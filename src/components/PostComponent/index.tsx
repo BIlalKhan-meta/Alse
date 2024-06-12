@@ -1,0 +1,233 @@
+// PostComponent.tsx
+import React from 'react';
+import { View, Text, StyleSheet, Image, TouchableOpacity, Share } from 'react-native';
+import { images } from '../../utils/images';
+import Card from '../Card';
+import { fontSizes, vh } from '../../constant';
+import InterMedium from '../Text/InterMedium';
+import { colors } from '../../utils/theme';
+import InterBold from '../Text/InterBold';
+import InterLight from '../Text/InterLight';
+import InterRegular from '../Text/InterRegular';
+import { useNavigation } from '@react-navigation/native';
+
+interface PostProps {
+  avatar: string;
+  name: string;
+  country: string;
+  time: string;
+  postText: string;
+  postImage: string;
+  likes: number;
+  comments: number;
+  share: number;
+  account: string
+  onCommnetPress: () => void;
+  onSavePress: () => void;
+
+}
+
+const PostComponent: React.FC<PostProps> = ({
+  avatar,
+  name,
+  country,
+  time,
+  postText,
+  postImage,
+  likes,
+  comments,
+  share,
+  account,
+  onCommnetPress,
+  onSavePress
+}) => {
+
+  const navigation = useNavigation();
+  const goToProfile = () => {
+    navigation.navigate('Profile', { account });
+  };
+  return (
+    <Card style={styles.card}>
+      <View style={styles.header}>
+        <View style={styles.userInfo}>
+          <TouchableOpacity onPress={goToProfile}>
+            <Image
+              source={avatar}
+              style={styles.avatar}
+            />
+          </TouchableOpacity>
+          <View>
+            <InterBold style={styles.name}>{name}</InterBold>
+            <View style={styles.userMeta}>
+              <InterRegular style={styles.country}>{country}</InterRegular>
+              <InterRegular style={styles.time}> · {time}</InterRegular>
+            </View>
+          </View>
+        </View>
+        <TouchableOpacity>
+          <Image
+            source={images.dots}
+            style={styles.threeDots}
+          />
+        </TouchableOpacity>
+      </View>
+
+      <InterLight style={styles.postText}>{postText}</InterLight>
+      <Image
+        source={postImage}
+        style={styles.postImage}
+      />
+      <View style={styles.postActions}>
+        <View style={styles.leftActions}>
+          <Image
+            source={images.heartIcon}
+            style={styles.icon}
+          />
+          <InterRegular style={styles.actionText}>{likes}</InterRegular>
+          <Image
+            source={images.comment}
+            style={styles.icon}
+          />
+          <InterRegular style={styles.actionText}>{comments} </InterRegular>
+          <Image
+            source={images.share}
+            style={styles.icon}
+          />
+          <InterRegular style={styles.actionText}>{share}</InterRegular>
+        </View>
+        <TouchableOpacity
+          onPress={onSavePress}
+        >
+          <Image
+            source={images.save}
+            style={styles.icon}
+          />
+        </TouchableOpacity>
+      </View>
+      <View style={styles.separator} />
+      <View style={styles.bottomActions}>
+        <TouchableOpacity style={styles.button}>
+          <Image
+            source={images.like}
+            style={styles.buttonIcon}
+          />
+          <Text style={styles.buttonText}>Like</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.button}
+          onPress={onCommnetPress}
+        >
+          <Image
+            source={images.comment}
+            style={styles.buttonIcon}
+          />
+          <Text style={styles.buttonText}>Comment</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.button}>
+          <Image
+            source={images.share}
+            style={styles.buttonIcon}
+          />
+          <Text style={styles.buttonText}>Share</Text>
+        </TouchableOpacity>
+      </View>
+    </Card>
+
+  );
+};
+
+const styles = StyleSheet.create({
+  card: {
+    marginVertical: vh * 4
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: vh * 2,
+  },
+  userInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  avatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 10,
+  },
+  name: {
+    fontSize: fontSizes.f16,
+    color: colors.black,
+    fontWeight: "bold"
+  },
+  userMeta: {
+    flexDirection: 'row',
+  },
+  country: {
+    fontSize: fontSizes.f12,
+    color: colors.lightGrey,
+  },
+  time: {
+    fontSize: fontSizes.f12,
+    color: colors.lightGrey,
+  },
+  threeDots: {
+    width: 4,
+    height: 19,
+  },
+  postText: {
+    fontSize: fontSizes.f14,
+    marginBottom: 10,
+    color: colors.inputText
+  },
+  postImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 10,
+    marginBottom: 10,
+  },
+  postActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  leftActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  icon: {
+    width: 20,
+    height: 20,
+    marginRight: 5,
+  },
+  actionText: {
+    marginRight: 20,
+    fontSize: fontSizes.f12,
+    color: colors.inputText,
+  },
+  separator: {
+    height: 1,
+    backgroundColor: '#ddd',
+    marginVertical: 10,
+  },
+  bottomActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  button: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  buttonIcon: {
+    width: 30,
+    height: 30,
+    marginRight: 5,
+  },
+  buttonText: {
+    fontSize: fontSizes.f14,
+    color: colors.inputText
+  },
+});
+
+export default PostComponent;
