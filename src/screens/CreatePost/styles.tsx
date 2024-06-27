@@ -36,6 +36,22 @@ const styles = StyleSheet.create({
         fontSize: 16,
         marginLeft: 5,
     },
+    media: {
+        width: 300,
+        height: 300,
+        marginBottom: 20,
+    },
+    buttonContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: 20,
+    },
+    button2: {
+        backgroundColor: '#DDDDDD',
+        padding: 10,
+        marginHorizontal: 10,
+    },
 
 });
 

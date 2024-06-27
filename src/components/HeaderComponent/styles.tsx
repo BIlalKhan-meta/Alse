@@ -22,6 +22,20 @@ const styles = StyleSheet.create({
         height: 30,
         marginLeft: 20,
     },
+    backicon: {
+        width: 30,
+        height: 30,
+        marginRight: 5
+
+    },
+    imageStyle: {
+        width: "100%",
+        height: "100%"
+    },
+    dotIcon: {
+        width: 4,
+        height: 20,
+    }
 });
 
 export default styles;

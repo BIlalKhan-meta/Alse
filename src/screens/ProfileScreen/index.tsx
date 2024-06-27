@@ -83,9 +83,11 @@ const ProfileScreen: React.FC = ({ navigation }) => {
           />
           <ReportBlockModal
             isVisible={modalVisible}
+            reportButtonText="Report"
+            blockButtonText="Block"
             onReportPress={handleReportPress}
             onBlockPress={handleBlockPress}
-            onClose={handleClose}
+            onClose={() => setModalVisible(false)}
           />
         </Card>
 

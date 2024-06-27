@@ -11,6 +11,7 @@ import InterBold from '../../components/Text/InterBold';
 import CommentsModal from '../../components/CommentsModal';
 import { useNavigation } from '@react-navigation/native';
 import HeaderComponent from '../../components/HeaderComponent';
+import styles from './styles';
 
 const posts = [
   {
@@ -80,10 +81,13 @@ const Home: React.FC = () => {
           label={'News Feed'}
           onBackPress={() => navigation.goBack()}
           notifiVisible={true}
+          searchVisible={true}
         />
 
 
-        <CardComponent />
+        <CardComponent
+          onTextInput={() => navigation.navigate("CreatePost")}
+        />
 
         {posts.map((post, index) => (
           <PostComponent
@@ -119,41 +123,6 @@ const Home: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    paddingHorizontal: 15,
-    paddingTop: 50,
-  },
 
-
-
-  uploadOptions: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  button: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.inputcolor,
-    borderRadius: 10,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-  },
-  buttonIcon: {
-    width: 17,
-    height: 10,
-  },
-  buttonIcon2: {
-    width: 16,
-    height: 15,
-  },
-  buttonText: {
-    color: colors.inputText,
-    fontSize: 16,
-    marginLeft: 5,
-  },
-});
 
 export default Home;

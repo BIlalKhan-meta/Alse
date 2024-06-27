@@ -5,6 +5,8 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import Home from "../../screens/Home";
 import TabNavigation from "../BottomTab";
 import Saved from "../../screens/Saved";
+import Shop from "../../screens/Shop";
+import CreatePost from "../../screens/CreatePost";
 
 
 
@@ -21,6 +23,8 @@ const AppNavigation = () => {
       <Stack.Screen name="Home" component={TabNavigation} />
 
       <Stack.Screen name="Saved" component={Saved} />
+      <Stack.Screen name="Shop" component={Shop} />
+      <Stack.Screen name="CreatePost" component={CreatePost} />
 
 
     </Stack.Navigator>

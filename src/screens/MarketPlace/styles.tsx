@@ -1,5 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { colors } from '../../utils/theme';
+import { vw } from '../../constant';
 
 const styles = StyleSheet.create({
     container: {
@@ -7,6 +8,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         paddingHorizontal: 15,
         paddingTop: 50,
+        paddingBottom: 30
     },
 
 
@@ -16,20 +18,8 @@ const styles = StyleSheet.create({
         justifyContent: 'space-around',
     },
     button: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: colors.inputcolor,
-        borderRadius: 10,
-        paddingHorizontal: 20,
-        paddingVertical: 10,
-    },
-    buttonIcon: {
-        width: 17,
-        height: 10,
-    },
-    buttonIcon2: {
-        width: 16,
-        height: 15,
+        width: vw * 60,
+        alignSelf: "center"
     },
     buttonText: {
         color: colors.inputText,

@@ -10,12 +10,28 @@ interface HeaderComponentProps {
   onBackPress: () => void;
   notifiVisible: boolean;
   chatVisible: boolean;
+  searchVisible: boolean;
+  back: boolean;
+  onDotPress: () => void;
+  dots: boolean;
 }
 
-const HeaderComponent: React.FC<HeaderComponentProps> = ({ label, onBackPress, notifiVisible, chatVisible }) => {
+const HeaderComponent: React.FC<HeaderComponentProps> = ({ label, onBackPress, notifiVisible, chatVisible, searchVisible, back, dots, onDotPress }) => {
   return (
     <View style={styles.header}>
-      <InterBold style={styles.headerText}>{label}</InterBold>
+
+
+      <View style={{ flexDirection: "row", alignItems: "center" }}>
+        {back && <TouchableOpacity
+          onPress={() => onBackPress()}
+        >
+          <Image
+            source={images.backicon}
+            style={styles.backicon}
+          />
+        </TouchableOpacity>}
+        <InterBold style={styles.headerText}>{label}</InterBold>
+      </View>
       <View style={styles.headerIcons}>
         {notifiVisible && <TouchableOpacity>
           <Image
@@ -29,12 +45,22 @@ const HeaderComponent: React.FC<HeaderComponentProps> = ({ label, onBackPress, n
             style={styles.icon}
           />
         </TouchableOpacity>}
-        <TouchableOpacity>
+        {searchVisible && <TouchableOpacity>
           <Image
             source={images.searchIcon}
             style={styles.icon}
           />
-        </TouchableOpacity>
+        </TouchableOpacity>}
+        {dots && <TouchableOpacity
+          onPress={() => onDotPress()}
+        >
+          <View style={styles.dotIcon}>
+            <Image
+              source={images.dots}
+              style={styles.imageStyle}
+            />
+          </View>
+        </TouchableOpacity>}
       </View>
     </View>
   );

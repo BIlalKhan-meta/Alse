@@ -1,0 +1,54 @@
+import {useState} from 'react';
+import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
+
+const useImagePicker = () => {
+  const [image, setImage] = useState(null); // State to store the selected image URI
+
+  // Function to handle image selection from gallery
+  const chooseImageFromLibrary = () => {
+    let options = {
+      mediaType: 'photo', // 'photo' or 'video'
+      maxWidth: 300,
+      maxHeight: 550,
+      quality: 1,
+    };
+
+    launchImageLibrary(options, response => {
+      if (response.didCancel) {
+        console.log('User cancelled image picker');
+      } else if (response.errorCode == 'permission') {
+        console.log('Permission not satisfied');
+      } else {
+        setImage(response.assets[0].uri); // Set the selected image URI
+        // Handle further processing if needed (e.g., setting file type)
+      }
+    });
+  };
+
+  // Function to capture image using the camera
+  const captureImage = mediaType => {
+    let options = {
+      mediaType: mediaType || 'photo', // 'photo' or 'video'
+      maxWidth: 300,
+      maxHeight: 550,
+      quality: 1,
+    };
+
+    launchCamera(options, response => {
+      if (response.didCancel) {
+        console.log('User cancelled camera picker');
+      } else if (response.errorCode == 'camera_unavailable') {
+        console.log('Camera not available on device');
+      } else if (response.errorCode == 'permission') {
+        console.log('Permission not satisfied');
+      } else {
+        setImage(response.assets[0].uri); // Set the captured image URI
+        // Handle further processing if needed (e.g., setting file type)
+      }
+    });
+  };
+
+  return {image, captureImage, chooseImageFromLibrary};
+};
+
+export default useImagePicker;

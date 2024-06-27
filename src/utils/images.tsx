@@ -7,6 +7,7 @@ export const images = {
   linearCircle: require('../assets/Icons/linearCircle.png'),
   bellIcon: require('../assets/Icons/bellIcon.png'),
   searchIcon: require('../assets/Icons/searchIcon.png'),
+  search: require('../assets/Icons/search.png'),
   media: require('../assets/Icons/media.png'),
   video: require('../assets/Icons/video.png'),
   user: require('../assets/Icons/user.png'),
@@ -35,6 +36,20 @@ export const images = {
   help: require('../assets/Icons/help.png'),
   logout: require('../assets/Icons/logout.png'),
   chatIcon: require('../assets/Icons/chatIcon.png'),
+  pro1: require('../assets/Icons/pro1.png'),
+  pro2: require('../assets/Icons/pro2.png'),
+  filter: require('../assets/Icons/filter.png'),
+
+
+
+  //Imagesssss/////
+  shop1: require('../assets/images/shop1.png'),
+  shop11: require('../assets/images/shop11.png'),
+  shop2: require('../assets/images/shop2.png'),
+  shop3: require('../assets/images/shop3.png'),
+  shop4: require('../assets/images/shop4.png'),
+  shop5: require('../assets/images/shop5.png'),
+  shop6: require('../assets/images/shop6.png'),
 
 
 

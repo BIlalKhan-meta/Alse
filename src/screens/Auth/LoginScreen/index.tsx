@@ -36,10 +36,16 @@ const LoginScreen: React.FC = () => {
     password: string
   }
 
+  // const initialValues = {
+  //   email: '',
+  //   password: '',
+  // };
+
   const initialValues = {
-    email: '',
-    password: '',
+    email: __DEV__ ? 'abc@gmail.com' : '',
+    password: __DEV__ ? '12345678' : '',
   };
+
 
   const validationSchema: yup.AnySchema<FormValues> = yup.object().shape({
     email: yup
@@ -73,8 +79,8 @@ const LoginScreen: React.FC = () => {
 
             <View style={styles.container}>
               <InterBold style={styles.heading}>Login</InterBold>
-           
-         
+
+
 
 
               <RegularTextInput
@@ -88,7 +94,7 @@ const LoginScreen: React.FC = () => {
                 errors={errors.email}
               />
 
-         
+
 
 
 
@@ -107,11 +113,11 @@ const LoginScreen: React.FC = () => {
                 onPressPassword={() => setSecurePassword(!securePassword)} />
 
 
-        <RememberMeContainer
-         isSelected={isSelected}
-         setIsSelected={setIsSelected}
-         onPress={()=> navigation.navigate("ForgotPassword")}
-        />
+              <RememberMeContainer
+                isSelected={isSelected}
+                setIsSelected={setIsSelected}
+                onPress={() => navigation.navigate("ForgotPassword")}
+              />
 
 
               <CustomButton onPress={() => {
@@ -124,7 +130,7 @@ const LoginScreen: React.FC = () => {
                 Login
               </CustomButton>
 
-     
+
 
 
             </View>

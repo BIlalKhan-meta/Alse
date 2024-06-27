@@ -1,22 +1,29 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Modal, TouchableOpacity, Text, StyleSheet, Dimensions } from 'react-native';
 import styles from './styles';
+
 const windowWidth = Dimensions.get('window').width;
 
 interface ReportBlockModalProps {
     isVisible: boolean;
+    reportButtonText: string;
+    blockButtonText: string;
     onReportPress: () => void;
     onBlockPress: () => void;
     onClose: () => void;
 }
 
-const ReportBlockModal: React.FC<ReportBlockModalProps> = ({ isVisible, onReportPress, onBlockPress, onClose }) => {
+const ReportBlockModal: React.FC<ReportBlockModalProps> = ({
+    isVisible,
+    reportButtonText,
+    blockButtonText,
+    onReportPress,
+    onBlockPress,
+    onClose,
+}) => {
 
     return (
-
-
         <Modal
-            // animationType="fade"
             transparent={true}
             visible={isVisible}
             onRequestClose={() => onClose()}
@@ -26,19 +33,21 @@ const ReportBlockModal: React.FC<ReportBlockModalProps> = ({ isVisible, onReport
                 activeOpacity={1}
                 onPress={onClose}
             >
-                <View style={[styles.modalContainer,]}>
-                    <TouchableOpacity style={styles.modalOption} onPress={onReportPress}>
-                        <Text>Report</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.modalOption} onPress={onBlockPress}>
-                        <Text>Block</Text>
-                    </TouchableOpacity>
+                <View style={styles.modalContainer}>
+                    {reportButtonText && (
+                        <TouchableOpacity style={styles.modalOption} onPress={onReportPress}>
+                            <Text>{reportButtonText}</Text>
+                        </TouchableOpacity>
+                    )}
+                    {blockButtonText && (
+                        <TouchableOpacity style={styles.modalOption} onPress={onBlockPress}>
+                            <Text>{blockButtonText}</Text>
+                        </TouchableOpacity>
+                    )}
                 </View>
             </TouchableOpacity>
         </Modal>
     );
 };
-
-
 
 export default ReportBlockModal;

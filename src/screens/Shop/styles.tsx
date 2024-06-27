@@ -36,6 +36,15 @@ const styles = StyleSheet.create({
         marginTop: vh * 2,
         marginBottom: vh * 4
     },
+    mainheading: {
+        fontSize: fontSizes.f16,
+        color: colors.black,
+    },
+    sortConatiner: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        marginTop: vh * 2
+    },
     heading: {
         color: colors.inputText,
         fontSize: fontSizes.f14,
@@ -57,14 +66,23 @@ const styles = StyleSheet.create({
         height: vh * 6,
         marginTop: vh * 2,
         width: vw * 55,
-        fontWeight: '300',
+        // fontWeight: '200',
         borderColor: colors.inputcolor,
         borderWidth: 1,
         borderRadius: 5,
         paddingHorizontal: 10,
-        backgroundColor: colors.inputcolor
+        backgroundColor: colors.inputcolor,
         // backgroundColor: "yellow"
     },
+    imageStyle: {
+        width: '100%',
+        height: "100%",
+        borderRadius: 10
+    },
+    banner: {
+        width: vw * 86,
+        height: vh * 30,
+    }
 
 });
 

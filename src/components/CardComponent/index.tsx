@@ -6,39 +6,57 @@ import { colors } from '../../utils/theme';
 import Card from '../Card';
 import RegularTextInput from '../TextInput/RegularTextInput';
 
-const CardComponent: React.FC = () => {
+interface CardComponentProps {
+
+  onTextInput: () => void;
+  // notifiVisible: boolean;
+  // chatVisible: boolean;
+  // searchVisible: boolean;
+  // back: boolean;
+  onVideoPress: () => void;
+  onImagePress: () => void;
+  // dots: boolean;
+}
+const CardComponent: React.FC<CardComponentProps> = ({ onTextInput, onImagePress, onVideoPress }) => {
   return (
     <Card>
-    <View style={styles.card}>
-      <Image
-        source={images.user}
-        style={styles.avatar}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="What's on your mind?"
-        placeholderTextColor={colors.inputText}
-      />
+      <View style={styles.card}>
+        <Image
+          source={images.user}
+          style={styles.avatar}
+        />
+
+        <TextInput
+          onPress={() => onTextInput()}
+          style={styles.input}
+          placeholder="What's on your mind?"
+          placeholderTextColor={colors.inputText}
+        />
 
 
-    </View>
-     <View style={styles.uploadOptions}>
-     <TouchableOpacity style={styles.button}>
-       <Image
-         source={images.video}
-         style={styles.buttonIcon}
-       />
-       <Text style={styles.buttonText}> Video</Text>
-     </TouchableOpacity>
-     <TouchableOpacity style={styles.button}>
-       <Image
-         source={images.media}
-         style={styles.buttonIcon2}
-       />
-       <Text style={styles.buttonText}> Image</Text>
-     </TouchableOpacity>
-   </View>
-   </Card>
+      </View>
+      <View style={styles.uploadOptions}>
+        <TouchableOpacity style={styles.button}
+          onPress={onVideoPress}
+        >
+          <Image
+            source={images.video}
+            style={styles.buttonIcon}
+          />
+          <Text style={styles.buttonText}> Video</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.button}
+          onPress={onImagePress}
+        >
+          <Image
+            source={images.media}
+            style={styles.buttonIcon2}
+
+          />
+          <Text style={styles.buttonText}> Image</Text>
+        </TouchableOpacity>
+      </View>
+    </Card>
   );
 };
 
@@ -62,7 +80,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.inputcolor,
     padding: 10,
     borderRadius: 10,
- 
+
   },
   uploadOptions: {
     flexDirection: 'row',
