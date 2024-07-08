@@ -15,6 +15,7 @@ export const images = {
   postImage1: require('../assets/Icons/postImage1.png'),
   heartIcon: require('../assets/Icons/heartIcon.png'),
   like: require('../assets/Icons/like.png'),
+  likeFill: require('../assets/Icons/likeFill.png'),
   share: require('../assets/Icons/share.png'),
   comment: require('../assets/Icons/comment.png'),
   save: require('../assets/Icons/save.png'),
@@ -39,6 +40,7 @@ export const images = {
   pro1: require('../assets/Icons/pro1.png'),
   pro2: require('../assets/Icons/pro2.png'),
   filter: require('../assets/Icons/filter.png'),
+  noti: require('../assets/Icons/noti.png'),
 
 
 

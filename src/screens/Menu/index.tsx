@@ -101,21 +101,30 @@ const Menu: React.FC = () => {
         </Card>
 
         <Card style={styles.cardContainer}>
-          <View style={styles.cardContent5}>
-            <View style={styles.notifiCon}>
-              <Image source={images.notifi} style={styles.imageStyle} />
+          <TouchableOpacity
+            onPress={() => navigation.navigate("Notifications")}
+          >
+            <View style={styles.cardContent5}>
+              <View style={styles.notifiCon}>
+                <Image source={images.notifi} style={styles.imageStyle} />
+              </View>
+              <InterMedium style={styles.cardHeading}>Notification</InterMedium>
             </View>
-            <InterMedium style={styles.cardHeading}>Notification</InterMedium>
-          </View>
+          </TouchableOpacity>
         </Card>
 
         <Card style={styles.cardContainer}>
-          <View style={styles.cardContent5}>
-            <View style={styles.notifiCon}>
-              <Image source={images.request} style={styles.imageStyle} />
+          <TouchableOpacity
+            onPress={() => navigation.navigate("RequestScreen")}
+          >
+
+            <View style={styles.cardContent5}>
+              <View style={styles.notifiCon}>
+                <Image source={images.request} style={styles.imageStyle} />
+              </View>
+              <InterMedium style={styles.cardHeading}>Requests</InterMedium>
             </View>
-            <InterMedium style={styles.cardHeading}>Requests</InterMedium>
-          </View>
+          </TouchableOpacity>
         </Card>
 
         <Card style={styles.cardContainer}>
@@ -147,24 +156,35 @@ const Menu: React.FC = () => {
           </Card>
 
           <Card style={styles.cardContainer2}>
-            <View style={styles.cardContent5}>
-              <View style={[styles.notifiCon, { width: vw * 8 }]}>
-                <Image source={images.phone} style={styles.imageStyle} />
+            <TouchableOpacity
+              onPress={() => navigation.navigate("ContactUs")}
+
+            >
+
+              <View style={styles.cardContent5}>
+                <View style={[styles.notifiCon, { width: vw * 8 }]}>
+                  <Image source={images.phone} style={styles.imageStyle} />
+                </View>
+                <InterMedium style={styles.cardHeading}>Contact</InterMedium>
               </View>
-              <InterMedium style={styles.cardHeading}>Contact</InterMedium>
-            </View>
+            </TouchableOpacity>
           </Card>
 
         </View>
 
         <View style={styles.bottomCon}>
           <Card style={styles.cardContainer2}>
-            <View style={styles.cardContent5}>
-              <View style={[styles.notifiCon, { width: vw * 8 }]}>
-                <Image source={images.help} style={styles.imageStyle} />
+            <TouchableOpacity
+              onPress={() => navigation.navigate("AboutUs")}
+
+            >
+              <View style={styles.cardContent5}>
+                <View style={[styles.notifiCon, { width: vw * 8 }]}>
+                  <Image source={images.help} style={styles.imageStyle} />
+                </View>
+                <InterMedium style={styles.cardHeading}>About Us</InterMedium>
               </View>
-              <InterMedium style={styles.cardHeading}>About Us</InterMedium>
-            </View>
+            </TouchableOpacity>
           </Card>
 
           <Card style={styles.cardContainer2}>

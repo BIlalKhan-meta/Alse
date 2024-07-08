@@ -8,7 +8,8 @@ export const colors = {
   themeColor: "#0C959B",
   redText: '#FF0000',
   lightGrey: "#666666",
-  blue: "#169BD5"
+  blue: "#169BD5",
+  borderColor: '#D9D9D9'
 };
 
 export const appShadow: Record<string, any> = {

@@ -16,6 +16,7 @@ import InterRegular from '../../components/Text/InterRegular';
 import WishlistScreen from '../../components/WishList';
 import ContentSavedScreen from '../../components/ContentSaved';
 import { Picker } from '@react-native-picker/picker';
+import ReactModal from '../../components/ReactModal';
 
 const posts = [
     {
@@ -70,6 +71,19 @@ const dummyComments = [
         comment: 'Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
     },
 
+];
+const reactions = [
+    { id: 1, userAvatar: 'avatar1.jpg', userName: 'Marvel Edward', reactionType: 'heart' },
+    { id: 2, userAvatar: 'avatar2.jpg', userName: 'Madvin', reactionType: 'like' },
+    { id: 3, userAvatar: 'avatar3.jpg', userName: 'Marvel Edward', reactionType: 'heart' },
+    { id: 4, userAvatar: 'avatar2.jpg', userName: 'Juliana David', reactionType: 'like' },
+    { id: 5, userAvatar: 'avatar2.jpg', userName: 'Roy Rose', reactionType: 'heart' },
+    { id: 6, userAvatar: 'avatar2.jpg', userName: 'Marvel Edward', reactionType: 'like' },
+    { id: 7, userAvatar: 'avatar2.jpg', userName: 'Colin Shaien', reactionType: 'like' },
+    { id: 8, userAvatar: 'avatar2.jpg', userName: 'Sam Alex', reactionType: 'heart' },
+    { id: 9, userAvatar: 'avatar2.jpg', userName: 'Peter Parker', reactionType: 'like' },
+
+    // Add more reactions as needed
 ];
 
 const dummyWishlist = [
@@ -165,6 +179,7 @@ const productFilter = [
 const Saved: React.FC = () => {
     const navigation = useNavigation();
     const [commentsVisible, setCommentsVisible] = useState<boolean>(false)
+    const [reactVisible, setrRactVisible] = useState(false);
     const [active, setActive] = useState<number>(1)
 
     const handleAddToCart = (productId: string) => {
@@ -232,6 +247,7 @@ const Saved: React.FC = () => {
                                 share={post.share}
                                 account={post.account}
                                 onCommnetPress={() => setCommentsVisible(true)}
+                                onLikePress={() => setrRactVisible(true)}
                             />
                         ))}
 
@@ -244,6 +260,12 @@ const Saved: React.FC = () => {
                             buttonText='Apply'
                             onPress={() => navigation.navigate("Home")}
                             comments={dummyComments}
+                        />
+
+                        <ReactModal
+                            visible={reactVisible}
+                            closeModal={() => setrRactVisible(false)}
+                            reactions={reactions}
                         />
                     </View>
                 )}

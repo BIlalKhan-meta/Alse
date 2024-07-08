@@ -24,6 +24,7 @@ interface PostProps {
   account: string
   onCommnetPress: () => void;
   onSavePress: () => void;
+  onLikePress: () => void;
 
 }
 
@@ -39,7 +40,8 @@ const PostComponent: React.FC<PostProps> = ({
   share,
   account,
   onCommnetPress,
-  onSavePress
+  onSavePress,
+  onLikePress
 }) => {
 
   const navigation = useNavigation();
@@ -106,7 +108,9 @@ const PostComponent: React.FC<PostProps> = ({
       </View>
       <View style={styles.separator} />
       <View style={styles.bottomActions}>
-        <TouchableOpacity style={styles.button}>
+        <TouchableOpacity style={styles.button}
+          onPress={onLikePress}
+        >
           <Image
             source={images.like}
             style={styles.buttonIcon}
