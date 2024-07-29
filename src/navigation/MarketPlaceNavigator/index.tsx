@@ -8,21 +8,20 @@ import NavigationOptions from "../NavigationOptions";
 import MyPosts from "../../screens/MyPosts";
 import Cart from "../../screens/Cart";
 import BlockedUsers from "../../screens/BlockedUsers";
+import Marketplace from "../../screens/MarketPlace";
+import MyOrders from "../../screens/MyOrders";
 
-const HomeNavigation = () => {
+const MarketPlaceNavigation = () => {
     const Stack = createNativeStackNavigator();
     return (
         <Stack.Navigator
-            initialRouteName="Home"
+            initialRouteName="Marketplace"
             screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="Home" component={Home} />
-            <Stack.Screen name="Profile" component={ProfileScreen} />
-            <Stack.Screen name="ChatScreen" component={ChatScreen} options={NavigationOptions} />
-            <Stack.Screen name="MyPosts" component={MyPosts} options={NavigationOptions} />
-            <Stack.Screen name="BlockedUsers" component={BlockedUsers} options={NavigationOptions} />
+            <Stack.Screen name="Marketplace" component={Marketplace} />
+
 
             <Stack.Screen name="Cart" component={Cart} options={NavigationOptions} />
-            {/* <Stack.Screen name="MenuManagement" component={MenuManagement} /> */}
+            <Stack.Screen name="MyOrders" component={MyOrders} options={NavigationOptions} />
             {/*
         <Stack.Screen name="RatingsandReviews" component={RatingsandReviews} options={NavigationOptions}/> */}
             {/* <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicy} options={NavigationOptions}/> */}
@@ -38,4 +37,4 @@ const HomeNavigation = () => {
 
 }
 
-export default HomeNavigation
+export default MarketPlaceNavigation

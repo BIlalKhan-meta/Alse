@@ -14,6 +14,7 @@ import ContactUs from "../../screens/ContactUs";
 import AboutUs from "../../screens/AboutUs";
 import ChatOngoing from "../../screens/ChatOngoing";
 import NavigationOptions from "../NavigationOptions";
+import ProductView from "../../screens/ProductView";
 
 
 
@@ -32,9 +33,9 @@ const AppNavigation = () => {
 
       <Stack.Screen name="Saved" component={Saved} />
       <Stack.Screen name="RequestScreen" component={RequestScreen} />
-      <Stack.Screen name="BlockedUsers" component={BlockedUsers} />
       <Stack.Screen name="Notifications" component={Notifications} />
       <Stack.Screen name="Shop" component={Shop} options={NavigationOptions} />
+      <Stack.Screen name="ProductView" component={ProductView} options={NavigationOptions} />
       <Stack.Screen name="CreatePost" component={CreatePost} options={NavigationOptions} />
       <Stack.Screen name="ContactUs" component={ContactUs} />
       <Stack.Screen name="AboutUs" component={AboutUs} />

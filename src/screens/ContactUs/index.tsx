@@ -14,6 +14,8 @@ import CustomButton from '../../components/CustomButton';
 import InterBold from '../../components/Text/InterBold';
 import Card from '../../components/Card';
 import HeaderComponent from '../../components/HeaderComponent';
+import GeneralModal from '../../components/GeneralModal';
+import { images } from '../../utils/images';
 
 const ContactUs: React.FC = ({ navigation }) => {
 
@@ -129,10 +131,11 @@ const ContactUs: React.FC = ({ navigation }) => {
                   <CustomButton
                     style={{ alignSelf: "center" }}
                     onPress={() => {
+                      setMessageSubmittedModal(true)
+
                       setSubmitted(true)
                       resetForm()
                       handleSubmit()
-                      setMessageSubmittedModal(true)
                     }}>
                     Submit
                   </CustomButton>
@@ -147,16 +150,16 @@ const ContactUs: React.FC = ({ navigation }) => {
       </Card>
 
 
-      {/* <GeneralModal
+      <GeneralModal
         visible={messageSubmittedModal}
         closeModal={() => setMessageSubmittedModal(false)}
-        icon={CheckedIcon}
-        title='Successfully'
+        icon={images.checkedIcon}
+        title='Message'
         message='Your message has been submitted successfully'
         buttonText='Okay'
         onPress={() => setMessageSubmittedModal(false)}
         primaryBtn={true}
-      /> */}
+      />
 
 
     </>

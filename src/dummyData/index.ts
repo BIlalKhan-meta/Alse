@@ -119,3 +119,72 @@ export const products: Product[] = [
     quantity: 1,
   },
 ];
+
+export const dummyWishlist = [
+  {
+    id: '1',
+    name: 'Product 1',
+    price: 20,
+    imageUrl: `${images.pro1}`,
+  },
+  {
+    id: '2',
+    name: 'Product 2',
+    price: 30,
+    imageUrl: `${images.pro2}`,
+  },
+  {
+    id: '3',
+    name: 'Product 3',
+    price: 25,
+    imageUrl: `${images.pro3}`,
+  },
+  {
+    id: '4',
+    name: 'Product 4',
+    price: 25,
+    imageUrl: `${images.pro1}`,
+  },
+  {
+    id: '5',
+    name: 'Product 5',
+    price: 25,
+    imageUrl: `${images.pro2}`,
+  },
+  {
+    id: '6',
+    name: 'Product 6',
+    price: 25,
+    imageUrl: `${images.pro3}`,
+  },
+];
+
+export const reviews = [
+  {
+    id: 1,
+    userAvatar: 'https://example.com/user1.jpg',
+    userName: 'Athalia Putri',
+    rating: 4.5,
+    reviewText:
+      'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut.',
+    date: 'Jul 14, 2023',
+  },
+  {
+    id: 2,
+    userAvatar: 'https://example.com/user2.jpg',
+    userName: 'John Doe',
+    rating: 4.0,
+    reviewText:
+      'Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
+    date: 'Jul 15, 2023',
+  },
+  {
+    id: 3,
+    userAvatar: 'https://example.com/user3.jpg',
+    userName: 'Jane Smith',
+    rating: 5.0,
+    reviewText:
+      'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.',
+    date: 'Jul 16, 2023',
+  },
+];

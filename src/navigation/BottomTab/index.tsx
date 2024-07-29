@@ -11,6 +11,7 @@ import Game from '../../screens/Game';
 import Menu from '../../screens/Menu';
 import InterBold from '../../components/Text/InterBold';
 import NavigationOptions from "../NavigationOptions";
+import MarketPlaceNavigation from '../MarketPlaceNavigator';
 
 
 const TabNavigation = () => {
@@ -51,7 +52,7 @@ const TabNavigation = () => {
             />
             <Tab.Screen
                 name="Marketplace"
-                component={Marketplace}
+                component={MarketPlaceNavigation}
                 options={{
                     tabBarIcon: ({ focused }) => (
                         <View style={styles.tabButton}>

@@ -13,6 +13,9 @@ import CreatePost from '../../screens/CreatePost';
 import Cart from '../../screens/Cart';
 import Marketplace from '../../screens/MarketPlace';
 import Shop from '../../screens/Shop';
+import ProductView from '../../screens/ProductView';
+import BlockedUsers from '../../screens/BlockedUsers';
+import MyOrders from '../../screens/MyOrders';
 
 
 interface RouteParams {
@@ -32,8 +35,10 @@ const titles: { [key: string]: string } = {
     CreatePost: "Create Post",
     Cart: "My Cart",
     Marketplace: "Shops",
-    Shop: "Shop"
-    // MyOrders: "My Orders",
+    Shop: "Shop",
+    ProductView: "Shop",
+    BlockedUsers: "Blocked Users",
+    MyOrders: "My Orders",
     // BlockedUsers: "Block User",
     // MyProfile: "Profile",
     // MyProfileUpdate: "Edit Profile",
@@ -50,7 +55,8 @@ const titles: { [key: string]: string } = {
 const backButtonRoutes: { [key: string]: boolean } = {
     ChatOngoing: true,
     CreatePost: true,
-    Shop: true
+    Shop: true,
+    ProductView: true,
 
 };
 

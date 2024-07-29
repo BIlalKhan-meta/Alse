@@ -12,7 +12,9 @@ export const colors = {
   lightGrey: "#666666",
   blue: "#169BD5",
   borderColor: '#D9D9D9',
-  headerColor: "#EDFAFA"
+  headerColor: "#EDFAFA",
+  darkGray: '#666666',
+
 };
 
 export const appShadow: Record<string, any> = {

@@ -177,6 +177,8 @@ const Shop: React.FC = () => {
                         heart={true}
                         addCart={true}
                         product={true}
+                        onPress={() => navigation.navigate("ProductView")}
+
                     />
                 </Card>
 

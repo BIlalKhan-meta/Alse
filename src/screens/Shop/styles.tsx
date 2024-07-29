@@ -6,9 +6,9 @@ import fonts from '../../assets/fonts';
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
+        backgroundColor: colors.headerColor,
         paddingHorizontal: 15,
-        paddingTop: 50,
+        // paddingTop: 50,
     },
     activeContainer: {
         flexDirection: "row",

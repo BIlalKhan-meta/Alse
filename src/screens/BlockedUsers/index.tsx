@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useLayoutEffect, useState } from 'react';
 import { View, ScrollView, TouchableOpacity, FlatList, Image } from 'react-native';
 import Card from '../../components/Card';
 import styles from './styles';
@@ -7,10 +7,34 @@ import InterRegular from '../../components/Text/InterRegular';
 import { images } from '../../utils/images';
 import HorizontalSeparator from '../../components/HorizontalSeparator';
 import GeneralModal from '../../components/GeneralModal';
+import { useNavigation } from '@react-navigation/native';
 
 const BlockedUsers: React.FC = () => {
+    const navigation = useNavigation()
     const [blockVisible, setBlockVisible] = useState(false);
     const [blockSuccess, setBlockSuccess] = useState(false);
+
+
+
+    useLayoutEffect(() => {
+        navigation.setOptions({
+
+            headerRight: () => (
+                <TouchableOpacity style={styles.headerBtn}
+                // onPress={() => navigation.navigate("AddProduct")}
+                >
+                    <Image
+                        source={images.searchIcon}
+                        style={styles.icon}
+                    />
+                </TouchableOpacity>
+            ),
+        });
+    }, [navigation]);
+
+
+
+
 
     const handleBlockButton = (userId: string) => {
         setBlockVisible(true)
@@ -64,17 +88,11 @@ const BlockedUsers: React.FC = () => {
     return (
         <ScrollView showsVerticalScrollIndicator={false}>
             <View style={styles.container}>
-                {/* Header */}
-                <HeaderComponent
-                    label={'Blocked Users'}
-                    onBackPress={() => navigation.goBack()}
-                    searchVisible={true}
-                />
+
 
                 <Card>
 
 
-                    {/* Render user list based on active tab using FlatList */}
                     <FlatList
                         data={blockList}
                         renderItem={renderUserItem}

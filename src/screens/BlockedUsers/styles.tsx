@@ -7,7 +7,7 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#fff',
         paddingHorizontal: 15,
-        paddingTop: 50,
+        paddingTop: vh * 2,
         paddingBottom: 50,
     },
     activeContainer: {
@@ -67,6 +67,11 @@ const styles = StyleSheet.create({
     actionButtonText: {
         fontSize: fontSizes.f12,
         color: '#fff',
+    },
+    icon: {
+        width: 30,
+        height: 30,
+        marginLeft: 20,
     },
 });
 
