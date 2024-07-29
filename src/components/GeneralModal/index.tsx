@@ -20,9 +20,11 @@ interface GeneralModalProps {
   secondaryBtn: boolean;
   SecondaryText1: string;
   SecondaryText2: string;
+  redImage: boolean;
+
 }
 
-const GeneralModal: React.FC<GeneralModalProps> = ({ visible, closeModal, icon, title, message, buttonText, onPress, primaryBtn, secondaryBtn, SecondaryText1, SecondaryText2, }) => {
+const GeneralModal: React.FC<GeneralModalProps> = ({ visible, closeModal, icon, title, message, buttonText, onPress, primaryBtn, secondaryBtn, SecondaryText1, SecondaryText2, redImage }) => {
   return (
     <Modal
       visible={visible}
@@ -42,11 +44,20 @@ const GeneralModal: React.FC<GeneralModalProps> = ({ visible, closeModal, icon, 
       />
       <View style={styles.centeredView}>
         <View style={styles.container}>
-          <View style={styles.imageConatiner}>
-            <Image source={images.linearCircle} />
-            <Image source={icon} style={styles.innerImage} />
+          {redImage ? (
+            <View style={styles.imageConatiner}>
+              <Image source={images.linearCircle2} />
+              {/* <Image source={icon} style={styles.innerImage} /> */}
 
-          </View>
+            </View>
+          ) : (
+            <View style={styles.imageConatiner}>
+              <Image source={images.linearCircle} />
+              <Image source={icon} style={styles.innerImage} />
+
+            </View>
+          )}
+
           <InterBoldSmall style={styles.title}>{title}</InterBoldSmall>
           <InterLightAverage style={styles.message}>{message}</InterLightAverage>
 

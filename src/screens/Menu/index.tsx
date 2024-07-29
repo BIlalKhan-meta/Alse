@@ -58,10 +58,10 @@ const Menu: React.FC = () => {
           <View style={styles.cardContent2}>
             <InterMedium style={styles.cardHeading}>- &nbsp;&nbsp;&nbsp;Marketplace</InterMedium>
             <View style={styles.btnCon}>
-              <TouchableOpacity onPress={() => navigation.navigate('Shops')}>
+              <TouchableOpacity onPress={() => navigation.navigate('Marketplace')}>
                 <InterRegular style={styles.cardText}>Shops</InterRegular>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => navigation.navigate('MyCart')}>
+              <TouchableOpacity onPress={() => navigation.navigate('Cart')}>
                 <InterRegular style={styles.cardText}>My Cart</InterRegular>
               </TouchableOpacity>
               <TouchableOpacity onPress={() => navigation.navigate('BankDetails')}>

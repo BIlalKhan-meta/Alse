@@ -1,7 +1,7 @@
 
 
 // Home.tsx
-import React, { useState } from 'react';
+import React, { useLayoutEffect, useState } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from 'react-native';
 import { images } from '../../utils/images';
 import CardComponent from '../../components/CardComponent';
@@ -119,16 +119,27 @@ const Marketplace: React.FC = () => {
     // Simulated search results for demonstration
     setSearchResults([`Shop 1 - ${query}`, `Shop 2 - ${query}`, `Shop 3 - ${query}`]);
   };
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerShown: true,
+      title: "Shops",
+      headerStyle: {
+        backgroundColor: colors.headerColor
+      },
+
+    });
+  }, [navigation]);
   return (
     <ScrollView
       showsVerticalScrollIndicator={false}
     >
       <View style={styles.container}>
 
-        <HeaderComponent
+        {/* <HeaderComponent
           label={'Shops'}
           onBackPress={() => navigation.goBack()}
-        />
+        /> */}
 
         <Card>
           <SearchComponent onSearch={handleSearch} placeholder="Find shop" />

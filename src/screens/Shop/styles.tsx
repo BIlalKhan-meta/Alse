@@ -82,6 +82,10 @@ const styles = StyleSheet.create({
     banner: {
         width: vw * 86,
         height: vh * 30,
+    },
+    threeDots: {
+        width: vw * 1,
+        height: vh * 2.5
     }
 
 });

@@ -13,6 +13,9 @@ import PostComponent from '../../components/PostComponent';
 import { useRoute } from '@react-navigation/native';
 import ReportBlockModal from '../../components/ReportBlockModal';
 import GeneralModal from '../../components/GeneralModal';
+import ReactModal from '../../components/ReactModal';
+import { dummyComments, reactions } from '../../dummyData';
+import CommentsModal from '../../components/CommentsModal';
 
 const ProfileScreen: React.FC = ({ navigation }) => {
 
@@ -24,6 +27,8 @@ const ProfileScreen: React.FC = ({ navigation }) => {
   const [reportSuccess, setReportSuccess] = useState(false);
   const [blockVisible, setBlockVisible] = useState(false);
   const [blockSuccess, setBlockSuccess] = useState(false);
+  const [reactVisible, setrRactVisible] = useState(false);
+  const [commentsVisible, setCommentsVisible] = useState<boolean>(false)
 
   const handleReportPress = () => {
     setModalVisible(false);
@@ -109,10 +114,30 @@ const ProfileScreen: React.FC = ({ navigation }) => {
                 likes={post.likes}
                 comments={post.comments}
                 share={post.share}
+                onLikePress={() => setrRactVisible(true)}
+                onCommnetPress={() => setCommentsVisible(true)}
+
               />
             ))}
           </>
         )}
+
+
+        <CommentsModal
+          visible={commentsVisible}
+          closeModal={() => setCommentsVisible(false)}
+          // icon={CheckedIcon}
+          title='Successfully'
+          message='Password has been updated successfully'
+          buttonText='Apply'
+          onPress={() => navigation.navigate("Home")}
+          comments={dummyComments}
+        />
+        <ReactModal
+          visible={reactVisible}
+          closeModal={() => setrRactVisible(false)}
+          reactions={reactions}
+        />
 
         {account == "private" && (
           <Card style={styles.lockContainer}>

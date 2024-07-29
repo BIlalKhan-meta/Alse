@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useLayoutEffect, useState } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from 'react-native';
 import { images } from '../../utils/images';
 import CardComponent from '../../components/CardComponent';
@@ -17,6 +17,7 @@ import ContentSavedScreen from '../../components/ContentSaved';
 import { Picker } from '@react-native-picker/picker';
 import InterMedium from '../../components/Text/InterMedium';
 import ReportBlockModal from '../../components/ReportBlockModal';
+import GeneralModal from '../../components/GeneralModal';
 
 const dummyWishlist = [
     {
@@ -73,6 +74,7 @@ const Shop: React.FC = () => {
     const [commentsVisible, setCommentsVisible] = useState<boolean>(false)
     const [active, setActive] = useState<number>(1)
     const [modalVisible, setModalVisible] = useState(false);
+    const [ReportSuccess, setReportSuccess] = useState(false);
 
     const handleAddToCart = (productId: string) => {
         // Implement your logic to add the product to cart
@@ -85,30 +87,44 @@ const Shop: React.FC = () => {
     };
     const handleReportPress = () => {
         setModalVisible(false);
-        // setReportVisible(true)
+        setReportSuccess(true)
     };
+
+    useLayoutEffect(() => {
+        navigation.setOptions({
+            headerStyle: {
+                backgroundColor: colors.headerColor
+            },
+            headerRight: () => (
+                <TouchableOpacity onPress={() => {
+                    setModalVisible(true)
+                }}>
+                    <Image
+                        source={images.dots}
+                        style={styles.threeDots}
+
+                    />
+                </TouchableOpacity>
+            ),
+        });
+    }, [navigation]);
+
+    const options = [
+        // { text: 'Get Link', onPress: () => { handleGetLink(); } },
+        { text: 'Report Shop', onPress: () => { handleReportPress(); } },
+        // { text: 'Block', onPress: () => { handleBlockPress(); } },
+    ];
 
     return (
         <ScrollView
             showsVerticalScrollIndicator={false}
         >
             <View style={styles.container}>
-                {/* Header */}
-                <HeaderComponent
-                    label={'Shop'}
-                    onBackPress={() => navigation.goBack()}
-                    onDotPress={() => setModalVisible(true)}
-                    back={true}
-                    dots={true}
-                // searchVisible={true}
-                />
+
 
                 <ReportBlockModal
                     isVisible={modalVisible}
-                    reportButtonText="Report Shop"
-
-                    onReportPress={handleReportPress}
-                    onClose={() => setModalVisible(false)}
+                    options={options}
                 />
 
 
@@ -164,7 +180,19 @@ const Shop: React.FC = () => {
                     />
                 </Card>
 
-
+                <GeneralModal
+                    visible={ReportSuccess}
+                    closeModal={() => setReportSuccess(false)}
+                    // icon={images.checkedIcon}
+                    redImage={true}
+                    title='Report Shop'
+                    message='Shop has been reported'
+                    buttonText='Ok'
+                    onPress={() => {
+                        setReportSuccess(false)
+                    }}
+                    primaryBtn={true}
+                />
 
 
             </View>

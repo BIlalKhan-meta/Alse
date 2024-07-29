@@ -1,15 +1,17 @@
-import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import React from 'react';
-import {Image, View} from 'react-native';
-import {colors} from '../../utils/theme';
+import { Image, View } from 'react-native';
+import { colors } from '../../utils/theme';
 import styles from './styles';
 import Home from '../../screens/Home';
 import HomeNavigation from '../HomeNavigation';
-import {images} from '../../utils/images';
+import { images } from '../../utils/images';
 import Marketplace from '../../screens/MarketPlace';
 import Game from '../../screens/Game';
 import Menu from '../../screens/Menu';
 import InterBold from '../../components/Text/InterBold';
+import NavigationOptions from "../NavigationOptions";
+
 
 const TabNavigation = () => {
     const Tab = createBottomTabNavigator();
@@ -21,14 +23,14 @@ const TabNavigation = () => {
                 tabBarShowLabel: false,
                 tabBarHideOnKeyboard: true,
                 tabBarStyle: styles.tabStyle,
-            }}  
+            }}
             initialRouteName='Home'
         >
             <Tab.Screen
                 name="Home"
                 component={HomeNavigation}
                 options={{
-                    tabBarIcon: ({focused}) => (
+                    tabBarIcon: ({ focused }) => (
                         <View style={styles.tabButton}>
                             <Image
                                 source={images.home}
@@ -51,7 +53,7 @@ const TabNavigation = () => {
                 name="Marketplace"
                 component={Marketplace}
                 options={{
-                    tabBarIcon: ({focused}) => (
+                    tabBarIcon: ({ focused }) => (
                         <View style={styles.tabButton}>
                             <Image
                                 source={images.market}
@@ -68,13 +70,14 @@ const TabNavigation = () => {
                             </InterBold>
                         </View>
                     ),
+                    ...NavigationOptions
                 }}
             />
             <Tab.Screen
                 name="Game"
                 component={Game}
                 options={{
-                    tabBarIcon: ({focused}) => (
+                    tabBarIcon: ({ focused }) => (
                         <View style={styles.tabButton}>
                             <Image
                                 source={images.game}
@@ -97,7 +100,7 @@ const TabNavigation = () => {
                 name="Menu"
                 component={Menu}
                 options={{
-                    tabBarIcon: ({focused}) => (
+                    tabBarIcon: ({ focused }) => (
                         <View style={styles.tabButton}>
                             <Image
                                 source={images.menu}

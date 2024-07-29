@@ -10,6 +10,7 @@ import InterBold from '../Text/InterBold';
 import InterLight from '../Text/InterLight';
 import InterRegular from '../Text/InterRegular';
 import { useNavigation } from '@react-navigation/native';
+import ReportBlockModal from '../ReportBlockModal';
 
 interface PostProps {
   avatar: string;
@@ -25,7 +26,10 @@ interface PostProps {
   onCommnetPress: () => void;
   onSavePress: () => void;
   onLikePress: () => void;
-
+  onDotPress: () => void;
+  handleReportPress: () => void;
+  handleBlockPress: () => void;
+  modalVisible: boolean;
 }
 
 const PostComponent: React.FC<PostProps> = ({
@@ -41,13 +45,22 @@ const PostComponent: React.FC<PostProps> = ({
   account,
   onCommnetPress,
   onSavePress,
-  onLikePress
+  onLikePress,
+  onDotPress,
+  modalVisible,
+  handleReportPress,
+  handleBlockPress
 }) => {
 
   const navigation = useNavigation();
   const goToProfile = () => {
     navigation.navigate('Profile', { account });
   };
+
+  const options = [
+    { text: 'Edit', onPress: () => handleReportPress() },
+    { text: 'Delete', onPress: () => handleBlockPress() },
+  ];
   return (
     <Card style={styles.card}>
       <View style={styles.header}>
@@ -66,7 +79,9 @@ const PostComponent: React.FC<PostProps> = ({
             </View>
           </View>
         </View>
-        <TouchableOpacity>
+        <TouchableOpacity
+          onPress={onDotPress}
+        >
           <Image
             source={images.dots}
             style={styles.threeDots}
@@ -134,6 +149,12 @@ const PostComponent: React.FC<PostProps> = ({
           <Text style={styles.buttonText}>Share</Text>
         </TouchableOpacity>
       </View>
+      <ReportBlockModal
+        isVisible={modalVisible}
+        options={options}
+        onClose={onDotPress}
+        style={{ top: 55 }}
+      />
     </Card>
 
   );

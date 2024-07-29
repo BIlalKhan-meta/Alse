@@ -2,6 +2,8 @@ import { Platform } from "react-native";
 
 export const colors = {
   inputcolor: '#F8FAFE',
+  chatInput: "#F6F6F6",
+  lightColor: "#F9F9F9",
   inputText: "#333333",
   white: '#fff',
   black: '#000',
@@ -9,7 +11,8 @@ export const colors = {
   redText: '#FF0000',
   lightGrey: "#666666",
   blue: "#169BD5",
-  borderColor: '#D9D9D9'
+  borderColor: '#D9D9D9',
+  headerColor: "#EDFAFA"
 };
 
 export const appShadow: Record<string, any> = {

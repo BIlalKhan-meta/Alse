@@ -17,6 +17,7 @@ import WishlistScreen from '../../components/WishList';
 import ContentSavedScreen from '../../components/ContentSaved';
 import { Picker } from '@react-native-picker/picker';
 import ReactModal from '../../components/ReactModal';
+import { reactions } from '../../dummyData';
 
 const posts = [
     {
@@ -72,19 +73,7 @@ const dummyComments = [
     },
 
 ];
-const reactions = [
-    { id: 1, userAvatar: 'avatar1.jpg', userName: 'Marvel Edward', reactionType: 'heart' },
-    { id: 2, userAvatar: 'avatar2.jpg', userName: 'Madvin', reactionType: 'like' },
-    { id: 3, userAvatar: 'avatar3.jpg', userName: 'Marvel Edward', reactionType: 'heart' },
-    { id: 4, userAvatar: 'avatar2.jpg', userName: 'Juliana David', reactionType: 'like' },
-    { id: 5, userAvatar: 'avatar2.jpg', userName: 'Roy Rose', reactionType: 'heart' },
-    { id: 6, userAvatar: 'avatar2.jpg', userName: 'Marvel Edward', reactionType: 'like' },
-    { id: 7, userAvatar: 'avatar2.jpg', userName: 'Colin Shaien', reactionType: 'like' },
-    { id: 8, userAvatar: 'avatar2.jpg', userName: 'Sam Alex', reactionType: 'heart' },
-    { id: 9, userAvatar: 'avatar2.jpg', userName: 'Peter Parker', reactionType: 'like' },
 
-    // Add more reactions as needed
-];
 
 const dummyWishlist = [
     {
@@ -203,6 +192,8 @@ const Saved: React.FC = () => {
                     onBackPress={() => navigation.goBack()}
                     chatVisible={true}
                     searchVisible={true}
+                    onChatPress={() => navigation.navigate("ChatScreen")}
+
                 />
 
                 <Card style={styles.activeContainer}>

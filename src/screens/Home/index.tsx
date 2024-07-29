@@ -12,6 +12,9 @@ import CommentsModal from '../../components/CommentsModal';
 import { useNavigation } from '@react-navigation/native';
 import HeaderComponent from '../../components/HeaderComponent';
 import styles from './styles';
+import ReactModal from '../../components/ReactModal';
+import { dummyComments, reactions } from '../../dummyData';
+import GeneralModal from '../../components/GeneralModal';
 
 const posts = [
   {
@@ -43,34 +46,21 @@ const posts = [
 ];
 
 
-const dummyComments = [
-  {
-    id: 1,
-    userAvatar: 'https://randomuser.me/api/portraits/men/1.jpg',
-    userName: 'John Doe',
-    userImage: 'https://via.placeholder.com/150',
-    comment: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
-  },
-  {
-    id: 2,
-    userAvatar: 'https://randomuser.me/api/portraits/women/2.jpg',
-    userName: 'Jane Smith',
-    userImage: 'https://via.placeholder.com/150',
-    comment: 'Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-  },
-  {
-    id: 3,
-    userAvatar: 'https://randomuser.me/api/portraits/men/3.jpg',
-    userName: 'Mike Johnson',
-    userImage: 'https://via.placeholder.com/150',
-    comment: 'Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
-  },
-];
+
 
 const Home: React.FC = () => {
   const navigation = useNavigation();
 
   const [commentsVisible, setCommentsVisible] = useState<boolean>(false)
+  const [reactVisible, setrRactVisible] = useState(false);
+  const [activePostId, setActivePostId] = useState<number | null>(null);
+  const [deleteVisible, setDeleteVisible] = useState(false);
+  const [deleteSuccess, setDeleteSuccess] = useState(false);
+
+  const handleDotPress = (postId: number) => {
+    setActivePostId(activePostId === postId ? null : postId);
+  };
+
   return (
     <ScrollView
       showsVerticalScrollIndicator={false}
@@ -104,6 +94,20 @@ const Home: React.FC = () => {
             account={post.account}
             onCommnetPress={() => setCommentsVisible(true)}
             onSavePress={() => navigation.navigate("Saved")}
+            onLikePress={() => setrRactVisible(true)}
+            onDotPress={() => handleDotPress(post.id)}
+            modalVisible={activePostId === post.id}
+            handleBlockPress={() => {
+              handleDotPress();
+              setDeleteVisible(true)
+            }}
+            handleReportPress={() => {
+              handleDotPress();
+              // setReportVisible(true)
+              // navigation.navigate("MyProfileUpdate")
+              navigation.navigate("CreatePost", { title: "Edit Post" })
+
+            }}
           />
         ))}
 
@@ -116,6 +120,42 @@ const Home: React.FC = () => {
           buttonText='Apply'
           onPress={() => navigation.navigate("Home")}
           comments={dummyComments}
+        />
+
+        <ReactModal
+          visible={reactVisible}
+          closeModal={() => setrRactVisible(false)}
+          reactions={reactions}
+        />
+
+
+        <GeneralModal
+          visible={deleteVisible}
+          closeModal={() => setDeleteVisible(false)}
+          icon={images.qmark}
+          title='Delete Post'
+          message='Are you sure you want to delete this Post?'
+          SecondaryText1='Yes'
+          SecondaryText2='No'
+          onPress={() => {
+            setDeleteVisible(false)
+            setDeleteSuccess(true)
+
+          }}
+          secondaryBtn={true}
+        />
+
+        <GeneralModal
+          visible={deleteSuccess}
+          closeModal={() => setDeleteSuccess(false)}
+          icon={images.checkedIcon}
+          title='Delete Post'
+          message='Post has been delete successfully.'
+          buttonText='Ok'
+          onPress={() => {
+            setDeleteSuccess(false)
+          }}
+          primaryBtn={true}
         />
 
       </View>

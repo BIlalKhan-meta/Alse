@@ -1,5 +1,5 @@
 // Home.tsx
-import React, { useState } from 'react';
+import React, { useLayoutEffect, useState } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, Button, } from 'react-native';
 import { images } from '../../utils/images';
 import CardComponent from '../../components/CardComponent';
@@ -9,24 +9,41 @@ import Card from '../../components/Card';
 import PostComponent from '../../components/PostComponent';
 import InterBold from '../../components/Text/InterBold';
 import CommentsModal from '../../components/CommentsModal';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import HeaderComponent from '../../components/HeaderComponent';
 import styles from './styles';
 import BottomModal from '../../components/BottomModel';
 import Video from 'react-native-video';
 import ImagePickerComponent from '../../components/ImagePickerComponent';
 import useImagePicker from '../../hooks/useImagePicker';
+import InterMedium from '../../components/Text/InterMedium';
 
 const CreatePost: React.FC = () => {
   const navigation = useNavigation();
+  const route = useRoute();
+  const title = route?.params?.title || "Create Post";
 
   const [bottomVisible, setbottomVisible] = useState<boolean>(true)
   const [selectedMedia, setSelectedMedia] = useState<string | null>(null);
   const [mediaType, setMediaType] = useState<'photo' | 'video'>('photo');
   const { image, captureImage, chooseImageFromLibrary } = useImagePicker();
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      title: title,
+      headerRight: () => (
+        <TouchableOpacity style={styles.postButton} onPress={() => { }}>
+          <InterMedium style={styles.postTxt}>{title == "Edit Post" ? "Edit" : "Post"}</InterMedium>
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation]);
+
   const handleSelectMedia = (mediaUri: string) => {
     setSelectedMedia(mediaUri);
   };
+
+
   return (
     <ScrollView
       showsVerticalScrollIndicator={false}

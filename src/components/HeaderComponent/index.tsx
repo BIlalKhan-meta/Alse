@@ -14,9 +14,10 @@ interface HeaderComponentProps {
   back: boolean;
   onDotPress: () => void;
   dots: boolean;
+  onChatPress: () => void;
 }
 
-const HeaderComponent: React.FC<HeaderComponentProps> = ({ label, onBackPress, notifiVisible, chatVisible, searchVisible, back, dots, onDotPress }) => {
+const HeaderComponent: React.FC<HeaderComponentProps> = ({ label, onBackPress, notifiVisible, chatVisible, searchVisible, back, dots, onDotPress, onChatPress }) => {
   return (
     <View style={styles.header}>
 
@@ -39,7 +40,7 @@ const HeaderComponent: React.FC<HeaderComponentProps> = ({ label, onBackPress, n
             style={styles.icon}
           />
         </TouchableOpacity>}
-        {chatVisible && <TouchableOpacity>
+        {chatVisible && <TouchableOpacity onPress={onChatPress}>
           <Image
             source={images.chatIcon}
             style={styles.icon}

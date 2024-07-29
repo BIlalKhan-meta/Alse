@@ -5,7 +5,10 @@ export const images = {
   camera: require('../assets/Icons/camera.png'),
   checkedIcon: require('../assets/Icons/checkedIcon.png'),
   linearCircle: require('../assets/Icons/linearCircle.png'),
+  linearCircle2: require('../assets/Icons/linearCircle2.png'),
   bellIcon: require('../assets/Icons/bellIcon.png'),
+  callIcon: require('../assets/Icons/callIcon.png'),
+  videoIcon: require('../assets/Icons/videoIcon.png'),
   searchIcon: require('../assets/Icons/searchIcon.png'),
   search: require('../assets/Icons/search.png'),
   media: require('../assets/Icons/media.png'),
@@ -41,6 +44,7 @@ export const images = {
   pro2: require('../assets/Icons/pro2.png'),
   filter: require('../assets/Icons/filter.png'),
   noti: require('../assets/Icons/noti.png'),
+  bin: require('../assets/Icons/bin.png'),
 
 
 

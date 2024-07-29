@@ -1,11 +1,11 @@
 import { StyleSheet } from 'react-native';
 import { colors } from '../../utils/theme';
-import { fontSizes, vh, vw } from '../../constant';
+import { vh, vw } from '../../constant';
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
+        backgroundColor: colors.headerColor,
         paddingHorizontal: 15,
         paddingTop: 50,
     },
@@ -37,36 +37,16 @@ const styles = StyleSheet.create({
         fontSize: 16,
         marginLeft: 5,
     },
-    media: {
-        width: 300,
-        height: 300,
-        marginBottom: 20,
+    header: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        width: vw * 22
     },
-    buttonContainer: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginTop: 20,
-    },
-    button2: {
-        backgroundColor: '#DDDDDD',
-        padding: 10,
-        marginHorizontal: 10,
-    },
-    postButton: {
-        width: vw * 20,
+    threeDots: {
+        width: vw * 10,
         height: vh * 5,
-        margin: 0,
-        backgroundColor: colors.themeColor,
-        alignItems: "center",
-        justifyContent: "center",
-        borderRadius: 4
+        // marginLeft: 20,
     },
-    postTxt: {
-        color: colors.white,
-        fontSize: fontSizes.f13
-    }
-
 });
 
 export default styles;

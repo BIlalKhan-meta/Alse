@@ -16,6 +16,7 @@ interface CardComponentProps {
   onVideoPress: () => void;
   onImagePress: () => void;
   // dots: boolean;
+
 }
 const CardComponent: React.FC<CardComponentProps> = ({ onTextInput, onImagePress, onVideoPress }) => {
   return (
@@ -27,7 +28,7 @@ const CardComponent: React.FC<CardComponentProps> = ({ onTextInput, onImagePress
         />
 
         <TextInput
-          onPress={() => onTextInput()}
+          // onPress={() => onTextInput()}
           style={styles.input}
           placeholder="What's on your mind?"
           placeholderTextColor={colors.inputText}

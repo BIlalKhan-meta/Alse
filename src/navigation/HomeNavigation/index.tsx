@@ -3,21 +3,27 @@ import React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import Home from "../../screens/Home";
 import ProfileScreen from "../../screens/ProfileScreen";
+import ChatScreen from "../../screens/ChatScreen";
+import NavigationOptions from "../NavigationOptions";
+import MyPosts from "../../screens/MyPosts";
+import Cart from "../../screens/Cart";
 
-const HomeNavigation=()=>{
-    const Stack= createNativeStackNavigator();
-    return(
+const HomeNavigation = () => {
+    const Stack = createNativeStackNavigator();
+    return (
         <Stack.Navigator
-        initialRouteName="Home"
-        screenOptions={{headerShown: false}}>
-             <Stack.Screen name="Home" component={Home} />
-             <Stack.Screen name="Profile" component={ProfileScreen} />
-             {/* <Stack.Screen name="NearestRestaurent" component={NearestRestaurent} options={NavigationOptions}/>
-             <Stack.Screen name="MenuManagement" component={MenuManagement} /> */}
-        {/*
+            initialRouteName="Home"
+            screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="Home" component={Home} />
+            <Stack.Screen name="Profile" component={ProfileScreen} />
+            <Stack.Screen name="ChatScreen" component={ChatScreen} options={NavigationOptions} />
+            <Stack.Screen name="MyPosts" component={MyPosts} options={NavigationOptions} />
+            <Stack.Screen name="Cart" component={Cart} options={NavigationOptions} />
+            {/* <Stack.Screen name="MenuManagement" component={MenuManagement} /> */}
+            {/*
         <Stack.Screen name="RatingsandReviews" component={RatingsandReviews} options={NavigationOptions}/> */}
-        {/* <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicy} options={NavigationOptions}/> */}
-        {/* <Stack.Screen name="Signup" component={Signup}/>
+            {/* <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicy} options={NavigationOptions}/> */}
+            {/* <Stack.Screen name="Signup" component={Signup}/>
         <Stack.Screen name="ForgotPassword" component={ForgotPassword}/>
         <Stack.Screen name="Verification" component={Verification}/>
         <Stack.Screen name="RecoverPassword" component={RecoverPassword}/>
