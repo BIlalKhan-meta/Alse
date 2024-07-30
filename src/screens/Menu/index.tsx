@@ -64,7 +64,7 @@ const Menu: React.FC = () => {
               <TouchableOpacity onPress={() => navigation.navigate('Cart')}>
                 <InterRegular style={styles.cardText}>My Cart</InterRegular>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => navigation.navigate('BankDetails')}>
+              <TouchableOpacity onPress={() => navigation.navigate('BankDetailUpdate')}>
                 <InterRegular style={styles.cardText}>Manage Bank Details</InterRegular>
               </TouchableOpacity>
               <TouchableOpacity onPress={() => navigation.navigate('PaymentLogs')}>

@@ -1,5 +1,5 @@
 import React, { useLayoutEffect, useState } from 'react';
-import { View, TouchableOpacity, Image, TouchableWithoutFeedback } from 'react-native';
+import { View, TouchableOpacity, Image, TouchableWithoutFeedback, ScrollView } from 'react-native';
 import styles from './styles';
 import { useNavigation } from '@react-navigation/native';
 import { images } from '../../utils/images';
@@ -42,35 +42,39 @@ const MyOrders: React.FC = () => {
     }, [navigation]);
 
     return (
-        <TouchableWithoutFeedback
-            onPress={() => setModalVisible(false)}
+        <ScrollView
+            showsVerticalScrollIndicator={false}
         >
-            <View style={styles.container}>
-                <FilterModal
-                    isVisible={modalVisible}
-                    onClose={() => setModalVisible(false)}
-                    fromDate={fromDate}
-                    toDate={toDate}
-                    onFromDateChange={setFromDate}
-                    onToDateChange={setToDate}
-                    // filterStatus={true}
-                    selectedStatus={selectedStatus}
-                    onStatusChange={setSelectedStatus}
-                    style={{}}
-                />
+            <TouchableWithoutFeedback
+                onPress={() => setModalVisible(false)}
+            >
+                <View style={styles.container}>
+                    <FilterModal
+                        isVisible={modalVisible}
+                        onClose={() => setModalVisible(false)}
+                        fromDate={fromDate}
+                        toDate={toDate}
+                        onFromDateChange={setFromDate}
+                        onToDateChange={setToDate}
+                        // filterStatus={true}
+                        selectedStatus={selectedStatus}
+                        onStatusChange={setSelectedStatus}
+                        style={{}}
+                    />
 
-                <TabsComponent
-                    tabs={['All', 'Pending', 'Delivered', 'Cancelled',]}
-                    selectedTab={selectedTab}
-                    onTabPress={setSelectedTab}
-                />
+                    <TabsComponent
+                        tabs={['All', 'Pending', 'Delivered', 'Cancelled',]}
+                        selectedTab={selectedTab}
+                        onTabPress={setSelectedTab}
+                    />
 
-                <OrderListComponent
-                    orders={filteredOrders}
-                    title={"My Order Detail"}
-                />
-            </View>
-        </TouchableWithoutFeedback>
+                    <OrderListComponent
+                        orders={filteredOrders}
+                        title={"My Order Detail"}
+                    />
+                </View>
+            </TouchableWithoutFeedback>
+        </ScrollView>
     );
 };
 

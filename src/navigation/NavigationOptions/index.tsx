@@ -16,6 +16,8 @@ import Shop from '../../screens/Shop';
 import ProductView from '../../screens/ProductView';
 import BlockedUsers from '../../screens/BlockedUsers';
 import MyOrders from '../../screens/MyOrders';
+import MyOrderDetail from '../../screens/MyOrderDetail';
+import CheckoutScreen from '../../screens/Checkout';
 
 
 interface RouteParams {
@@ -39,13 +41,13 @@ const titles: { [key: string]: string } = {
     ProductView: "Shop",
     BlockedUsers: "Blocked Users",
     MyOrders: "My Orders",
-    // BlockedUsers: "Block User",
+    MyOrderDetail: "My Order Detail",
+    CheckoutScreen: "Checkout",
+    BankDetail: "Bank Detail",
+    BankDetailUpdate: "Bank Detail",
     // MyProfile: "Profile",
     // MyProfileUpdate: "Edit Profile",
     // MyProfilePassword: "Change Password",
-    // BankDetail: "View Bank Detail",
-    // BankDetailUpdate: "Edit Bank Detail",
-    // MyOrderDetail: "My Order Detail",
     // MyStore: "My store",
     // AddProduct: "Add Product",
     // WishList: "Wishlist",
@@ -57,6 +59,8 @@ const backButtonRoutes: { [key: string]: boolean } = {
     CreatePost: true,
     Shop: true,
     ProductView: true,
+    MyOrderDetail: true,
+    CheckoutScreen: true,
 
 };
 

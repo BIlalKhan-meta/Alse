@@ -15,6 +15,10 @@ import AboutUs from "../../screens/AboutUs";
 import ChatOngoing from "../../screens/ChatOngoing";
 import NavigationOptions from "../NavigationOptions";
 import ProductView from "../../screens/ProductView";
+import MyOrderDetail from "../../screens/MyOrderDetail";
+import CheckoutScreen from "../../screens/Checkout";
+import BankDetailUpdate from "../../screens/BankDetailUpdate";
+import BankDetail from "../../screens/BankDetail";
 
 
 
@@ -40,6 +44,10 @@ const AppNavigation = () => {
       <Stack.Screen name="ContactUs" component={ContactUs} />
       <Stack.Screen name="AboutUs" component={AboutUs} />
       <Stack.Screen name="ChatOngoing" component={ChatOngoing} options={NavigationOptions} />
+      <Stack.Screen name="MyOrderDetail" component={MyOrderDetail} options={NavigationOptions} />
+      <Stack.Screen name="CheckoutScreen" component={CheckoutScreen} options={NavigationOptions} />
+      <Stack.Screen name="BankDetailUpdate" component={BankDetailUpdate} options={NavigationOptions} />
+      <Stack.Screen name="BankDetail" component={BankDetail} options={NavigationOptions} />
 
 
     </Stack.Navigator>

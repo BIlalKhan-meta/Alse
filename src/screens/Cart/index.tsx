@@ -52,7 +52,9 @@ const Cart = () => {
     }, [navigation]);
 
     return (
-        <ScrollView>
+        <ScrollView
+            showsVerticalScrollIndicator={false}
+        >
             <View style={styles.container}>
                 <Card style={styles.contentContainer}>
                     <FlatList
@@ -85,7 +87,9 @@ const Cart = () => {
 
                 />
 
-                <CustomButton style={styles.checkoutButton}>
+                <CustomButton style={styles.checkoutButton}
+                    onPress={() => navigation.navigate("CheckoutScreen")}
+                >
                     Procced to Checkout
                 </CustomButton>
 
