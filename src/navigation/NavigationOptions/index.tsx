@@ -18,6 +18,7 @@ import BlockedUsers from '../../screens/BlockedUsers';
 import MyOrders from '../../screens/MyOrders';
 import MyOrderDetail from '../../screens/MyOrderDetail';
 import CheckoutScreen from '../../screens/Checkout';
+import PaymentLogs from '../../screens/PaymentLogs';
 
 
 interface RouteParams {
@@ -45,13 +46,13 @@ const titles: { [key: string]: string } = {
     CheckoutScreen: "Checkout",
     BankDetail: "Bank Detail",
     BankDetailUpdate: "Bank Detail",
+    PaymentLogs: "Payment Logs"
     // MyProfile: "Profile",
     // MyProfileUpdate: "Edit Profile",
     // MyProfilePassword: "Change Password",
     // MyStore: "My store",
     // AddProduct: "Add Product",
     // WishList: "Wishlist",
-    // PaymentLogs: "Payment Logs"
 
 };
 const backButtonRoutes: { [key: string]: boolean } = {

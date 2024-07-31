@@ -10,6 +10,7 @@ import Cart from "../../screens/Cart";
 import BlockedUsers from "../../screens/BlockedUsers";
 import Marketplace from "../../screens/MarketPlace";
 import MyOrders from "../../screens/MyOrders";
+import PaymentLogs from "../../screens/PaymentLogs";
 
 const MarketPlaceNavigation = () => {
     const Stack = createNativeStackNavigator();
@@ -22,8 +23,9 @@ const MarketPlaceNavigation = () => {
 
             <Stack.Screen name="Cart" component={Cart} options={NavigationOptions} />
             <Stack.Screen name="MyOrders" component={MyOrders} options={NavigationOptions} />
+            <Stack.Screen name="PaymentLogs" component={PaymentLogs} options={NavigationOptions} />
             {/*
-        <Stack.Screen name="RatingsandReviews" component={RatingsandReviews} options={NavigationOptions}/> */}
+       */}
             {/* <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicy} options={NavigationOptions}/> */}
             {/* <Stack.Screen name="Signup" component={Signup}/>
         <Stack.Screen name="ForgotPassword" component={ForgotPassword}/>

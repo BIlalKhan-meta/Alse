@@ -41,7 +41,7 @@ const Menu: React.FC = () => {
               <TouchableOpacity onPress={() => navigation.navigate('BlockedUsers')}>
                 <InterRegular style={styles.cardText}>Blocked Users</InterRegular>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => navigation.navigate('ChatsAndGroups')}>
+              <TouchableOpacity onPress={() => navigation.navigate('ChatScreen')}>
                 <InterRegular style={styles.cardText}>Chats and Groups</InterRegular>
               </TouchableOpacity>
               <TouchableOpacity onPress={() => navigation.navigate('Recordings')}>
@@ -67,7 +67,7 @@ const Menu: React.FC = () => {
               <TouchableOpacity onPress={() => navigation.navigate('BankDetailUpdate')}>
                 <InterRegular style={styles.cardText}>Manage Bank Details</InterRegular>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => navigation.navigate('PaymentLogs')}>
+              <TouchableOpacity onPress={() => navigation.navigate('Marketplace', { screen: "PaymentLogs" })}>
                 <InterRegular style={styles.cardText}>Payment Logs</InterRegular>
               </TouchableOpacity>
               <TouchableOpacity onPress={() => navigation.navigate('MyOrders')}>

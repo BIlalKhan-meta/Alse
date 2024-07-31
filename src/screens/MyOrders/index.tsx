@@ -6,6 +6,7 @@ import { images } from '../../utils/images';
 import TabsComponent from '../../components/TabsComponent';
 import OrderListComponent from '../../components/OrderListComponent';
 import FilterModal from '../../components/FilterModal';
+import { colors } from '../../utils/theme';
 
 const MyOrders: React.FC = () => {
     const navigation = useNavigation();
@@ -31,6 +32,9 @@ const MyOrders: React.FC = () => {
 
     useLayoutEffect(() => {
         navigation.setOptions({
+            headerStyle: {
+                backgroundColor: colors.headerColor
+            },
             headerRight: () => (
                 <View>
                     <TouchableOpacity onPress={() => setModalVisible(!modalVisible)}>
