@@ -17,7 +17,6 @@ interface MyStoreTopTabsNavigationProps {
 
 const MyStoreTopTabsNavigation: React.FC<MyStoreTopTabsNavigationProps> = (props) => {
     const Tab = createMaterialTopTabNavigator();
-    console.log("MaterialTopTab")
     const CustomTabBar = ({ state, descriptors, navigation }: any) => (
         <View style={styles.tabContainer}>
             {state.routes.map((route: any, index: number) => {

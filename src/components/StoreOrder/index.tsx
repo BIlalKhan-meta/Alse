@@ -34,6 +34,13 @@ const StoreOrderComponent: React.FC = () => {
         index - 1
     };
 
+
+    // return(
+    //     <View style={{backgroundColor:"red",flex:1,borderWidth:1}}>
+    //         <Text>HRy</Text>
+    //     </View>
+    // )
+
     return (
 
         <View style={styles.container}>

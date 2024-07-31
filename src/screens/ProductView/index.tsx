@@ -51,16 +51,18 @@ const ProductView: React.FC = () => {
     }, [navigation]);
 
     return (
-        <ScrollView
-            showsVerticalScrollIndicator={false}
-            style={{ flex: 1 }}
-        >
+        // <ScrollView
+        //     showsVerticalScrollIndicator={false}
+        // style={{ flex: 1 }}
+        // >
             <TouchableWithoutFeedback
                 onPress={() => setModalVisible(false)}
             >
 
 
-                <View style={[styles.container, Platform.OS == "ios" && { height: vh * 100 }]}>
+                <View style={[styles.container,
+                    Platform.OS == "ios" && { height: vh * 100 }
+                ]}>
 
 
                     <Card style={styles.cardContainer}>
@@ -154,7 +156,7 @@ const ProductView: React.FC = () => {
 
             </TouchableWithoutFeedback>
 
-        </ScrollView>
+        // {/* </ScrollView> */}
     );
 };
 

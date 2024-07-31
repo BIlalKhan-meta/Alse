@@ -187,4 +187,23 @@ export const reviews = [
       'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.',
     date: 'Jul 16, 2023',
   },
+  {
+    id: 4,
+    userAvatar: 'https://example.com/user2.jpg',
+    userName: 'John Doe',
+    rating: 4.0,
+    reviewText:
+      'Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
+    date: 'Jul 15, 2023',
+  },
+  {
+    id: 5,
+    userAvatar: 'https://example.com/user3.jpg',
+    userName: 'Jane Smith',
+    rating: 5.0,
+    reviewText:
+      'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.',
+    date: 'Jul 16, 2023',
+  },
+  
 ];

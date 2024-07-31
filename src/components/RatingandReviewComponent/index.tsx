@@ -1,5 +1,5 @@
 import React from 'react';
-import { FlatList, Image, View, StyleSheet } from 'react-native';
+import { FlatList, Image, View, StyleSheet, Text } from 'react-native';
 import { colors } from '../../utils/theme';
 import { fontSizes, vh, vw } from '../../constant';
 
@@ -39,6 +39,7 @@ const RatingandReviewComponent: React.FC = () => {
     </View>
   );
 
+
   return (
     <View style={styles.container}>
       <FlatList
@@ -46,8 +47,9 @@ const RatingandReviewComponent: React.FC = () => {
         renderItem={renderReviewItem}
         keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={styles.listContainer}
+        style={styles.flatList} 
       />
-    </View>
+   </View>
   );
 };
 
@@ -57,6 +59,7 @@ const styles = StyleSheet.create({
     paddingVertical: vh * 1,
     paddingHorizontal: vw * 2,
     flex: 1,
+    
   },
   listContainer: {
     paddingBottom: vh * 2,
@@ -98,6 +101,9 @@ const styles = StyleSheet.create({
   rating: {
     marginLeft: vw * 0.5,
   },
+  flatList: {
+    flex: 1,
+  }
 });
 
 export default RatingandReviewComponent;

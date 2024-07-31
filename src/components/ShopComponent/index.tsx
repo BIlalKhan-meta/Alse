@@ -64,12 +64,6 @@ const ShopComponent: React.FC = () => {
         >
             <View style={styles.contentContainer}>
 
-
-
-
-
-
-
                 <WishlistScreen
                     wishlist={dummyWishlist}
                     onAddToCart={handleAddToCart}

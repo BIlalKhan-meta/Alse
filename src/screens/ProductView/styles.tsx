@@ -15,11 +15,13 @@ const styles = StyleSheet.create({
         // height: vh * 100
     },
     cardContainer: {
-        margin: vh * 2
+        flex:1,
+        margin: vh * 2,
+        // backgroundColor:"yellow"
     },
     contentContainer: {
         flex: 1,
-        marginTop: vh * 1
+        // marginTop: vh * 1
     },
     activeContainer: {
         flexDirection: "row",
@@ -93,10 +95,7 @@ const styles = StyleSheet.create({
         // top: 0,
         // position: "absolute"
     },
-    safeArea: {
-        flex: 1,
-        backgroundColor: 'transparent',
-    },
+ 
     headericonButton: {
         marginRight: vw * 2.1,
         marginTop: vh * 2,
