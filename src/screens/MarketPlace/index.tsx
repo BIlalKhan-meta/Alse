@@ -147,7 +147,10 @@ const Marketplace: React.FC = () => {
             wishlist={dummyShops}
             onPress={() => navigation.navigate("Shop")}
           />
-          <CustomButton style={styles.button}>
+
+          <CustomButton style={styles.button}
+            onPress={() => navigation.navigate("AddStore")}
+          >
             Create Shop/My Shop
           </CustomButton>
         </Card>

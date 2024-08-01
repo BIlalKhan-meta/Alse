@@ -8,7 +8,8 @@ const styles = StyleSheet.create({
         // flexGrow: 1,
         paddingHorizontal: vw * 5,
         paddingTop: vh * 2,
-        backgroundColor: colors.white
+        paddingBottom: vh * 2,
+        backgroundColor: colors.headerColor,
     },
     section: {
         marginBottom: vh * 2,

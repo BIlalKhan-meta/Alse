@@ -1,6 +1,7 @@
 import { StyleSheet } from 'react-native';
 import { colors } from '../../utils/theme';
 import { fontSizes, vh, vw } from '../../constant';
+import fonts from '../../assets/fonts';
 
 
 const styles = StyleSheet.create({
@@ -8,16 +9,28 @@ const styles = StyleSheet.create({
     height: vh * 20
   },
   scrollview: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.headerColor,
     // flex: 1
   },
   container: {
-    paddingHorizontal: vw * 8,
+    // paddingHorizontal: vw * 8,
     // paddingVertical: vh * 4,
-    backgroundColor: colors.white,
+    backgroundColor: colors.headerColor,
     // paddingBottom: vh * 12
   },
+  cardContainer: {
+    margin: vh * 2,
+    padding: 0,
+    paddingBottom: vh * 2,
+  },
 
+  banner: {
+    // width: vw * 90,
+    height: vh * 20
+  },
+  profileConatiner: {
+    bottom: vh * 10
+  },
   imagecontainer: {
     alignItems: 'center',
     // position: "absolute",
@@ -28,6 +41,23 @@ const styles = StyleSheet.create({
     height: vw * 30,
     borderColor: colors.white,
     borderRadius: vw * 15
+
+  },
+  camBg: {
+    position: "absolute",
+    alignSelf: "center",
+    top: vw * 28,
+    backgroundColor: colors.camBg,
+    width: vw * 8,
+    height: vw * 8,
+    borderRadius: vw * 4,
+    alignItems: "center",
+    justifyContent: "center",
+    left: vw * 50,
+  },
+  camcontainer: {
+    width: vw * 5.6,
+    height: vh * 2.4,
 
   },
   changePasswordText: {
@@ -78,20 +108,20 @@ const styles = StyleSheet.create({
   },
   txt: {
     fontSize: fontSizes.f14,
-    // color: colors.forgotColor,
+    color: colors.black,
     // alignSelf: "center",
     fontWeight: "bold",
-    paddingBottom: vh * 2
+    // paddingBottom: vh * 2
 
   },
   txtConatiner: {
-    flexDirection: "row",
+    // flexDirection: "row",
     // alignContent:"center",
     justifyContent: "space-between",
     // alignItems: "center",
     marginTop: vh * 4,
     // alignSelf: "center",
-    width: vw * 60,
+    // width: vw * 60,
     // backgroundColor: "yellow"
   },
   InnerConatiner: {
@@ -121,8 +151,54 @@ const styles = StyleSheet.create({
   },
   phoneContainer: {
     // width: vw * 90
-  }
+  },
+  label: {
+    // fontSize:fontSizes.f14,
+    // alignSelf: "flex-start",
+    // marginLeft:vw*8,
+    marginTop: vh * 2,
+    color: colors.black,
+    fontSize: fontSizes.f14,
+    fontWeight: "bold"
 
+  },
+  textinputbox: {
+    fontSize: fontSizes.f11,
+    height: vh * 6,
+    marginTop: vh * 2,
+    width: vw * 42,
+    fontWeight: '300',
+    borderColor: colors.inputcolor,
+    borderWidth: 1,
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    backgroundColor: colors.inputcolor,
+    // backgroundColor:colors.green,
+    color: colors.inputText,
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: "flex-start",
+    marginRight: 10
+  },
+  pickercontainer: {
+    fontFamily: fonts.Inter.Bold,
+    color: colors.inputText,
+    fontSize: fontSizes.f11,
+    height: vh * 6,
+    marginTop: vh * 2,
+    width: vw * 42,
+    fontWeight: '300',
+    borderColor: colors.inputcolor,
+    borderWidth: 1,
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    backgroundColor: colors.inputcolor
+  },
+  inputContainer: {
+    bottom: vh * 10,
+    marginLeft: 10
+    // backgroundColor: "yellow"
+  }
 });
 
 export default styles;

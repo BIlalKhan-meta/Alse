@@ -19,6 +19,10 @@ import MyOrderDetail from "../../screens/MyOrderDetail";
 import CheckoutScreen from "../../screens/Checkout";
 import BankDetailUpdate from "../../screens/BankDetailUpdate";
 import BankDetail from "../../screens/BankDetail";
+import MyProfileUpdate from "../../screens/MyProfileUpdate";
+import MyProfilePassword from "../../screens/MyProfilePassword";
+import Payment from "../../screens/Payment";
+import AddStore from "../../screens/AddStore";
 
 
 
@@ -48,6 +52,10 @@ const AppNavigation = () => {
       <Stack.Screen name="CheckoutScreen" component={CheckoutScreen} options={NavigationOptions} />
       <Stack.Screen name="BankDetailUpdate" component={BankDetailUpdate} options={NavigationOptions} />
       <Stack.Screen name="BankDetail" component={BankDetail} options={NavigationOptions} />
+      <Stack.Screen name="MyProfileUpdate" component={MyProfileUpdate} options={NavigationOptions} />
+      <Stack.Screen name="MyProfilePassword" component={MyProfilePassword} options={NavigationOptions} />
+      <Stack.Screen name="Payment" component={Payment} options={NavigationOptions} />
+      <Stack.Screen name="AddStore" component={AddStore} options={NavigationOptions} />
 
 
     </Stack.Navigator>

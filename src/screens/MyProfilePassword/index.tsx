@@ -5,13 +5,13 @@ import * as yup from 'yup';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import GeneralModal from '../../components/GeneralModal';
 import RegularTextInput from '../../components/TextInput/RegularTextInput';
-import SignupButton from '../../components/SignupButton';
 import HeaderComponent from '../../components/HeaderComponent';
 import { useNavigation } from '@react-navigation/native';
 import { images } from '../../utils/images';
 import styles from './styles';
-import ProfileModal from '../../components/ProfileModal';
+// import ProfileModal from '../../components/ProfileModal';
 import { colors } from '../../utils/theme';
+import CustomButton from '../../components/CustomButton';
 
 const MyProfilePassword: React.FC = () => {
   const navigation = useNavigation();
@@ -135,15 +135,15 @@ const MyProfilePassword: React.FC = () => {
 
 
 
-              <SignupButton onPress={handleSubmit} style={styles.btnStyle}>
+              <CustomButton onPress={handleSubmit} style={styles.btnStyle}>
                 Update
-              </SignupButton>
+              </CustomButton>
             </View>
           </KeyboardAwareScrollView>
           <GeneralModal
             visible={changePasswordModal}
             closeModal={() => setChangePasswordModal(false)}
-            icon={images.doubleCheck} // Adjust as per your assets
+            icon={images.checkedIcon} // Adjust as per your assets
             title="Successfully"
             message="Your password has been updated successfully"
             buttonText="Ok"
@@ -153,9 +153,10 @@ const MyProfilePassword: React.FC = () => {
               // navigation.navigate("MyProfile")
               navigation.navigate("Home")
             }}
+            primaryBtn={true}
           />
 
-          <ProfileModal
+          {/* <ProfileModal
             visible={imageModal}
             closeModal={() => setImageModal(false)}
             // icon={CheckedIcon}
@@ -165,7 +166,7 @@ const MyProfilePassword: React.FC = () => {
             onPress={() => {
               setImageModal(false)
 
-            }} />
+            }} /> */}
 
         </>
       )}

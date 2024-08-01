@@ -14,6 +14,7 @@ export const colors = {
   borderColor: '#D9D9D9',
   headerColor: "#EDFAFA",
   darkGray: '#666666',
+  camBg: "#E7F7FE"
 
 };
 

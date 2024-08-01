@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useLayoutEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, FlatList } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { Formik } from 'formik';
@@ -19,6 +19,7 @@ import CustomButton from '../../components/CustomButton';
 import { products } from '../../dummyData';
 import InterBoldLabel from '../../components/Text/InterBoldLabel';
 import Card from '../../components/Card';
+import { colors } from '../../utils/theme';
 
 const CheckoutScreen: React.FC = () => {
     const navigation = useNavigation();
@@ -87,7 +88,14 @@ const CheckoutScreen: React.FC = () => {
     const handleSubmit = (values: object) => {
         console.log('Form submitted:', values);
     };
+    useLayoutEffect(() => {
+        navigation.setOptions({
+            headerStyle: {
+                backgroundColor: colors.headerColor
+            },
 
+        });
+    }, [navigation]);
     return (
         <KeyboardAwareScrollView contentContainerStyle={styles.container}
             showsVerticalScrollIndicator={false}

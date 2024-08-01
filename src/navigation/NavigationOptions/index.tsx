@@ -19,6 +19,10 @@ import MyOrders from '../../screens/MyOrders';
 import MyOrderDetail from '../../screens/MyOrderDetail';
 import CheckoutScreen from '../../screens/Checkout';
 import PaymentLogs from '../../screens/PaymentLogs';
+import MyProfileUpdate from '../../screens/MyProfileUpdate';
+import MyProfilePassword from '../../screens/MyProfilePassword';
+import Payment from '../../screens/Payment';
+import AddStore from '../../screens/AddStore';
 
 
 interface RouteParams {
@@ -46,11 +50,12 @@ const titles: { [key: string]: string } = {
     CheckoutScreen: "Checkout",
     BankDetail: "Bank Detail",
     BankDetailUpdate: "Bank Detail",
-    PaymentLogs: "Payment Logs"
+    PaymentLogs: "Payment Logs",
     // MyProfile: "Profile",   
-    // MyProfileUpdate: "Edit Profile",
-    // MyProfilePassword: "Change Password",
-    // MyStore: "My store",
+    MyProfileUpdate: "Edit Profile",
+    MyProfilePassword: "Change Password",
+    Payment: "Payment Details",
+    AddStore: "Create Shop",
     // AddProduct: "Add Product",
     // WishList: "Wishlist",
 
@@ -62,7 +67,9 @@ const backButtonRoutes: { [key: string]: boolean } = {
     ProductView: true,
     MyOrderDetail: true,
     CheckoutScreen: true,
-
+    MyProfileUpdate: true,
+    MyProfilePassword: true,
+    Payment: true
 };
 
 const getTitle: React.FC<NavigationOptionsProps> = (props) => {

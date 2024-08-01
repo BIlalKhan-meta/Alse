@@ -159,6 +159,10 @@ const styles = StyleSheet.create({
   profileTxt: {
     color: colors.white,
     fontSize: fontSizes.f12,
+  },
+  threeDots: {
+    height: vh * 2.5,
+    width: vw * 1
   }
 
 
