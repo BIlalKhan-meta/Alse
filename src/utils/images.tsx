@@ -58,6 +58,7 @@ export const images = {
   shop4: require('../assets/images/shop4.png'),
   shop5: require('../assets/images/shop5.png'),
   shop6: require('../assets/images/shop6.png'),
+  profileBg: require('../assets/images/profileBg.png'),
 
 
 

@@ -17,12 +17,14 @@ const Menu: React.FC = () => {
     >
       <View style={styles.container}>
         <Card style={styles.cardContainer}>
-          <View style={styles.contentCon}>
-            <View style={styles.avatarContainer}>
-              <Image source={images.user} style={styles.imageStyle} />
+          <TouchableOpacity onPress={() => navigation.navigate('MyProfile')}>
+            <View style={styles.contentCon}>
+              <View style={styles.avatarContainer}>
+                <Image source={images.user} style={styles.imageStyle} />
+              </View>
+              <InterRegular style={styles.userName}>Juliana David</InterRegular>
             </View>
-            <InterRegular style={styles.userName}>Juliana David</InterRegular>
-          </View>
+          </TouchableOpacity>
         </Card>
 
         <Card style={styles.cardContainer}>

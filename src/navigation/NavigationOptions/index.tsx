@@ -47,7 +47,7 @@ const titles: { [key: string]: string } = {
     BankDetail: "Bank Detail",
     BankDetailUpdate: "Bank Detail",
     PaymentLogs: "Payment Logs"
-    // MyProfile: "Profile",
+    // MyProfile: "Profile",   
     // MyProfileUpdate: "Edit Profile",
     // MyProfilePassword: "Change Password",
     // MyStore: "My store",

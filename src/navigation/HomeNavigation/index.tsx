@@ -8,6 +8,7 @@ import NavigationOptions from "../NavigationOptions";
 import MyPosts from "../../screens/MyPosts";
 import Cart from "../../screens/Cart";
 import BlockedUsers from "../../screens/BlockedUsers";
+import MyProfile from "../../screens/MyProfile";
 
 const HomeNavigation = () => {
     const Stack = createNativeStackNavigator();
@@ -20,8 +21,8 @@ const HomeNavigation = () => {
             <Stack.Screen name="ChatScreen" component={ChatScreen} options={NavigationOptions} />
             <Stack.Screen name="MyPosts" component={MyPosts} options={NavigationOptions} />
             <Stack.Screen name="BlockedUsers" component={BlockedUsers} options={NavigationOptions} />
-
             <Stack.Screen name="Cart" component={Cart} options={NavigationOptions} />
+            <Stack.Screen name="MyProfile" component={MyProfile} options={NavigationOptions} />
             {/* <Stack.Screen name="MenuManagement" component={MenuManagement} /> */}
             {/*
         <Stack.Screen name="RatingsandReviews" component={RatingsandReviews} options={NavigationOptions}/> */}
