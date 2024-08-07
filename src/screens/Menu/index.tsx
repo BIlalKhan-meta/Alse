@@ -130,12 +130,16 @@ const Menu: React.FC = () => {
         </Card>
 
         <Card style={styles.cardContainer}>
-          <View style={styles.cardContent5}>
-            <View style={[styles.notifiCon, { width: vw * 9 }]}>
-              <Image source={images.plan} style={styles.imageStyle} />
+          <TouchableOpacity
+            onPress={() => navigation.navigate("SubscriptionPlan")}
+          >
+            <View style={styles.cardContent5}>
+              <View style={[styles.notifiCon, { width: vw * 9 }]}>
+                <Image source={images.plan} style={styles.imageStyle} />
+              </View>
+              <InterMedium style={styles.cardHeading}>Subscription Plan</InterMedium>
             </View>
-            <InterMedium style={styles.cardHeading}>Subscription Plan</InterMedium>
-          </View>
+          </TouchableOpacity>
         </Card>
 
         <Card style={styles.cardContainer}>
@@ -149,12 +153,16 @@ const Menu: React.FC = () => {
 
         <View style={styles.bottomCon}>
           <Card style={styles.cardContainer2}>
-            <View style={styles.cardContent5}>
-              <View style={styles.notifiCon}>
-                <Image source={images.save} style={styles.imageStyle} tintColor={colors.themeColor} />
+            <TouchableOpacity
+              onPress={() => navigation.navigate("Saved")}
+            >
+              <View style={styles.cardContent5}>
+                <View style={styles.notifiCon}>
+                  <Image source={images.save} style={styles.imageStyle} tintColor={colors.themeColor} />
+                </View>
+                <InterMedium style={styles.cardHeading}>Saved Items</InterMedium>
               </View>
-              <InterMedium style={styles.cardHeading}>Saved Items</InterMedium>
-            </View>
+            </TouchableOpacity>
           </Card>
 
           <Card style={styles.cardContainer2}>
@@ -190,12 +198,17 @@ const Menu: React.FC = () => {
           </Card>
 
           <Card style={styles.cardContainer2}>
-            <View style={styles.cardContent5}>
-              <View style={[styles.notifiCon, { width: vw * 8 }]}>
-                <Image source={images.logout} style={styles.imageStyle} />
+            <TouchableOpacity
+              onPress={() => navigation.navigate("Login")}
+
+            >
+              <View style={styles.cardContent5}>
+                <View style={[styles.notifiCon, { width: vw * 8 }]}>
+                  <Image source={images.logout} style={styles.imageStyle} />
+                </View>
+                <InterMedium style={styles.cardHeading}>Log out</InterMedium>
               </View>
-              <InterMedium style={styles.cardHeading}>Log out</InterMedium>
-            </View>
+            </TouchableOpacity>
           </Card>
 
         </View>

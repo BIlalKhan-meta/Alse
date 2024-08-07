@@ -23,6 +23,7 @@ import MyProfileUpdate from "../../screens/MyProfileUpdate";
 import MyProfilePassword from "../../screens/MyProfilePassword";
 import Payment from "../../screens/Payment";
 import AddStore from "../../screens/AddStore";
+import SubscriptionLogs from "../../screens/SubscriptionLogs";
 
 
 
@@ -56,6 +57,7 @@ const AppNavigation = () => {
       <Stack.Screen name="MyProfilePassword" component={MyProfilePassword} options={NavigationOptions} />
       <Stack.Screen name="Payment" component={Payment} options={NavigationOptions} />
       <Stack.Screen name="AddStore" component={AddStore} options={NavigationOptions} />
+      <Stack.Screen name="SubscriptionLogs" component={SubscriptionLogs} options={NavigationOptions} />
 
 
     </Stack.Navigator>

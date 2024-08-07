@@ -96,13 +96,7 @@ const BankDetailUpdate: React.FC = () => {
                                     style={styles.inputStyle}
                                 />
 
-                                {/* <DropDownTextInput
-                            label="Account type"
-                            items={accountTypes}
-                            selectedValue={values.accountType}
-                            onValueChange={handleChange('accountType')}
-                            style={styles.dropdown}
-                        /> */}
+
 
                                 <InterRegular style={styles.countryLabel}>
                                     Account type
@@ -132,13 +126,7 @@ const BankDetailUpdate: React.FC = () => {
                                     />
                                 </View>
 
-                                {/* <DropDownTextInput
-                            label="Bank Name"
-                            items={banks}
-                            selectedValue={values.bankName}
-                            onValueChange={handleChange('bankName')}
-                            style={styles.dropdown}
-                        /> */}
+
 
                                 <RegularTextInput
                                     label="Routing Number *"

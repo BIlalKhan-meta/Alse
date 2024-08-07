@@ -15,6 +15,7 @@ import { colors } from '../../utils/theme';
 import CustomButton from '../../components/CustomButton';
 import InterRegular from '../../components/Text/InterRegular';
 import InterBoldLabel from '../../components/Text/InterBoldLabel';
+import Card from '../../components/Card';
 
 const AddStore: React.FC = () => {
     const navigation = useNavigation();
@@ -43,12 +44,32 @@ const AddStore: React.FC = () => {
         { label: 'Category 2', value: 'category2' },
         { label: 'Category 3', value: 'category3' },
     ];
+    const accountTypes = [
+        { label: 'Savings', value: 'savings' },
+        { label: 'Checking', value: 'checking' },
+    ];
+
+    const banks = [
+        { label: 'Bank 1', value: 'bank1' },
+        { label: 'Bank 2', value: 'bank2' },
+    ];
 
     const validationSchema = yup.object().shape({
         shopName: yup.string().required('Shop Name is required'),
         shopCategory: yup.string().required('Shop Category is required'),
         shopDescription: yup.string().required('Shop Description is required'),
         shopImage: yup.string().required('Shop Image is required'),
+        accountHolderName: yup.string().required('Account Holder Name is required'),
+        accountType: yup.string().required('Account Type is required'),
+        bankName: yup.string().required('Bank Name is required'),
+        routingNumber: yup.string().required('Routing Number is required'),
+        confirmRoutingNumber: yup.string()
+            .oneOf([yup.ref('routingNumber'), null], 'Routing Numbers must match')
+            .required('Confirm Routing Number is required'),
+        accountNumber: yup.string().required('Account Number is required'),
+        confirmAccountNumber: yup.string()
+            .oneOf([yup.ref('accountNumber'), null], 'Account Numbers must match')
+            .required('Confirm Account Number is required'),
     });
 
     const initialValues = {
@@ -56,6 +77,13 @@ const AddStore: React.FC = () => {
         shopCategory: '',
         shopDescription: '',
         shopImage: '',
+        accountHolderName: '',
+        accountType: accountTypes[0].value,
+        bankName: banks[0].value,
+        routingNumber: '',
+        confirmRoutingNumber: '',
+        accountNumber: '',
+        confirmAccountNumber: '',
     };
 
     const handleDropdownChange = (value: string | null) => {
@@ -69,6 +97,7 @@ const AddStore: React.FC = () => {
     return (
         <KeyboardAwareScrollView contentContainerStyle={styles.container}
             showsVerticalScrollIndicator={false}
+            enableOnAndroid={true}
         >
 
 
@@ -79,7 +108,7 @@ const AddStore: React.FC = () => {
             >
                 {({ handleChange, handleBlur, handleSubmit, values, errors, touched }) => (
                     <>
-                        <View style={styles.section}>
+                        <Card style={styles.contentContainer}>
                             <RegularTextInput
                                 label="Shop Name *"
                                 placeholder="Enter Shop Name"
@@ -124,21 +153,111 @@ const AddStore: React.FC = () => {
                                 </InterRegular>
                                 <Image source={images.upload} style={styles.uploadImg} />
                             </TouchableOpacity>
-                        </View>
 
-                        <CustomButton style={styles.submitButton} onPress={() => {
-                            handleSubmit();
-                            setShopSuccess(true);
-                        }}>
-                            {title == "Edit Shop" ? "UPDATE" : "CREATE"}
-                        </CustomButton>
+
+                            <RegularTextInput
+                                label="Account Holder Number *"
+                                placeholder="Enter account holder Name"
+                                placeholderTextColor={colors.inputText}
+                                onChangeText={handleChange('accountHolderName')}
+                                onBlur={handleBlur('accountHolderName')}
+                                value={values.accountHolderName}
+                                error={touched.accountHolderName && errors.accountHolderName}
+                                style={styles.inputStyle}
+                            />
+
+
+
+                            <InterRegular style={styles.countryLabel}>
+                                Account type
+                            </InterRegular>
+
+                            <View style={styles.dropdownContainer}>
+                                <DropDownTextInput
+                                    items={accountTypes}
+                                    // defaultValue='all'
+                                    placeholder="Select Account type"
+                                    onChangeValue={handleDropdownChange}
+                                    style={styles.dropDown}
+                                />
+                            </View>
+
+                            <InterRegular style={styles.countryLabel}>
+                                Bank Name
+                            </InterRegular>
+
+                            <View style={[styles.dropdownContainer, { zIndex: 4 }]}>
+                                <DropDownTextInput
+                                    items={banks}
+                                    // defaultValue='all'
+                                    placeholder="Select Bank Name"
+                                    onChangeValue={handleDropdownChange}
+                                    style={styles.dropDown}
+                                />
+                            </View>
+
+
+
+                            <RegularTextInput
+                                label="Routing Number *"
+                                placeholder="Enter Routing Number"
+                                placeholderTextColor={colors.inputText}
+                                onChangeText={handleChange('routingNumber')}
+                                onBlur={handleBlur('routingNumber')}
+                                value={values.routingNumber}
+                                error={touched.routingNumber && errors.routingNumber}
+                                style={styles.inputStyle}
+                            />
+
+                            <RegularTextInput
+                                label="Confirm Routing Number *"
+                                placeholder="Confirm Routing Number"
+                                placeholderTextColor={colors.inputText}
+                                onChangeText={handleChange('confirmRoutingNumber')}
+                                onBlur={handleBlur('confirmRoutingNumber')}
+                                value={values.confirmRoutingNumber}
+                                error={touched.confirmRoutingNumber && errors.confirmRoutingNumber}
+                                style={styles.inputStyle}
+                            />
+
+                            <RegularTextInput
+                                label="Account Number *"
+                                placeholder="Enter Account Number"
+                                placeholderTextColor={colors.inputText}
+                                onChangeText={handleChange('accountNumber')}
+                                onBlur={handleBlur('accountNumber')}
+                                value={values.accountNumber}
+                                error={touched.accountNumber && errors.accountNumber}
+                                style={styles.inputStyle}
+                            />
+
+                            <RegularTextInput
+                                label="Confirm Account Number *"
+                                placeholder="Confirm Account Number"
+                                placeholderTextColor={colors.inputText}
+                                onChangeText={handleChange('confirmAccountNumber')}
+                                onBlur={handleBlur('confirmAccountNumber')}
+                                value={values.confirmAccountNumber}
+                                error={touched.confirmAccountNumber && errors.confirmAccountNumber}
+                                style={styles.inputStyle}
+                            />
+
+                            <CustomButton style={styles.submitButton} onPress={() => {
+                                handleSubmit();
+                                setShopSuccess(true);
+                            }}>
+                                {title == "Edit Shop" ? "UPDATE" : "CREATE"}
+                            </CustomButton>
+                        </Card>
+
 
                         <GeneralModal
                             visible={shopSuccess}
                             closeModal={() => setShopSuccess(false)}
-                            icon={images.doubleCheck}
+                            icon={images.checkedIcon}
                             title={title == "Edit Shop" ? "Shop Updated successfully" : 'Shop Created successfully'}
                             buttonText='Ok'
+                            primaryBtn={true}
                             onPress={() => {
                                 setShopSuccess(false);
                             }}
