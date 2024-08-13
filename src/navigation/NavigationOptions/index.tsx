@@ -25,6 +25,10 @@ import Payment from '../../screens/Payment';
 import AddStore from '../../screens/AddStore';
 import SubscriptionPlan from '../../screens/SubscriptionPlan';
 import SubscriptionLogs from '../../screens/PaymentLogs';
+import Blogs from '../../screens/Blogs';
+import ViewBlog from '../../screens/BlogsDetail';
+import MyBlogs from '../../screens/MyBlogs';
+import AddBlog from '../../screens/AddBlog';
 
 
 interface RouteParams {
@@ -59,7 +63,8 @@ const titles: { [key: string]: string } = {
     Payment: "Payment Details",
     AddStore: "Create Shop",
     SubscriptionPlan: "Subscription Plan",
-    SubscriptionLogs: "Subscription Logs"
+    SubscriptionLogs: "Subscription Logs",
+    Blogs: "Blogs"
     // AddProduct: "Add Product",
     // WishList: "Wishlist",
 
@@ -74,7 +79,10 @@ const backButtonRoutes: { [key: string]: boolean } = {
     MyProfileUpdate: true,
     MyProfilePassword: true,
     Payment: true,
-    SubscriptionLogs: true
+    SubscriptionLogs: true,
+    ViewBlog: true,
+    MyBlogs: true,
+    AddBlog: true
 };
 
 const getTitle: React.FC<NavigationOptionsProps> = (props) => {

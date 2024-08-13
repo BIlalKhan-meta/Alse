@@ -6,20 +6,21 @@ import fonts from '../../assets/fonts';
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
-        paddingHorizontal: 15,
-        paddingTop: 50,
+        backgroundColor: colors.headerColor,
+        // paddingHorizontal: 15,
+        paddingTop: vh * 2,
     },
     activeContainer: {
         flexDirection: "row",
-        justifyContent: "space-around",
+        // justifyContent: "space-around",
         alignItems: "center"
     },
     activeBtn: {
         backgroundColor: colors.themeColor,
         paddingHorizontal: vw * 3,
         paddingVertical: vw * 2,
-        borderRadius: 5
+        borderRadius: 5,
+        marginHorizontal: vw * 4
     },
     activeTxt: {
         fontSize: fontSizes.f14,
@@ -27,6 +28,12 @@ const styles = StyleSheet.create({
     },
     InactiveBtn: {
         // backgroundColor: colors.themeColor
+        backgroundColor: colors.white,
+        paddingHorizontal: vw * 3,
+        paddingVertical: vw * 2,
+        borderRadius: 5,
+        marginHorizontal: vw * 4,
+
     },
     InactiveTxt: {
         fontSize: fontSizes.f14,
@@ -34,7 +41,13 @@ const styles = StyleSheet.create({
     },
     contentContainer: {
         marginTop: vh * 2,
-        marginBottom: vh * 4,
+        marginBottom: vh * 4
+    },
+    itemCard: {
+        marginBottom: vh * 2,
+        width: vw * 94,
+        alignSelf: "center",
+        padding: 0
     },
     heading: {
         color: colors.inputText,
@@ -65,6 +78,10 @@ const styles = StyleSheet.create({
         backgroundColor: colors.inputcolor
         // backgroundColor: "yellow"
     },
+    btn: {
+        alignSelf: "center",
+        marginBottom: vh * 2
+    }
 
 });
 

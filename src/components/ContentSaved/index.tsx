@@ -15,20 +15,34 @@ interface Product {
 }
 
 interface ContentSavedProps {
-    ContentSaved: Product[];
+    title: string;
+    viewBtn: string;
+    item: {};
     onAddToCart: (productId: string) => void;
     onRemoveFromContentSaved: (productId: string) => void;
+    onItemPress: () => void;
 }
 
-const ContentSavedScreen: React.FC<ContentSavedProps> = ({ ContentSaved, onAddToCart, onRemoveFromContentSaved }) => {
-    const renderItem = ({ item }: { item: Product }) => (
-        <View style={styles.productContainer}>
+const ContentSavedScreen: React.FC<ContentSavedProps> = ({ item, onAddToCart, onRemoveFromContentSaved, title, viewBtn, onItemPress }) => {
+
+
+
+    return (
+        <TouchableOpacity style={styles.productContainer}
+            onPress={onItemPress}
+        >
             <Image source={item.imageUrl} style={styles.productImage} />
 
             <View style={styles.productDetails}>
                 <View>
-                    <InterMedium style={styles.blogTitle}>Blog Title</InterMedium>
+                    <InterMedium style={styles.blogTitle}>{title}</InterMedium>
                     <InterRegular style={styles.blogDetail}>{item.name}</InterRegular>
+                    {viewBtn && (
+                        <TouchableOpacity style={styles.viewBtn}>
+                            <InterRegular style={styles.viewText}>{viewBtn}</InterRegular>
+                        </TouchableOpacity>
+                    )}
+
                 </View>
                 {item.active ? <TouchableOpacity
                     onPress={() => onAddToCart(item.id)}
@@ -43,17 +57,8 @@ const ContentSavedScreen: React.FC<ContentSavedProps> = ({ ContentSaved, onAddTo
                 </TouchableOpacity>}
             </View>
 
-        </View>
-    );
+        </TouchableOpacity>
 
-
-    return (
-        <FlatList
-            data={ContentSaved}
-            renderItem={renderItem}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={styles.container}
-        />
     );
 };
 

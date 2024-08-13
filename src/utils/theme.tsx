@@ -9,6 +9,7 @@ export const colors = {
   black: '#000',
   themeColor: "#0C959B",
   redText: '#FF0000',
+  redStatus: "#C90505",
   lightGrey: "#666666",
   blue: "#169BD5",
   borderColor: '#D9D9D9',

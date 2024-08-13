@@ -143,12 +143,16 @@ const Menu: React.FC = () => {
         </Card>
 
         <Card style={styles.cardContainer}>
-          <View style={styles.cardContent5}>
-            <View style={[styles.notifiCon, { width: vw * 8 }]}>
-              <Image source={images.blogs} style={styles.imageStyle} />
+          <TouchableOpacity
+            onPress={() => navigation.navigate("Blogs")}
+          >
+            <View style={styles.cardContent5}>
+              <View style={[styles.notifiCon, { width: vw * 8 }]}>
+                <Image source={images.blogs} style={styles.imageStyle} />
+              </View>
+              <InterMedium style={styles.cardHeading}>Blogs</InterMedium>
             </View>
-            <InterMedium style={styles.cardHeading}>Blogs</InterMedium>
-          </View>
+          </TouchableOpacity>
         </Card>
 
         <View style={styles.bottomCon}>

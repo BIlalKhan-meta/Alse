@@ -47,6 +47,9 @@ export const images = {
   filter: require('../assets/Icons/filter.png'),
   noti: require('../assets/Icons/noti.png'),
   bin: require('../assets/Icons/bin.png'),
+  blog1: require('../assets/Icons/blog1.png'),
+  upload: require('../assets/Icons/upload.png'),
+  edit: require('../assets/Icons/edit.png'),
 
 
 

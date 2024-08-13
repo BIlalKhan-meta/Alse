@@ -1,6 +1,6 @@
 // Home.tsx
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, FlatList } from 'react-native';
 import { images } from '../../utils/images';
 import CardComponent from '../../components/CardComponent';
 import { colors } from '../../utils/theme';
@@ -123,41 +123,41 @@ const dummyContentSaved = [
         id: '1',
         name: 'It is a long established fact that a reader will be distracted by the readable content ',
         active: true,
-        imageUrl: `${images.pro1}`,
+        imageUrl: `${images.blog1}`,
     },
     {
         id: '2',
         name: 'It is a long established fact that a reader will be distracted by the readable content ',
         active: true,
-        imageUrl: `${images.pro2}`,
+        imageUrl: `${images.blog1}`,
 
     },
     {
         id: '3',
         name: 'It is a long established fact that a reader will be distracted by the readable content ',
         active: false,
-        imageUrl: `${images.pro2}`,
+        imageUrl: `${images.blog1}`,
 
     },
     {
         id: '4',
         name: 'It is a long established fact that a reader will be distracted by the readable content ',
         active: true,
-        imageUrl: `${images.pro1}`,
+        imageUrl: `${images.blog1}`,
 
     },
     {
         id: '5',
         name: 'It is a long established fact that a reader will be distracted by the readable content ',
         active: false,
-        imageUrl: `${images.pro1}`,
+        imageUrl: `${images.blog1}`,
 
     },
     {
         id: '6',
         name: 'It is a long established fact that a reader will be distracted by the readable content ',
         active: true,
-        imageUrl: `${images.pro2}`,
+        imageUrl: `${images.blog1}`,
 
     },
 ];
@@ -314,10 +314,19 @@ const Saved: React.FC = () => {
 
                 {active == 3 && (
                     <Card style={styles.contentContainer}>
-                        <ContentSavedScreen
-                            ContentSaved={dummyContentSaved}
-                        //  onAddToCart={handleAddToCart}
-                        // onRemoveFromWishlist={handleRemoveFromWishlist}
+                        <FlatList
+                            data={dummyContentSaved}
+                            renderItem={({ item }) => (
+                                <ContentSavedScreen
+                                    item={item}
+                                    title='Blog Title'
+                                    viewBtn='View Full Blog'
+
+                                />
+                                // </View>
+
+                            )}
+                            keyExtractor={(item) => item.id}
                         />
                     </Card>
                 )}

@@ -24,6 +24,10 @@ import MyProfilePassword from "../../screens/MyProfilePassword";
 import Payment from "../../screens/Payment";
 import AddStore from "../../screens/AddStore";
 import SubscriptionLogs from "../../screens/SubscriptionLogs";
+import Blogs from "../../screens/Blogs";
+import ViewBlog from "../../screens/BlogsDetail";
+import MyBlogs from "../../screens/MyBlogs";
+import AddBlog from "../../screens/AddBlog";
 
 
 
@@ -39,7 +43,6 @@ const AppNavigation = () => {
 
       <Stack.Screen name="AuthNavigation" component={AuthNavigation} />
       <Stack.Screen name="Home" component={TabNavigation} />
-
       <Stack.Screen name="Saved" component={Saved} />
       <Stack.Screen name="RequestScreen" component={RequestScreen} />
       <Stack.Screen name="Notifications" component={Notifications} />
@@ -58,7 +61,10 @@ const AppNavigation = () => {
       <Stack.Screen name="Payment" component={Payment} options={NavigationOptions} />
       <Stack.Screen name="AddStore" component={AddStore} options={NavigationOptions} />
       <Stack.Screen name="SubscriptionLogs" component={SubscriptionLogs} options={NavigationOptions} />
-
+      <Stack.Screen name="Blogs" component={Blogs} options={NavigationOptions} />
+      <Stack.Screen name="ViewBlog" component={ViewBlog} options={NavigationOptions} />
+      <Stack.Screen name="MyBlogs" component={MyBlogs} options={NavigationOptions} />
+      <Stack.Screen name="AddBlog" component={AddBlog} options={NavigationOptions} />
 
     </Stack.Navigator>
 

@@ -205,5 +205,43 @@ export const reviews = [
       'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.',
     date: 'Jul 16, 2023',
   },
-  
+];
+
+export const dummyContentSaved = [
+  {
+    id: '1',
+    name: 'It is a long established fact that a reader will be distracted by the readable content ',
+    active: true,
+    imageUrl: `${images.blog1}`,
+  },
+  {
+    id: '2',
+    name: 'It is a long established fact that a reader will be distracted by the readable content ',
+    active: true,
+    imageUrl: `${images.blog1}`,
+  },
+  {
+    id: '3',
+    name: 'It is a long established fact that a reader will be distracted by the readable content ',
+    active: false,
+    imageUrl: `${images.blog1}`,
+  },
+  {
+    id: '4',
+    name: 'It is a long established fact that a reader will be distracted by the readable content ',
+    active: true,
+    imageUrl: `${images.blog1}`,
+  },
+  {
+    id: '5',
+    name: 'It is a long established fact that a reader will be distracted by the readable content ',
+    active: false,
+    imageUrl: `${images.blog1}`,
+  },
+  {
+    id: '6',
+    name: 'It is a long established fact that a reader will be distracted by the readable content ',
+    active: true,
+    imageUrl: `${images.blog1}`,
+  },
 ];

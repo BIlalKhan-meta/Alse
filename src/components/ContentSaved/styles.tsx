@@ -7,22 +7,22 @@ const styles = StyleSheet.create({
         // padding: 10,
     },
     productContainer: {
-        flex: 1,
+        // flex: 1,
         flexDirection: 'row',
         // alignItems: 'center',
         // justifyContent: "space-between",
-        margin: 5,
+        // margin: 5,
         borderRadius: 10,
         // overflow: 'hidden',
         // backgroundColor: '#fff',
         // backgroundColor: 'pink',
         // position: 'relative',
+        padding: vh * 2
     },
     productImage: {
         width: vw * 25, // Adjust width as per your design
         height: vh * 15,
-        borderTopLeftRadius: 10,
-        borderTopRightRadius: 10,
+        borderRadius: vh * 1
     },
 
     activeButton: {
@@ -37,7 +37,7 @@ const styles = StyleSheet.create({
         // zIndex: 1,
     },
     inactiveButton: {
-        backgroundColor: colors.redText,
+        backgroundColor: colors.redStatus,
         width: vw * 13,
         height: vh * 3,
         borderRadius: 3,
@@ -72,6 +72,17 @@ const styles = StyleSheet.create({
         marginLeft: vw * 2
 
     },
+    viewBtn: {
+        borderBottomWidth: 1,
+        borderBottomColor: colors.themeColor,
+        marginLeft: vw * 2,
+        width: vw * 28,
+        alignItems: "center"
+    },
+    viewText: {
+        fontSize: fontSizes.f12,
+        color: colors.themeColor,
+    }
 });
 
 
