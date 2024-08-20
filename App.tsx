@@ -1,16 +1,16 @@
 import 'react-native-gesture-handler';
 import React, { useEffect } from 'react';
-import type {PropsWithChildren} from 'react';
+import type { PropsWithChildren } from 'react';
 import {
   SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
-  Text, 
+  Text,
   useColorScheme,
   View,
 } from 'react-native';
-import {NavigationContainer} from '@react-navigation/native';
+import { NavigationContainer } from '@react-navigation/native';
 import AppNavigation from './src/navigation/AppNavigation';
 import { colors } from './src/utils/theme';
 import BootSplash from "react-native-bootsplash";
@@ -34,11 +34,10 @@ function App(): React.JSX.Element {
   }, []);
 
   return (
-    <SafeAreaView 
-    style={styles.container}>
+    <SafeAreaView
+      style={styles.container}>
       <NavigationContainer>
-        <StatusBar backgroundColor={colors.white} />
-        
+        <StatusBar backgroundColor={colors.headerColor} barStyle={'dark-content'} />
         <AppNavigation />
       </NavigationContainer>
     </SafeAreaView>
@@ -47,7 +46,7 @@ function App(): React.JSX.Element {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1, 
+    flex: 1,
     backgroundColor: colors.white
   },
 

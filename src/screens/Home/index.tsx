@@ -1,6 +1,6 @@
 // Home.tsx
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, TouchableWithoutFeedback } from 'react-native';
 import { images } from '../../utils/images';
 import CardComponent from '../../components/CardComponent';
 import { colors } from '../../utils/theme';
@@ -18,6 +18,7 @@ import GeneralModal from '../../components/GeneralModal';
 
 const posts = [
   {
+    id: 1,
     avatar: `${images.user}`,
     name: 'John Doe',
     country: 'Newyork, USA',
@@ -30,6 +31,7 @@ const posts = [
     account: "public"
   },
   {
+    id: 2,
     avatar: `${images.user}`,
     name: 'Jane Smith',
     country: 'UK',
@@ -58,108 +60,125 @@ const Home: React.FC = () => {
   const [deleteSuccess, setDeleteSuccess] = useState(false);
 
   const handleDotPress = (postId: number) => {
-    setActivePostId(activePostId === postId ? null : postId);
+    // setActivePostId(activePostId === postId ? null : postId);
+    setActivePostId(postId ? postId : null);
   };
 
+
+
   return (
+
     <ScrollView
       showsVerticalScrollIndicator={false}
     >
-      <View style={styles.container}>
+      <TouchableWithoutFeedback
+        onPress={() => handleDotPress()}
+      >
 
-        <HeaderComponent
-          label={'News Feed'}
-          onBackPress={() => navigation.goBack()}
-          notifiVisible={true}
-          searchVisible={true}
-        />
+        <View style={styles.container}>
 
+          <HeaderComponent
+            label={'News Feed'}
+            onBackPress={() => navigation.goBack()}
+            notifiVisible={true}
+            onNofiPress={() => navigation.navigate("Notifications")}
 
-        <CardComponent
-          onTextInput={() => navigation.navigate("CreatePost")}
-        />
+            searchVisible={true}
 
-        {posts.map((post, index) => (
-          <PostComponent
-            key={index}
-            avatar={post.avatar}
-            name={post.name}
-            country={post.country}
-            time={post.time}
-            postText={post.postText}
-            postImage={post.postImage}
-            likes={post.likes}
-            comments={post.comments}
-            share={post.share}
-            account={post.account}
-            onCommnetPress={() => setCommentsVisible(true)}
-            onSavePress={() => navigation.navigate("Saved")}
-            onLikePress={() => setrRactVisible(true)}
-            onDotPress={() => handleDotPress(post.id)}
-            modalVisible={activePostId === post.id}
-            handleBlockPress={() => {
-              handleDotPress();
-              setDeleteVisible(true)
-            }}
-            handleReportPress={() => {
-              handleDotPress();
-              // setReportVisible(true)
-              // navigation.navigate("MyProfileUpdate")
-              navigation.navigate("CreatePost", { title: "Edit Post" })
-
-            }}
           />
-        ))}
-
-        <CommentsModal
-          visible={commentsVisible}
-          closeModal={() => setCommentsVisible(false)}
-          // icon={CheckedIcon}
-          title='Successfully'
-          message='Password has been updated successfully'
-          buttonText='Apply'
-          onPress={() => navigation.navigate("Home")}
-          comments={dummyComments}
-        />
-
-        <ReactModal
-          visible={reactVisible}
-          closeModal={() => setrRactVisible(false)}
-          reactions={reactions}
-        />
 
 
-        <GeneralModal
-          visible={deleteVisible}
-          closeModal={() => setDeleteVisible(false)}
-          icon={images.qmark}
-          title='Delete Post'
-          message='Are you sure you want to delete this Post?'
-          SecondaryText1='Yes'
-          SecondaryText2='No'
-          onPress={() => {
-            setDeleteVisible(false)
-            setDeleteSuccess(true)
+          <CardComponent
+            onImagePress={() => navigation.navigate("CreatePost")}
+            onVideoPress={() => navigation.navigate("CreatePost")}
+          />
 
-          }}
-          secondaryBtn={true}
-        />
+          {posts.map((post, index) => (
+            <PostComponent
+              key={index}
+              avatar={post.avatar}
+              name={post.name}
+              country={post.country}
+              time={post.time}
+              postText={post.postText}
+              postImage={post.postImage}
+              likes={post.likes}
+              comments={post.comments}
+              share={post.share}
+              account={post.account}
+              onCommnetPress={() => setCommentsVisible(true)}
+              onSavePress={() => navigation.navigate("Saved")}
+              onLikePress={() => setrRactVisible(true)}
+              onDotPress={() => {
+                // activePostId(post.id)
+                handleDotPress(post.id)
+              }}
+              modalVisible={activePostId === post.id}
+              handleBlockPress={() => {
+                handleDotPress();
+                setDeleteVisible(true)
+              }}
+              handleReportPress={() => {
+                handleDotPress();
+                // setReportVisible(true)
+                // navigation.navigate("MyProfileUpdate")
+                navigation.navigate("CreatePost", { title: "Edit Post" })
 
-        <GeneralModal
-          visible={deleteSuccess}
-          closeModal={() => setDeleteSuccess(false)}
-          icon={images.checkedIcon}
-          title='Delete Post'
-          message='Post has been delete successfully.'
-          buttonText='Ok'
-          onPress={() => {
-            setDeleteSuccess(false)
-          }}
-          primaryBtn={true}
-        />
+              }}
+            />
+          ))}
 
-      </View>
+          <CommentsModal
+            visible={commentsVisible}
+            closeModal={() => setCommentsVisible(false)}
+            // icon={CheckedIcon}
+            title='Successfully'
+            message='Password has been updated successfully'
+            buttonText='Apply'
+            onPress={() => navigation.navigate("Home")}
+            comments={dummyComments}
+          />
+
+          <ReactModal
+            visible={reactVisible}
+            closeModal={() => setrRactVisible(false)}
+            reactions={reactions}
+          />
+
+
+          <GeneralModal
+            visible={deleteVisible}
+            closeModal={() => setDeleteVisible(false)}
+            icon={images.qmark}
+            title='Delete Post'
+            message='Are you sure you want to delete this Post?'
+            SecondaryText1='Yes'
+            SecondaryText2='No'
+            onPress={() => {
+              setDeleteVisible(false)
+              setDeleteSuccess(true)
+
+            }}
+            secondaryBtn={true}
+          />
+
+          <GeneralModal
+            visible={deleteSuccess}
+            closeModal={() => setDeleteSuccess(false)}
+            icon={images.checkedIcon}
+            title='Delete Post'
+            message='Post has been delete successfully.'
+            buttonText='Ok'
+            onPress={() => {
+              setDeleteSuccess(false)
+            }}
+            primaryBtn={true}
+          />
+
+        </View>
+      </TouchableWithoutFeedback>
     </ScrollView>
+
   );
 };
 

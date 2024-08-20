@@ -51,8 +51,17 @@ const BottomModal: React.FC<BottomModalProps> = props => {
                 source={images.camera}
                 style={styles.buttonIcon2}
               />
+              <Text style={styles.buttonText}>Capture Image</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.button} onPress={onPressImage}>
+              <Image
+                source={images.media}
+                style={styles.buttonIcon2}
+              />
               <Text style={styles.buttonText}>Upload Image</Text>
             </TouchableOpacity>
+
             <TouchableOpacity style={styles.button}
               onPress={onPress}
             >

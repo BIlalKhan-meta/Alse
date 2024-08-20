@@ -8,17 +8,17 @@ import RecoverPassword from "../../screens/Auth/RecoverPassword";
 import RegisterScreen from "../../screens/Auth/RegisterScreen";
 
 
-const AuthNavigation=()=>{
-    const Stack= createNativeStackNavigator();
-    return(
+const AuthNavigation = () => {
+    const Stack = createNativeStackNavigator();
+    return (
         <Stack.Navigator
-        initialRouteName="RegisterScreen"
-        screenOptions={{headerShown: false}}>
-        <Stack.Screen name="RegisterScreen" component={RegisterScreen}/>
-        <Stack.Screen name="Login" component={LoginScreen}/>
-        <Stack.Screen name="ForgotPassword" component={ForgetPassword}/>
-        <Stack.Screen name="Verification" component={Verification}/>
-        <Stack.Screen name="RecoverPassword" component={RecoverPassword}/>
+            initialRouteName="Login"
+            screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="RegisterScreen" component={RegisterScreen} />
+            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="ForgotPassword" component={ForgetPassword} />
+            <Stack.Screen name="Verification" component={Verification} />
+            <Stack.Screen name="RecoverPassword" component={RecoverPassword} />
 
         </Stack.Navigator>
     )

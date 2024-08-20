@@ -6,7 +6,7 @@ const styles = StyleSheet.create({
   container: {
     marginTop: 'auto',
     width: vw * 100,
-    height: vh * 25,
+    height: vh * 30,
     backgroundColor: 'white',
     borderTopLeftRadius: vw * 7,
     borderTopRightRadius: vw * 7,

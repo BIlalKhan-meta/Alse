@@ -51,6 +51,11 @@ const styles = StyleSheet.create({
         color: colors.black,
         lineHeight: vh * 2.5,
     },
+    category: {
+        fontSize: fontSizes.f12,
+        color: colors.themeColor,
+        paddingTop: vh * 2
+    },
     checkoutButton: {
         alignSelf: "center",
         width: vw * 40,

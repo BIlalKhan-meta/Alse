@@ -3,27 +3,35 @@ import { colors } from '../../../utils/theme';
 import { fontSizes, vh, vw } from '../../../constant';
 
 const styles = StyleSheet.create({
-  scrollview:{
-    flex:1,
-    backgroundColor:colors.white,
+  scrollview: {
+    flex: 1,
+    backgroundColor: colors.white,
   },
   container: {
-    backgroundColor:colors.white,
-    alignItems:"center",
-    paddingBottom:vh*5
+    backgroundColor: colors.headerColor,
+    alignItems: "center",
+    paddingBottom: vh * 5,
+    paddingTop: vh * 2,
+    // flex: 1
 
-    },
-    heading:{
-      color:colors.black,
-      fontSize:fontSizes.f24,
-      fontWeight:"600"
-    },
-    adddetailsheading:{
-      color:colors.inputText,
-      fontSize:fontSizes.f12,
-      marginTop:vh*2,
-      width:vw*80
-    }
+  },
+  cardStyle: {
+    alignItems: "center",
+    flex: 1,
+    paddingBottom: vh * 32
+
+  },
+  heading: {
+    color: colors.black,
+    fontSize: fontSizes.f24,
+    fontWeight: "600"
+  },
+  adddetailsheading: {
+    color: colors.inputText,
+    fontSize: fontSizes.f12,
+    marginTop: vh * 2,
+    width: vw * 80
+  }
 
 });
 

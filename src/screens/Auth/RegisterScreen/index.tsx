@@ -22,6 +22,7 @@ import CustomButton from '../../../components/CustomButton';
 import { images } from '../../../utils/images';
 import GeneralModal from '../../../components/GeneralModal';
 import { useNavigation } from '@react-navigation/native';
+import Card from '../../../components/Card';
 
 const RegisterScreen: React.FC = () => {
 
@@ -127,174 +128,175 @@ const RegisterScreen: React.FC = () => {
           >
 
             <View style={styles.container}>
-              <InterBold style={styles.heading}>Create Account</InterBold>
-              <View style={styles.imageContainer}>
-                <Image source={images.profile} />
+              <Card style={styles.cardStyle}>
 
-                <View style={styles.camera}>
-                  <Image source={images.camera} />
+                <InterBold style={styles.heading}>Create Account</InterBold>
+                <View style={styles.imageContainer}>
+                  <Image source={images.profile} />
+
+                  <View style={styles.camera}>
+                    <Image source={images.camera} />
+                  </View>
                 </View>
-              </View>
-              <RegularTextInput
-                label="Full Name"
-                placeholder='Enter full name'
-                placeholderTextColor={colors.inputText}
-                onChangeText={handleChange('firstname')}
-                onBlur={handleBlur('firstname')}
-                value={values.firstname}
-                submitted={submitted}
-                errors={errors.firstname}
-                labelStyle={styles.label}
-              />
-
-
-
-              <RegularTextInput
-                label="Email Address"
-                placeholder='Enter Email Address'
-                placeholderTextColor={colors.inputText}
-                onChangeText={handleChange('email')}
-                onBlur={handleBlur('email')}
-                value={values.email}
-                submitted={submitted}
-                errors={errors.email}
-              />
-
-              <PhoneNumberInput
-                initialNumber={phoneNumber}
-                onNumberChange={handleNumberChange}
-                label="Phone No."
-
-              />
-
-              <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                <View>
-                  <InterRegular style={styles.label}>
-                    Date of Birth
-                  </InterRegular>
-
-                  <TouchableOpacity onPress={() => setOpenDate(true)}>
-                    <View style={[styles.textinputbox]}>
-                      <InterLight style={{}}>{'mm/dd/yyyy'}</InterLight>
-                      {/* <Image source={calendericon} style={styles.calendericon}/> */}
-                    </View>
-                  </TouchableOpacity>
-                  <DatePicker
-                    modal
-                    mode="date"
-                    open={openDate}
-                    date={date}
-                    onConfirm={(date) => {
-                      setOpenDate(false)
-                      setDate(date)
-                    }}
-                    onCancel={() => {
-                      setOpenDate(false)
-                    }}
-                  />
-                </View>
-
-
-
-                <View>
-                  <InterRegular style={styles.label}>
-                    Age
-                  </InterRegular>
-                  <Picker
-                    style={[styles.pickercontainer]}
-                    dropdownIconColor={colors.inputText}
-                    enabled={true}
-                    mode='dialog'
-                    placeholder={"Select Age"}
-                    onValueChange={handleChange('gender')}
-                    selectedValue={values.gender}
-                  // data={genders}
-                  >
-
-                    <Picker.Item label={"Select Age"} value="" />
-
-                    {genders.map((item) => (
-                      <Picker.Item
-                        label={item.name.toString()}
-                        value={item.name.toString()}
-                        key={item.id.toString()}
-                      />
-                    ))}
-
-                  </Picker>
-                </View>
-
-              </View>
-
-
-
-
-              <RegularTextInput
-                label="Password"
-                placeholder='Enter Password'
-                placeholderTextColor={colors.inputText}
-                onChangeText={handleChange('password')}
-                onBlur={handleBlur('password')}
-                value={values.password}
-                submitted={submitted}
-                errors={errors.password}
-                secureTextEntry={securePassword}
-                onPressPassword={() => setSecurePassword(!securePassword)} />
-
-              <RegularTextInput
-                label="Confirm Password"
-                placeholder='Enter Confirm Password'
-                placeholderTextColor={colors.inputText}
-                onChangeText={handleChange('cpassword')}
-                onBlur={handleBlur('cpassword')}
-                value={values.cpassword}
-                submitted={submitted}
-                errors={errors.cpassword}
-                secureTextEntry={secureCPassword}
-                onPressCPassword={() => setSecureCPassword(!secureCPassword)} />
-              <View style={styles.checkboxStyle}>
-                <CheckboxComponent
-                  label="Child Account"
-                  isChecked={isChecked}
-                  onValueChange={handleCheckboxChange}
+                <RegularTextInput
+                  label="Full Name"
+                  placeholder='Enter full name'
+                  placeholderTextColor={colors.inputText}
+                  onChangeText={handleChange('firstname')}
+                  onBlur={handleBlur('firstname')}
+                  value={values.firstname}
+                  submitted={submitted}
+                  errors={errors.firstname}
+                  labelStyle={styles.label}
                 />
 
 
-              </View>
+
+                <RegularTextInput
+                  label="Email Address"
+                  placeholder='Enter Email Address'
+                  placeholderTextColor={colors.inputText}
+                  onChangeText={handleChange('email')}
+                  onBlur={handleBlur('email')}
+                  value={values.email}
+                  submitted={submitted}
+                  errors={errors.email}
+                />
+
+                <PhoneNumberInput
+                  initialNumber={phoneNumber}
+                  onNumberChange={handleNumberChange}
+                  label="Phone No."
+
+                />
+
+                <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+                  <View>
+                    <InterRegular style={styles.label}>
+                      Date of Birth
+                    </InterRegular>
+
+                    <TouchableOpacity onPress={() => setOpenDate(true)}>
+                      <View style={[styles.textinputbox]}>
+                        <InterLight style={{}}>{'mm/dd/yyyy'}</InterLight>
+                        {/* <Image source={calendericon} style={styles.calendericon}/> */}
+                      </View>
+                    </TouchableOpacity>
+                    <DatePicker
+                      modal
+                      mode="date"
+                      open={openDate}
+                      date={date}
+                      onConfirm={(date) => {
+                        setOpenDate(false)
+                        setDate(date)
+                      }}
+                      onCancel={() => {
+                        setOpenDate(false)
+                      }}
+                    />
+                  </View>
 
 
 
-              <CustomButton onPress={() => {
-                setSuccessModel(true)
-                // setSubmitted(true)
-                // resetForm()
-                // handleSubmit()
-              }}>
-                Create Account
-              </CustomButton>
+                  <View>
+                    <InterRegular style={styles.label}>
+                      Age
+                    </InterRegular>
+                    <Picker
+                      style={[styles.pickercontainer]}
+                      dropdownIconColor={colors.inputText}
+                      enabled={true}
+                      mode='dialog'
+                      placeholder={"Select Age"}
+                      onValueChange={handleChange('gender')}
+                      selectedValue={values.gender}
+                    // data={genders}
+                    >
 
-              <View style={styles.loginContainer}>
-                <InterRegular style={styles.loginTxt}>Already have an account? </InterRegular>
-                <TouchableOpacity onPress={() => navigation.navigate("Login")}>
-                  <InterRegular style={styles.loginTxt2}>Login Now </InterRegular>
-                </TouchableOpacity>
-              </View>
-              {successModel && (
-                <>
-                  <GeneralModal
-                    visible={successModel}
-                    closeModal={() => setSuccessModel(false)}
-                    icon={images.checkedIcon}
-                    title='Account Registered'
-                    message='Your account has been registered successfully'
-                    buttonText='Okay'
-                    primaryBtn={true}
-                    onPress={() => {
-                      setSuccessModel(false)
-                      navigation.navigate("Login")
-                    }} />
-                </>
-              )}
+                      <Picker.Item label={"Select Age"} value="" />
+
+                      {genders.map((item) => (
+                        <Picker.Item
+                          label={item.name.toString()}
+                          value={item.name.toString()}
+                          key={item.id.toString()}
+                        />
+                      ))}
+
+                    </Picker>
+                  </View>
+
+                </View>
+
+
+
+
+                <RegularTextInput
+                  label="Password"
+                  placeholder='Enter Password'
+                  placeholderTextColor={colors.inputText}
+                  onChangeText={handleChange('password')}
+                  onBlur={handleBlur('password')}
+                  value={values.password}
+                  submitted={submitted}
+                  errors={errors.password}
+                  secureTextEntry={securePassword}
+                  onPressPassword={() => setSecurePassword(!securePassword)} />
+
+                <RegularTextInput
+                  label="Confirm Password"
+                  placeholder='Enter Confirm Password'
+                  placeholderTextColor={colors.inputText}
+                  onChangeText={handleChange('cpassword')}
+                  onBlur={handleBlur('cpassword')}
+                  value={values.cpassword}
+                  submitted={submitted}
+                  errors={errors.cpassword}
+                  secureTextEntry={secureCPassword}
+                  onPressCPassword={() => setSecureCPassword(!secureCPassword)} />
+                <View style={styles.checkboxStyle}>
+                  <CheckboxComponent
+                    label="Child Account"
+                    isChecked={isChecked}
+                    onValueChange={handleCheckboxChange}
+                  />
+
+
+                </View>
+
+
+
+                <CustomButton onPress={() => {
+                  setSuccessModel(true)
+                  // setSubmitted(true)
+                  // resetForm()
+                  // handleSubmit()
+                }}>
+                  Create Account
+                </CustomButton>
+
+                <View style={styles.loginContainer}>
+                  <InterRegular style={styles.loginTxt}>Already have an account? </InterRegular>
+                  <TouchableOpacity onPress={() => navigation.navigate("Login")}>
+                    <InterRegular style={styles.loginTxt2}>Login Now </InterRegular>
+                  </TouchableOpacity>
+                </View>
+
+                <GeneralModal
+                  visible={successModel}
+                  closeModal={() => setSuccessModel(false)}
+                  icon={images.checkedIcon}
+                  title='Account Registered'
+                  message='Your account has been registered successfully'
+                  buttonText='Okay'
+                  primaryBtn={true}
+                  onPress={() => {
+                    setSuccessModel(false)
+                    navigation.navigate("Login")
+                  }} />
+
+              </Card>
 
 
             </View>

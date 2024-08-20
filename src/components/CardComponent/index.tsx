@@ -15,10 +15,11 @@ interface CardComponentProps {
   // back: boolean;
   onVideoPress: () => void;
   onImagePress: () => void;
+  onCameraPress: () => void;
   // dots: boolean;
 
 }
-const CardComponent: React.FC<CardComponentProps> = ({ onTextInput, onImagePress, onVideoPress }) => {
+const CardComponent: React.FC<CardComponentProps> = ({ onTextInput, onImagePress, onVideoPress, onCameraPress }) => {
   return (
     <Card>
       <View style={styles.card}>
@@ -56,6 +57,18 @@ const CardComponent: React.FC<CardComponentProps> = ({ onTextInput, onImagePress
           />
           <Text style={styles.buttonText}> Image</Text>
         </TouchableOpacity>
+
+        <TouchableOpacity style={styles.button}
+          onPress={onCameraPress}
+        >
+          <Image
+            source={images.camera}
+            style={styles.buttonIcon2}
+
+          />
+          <Text style={styles.buttonText}> Camera</Text>
+        </TouchableOpacity>
+
       </View>
     </Card>
   );
@@ -100,7 +113,7 @@ const styles = StyleSheet.create({
     height: 10,
   },
   buttonIcon2: {
-    width: 16,
+    width: 17,
     height: 15,
   },
   buttonText: {

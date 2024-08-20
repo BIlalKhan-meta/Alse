@@ -16,81 +16,86 @@ import { useNavigation } from '@react-navigation/native';
 import { colors } from '../../../utils/theme';
 import ResendCode from '../../../components/ResendCode';
 import * as yup from 'yup';
+import Card from '../../../components/Card';
 
 
 const Verification: React.FC = () => {
 
-  const navigation=useNavigation();
+  const navigation = useNavigation();
 
-  const [submitted , setSubmitted] = useState<boolean>(false)
+  const [submitted, setSubmitted] = useState<boolean>(false)
 
-  interface FormValues{
-    code:string
-}
+  interface FormValues {
+    code: string
+  }
 
   const initialValues = {
     code: ''
   };
 
-  const validationSchema:yup.AnySchema<FormValues> = yup.object().shape({
+  const validationSchema: yup.AnySchema<FormValues> = yup.object().shape({
     code: yup
-    .string()
-    .min(6, 'Verification code must be at least 6 characters')
-    .required('Verification code is required'),
+      .string()
+      .min(6, 'Verification code must be at least 6 characters')
+      .required('Verification code is required'),
   });
 
-  const handleSubmit=(values:object, { resetForm }: { resetForm: () => void })=>{
+  const handleSubmit = (values: object, { resetForm }: { resetForm: () => void }) => {
     console.log("SUBMITTED")
     navigation.navigate("RecoverPassword")
 
   }
   return (
     <>
-    <Formik
-    initialValues={initialValues}
-    validationSchema={validationSchema} 
-    onSubmit={handleSubmit}>
-      {({handleSubmit , handleChange , handleBlur , values, errors, resetForm}) => (
-        <> 
-      <KeyboardAwareScrollView 
-      style={styles.scrollview}>
- 
-        <View style={styles.container}>
-          <InterBold style={styles.heading}>Forgot Password</InterBold>
-          <InterRegular style={styles.adddetailsheading}>An email has been sent to you with a verification code. Please enter it here.</InterRegular>         
+      <Formik
+        initialValues={initialValues}
+        validationSchema={validationSchema}
+        onSubmit={handleSubmit}>
+        {({ handleSubmit, handleChange, handleBlur, values, errors, resetForm }) => (
+          <>
+            <KeyboardAwareScrollView
+              style={styles.scrollview}>
 
-          <RegularTextInput
-          label="Verification Code"
-          placeholder='Enter verification code'
-          placeholderTextColor={colors.inputText}
-          onChangeText={handleChange('code')}
-          onBlur={handleBlur('code')}
-          value={values.code}
-          submitted={submitted}
-          errors={errors.code}/>   
+              <View style={styles.container}>
+                <Card style={styles.cardStyle}>
 
-          <ResendCode
-          onPress={()=>console.log("Resend Code")}
-          /> 
+                  <InterBold style={styles.heading}>Forgot Password</InterBold>
+                  <InterRegular style={styles.adddetailsheading}>An email has been sent to you with a verification code. Please enter it here.</InterRegular>
 
-          <CustomButton style={styles.continuebutton}
-          onPress={()=>{
-            setSubmitted(true)
-            resetForm()
-            handleSubmit()
-          }}>
-            Continue
-          </CustomButton>
+                  <RegularTextInput
+                    label="Verification Code"
+                    placeholder='Enter verification code'
+                    placeholderTextColor={colors.inputText}
+                    onChangeText={handleChange('code')}
+                    onBlur={handleBlur('code')}
+                    value={values.code}
+                    submitted={submitted}
+                    errors={errors.code}
+                    maxLength={6}
+                  />
 
-          <BackToLogin
-          onPress={()=> navigation.navigate("Login")}/>
+                  <ResendCode
+                    onPress={() => console.log("Resend Code")}
+                  />
 
-        </View>
-      </KeyboardAwareScrollView>
-        </>
-      )
+                  <CustomButton style={styles.continuebutton}
+                    onPress={() => {
+                      setSubmitted(true)
+                      resetForm()
+                      handleSubmit()
+                    }}>
+                    Continue
+                  </CustomButton>
 
-      }
+                  <BackToLogin
+                    onPress={() => navigation.navigate("Login")} />
+                </Card>
+              </View>
+            </KeyboardAwareScrollView>
+          </>
+        )
+
+        }
       </Formik>
 
     </>

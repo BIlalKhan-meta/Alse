@@ -23,6 +23,8 @@ import { images } from '../../../utils/images';
 import GeneralModal from '../../../components/GeneralModal';
 import { useNavigation } from '@react-navigation/native';
 import RememberMeContainer from '../../../components/RememberMeContainer';
+import Card from '../../../components/Card';
+import SignupLastBottomText from '../../../components/SignupLastBottomText';
 
 const LoginScreen: React.FC = () => {
 
@@ -50,7 +52,7 @@ const LoginScreen: React.FC = () => {
   const validationSchema: yup.AnySchema<FormValues> = yup.object().shape({
     email: yup
       .string()
-      .email('Email or password is wrong !! TRY AGAIN')
+      .email('Invalid Email')
       .required('Email is required'),
     password: yup
       .string()
@@ -60,7 +62,9 @@ const LoginScreen: React.FC = () => {
 
   const handleSubmit = (values: object, { resetForm }: { resetForm: () => void }) => {
     console.log("SUBMITTED")
-    navigation.navigate("DrawerNavigation", { screen: 'Home' })
+    // navigation.navigate("DrawerNavigation", { screen: 'Home' })
+    navigation.navigate("Home")
+
 
   }
 
@@ -78,21 +82,23 @@ const LoginScreen: React.FC = () => {
           >
 
             <View style={styles.container}>
-              <InterBold style={styles.heading}>Login</InterBold>
+              <Card style={styles.cardStyle}>
+
+                <InterBold style={styles.heading}>Login</InterBold>
 
 
 
 
-              <RegularTextInput
-                label="Email Address"
-                placeholder='Enter Email Address'
-                placeholderTextColor={colors.inputText}
-                onChangeText={handleChange('email')}
-                onBlur={handleBlur('email')}
-                value={values.email}
-                submitted={submitted}
-                errors={errors.email}
-              />
+                <RegularTextInput
+                  label="Email Address"
+                  placeholder='Enter Email Address'
+                  placeholderTextColor={colors.inputText}
+                  onChangeText={handleChange('email')}
+                  onBlur={handleBlur('email')}
+                  value={values.email}
+                  submitted={submitted}
+                  errors={errors.email}
+                />
 
 
 
@@ -100,38 +106,47 @@ const LoginScreen: React.FC = () => {
 
 
 
-              <RegularTextInput
-                label="Password"
-                placeholder='Enter Password'
-                placeholderTextColor={colors.inputText}
-                onChangeText={handleChange('password')}
-                onBlur={handleBlur('password')}
-                value={values.password}
-                submitted={submitted}
-                errors={errors.password}
-                secureTextEntry={securePassword}
-                onPressPassword={() => setSecurePassword(!securePassword)} />
+                <RegularTextInput
+                  label="Password"
+                  placeholder='Enter Password'
+                  placeholderTextColor={colors.inputText}
+                  onChangeText={handleChange('password')}
+                  onBlur={handleBlur('password')}
+                  value={values.password}
+                  submitted={submitted}
+                  errors={errors.password}
+                  secureTextEntry={securePassword}
+                  onPressPassword={() => setSecurePassword(!securePassword)} />
 
 
-              <RememberMeContainer
-                isSelected={isSelected}
-                setIsSelected={setIsSelected}
-                onPress={() => navigation.navigate("ForgotPassword")}
-              />
+                <RememberMeContainer
+                  isSelected={isSelected}
+                  setIsSelected={setIsSelected}
+                  onPress={() => navigation.navigate("ForgotPassword")}
+                />
 
 
-              <CustomButton onPress={() => {
-                // setSuccessModel(true)
-                // setSubmitted(true)
-                // resetForm()
-                // handleSubmit()
-                navigation.navigate("Home")
-              }}>
-                Login
-              </CustomButton>
+                <CustomButton onPress={() => {
+                  // setSuccessModel(true)
+                  setSubmitted(true)
+                  resetForm()
+                  handleSubmit()
+                  // navigation.navigate("Home")
+                }}>
+                  Login
+                </CustomButton>
 
 
+                <View style={styles.bottomStyle}>
 
+                  <SignupLastBottomText
+                    firstText={'Dont have an account?'}
+                    secondText={'Sign Up'}
+                    onPress={() => navigation.navigate('RegisterScreen')}
+                  />
+                </View>
+
+              </Card>
 
             </View>
           </KeyboardAwareScrollView>

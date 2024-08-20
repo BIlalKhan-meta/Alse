@@ -14,7 +14,7 @@ const ViewBlog: React.FC = () => {
     const route = useRoute();
     const { item, title, edit } = route?.params;
     // const title = route?.params?.title || ""
-
+    console.log(title, edit, "Titllleeeeeeeee")
     useLayoutEffect(() => {
         navigation.setOptions({
             headerStyle: {
@@ -31,6 +31,8 @@ const ViewBlog: React.FC = () => {
                             navigation.navigate("AddBlog", { title: "Update Blog" })
                         } else if (title == "Blog Title") {
                             navigation.navigate("AddBlog", { title: "Update Blog" })
+                        } else if (title == "Video") {
+                            navigation.navigate("AddBlog", { title: "Update Video" })
                         } else {
                             navigation.navigate("AddBlog", { title: "Update Article" })
 
@@ -49,7 +51,7 @@ const ViewBlog: React.FC = () => {
 
                 <View>
                     <Image
-                        source={item.imageUrl} // Replace with the correct image URL or require local image
+                        source={item.imageUrl ? item.imageUrl : images.blog1} // Replace with the correct image URL or require local image
                         style={styles.blogImage}
                         resizeMode="cover"
                     />
@@ -63,20 +65,37 @@ const ViewBlog: React.FC = () => {
 
                 <Text style={styles.blogTitle}>{title == "View Blog Title" ? "Blog Title" : title == "View Article Title" ? "Artcile Title" : title}</Text>
                 <Text style={styles.blogContent}>
-                    {item.name}
+                    {item.name ? item.name : item.description}
                 </Text>
+
+                {title == "Video" &&
+                    <InterRegular style={styles.category}>{item.category}</InterRegular>
+
+                }
 
                 {edit && (
 
                     <View style={styles.btnContainer}>
                         <CustomButton style={styles.checkoutButton}
-                            onPress={() => navigation.navigate("CheckoutScreen")}
+                            onPress={() => {
+                                if (title == "My Blogs") {
+                                    navigation.navigate("AddBlog", { title: "Update Blog" })
+                                } else if (title == "Blog Title") {
+                                    navigation.navigate("AddBlog", { title: "Update Blog" })
+                                } else if (title == "Video") {
+                                    navigation.navigate("AddBlog", { title: "Update Video" })
+                                }
+                                else {
+                                    navigation.navigate("AddBlog", { title: "Update Article" })
+
+                                }
+                            }}
                         >
-                            Edit {title == "My Blogs" ? "Blog" : "Article"}
+                            Edit {title == "My Blogs" ? "Blog" : title == "Video" ? "Video" : "Article"}
                         </CustomButton>
 
                         <CustomButton style={styles.shoppingButton} txtstyle={styles.shoppingTxt}>
-                            Inactive {title == "My Blogs" ? "Blog" : "Article"}
+                            Inactive {title == "My Blogs" ? "Blog" : title == "Video" ? "Video" : "Article"}
                         </CustomButton>
                     </View>
                 )}

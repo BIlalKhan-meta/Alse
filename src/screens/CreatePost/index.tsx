@@ -61,6 +61,8 @@ const CreatePost: React.FC = () => {
         <CardComponent
           onImagePress={() => setbottomVisible(true)}
           onVideoPress={() => setbottomVisible(true)}
+          onCameraPress={() => setbottomVisible(true)}
+
         />
         <BottomModal
           visible={bottomVisible}

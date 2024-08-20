@@ -8,7 +8,10 @@ const styles = StyleSheet.create({
         backgroundColor: colors.headerColor,
         alignItems: "center",
         paddingBottom: vh * 2,
-        flex: 1
+        // flex: 1
+    },
+    cardStyle: {
+        marginVertical: vh
     },
     section: {
         marginBottom: vh * 2,
@@ -21,21 +24,32 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         alignItems: "center"
     },
-    dropdownLabel: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        marginBottom: 8,
+    dropDownContainer: {
+        // zIndex: 999999, 
+        backgroundColor: colors.inputcolor
     },
     dropDown: {
-        marginBottom: 16,
-        borderWidth: 0
+        // marginBottom: 16,
+        borderWidth: 0,
+        zIndex: 3,
+        backgroundColor: colors.inputcolor
+
+    },
+    dropdownLabel: {
+        fontSize: fontSizes.f14,
+        color: colors.black,
+        // fontWeight: 'bold',
+        marginBottom: 8,
+        marginTop: vh * 2
+        // zIndex: 100
     },
     submitButton: {
         // backgroundColor: colors.primary, // Assuming colors.primary is your button background color
         paddingVertical: vh * 2,
         alignItems: 'center',
         borderRadius: 8,
-        marginTop: vh * 2
+        marginTop: vh * 2,
+        marginLeft: vw * 2
     },
     imgTxt: {
         color: colors.black,

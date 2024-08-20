@@ -10,6 +10,21 @@ import { images } from '../../utils/images';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { colors } from '../../utils/theme';
 import Checkbox from 'expo-checkbox';
+import InterBoldLabel from '../../components/Text/InterBoldLabel';
+import DropDownTextInput from '../../components/TextInput/DropDownTextInput';
+import Card from '../../components/Card';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+
+
+const statuses = [
+    { label: 'Active', value: 'active' },
+    { label: 'Inactive', value: 'inactive' },
+];
+
+const statuses1 = [
+    { label: 'Information Technology', value: 'it' },
+    { label: 'Artificial Intelligance', value: 'ai' },
+];
 
 
 const AddBlog = () => {
@@ -40,17 +55,25 @@ const AddBlog = () => {
         blogDescription: '',
     };
 
+    const handleDropdownChange = (value: string | null) => {
+        console.log('Selected value:', value);
+    };
+
     return (
-        <ScrollView contentContainerStyle={styles.container}>
+        <KeyboardAwareScrollView contentContainerStyle={styles.container}
+            showsVerticalScrollIndicator={false}
+        >
             <Formik
                 initialValues={initialValues}
                 validationSchema={validationSchema}
                 onSubmit={(values) => console.log(values)}
             >
                 {({ handleChange, handleBlur, handleSubmit, values, errors, touched }) => (
-                    <>
+                    <Card style={styles.cardStyle}>
+
+
                         <RegularTextInput
-                            label={title == ("Add Blog" && "Update Blog") ? "Blog Title *" : "Article Title *"}
+                            label={title == ("Add Blog" && "Update Blog") ? "Blog Title *" : title == "Add Videos" ? "Title *" : "Article Title *"}
                             placeholder="Enter Title"
                             onChangeText={handleChange('blogTitle')}
                             onBlur={handleBlur('blogTitle')}
@@ -58,7 +81,44 @@ const AddBlog = () => {
                             error={touched.blogTitle && errors.blogTitle}
                         />
 
-                        <InterRegular style={styles.imgTxt}>Images *</InterRegular>
+
+                        {(title == "Add Videos" || title == "Update Video") &&
+                            <>
+
+                                <InterRegular style={styles.dropdownLabel}>
+
+                                    Category *
+                                </InterRegular>
+                                <View style={styles.dropDownContainer}>
+
+                                    <DropDownTextInput
+                                        items={statuses1}
+                                        defaultValue='it'
+                                        // placeholder="Select Status"
+                                        onChangeValue={handleDropdownChange('status')}
+                                        style={[styles.dropDown, { zIndex: 1000 }]}
+                                    />
+
+                                </View>
+
+                                <InterRegular style={styles.dropdownLabel}>
+                                    Status *
+                                </InterRegular>
+
+                                <View style={styles.dropDownContainer}>
+
+                                    <DropDownTextInput
+                                        items={statuses}
+                                        defaultValue='active'
+                                        // placeholder="Select Status"
+                                        onChangeValue={handleDropdownChange('status')}
+                                        style={styles.dropDown}
+                                    />
+                                </View>
+                            </>
+                        }
+
+                        <InterRegular style={styles.imgTxt}>{title == "Add Videos" ? "Upload Video*" : "Images *"}</InterRegular>
 
 
                         <TouchableOpacity style={styles.uploadBtn}>
@@ -99,11 +159,12 @@ const AddBlog = () => {
                             </View>
                         </View>
 
-                        <CustomButton onPress={handleSubmit}>{title == ("Add Blog" || "Add Article") ? "Add" : "Update"}</CustomButton>
-                    </>
+                        <CustomButton containerStyle={styles.submitButton}
+                            onPress={handleSubmit}>{title == ("Add Blog" || "Add Article") ? "Add" : title == "Add Videos" ? "Add" : "Update"}</CustomButton>
+                    </Card>
                 )}
             </Formik>
-        </ScrollView>
+        </KeyboardAwareScrollView>
     );
 };
 

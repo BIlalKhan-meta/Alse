@@ -19,6 +19,7 @@ import BackToLogin from '../../../components/BackToLogin';
 import CustomButton from '../../../components/CustomButton';
 import { images } from '../../../utils/images';
 import { colors } from '../../../utils/theme';
+import Card from '../../../components/Card';
 
 const RecoverPassword: React.FC = ({ navigation }) => {
 
@@ -67,46 +68,48 @@ const RecoverPassword: React.FC = ({ navigation }) => {
               style={styles.scrollview}>
 
               <View style={styles.container}>
-                <InterBold style={styles.heading}>Forgot Password</InterBold>
-                <InterRegular style={styles.adddetailsheading}>Enter your email address to receive a verification code</InterRegular>
+                <Card style={styles.cardStyle}>
+
+                  <InterBold style={styles.heading}>Forgot Password</InterBold>
+                  <InterRegular style={styles.adddetailsheading}>Type in a new password</InterRegular>
 
 
-                <RegularTextInput
-                  label="New Password"
-                  placeholder='Enter New Password'
-                  placeholderTextColor={colors.inputText}
-                  onChangeText={handleChange('password')}
-                  onBlur={handleBlur('password')}
-                  value={values.password}
-                  submitted={submitted}
-                  errors={errors.password}
-                  secureTextEntry={securePassword}
-                  onPressPassword={() => setSecurePassword(!securePassword)} />
+                  <RegularTextInput
+                    label="New Password"
+                    placeholder='Enter New Password'
+                    placeholderTextColor={colors.inputText}
+                    onChangeText={handleChange('password')}
+                    onBlur={handleBlur('password')}
+                    value={values.password}
+                    submitted={submitted}
+                    errors={errors.password}
+                    secureTextEntry={securePassword}
+                    onPressPassword={() => setSecurePassword(!securePassword)} />
 
-                <RegularTextInput
-                  label="Confirm New Password"
-                  placeholder='Enter Confirm New Password'
-                  placeholderTextColor={colors.inputText}
-                  onChangeText={handleChange('cpassword')}
-                  onBlur={handleBlur('cpassword')}
-                  value={values.cpassword}
-                  submitted={submitted}
-                  errors={errors.cpassword}
-                  secureTextEntry={secureCPassword}
-                  onPressCPassword={() => setSecureCPassword(!secureCPassword)} />
+                  <RegularTextInput
+                    label="Confirm New Password"
+                    placeholder='Confirm New Password'
+                    placeholderTextColor={colors.inputText}
+                    onChangeText={handleChange('cpassword')}
+                    onBlur={handleBlur('cpassword')}
+                    value={values.cpassword}
+                    submitted={submitted}
+                    errors={errors.cpassword}
+                    secureTextEntry={secureCPassword}
+                    onPressCPassword={() => setSecureCPassword(!secureCPassword)} />
 
-                <CustomButton onPress={() => {
-                  setSubmitted(true)
-                  resetForm()
-                  handleSubmit()
-                  setPasswordRecovered(true)
-                }}>
-                  Update
-                </CustomButton>
+                  <CustomButton onPress={() => {
+                    setSubmitted(true)
+                    resetForm()
+                    handleSubmit()
+                    // setPasswordRecovered(true)
+                  }}>
+                    Update
+                  </CustomButton>
 
-                <BackToLogin
-                  onPress={() => navigation.navigate("Login")} />
-
+                  <BackToLogin
+                    onPress={() => navigation.navigate("Login")} />
+                </Card>
               </View>
             </KeyboardAwareScrollView>
           </>
