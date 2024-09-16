@@ -11,7 +11,7 @@ const styles = StyleSheet.create({
         // flex: 1,
     },
     contentContainer: {
-        marginVertical: vh * 2
+        marginVertical: vh * 1
         // flex: 1,
         // backgroundColor: "yellow"
 
@@ -23,10 +23,16 @@ const styles = StyleSheet.create({
         paddingLeft: vw * 4,
         height: vh * 6
     },
+    heading: {
+        color: colors.black,
+        fontSize: fontSizes.f24,
+        marginTop: vh * 2
+    },
     dropdownLabel: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        marginBottom: 8,
+        color: colors.black,
+        fontSize: fontSizes.f14,
+        marginLeft: vw * 2,
+
     },
     // dropDown: {
     //     marginBottom: 16,
@@ -72,7 +78,10 @@ const styles = StyleSheet.create({
         marginTop: vh * 3,
         marginLeft: vw * 2
     },
-
+    error: {
+        color: colors.redText,
+        marginTop: vh * 1
+    }
 });
 
 export default styles;

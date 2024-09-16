@@ -19,8 +19,7 @@ const styles = StyleSheet.create({
     productImage: {
         width: '100%',
         height: 150,
-        borderTopLeftRadius: 10,
-        borderTopRightRadius: 10,
+        borderRadius: 10,
     },
     heartIconContainer: {
         position: 'absolute',

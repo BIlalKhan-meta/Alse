@@ -46,10 +46,10 @@ const Menu: React.FC = () => {
               <TouchableOpacity onPress={() => navigation.navigate('ChatScreen')}>
                 <InterRegular style={styles.cardText}>Chats and Groups</InterRegular>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => navigation.navigate('Recordings')}>
+              <TouchableOpacity onPress={() => navigation.navigate('SavedChat')}>
                 <InterRegular style={styles.cardText}>Recordings</InterRegular>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => navigation.navigate('Scripts')}>
+              <TouchableOpacity onPress={() => navigation.navigate('SavedScripts')}>
                 <InterRegular style={styles.cardText}>Scripts</InterRegular>
               </TouchableOpacity>
             </View>

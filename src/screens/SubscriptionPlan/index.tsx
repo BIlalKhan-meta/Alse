@@ -4,7 +4,7 @@ import Carousel from 'react-native-snap-carousel';
 import styles from './styles';
 import CustomButton from '../../components/CustomButton';
 import Card from '../../components/Card';
-import { vw } from '../../constant';
+import { vh, vw } from '../../constant';
 import { useNavigation } from '@react-navigation/native';
 
 const { width: viewportWidth } = Dimensions.get('window');
@@ -34,33 +34,39 @@ const plans = [
     }
 ];
 
-const renderItem = ({ item }) => (
-    <View style={styles.planDetails}>
-        <Text style={styles.planTitle}>{item.title}</Text>
-        {item.description.map((desc, index) => (
-            <Text key={index} style={styles.planDescription}>• {desc}</Text>
-        ))}
-        <Text style={styles.price}>Price: {item.price}</Text>
-        <CustomButton style={styles.button}>
-            Choose Plan
-        </CustomButton>
-    </View>
-);
+
 
 const SubscriptionPlan: React.FC = () => {
     const navigation = useNavigation();
+
+    const renderItem = ({ item }) => (
+        <View style={styles.planDetails}>
+            <Text style={styles.planTitle}>{item.title}</Text>
+            {item.description.map((desc, index) => (
+                <Text key={index} style={styles.planDescription}>• {desc}</Text>
+            ))}
+            <Text style={styles.price}>Price: {item.price}</Text>
+            <CustomButton style={styles.button}
+                onPress={() => navigation.navigate("Payment")}
+            >
+                Choose Plan
+            </CustomButton>
+        </View>
+    );
     return (
 
         <ScrollView contentContainerStyle={styles.container}>
             <Card>
-                <Carousel
-                    data={plans}
-                    renderItem={renderItem}
-                    sliderWidth={viewportWidth}
-                    // itemWidth={viewportWidth * 0.6}
-                    itemWidth={vw * 70}
-                    layout={'default'}
-                />
+                <View style={styles.carasouelContainer}>
+                    <Carousel
+                        data={plans}
+                        renderItem={renderItem}
+                        sliderWidth={viewportWidth}
+                        // itemWidth={viewportWidth * 0.6}
+                        itemWidth={vw * 70}
+                        layout={'default'}
+                    />
+                </View>
                 <CustomButton style={styles.logButton}
                     onPress={() => navigation.navigate("SubscriptionLogs")}
                 >

@@ -28,6 +28,9 @@ import Blogs from "../../screens/Blogs";
 import ViewBlog from "../../screens/BlogsDetail";
 import MyBlogs from "../../screens/MyBlogs";
 import AddBlog from "../../screens/AddBlog";
+import SavedChat from "../../screens/SavedChat";
+import SavedChatDetail from "../../screens/SavedChatDetail";
+import SavedScripts from "../../screens/SavedScripts";
 
 
 
@@ -65,6 +68,10 @@ const AppNavigation = () => {
       <Stack.Screen name="ViewBlog" component={ViewBlog} options={NavigationOptions} />
       <Stack.Screen name="MyBlogs" component={MyBlogs} options={NavigationOptions} />
       <Stack.Screen name="AddBlog" component={AddBlog} options={NavigationOptions} />
+      <Stack.Screen name="SavedChat" component={SavedChat} options={NavigationOptions} />
+      <Stack.Screen name="SavedChatDetail" component={SavedChatDetail} options={NavigationOptions} />
+      <Stack.Screen name="SavedScripts" component={SavedScripts} options={NavigationOptions} />
+
 
     </Stack.Navigator>
 

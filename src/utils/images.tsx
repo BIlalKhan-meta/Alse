@@ -50,6 +50,7 @@ export const images = {
   blog1: require('../assets/Icons/blog1.png'),
   upload: require('../assets/Icons/upload.png'),
   edit: require('../assets/Icons/edit.png'),
+  recordingIcon: require('../assets/Icons/recordingIcon.png'),
 
 
 

@@ -16,6 +16,8 @@ import CustomButton from '../../components/CustomButton';
 import InterRegular from '../../components/Text/InterRegular';
 import InterBoldLabel from '../../components/Text/InterBoldLabel';
 import Card from '../../components/Card';
+import InterBoldSmall from '../../components/Text/InterBoldSmall';
+import InterRegularSmallest from '../../components/Text/InterRegularSmallest';
 
 const AddStore: React.FC = () => {
     const navigation = useNavigation();
@@ -25,6 +27,7 @@ const AddStore: React.FC = () => {
 
     const { image, captureImage, chooseImageFromLibrary } = useImagePicker();
     const [shopSuccess, setShopSuccess] = useState(false);
+    const [submitted, setSubmitted] = useState<boolean>(false)
 
 
     useLayoutEffect(() => {
@@ -39,11 +42,6 @@ const AddStore: React.FC = () => {
 
 
 
-    const categories = [
-        { label: 'Category 1', value: 'category1' },
-        { label: 'Category 2', value: 'category2' },
-        { label: 'Category 3', value: 'category3' },
-    ];
     const accountTypes = [
         { label: 'Savings', value: 'savings' },
         { label: 'Checking', value: 'checking' },
@@ -56,12 +54,10 @@ const AddStore: React.FC = () => {
 
     const validationSchema = yup.object().shape({
         shopName: yup.string().required('Shop Name is required'),
-        shopCategory: yup.string().required('Shop Category is required'),
-        shopDescription: yup.string().required('Shop Description is required'),
-        shopImage: yup.string().required('Shop Image is required'),
+        // shopImage: yup.string().required('Shop Image is required'),
         accountHolderName: yup.string().required('Account Holder Name is required'),
-        accountType: yup.string().required('Account Type is required'),
-        bankName: yup.string().required('Bank Name is required'),
+        // accountType: yup.string().required('Account Type is required'),
+        // bankName: yup.string().required('Bank Name is required'),
         routingNumber: yup.string().required('Routing Number is required'),
         confirmRoutingNumber: yup.string()
             .oneOf([yup.ref('routingNumber'), null], 'Routing Numbers must match')
@@ -74,25 +70,28 @@ const AddStore: React.FC = () => {
 
     const initialValues = {
         shopName: '',
-        shopCategory: '',
-        shopDescription: '',
-        shopImage: '',
+        // shopImage: '',
         accountHolderName: '',
-        accountType: accountTypes[0].value,
-        bankName: banks[0].value,
+        // accountType: '',
+        // bankName: '',
         routingNumber: '',
         confirmRoutingNumber: '',
         accountNumber: '',
         confirmAccountNumber: '',
+
     };
 
     const handleDropdownChange = (value: string | null) => {
         console.log('Selected value:', value);
     };
 
-    const handleSubmit = (values: object) => {
-        console.log('Form submitted:', values);
-    };
+    const handleSubmit = (values: object, { resetForm }: { resetForm: () => void }) => {
+        console.log("SUBMITTED")
+        setShopSuccess(true);  // Set the modal for success message
+        resetForm()
+
+    }
+
 
     return (
         <KeyboardAwareScrollView contentContainerStyle={styles.container}
@@ -104,46 +103,29 @@ const AddStore: React.FC = () => {
             <Formik
                 initialValues={initialValues}
                 validationSchema={validationSchema}
-                onSubmit={handleSubmit}
+                onSubmit={(values, { resetForm }) => {
+                    handleSubmit(values, resetForm);
+                }}
             >
-                {({ handleChange, handleBlur, handleSubmit, values, errors, touched }) => (
+                {({ handleChange, handleBlur, handleSubmit, resetForm, values, errors, touched }) => (
                     <>
                         <Card style={styles.contentContainer}>
                             <RegularTextInput
                                 label="Shop Name *"
                                 placeholder="Enter Shop Name"
-                                placeholderTextColor={colors.darkText}
+                                placeholderTextColor={colors.inputText}
                                 onChangeText={handleChange('shopName')}
                                 onBlur={handleBlur('shopName')}
                                 value={values.shopName}
-                                error={touched.shopName && errors.shopName}
+                                submitted={submitted}
+                                errors={errors.shopName}
                                 style={styles.inputStyle}
-                            />
-                            <InterBoldLabel style={styles.dropdownLabel}>
-                                Shop Category *
-                            </InterBoldLabel>
-                            <DropDownTextInput
-                                items={categories}
-                                placeholder="Select Category"
-                                onChangeValue={handleDropdownChange}
-                                style={styles.dropDown}
-                            />
-                            <RegularTextInput
-                                label="Shop Description *"
-                                placeholder="Enter Shop Description"
-                                placeholderTextColor={colors.darkText}
-                                onChangeText={handleChange('shopDescription')}
-                                onBlur={handleBlur('shopDescription')}
-                                value={values.shopDescription}
-                                error={touched.shopDescription && errors.shopDescription}
-                                style={styles.inputStyle}
-                                multiline
-                                numberOfLines={4}
                             />
 
-                            <InterBoldLabel style={styles.dropdownLabel}>
-                                Shop Image*
-                            </InterBoldLabel>
+
+                            <InterRegular style={styles.dropdownLabel}>
+                                Banner Image*
+                            </InterRegular>
 
                             <TouchableOpacity style={styles.uploadBtn}
                                 onPress={() => captureImage('photo')}
@@ -155,6 +137,11 @@ const AddStore: React.FC = () => {
                             </TouchableOpacity>
 
 
+                            <InterBoldSmall style={styles.heading}>
+                                Bank Information
+                            </InterBoldSmall>
+
+
                             <RegularTextInput
                                 label="Account Holder Number *"
                                 placeholder="Enter account holder Name"
@@ -162,39 +149,82 @@ const AddStore: React.FC = () => {
                                 onChangeText={handleChange('accountHolderName')}
                                 onBlur={handleBlur('accountHolderName')}
                                 value={values.accountHolderName}
-                                error={touched.accountHolderName && errors.accountHolderName}
+                                errors={touched.accountHolderName && errors.accountHolderName}
                                 style={styles.inputStyle}
+                                submitted={submitted}
+
                             />
 
 
 
                             <InterRegular style={styles.countryLabel}>
-                                Account type
+                                Account type *
                             </InterRegular>
 
                             <View style={styles.dropdownContainer}>
                                 <DropDownTextInput
                                     items={accountTypes}
-                                    // defaultValue='all'
+                                    defaultValue={accountTypes[0].value}
                                     placeholder="Select Account type"
-                                    onChangeValue={handleDropdownChange}
+                                    onChangeValue={() => {
+                                        handleChange('accountType');
+                                        handleBlur('accountType')
+                                        handleDropdownChange;
+                                    }}
                                     style={styles.dropDown}
+                                    error={touched.accountType && errors.accountType}
                                 />
                             </View>
 
+                            {/* {errors.accountType && <InterRegularSmallest style={styles.error}>
+                                {errors.accountType}
+                            </InterRegularSmallest>} */}
+
                             <InterRegular style={styles.countryLabel}>
-                                Bank Name
+                                Bank Name *
                             </InterRegular>
 
                             <View style={[styles.dropdownContainer, { zIndex: 4 }]}>
                                 <DropDownTextInput
                                     items={banks}
-                                    // defaultValue='all'
+                                    defaultValue={banks[0].value}
                                     placeholder="Select Bank Name"
                                     onChangeValue={handleDropdownChange}
                                     style={styles.dropDown}
+
                                 />
                             </View>
+
+                            {/* {errors.bankName && <InterRegularSmallest style={styles.error}>
+                                {errors.bankName}
+                            </InterRegularSmallest>} */}
+
+
+                            <RegularTextInput
+                                label="Account Number *"
+                                placeholder="Enter Account Number"
+                                placeholderTextColor={colors.inputText}
+                                onChangeText={handleChange('accountNumber')}
+                                onBlur={handleBlur('accountNumber')}
+                                value={values.accountNumber}
+                                errors={touched.accountNumber && errors.accountNumber}
+                                style={styles.inputStyle}
+                                submitted={submitted}
+
+                            />
+
+                            <RegularTextInput
+                                label="Confirm Account Number *"
+                                placeholder="Confirm Account Number"
+                                placeholderTextColor={colors.inputText}
+                                onChangeText={handleChange('confirmAccountNumber')}
+                                onBlur={handleBlur('confirmAccountNumber')}
+                                value={values.confirmAccountNumber}
+                                errors={touched.confirmAccountNumber && errors.confirmAccountNumber}
+                                style={styles.inputStyle}
+                                submitted={submitted}
+
+                            />
 
 
 
@@ -205,8 +235,10 @@ const AddStore: React.FC = () => {
                                 onChangeText={handleChange('routingNumber')}
                                 onBlur={handleBlur('routingNumber')}
                                 value={values.routingNumber}
-                                error={touched.routingNumber && errors.routingNumber}
+                                errors={touched.routingNumber && errors.routingNumber}
                                 style={styles.inputStyle}
+                                submitted={submitted}
+
                             />
 
                             <RegularTextInput
@@ -216,35 +248,18 @@ const AddStore: React.FC = () => {
                                 onChangeText={handleChange('confirmRoutingNumber')}
                                 onBlur={handleBlur('confirmRoutingNumber')}
                                 value={values.confirmRoutingNumber}
-                                error={touched.confirmRoutingNumber && errors.confirmRoutingNumber}
+                                errors={touched.confirmRoutingNumber && errors.confirmRoutingNumber}
                                 style={styles.inputStyle}
+                                submitted={submitted}
+
                             />
 
-                            <RegularTextInput
-                                label="Account Number *"
-                                placeholder="Enter Account Number"
-                                placeholderTextColor={colors.inputText}
-                                onChangeText={handleChange('accountNumber')}
-                                onBlur={handleBlur('accountNumber')}
-                                value={values.accountNumber}
-                                error={touched.accountNumber && errors.accountNumber}
-                                style={styles.inputStyle}
-                            />
 
-                            <RegularTextInput
-                                label="Confirm Account Number *"
-                                placeholder="Confirm Account Number"
-                                placeholderTextColor={colors.inputText}
-                                onChangeText={handleChange('confirmAccountNumber')}
-                                onBlur={handleBlur('confirmAccountNumber')}
-                                value={values.confirmAccountNumber}
-                                error={touched.confirmAccountNumber && errors.confirmAccountNumber}
-                                style={styles.inputStyle}
-                            />
 
                             <CustomButton style={styles.submitButton} onPress={() => {
+
+                                setSubmitted(true)
                                 handleSubmit();
-                                setShopSuccess(true);
                             }}>
                                 {title == "Edit Shop" ? "UPDATE" : "CREATE"}
                             </CustomButton>
@@ -260,6 +275,7 @@ const AddStore: React.FC = () => {
                             primaryBtn={true}
                             onPress={() => {
                                 setShopSuccess(false);
+                                navigation.navigate("Shop")
                             }}
                         />
                     </>

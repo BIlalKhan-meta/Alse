@@ -68,7 +68,12 @@ const styles = StyleSheet.create({
         alignItems: "center",
     },
     shoppingTxt: {
-        color: colors.themeColor
+        color: colors.themeColor,
+        fontSize: fontSizes.f14
+    },
+    buttonTxt: {
+        fontSize: fontSizes.f14
+
     },
     btnContainer: {
         flexDirection: "row",

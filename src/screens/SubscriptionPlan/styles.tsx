@@ -62,6 +62,12 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: 'bold',
     },
+    carasouelContainer: {
+        height: vh * 65,
+        alignItems: "center",
+        justifyContent: "center",
+        paddingTop: vh * 2
+    }
 });
 
 export default styles;

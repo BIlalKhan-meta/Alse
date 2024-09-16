@@ -44,27 +44,27 @@ const DropDownTextInput: React.FC<DropdownComponentProps> = ({
       }}
       setItems={setDropdownItems}
       placeholder={placeholder}
-      style={[styles.dropdown,style]}
-      
-      iconContainerStyle={{backgroundColor:colors.pattenBlue}}
-    
+      style={[styles.dropdown, style]}
+
+      iconContainerStyle={{ backgroundColor: colors.pattenBlue }}
+
     />
   );
 };
 
 const styles = StyleSheet.create({
-    dropdown: {
-      backgroundColor: '#C7EEFF',
+  dropdown: {
+    backgroundColor: '#C7EEFF',
     //   borderColor: 'grey',
-      borderRadius: 10,
-      opacity:0.3,
-      color:"red",
-      
-    },
-  
-    icon: {
-      color: 'grey',
-    },
-  });
+    borderRadius: 10,
+    opacity: 0.3,
+    color: "red",
+
+  },
+
+  icon: {
+    color: 'grey',
+  },
+});
 
 export default DropDownTextInput;

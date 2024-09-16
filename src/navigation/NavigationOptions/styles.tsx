@@ -5,7 +5,7 @@ import fonts from '../../assets/fonts';
 
 const styles = StyleSheet.create({
     header: {
-        backgroundColor: colors.white,
+        backgroundColor: colors.headerColor,
         width: vw * 100
     },
 

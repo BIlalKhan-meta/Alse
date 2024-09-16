@@ -77,6 +77,7 @@ const ViewBlog: React.FC = () => {
 
                     <View style={styles.btnContainer}>
                         <CustomButton style={styles.checkoutButton}
+                            txtstyle={styles.buttonTxt}
                             onPress={() => {
                                 if (title == "My Blogs") {
                                     navigation.navigate("AddBlog", { title: "Update Blog" })

@@ -7,28 +7,9 @@ import { Image, Settings, Text, TouchableOpacity, View } from 'react-native';
 // import BagIcon from '../../assets/icons/bagicon.png'
 import styles from './styles';
 import { images } from '../../utils/images';
-import ChatScreen from '../../screens/ChatScreen';
-import MyPosts from '../../screens/MyPosts';
-import CreatePost from '../../screens/CreatePost';
-import Cart from '../../screens/Cart';
-import Marketplace from '../../screens/MarketPlace';
-import Shop from '../../screens/Shop';
-import ProductView from '../../screens/ProductView';
-import BlockedUsers from '../../screens/BlockedUsers';
-import MyOrders from '../../screens/MyOrders';
-import MyOrderDetail from '../../screens/MyOrderDetail';
-import CheckoutScreen from '../../screens/Checkout';
-import PaymentLogs from '../../screens/PaymentLogs';
-import MyProfileUpdate from '../../screens/MyProfileUpdate';
-import MyProfilePassword from '../../screens/MyProfilePassword';
-import Payment from '../../screens/Payment';
-import AddStore from '../../screens/AddStore';
-import SubscriptionPlan from '../../screens/SubscriptionPlan';
-import SubscriptionLogs from '../../screens/PaymentLogs';
-import Blogs from '../../screens/Blogs';
-import ViewBlog from '../../screens/BlogsDetail';
-import MyBlogs from '../../screens/MyBlogs';
-import AddBlog from '../../screens/AddBlog';
+import SavedChatDetail from '../../screens/SavedChatDetail';
+import SavedScripts from '../../screens/SavedScripts';
+
 
 
 interface RouteParams {
@@ -64,7 +45,11 @@ const titles: { [key: string]: string } = {
     AddStore: "Create Shop",
     SubscriptionPlan: "Subscription Plan",
     SubscriptionLogs: "Subscription Logs",
-    Blogs: "Blogs"
+    Blogs: "Blogs",
+    SavedChat: "Saved Chat",
+    SavedChatDetail: "Saved Chat",
+    SavedScripts: "Saved Scripts",
+
     // AddProduct: "Add Product",
     // WishList: "Wishlist",
 
@@ -82,7 +67,8 @@ const backButtonRoutes: { [key: string]: boolean } = {
     SubscriptionLogs: true,
     ViewBlog: true,
     MyBlogs: true,
-    AddBlog: true
+    AddBlog: true,
+    SavedChatDetail: true
 };
 
 const getTitle: React.FC<NavigationOptionsProps> = (props) => {
@@ -155,7 +141,7 @@ const NavigationOptions: React.FC<NavigationOptionsProps> = (props) => {
         headerTitleAlign: 'left',
         headerTransparent: props?.route?.name === 'NearestRestaurent' ? true : false,
         headerStyle: styles.header,
-        headerTitleStyle: props?.route?.name == 'NearestRestaurent' ? styles.headerTitleWhite : styles.headerTitle,
+        headerTitleStyle: styles.headerTitle,
         title: getTitle(props),
         headerLeft: () => getHeaderLeft(props),
         headerRight: () => getHeaderRight(props),
