@@ -43,7 +43,7 @@ const MyOrders: React.FC = () => {
                 </View>
             ),
         });
-    }, [navigation]);
+    }, [navigation, modalVisible]);
 
     return (
         <ScrollView

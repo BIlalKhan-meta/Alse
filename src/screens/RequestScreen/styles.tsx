@@ -5,9 +5,9 @@ import { colors } from '../../utils/theme';
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
+        backgroundColor: colors.headerColor,
         paddingHorizontal: 15,
-        paddingTop: 50,
+        paddingTop: 10,
         paddingBottom: 50,
     },
     activeContainer: {
@@ -67,6 +67,37 @@ const styles = StyleSheet.create({
     actionButtonText: {
         fontSize: fontSizes.f12,
         color: '#fff',
+    },
+    icon: {
+        width: 30,
+        height: 30,
+        marginLeft: 20,
+    },
+    title: {
+        fontSize: fontSizes.f24,
+        color: colors.black,
+        fontWeight: "bold"
+    },
+    searchContainer: {
+        flex: 1, // Ensures the container takes up full space in the header
+        // flexDirection: 'row',
+        // justifyContent: 'center', // Center horizontally
+        // alignItems: 'center', // Center vertically
+        // paddingHorizontal: 20, // Padding between left and right icons
+        // height: 10,
+        // marginLeft: vw * 6,
+    },
+    searchInput: {
+        // flex: 1, // Take full width
+        // marginHorizontal: 10, // Add space on left and right of TextInput
+        backgroundColor: '#fff', // Example background color
+        borderRadius: 8,
+        // paddingVertical: 5,
+        paddingHorizontal: 15, // Adjust horizontal padding for better input feel
+        fontSize: 16,
+        elevation: 2, // Adds shadow
+        width: vw * 70,
+        height: vh * 5
     },
 });
 

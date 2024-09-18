@@ -18,7 +18,7 @@ const MarketPlaceNavigation = () => {
         <Stack.Navigator
             initialRouteName="Marketplace"
             screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="Marketplace" component={Marketplace} />
+            <Stack.Screen name="Marketplace" component={Marketplace} options={NavigationOptions} />
 
 
             <Stack.Screen name="Cart" component={Cart} options={NavigationOptions} />

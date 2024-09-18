@@ -3,7 +3,7 @@ import { colors } from '../../utils/theme';
 import { fontSizes, vh, vw } from '../../constant';
 
 const styles = StyleSheet.create({
-    contentCOntainer: { marginBottom: 40, backgroundColor: colors.white },
+    contentCOntainer: { marginBottom: 40, backgroundColor: colors.headerColor },
     maincontainer: { backgroundColor: colors.white, },
     container: {
         // marginVertical: vh * 1.5,

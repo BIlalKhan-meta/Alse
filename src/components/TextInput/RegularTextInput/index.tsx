@@ -16,6 +16,7 @@ import { images } from "../../../utils/images";
 
 interface RegularTextInputProps extends TextInputProps {
   style?: StyleProp<ViewStyle>;
+  containerStyle?: StyleProp<ViewStyle>;
   label?: string;
   secureTextEntry?: boolean;
   onPressCurrentPassword?: () => void;
@@ -29,15 +30,16 @@ interface RegularTextInputProps extends TextInputProps {
 }
 
 const RegularTextInput: React.FC<RegularTextInputProps> = (props) => {
+  const textInputStyle = props.multiline ? styles.textinputMultiline : styles.textinput;
 
   return (
     <>
-      <View style={styles.container}>
+      <View style={[styles.container, props.containerStyle]}>
         {props.label &&
           <InterRegular style={[styles.label, props.labelStyle]}>
             {props?.label}
           </InterRegular>}
-        <TextInputWrapper style={[styles.textinput, props.style]}
+        <TextInputWrapper style={[textInputStyle, props.style]}
           {...props}
           maxLength={props.maxLength}
         />
@@ -67,11 +69,13 @@ const RegularTextInput: React.FC<RegularTextInputProps> = (props) => {
         <Image source={props?.secureTextEntry ? EyeIcon : VisibilityOffIcon}/>
         </TouchableOpacity>} */}
 
-        {props?.submitted && props?.errors &&
-          <InterRegularSmallest style={styles.error}>
-            {props?.errors}
-          </InterRegularSmallest>}
+
       </View>
+
+      {props?.submitted && props?.errors &&
+        <InterRegularSmallest style={styles.error}>
+          {props?.errors}
+        </InterRegularSmallest>}
     </>
   )
 }
@@ -97,6 +101,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     // backgroundColor:'rgba(48, 86, 112, 0.05)',
     backgroundColor: colors.inputcolor,
+  },
+  textinputMultiline: {
+    color: colors.inputText,
+    fontSize: fontSizes.f11,
+    height: vh * 12,
+    marginTop: vh * 2,
+    width: vw * 85,
+    fontWeight: '300',
+    borderColor: 'rgba(48, 86, 112, 0.05)',
+    borderWidth: 1,
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    // backgroundColor:'rgba(48, 86, 112, 0.05)',
+    backgroundColor: colors.inputcolor,
+    textAlignVertical: 'top',
+
   },
   eyeicon: {
     position: 'absolute',

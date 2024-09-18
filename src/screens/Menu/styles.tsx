@@ -5,7 +5,8 @@ import { colors } from "../../utils/theme";
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        paddingBottom: vh * 4
+        paddingBottom: vh * 4,
+        backgroundColor: colors.headerColor
         // alignItems: 'center',
         // justifyContent: 'center',
     },

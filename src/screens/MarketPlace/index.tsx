@@ -120,16 +120,16 @@ const Marketplace: React.FC = () => {
     setSearchResults([`Shop 1 - ${query}`, `Shop 2 - ${query}`, `Shop 3 - ${query}`]);
   };
 
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      headerShown: true,
-      title: "Shops",
-      headerStyle: {
-        backgroundColor: colors.headerColor
-      },
+  // useLayoutEffect(() => {
+  //   navigation.setOptions({
+  //     headerShown: true,
+  //     title: "Shops",
+  //     headerStyle: {
+  //       backgroundColor: colors.headerColor
+  //     },
 
-    });
-  }, [navigation]);
+  //   });
+  // }, [navigation]);
   return (
     <ScrollView
       showsVerticalScrollIndicator={false}

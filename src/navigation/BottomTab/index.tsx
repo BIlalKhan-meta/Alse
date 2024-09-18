@@ -12,6 +12,7 @@ import Menu from '../../screens/Menu';
 import InterBold from '../../components/Text/InterBold';
 import NavigationOptions from "../NavigationOptions";
 import MarketPlaceNavigation from '../MarketPlaceNavigator';
+import MenuNavigation from '../MenuNavigation';
 
 
 const TabNavigation = () => {
@@ -26,6 +27,7 @@ const TabNavigation = () => {
                 tabBarStyle: styles.tabStyle,
             }}
             initialRouteName='Home'
+
         >
             <Tab.Screen
                 name="Home"
@@ -48,6 +50,7 @@ const TabNavigation = () => {
                             </InterBold>
                         </View>
                     ),
+                    ...NavigationOptions
                 }}
             />
             <Tab.Screen
@@ -99,7 +102,7 @@ const TabNavigation = () => {
             />
             <Tab.Screen
                 name="Menu"
-                component={Menu}
+                component={MenuNavigation}
                 options={{
                     tabBarIcon: ({ focused }) => (
                         <View style={styles.tabButton}>
@@ -118,6 +121,7 @@ const TabNavigation = () => {
                             </InterBold>
                         </View>
                     ),
+                    ...NavigationOptions
                 }}
             />
         </Tab.Navigator>

@@ -9,6 +9,10 @@ import styles from './styles';
 import { images } from '../../utils/images';
 import SavedChatDetail from '../../screens/SavedChatDetail';
 import SavedScripts from '../../screens/SavedScripts';
+import Home from '../../screens/Home';
+import Menu from '../../screens/Menu';
+import Notifications from '../../screens/Notifications';
+import ContactUs from '../../screens/ContactUs';
 
 
 
@@ -29,6 +33,7 @@ const titles: { [key: string]: string } = {
     CreatePost: "Create Post",
     Cart: "My Cart",
     Marketplace: "Shops",
+    Menu: "Menu",
     Shop: "Shop",
     ProductView: "Product View",
     BlockedUsers: "Blocked Users",
@@ -49,9 +54,12 @@ const titles: { [key: string]: string } = {
     SavedChat: "Saved Chat",
     SavedChatDetail: "Saved Chat",
     SavedScripts: "Saved Scripts",
-
+    Home: "News Feed",
+    Notifications: "Notifications",
     // AddProduct: "Add Product",
     // WishList: "Wishlist",
+    ContactUs: "Contact Us",
+    RequestScreen: 'RequestScreen'
 
 };
 const backButtonRoutes: { [key: string]: boolean } = {
@@ -68,7 +76,9 @@ const backButtonRoutes: { [key: string]: boolean } = {
     ViewBlog: true,
     MyBlogs: true,
     AddBlog: true,
-    SavedChatDetail: true
+    SavedChatDetail: true,
+    RequestScreen: false
+
 };
 
 const getTitle: React.FC<NavigationOptionsProps> = (props) => {
@@ -88,18 +98,18 @@ export const getHeaderRight: React.FC<NavigationOptionsProps> = (props) => {
         return (
             <View style={styles.notificationandshopcontainer}>
                 <TouchableOpacity style={[styles.iconContainer, { marginRight: 4 }]}
-                    onPress={() => props.navigation.navigate("ChatScreen")}
+                    onPress={() => props.navigation.navigate("Notifications")}
                 >
                     <View style={styles.notificationcontainer}>
-                        <Image source={images.chat} style={styles.notificationicon} />
+                        <Image source={images.bellIcon} style={styles.notificationicon} />
                     </View>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.iconContainer}>
+                {/* <TouchableOpacity style={styles.iconContainer}>
                     <View style={styles.notificationcontainer}>
                         <Image source={images.search} style={styles.notificationicon} />
                     </View>
-                </TouchableOpacity>
+                </TouchableOpacity> */}
 
             </View>
 
@@ -127,9 +137,13 @@ const getHeaderLeft: React.FC<NavigationOptionsProps> = (props) => {
 
             </TouchableOpacity>
         );
+    } else {
+        return (
+            <View></View>
+        )
     }
 
-    return <></>;
+    // return <></>;
 };
 
 const NavigationOptions: React.FC<NavigationOptionsProps> = (props) => {
@@ -142,6 +156,8 @@ const NavigationOptions: React.FC<NavigationOptionsProps> = (props) => {
         headerTransparent: props?.route?.name === 'NearestRestaurent' ? true : false,
         headerStyle: styles.header,
         headerTitleStyle: styles.headerTitle,
+        headerBackTitleVisible: false,
+        headerBackVisible: false,
         title: getTitle(props),
         headerLeft: () => getHeaderLeft(props),
         headerRight: () => getHeaderRight(props),

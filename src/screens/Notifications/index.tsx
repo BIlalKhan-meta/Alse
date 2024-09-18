@@ -18,6 +18,7 @@ import { images } from "../../utils/images";
 import { vh, vw } from "../../constant";
 import InterMedium from "../../components/Text/InterMedium";
 import HorizontalSeparator from "../../components/HorizontalSeparator";
+import { useLayoutEffect } from "react";
 
 const NotificationsData = [
     {
@@ -74,6 +75,16 @@ const Notifications: React.FC = () => {
     const handleDropdownChange = (value: string | null) => {
         console.log('Selected value:', value);
     };
+    useLayoutEffect(() => {
+        navigation.setOptions({
+            headerRight: () => (
+                <TouchableOpacity style={[styles.readBtn, { borderColor: colors.themeColor, marginBottom: 10 }]}>
+                    <InterBold style={[styles.readTxt, { color: colors.themeColor }]}>Mark As All Read</InterBold>
+
+                </TouchableOpacity>
+            ),
+        });
+    }, [navigation]);
 
     const renderItem = ({ item }) => {
         console.log(item, "Itemsss")
@@ -112,24 +123,7 @@ const Notifications: React.FC = () => {
 
         <View style={styles.contentCOntainer}>
 
-            <View style={styles.statusConatiner}>
-                <HeaderComponent label="Notifications" />
-                {/* <InterMedium style={styles.label2}>Showing</InterMedium>
-                <View style={styles.dropdownContainer}>
-                    <DropDownTextInput
-                        items={items}
-                        defaultValue='all'
-                        // placeholder="Select a fruit"
-                        onChangeValue={handleDropdownChange}
-                        style={styles.dropDown}
-                    />
-                </View> */}
 
-                <TouchableOpacity style={[styles.readBtn, { borderColor: colors.themeColor, marginBottom: 10 }]}>
-                    <InterBold style={[styles.readTxt, { color: colors.themeColor }]}>Mark As All Read</InterBold>
-
-                </TouchableOpacity>
-            </View>
             <Card style={styles.cardContainer}>
 
                 <FlatList

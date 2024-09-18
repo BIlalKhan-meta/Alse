@@ -1,14 +1,21 @@
-import React, { useState } from 'react';
-import { View, ScrollView, TouchableOpacity, FlatList, Image } from 'react-native';
+import React, { useLayoutEffect, useState } from 'react';
+import { View, ScrollView, TouchableOpacity, FlatList, Image, TextInput } from 'react-native';
 import Card from '../../components/Card';
 import styles from './styles';
 import HeaderComponent from '../../components/HeaderComponent';
 import InterRegular from '../../components/Text/InterRegular';
 import { images } from '../../utils/images';
 import HorizontalSeparator from '../../components/HorizontalSeparator';
+import { useNavigation } from '@react-navigation/native';
+import InterBold from '../../components/Text/InterBold';
 
 const RequestScreen: React.FC = () => {
-    const [active, setActive] = useState<number>(1); // 1: Follow Request, 2: Followers, 3: Following
+    const navigation = useNavigation();
+
+    const [active, setActive] = useState<number>(1);
+    const [showSearch, setShowSearch] = useState(false);
+    const [searchTxt, setSearchTxt] = useState('');
+
 
     const handleActionButton = (type: string, userId: string) => {
         if (type === 'follow') {
@@ -83,15 +90,47 @@ const RequestScreen: React.FC = () => {
         </>
     );
 
+    useLayoutEffect(() => {
+        navigation.setOptions({
+            headerRight: () => (
+                <TouchableOpacity
+                    onPress={() => {
+                        setShowSearch(!showSearch);
+                        // setSearchTxt('');
+                        // setSearchResults([]); // Clear search results
+                        // setIsSearching(false); // Reset searching state
+                    }}>
+                    <Image source={images.searchIcon} style={styles.icon} />
+                </TouchableOpacity>
+            ),
+            headerTitle: () => {
+                return (
+                    showSearch ? (
+                        <View style={styles.searchContainer}>
+                            <TextInput
+                                value={searchTxt}
+                                style={styles.searchInput}
+                                placeholder="Search..."
+                                // onSubmitEditing={() => getSearchChatApi()}
+                                // onChangeText={text => setSearchTxt(text)}
+                                returnKeyType="search"
+                            />
+                        </View>
+                    ) : (
+                        <>
+                            <InterBold style={styles.title}>{active === 1 ? "Follow Request" : active === 2 ? "Followers" : "Following"}</InterBold>
+                        </>
+                    ))
+            },
+
+        });
+
+    }, [navigation, showSearch, searchTxt, active]);
+
     return (
         <ScrollView showsVerticalScrollIndicator={false}>
             <View style={styles.container}>
-                {/* Header */}
-                <HeaderComponent
-                    label={active == 1 ? 'Follow Request' : active == 2 ? "Followers" : "Following"}
-                    onBackPress={() => navigation.goBack()}
-                    searchVisible={true}
-                />
+
 
                 <Card>
                     <View style={styles.activeContainer}>

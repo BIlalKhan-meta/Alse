@@ -97,7 +97,9 @@ const PostComponent: React.FC<PostProps> = ({
       <View style={styles.postActions}>
         <View style={styles.leftActions}>
           <Image
-            source={images.heartIcon}
+            // source={images.like}
+            source={images.likeFill}
+            tintColor={colors.blue}
             style={styles.icon}
           />
           <InterRegular style={styles.actionText}>{likes}</InterRegular>

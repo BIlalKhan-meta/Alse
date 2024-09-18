@@ -9,13 +9,15 @@ import InterRegular from '../Text/InterRegular';
 import CustomButton from '../CustomButton';
 import QunatityControls from '../QuantityControls';
 import Selection from '../Selection';
+import { useNavigation } from '@react-navigation/native';
 
 const colorsType = ['red', 'blue', 'green',];
 const sizes = ['S', 'M', 'L'];
 
 const StoreOrderComponent: React.FC = () => {
-    const [selectedColor, setSelectedColor] = useState<string | null>(null);
-    const [selectedSize, setSelectedSize] = useState<string | null>(null);
+    const navigation = useNavigation();
+    const [selectedColor, setSelectedColor] = useState<string | null>('red');
+    const [selectedSize, setSelectedSize] = useState<string | null>('L');
 
 
 
@@ -66,15 +68,19 @@ const StoreOrderComponent: React.FC = () => {
                     setSelectedOption={setSelectedSize}
                 />
             </View>
+
+
             <View style={styles.btnContainer}>
-                <CustomButton style={styles.checkoutButton}>
+                <CustomButton containerStyle={styles.checkoutButton}
+                    onPress={() => navigation.navigate("Cart")}
+                >
                     Add to Cart
                 </CustomButton>
 
                 <QunatityControls
                     quantity={1}
-                    onIncrement={() => handleIncrement(index)}
-                    onDecrement={() => handleDecrement(index)}
+                    onIncrement={() => handleIncrement(1)}
+                    onDecrement={() => handleDecrement(1)}
                 />
             </View>
 

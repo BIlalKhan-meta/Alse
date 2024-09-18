@@ -15,7 +15,7 @@ const styles = StyleSheet.create({
         // height: vh * 100
     },
     cardContainer: {
-        flex:1,
+        flex: 1,
         margin: vh * 2,
         // backgroundColor:"yellow"
     },
@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
         // top: 0,
         // position: "absolute"
     },
- 
+
     headericonButton: {
         marginRight: vw * 2.1,
         marginTop: vh * 2,
@@ -164,6 +164,10 @@ const styles = StyleSheet.create({
         backgroundColor: colors.darkGray,
         marginRight: 8,
     },
+    buttonText: {
+        color: colors.black,
+        fontSize: fontSizes.f40
+    }
 });
 
 export default styles;

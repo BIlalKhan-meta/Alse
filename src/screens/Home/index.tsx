@@ -85,13 +85,13 @@ const Home: React.FC = () => {
     <ScrollView showsVerticalScrollIndicator={false}>
       <TouchableWithoutFeedback onPress={() => handleDotPress(null)}>
         <View style={styles.container}>
-          <HeaderComponent
+          {/* <HeaderComponent
             label={'News Feed'}
             onBackPress={() => navigation.goBack()}
             notifiVisible={true}
             onNofiPress={() => navigation.navigate("Notifications")}
             searchVisible={true}
-          />
+          /> */}
 
           <CardComponent
             onImagePress={() => navigation.navigate("CreatePost")}

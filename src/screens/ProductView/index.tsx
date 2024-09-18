@@ -14,12 +14,19 @@ import { vh } from '../../constant';
 import InterRegular from '../../components/Text/InterRegular';
 import InterBoldAverage from '../../components/Text/InterBoldAverage';
 import InterMedium from '../../components/Text/InterMedium';
+import Swiper from 'react-native-swiper';
 
 
 
 const productFilter = [
     { name: 'a', id: 1 },
     { name: 'b', id: 2 },
+];
+
+const bannerImages = [
+    images.shop11,
+    images.shop1,
+    images.shop3, // Add more images if needed
 ];
 
 
@@ -55,106 +62,123 @@ const ProductView: React.FC = () => {
         //     showsVerticalScrollIndicator={false}
         // style={{ flex: 1 }}
         // >
-            <TouchableWithoutFeedback
-                onPress={() => setModalVisible(false)}
-            >
+        <TouchableWithoutFeedback
+            onPress={() => setModalVisible(false)}
+        >
 
 
-                <View style={[styles.container,
-                    Platform.OS == "ios" && { height: vh * 100 }
-                ]}>
+            <View style={[styles.container,
+            Platform.OS == "ios" && { height: vh * 100 }
+            ]}>
 
 
-                    <Card style={styles.cardContainer}>
+                <Card style={styles.cardContainer}>
 
 
-                        <View style={styles.banner}>
-                            <Image source={images.shop11} style={styles.imageStyle} />
+                    <View style={styles.banner}>
+                        {/* <Image source={images.shop11} style={styles.imageStyle} /> */}
+                        <Swiper
+                            // autoplay={true}
+                            showsPagination={false}
+                            // loop={true}
+                            // dotStyle={styles.dotStyle}
+                            // activeDotStyle={styles.activeDotStyle}
+                            // autoplayTimeout={3}
+                            showsButtons={true}
+                            nextButton={<Text style={styles.buttonText}>›</Text>}
+                            prevButton={<Text style={styles.buttonText}>‹</Text>}
+                        >
+                            {bannerImages.map((image, index) => (
+                                <View key={index}>
+                                    <Image source={image} style={styles.imageStyle} />
+                                </View>
+                            ))}
+                        </Swiper>
 
+                    </View>
+
+
+                    <View style={styles.productDetails}>
+
+                        <InterMedium style={styles.productName}>{"Product Name"}</InterMedium>
+                        <View style={styles.priceContainer}>
+                            <InterRegular style={styles.ratingTxt}>4.5 (100+)</InterRegular>
+                            <InterBoldAverage style={styles.productPrice}>$45</InterBoldAverage>
                         </View>
 
+                    </View>
 
-                        <View style={styles.productDetails}>
+                    <View style={styles.vendorContainer}>
+                        <InterRegular style={styles.vendorTxt}>Vendor Abc</InterRegular>
 
-                            <InterMedium style={styles.productName}>{"Product Name"}</InterMedium>
-                            <View style={styles.priceContainer}>
-                                <InterRegular style={styles.ratingTxt}>4.5 (100+)</InterRegular>
-                                <InterBoldAverage style={styles.productPrice}>$45</InterBoldAverage>
-                            </View>
-
+                        <View style={styles.bulletTextContainer}>
+                            <View style={styles.bullet} />
+                            <InterRegular style={styles.vendorTxt}>Category</InterRegular>
                         </View>
 
-                        <View style={styles.vendorContainer}>
-                            <InterRegular style={styles.vendorTxt}>Vendor Abc</InterRegular>
-
-                            <View style={styles.bulletTextContainer}>
-                                <View style={styles.bullet} />
-                                <InterRegular style={styles.vendorTxt}>Brand A</InterRegular>
-                            </View>
-
-                            <View style={styles.bulletTextContainer}>
-                                <View style={styles.bullet} />
-                                <InterRegular style={styles.vendorTxt}>SKU:564</InterRegular>
-                            </View>
-
+                        <View style={styles.bulletTextContainer}>
+                            <View style={styles.bullet} />
+                            <InterRegular style={styles.vendorTxt}>SKU:564</InterRegular>
                         </View>
 
-
-                        <View style={styles.contentContainer}>
-                            <MyStoreTopTabsNavigation />
-                        </View>
-
-                    </Card>
-
-                    <GeneralModal
-                        visible={reportVisible}
-                        closeModal={() => setReportVisible(false)}
-                        icon={images.qmark}
-                        title='Report Store'
-                        message='Are you sure you want to report this Store?'
-                        buttonText='Yes'
-                        buttonText2='No'
-                        onPress={() => {
-                            setReportVisible(false)
-                            setReportInput(true)
-
-                        }}
-                        smallButtons={true}
-                    />
-
-                    <GeneralModal
-                        visible={reportInput}
-                        closeModal={() => setReportInput(false)}
-                        // icon={images.doubleCheck}
-                        title='Reason Of Report Store'
-                        // message='Post has been delete successfully.'
-                        buttonText='Ok'
-                        inputVisible={true}
-                        onPress={() => {
-                            setReportInput(false)
-                            setReportSuccess(true)
-                        }}
-                    />
-
-                    <GeneralModal
-                        visible={ReportSuccess}
-                        closeModal={() => setReportSuccess(false)}
-                        icon={images.doubleCheck}
-                        title='Report Store'
-                        message='Store has been report successfully.'
-                        buttonText='Ok'
-                        onPress={() => {
-                            setReportSuccess(false)
-                        }}
-                    />
+                    </View>
 
 
+                    <View style={styles.contentContainer}>
+                        <MyStoreTopTabsNavigation />
+                    </View>
+
+                </Card>
+
+                <GeneralModal
+                    visible={reportVisible}
+                    closeModal={() => setReportVisible(false)}
+                    icon={images.qmark}
+                    title='Report Store'
+                    message='Are you sure you want to report this Store?'
+                    buttonText='Yes'
+                    buttonText2='No'
+                    onPress={() => {
+                        setReportVisible(false)
+                        setReportInput(true)
+
+                    }}
+                    smallButtons={true}
+                />
+
+                <GeneralModal
+                    visible={reportInput}
+                    closeModal={() => setReportInput(false)}
+                    // icon={images.doubleCheck}
+                    title='Reason Of Report Store'
+                    // message='Post has been delete successfully.'
+                    buttonText='Ok'
+                    inputVisible={true}
+                    onPress={() => {
+                        setReportInput(false)
+                        setReportSuccess(true)
+                    }}
+                />
+
+                <GeneralModal
+                    visible={ReportSuccess}
+                    closeModal={() => setReportSuccess(false)}
+                    icon={images.doubleCheck}
+                    title='Report Store'
+                    message='Store has been report successfully.'
+                    buttonText='Ok'
+                    onPress={() => {
+                        setReportSuccess(false)
+                    }}
+                />
 
 
 
-                </View>
 
-            </TouchableWithoutFeedback>
+
+            </View>
+
+        </TouchableWithoutFeedback>
 
         // {/* </ScrollView> */}
     );

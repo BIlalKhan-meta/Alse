@@ -47,8 +47,8 @@ const AppNavigation = () => {
       <Stack.Screen name="AuthNavigation" component={AuthNavigation} />
       <Stack.Screen name="Home" component={TabNavigation} />
       <Stack.Screen name="Saved" component={Saved} />
-      <Stack.Screen name="RequestScreen" component={RequestScreen} />
-      <Stack.Screen name="Notifications" component={Notifications} />
+      <Stack.Screen name="RequestScreen" component={RequestScreen} options={NavigationOptions} />
+      <Stack.Screen name="Notifications" component={Notifications} options={NavigationOptions} />
       <Stack.Screen name="Shop" component={Shop} options={NavigationOptions} />
       <Stack.Screen name="ProductView" component={ProductView} options={NavigationOptions} />
       <Stack.Screen name="CreatePost" component={CreatePost} options={NavigationOptions} />

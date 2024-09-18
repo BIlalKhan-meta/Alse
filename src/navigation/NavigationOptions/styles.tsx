@@ -11,7 +11,8 @@ const styles = StyleSheet.create({
 
     headerTitle: {
         color: colors.black,
-        fontSize: fontSizes.f16,
+        fontSize: fontSizes.f20,
+        fontWeight: 'bold',
         width: vw * 80
     },
     headerTitleWhite: {
@@ -46,8 +47,8 @@ const styles = StyleSheet.create({
         // backgroundColor:'green',
     },
     notificationcontainer: {
-        width: vw * 6,
-        height: vh * 3,
+        width: vw * 10,
+        height: vh * 5,
         borderRadius: vw * 10,
         backgroundColor: colors.white,
         borderColor: colors.gray,

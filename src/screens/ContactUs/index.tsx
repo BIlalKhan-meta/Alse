@@ -24,7 +24,6 @@ const ContactUs: React.FC = ({ navigation }) => {
 
   interface FormValues {
     name: string,
-    contactNo: string,
     email: string,
     subject: string,
     message: string;
@@ -32,7 +31,6 @@ const ContactUs: React.FC = ({ navigation }) => {
 
   const initialValues = {
     name: '',
-    contactNo: '',
     email: '',
     subject: '',
     message: ''
@@ -40,7 +38,6 @@ const ContactUs: React.FC = ({ navigation }) => {
 
   const validationSchema: yup.AnySchema<FormValues> = yup.object().shape({
     name: yup.string().required('First Name is required'),
-    contactNo: yup.string().required('Contact Number is required'),
     email: yup
       .string()
       .email('Email is wrong !! TRY AGAIN')
@@ -52,17 +49,15 @@ const ContactUs: React.FC = ({ navigation }) => {
   const handleSubmit = (values: object, { resetForm }: { resetForm: () => void }) => {
     console.log("CONTACT ADMIN FORM SUBMITTED")
     setMessageSubmittedModal(true)
+
     resetForm()
     // navigation.navigate("Login")
 
   }
 
   return (
-    <>
-      <View style={{ paddingHorizontal: 15, paddingTop: 30, }}>
+    <View style={styles.mainContainer}>
 
-        <HeaderComponent label='Contact Us' />
-      </View>
       <Card style={styles.cardContainer}>
         <Formik
           initialValues={initialValues}
@@ -76,7 +71,7 @@ const ContactUs: React.FC = ({ navigation }) => {
                 <View style={styles.container}>
 
                   <RegularTextInput
-                    label="Full Name"
+                    label="Full Name*"
                     placeholder='Enter Full Name'
                     placeholderTextColor="#9B9797"
                     onChangeText={handleChange('name')}
@@ -88,7 +83,7 @@ const ContactUs: React.FC = ({ navigation }) => {
 
 
                   <RegularTextInput
-                    label="Email Address"
+                    label="Email Address*"
                     placeholder='Enter Email Address'
                     placeholderTextColor="#9B9797"
                     onChangeText={handleChange('email')}
@@ -98,7 +93,7 @@ const ContactUs: React.FC = ({ navigation }) => {
                     errors={errors.email} />
 
                   <RegularTextInput
-                    label="Subject"
+                    label="Subject*"
                     placeholder='Enter Subject'
                     placeholderTextColor="#9B9797"
                     onChangeText={handleChange('subject')}
@@ -108,33 +103,30 @@ const ContactUs: React.FC = ({ navigation }) => {
                     errors={errors.subject} />
 
                   <InterBold style={[styles.label]}>
-                    {"Message"}
+                    {"Message*"}
                   </InterBold>
 
-                  <View style={styles.msgStyle}>
 
-                    <TextInput
-                      // label="Message"
-                      placeholder='Enter Message'
-                      placeholderTextColor="#9B9797"
-                      onChangeText={handleChange('message')}
-                      onBlur={handleBlur('message')}
-                      value={values.message}
-                      submitted={submitted}
-                      errors={errors.message}
-                      multiline={true}
-                      style={styles.inputStyle}
-                    />
-                  </View>
+                  <RegularTextInput
+                    // label="Message"
+                    placeholder='Enter Message'
+                    placeholderTextColor="#9B9797"
+                    onChangeText={handleChange('message')}
+                    onBlur={handleBlur('message')}
+                    value={values.message}
+                    submitted={submitted}
+                    errors={errors.message}
+                    multiline={true}
+                    // style={styles.inputStyle}
+                    containerStyle={{ marginTop: 0 }}
+                  />
 
 
                   <CustomButton
                     style={{ alignSelf: "center" }}
                     onPress={() => {
-                      setMessageSubmittedModal(true)
 
                       setSubmitted(true)
-                      resetForm()
                       handleSubmit()
                     }}>
                     Submit
@@ -162,7 +154,7 @@ const ContactUs: React.FC = ({ navigation }) => {
       />
 
 
-    </>
+    </View>
   );
 };
 

@@ -3,16 +3,14 @@ import { colors } from '../../utils/theme';
 import { fontSizes, vh, vw } from '../../constant';
 
 const styles = StyleSheet.create({
-  scrollview: {
+
+  cardContainer: {
+    margin: vh * 2,
     backgroundColor: colors.white
   },
-  cardContainer: {
-    margin: vh * 2
-  },
-  container: {
-    paddingHorizontal: vw * 6,
-    paddingBottom: vh * 10,
-    // backgroundColor:colors.red,
+  mainContainer: {
+    backgroundColor: colors.headerColor,
+    flex: 1
   },
   adddetailsheading: {
     marginTop: vh * 1.5

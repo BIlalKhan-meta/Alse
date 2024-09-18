@@ -29,15 +29,18 @@ const styles = StyleSheet.create({
     checkoutButton: {
         alignSelf: "center",
         width: vw * 40,
-        marginBottom: vh * 2
+        marginTop: 0
+        // marginBottom: vh * 2
     },
     btnContainer: {
-        marginTop: vh * 6,
+        marginTop: vh * 1,
         flexDirection: "row",
         alignSelf: "center",
         alignItems: "center",
-        justifyContent: "center",
+        justifyContent: "space-between",
         // backgroundColor: "yellow",
+        width: vw * 68,
+
     },
 
 

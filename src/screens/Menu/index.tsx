@@ -66,13 +66,13 @@ const Menu: React.FC = () => {
               <TouchableOpacity onPress={() => navigation.navigate('Cart')}>
                 <InterRegular style={styles.cardText}>My Cart</InterRegular>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => navigation.navigate('BankDetailUpdate')}>
+              <TouchableOpacity onPress={() => navigation.navigate('BankDetail')}>
                 <InterRegular style={styles.cardText}>Manage Bank Details</InterRegular>
               </TouchableOpacity>
               <TouchableOpacity onPress={() => navigation.navigate('Marketplace', { screen: "PaymentLogs" })}>
                 <InterRegular style={styles.cardText}>Payment Logs</InterRegular>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => navigation.navigate('MyOrders')}>
+              <TouchableOpacity onPress={() => navigation.navigate('Marketplace', { screen: "MyOrders" })}>
                 <InterRegular style={styles.cardText}>Order Logs</InterRegular>
               </TouchableOpacity>
 

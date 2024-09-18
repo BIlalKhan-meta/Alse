@@ -17,7 +17,7 @@ const HomeNavigation = () => {
         <Stack.Navigator
             initialRouteName="Home"
             screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="Home" component={Home} />
+            <Stack.Screen name="Home" component={Home} options={NavigationOptions} />
             <Stack.Screen name="Profile" component={ProfileScreen} />
             <Stack.Screen name="ChatScreen" component={ChatScreen} options={NavigationOptions} />
             <Stack.Screen name="MyPosts" component={MyPosts} options={NavigationOptions} />

@@ -87,7 +87,7 @@ const BankDetailUpdate: React.FC = () => {
 
                                 <RegularTextInput
                                     label="Account Holder Number *"
-                                    placeholder="Enter account holder Name"
+                                    placeholder="Enter Name"
                                     placeholderTextColor={colors.inputText}
                                     onChangeText={handleChange('accountHolderName')}
                                     onBlur={handleBlur('accountHolderName')}
@@ -106,7 +106,7 @@ const BankDetailUpdate: React.FC = () => {
                                     <DropDownTextInput
                                         items={accountTypes}
                                         // defaultValue='all'
-                                        placeholder="Select Account type"
+                                        placeholder="Select"
                                         onChangeValue={handleDropdownChange}
                                         style={styles.dropDown}
                                     />
@@ -120,7 +120,7 @@ const BankDetailUpdate: React.FC = () => {
                                     <DropDownTextInput
                                         items={banks}
                                         // defaultValue='all'
-                                        placeholder="Select Bank Name"
+                                        placeholder="Select"
                                         onChangeValue={handleDropdownChange}
                                         style={styles.dropDown}
                                     />
@@ -152,7 +152,7 @@ const BankDetailUpdate: React.FC = () => {
 
                                 <RegularTextInput
                                     label="Account Number *"
-                                    placeholder="Enter Account Number"
+                                    placeholder="Enter Number"
                                     placeholderTextColor={colors.inputText}
                                     onChangeText={handleChange('accountNumber')}
                                     onBlur={handleBlur('accountNumber')}
