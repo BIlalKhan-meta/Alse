@@ -6964,10 +6964,10 @@ react-native-typing-animation@0.1.7:
   resolved "https://registry.yarnpkg.com/react-native-typing-animation/-/react-native-typing-animation-0.1.7.tgz#8f2cf08d9400ae543a110292eb7d71523dda5528"
   integrity sha512-4H3rF9M+I2yAZpYJcY0Mb29TXkn98QK12rrKSY6LZj1BQD9NNmRZuNXzwX4XHapsIz+N/J8M3p27FOQPbfzqeg==
 
-react-native-video@^6.4.4:
-  version "6.4.4"
-  resolved "https://registry.yarnpkg.com/react-native-video/-/react-native-video-6.4.4.tgz#89c8276488a6265f1bc498a54d5284448ea00a55"
-  integrity sha512-HSbpY8KQAX83NleaBzCxreDnqqTCHLqb5JngyY5AoCRw8TL0qO7awmEuH1fX9EpV46gU38sJDVHitBXZ6Y+t3g==
+react-native-video@^6.3.0:
+  version "6.6.1"
+  resolved "https://registry.yarnpkg.com/react-native-video/-/react-native-video-6.6.1.tgz#eacb952faea5c884f3975b6d98a722c7af24b91c"
+  integrity sha512-GFJ6KGZQyGxQvQibyVv7hdbc7Ukkt2/GpYdjM2WBvExlMrm1Ii6tIbwc68nRSZ8ljn4hYfL1L/xPTsXFRp4HZw==
 
 react-native@*:
   version "0.75.1"

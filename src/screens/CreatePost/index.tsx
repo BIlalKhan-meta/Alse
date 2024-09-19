@@ -13,7 +13,6 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import HeaderComponent from '../../components/HeaderComponent';
 import styles from './styles';
 import BottomModal from '../../components/BottomModel';
-import Video from 'react-native-video';
 import ImagePickerComponent from '../../components/ImagePickerComponent';
 import useImagePicker from '../../hooks/useImagePicker';
 import InterMedium from '../../components/Text/InterMedium';

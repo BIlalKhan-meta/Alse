@@ -93,9 +93,7 @@ const Menu: React.FC = () => {
               <TouchableOpacity onPress={() => navigation.navigate('Games')}>
                 <InterRegular style={styles.cardText}>Games</InterRegular>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => navigation.navigate('PaymentLogs')}>
-                <InterRegular style={styles.cardText}>Payment Logs</InterRegular>
-              </TouchableOpacity>
+
 
 
             </View>
