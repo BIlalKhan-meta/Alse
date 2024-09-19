@@ -5,9 +5,9 @@ import { fontSizes, vh, vw } from '../../constant';
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
+        backgroundColor: colors.headerColor,
         paddingHorizontal: 15,
-        paddingTop: 50,
+        paddingTop: vh*10,
     },
 
 

@@ -1,4 +1,4 @@
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 import { fontSizes, vh, vw } from '../../constant';
 import { colors } from '../../utils/theme';
 import fonts from '../../assets/fonts';
@@ -13,7 +13,8 @@ const styles = StyleSheet.create({
     activeContainer: {
         flexDirection: "row",
         // justifyContent: "space-around",
-        alignItems: "center"
+        alignItems: "center",
+        marginTop:Platform.OS=="ios"?vh*8:0
     },
     activeBtn: {
         backgroundColor: colors.themeColor,

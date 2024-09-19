@@ -1,4 +1,4 @@
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 import { colors } from '../../utils/theme';
 import { fontSizes, vh, vw } from '../../constant';
 
@@ -10,7 +10,9 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     contentContainer: {
-        marginTop: vh * 2,
+
+        marginTop:Platform.OS=="ios"?vh*8:2,
+
         padding: vh * 2,
         backgroundColor: colors.white,
         borderRadius: vw * 2,

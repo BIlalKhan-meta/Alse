@@ -1,4 +1,4 @@
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 import { colors } from '../../utils/theme';
 import { fontSizes, vh, vw } from '../../constant';
 
@@ -11,7 +11,8 @@ const styles = StyleSheet.create({
         backgroundColor: colors.headerColor
     },
     contentContainer: {
-        marginTop: vh * 2
+        marginTop:Platform.OS=="ios"?vh*8:vh * 2
+
     },
     section: {
         marginBottom: vh * 2,

@@ -7,7 +7,7 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: colors.headerColor,
         paddingHorizontal: 16,
-        paddingTop: 16,
+        paddingTop: vh*10,
     },
     chatHeader: {
         flexDirection: 'row',

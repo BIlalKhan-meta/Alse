@@ -1,4 +1,4 @@
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 import { colors } from '../../utils/theme'; // Assuming you have a theme file for colors
 import { fontSizes, vh, vw } from '../../constant'; // Assuming these are your utility functions for responsive sizing
 
@@ -11,7 +11,9 @@ const styles = StyleSheet.create({
         // flex: 1
     },
     cardStyle: {
-        marginVertical: vh
+        // marginVertical: vh,
+        marginTop:Platform.OS=="ios"?vh*8:0
+
     },
     section: {
         marginBottom: vh * 2,

@@ -1,4 +1,4 @@
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 import { colors } from '../../utils/theme';
 import { fontSizes, vh, vw } from '../../constant';
 
@@ -8,9 +8,12 @@ const styles = StyleSheet.create({
         backgroundColor: colors.headerColor,
         paddingHorizontal: vw * 5,
         // paddingVertical: vh * 4,
+        flex:1
     },
     contentContainer: {
-        marginTop: vh * 1,
+
+        marginTop:Platform.OS=="ios"?vh*8:vh * 1
+
         // alignItems: "center"
     },
     btnConatiner: {

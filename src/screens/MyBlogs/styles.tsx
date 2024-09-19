@@ -1,4 +1,4 @@
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 import { colors } from '../../utils/theme';
 import { fontSizes, vh, vw } from '../../constant';
 
@@ -8,6 +8,8 @@ const styles = StyleSheet.create({
         backgroundColor: colors.headerColor,
         paddingHorizontal: 15,
         paddingTop: vh * 1,
+        marginTop:Platform.OS=="ios"?vh*4:0
+
     },
     itemCard: {
         marginBottom: vh * 2,
