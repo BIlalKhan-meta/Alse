@@ -25,12 +25,14 @@ const dummyWishlist = [
         name: 'Product 1',
         price: 20,
         imageUrl: `${images.pro1}`,
+        size: "L, M, S"
     },
     {
         id: '2',
         name: 'Product 2',
         price: 30,
         imageUrl: `${images.pro2}`,
+        size: "L, M,"
 
     },
     {
@@ -38,6 +40,8 @@ const dummyWishlist = [
         name: 'Product 3',
         price: 25,
         imageUrl: `${images.pro2}`,
+        size: "L, M, S"
+
 
     },
     {
@@ -45,6 +49,7 @@ const dummyWishlist = [
         name: 'Product 4',
         price: 25,
         imageUrl: `${images.pro1}`,
+        size: "L, M, S"
 
     },
     {
@@ -52,6 +57,8 @@ const dummyWishlist = [
         name: 'Product 5',
         price: 25,
         imageUrl: `${images.pro1}`,
+        size: "L, M, S"
+
 
     },
     {
@@ -59,6 +66,8 @@ const dummyWishlist = [
         name: 'Product 6',
         price: 25,
         imageUrl: `${images.pro2}`,
+        size: "L, M, S"
+
 
     },
 ];

@@ -48,6 +48,11 @@ const ProfileScreen: React.FC = ({ navigation }) => {
     setModalVisible(!modalVisible);
   };
 
+  const options = [
+    { text: 'Report', onPress: () => handleReportPress() },
+    { text: 'Block', onPress: () => handleBlockPress() },
+  ];
+
 
   const posts = [
     {
@@ -86,13 +91,21 @@ const ProfileScreen: React.FC = ({ navigation }) => {
             avatar={images.user2}
             onPress={handleOpen}
           />
-          <ReportBlockModal
+          {/* <ReportBlockModal
             isVisible={modalVisible}
             reportButtonText="Report"
             blockButtonText="Block"
             onReportPress={handleReportPress}
             onBlockPress={handleBlockPress}
             onClose={() => setModalVisible(false)}
+          /> */}
+
+          <ReportBlockModal
+            isVisible={modalVisible}
+            options={options}
+            onClose={() => setModalVisible(false)}
+
+            style={{ top: 55 }}
           />
         </Card>
 

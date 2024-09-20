@@ -15,7 +15,9 @@ const styles = StyleSheet.create({
     },
     planDetails: {
         backgroundColor: '#E0F7FA',
-        padding: 20,
+        // padding: 20,
+        paddingVertical: vh * 2,
+        paddingHorizontal: vw * 2,
         borderRadius: 10,
         alignItems: 'center',
         justifyContent: 'center',

@@ -44,12 +44,26 @@ const ChatOngoing: React.FC = () => {
                         />
                     </TouchableOpacity>
 
+
+
                     <TouchableOpacity onPress={() => {
                         // setModalVisible(true)
                     }}>
                         <Image
                             source={images.videoIcon}
                             style={styles.threeDots}
+
+                        />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity onPress={() => {
+                        // setModalVisible(true)
+                    }}
+                        style={styles.savedConatiner}
+                    >
+                        <Image
+                            source={images.save}
+                            style={styles.saveicon}
 
                         />
                     </TouchableOpacity>

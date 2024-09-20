@@ -45,7 +45,10 @@ const styles = StyleSheet.create({
     },
     value: {
         fontSize: fontSizes.f14,
-        color: colors.darkGray
+        color: colors.darkGray,
+        alignSelf: "flex-start"
+    },
+    topValue: {
     }
 });
 

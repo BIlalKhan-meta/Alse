@@ -86,7 +86,7 @@ const BankDetailUpdate: React.FC = () => {
                             <Card style={styles.contentContainer}>
 
                                 <RegularTextInput
-                                    label="Account Holder Number *"
+                                    label="Account Holder Name *"
                                     placeholder="Enter Name"
                                     placeholderTextColor={colors.inputText}
                                     onChangeText={handleChange('accountHolderName')}

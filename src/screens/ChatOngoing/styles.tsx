@@ -10,10 +10,23 @@ const styles = StyleSheet.create({
     header: {
         flexDirection: "row",
         justifyContent: "space-between",
-        width: vw * 20
+        width: vw * 30
     },
     headerButton: {
         padding: 10,
+    },
+    savedConatiner: {
+        width: vw * 9,
+        height: vw * 9,
+        borderRadius: vw * 4.5,
+        backgroundColor: colors.white,
+        alignSelf: "center",
+        alignItems: "center",
+        justifyContent: "center"
+    },
+    saveicon: {
+        width: vw * 4,
+        height: vh * 2
     },
     headerTitle: {
         fontSize: 18,

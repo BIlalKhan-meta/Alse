@@ -11,6 +11,7 @@ interface Product {
     name: string;
     price: number;
     imageUrl: string;
+    size: string
 }
 
 interface WishlistProps {
@@ -48,8 +49,10 @@ const WishlistScreen: React.FC<WishlistProps> = ({ wishlist, onAddToCart, onRemo
                     ) : <Text> </Text>}
                 </View>
                 {product &&
-                    <InterRegular style={styles.product}>{item.name}</InterRegular>
+                    <InterRegular style={styles.product}>Size: {item.size}</InterRegular>
                 }
+                <InterRegular style={styles.product}>Color: Red, Green, Blue</InterRegular>
+
             </View>
         </TouchableOpacity>
     );

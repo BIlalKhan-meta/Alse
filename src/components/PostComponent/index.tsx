@@ -1,5 +1,5 @@
 // PostComponent.tsx
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Share } from 'react-native';
 import { images } from '../../utils/images';
 import Card from '../Card';
@@ -53,6 +53,9 @@ const PostComponent: React.FC<PostProps> = ({
 }) => {
 
   const navigation = useNavigation();
+  const [showFullText, setShowFullText] = useState(false);
+  const maxTextLength = 100;
+
   const goToProfile = () => {
     if (account === "self") {
       navigation.navigate('MyProfile', { account });
@@ -67,6 +70,33 @@ const PostComponent: React.FC<PostProps> = ({
     { text: 'Edit', onPress: () => handleReportPress() },
     { text: 'Delete', onPress: () => handleBlockPress() },
   ];
+
+  const handleReadMoreToggle = () => {
+    setShowFullText(!showFullText);
+  };
+  const renderPostText = () => {
+    if (postText.length <= maxTextLength || showFullText) {
+      return (
+        <Text style={styles.postText}>
+          {postText}{' '}
+          {postText.length > maxTextLength && (
+            <Text style={styles.readMoreText} onPress={handleReadMoreToggle}>
+              {showFullText ? 'Read Less' : ''}
+            </Text>
+          )}
+        </Text>
+      );
+    } else {
+      return (
+        <Text style={styles.postText}>
+          {`${postText.substring(0, maxTextLength)}... `}{' '}
+          <Text style={styles.readMoreText} onPress={handleReadMoreToggle}>
+            Read More
+          </Text>
+        </Text>
+      );
+    }
+  };
   return (
     <Card style={styles.card}>
       <View style={styles.header}>
@@ -95,7 +125,9 @@ const PostComponent: React.FC<PostProps> = ({
         </TouchableOpacity>
       </View>
 
-      <InterLight style={styles.postText}>{postText}</InterLight>
+      {/* <InterLight style={styles.postText}>{postText}</InterLight> */}
+      <View style={styles.postContent}>{renderPostText()}</View>
+
       <Image
         source={postImage}
         style={styles.postImage}
@@ -208,11 +240,7 @@ const styles = StyleSheet.create({
     width: 4,
     height: 19,
   },
-  postText: {
-    fontSize: fontSizes.f14,
-    marginBottom: 10,
-    color: colors.inputText
-  },
+
   postImage: {
     width: '100%',
     height: 200,
@@ -260,6 +288,20 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: fontSizes.f14,
     color: colors.inputText
+  },
+  postText: {
+    fontSize: fontSizes.f14,
+    // marginBottom: 10,
+    color: colors.inputText
+  },
+  postContent: {
+    // marginVertical: 10,
+    marginBottom: vh * 2
+  },
+
+  readMoreText: {
+    color: colors.themeColor,
+    // marginTop: 5,
   },
 });
 

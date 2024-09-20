@@ -18,7 +18,7 @@ const posts = [
     name: 'John Doe',
     country: 'Newyork, USA',
     time: '12:30 AM',
-    postText: 'Haters will say what they want, but their hate will never stop you from casting your dreams just believe in yourself ...Read More',
+    postText: 'Haters will say what they want, but their hate will never stop you from casting your dreams just believe in yourself ',
     postImage: images.postImage1,
     likes: 120,
     comments: 45,
@@ -31,7 +31,7 @@ const posts = [
     name: 'Jane Smith',
     country: 'UK',
     time: '5h ago',
-    postText: 'Haters will say what they want, but their hate will never stop you from casting your dreams just believe in yourself ...Read More',
+    postText: 'Haters will say what they want, but their hate will never stop you from casting your dreams just believe in yourself ',
     postImage: images.postImage2,
     likes: 80,
     comments: 20,
@@ -96,6 +96,7 @@ const Home: React.FC = () => {
           <CardComponent
             onImagePress={() => navigation.navigate("CreatePost")}
             onVideoPress={() => navigation.navigate("CreatePost")}
+            onCameraPress={() => navigation.navigate("CreatePost")}
           />
 
           <FlatList

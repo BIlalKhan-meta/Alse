@@ -88,8 +88,12 @@ const PaymentLogs: React.FC = () => {
                                 <InterMedium style={styles.heading}>Amount Paid</InterMedium>
                             </View>
                             <View style={styles.topHead}>
-                                <InterRegular style={styles.value}>{item.customerName}</InterRegular>
-                                <InterRegular style={styles.value}>{item.amountPaid}</InterRegular>
+                                <View style={styles.topValue}>
+                                    <InterRegular style={styles.value}>{item.customerName}</InterRegular>
+                                </View>
+                                <View style={styles.topValue}>
+                                    <InterRegular style={styles.value}>{item.amountPaid}</InterRegular>
+                                </View>
                             </View>
 
                             <View style={styles.topHead}>

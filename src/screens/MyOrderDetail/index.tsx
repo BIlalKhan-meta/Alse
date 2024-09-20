@@ -88,6 +88,10 @@ const MyOrderDetail: React.FC = () => {
                     <View>
                         <InterMedium style={styles.orderId}>Order Id: 541554</InterMedium>
                         <InterMedium style={styles.orderDate}>Order Date: 01/01/2024</InterMedium>
+                        {status == "Delivered" &&
+                            <InterMedium style={styles.orderDate}>Delivered Date: 01/01/2024</InterMedium>
+
+                        }
                     </View>
 
                     <View>
