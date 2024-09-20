@@ -66,11 +66,11 @@ const MyProfileUpdate: React.FC = () => {
 
 
   const initialValues = {
-    username: '',
-    contactNo: '',
-    email: '',
-    age: '',
-    birthdate: '',
+    username: 'xyz',
+    contactNo: '3243545454',
+    email: 'abc#gmail.com',
+    age: '10 years',
+    birthdate: '12-5-2000',
 
   };
 
@@ -124,8 +124,17 @@ const MyProfileUpdate: React.FC = () => {
 
                   <View style={styles.banner}>
                     <Image source={images.profileBg} style={styles.imageStyle} />
+                    <TouchableOpacity style={styles.editBtn}
+                      onPress={() => captureImage('photo')}
+
+                    >
+                      <Image source={images.edit} style={styles.editImage} />
+                    </TouchableOpacity>
 
                   </View>
+
+
+
                   <View style={styles.profileConatiner}>
 
                     <View style={styles.imagecontainer}>
@@ -151,17 +160,17 @@ const MyProfileUpdate: React.FC = () => {
                       value={values.username}
                       submitted={submitted}
                       errors={errors.username}
-                      style={styles.inputstyle}
+                      // style={styles.inputstyle}
                       labelStyle={styles.txt}
                     />
 
 
 
-                    <PhoneNumberInput2
+                    <PhoneNumberInput
                       initialNumber={values.contactNo}
                       onNumberChange={handleChange('contactNo')}
                       label="Phone Number *"
-                      style={styles.phoneContainer}
+                      // style={styles.phoneContainer}
                       submitted={submitted}
                       errors={errors.contactNo}
                       labelStyle={styles.txt}
@@ -186,13 +195,13 @@ const MyProfileUpdate: React.FC = () => {
                     <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
                       <View>
                         <InterRegular style={styles.label}>
-                          Date of Birth
+                          Date of Birth *
                         </InterRegular>
 
                         <TouchableOpacity onPress={() => setOpenDate(true)}>
                           <View style={[styles.textinputbox]}>
                             <InterLight style={{}}>{'mm/dd/yyyy'}</InterLight>
-                            {/* <Image source={calendericon} style={styles.calendericon}/> */}
+                            <Image source={images.calendericon} style={styles.calendericon} />
                           </View>
                         </TouchableOpacity>
                         <DatePicker
@@ -214,7 +223,7 @@ const MyProfileUpdate: React.FC = () => {
 
                       <View>
                         <InterRegular style={styles.label}>
-                          Age
+                          Age *
                         </InterRegular>
                         <Picker
                           style={[styles.pickercontainer]}
@@ -245,9 +254,9 @@ const MyProfileUpdate: React.FC = () => {
                     <CustomButton
                       style={{ alignSelf: "center" }}
                       onPress={() => {
-                        setProfileUpdateModal(true)
+                        // setProfileUpdateModal(true)
                         setSubmitted(true);
-                        resetForm()
+                        // resetForm()
                         handleSubmit();
                       }}
                     >

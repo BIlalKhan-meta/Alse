@@ -166,10 +166,11 @@ const Payment: React.FC = () => {
               <GeneralModal
                 visible={paymentSuccess}
                 closeModal={() => setPaymentSuccess(false)}
-                icon={images.doubleCheck}
+                icon={images.checkedIcon}
                 title='Successfully'
                 message='Order has been placed successfull. Your Order ID is #1234567'
                 buttonText='Ok'
+                primaryBtn={true}
                 onPress={() => {
                   setPaymentSuccess(false)
                   // navigation.navigate("DrawerNavigation", { screen: "Home" })

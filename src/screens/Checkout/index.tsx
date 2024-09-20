@@ -11,7 +11,6 @@ import CartItem from '../../components/CartItem';
 
 import Summary from '../../components/SummaryComponent';
 import PhoneNumberInput from '../../components/TextInput/PhoneNumberInput';
-import PhoneNumberInput2 from '../../components/TextInput/PhoneNumberInput2';
 import { useNavigation } from '@react-navigation/native';
 import DropDownTextInput from '../../components/TextInput/DropDownTextInput';
 import BillingAddressSame from '../../components/BillingAddressSame';
@@ -24,6 +23,7 @@ import { colors } from '../../utils/theme';
 const CheckoutScreen: React.FC = () => {
     const navigation = useNavigation();
     const [isSelected, setIsSelected] = useState<boolean>(false);
+    const [submitted, setSubmitted] = useState<boolean>(false)
 
     const subTotal = products.reduce((total, product) => total + product.price * product.quantity, 0);
     const adminCommission = 5;
@@ -60,11 +60,14 @@ const CheckoutScreen: React.FC = () => {
         shippingState: yup.string().required('State is required'),
         shippingCity: yup.string().required('City is required'),
         shippingZipCode: yup.string().required('Zip Code is required'),
-        billingAddress: yup.string().required('Billing Address is required'),
-        billingCountry: yup.string().required('Country is required'),
-        billingState: yup.string().required('State is required'),
-        billingCity: yup.string().required('City is required'),
-        billingZipCode: yup.string().required('Zip Code is required'),
+
+        ...(!isSelected && {
+            billingAddress: yup.string().required('Billing Address is required'),
+            billingCountry: yup.string().required('Country is required'),
+            billingState: yup.string().required('State is required'),
+            billingCity: yup.string().required('City is required'),
+            billingZipCode: yup.string().required('Zip Code is required'),
+        }),
     });
 
 
@@ -87,6 +90,8 @@ const CheckoutScreen: React.FC = () => {
 
     const handleSubmit = (values: object) => {
         console.log('Form submitted:', values);
+        navigation.navigate("Payment")
+
     };
     useLayoutEffect(() => {
         navigation.setOptions({
@@ -145,7 +150,9 @@ const CheckoutScreen: React.FC = () => {
                                 onChangeText={handleChange('firstName')}
                                 onBlur={handleBlur('firstName')}
                                 value={values.firstName}
-                                error={touched.firstName && errors.firstName}
+                                errors={touched.firstName && errors.firstName}
+                                submitted={submitted}
+
                                 style={styles.inputStyle}
                             />
                             {/* Add other text inputs */}
@@ -155,7 +162,9 @@ const CheckoutScreen: React.FC = () => {
                                 onChangeText={handleChange('lastName')}
                                 onBlur={handleBlur('lastName')}
                                 value={values.lastName}
-                                error={touched.lastName && errors.lastName}
+                                errors={touched.lastName && errors.lastName}
+                                submitted={submitted}
+
                                 style={styles.inputStyle}
 
                             />
@@ -166,17 +175,21 @@ const CheckoutScreen: React.FC = () => {
                                 onChangeText={handleChange('email')}
                                 onBlur={handleBlur('email')}
                                 value={values.email}
-                                error={touched.email && errors.email}
+                                errors={touched.email && errors.email}
+                                submitted={submitted}
+
                                 style={styles.inputStyle}
 
                             />
 
-                            <PhoneNumberInput2
+                            <PhoneNumberInput
                                 initialNumber={values.contactNo}
                                 onNumberChange={handleChange('contactNo')}
                                 label="Contact Number *"
                                 // submitted={submitted}
                                 errors={errors.contactNo}
+                                submitted={submitted}
+
                                 labelStyle={styles.label}
                                 style={styles.inputStyle}
                             />
@@ -190,7 +203,9 @@ const CheckoutScreen: React.FC = () => {
                                     onChangeText={handleChange('firstName')}
                                     onBlur={handleBlur('firstName')}
                                     value={values.firstName}
-                                    error={touched.firstName && errors.firstName}
+                                    errors={touched.firstName && errors.firstName}
+                                    submitted={submitted}
+
                                     style={styles.inputStyle}
                                 />
                                 <RegularTextInput
@@ -199,17 +214,21 @@ const CheckoutScreen: React.FC = () => {
                                     onChangeText={handleChange('lastName')}
                                     onBlur={handleBlur('lastName')}
                                     value={values.lastName}
-                                    error={touched.lastName && errors.lastName}
+                                    errors={touched.lastName && errors.lastName}
+                                    submitted={submitted}
+
                                     style={styles.inputStyle}
 
                                 />
 
-                                <PhoneNumberInput2
+                                <PhoneNumberInput
                                     initialNumber={values.contactNo}
                                     onNumberChange={handleChange('contactNo')}
                                     label="Contact Number *"
                                     // submitted={submitted}
                                     errors={errors.contactNo}
+                                    submitted={submitted}
+
                                     labelStyle={styles.label}
                                     style={styles.inputStyle}
                                 />
@@ -221,7 +240,9 @@ const CheckoutScreen: React.FC = () => {
                                     onChangeText={handleChange('shippingAddress')}
                                     onBlur={handleBlur('shippingAddress')}
                                     value={values.shippingAddress}
-                                    error={touched.shippingAddress && errors.shippingAddress}
+                                    errors={touched.shippingAddress && errors.shippingAddress}
+                                    submitted={submitted}
+
                                     style={styles.inputStyle}
 
                                 />
@@ -276,7 +297,9 @@ const CheckoutScreen: React.FC = () => {
                                     onChangeText={handleChange('shippingZipCode')}
                                     onBlur={handleBlur('shippingZipCode')}
                                     value={values.shippingZipCode}
-                                    error={touched.shippingZipCode && errors.shippingZipCode}
+                                    errors={touched.shippingZipCode && errors.shippingZipCode}
+                                    submitted={submitted}
+
                                     style={styles.inputStyle}
 
                                 />
@@ -290,111 +313,125 @@ const CheckoutScreen: React.FC = () => {
                             />
 
                             {/* Billing Address */}
-                            <View style={styles.section}>
-                                <Text style={styles.sectionTitle}>Billing Address</Text>
+                            {!isSelected && (
 
-                                <RegularTextInput
-                                    label="First Name *"
-                                    placeholder="Enter First Name"
-                                    onChangeText={handleChange('firstName')}
-                                    onBlur={handleBlur('firstName')}
-                                    value={values.firstName}
-                                    error={touched.firstName && errors.firstName}
-                                    style={styles.inputStyle}
-                                />
-                                <RegularTextInput
-                                    label="Last Name *"
-                                    placeholder="Enter Last Name"
-                                    onChangeText={handleChange('lastName')}
-                                    onBlur={handleBlur('lastName')}
-                                    value={values.lastName}
-                                    error={touched.lastName && errors.lastName}
-                                    style={styles.inputStyle}
+                                <View style={styles.section}>
+                                    <Text style={styles.sectionTitle}>Billing Address</Text>
 
-                                />
+                                    <RegularTextInput
+                                        label="First Name *"
+                                        placeholder="Enter First Name"
+                                        onChangeText={handleChange('firstName')}
+                                        onBlur={handleBlur('firstName')}
+                                        value={values.firstName}
+                                        errors={touched.firstName && errors.firstName}
+                                        submitted={submitted}
 
-                                <PhoneNumberInput2
-                                    initialNumber={values.contactNo}
-                                    onNumberChange={handleChange('contactNo')}
-                                    label="Contact Number *"
-                                    // submitted={submitted}
-                                    errors={errors.contactNo}
-                                    labelStyle={styles.label}
-                                    style={styles.inputStyle}
-                                />
+                                        style={styles.inputStyle}
+                                    />
+                                    <RegularTextInput
+                                        label="Last Name *"
+                                        placeholder="Enter Last Name"
+                                        onChangeText={handleChange('lastName')}
+                                        onBlur={handleBlur('lastName')}
+                                        value={values.lastName}
+                                        errors={touched.lastName && errors.lastName}
+                                        submitted={submitted}
 
+                                        style={styles.inputStyle}
 
-                                <RegularTextInput
-                                    label="Residential Address *"
-                                    placeholder="Enter Address"
-                                    onChangeText={handleChange('shippingAddress')}
-                                    onBlur={handleBlur('shippingAddress')}
-                                    value={values.shippingAddress}
-                                    error={touched.shippingAddress && errors.shippingAddress}
-                                    style={styles.inputStyle}
-                                />
+                                    />
+
+                                    <PhoneNumberInput
+                                        initialNumber={values.contactNo}
+                                        onNumberChange={handleChange('contactNo')}
+                                        label="Contact Number *"
+                                        // submitted={submitted}
+                                        errors={errors.contactNo}
+                                        submitted={submitted}
+
+                                        labelStyle={styles.label}
+                                        style={styles.inputStyle}
+                                    />
 
 
-                                <InterBoldLabel style={styles.countryLabel}>
-                                    Country *
-                                </InterBoldLabel>
+                                    <RegularTextInput
+                                        label="Residential Address *"
+                                        placeholder="Enter Address"
+                                        onChangeText={handleChange('shippingAddress')}
+                                        onBlur={handleBlur('shippingAddress')}
+                                        value={values.shippingAddress}
+                                        errors={touched.shippingAddress && errors.shippingAddress}
+                                        submitted={submitted}
 
-                                <View style={styles.dropdownContainer}>
-                                    <DropDownTextInput
-                                        items={countries}
-                                        // defaultValue='all'
-                                        placeholder="Select Country"
-                                        onChangeValue={handleDropdownChange}
-                                        style={styles.dropDown}
+                                        style={styles.inputStyle}
+                                    />
+
+
+                                    <InterBoldLabel style={styles.countryLabel}>
+                                        Country *
+                                    </InterBoldLabel>
+
+                                    <View style={styles.dropdownContainer}>
+                                        <DropDownTextInput
+                                            items={countries}
+                                            // defaultValue='all'
+                                            placeholder="Select Country"
+                                            onChangeValue={handleDropdownChange}
+                                            style={styles.dropDown}
+                                        />
+                                    </View>
+
+
+                                    <InterBoldLabel style={styles.countryLabel}>
+                                        State *
+                                    </InterBoldLabel>
+
+                                    <View style={[styles.dropdownContainer, { zIndex: 4 }]}>
+                                        <DropDownTextInput
+                                            items={states}
+                                            // defaultValue='all'
+                                            placeholder="Select State"
+                                            onChangeValue={handleDropdownChange}
+                                            style={styles.dropDown}
+                                        />
+                                    </View>
+
+                                    <InterBoldLabel style={styles.countryLabel}>
+                                        City *
+                                    </InterBoldLabel>
+
+                                    <View style={[styles.dropdownContainer, { zIndex: 3 }]}>
+                                        <DropDownTextInput
+                                            items={cities}
+                                            // defaultValue='all'
+                                            placeholder="Select City"
+                                            onChangeValue={handleDropdownChange}
+                                            style={styles.dropDown}
+                                        />
+                                    </View>
+
+
+                                    <RegularTextInput
+                                        label="Zip Code *"
+                                        placeholder="Enter Zip Code"
+                                        onChangeText={handleChange('shippingZipCode')}
+                                        onBlur={handleBlur('shippingZipCode')}
+                                        value={values.shippingZipCode}
+                                        errors={touched.shippingZipCode && errors.shippingZipCode}
+                                        submitted={submitted}
+
+                                        style={styles.inputStyle}
+
                                     />
                                 </View>
-
-
-                                <InterBoldLabel style={styles.countryLabel}>
-                                    State *
-                                </InterBoldLabel>
-
-                                <View style={[styles.dropdownContainer, { zIndex: 4 }]}>
-                                    <DropDownTextInput
-                                        items={states}
-                                        // defaultValue='all'
-                                        placeholder="Select State"
-                                        onChangeValue={handleDropdownChange}
-                                        style={styles.dropDown}
-                                    />
-                                </View>
-
-                                <InterBoldLabel style={styles.countryLabel}>
-                                    City *
-                                </InterBoldLabel>
-
-                                <View style={[styles.dropdownContainer, { zIndex: 3 }]}>
-                                    <DropDownTextInput
-                                        items={cities}
-                                        // defaultValue='all'
-                                        placeholder="Select City"
-                                        onChangeValue={handleDropdownChange}
-                                        style={styles.dropDown}
-                                    />
-                                </View>
-
-
-                                <RegularTextInput
-                                    label="Zip Code *"
-                                    placeholder="Enter Zip Code"
-                                    onChangeText={handleChange('shippingZipCode')}
-                                    onBlur={handleBlur('shippingZipCode')}
-                                    value={values.shippingZipCode}
-                                    error={touched.shippingZipCode && errors.shippingZipCode}
-                                    style={styles.inputStyle}
-
-                                />
-                            </View>
+                            )}
 
                             {/* Place Order Button */}
                             <CustomButton style={styles.placeOrderButton} onPress={() => {
-                                navigation.navigate("Payment")
-                                // handleSubmit()
+                                // navigation.navigate("Payment")
+                                setSubmitted(true)
+                                handleSubmit()
                             }}>
                                 Place Order
                             </CustomButton >

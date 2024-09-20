@@ -15,6 +15,7 @@ interface BottomModalProps {
   buttonText: string;
   onPress: () => void;
   onPressImage: () => void;
+  onPressCamera: () => void;
   primaryBtn: boolean;
   secondaryBtn: boolean;
   SecondaryText1: string;
@@ -25,7 +26,7 @@ interface BottomModalProps {
 }
 
 const BottomModal: React.FC<BottomModalProps> = props => {
-  const { visible, closeModal, icon, title, message, buttonText, onPress, primaryBtn, secondaryBtn, SecondaryText1, SecondaryText2, input, btnStyle, onPressImage } = props;
+  const { visible, closeModal, icon, title, message, buttonText, onPress, primaryBtn, secondaryBtn, SecondaryText1, SecondaryText2, input, btnStyle, onPressImage, onPressCamera } = props;
   return (
     <>
       <Modal
@@ -46,7 +47,7 @@ const BottomModal: React.FC<BottomModalProps> = props => {
 
 
           <View style={styles.uploadOptions}>
-            <TouchableOpacity style={styles.button} onPress={onPressImage}>
+            <TouchableOpacity style={styles.button} onPress={onPressCamera}>
               <Image
                 source={images.camera}
                 style={styles.buttonIcon2}

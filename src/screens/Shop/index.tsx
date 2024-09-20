@@ -1,5 +1,5 @@
 import React, { useLayoutEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, TouchableWithoutFeedback } from 'react-native';
 import { images } from '../../utils/images';
 import CardComponent from '../../components/CardComponent';
 import { colors } from '../../utils/theme';
@@ -97,7 +97,7 @@ const Shop: React.FC = () => {
             },
             headerRight: () => (
                 <TouchableOpacity onPress={() => {
-                    setModalVisible(true)
+                    setModalVisible(!modalVisible)
                 }}>
                     <Image
                         source={images.dots}
@@ -107,7 +107,7 @@ const Shop: React.FC = () => {
                 </TouchableOpacity>
             ),
         });
-    }, [navigation]);
+    }, [navigation, modalVisible]);
 
     const options = [
         // { text: 'Get Link', onPress: () => { handleGetLink(); } },
@@ -119,85 +119,88 @@ const Shop: React.FC = () => {
         <ScrollView
             showsVerticalScrollIndicator={false}
         >
-            <View style={styles.container}>
+            <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
+
+                <View style={styles.container}>
 
 
-                <ReportBlockModal
-                    isVisible={modalVisible}
-                    options={options}
-                />
+                    <ReportBlockModal
+                        isVisible={modalVisible}
+                        options={options}
+                    />
 
 
-                <Card style={styles.contentContainer}>
-                    <View style={styles.banner}>
-                        <Image source={images.shop11} style={styles.imageStyle} />
-                    </View>
-                    <View style={styles.sortConatiner}>
-                        <InterMedium style={styles.mainheading}>Shop Name</InterMedium>
-                        <View >
-                            <InterRegular style={styles.heading}>
-                                Sort by:
-                            </InterRegular>
-                            <View>
+                    <Card style={styles.contentContainer}>
+                        <View style={styles.banner}>
+                            <Image source={images.shop11} style={styles.imageStyle} />
+                        </View>
+                        <View style={styles.sortConatiner}>
+                            <InterMedium style={styles.mainheading}>Shop Name</InterMedium>
+                            <View >
+                                <InterRegular style={styles.heading}>
+                                    Sort by:
+                                </InterRegular>
+                                <View>
 
-                                <Picker
-                                    style={[styles.pickercontainer]}
-                                    dropdownIconColor={colors.inputText}
-                                    enabled={true}
-                                    mode='dialog'
-                                    placeholder={"Product name (a-z)"}
+                                    <Picker
+                                        style={[styles.pickercontainer]}
+                                        dropdownIconColor={colors.inputText}
+                                        enabled={true}
+                                        mode='dialog'
+                                        placeholder={"Product name (a-z)"}
 
-                                // onValueChange={handleChange('gender')}
-                                // selectedValue={values.gender}
-                                // data={genders}
-                                >
+                                    // onValueChange={handleChange('gender')}
+                                    // selectedValue={values.gender}
+                                    // data={genders}
+                                    >
 
-                                    <Picker.Item label={"Product name (a-z)"} value="" />
+                                        <Picker.Item label={"Product name (a-z)"} value="" />
 
-                                    {productFilter.map((item) => (
-                                        <Picker.Item
-                                            label={item.name.toString()}
-                                            value={item.name.toString()}
-                                            key={item.id.toString()}
-                                        />
-                                    ))}
+                                        {productFilter.map((item) => (
+                                            <Picker.Item
+                                                label={item.name.toString()}
+                                                value={item.name.toString()}
+                                                key={item.id.toString()}
+                                            />
+                                        ))}
 
-                                </Picker>
+                                    </Picker>
+                                </View>
                             </View>
+
+
+
                         </View>
 
+                        <WishlistScreen
+                            wishlist={dummyWishlist}
+                            onAddToCart={handleAddToCart}
+                            onRemoveFromWishlist={handleRemoveFromWishlist}
+                            heart={true}
+                            addCart={true}
+                            product={true}
+                            onPress={() => navigation.navigate("ProductView")}
 
+                        />
+                    </Card>
 
-                    </View>
-
-                    <WishlistScreen
-                        wishlist={dummyWishlist}
-                        onAddToCart={handleAddToCart}
-                        onRemoveFromWishlist={handleRemoveFromWishlist}
-                        heart={true}
-                        addCart={true}
-                        product={true}
-                        onPress={() => navigation.navigate("ProductView")}
-
+                    <GeneralModal
+                        visible={ReportSuccess}
+                        closeModal={() => setReportSuccess(false)}
+                        // icon={images.checkedIcon}
+                        redImage={true}
+                        title='Report Shop'
+                        message='Shop has been reported'
+                        buttonText='Ok'
+                        onPress={() => {
+                            setReportSuccess(false)
+                        }}
+                        primaryBtn={true}
                     />
-                </Card>
-
-                <GeneralModal
-                    visible={ReportSuccess}
-                    closeModal={() => setReportSuccess(false)}
-                    // icon={images.checkedIcon}
-                    redImage={true}
-                    title='Report Shop'
-                    message='Shop has been reported'
-                    buttonText='Ok'
-                    onPress={() => {
-                        setReportSuccess(false)
-                    }}
-                    primaryBtn={true}
-                />
 
 
-            </View>
+                </View>
+            </TouchableWithoutFeedback>
         </ScrollView>
     );
 };

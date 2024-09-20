@@ -12,6 +12,7 @@ import styles from './styles';
 // import ProfileModal from '../../components/ProfileModal';
 import { colors } from '../../utils/theme';
 import CustomButton from '../../components/CustomButton';
+import Card from '../../components/Card';
 
 const MyProfilePassword: React.FC = () => {
   const navigation = useNavigation();
@@ -88,8 +89,8 @@ const MyProfilePassword: React.FC = () => {
     >
       {({ handleSubmit, handleChange, handleBlur, values, errors }) => (
         <>
-          <KeyboardAwareScrollView >
-            <View style={styles.container}>
+          <KeyboardAwareScrollView style={styles.scrollview}>
+            <Card style={styles.container}>
               <RegularTextInput
                 label="Current Password *"
                 placeholder="Current Password"
@@ -138,7 +139,7 @@ const MyProfilePassword: React.FC = () => {
               <CustomButton onPress={handleSubmit} style={styles.btnStyle}>
                 Update
               </CustomButton>
-            </View>
+            </Card>
           </KeyboardAwareScrollView>
           <GeneralModal
             visible={changePasswordModal}

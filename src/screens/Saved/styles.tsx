@@ -6,9 +6,9 @@ import fonts from '../../assets/fonts';
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
+        backgroundColor: colors.headerColor,
         paddingHorizontal: 15,
-        paddingTop: 50,
+        paddingTop: vh * 1,
     },
     activeContainer: {
         flexDirection: "row",
@@ -35,6 +35,10 @@ const styles = StyleSheet.create({
     contentContainer: {
         marginTop: vh * 2,
         marginBottom: vh * 4,
+    },
+    itemStyle: {
+        padding: 0,
+        paddingBottom: vh * 2
     },
     heading: {
         color: colors.inputText,
@@ -64,6 +68,11 @@ const styles = StyleSheet.create({
         paddingHorizontal: 10,
         backgroundColor: colors.inputcolor
         // backgroundColor: "yellow"
+    },
+    threeDots: {
+        width: vw * 10,
+        height: vh * 5,
+        // marginLeft: 20,
     },
 
 });

@@ -66,7 +66,7 @@ const CreatePost: React.FC = () => {
         <BottomModal
           visible={bottomVisible}
           closeModal={() => setbottomVisible(false)}
-
+          onPressCamera={() => captureImage('photo')}
           onPressImage={() => chooseImageFromLibrary()}
           onPress={() => captureImage('video')}
 

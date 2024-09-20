@@ -62,7 +62,7 @@ const ChatOngoing: React.FC = () => {
 
     return (
         <TouchableWithoutFeedback
-            onPress={() => setModalVisible(false)}
+        // onPress={() => setModalVisible(false)}
         >
             <View style={styles.container}>
                 <Card style={styles.cardStyle}>

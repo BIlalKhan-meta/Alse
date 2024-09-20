@@ -5,14 +5,14 @@ import { fontSizes, vh, vw } from '../../../constant';
 const styles = StyleSheet.create({
   scrollview: {
     // flex: 1,
-    backgroundColor: colors.white,
+    backgroundColor: colors.headerColor,
   },
   container: {
     backgroundColor: colors.headerColor,
     alignItems: "center",
-    paddingBottom: vh * 5,
+    marginBottom: vh * 5,
     paddingTop: vh * 2,
-    // flex: 1
+    // flex: 1,
 
   },
   cardStyle: {
@@ -27,7 +27,7 @@ const styles = StyleSheet.create({
     fontWeight: "600"
   },
   bottomStyle: {
-    paddingTop: vh * 35,
+    paddingTop: vh * 5,
 
   }
 

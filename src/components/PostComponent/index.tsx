@@ -54,7 +54,13 @@ const PostComponent: React.FC<PostProps> = ({
 
   const navigation = useNavigation();
   const goToProfile = () => {
-    navigation.navigate('Profile', { account });
+    if (account === "self") {
+      navigation.navigate('MyProfile', { account });
+
+    } else {
+
+      navigation.navigate('Profile', { account });
+    }
   };
 
   const options = [

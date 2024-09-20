@@ -104,6 +104,26 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.themeColor
   },
+  faceBtn: {
+    alignSelf: "center",
+    alignItems: "center",
+    marginTop: vh * 2
+
+  },
+  faceImg: {
+    width: vw * 10,
+    height: vh * 5,
+    alignSelf: "center",
+    marginTop: vh
+  },
+  faceTxt: {
+    fontSize: fontSizes.f12,
+    color: colors.inputText
+  },
+  error: {
+    color: colors.redText,
+    marginTop: vh * 1
+  },
 
 });
 

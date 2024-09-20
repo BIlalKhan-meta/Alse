@@ -16,13 +16,14 @@ import CustomButton from '../../components/CustomButton';
 import InterMedium from '../../components/Text/InterMedium';
 import InterRegular from '../../components/Text/InterRegular';
 import Card from '../../components/Card';
+import ReportBlockModal from '../../components/ReportBlockModal';
 
 const MyProfile: React.FC = () => {
   const navigation = useNavigation()
   const [profileDetails, setProfileDetails] = useState<boolean>(true);
   const [profileUpdate, setProfileUpdate] = useState<boolean>(false);
   const [changePassword, setChangePassword] = useState<boolean>(false);
-  const [submitted, setSubmitted] = useState<boolean>(false);
+  const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [submitted2, setSubmitted2] = useState<boolean>(false);
   const [secureCurrentPassword, setSecureCurrentPassword] = useState<boolean>(true);
   const [securePassword, setSecurePassword] = useState<boolean>(true);
@@ -31,66 +32,18 @@ const MyProfile: React.FC = () => {
   const [changePasswordModal, setChangePasswordModal] = useState<boolean>(false);
   const [imageModal, setImageModal] = useState<boolean>(false);
 
-  interface FormValues {
-    firstname: string;
-    lastname: string;
+  const options = [
+    { text: 'Private', onPress: () => handlePrivatePress() },
+    { text: 'Public', onPress: () => handlePublicPress() },
+  ];
+
+  const handlePrivatePress = () => {
+    setModalVisible(false)
   }
 
-  interface FormValues2 {
-    currentPassword: string;
-    password: string;
-    cpassword: string;
+  const handlePublicPress = () => {
+    setModalVisible(false)
   }
-
-  const initialValues = {
-    firstname: 'Bella',
-    lastname: 'Edward',
-  };
-
-  const confirmPasswordInitialValues = {
-    currentPassword: '',
-    password: '',
-    cpassword: '',
-  };
-
-  const validationSchema: yup.AnySchema<FormValues> = yup.object().shape({
-    firstname: yup.string().required('First Name is required'),
-    lastname: yup.string().required('Last Name is required'),
-  });
-
-  const confirmPasswordValidationSchema: yup.AnySchema<FormValues2> = yup.object().shape({
-    currentPassword: yup
-      .string()
-      .min(6, 'Password must be at least 6 characters')
-      .required('Password is required'),
-    password: yup
-      .string()
-      .min(6, 'Password must be at least 6 characters')
-      .required('Password is required'),
-    cpassword: yup
-      .string()
-      .oneOf([yup.ref('password'), null], 'Passwords must match')
-      .required('Confirm Password is required'),
-  });
-
-  const handleSubmit = (
-    values: object,
-    { resetForm }: { resetForm: () => void },
-  ) => {
-    if (profileUpdate) {
-      setProfileUpdateModal(true)
-      console.log('PROFILE DETAILS SUBMITTED SUCCESSFULLY');
-      setProfileUpdate(false)
-      resetForm();
-    }
-    else if (changePassword) {
-      setChangePasswordModal(true)
-      console.log('PASSWORD CHANGED SUCCESSFULLY');
-      setChangePassword(false)
-      resetForm();
-    }
-    // navigation.navigate("Login")
-  };
 
 
   useLayoutEffect(() => {
@@ -102,8 +55,8 @@ const MyProfile: React.FC = () => {
         <View style={{}}>
 
           <TouchableOpacity onPress={() => {
-            // setModalVisible(!modalVisible) 
-            setImageModal(true)
+            setModalVisible(!modalVisible)
+            // setImageModal(true)
           }}>
             <Image
               source={images.dots}
@@ -117,121 +70,92 @@ const MyProfile: React.FC = () => {
         </View>
       ),
     });
-  }, [navigation]);
+  }, [navigation, modalVisible]);
 
 
   return (
     <View>
-      {/* <HeaderComponent
-        style={styles.header}
-        home={true} name='My Profile' onPress={navigation.toggleDrawer} onPressNotifications={() => navigation.navigate("Notifications")}
-        notification={true}
-
-      /> */}
-      <Formik
-        initialValues={
-          profileUpdate
-            ? initialValues
-            : changePassword
-              ? confirmPasswordInitialValues
-              : {}
-        }
-
-        validationSchema={
-          profileUpdate
-            ? validationSchema
-            : changePassword
-              ? confirmPasswordValidationSchema
-              : {}
-        }
-        onSubmit={handleSubmit}>
-        {({
-          handleSubmit,
-          handleChange,
-          handleBlur,
-          values,
-          errors,
-          resetForm,
-        }) => (
-          <>
-            {/* <KeyboardAwareScrollView style={styles.scrollview}> */}
-            <View style={styles.container}>
 
 
-              <Card style={styles.cardContainer}>
-
-                <View style={styles.banner}>
-                  <Image source={images.profileBg} style={styles.imageStyle} />
-
-                </View>
-
-                <View style={styles.imagecontainer}>
-                  <Image source={images.user2} style={styles.imageStyle} />
-                </View>
-
-                <TouchableOpacity style={styles.btnConatiner2}
-                  onPress={() => navigation.navigate("MyProfilePassword")}>
-                  <InterMedium style={styles.editTxt}>Change Password</InterMedium>
-                </TouchableOpacity>
-                <InterMedium style={styles.username}>Ad Abc</InterMedium>
-                <InterMedium style={styles.email}>Test@2020</InterMedium>
-
-                <View style={styles.profileBtn}>
-                  <InterRegular style={styles.profileTxt}>Private</InterRegular>
-                </View>
+      <View style={styles.container}>
 
 
-                <View style={styles.contentContainer}>
+        <Card style={styles.cardContainer}>
 
-                  <View style={styles.txtConatiner}>
-                    <InterMedium style={styles.txt}>Phone Number</InterMedium>
-                    <InterMedium style={styles.txt}>Age</InterMedium>
+          <View style={styles.banner}>
+            <Image source={images.profileBg} style={styles.imageStyle} />
 
-                  </View>
+          </View>
 
-                  <View style={styles.txtConatiner}>
-                    <InterMedium style={styles.phoneTxt}>123-456-7890</InterMedium>
-                    <InterMedium style={styles.phoneTxt}>16</InterMedium>
-                  </View>
+          <View style={styles.imagecontainer}>
+            <Image source={images.user2} style={styles.imageStyle} />
+          </View>
 
-                  <View style={styles.txtConatiner}>
-                    <InterMedium style={styles.txt}>Birth Date</InterMedium>
-                    <InterMedium style={styles.txt}>Gender</InterMedium>
+          <TouchableOpacity style={styles.btnConatiner2}
+            onPress={() => navigation.navigate("MyProfilePassword")}>
+            <InterMedium style={styles.editTxt}>Change Password</InterMedium>
+          </TouchableOpacity>
+          <InterMedium style={styles.username}>Ad Abc</InterMedium>
+          <InterMedium style={styles.email}>Test@2020</InterMedium>
 
-                  </View>
-
-                  <View style={styles.txtConatiner}>
-                    <InterMedium style={styles.phoneTxt}>16/12/2024</InterMedium>
-                    <InterMedium style={styles.phoneTxt}>Female</InterMedium>
-                  </View>
+          <View style={styles.profileBtn}>
+            <InterRegular style={styles.profileTxt}>Private</InterRegular>
+          </View>
 
 
-                </View>
+          <View style={styles.contentContainer}>
 
-
-
-
-
-                <CustomButton style={styles.btnConatiner}
-                  onPress={() => navigation.navigate("MyProfileUpdate")}>
-                  EDIT PROFILE
-                </CustomButton>
-
-              </Card>
-
-
-
-
+            <View style={styles.headingConatiner}>
+              <InterMedium style={styles.txt}>Phone Number</InterMedium>
+              <InterMedium style={styles.txt}>Age</InterMedium>
 
             </View>
-            {/* </KeyboardAwareScrollView> */}
-          </>
-        )}
-      </Formik>
+
+            <View style={styles.txtConatiner}>
+              <InterMedium style={styles.phoneTxt}>123-456-7890</InterMedium>
+              <InterMedium style={styles.phoneTxt}>16</InterMedium>
+            </View>
+
+            <View style={styles.headingConatiner}>
+              <InterMedium style={styles.txt}>Birth Date</InterMedium>
+              <InterMedium style={styles.txt}>Gender</InterMedium>
+
+            </View>
+
+            <View style={styles.txtConatiner}>
+              <InterMedium style={styles.phoneTxt}>16/12/2024</InterMedium>
+              <InterMedium style={styles.phoneTxt}>Female</InterMedium>
+            </View>
+
+
+          </View>
 
 
 
 
+
+          <CustomButton style={styles.btnConatiner}
+            onPress={() => navigation.navigate("MyProfileUpdate")}>
+            EDIT PROFILE
+          </CustomButton>
+
+        </Card>
+
+
+
+
+
+      </View>
+
+
+
+
+      <ReportBlockModal
+        isVisible={modalVisible}
+        options={options}
+        onClose={() => setModalVisible(false)}
+      // style={{ top: 55 }}
+      />
 
 
 

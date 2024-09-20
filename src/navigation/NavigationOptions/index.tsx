@@ -13,6 +13,7 @@ import Home from '../../screens/Home';
 import Menu from '../../screens/Menu';
 import Notifications from '../../screens/Notifications';
 import ContactUs from '../../screens/ContactUs';
+import Saved from '../../screens/Saved';
 
 
 
@@ -59,7 +60,8 @@ const titles: { [key: string]: string } = {
     // AddProduct: "Add Product",
     // WishList: "Wishlist",
     ContactUs: "Contact Us",
-    RequestScreen: 'RequestScreen'
+    RequestScreen: 'RequestScreen',
+    Saved: "Saved",
 
 };
 const backButtonRoutes: { [key: string]: boolean } = {
@@ -77,7 +79,8 @@ const backButtonRoutes: { [key: string]: boolean } = {
     MyBlogs: true,
     AddBlog: true,
     SavedChatDetail: true,
-    RequestScreen: false
+    AddStore: true,
+
 
 };
 

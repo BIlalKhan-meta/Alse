@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, FlatList } from 'react-native';
+import { View, Text, Image, TouchableOpacity, StyleSheet, FlatList, ViewStyle } from 'react-native';
 import { images } from '../../utils/images';
 import { vh } from '../../constant';
 import InterRegular from '../Text/InterRegular';
@@ -21,14 +21,15 @@ interface ContentSavedProps {
     onAddToCart: (productId: string) => void;
     onRemoveFromContentSaved: (productId: string) => void;
     onItemPress: () => void;
+    style: ViewStyle
 }
 
-const ContentSavedScreen: React.FC<ContentSavedProps> = ({ item, onAddToCart, onRemoveFromContentSaved, title, viewBtn, onItemPress }) => {
+const ContentSavedScreen: React.FC<ContentSavedProps> = ({ item, onAddToCart, onRemoveFromContentSaved, title, viewBtn, onItemPress, style }) => {
 
 
 
     return (
-        <TouchableOpacity style={styles.productContainer}
+        <TouchableOpacity style={[styles.productContainer, style]}
             onPress={onItemPress}
         >
             <Image source={item.imageUrl} style={styles.productImage} />
@@ -45,12 +46,12 @@ const ContentSavedScreen: React.FC<ContentSavedProps> = ({ item, onAddToCart, on
 
                 </View>
                 {item.active ? <TouchableOpacity
-                    onPress={() => onAddToCart(item.id)}
+                    // onPress={() => onAddToCart(item.id)}
                     style={styles.activeButton}
                 >
                     <InterRegular style={styles.addButtonText}>Active</InterRegular>
                 </TouchableOpacity> : <TouchableOpacity
-                    onPress={() => onAddToCart(item.id)}
+                    // onPress={() => onAddToCart(item.id)}
                     style={styles.inactiveButton}
                 >
                     <InterRegular style={styles.addButtonText}>InActive</InterRegular>

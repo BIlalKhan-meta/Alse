@@ -38,9 +38,9 @@ const styles = StyleSheet.create({
         marginLeft: 5,
     },
     header: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        width: vw * 22
+        // flexDirection: "row",
+        // justifyContent: "space-between",
+        // width: vw * 22
     },
     threeDots: {
         width: vw * 10,

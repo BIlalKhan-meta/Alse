@@ -4,16 +4,25 @@ import PhoneInput from 'react-native-phone-number-input';
 import styles from './styles';
 import InterRegular from '../../Text/InterRegular';
 import { colors } from '../../../utils/theme';
+import InterRegularSmallest from '../../Text/InterRegularSmallest';
 
 interface PhoneNumberInputProps {
   initialNumber?: string;
   onNumberChange?: (phoneNumber: string) => void;
   label?: string;
   labelStyle?: StyleProp<TextStyle>;
+  errors?: string;
+  submitted?: boolean;
 
 }
 
-const PhoneNumberInput: React.FC<PhoneNumberInputProps> = ({ initialNumber, onNumberChange,label,labelStyle }) => {
+const PhoneNumberInput: React.FC<PhoneNumberInputProps> = ({
+  initialNumber,
+  onNumberChange,
+  label, labelStyle,
+  errors,
+  submitted
+}) => {
   const phoneInput = useRef<PhoneInput>(null);
 
   const handleChange = (number: string) => {
@@ -24,9 +33,9 @@ const PhoneNumberInput: React.FC<PhoneNumberInputProps> = ({ initialNumber, onNu
 
   return (
     <View style={styles.container}>
-    <InterRegular style={[styles.label, labelStyle]}>
+      <InterRegular style={[styles.label, labelStyle]}>
         {label}
-       </InterRegular>
+      </InterRegular>
       <PhoneInput
         ref={phoneInput}
         defaultValue={initialNumber}
@@ -36,6 +45,7 @@ const PhoneNumberInput: React.FC<PhoneNumberInputProps> = ({ initialNumber, onNu
         containerStyle={styles.phoneContainer}
         textContainerStyle={styles.textInput}
       />
+      {submitted && errors && <InterRegularSmallest style={styles.error}>{errors}</InterRegularSmallest>}
 
     </View>
   );

@@ -25,7 +25,7 @@ const styles = StyleSheet.create({
   },
 
   banner: {
-    // width: vw * 90,
+    width: "100%",
     height: vh * 20
   },
   profileConatiner: {
@@ -80,13 +80,19 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.f16,
     color: colors.forgotColor,
   },
+  editBtn: {
+    position: "absolute",
+    right: vh * 2,
+    top: vh * 2
+  },
   editImage: {
     width: vw * 5,
-    height: vh * 2.5
+    height: vh * 2.5,
+
   },
   rightImage: {
     width: vw * 10,
-    height: vh * 5
+    height: vh * 5,
   },
   imageStyle: {
     width: "100%",
@@ -133,9 +139,10 @@ const styles = StyleSheet.create({
     height: vh * 5
   },
   phoneTxt: {
-    fontSize: fontSizes.f14,
+    fontSize: fontSizes.f12,
     color: colors.forgotColor,
-    marginLeft: vw * 2
+    marginLeft: vw * 2,
+    marginTop: vh * 2
   },
   Btn2: {
     alignSelf: "center",
@@ -198,6 +205,12 @@ const styles = StyleSheet.create({
     bottom: vh * 10,
     marginLeft: 10
     // backgroundColor: "yellow"
+  },
+  calendericon: {
+    width: vw * 4,
+    height: vh * 2,
+    alignSelf: "center",
+    marginLeft: "auto"
   }
 });
 

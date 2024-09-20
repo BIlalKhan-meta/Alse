@@ -159,7 +159,7 @@ const ChatScreen: React.FC = () => {
                     <InterMedium style={styles.name}>{item.name}</InterMedium>
                     <Text style={styles.lastMessage}>{item.lastMessageTime}</Text>
                 </View>
-                <View style={styles.chatActions}>
+                {/* <View style={styles.chatActions}>
 
                     <TouchableOpacity
                         onPress={() => openModal(item.id)}
@@ -172,7 +172,7 @@ const ChatScreen: React.FC = () => {
                         options={item.group ? options : options2}
                     // onClose={() => setActiveChatId(null)}
                     />
-                </View>
+                </View> */}
             </View>
             <InterRegular style={styles.lastMessage}>{item.lastMessage}</InterRegular>
         </TouchableOpacity>

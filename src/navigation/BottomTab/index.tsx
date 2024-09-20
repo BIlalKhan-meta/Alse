@@ -77,7 +77,7 @@ const TabNavigation = () => {
                     ...NavigationOptions
                 }}
             />
-            <Tab.Screen
+            {/* <Tab.Screen
                 name="Game"
                 component={Game}
                 options={{
@@ -99,7 +99,7 @@ const TabNavigation = () => {
                         </View>
                     ),
                 }}
-            />
+            /> */}
             <Tab.Screen
                 name="Menu"
                 component={MenuNavigation}

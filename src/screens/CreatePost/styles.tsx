@@ -1,4 +1,4 @@
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 import { colors } from '../../utils/theme';
 import { fontSizes, vh, vw } from '../../constant';
 
@@ -7,7 +7,8 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: colors.headerColor,
         paddingHorizontal: 15,
-        paddingTop: vh*10,
+        paddingTop: Platform.OS == "ios" ? vh * 10 : vh * 3,
+        paddingBottom: vh * 4
     },
 
 

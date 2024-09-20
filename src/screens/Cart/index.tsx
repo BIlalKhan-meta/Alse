@@ -93,7 +93,9 @@ const Cart = () => {
                     Procced to Checkout
                 </CustomButton>
 
-                <CustomButton style={styles.shoppingButton} txtstyle={styles.shoppingTxt}>
+                <CustomButton style={styles.shoppingButton} txtstyle={styles.shoppingTxt}
+                    onPress={() => navigation.navigate("Shop")}
+                >
                     Continue Shopping
                 </CustomButton>
 

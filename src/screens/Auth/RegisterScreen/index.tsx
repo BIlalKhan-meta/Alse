@@ -23,6 +23,7 @@ import { images } from '../../../utils/images';
 import GeneralModal from '../../../components/GeneralModal';
 import { useNavigation } from '@react-navigation/native';
 import Card from '../../../components/Card';
+import InterRegularSmallest from '../../../components/Text/InterRegularSmallest';
 
 const RegisterScreen: React.FC = () => {
 
@@ -43,43 +44,48 @@ const RegisterScreen: React.FC = () => {
     setIsChecked(value);
   };
 
-  const handleNumberChange = (number: string) => {
+  // const handleNumberChange = (number: string) => {
+  //   setPhoneNumber(number);
+  // }
+  const handleNumberChange = (number: string, setFieldValue: any) => {
+    setFieldValue('contactNo', number);
     setPhoneNumber(number);
-  }
-  const genders = [
-    { name: '10 years', id: 1 },
-    { name: '12 years', id: 2 },
-  ];
+  };
+
+
+
+  const ages = Array.from({ length: 100 }, (_, index) => ({
+    name: `${index + 1} years`,
+    id: index + 1
+  }));
 
   interface FormValues {
-    firstname: string,
-    lastname: string,
+    name: string,
     email: string,
-    gender: string,
     password: string,
     cpassword: string,
-    contactNo: string
+    contactNo: string,
+    dateOfBirth: string,
+    age: string,
 
   }
 
   const initialValues = {
-    firstname: '',
-    lastname: '',
+    name: '',
     email: '',
-    gender: '',
     password: '',
     cpassword: '',
-    contactNo: ''
+    contactNo: '',
+    dateOfBirth: '',
+    age: '',
   };
 
   const validationSchema: yup.AnySchema<FormValues> = yup.object().shape({
-    firstname: yup.string().required('First Name is required'),
-    lastname: yup.string().required('Last Name is required'),
+    name: yup.string().required('Name is required'),
     email: yup
       .string()
       .email('Email or password is wrong !! TRY AGAIN')
       .required('Email is required'),
-    gender: yup.string().required('Gender is required'),
     password: yup
       .string()
       .min(6, 'Password must be at least 6 characters')
@@ -89,12 +95,20 @@ const RegisterScreen: React.FC = () => {
       .oneOf([yup.ref('password'), null], 'Passwords must match')
       .required('Confirm Password is required'),
     contactNo: yup.string().required('Contact Number is required'),
+    dateOfBirth: yup
+      .date()
+      .required('Date of Birth is required'),
+    age: yup
+      .string()
+      .required('Age is required'),
   });
 
 
   const handleSubmit = (values: object, { resetForm }: { resetForm: () => void }) => {
-    console.log("SUBMITTED")
-    navigation.navigate("Login")
+    setSuccessModel(true)
+
+    // console.log("SUBMITTED")
+    // navigation.navigate("Login")
   }
 
   function formatDate(date: any) {
@@ -142,11 +156,11 @@ const RegisterScreen: React.FC = () => {
                   label="Full Name"
                   placeholder='Enter full name'
                   placeholderTextColor={colors.inputText}
-                  onChangeText={handleChange('firstname')}
-                  onBlur={handleBlur('firstname')}
-                  value={values.firstname}
+                  onChangeText={handleChange('name')}
+                  onBlur={handleBlur('name')}
+                  value={values.name}
                   submitted={submitted}
-                  errors={errors.firstname}
+                  errors={errors.name}
                   labelStyle={styles.label}
                 />
 
@@ -165,8 +179,12 @@ const RegisterScreen: React.FC = () => {
 
                 <PhoneNumberInput
                   initialNumber={phoneNumber}
-                  onNumberChange={handleNumberChange}
+                  // onNumberChange={handleNumberChange}
+                  onNumberChange={(number: string) => handleNumberChange(number, setFieldValue)}
                   label="Phone No."
+                  // value={values.contactNo}
+                  submitted={submitted}
+                  errors={errors.contactNo}
 
                 />
 
@@ -190,11 +208,13 @@ const RegisterScreen: React.FC = () => {
                       onConfirm={(date) => {
                         setOpenDate(false)
                         setDate(date)
+                        setFieldValue('dateOfBirth', date);
                       }}
                       onCancel={() => {
                         setOpenDate(false)
                       }}
                     />
+                    {submitted && errors.dateOfBirth && <InterRegularSmallest style={styles.error}>{errors.dateOfBirth}</InterRegularSmallest>}
                   </View>
 
 
@@ -209,14 +229,14 @@ const RegisterScreen: React.FC = () => {
                       enabled={true}
                       mode='dialog'
                       placeholder={"Select Age"}
-                      onValueChange={handleChange('gender')}
-                      selectedValue={values.gender}
-                    // data={genders}
+                      onValueChange={handleChange('age')}
+                      selectedValue={values.age}
+                    // data={ages}
                     >
 
                       <Picker.Item label={"Select Age"} value="" />
 
-                      {genders.map((item) => (
+                      {ages.map((item) => (
                         <Picker.Item
                           label={item.name.toString()}
                           value={item.name.toString()}
@@ -225,6 +245,7 @@ const RegisterScreen: React.FC = () => {
                       ))}
 
                     </Picker>
+                    {submitted && errors.age && <InterRegularSmallest style={styles.error}>{errors.age}</InterRegularSmallest>}
                   </View>
 
                 </View>
@@ -265,13 +286,20 @@ const RegisterScreen: React.FC = () => {
 
                 </View>
 
+                <TouchableOpacity style={styles.faceBtn}>
+                  <View>
+                    <InterRegular style={styles.faceTxt}>Face Recognition is required for child verification</InterRegular>
+                    <Image source={images.face} style={styles.faceImg} />
+                  </View>
+                </TouchableOpacity>
+
 
 
                 <CustomButton onPress={() => {
-                  setSuccessModel(true)
-                  // setSubmitted(true)
+                  // setSuccessModel(true)
+                  setSubmitted(true)
                   // resetForm()
-                  // handleSubmit()
+                  handleSubmit()
                 }}>
                   Create Account
                 </CustomButton>

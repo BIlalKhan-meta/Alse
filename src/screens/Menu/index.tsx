@@ -84,15 +84,15 @@ const Menu: React.FC = () => {
           <View style={styles.cardContent2}>
             <InterMedium style={styles.cardHeading}>- &nbsp;&nbsp;&nbsp;Educational Library</InterMedium>
             <View style={styles.btnCon}>
-              <TouchableOpacity onPress={() => navigation.navigate('ViewContent')}>
+              <TouchableOpacity onPress={() => navigation.navigate('Blogs')}>
                 <InterRegular style={styles.cardText}>View Content</InterRegular>
               </TouchableOpacity>
               <TouchableOpacity onPress={() => navigation.navigate('SubscriptionLogs')}>
                 <InterRegular style={styles.cardText}>Subscription Logs</InterRegular>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => navigation.navigate('Games')}>
+              {/* <TouchableOpacity onPress={() => navigation.navigate('Games')}>
                 <InterRegular style={styles.cardText}>Games</InterRegular>
-              </TouchableOpacity>
+              </TouchableOpacity> */}
 
 
 

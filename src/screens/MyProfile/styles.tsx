@@ -107,14 +107,23 @@ const styles = StyleSheet.create({
 
   },
   contentContainer: {
-    marginTop: vh * 4
+    marginTop: vh * 4,
   },
   txtConatiner: {
     flexDirection: "row",
     // alignContent:"center",
     justifyContent: "space-between",
     // alignItems: "center",
-    // marginTop: vh * 4,
+    alignSelf: "center",
+    width: vw * 80,
+    // backgroundColor: "yellow"
+  },
+  headingConatiner: {
+    flexDirection: "row",
+    // alignContent:"center",
+    justifyContent: "space-between",
+    // alignItems: "center",
+    marginTop: vh * 2,
     alignSelf: "center",
     width: vw * 80,
     // backgroundColor: "yellow"

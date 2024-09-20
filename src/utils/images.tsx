@@ -51,6 +51,8 @@ export const images = {
   upload: require('../assets/Icons/upload.png'),
   edit: require('../assets/Icons/edit.png'),
   recordingIcon: require('../assets/Icons/recordingIcon.png'),
+  face: require('../assets/Icons/face.png'),
+  calendericon: require('../assets/Icons/calendericon.png'),
 
 
 

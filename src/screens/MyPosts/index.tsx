@@ -28,7 +28,7 @@ const posts = [
         likes: 120,
         comments: 45,
         share: 25,
-        account: "public"
+        account: "self"
     },
     {
         id: 2,
@@ -41,7 +41,7 @@ const posts = [
         likes: 80,
         comments: 20,
         share: 10,
-        account: "private"
+        account: "self"
 
     },
     // Add more posts as needed
@@ -72,6 +72,7 @@ const MyPosts: React.FC = () => {
                 <View style={styles.header}>
                     <TouchableOpacity onPress={() => {
                         // setModalVisible(true)
+                        navigation.navigate("Notifications")
                     }}>
                         <Image
                             source={images.bellIcon}
@@ -79,7 +80,7 @@ const MyPosts: React.FC = () => {
 
                         />
                     </TouchableOpacity>
-
+                    {/* 
                     <TouchableOpacity onPress={() => {
                         // setModalVisible(true)
                     }}>
@@ -88,7 +89,7 @@ const MyPosts: React.FC = () => {
                             style={styles.threeDots}
 
                         />
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
                 </View>
             ),
         });
@@ -104,6 +105,7 @@ const MyPosts: React.FC = () => {
                     onTextInput={() => navigation.navigate("CreatePost")}
                     onVideoPress={() => navigation.navigate("CreatePost")}
                     onImagePress={() => navigation.navigate("CreatePost")}
+                    onCameraPress={() => navigation.navigate("CreatePost")}
                 />
 
                 {posts.map((post, index) => (

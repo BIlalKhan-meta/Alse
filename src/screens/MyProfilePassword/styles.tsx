@@ -8,13 +8,13 @@ const styles = StyleSheet.create({
     height: vh * 20
   },
   scrollview: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.headerColor,
     flex: 1
   },
   container: {
-    paddingHorizontal: vw * 5,
+    // paddingHorizontal: vw * 5,
     // paddingVertical: vh * 4,
-    backgroundColor: colors.white
+    margin: vh * 2
   },
 
   btnStyle: {

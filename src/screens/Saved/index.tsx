@@ -1,5 +1,5 @@
 // Home.tsx
-import React, { useState } from 'react';
+import React, { useLayoutEffect, useState } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, FlatList } from 'react-native';
 import { images } from '../../utils/images';
 import CardComponent from '../../components/CardComponent';
@@ -181,20 +181,52 @@ const Saved: React.FC = () => {
         console.log(`Product with id ${productId} removed from wishlist`);
     };
 
+    useLayoutEffect(() => {
+        navigation.setOptions({
+            headerStyle: {
+                backgroundColor: colors.headerColor
+            },
+            headerRight: () => (
+                <View style={styles.header}>
+                    <TouchableOpacity onPress={() => {
+                        // setModalVisible(true)
+                        navigation.navigate("Notifications")
+                    }}>
+                        <Image
+                            source={images.bellIcon}
+                            style={styles.threeDots}
+
+                        />
+                    </TouchableOpacity>
+                    {/* 
+                    <TouchableOpacity onPress={() => {
+                        // setModalVisible(true)
+                    }}>
+                        <Image
+                            source={images.searchIcon}
+                            style={styles.threeDots}
+
+                        />
+                    </TouchableOpacity> */}
+                </View>
+            ),
+        });
+    }, [navigation]);
+
     return (
         <ScrollView
             showsVerticalScrollIndicator={false}
         >
             <View style={styles.container}>
                 {/* Header */}
-                <HeaderComponent
+                {/* <HeaderComponent
                     label={'Saved'}
                     onBackPress={() => navigation.goBack()}
                     chatVisible={true}
                     searchVisible={true}
                     onChatPress={() => navigation.navigate("ChatScreen")}
 
-                />
+                /> */}
 
                 <Card style={styles.activeContainer}>
                     <TouchableOpacity style={active == 1 ? styles.activeBtn : styles.InactiveBtn}
@@ -321,7 +353,7 @@ const Saved: React.FC = () => {
                                     item={item}
                                     title='Blog Title'
                                     viewBtn='View Full Blog'
-
+                                    style={styles.itemStyle}
                                 />
                                 // </View>
 
