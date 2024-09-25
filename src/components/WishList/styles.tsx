@@ -1,16 +1,17 @@
 import { StyleSheet } from "react-native";
-import { fontSizes, vh } from "../../constant";
+import { fontSizes, vh, vw } from "../../constant";
 import { colors } from "../../utils/theme";
 
 const styles = StyleSheet.create({
     container: {
-        padding: 10,
+        // padding: 10,
     },
     productContainer: {
-        flex: 1,
+        // flex: 1,
+        width:vw*40,
         flexDirection: 'column',
         alignItems: 'center',
-        margin: 5,
+        margin: vh*0.6,
         borderRadius: 10,
         overflow: 'hidden',
         backgroundColor: '#fff',

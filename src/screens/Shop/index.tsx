@@ -18,6 +18,7 @@ import { Picker } from '@react-native-picker/picker';
 import InterMedium from '../../components/Text/InterMedium';
 import ReportBlockModal from '../../components/ReportBlockModal';
 import GeneralModal from '../../components/GeneralModal';
+import SortModal from '../../components/SortModal';
 
 const dummyWishlist = [
     {
@@ -25,14 +26,16 @@ const dummyWishlist = [
         name: 'Product 1',
         price: 20,
         imageUrl: `${images.pro1}`,
-        size: "L, M, S"
+        size: "L, M, S",
+        colors:"Green"
     },
     {
         id: '2',
         name: 'Product 2',
         price: 30,
         imageUrl: `${images.pro2}`,
-        size: "L, M,"
+        size: "L, M,",
+        colors:"Green"
 
     },
     {
@@ -40,7 +43,8 @@ const dummyWishlist = [
         name: 'Product 3',
         price: 25,
         imageUrl: `${images.pro2}`,
-        size: "L, M, S"
+        size: "L, M, S",
+        colors:"Green"
 
 
     },
@@ -49,7 +53,8 @@ const dummyWishlist = [
         name: 'Product 4',
         price: 25,
         imageUrl: `${images.pro1}`,
-        size: "L, M, S"
+        size: "L, M, S",
+        colors:"Green"
 
     },
     {
@@ -57,7 +62,8 @@ const dummyWishlist = [
         name: 'Product 5',
         price: 25,
         imageUrl: `${images.pro1}`,
-        size: "L, M, S"
+        size: "L, M, S",
+        colors:"Green"
 
 
     },
@@ -66,7 +72,8 @@ const dummyWishlist = [
         name: 'Product 6',
         price: 25,
         imageUrl: `${images.pro2}`,
-        size: "L, M, S"
+        size: "L, M, S",
+        colors:"Green"
 
 
     },
@@ -84,6 +91,15 @@ const Shop: React.FC = () => {
     const [active, setActive] = useState<number>(1)
     const [modalVisible, setModalVisible] = useState(false);
     const [ReportSuccess, setReportSuccess] = useState(false);
+
+    // const [modalVisible, setModalVisible] = useState(false);
+    const [sortValue, setSortValue] = useState<string>(''); // State for the selected sort value
+
+    const handleSelectSort = (value: string) => {
+        setSortValue(value);
+        // Implement sorting logic here based on the selected value
+    };
+
 
     const handleAddToCart = (productId: string) => {
         // Implement your logic to add the product to cart
@@ -150,8 +166,15 @@ const Shop: React.FC = () => {
                                     Sort by:
                                 </InterRegular>
                                 <View>
-
-                                    <Picker
+                                <TouchableOpacity 
+                                    onPress={() => setModalVisible(true)}
+                                    style={styles.sortInput}
+                                    >
+                                <Text style={styles.sortText}>
+                                    {sortValue || 'Select an option'}
+                                </Text>
+                            </TouchableOpacity>
+                                    {/* <Picker
                                         style={[styles.pickercontainer]}
                                         dropdownIconColor={colors.inputText}
                                         enabled={true}
@@ -173,7 +196,7 @@ const Shop: React.FC = () => {
                                             />
                                         ))}
 
-                                    </Picker>
+                                    </Picker> */}
                                 </View>
                             </View>
 
@@ -192,7 +215,11 @@ const Shop: React.FC = () => {
 
                         />
                     </Card>
-
+                    <SortModal
+                        visible={modalVisible}
+                        onClose={() => setModalVisible(false)}
+                        onSelect={handleSelectSort}
+                    />
                     <GeneralModal
                         visible={ReportSuccess}
                         closeModal={() => setReportSuccess(false)}

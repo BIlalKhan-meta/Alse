@@ -15,6 +15,9 @@ import InterRegular from '../../components/Text/InterRegular';
 import InterBoldAverage from '../../components/Text/InterBoldAverage';
 import InterMedium from '../../components/Text/InterMedium';
 import Swiper from 'react-native-swiper';
+import RatingandReviewComponent from '../../components/RatingandReviewComponent';
+import ShopComponent from '../../components/ShopComponent';
+import StoreOrderComponent from '../../components/StoreOrder';
 
 
 
@@ -36,7 +39,7 @@ const ProductView: React.FC = () => {
     // const { type } = route?.params;
 
     const [commentsVisible, setCommentsVisible] = useState<boolean>(false)
-    const [active, setActive] = useState<number>(1)
+    const [activeTab, setActiveTab] = useState<number>(1)
     const [modalVisible, setModalVisible] = useState(false);
     const [reportVisible, setReportVisible] = useState(false);
     const [reportInput, setReportInput] = useState(false);
@@ -57,19 +60,36 @@ const ProductView: React.FC = () => {
         });
     }, [navigation]);
 
+
+    const renderContent = () => {
+        switch (activeTab) {
+            case 1:
+                return (
+                    <StoreOrderComponent />
+                );
+            case 2:
+                return (
+                    <RatingandReviewComponent />
+                );
+            case 3:
+                return (
+                    <ShopComponent />
+                );
+            default:
+                return null;
+        }
+    };
+
     return (
         <ScrollView
             showsVerticalScrollIndicator={false}
-            style={{ flex: 1 }}
         >
             <TouchableWithoutFeedback
                 onPress={() => setModalVisible(false)}
             >
 
 
-                <View style={[styles.container,
-                Platform.OS == "ios" && { height: vh * 100 }
-                ]}>
+                <View style={[styles.container]}>
 
 
                     <Card style={styles.cardContainer}>
@@ -124,10 +144,33 @@ const ProductView: React.FC = () => {
                         </View>
 
 
-                        <View style={styles.contentContainer}>
-                            <MyStoreTopTabsNavigation />
+                        {/* <View style={styles.contentContainer}> */}
+                        {/* <MyStoreTopTabsNavigation /> */}
+                        {/* </View> */}
+
+                        <View style={styles.tabBar}>
+                            <TouchableOpacity
+                                style={[styles.tab, activeTab === 1 && styles.activeTab]}
+                                onPress={() => setActiveTab(1)}
+                            >
+                                <Text style={activeTab === 1 ? styles.activeText : styles.inactiveText}>Description</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.tab, activeTab === 2 && styles.activeTab]}
+                                onPress={() => setActiveTab(2)}
+                            >
+                                <Text style={activeTab === 2 ? styles.activeText : styles.inactiveText}>Rating</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.tab, activeTab === 3 && styles.activeTab]}
+                                onPress={() => setActiveTab(3)}
+                            >
+                                <Text style={activeTab === 3 ? styles.activeText : styles.inactiveText}>Similar Products</Text>
+                            </TouchableOpacity>
                         </View>
 
+                        {/* <RatingandReviewComponent/> */}
+                        {renderContent()}
                     </Card>
 
                     <GeneralModal

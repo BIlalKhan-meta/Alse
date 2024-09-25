@@ -1,4 +1,4 @@
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 import { fontSizes, vh, vw } from '../../constant';
 import { colors } from '../../utils/theme';
 import fonts from '../../assets/fonts';
@@ -8,20 +8,21 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: colors.headerColor,
         // paddingHorizontal: 15,
-        // paddingTop: 50,
+        paddingTop: Platform.OS=="ios" ?vh*6:0,
         // marginBottom: vh * 30,
         // paddingBottom: 60,
         //iff ios will createe issue then i have to open height only for ios
         // height: vh * 100
     },
     cardContainer: {
-        flex: 1,
+        flexGrow: 1,
         margin: vh * 2,
         // backgroundColor:"yellow"
     },
     contentContainer: {
-        flex: 1,
-        // marginTop: vh * 1
+        // flex:1,
+               height: vh * 100
+
     },
     activeContainer: {
         flexDirection: "row",
@@ -167,6 +168,18 @@ const styles = StyleSheet.create({
     buttonText: {
         color: colors.black,
         fontSize: fontSizes.f40
+    },
+    tabBar:{
+        flexDirection:"row",
+        justifyContent:"space-between",
+        marginVertical:vh*2
+    },
+    activeTab:{
+        borderBottomWidth:3,
+        borderBottomColor:colors.themeColor,
+    },
+    activeText:{
+        color:colors.themeColor
     }
 });
 

@@ -354,6 +354,8 @@ const Saved: React.FC = () => {
                                     title='Blog Title'
                                     viewBtn='View Full Blog'
                                     style={styles.itemStyle}
+                                    onItemPress={() => navigation.navigate("ViewBlog", { item, title: "View Blog Title" })}
+
                                 />
                                 // </View>
 

@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.f11,
     height: vh * 6,
     marginTop: vh * 2,
-    width: vw * 42,
+    width: vw * 90,
     fontWeight: '300',
     borderColor: colors.inputcolor,
     borderWidth: 1,

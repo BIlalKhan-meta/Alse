@@ -8,7 +8,7 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: colors.headerColor,
         paddingHorizontal: 15,
-        // paddingTop: 50,
+        paddingTop: 50,
     },
     activeContainer: {
         flexDirection: "row",
@@ -43,7 +43,18 @@ const styles = StyleSheet.create({
     sortConatiner: {
         flexDirection: "row",
         justifyContent: "space-between",
-        marginTop: vh * 2
+        marginTop: vh * 2,
+    },
+    sortInput:{
+        backgroundColor:colors.inputcolor,
+        // backgroundColor:"yellow",
+        marginVertical:vh*1,
+        width:vw*40,
+        height:vh*5,
+        alignItems:"center",
+        justifyContent:"center"
+    
+        
     },
     heading: {
         color: colors.inputText,

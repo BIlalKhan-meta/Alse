@@ -55,10 +55,12 @@ const PaymentLogs: React.FC = () => {
     }, [navigation]);
 
     return (
-        <TouchableWithoutFeedback
+      
+            <View style={styles.container}>
+                  <TouchableWithoutFeedback
             onPress={() => setModalVisible(false)}
         >
-            <View style={styles.container}>
+            <>
                 <FilterModal
                     isVisible={modalVisible}
                     onClose={() => setModalVisible(false)}
@@ -111,8 +113,11 @@ const PaymentLogs: React.FC = () => {
                     contentContainerStyle={styles.listContainer}
                     showsVerticalScrollIndicator={false}
                 />
-            </View>
+            </>
+
         </TouchableWithoutFeedback>
+
+            </View>
     );
 };
 

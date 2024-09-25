@@ -126,36 +126,48 @@ export const dummyWishlist = [
     name: 'Product 1',
     price: 20,
     imageUrl: `${images.pro1}`,
+      size: "L, M, S",
+        colors:"Green"
   },
   {
     id: '2',
     name: 'Product 2',
     price: 30,
     imageUrl: `${images.pro2}`,
+      size: "L, M, S",
+        colors:"Green"
   },
   {
     id: '3',
     name: 'Product 3',
     price: 25,
     imageUrl: `${images.pro3}`,
+      size: "L, M, S",
+        colors:"Green"
   },
   {
     id: '4',
     name: 'Product 4',
     price: 25,
     imageUrl: `${images.pro1}`,
+      size: "L, M, S",
+        colors:"Green"
   },
   {
     id: '5',
     name: 'Product 5',
     price: 25,
     imageUrl: `${images.pro2}`,
+      size: "L, M, S",
+        colors:"Green"
   },
   {
     id: '6',
     name: 'Product 6',
     price: 25,
     imageUrl: `${images.pro3}`,
+      size: "L, M, S",
+        colors:"Green"
   },
 ];
 
@@ -198,6 +210,33 @@ export const reviews = [
   },
   {
     id: 5,
+    userAvatar: 'https://example.com/user3.jpg',
+    userName: 'Jane Smith',
+    rating: 5.0,
+    reviewText:
+      'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.',
+    date: 'Jul 16, 2023',
+  },
+  {
+    id: 6,
+    userAvatar: 'https://example.com/user3.jpg',
+    userName: 'Jane Smith',
+    rating: 5.0,
+    reviewText:
+      'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.',
+    date: 'Jul 16, 2023',
+  },
+  {
+    id: 7,
+    userAvatar: 'https://example.com/user2.jpg',
+    userName: 'John Doe',
+    rating: 4.0,
+    reviewText:
+      'Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
+    date: 'Jul 15, 2023',
+  },
+  {
+    id: 8,
     userAvatar: 'https://example.com/user3.jpg',
     userName: 'Jane Smith',
     rating: 5.0,

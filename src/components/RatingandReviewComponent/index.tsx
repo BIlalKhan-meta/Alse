@@ -47,7 +47,6 @@ const RatingandReviewComponent: React.FC = () => {
         renderItem={renderReviewItem}
         keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={styles.listContainer}
-        style={styles.flatList} 
       />
    </View>
   );
@@ -58,7 +57,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     paddingVertical: vh * 1,
     paddingHorizontal: vw * 2,
-    flex: 1,
+    // flex: 1,
+    flexGrow:1
     
   },
   listContainer: {

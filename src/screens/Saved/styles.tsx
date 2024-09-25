@@ -1,4 +1,4 @@
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 import { fontSizes, vh, vw } from '../../constant';
 import { colors } from '../../utils/theme';
 import fonts from '../../assets/fonts';
@@ -8,7 +8,7 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: colors.headerColor,
         paddingHorizontal: 15,
-        paddingTop: vh * 1,
+        paddingTop: Platform.OS=="ios"?vh*8: vh * 1,
     },
     activeContainer: {
         flexDirection: "row",

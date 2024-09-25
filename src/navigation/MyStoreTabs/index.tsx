@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         // width: vw * 30,
-        marginBottom: vh * 2
+        marginBottom: vh * 2,
 
     },
     tabLabel: {

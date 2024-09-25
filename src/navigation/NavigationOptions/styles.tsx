@@ -1,4 +1,4 @@
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 import { fontSizes, vh, vw } from '../../constant';
 import { colors } from '../../utils/theme';
 import fonts from '../../assets/fonts';
@@ -6,7 +6,8 @@ import fonts from '../../assets/fonts';
 const styles = StyleSheet.create({
     header: {
         backgroundColor: colors.headerColor,
-        width: vw * 100
+        width: vw * 100,
+      
     },
 
     headerTitle: {
@@ -27,7 +28,7 @@ const styles = StyleSheet.create({
     },
     headericonButton: {
         marginRight: vw * 2.1,
-        marginTop: vh * 2,
+        marginTop: Platform.OS==="ios"? vh * 1:vh*2,
         width: vw * 5.5,
         height: vh * 5,
     },

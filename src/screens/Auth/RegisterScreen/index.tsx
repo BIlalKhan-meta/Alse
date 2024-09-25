@@ -219,7 +219,7 @@ const RegisterScreen: React.FC = () => {
 
 
 
-                  <View>
+                  {/* <View>
                     <InterRegular style={styles.label}>
                       Age
                     </InterRegular>
@@ -246,7 +246,7 @@ const RegisterScreen: React.FC = () => {
 
                     </Picker>
                     {submitted && errors.age && <InterRegularSmallest style={styles.error}>{errors.age}</InterRegularSmallest>}
-                  </View>
+                  </View> */}
 
                 </View>
 

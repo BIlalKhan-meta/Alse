@@ -1,4 +1,4 @@
-import { StyleSheet } from "react-native";
+import { Platform, StyleSheet } from "react-native";
 import { vh, vw } from "../../constant";
 import { colors } from "../../utils/theme";
 
@@ -65,7 +65,7 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
     carasouelContainer: {
-        height: vh * 65,
+        height: Platform.OS=="ios"?vh*60: vh * 65,
         alignItems: "center",
         justifyContent: "center",
         paddingTop: vh * 2

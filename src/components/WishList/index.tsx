@@ -48,10 +48,10 @@ const WishlistScreen: React.FC<WishlistProps> = ({ wishlist, onAddToCart, onRemo
                         <InterBoldAverage style={styles.productPrice}>${item.price.toFixed(2)}</InterBoldAverage>
                     ) : <Text> </Text>}
                 </View>
-                {product &&
+                {product && item.size &&
                     <InterRegular style={styles.product}>Size: {item.size}</InterRegular>
                 }
-                <InterRegular style={styles.product}>Color: Red, Green, Blue</InterRegular>
+              {item.colors &&  <InterRegular style={styles.product}>Color: Red, Green, Blue</InterRegular>}
 
             </View>
         </TouchableOpacity>
