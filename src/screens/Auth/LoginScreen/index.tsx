@@ -25,10 +25,15 @@ import { useNavigation } from '@react-navigation/native';
 import RememberMeContainer from '../../../components/RememberMeContainer';
 import Card from '../../../components/Card';
 import SignupLastBottomText from '../../../components/SignupLastBottomText';
+import { useAppDispatch } from '../../../hooks/storeHooks';
+import { login } from '../../../store/slices/authSlice';
 
 const LoginScreen: React.FC = () => {
 
   const navigation = useNavigation();
+  const dispatch = useAppDispatch();
+
+
   const [submitted, setSubmitted] = useState<boolean>(false)
   const [securePassword, setSecurePassword] = useState<boolean>(true)
   const [isSelected, setIsSelected] = useState<boolean>(false);
@@ -44,7 +49,7 @@ const LoginScreen: React.FC = () => {
   // };
 
   const initialValues = {
-    email: __DEV__ ? 'abc@gmail.com' : '',
+    email: __DEV__ ? 'logan@mailinator.com' : '',
     password: __DEV__ ? '12345678' : '',
   };
 
@@ -60,13 +65,17 @@ const LoginScreen: React.FC = () => {
       .required('Password is required')
   });
 
-  const handleSubmit = (values: object, { resetForm }: { resetForm: () => void }) => {
-    console.log("SUBMITTED")
-    // navigation.navigate("DrawerNavigation", { screen: 'Home' })
-    navigation.navigate("Home")
-
-
-  }
+  const handleSubmit = async (values: FormValues, { resetForm }: { resetForm: () => void }) => {
+    setSubmitted(true); // Mark the form as submitted
+    try {
+      await dispatch(login({ ...values, useFormData: true })).unwrap(); // Dispatch the login action
+      resetForm(); // Reset the form on successful login
+      navigation.navigate("Home"); // Navigate to Home screen
+      setSubmitted(false)
+    } catch (error) {
+      console.error("Login error:", error); // Handle error (optional)
+    }
+  };
 
 
   return (
@@ -126,13 +135,16 @@ const LoginScreen: React.FC = () => {
                 />
 
 
-                <CustomButton onPress={() => {
-                  // setSuccessModel(true)
-                  setSubmitted(true)
-                  resetForm()
-                  handleSubmit()
-                  // navigation.navigate("Home")
-                }}>
+                <CustomButton
+                  // onPress={() => {
+                  //   setSubmitted(true)
+                  //   resetForm()
+                  //   handleSubmit()
+                  // }}
+                  onPress={handleSubmit}
+                  loading={submitted}
+
+                >
                   Login
                 </CustomButton>
 

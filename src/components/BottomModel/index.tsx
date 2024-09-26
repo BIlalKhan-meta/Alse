@@ -1,10 +1,25 @@
-import { Image, ImageSourcePropType, Modal, StyleProp, StyleSheet, Text, TextInput, TextStyle, TouchableOpacity, View, ViewStyle } from 'react-native';
+import {
+  Image,
+  ImageSourcePropType,
+  Modal,
+  StyleProp,
+  StyleSheet,
+  Text,
+  TextInput,
+  TextStyle,
+  TouchableOpacity,
+  View,
+  ViewStyle,
+} from 'react-native';
 
 import styles from './styles';
-import { BlurView } from '@react-native-community/blur';
+// import { BlurView } from '@react-native-community/blur';
 
-import InterBold from '../Text/InterBold';
+// import InterBold from '../Text/InterBold';
 import { images } from '../../utils/images';
+import HorizontalSeparator from '../HorizontalSeparator';
+import { colors } from '../../utils/theme';
+import { vh, vw } from '../../constant';
 
 interface BottomModalProps {
   visible: boolean;
@@ -15,24 +30,39 @@ interface BottomModalProps {
   buttonText: string;
   onPress: () => void;
   onPressImage: () => void;
-  onPressCamera: () => void;
+  onPressGallery: () => void;
   primaryBtn: boolean;
   secondaryBtn: boolean;
   SecondaryText1: string;
   SecondaryText2: string;
   input: boolean;
-  btnStyle: StyleProp<ViewStyle>
-
+  btnStyle: StyleProp<ViewStyle>;
 }
 
 const BottomModal: React.FC<BottomModalProps> = props => {
-  const { visible, closeModal, icon, title, message, buttonText, onPress, primaryBtn, secondaryBtn, SecondaryText1, SecondaryText2, input, btnStyle, onPressImage, onPressCamera } = props;
+  const {
+    visible,
+    closeModal,
+    icon,
+    title,
+    message,
+    buttonText,
+    onPress,
+    primaryBtn,
+    secondaryBtn,
+    SecondaryText1,
+    SecondaryText2,
+    input,
+    btnStyle,
+    onPressImage,
+    onPressGallery,
+  } = props;
   return (
     <>
       <Modal
         visible={visible}
         onRequestClose={closeModal}
-        animationType='slide'
+        animationType="slide"
         transparent>
         {/* <BlurView
           style={styles.absolute}
@@ -40,46 +70,52 @@ const BottomModal: React.FC<BottomModalProps> = props => {
           blurAmount={1}
           reducedTransparencyFallbackColor="white"
         /> */}
-        <TouchableOpacity
-          style={styles.blurcontainer}
-          onPress={closeModal} />
+        <TouchableOpacity style={styles.blurcontainer} onPress={closeModal} />
         <View style={styles.container}>
-
-
           <View style={styles.uploadOptions}>
-            <TouchableOpacity style={styles.button} onPress={onPressCamera}>
-              <Image
-                source={images.camera}
-                style={styles.buttonIcon2}
-              />
-              <Text style={styles.buttonText}>Capture Image</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.button} onPress={onPressImage}>
-              <Image
-                source={images.media}
-                style={styles.buttonIcon2}
-              />
+            <TouchableOpacity style={styles.button} onPress={onPressGallery}>
+              <Image source={images.media} style={styles.buttonIcon2} />
               <Text style={styles.buttonText}>Upload Image</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.button}
-              onPress={onPress}
-            >
-              <Image
-                source={images.video}
-                style={styles.buttonIcon}
-              />
-              <Text style={styles.buttonText}>Upload Video</Text>
+            <View
+              style={{
+                marginHorizontal: vw * 2,
+                marginVertical: vh * 1,
+                width: vw * 95,
+                height: 1,
+                backgroundColor: colors.borderColor,
+                alignSelf: 'center',
+              }}
+            />
+
+            <TouchableOpacity style={styles.button} onPress={onPressImage}>
+              <Image source={images.camera} style={styles.buttonIcon2} />
+              <Text style={styles.buttonText}>Camera</Text>
             </TouchableOpacity>
-
+            {onPress && (
+              <View>
+                <View
+                  style={{
+                    marginHorizontal: vw * 2,
+                    marginVertical: vh * 1,
+                    width: vw * 95,
+                    height: 1,
+                    backgroundColor: colors.borderColor,
+                    alignSelf: 'center',
+                  }}
+                />
+                <TouchableOpacity style={styles.button} onPress={onPress}>
+                  <Image source={images.video} style={styles.buttonIcon} />
+                  <Text style={styles.buttonText}>Upload Video</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
-
         </View>
       </Modal>
     </>
   );
 };
-
 
 export default BottomModal;

@@ -18,10 +18,13 @@ import InterBold from '../../../components/Text/InterBold';
 import InterRegular from '../../../components/Text/InterRegular';
 import { colors } from '../../../utils/theme';
 import Card from '../../../components/Card';
+import { useAppDispatch } from '../../../hooks/storeHooks';
+import { forgotPassword } from '../../../store/slices/authSlice';
 
 
 
 const ForgetPassword: React.FC = ({ navigation }) => {
+  const dispatch = useAppDispatch();
 
   const [submitted, setSubmitted] = useState<boolean>(false)
 
@@ -42,7 +45,23 @@ const ForgetPassword: React.FC = ({ navigation }) => {
 
   const handleSubmit = (values: object, { resetForm }: { resetForm: () => void }) => {
     console.log("SUBMITTED")
-    navigation.navigate("Verification")
+    const apiData = {
+      email: values.email,
+
+    }
+    dispatch(forgotPassword(apiData))
+      .unwrap()
+      .then((res) => {
+        console.log('response from Signup ====>', res);
+
+        // Optionally navigate or show success message
+        navigation.navigate("Verification", { email: values.email })
+        // resetForm()
+        setSubmitted(false)
+      })
+      .catch((error) => {
+        console.error("Signup error:", error);
+      });
 
   }
 
@@ -76,7 +95,6 @@ const ForgetPassword: React.FC = ({ navigation }) => {
                   <CustomButton style={styles.continuebutton}
                     onPress={() => {
                       setSubmitted(true)
-                      resetForm()
                       handleSubmit()
                     }}>
                     Continue

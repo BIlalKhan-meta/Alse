@@ -25,6 +25,11 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.f24,
     fontWeight: "600"
   },
+  imageStyle: {
+    width: vw * 25,
+    height: vh * 12,
+    borderRadius: vh * 6
+  },
   imageContainer: {
     width: vw * 25,
     height: vh * 12,
@@ -56,7 +61,7 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.f11,
     height: vh * 6,
     marginTop: vh * 2,
-    width: vw * 90,
+    width: vw * 84,
     fontWeight: '300',
     borderColor: colors.inputcolor,
     borderWidth: 1,
@@ -67,8 +72,8 @@ const styles = StyleSheet.create({
     color: colors.inputText,
     flexDirection: 'row',
     alignItems: 'center',
-    alignSelf: "flex-start",
-    marginRight: 10
+    alignSelf: "center",
+    // marginRight: 10
   },
   pickercontainer: {
     fontFamily: fonts.Inter.Bold,

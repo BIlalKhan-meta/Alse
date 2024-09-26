@@ -14,6 +14,9 @@ import { NavigationContainer } from '@react-navigation/native';
 import AppNavigation from './src/navigation/AppNavigation';
 import { colors } from './src/utils/theme';
 import BootSplash from "react-native-bootsplash";
+import { Provider } from 'react-redux';
+import store from './src/store';
+import Toast from 'react-native-toast-message';
 
 type SectionProps = PropsWithChildren<{
   title: string;
@@ -34,13 +37,17 @@ function App(): React.JSX.Element {
   }, []);
 
   return (
-    <SafeAreaView
-      style={styles.container}>
-      <NavigationContainer>
-        <StatusBar backgroundColor={colors.headerColor} barStyle={'dark-content'} />
-        <AppNavigation />
-      </NavigationContainer>
-    </SafeAreaView>
+    <Provider store={store}>
+      <SafeAreaView
+        style={styles.container}>
+        <NavigationContainer>
+          <StatusBar backgroundColor={colors.headerColor} barStyle={'dark-content'} />
+          <AppNavigation />
+        </NavigationContainer>
+        <Toast />
+
+      </SafeAreaView>
+    </Provider>
   );
 }
 

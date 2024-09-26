@@ -20,8 +20,15 @@ import CustomButton from '../../../components/CustomButton';
 import { images } from '../../../utils/images';
 import { colors } from '../../../utils/theme';
 import Card from '../../../components/Card';
+import { useAppDispatch } from '../../../hooks/storeHooks';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { resetPassword } from '../../../store/slices/authSlice';
 
-const RecoverPassword: React.FC = ({ navigation }) => {
+const RecoverPassword: React.FC = () => {
+  const dispatch = useAppDispatch();
+  const navigation = useNavigation();
+  const route = useRoute()
+  const email = route?.params?.email || "";
 
   const [submitted, setSubmitted] = useState<boolean>(false)
   const [securePassword, setSecurePassword] = useState<boolean>(true)
@@ -52,8 +59,28 @@ const RecoverPassword: React.FC = ({ navigation }) => {
 
   const handleSubmit = (values: object, { resetForm }: { resetForm: () => void }) => {
     console.log("PASSWORD CHANGED SUCCESSFULLY")
-    setPasswordRecovered(true)
-    // navigation.navigate("Login")
+    const apiData = {
+      email: email,
+      password: values.password,
+      confirmPassword: values.cpassword
+    }
+    dispatch(resetPassword(apiData))
+      .then((res) => {
+        console.log('response from resetpasss ====>', res);
+        if (res?.payload?.status == true) {
+          // Optionally navigate or show success message
+          resetForm()
+          setPasswordRecovered(true)
+
+          setSubmitted(false)
+        }
+      })
+      .catch((error) => {
+        console.error("Signup error:", error);
+      });
+
+    // setPasswordRecovered(true)
+
   }
 
   return (
@@ -100,7 +127,7 @@ const RecoverPassword: React.FC = ({ navigation }) => {
 
                   <CustomButton onPress={() => {
                     setSubmitted(true)
-                    resetForm()
+                    // resetForm()
                     handleSubmit()
                     // setPasswordRecovered(true)
                   }}>

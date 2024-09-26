@@ -12,16 +12,22 @@ import InterRegularMedium from '../../../components/Text/InterRegularMedium';
 import CustomButton from '../../../components/CustomButton';
 import InterBold from '../../../components/Text/InterBold';
 import InterRegular from '../../../components/Text/InterRegular';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { colors } from '../../../utils/theme';
 import ResendCode from '../../../components/ResendCode';
 import * as yup from 'yup';
 import Card from '../../../components/Card';
+import { verifyOtp, forgotPassword } from '../../../store/slices/authSlice';
+import { useAppDispatch } from '../../../hooks/storeHooks';
+
+import { getMessage, Toast } from '../../../utils/helpers';
 
 
 const Verification: React.FC = () => {
-
+  const dispatch = useAppDispatch();
   const navigation = useNavigation();
+  const route = useRoute()
+  const email = route?.params?.email || "";
 
   const [submitted, setSubmitted] = useState<boolean>(false)
 
@@ -42,9 +48,44 @@ const Verification: React.FC = () => {
 
   const handleSubmit = (values: object, { resetForm }: { resetForm: () => void }) => {
     console.log("SUBMITTED")
-    navigation.navigate("RecoverPassword")
-
+    const apiData = {
+      email: email,
+      code: values.code
+    }
+    dispatch(verifyOtp(apiData))
+      .then((res) => {
+        console.log('response from Signup ====>', res);
+        if (res?.payload?.status == true) {
+          // Optionally navigate or show success message
+          navigation.navigate("RecoverPassword", { email })
+          // resetForm()
+          setSubmitted(false)
+        }
+      })
+      .catch((error) => {
+        console.error("Signup error:", error);
+      });
   }
+
+  const handleResend = async () => {
+    setSubmitted(true);
+    const apiData = {
+      email: email
+
+    }
+    await dispatch(forgotPassword(apiData))
+      .unwrap()
+      .then(res => {
+        setSubmitted(false);
+        console.log('res ==>', res);
+        Toast.success(getMessage(res?.message));
+        // navigation.navigate('RecoverPassword', {data: values});
+      })
+      .catch(err => {
+        setSubmitted(false);
+        Toast.error(getMessage(err?.message));
+      });
+  };
   return (
     <>
       <Formik
@@ -75,15 +116,16 @@ const Verification: React.FC = () => {
                   />
 
                   <ResendCode
-                    onPress={() => console.log("Resend Code")}
+                    onPress={handleResend}
                   />
 
                   <CustomButton style={styles.continuebutton}
                     onPress={() => {
                       setSubmitted(true)
-                      resetForm()
                       handleSubmit()
-                    }}>
+                    }}
+                    loading={submitted}
+                  >
                     Continue
                   </CustomButton>
 

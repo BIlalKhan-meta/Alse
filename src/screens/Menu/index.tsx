@@ -8,9 +8,20 @@ import InterMedium from '../../components/Text/InterMedium';
 import { useNavigation } from '@react-navigation/native';
 import { vh, vw } from '../../constant';
 import { colors } from '../../utils/theme';
+import { useAppDispatch } from '../../hooks/storeHooks';
+import { logout } from '../../store/slices/authSlice';
 
 const Menu: React.FC = () => {
   const navigation = useNavigation();
+
+  const dispatch = useAppDispatch();
+
+
+  const handleLogout = () => {
+    dispatch(logout());
+    navigation.navigate('Login');
+  };
+
   return (
     <ScrollView
       showsVerticalScrollIndicator={false}
@@ -201,7 +212,7 @@ const Menu: React.FC = () => {
 
           <Card style={styles.cardContainer2}>
             <TouchableOpacity
-              onPress={() => navigation.navigate("Login")}
+              onPress={handleLogout}
 
             >
               <View style={styles.cardContent5}>

@@ -24,10 +24,18 @@ import GeneralModal from '../../../components/GeneralModal';
 import { useNavigation } from '@react-navigation/native';
 import Card from '../../../components/Card';
 import InterRegularSmallest from '../../../components/Text/InterRegularSmallest';
+import { useAppDispatch } from '../../../hooks/storeHooks';
+import { signup } from '../../../store/slices/authSlice';
+import useImagePicker from '../../../hooks/useImagePicker';
+import BottomModal from '../../../components/BottomModel';
+import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
+import moment from 'moment';
 
 const RegisterScreen: React.FC = () => {
 
   const navigation = useNavigation();
+  const dispatch = useAppDispatch();
+  // const { image, captureImage, chooseImageFromLibrary } = useImagePicker();
 
   const [submitted, setSubmitted] = useState<boolean>(false)
   const [securePassword, setSecurePassword] = useState<boolean>(true)
@@ -39,6 +47,8 @@ const RegisterScreen: React.FC = () => {
   const [date, setDate] = useState<Date>(new Date());
   const [isChecked, setIsChecked] = useState<boolean>(false);
   const [successModel, setSuccessModel] = useState<boolean>(false);
+  const [bottomVisible, setbottomVisible] = useState<boolean>(false);
+  const [image, setImage] = useState(null);
 
   const handleCheckboxChange = (value: boolean) => {
     setIsChecked(value);
@@ -65,8 +75,9 @@ const RegisterScreen: React.FC = () => {
     password: string,
     cpassword: string,
     contactNo: string,
+    countryCode: string;
     dateOfBirth: string,
-    age: string,
+    // age: string,
 
   }
 
@@ -76,8 +87,9 @@ const RegisterScreen: React.FC = () => {
     password: '',
     cpassword: '',
     contactNo: '',
+    countryCode: '+1',
     dateOfBirth: '',
-    age: '',
+    // age: '',
   };
 
   const validationSchema: yup.AnySchema<FormValues> = yup.object().shape({
@@ -98,18 +110,64 @@ const RegisterScreen: React.FC = () => {
     dateOfBirth: yup
       .date()
       .required('Date of Birth is required'),
-    age: yup
-      .string()
-      .required('Age is required'),
+    // age: yup
+    //   .string()
+    //   .required('Age is required'),
   });
 
 
-  const handleSubmit = (values: object, { resetForm }: { resetForm: () => void }) => {
-    setSuccessModel(true)
+  const handleSubmit = (values: FormValues, { resetForm }: { resetForm: () => void }) => {
+    // setSuccessModel(true);
+    // Prepare data for signup
+    let code;
+    if (values?.countryCode == '') {
+      code = "+1"
+    } else {
+      code = values?.countryCode
 
-    // console.log("SUBMITTED")
-    // navigation.navigate("Login")
-  }
+    }
+    const signupData = {
+      first_name: values.name, // Assuming 'name' is first name
+      last_name: 'test', // If you want to add last name, update the input
+      username: values.name, // Add username input in your form
+      email: values.email,
+      password: values.password,
+      // dialing_code: values?.countryCode,
+      dialing_code: code,
+      phone_number: values.contactNo,
+      gender: 'male', // Adjust based on user input
+      dob: moment(date).format("YYYY-MM-DD"), // Use your existing formatDate function
+    };
+    console.log(values?.countryCode, "Countryyy codee ")
+    console.log(values?.contactNo, "contactNo codee ")
+    if (image) {
+      let imagePath = image.split('/');
+
+      const uploadedImage = {
+        uri: image,
+        name: imagePath[imagePath.length - 1],
+        type: `image/jpeg`,
+      };
+      signupData['image'] = uploadedImage;
+    }
+
+    // Dispatch the signup action
+    dispatch(signup(signupData))
+      .unwrap()
+      .then((res) => {
+        console.log('response from Signup ====>', res);
+
+        // Optionally navigate or show success message
+        // navigation.navigate("Login");
+        resetForm()
+        setSuccessModel(true)
+        setSubmitted(false)
+      })
+      .catch((error) => {
+        console.error("Signup error:", error);
+      });
+  };
+
 
   function formatDate(date: any) {
     if (!date) {
@@ -127,6 +185,54 @@ const RegisterScreen: React.FC = () => {
 
   }
 
+
+  const handleImage = camera => {
+    let options = {
+      mediaType: 'photo', // 'photo' or 'video'
+      maxWidth: 300,
+      maxHeight: 550,
+      quality: 1,
+    };
+    if (camera) {
+      launchCamera(options, response => {
+        if (response.didCancel) {
+          console.log('User cancelled camera picker');
+        } else if (response.errorCode == 'camera_unavailable') {
+          console.log('Camera not available on device');
+        } else if (response.errorCode == 'permission') {
+          console.log('Permission not satisfied');
+        } else {
+          console.log('response ===>', response);
+          setbottomVisible(false);
+          setImage(response?.assets[0]?.uri);
+
+          // Set the captured image URI
+          // Handle further processing if needed (e.g., setting file type)
+        }
+      });
+    } else {
+      launchImageLibrary(options, response => {
+        if (response.didCancel) {
+          console.log('User cancelled image picker');
+        } else if (response.errorCode == 'permission') {
+          console.log('Permission not satisfied');
+        } else {
+          setbottomVisible(false);
+          setImage(response?.assets[0]?.uri);
+          // let imagePath = imageData.split('/');
+
+          // const image = {
+          //   uri: imageData,
+          //   name: imagePath[imagePath.length - 1],
+          //   type: `image/jpeg`,
+          // };
+          // Set the selected image URI
+          // Handle further processing if needed (e.g., setting file type)
+        }
+      });
+    }
+  };
+  console.log(image, "Image uriiiiii ")
   return (
 
 
@@ -146,11 +252,14 @@ const RegisterScreen: React.FC = () => {
 
                 <InterBold style={styles.heading}>Create Account</InterBold>
                 <View style={styles.imageContainer}>
-                  <Image source={images.profile} />
+                  <Image source={image ? { uri: image } : images.profile} style={styles.imageStyle} />
 
-                  <View style={styles.camera}>
+
+                  <TouchableOpacity style={styles.camera}
+                    onPress={() => setbottomVisible(true)}
+                  >
                     <Image source={images.camera} />
-                  </View>
+                  </TouchableOpacity>
                 </View>
                 <RegularTextInput
                   label="Full Name"
@@ -185,6 +294,7 @@ const RegisterScreen: React.FC = () => {
                   // value={values.contactNo}
                   submitted={submitted}
                   errors={errors.contactNo}
+                  onChangeCountry={handleChange('countryCode')}
 
                 />
 
@@ -326,7 +436,13 @@ const RegisterScreen: React.FC = () => {
 
               </Card>
 
-
+              <BottomModal
+                visible={bottomVisible}
+                closeModal={() => setbottomVisible(false)}
+                onPressImage={() => handleImage(true)}
+                // onPress={() => captureImage('video')}
+                onPressGallery={() => handleImage()}
+              />
             </View>
           </KeyboardAwareScrollView>
         </>

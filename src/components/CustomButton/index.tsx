@@ -1,4 +1,4 @@
-import { Button, StyleProp, Text, TextStyle, TouchableOpacity, View, ViewStyle } from 'react-native';
+import { ActivityIndicator, Button, StyleProp, Text, TextStyle, TouchableOpacity, View, ViewStyle } from 'react-native';
 import { StyleSheet } from 'react-native';
 import { colors } from '../../utils/theme';
 import { fontSizes, vh, vw } from '../../constant';
@@ -10,6 +10,7 @@ interface ButtonProps {
     containerStyle?: StyleProp<ViewStyle>;
     onPress: () => void;
     children: React.ReactNode;
+    loading: boolean;
 }
 
 const CustomButton: React.FC<ButtonProps> = (props) => {
@@ -20,9 +21,15 @@ const CustomButton: React.FC<ButtonProps> = (props) => {
                 <TouchableOpacity
                     onPress={props?.onPress}
                     style={[styles.button, props.style]}>
-                    <Text style={[styles.text, props.txtstyle]}>
-                        {props.children}
-                    </Text>
+
+                    {props?.loading ? (
+                        <ActivityIndicator size={'large'} color={colors.white} />
+                    ) : (
+                        <Text style={[styles.text, props.txtstyle]}>
+                            {props.children}
+                        </Text>
+                    )}
+
 
                 </TouchableOpacity>
             </View>

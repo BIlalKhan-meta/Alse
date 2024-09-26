@@ -9,6 +9,8 @@ import InterRegularSmallest from '../../Text/InterRegularSmallest';
 interface PhoneNumberInputProps {
   initialNumber?: string;
   onNumberChange?: (phoneNumber: string) => void;
+  onChangeCountry?: (phoneNumber: string) => void;
+
   label?: string;
   labelStyle?: StyleProp<TextStyle>;
   errors?: string;
@@ -19,7 +21,9 @@ interface PhoneNumberInputProps {
 const PhoneNumberInput: React.FC<PhoneNumberInputProps> = ({
   initialNumber,
   onNumberChange,
-  label, labelStyle,
+  onChangeCountry,
+  label,
+  labelStyle,
   errors,
   submitted
 }) => {
@@ -28,6 +32,12 @@ const PhoneNumberInput: React.FC<PhoneNumberInputProps> = ({
   const handleChange = (number: string) => {
     if (onNumberChange) {
       onNumberChange(number);
+    }
+  };
+
+  const handleCountryChange = (number: string) => {
+    if (onChangeCountry) {
+      onChangeCountry(number);
     }
   };
 
@@ -44,6 +54,8 @@ const PhoneNumberInput: React.FC<PhoneNumberInputProps> = ({
         onChangeFormattedText={handleChange}
         containerStyle={styles.phoneContainer}
         textContainerStyle={styles.textInput}
+        onChangeCountry={val => handleCountryChange(val?.callingCode[0])}
+
       />
       {submitted && errors && <InterRegularSmallest style={styles.error}>{errors}</InterRegularSmallest>}
 
