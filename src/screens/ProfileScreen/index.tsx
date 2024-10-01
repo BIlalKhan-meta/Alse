@@ -1,6 +1,6 @@
 // ProfileScreen.tsx
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, FlatList } from 'react-native';
 import styles from './styles';
 import { images } from '../../utils/images';
 import Card from '../../components/Card';
@@ -10,17 +10,28 @@ import InterBold from '../../components/Text/InterBold';
 import InterMedium from '../../components/Text/InterMedium';
 import ProfileCard from '../../components/ProfileCard';
 import PostComponent from '../../components/PostComponent';
-import { useRoute } from '@react-navigation/native';
+import { useIsFocused, useRoute } from '@react-navigation/native';
 import ReportBlockModal from '../../components/ReportBlockModal';
 import GeneralModal from '../../components/GeneralModal';
 import ReactModal from '../../components/ReactModal';
 import { dummyComments, reactions } from '../../dummyData';
 import CommentsModal from '../../components/CommentsModal';
+import { getProfileById } from '../../store/slices/homeSlice';
+import { useAppDispatch } from '../../hooks/storeHooks';
+import dayjs from 'dayjs';
+import Loader from '../../components/Loader';
 
 const ProfileScreen: React.FC = ({ navigation }) => {
 
+  const dispatch = useAppDispatch();
+  const isFocused = useIsFocused();
   const route = useRoute();
-  const account = route?.params?.account;
+  const account = route?.params?.account === 2 ? "public" : "private";
+  console.log('====================================');
+  console.log(account);
+  console.log('====================================');
+
+  const id = route?.params?.id;
 
   const [modalVisible, setModalVisible] = useState(false);
   const [reportVisible, setReportVisible] = useState(false);
@@ -29,6 +40,29 @@ const ProfileScreen: React.FC = ({ navigation }) => {
   const [blockSuccess, setBlockSuccess] = useState(false);
   const [reactVisible, setrRactVisible] = useState(false);
   const [commentsVisible, setCommentsVisible] = useState<boolean>(false)
+  const [data, setData] = useState();
+  const [loading, setLoading] = useState(false);
+
+  const getData = () => {
+    if (id) {
+      setLoading(true);
+      dispatch(getProfileById(id))
+        .unwrap()
+        .then(res => {
+          console.log('response from User Profile ====================>', res?.data?.data);
+          setData(res?.data?.data);
+          setLoading(false);
+        })
+        .catch(err => {
+          setLoading(false);
+          console.log('Error from get Profile By IUd ==>', err);
+        });
+    }
+  };
+
+  useEffect(() => {
+    getData();
+  }, [isFocused, id]);
 
   const handleReportPress = () => {
     setModalVisible(false);
@@ -54,42 +88,44 @@ const ProfileScreen: React.FC = ({ navigation }) => {
   ];
 
 
-  const posts = [
-    {
-      avatar: `${images.user}`,
-      name: 'John Doe',
-      country: 'Newyork, USA',
-      time: '12:30 AM',
-      postText: 'Haters will say what they want, but their hate will never stop you from casting your dreams just believe in yourself ...Read More',
-      postImage: `${images.postImage1}`,
-      likes: 120,
-      comments: 45,
-      share: 25,
-    },
-    {
-      avatar: `${images.user}`,
-      name: 'Jane Smith',
-      country: 'UK',
-      time: '5h ago',
-      postText: 'Haters will say what they want, but their hate will never stop you from casting your dreams just believe in yourself ...Read More',
-      postImage: `${images.postImage2}`,
-      likes: 80,
-      comments: 20,
-      share: 10,
-    },
-    // Add more posts as needed
-  ];
+
+
+
+  if (loading) {
+    return <Loader />;
+  }
+
+
+  const renderPost = ({ item, index }) => (
+    <PostComponent
+      key={index}
+      avatar={item.avatar}
+      name={item.name}
+      account={item.privacy}
+      time={dayjs(item?.media[0]?.date).format('hh:MM A')}
+      postText={item?.description}
+      postImage={item?.media[0]?.path}
+      likes={item.likes}
+      comments={item.comments}
+      share={item.share}
+      onLikePress={() => setrRactVisible(true)}
+      onCommnetPress={() => setCommentsVisible(true)}
+
+    />
+  );
+
   return (
     <ScrollView>
 
       <View style={styles.container}>
         <Card>
           <ProfileCard
-            name="Marvel Edward"
-            description="A Freelance Photographer living best life"
-            stats="30 posts   50 followers   50 following"
-            avatar={images.user2}
+            name={data?.full_name}
+            // description="A Freelance Photographer living best life"
+            stats={`${data?.posts.length} posts   ${data?.followers.length} followers   ${data?.following.length} following`}
+            avatar={data?.avatar}
             onPress={handleOpen}
+            isFollowing={data?.is_following}
           />
           {/* <ReportBlockModal
             isVisible={modalVisible}
@@ -115,7 +151,14 @@ const ProfileScreen: React.FC = ({ navigation }) => {
 
         {account == "public" && (
           <>
-            {posts.map((post, index) => (
+            <FlatList
+              data={data?.posts}
+              keyExtractor={(item) => item.id.toString()}
+              renderItem={renderPost}
+              ListEmptyComponent={<Text>No Posts Found</Text>}
+            />
+
+            {/* {posts.map((post, index) => (
               <PostComponent
                 key={index}
                 avatar={post.avatar}
@@ -131,7 +174,7 @@ const ProfileScreen: React.FC = ({ navigation }) => {
                 onCommnetPress={() => setCommentsVisible(true)}
 
               />
-            ))}
+            ))} */}
           </>
         )}
 

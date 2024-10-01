@@ -23,6 +23,7 @@ import Card from '../../../components/Card';
 import { useAppDispatch } from '../../../hooks/storeHooks';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { resetPassword } from '../../../store/slices/authSlice';
+import { getMessage, Toast } from '../../../utils/helpers';
 
 const RecoverPassword: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -77,6 +78,8 @@ const RecoverPassword: React.FC = () => {
       })
       .catch((error) => {
         console.error("Signup error:", error);
+        Toast.success(getMessage(error?.message));
+        setSubmitted(false)
       });
 
     // setPasswordRecovered(true)
@@ -130,7 +133,9 @@ const RecoverPassword: React.FC = () => {
                     // resetForm()
                     handleSubmit()
                     // setPasswordRecovered(true)
-                  }}>
+                  }}
+                    loading={submitted}
+                  >
                     Update
                   </CustomButton>
 

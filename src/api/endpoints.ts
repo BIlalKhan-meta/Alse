@@ -5,6 +5,11 @@ const endpoints = {
     forgotPassword: '/forget-password',
     verifyOtp: '/verify-code',
     resetPassword: '/set-password',
+    logout: '/logout',
+  },
+  home: {
+    feedPost: '/get-newsfeed',
+    profileById: '/get-user',
   },
 };
 

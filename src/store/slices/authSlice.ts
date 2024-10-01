@@ -5,6 +5,7 @@ import {
   login as loginAPI,
   signup as signupAPI,
   resetPassword as resetPasswordAPI,
+  logout as logoutApi,
 } from '../../api/auth'; // Import the login function from the API file
 
 interface AuthState {
@@ -98,6 +99,26 @@ export const resetPassword = createAsyncThunk(
   },
 );
 
+export const LogoutUser = createAsyncThunk(
+  'auth/resetPassword',
+  async (
+    // data: {email: string; password: string; confirmPassword: string},
+    {rejectWithValue},
+  ) => {
+    try {
+      const response = await logoutApi();
+      return response;
+    } catch (error: any) {
+      return rejectWithValue(error.response.data || 'Request failed');
+    }
+  },
+);
+
+// export const LogoutUser = createAsyncThunk('auth/logoutuser', async () => {
+//   const response = await logout();
+//   return response;
+// });
+
 const authSlice = createSlice({
   name: 'auth',
   initialState,
@@ -115,12 +136,19 @@ const authSlice = createSlice({
       })
       .addCase(login.fulfilled, (state, action) => {
         state.loading = false;
-        state.token = action.payload.token;
-        state.user = action.payload.user;
+        // console.log('====================================');
+        // console.log('action.payload =================>', action.payload);
+        // console.log('====================================');
+        state.token = action.payload.data?.access_token;
+        state.user = action.payload?.data?.user;
       })
       .addCase(login.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
+      })
+      .addCase(LogoutUser.fulfilled, (state, action) => {
+        state.user = null;
+        state.token = null;
       });
     // .addCase(signup.pending, state => {
     //   state.loading = true;

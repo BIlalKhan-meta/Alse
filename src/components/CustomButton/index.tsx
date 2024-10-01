@@ -11,6 +11,8 @@ interface ButtonProps {
     onPress: () => void;
     children: React.ReactNode;
     loading: boolean;
+    disable: boolean;
+
 }
 
 const CustomButton: React.FC<ButtonProps> = (props) => {
@@ -19,6 +21,7 @@ const CustomButton: React.FC<ButtonProps> = (props) => {
         <>
             <View style={[styles.buttoncontainer, props?.containerStyle]}>
                 <TouchableOpacity
+                    disabled={props.disable}
                     onPress={props?.onPress}
                     style={[styles.button, props.style]}>
 

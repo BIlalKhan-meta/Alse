@@ -14,11 +14,12 @@ interface ProfileCardProps {
   description: string;
   stats: string;
   avatar: string;
+  isFollowing: boolean;
   onPress: () => void;
 
 }
 
-const ProfileCard: React.FC<ProfileCardProps> = ({ name, description, stats, avatar, onPress }) => {
+const ProfileCard: React.FC<ProfileCardProps> = ({ name, description, stats, avatar, onPress, isFollowing }) => {
   const navigation = useNavigation()
   return (
     <View style={styles.container}>
@@ -34,7 +35,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ name, description, stats, ava
 
         {/* Avatar */}
         <Image
-          source={avatar}
+          source={avatar ? { uri: avatar } : images.user}
           style={styles.avatar}
         />
 
@@ -55,8 +56,10 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ name, description, stats, ava
         <InterMedium style={styles.description}>{description}</InterMedium>
         <InterMedium style={styles.stats}>{stats}</InterMedium>
         {/* Follow Button */}
-        <CustomButton style={styles.followButton}>
-          Follow
+        <CustomButton style={styles.followButton}
+          disable={isFollowing ? true : false}
+        >
+          {isFollowing ? "Following" : "Follow"}
         </CustomButton>
       </View>
     </View>

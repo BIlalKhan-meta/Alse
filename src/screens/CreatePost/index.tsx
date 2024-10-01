@@ -17,13 +17,24 @@ import ImagePickerComponent from '../../components/ImagePickerComponent';
 import useImagePicker from '../../hooks/useImagePicker';
 import InterMedium from '../../components/Text/InterMedium';
 
+
+const ListOptions = [
+  { label: 'Public', value: 'public' },
+  { label: 'Friends', value: 'friends' },
+  { label: 'Only Me', value: 'only_me' },
+];
 const CreatePost: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const title = route?.params?.title || "Create Post";
-
   const [bottomVisible, setbottomVisible] = useState<boolean>(true)
   const [selectedMedia, setSelectedMedia] = useState<string | null>(null);
+  const [privacy, setPrivacy] = useState(
+    route?.params?.data?.privacy || ListOptions[0].value,
+  );
+  const [comment, setComment] = useState<string>(
+    route?.params?.data?.content || '',
+  );
   const [mediaType, setMediaType] = useState<'photo' | 'video'>('photo');
   const { image, captureImage, chooseImageFromLibrary } = useImagePicker();
 
@@ -61,6 +72,9 @@ const CreatePost: React.FC = () => {
           onImagePress={() => setbottomVisible(true)}
           onVideoPress={() => setbottomVisible(true)}
           onCameraPress={() => setbottomVisible(true)}
+          ListOptions={ListOptions}
+          privacy={privacy}
+          setPrivacy={setPrivacy}
 
         />
         <BottomModal

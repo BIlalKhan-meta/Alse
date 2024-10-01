@@ -81,3 +81,7 @@ export const resetPassword = (data: {
     formData: true,
   });
 };
+
+export const logout = () => {
+  return axiosInstance.post(`${endpoints.auth.logout}`);
+};

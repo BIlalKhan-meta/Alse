@@ -9,7 +9,7 @@ import { useNavigation } from '@react-navigation/native';
 import { vh, vw } from '../../constant';
 import { colors } from '../../utils/theme';
 import { useAppDispatch } from '../../hooks/storeHooks';
-import { logout } from '../../store/slices/authSlice';
+import { logout, LogoutUser } from '../../store/slices/authSlice';
 
 const Menu: React.FC = () => {
   const navigation = useNavigation();
@@ -19,6 +19,7 @@ const Menu: React.FC = () => {
 
   const handleLogout = () => {
     dispatch(logout());
+    dispatch(LogoutUser())
     navigation.navigate('Login');
   };
 

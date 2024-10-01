@@ -20,6 +20,7 @@ import { colors } from '../../../utils/theme';
 import Card from '../../../components/Card';
 import { useAppDispatch } from '../../../hooks/storeHooks';
 import { forgotPassword } from '../../../store/slices/authSlice';
+import { getMessage, Toast } from '../../../utils/helpers';
 
 
 
@@ -61,6 +62,8 @@ const ForgetPassword: React.FC = ({ navigation }) => {
       })
       .catch((error) => {
         console.error("Signup error:", error);
+        Toast.success(getMessage(error?.message));
+        setSubmitted(false)
       });
 
   }
@@ -96,7 +99,9 @@ const ForgetPassword: React.FC = ({ navigation }) => {
                     onPress={() => {
                       setSubmitted(true)
                       handleSubmit()
-                    }}>
+                    }}
+                    loading={submitted}
+                  >
                     Continue
                   </CustomButton>
 

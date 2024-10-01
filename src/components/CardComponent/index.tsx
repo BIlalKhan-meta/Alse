@@ -1,10 +1,12 @@
 // CardComponent.tsx
-import React from 'react';
+import React, { useState } from 'react';
 import { View, TextInput, StyleSheet, Image, Text, TouchableOpacity } from 'react-native';
 import { images } from '../../utils/images';
 import { colors } from '../../utils/theme';
 import Card from '../Card';
 import RegularTextInput from '../TextInput/RegularTextInput';
+import DropDownPicker from 'react-native-dropdown-picker';
+import { vh, vw } from '../../constant';
 
 interface CardComponentProps {
 
@@ -16,10 +18,17 @@ interface CardComponentProps {
   onVideoPress: () => void;
   onImagePress: () => void;
   onCameraPress: () => void;
+  value: string;
+  ListOptions?: any,
+  privacy?: string
+  setPrivacy?: () => void
+
   // dots: boolean;
 
 }
-const CardComponent: React.FC<CardComponentProps> = ({ onTextInput, onImagePress, onVideoPress, onCameraPress }) => {
+const CardComponent: React.FC<CardComponentProps> = ({ onTextInput, onImagePress, onVideoPress, onCameraPress, ListOptions, value, setPrivacy, privacy }) => {
+  const [open, setOpen] = useState(false)
+
   return (
     <Card>
       <View style={styles.card}>
@@ -37,6 +46,25 @@ const CardComponent: React.FC<CardComponentProps> = ({ onTextInput, onImagePress
 
 
       </View>
+      {
+        ListOptions && privacy && setPrivacy &&
+        <View style={{ marginVertical: vh * 4 }}>
+          <DropDownPicker
+            open={open}
+            setOpen={setOpen}
+            placeholder='Select'
+            items={ListOptions}
+            containerStyle={{ height: vh * 3 }}
+            style={{ borderWidth: 0, width: vw * 30, height: vh * 3, borderRadius: vh, backgroundColor: colors.redShadeLight, justifyContent: 'center', alignItems: 'center' }}
+            labelStyle={{ color: colors.redStatus }}
+            textStyle={{ color: colors.redStatus }}
+            dropDownContainerStyle={{ width: vw * 30, backgroundColor: colors.redShadeLight, borderWidth: 0 }}
+            value={privacy}
+            setValue={setPrivacy}
+
+          />
+        </View>
+      }
       <View style={styles.uploadOptions}>
         <TouchableOpacity style={styles.button}
           onPress={onVideoPress}

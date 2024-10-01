@@ -30,6 +30,7 @@ import useImagePicker from '../../../hooks/useImagePicker';
 import BottomModal from '../../../components/BottomModel';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import moment from 'moment';
+import { getMessage, Toast } from '../../../utils/helpers';
 
 const RegisterScreen: React.FC = () => {
 
@@ -165,6 +166,8 @@ const RegisterScreen: React.FC = () => {
       })
       .catch((error) => {
         console.error("Signup error:", error);
+        Toast.success(getMessage(error?.message));
+        setSubmitted(false)
       });
   };
 
@@ -232,7 +235,8 @@ const RegisterScreen: React.FC = () => {
       });
     }
   };
-  console.log(image, "Image uriiiiii ")
+
+
   return (
 
 
@@ -410,7 +414,9 @@ const RegisterScreen: React.FC = () => {
                   setSubmitted(true)
                   // resetForm()
                   handleSubmit()
-                }}>
+                }}
+                  loading={true}
+                >
                   Create Account
                 </CustomButton>
 

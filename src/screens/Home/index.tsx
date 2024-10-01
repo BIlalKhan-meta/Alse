@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { View, ScrollView, TouchableWithoutFeedback, FlatList } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, ScrollView, TouchableWithoutFeedback, FlatList, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { images } from '../../utils/images';
 import CardComponent from '../../components/CardComponent';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import styles from './styles';
 import PostComponent from '../../components/PostComponent';
 import CommentsModal from '../../components/CommentsModal';
@@ -10,61 +10,78 @@ import ReactModal from '../../components/ReactModal';
 import GeneralModal from '../../components/GeneralModal';
 import { dummyComments, reactions } from '../../dummyData';
 import HeaderComponent from '../../components/HeaderComponent';
+import { useAppDispatch, useAppSelector } from '../../hooks/storeHooks';
+import { GetNewsFeed, likePost } from '../../store/slices/homeSlice';
+import InterRegular from '../../components/Text/InterRegular';
+import { colors } from '../../utils/theme';
+import dayjs from 'dayjs';
+import Loader from '../../components/Loader';
 
-const posts = [
-  {
-    id: 1,
-    avatar: images.user,
-    name: 'John Doe',
-    country: 'Newyork, USA',
-    time: '12:30 AM',
-    postText: 'Haters will say what they want, but their hate will never stop you from casting your dreams just believe in yourself ',
-    postImage: images.postImage1,
-    likes: 120,
-    comments: 45,
-    share: 25,
-    account: "public"
-  },
-  {
-    id: 2,
-    avatar: images.user,
-    name: 'Jane Smith',
-    country: 'UK',
-    time: '5h ago',
-    postText: 'Haters will say what they want, but their hate will never stop you from casting your dreams just believe in yourself ',
-    postImage: images.postImage2,
-    likes: 80,
-    comments: 20,
-    share: 10,
-    account: "private"
-  },
-  // Add more posts as needed
-];
+
 
 const Home: React.FC = () => {
   const navigation = useNavigation();
+  const dispatch = useAppDispatch();
+
+  // Select posts and loading state from the Redux store
+  const { posts, loading, error } = useAppSelector((state) => state.home);
+
   const [commentsVisible, setCommentsVisible] = useState<boolean>(false);
   const [reactVisible, setrRactVisible] = useState(false);
   const [activePostId, setActivePostId] = useState<number | null>(null);
   const [deleteVisible, setDeleteVisible] = useState(false);
   const [deleteSuccess, setDeleteSuccess] = useState(false);
 
+
+
+  useEffect(() => {
+    getApi()
+  }, [])
+
+
+  const getApi = async () => {
+    const checkData = await dispatch(GetNewsFeed());
+
+    console.log(checkData, "checkkkkmetee")
+
+  }
+
+  if (loading) {
+    return <Loader />;
+  }
+
   const handleDotPress = (postId: number) => {
     setActivePostId(postId ? postId : null);
+  }
+
+
+  const handleLikePress = (id: number) => {
+    dispatch(likePost(id))
+      .then(res => {
+        console.log('response from like post ---->', res);
+        getApi();
+      })
+      .catch(err => {
+        console.log('error from like post', err);
+      });
   };
+
+
 
   const renderPost = ({ item }) => (
     <PostComponent
-      avatar={item.avatar}
+      id={item?.id}
+      postID={item?.media[0]?.post_id}
+      avatar={item?.avatar}
       name={item.name}
-      country={item.country}
-      time={item.time}
-      postText={item.postText}
-      postImage={item.postImage}
+      country={item.country ? item.country : ""}
+      time={dayjs(item?.media[0]?.date).format('hh:MM A')}
+      postText={item?.description}
+      postImage={item?.media[0]?.path}
       likes={item.likes}
       comments={item.comments}
       share={item.share}
-      account={item.account}
+      account={item.privacy}
       onCommnetPress={() => setCommentsVisible(true)}
       onSavePress={() => navigation.navigate("Saved")}
       onLikePress={() => setrRactVisible(true)}
@@ -81,6 +98,12 @@ const Home: React.FC = () => {
     />
   );
 
+  const renderEmpty = () => (
+    <View style={styles.emptyContainer}>
+      <InterRegular style={styles.emptyText}>No Posts to Show.</InterRegular>
+    </View>
+  );
+
   return (
     <ScrollView showsVerticalScrollIndicator={false}>
       <TouchableWithoutFeedback onPress={() => handleDotPress(null)}>
@@ -93,18 +116,37 @@ const Home: React.FC = () => {
             searchVisible={true}
           /> */}
 
-          <CardComponent
+          {/* <CardComponent
             onImagePress={() => navigation.navigate("CreatePost")}
             onVideoPress={() => navigation.navigate("CreatePost")}
             onCameraPress={() => navigation.navigate("CreatePost")}
-          />
+          /> */}
 
-          <FlatList
-            data={posts}
-            renderItem={renderPost}
-            keyExtractor={(item) => item.id.toString()}
-            showsVerticalScrollIndicator={false}
-          />
+          {posts.length > 0 && (
+
+            <FlatList
+              data={posts}
+              renderItem={renderPost}
+              keyExtractor={(item) => item.id.toString()}
+              showsVerticalScrollIndicator={false}
+              ListEmptyComponent={renderEmpty}
+              ListHeaderComponent={() => (
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={() => navigation.navigate('CreatePost')}>
+                  <View pointerEvents="none">
+                    <CardComponent
+                      onTextInput={() => navigation.navigate('CreatePost')}
+                      onVideoPress={() => navigation.navigate('CreatePost')}
+                      onImagePress={() => navigation.navigate('CreatePost')}
+                    />
+                  </View>
+                </TouchableOpacity>
+              )}
+
+            />
+          )}
+
 
           <CommentsModal
             visible={commentsVisible}

@@ -15,8 +15,9 @@ import AppNavigation from './src/navigation/AppNavigation';
 import { colors } from './src/utils/theme';
 import BootSplash from "react-native-bootsplash";
 import { Provider } from 'react-redux';
-import store from './src/store';
+import store, { persistor } from './src/store';
 import Toast from 'react-native-toast-message';
+import { PersistGate } from 'redux-persist/integration/react';
 
 type SectionProps = PropsWithChildren<{
   title: string;
@@ -37,17 +38,20 @@ function App(): React.JSX.Element {
   }, []);
 
   return (
-    <Provider store={store}>
-      <SafeAreaView
-        style={styles.container}>
-        <NavigationContainer>
-          <StatusBar backgroundColor={colors.headerColor} barStyle={'dark-content'} />
-          <AppNavigation />
-        </NavigationContainer>
-        <Toast />
+    <PersistGate loading={null} persistor={persistor}>
+      <Provider store={store}>
+        <SafeAreaView
+          style={styles.container}>
+          <NavigationContainer>
+            <StatusBar backgroundColor={colors.headerColor} barStyle={'dark-content'} />
+            <AppNavigation />
+          </NavigationContainer>
 
-      </SafeAreaView>
-    </Provider>
+          <Toast />
+
+        </SafeAreaView>
+      </Provider>
+    </PersistGate>
   );
 }
 

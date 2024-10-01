@@ -13,6 +13,8 @@ import { useNavigation } from '@react-navigation/native';
 import ReportBlockModal from '../ReportBlockModal';
 
 interface PostProps {
+  id?: number;
+  postID?: number;
   avatar: string;
   name: string;
   country: string;
@@ -33,6 +35,8 @@ interface PostProps {
 }
 
 const PostComponent: React.FC<PostProps> = ({
+  postID,
+  id,
   avatar,
   name,
   country,
@@ -62,7 +66,7 @@ const PostComponent: React.FC<PostProps> = ({
 
     } else {
 
-      navigation.navigate('Profile', { account });
+      navigation.navigate('Profile', { account, id });
     }
   };
 
@@ -103,7 +107,7 @@ const PostComponent: React.FC<PostProps> = ({
         <View style={styles.userInfo}>
           <TouchableOpacity onPress={goToProfile}>
             <Image
-              source={avatar}
+              source={avatar ? { uri: avatar } : images.user}
               style={styles.avatar}
             />
           </TouchableOpacity>
@@ -127,11 +131,13 @@ const PostComponent: React.FC<PostProps> = ({
 
       {/* <InterLight style={styles.postText}>{postText}</InterLight> */}
       <View style={styles.postContent}>{renderPostText()}</View>
+      {postImage && (
 
-      <Image
-        source={postImage}
-        style={styles.postImage}
-      />
+        <Image
+          source={{ uri: postImage }}
+          style={styles.postImage}
+        />
+      )}
       <View style={styles.postActions}>
         <View style={styles.leftActions}>
           <Image

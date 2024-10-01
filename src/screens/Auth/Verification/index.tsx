@@ -48,6 +48,7 @@ const Verification: React.FC = () => {
 
   const handleSubmit = (values: object, { resetForm }: { resetForm: () => void }) => {
     console.log("SUBMITTED")
+    setSubmitted(true)
     const apiData = {
       email: email,
       code: values.code
@@ -64,6 +65,9 @@ const Verification: React.FC = () => {
       })
       .catch((error) => {
         console.error("Signup error:", error);
+        Toast.success(getMessage(error?.message));
+        setSubmitted(false)
+
       });
   }
 
