@@ -187,6 +187,7 @@ const authSlice = createSlice({
     // });
   },
 });
-
+export const selectBearerToken = state => state.auth.token;
+export const selectUserProfile = state => state.auth.user;
 export const {logout} = authSlice.actions;
 export default authSlice.reducer;

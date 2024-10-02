@@ -3,6 +3,7 @@ import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 
 const useImagePicker = () => {
   const [image, setImage] = useState(null); // State to store the selected image URI
+  const [imageData, setImageData] = useState(null);
 
   // Function to handle image selection from gallery
   const chooseImageFromLibrary = () => {
@@ -21,6 +22,7 @@ const useImagePicker = () => {
       } else {
         setImage(response.assets[0].uri); // Set the selected image URI
         // Handle further processing if needed (e.g., setting file type)
+        setImageData(response?.assets[0]);
       }
     });
   };
@@ -44,11 +46,12 @@ const useImagePicker = () => {
       } else {
         setImage(response.assets[0].uri); // Set the captured image URI
         // Handle further processing if needed (e.g., setting file type)
+        setImageData(response?.assets[0]);
       }
     });
   };
 
-  return {image, captureImage, chooseImageFromLibrary};
+  return {image, imageData, captureImage, chooseImageFromLibrary};
 };
 
 export default useImagePicker;

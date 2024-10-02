@@ -1,6 +1,6 @@
 // Home.tsx
-import React, { useLayoutEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, FlatList } from 'react-native';
 import { images } from '../../utils/images';
 import CardComponent from '../../components/CardComponent';
 import { colors } from '../../utils/theme';
@@ -9,12 +9,19 @@ import Card from '../../components/Card';
 import PostComponent from '../../components/PostComponent';
 import InterBold from '../../components/Text/InterBold';
 import CommentsModal from '../../components/CommentsModal';
-import { useNavigation } from '@react-navigation/native';
+import { useIsFocused, useNavigation } from '@react-navigation/native';
 import HeaderComponent from '../../components/HeaderComponent';
 import ReactModal from '../../components/ReactModal';
 import { dummyComments, reactions } from '../../dummyData';
 import styles from './styles';
 import GeneralModal from '../../components/GeneralModal';
+import { selectUserProfile } from '../../store/slices/authSlice';
+import { useSelector } from 'react-redux';
+import { useAppDispatch } from '../../hooks/storeHooks';
+import { getMyPost } from '../../store/slices/homeSlice';
+import InterRegular from '../../components/Text/InterRegular';
+import dayjs from 'dayjs';
+import Loader from '../../components/Loader';
 
 const posts = [
     {
@@ -52,12 +59,21 @@ const posts = [
 
 const MyPosts: React.FC = () => {
     const navigation = useNavigation();
+    const isFocused = useIsFocused();
+    const dispatch = useAppDispatch();
+    const user = useSelector(selectUserProfile)
 
     const [commentsVisible, setCommentsVisible] = useState<boolean>(false)
     const [reactVisible, setrRactVisible] = useState(false);
     const [activePostId, setActivePostId] = useState<number | null>(null);
     const [deleteVisible, setDeleteVisible] = useState(false);
     const [deleteSuccess, setDeleteSuccess] = useState(false);
+    const [loader, setLoader] = useState(false);
+    const [data, setData] = useState([]);
+
+    console.log('====================================');
+    console.log("Here userss=sss>", user?.id);
+    console.log('====================================');
 
     const handleDotPress = (postId: number) => {
         setActivePostId(activePostId === postId ? null : postId);
@@ -71,7 +87,6 @@ const MyPosts: React.FC = () => {
             headerRight: () => (
                 <View style={styles.header}>
                     <TouchableOpacity onPress={() => {
-                        // setModalVisible(true)
                         navigation.navigate("Notifications")
                     }}>
                         <Image
@@ -95,13 +110,75 @@ const MyPosts: React.FC = () => {
         });
     }, [navigation]);
 
+
+    const getData = () => {
+        setLoader(true);
+        let id = user?.id;
+        dispatch(getMyPost(id))
+            .unwrap()
+            .then(res => {
+                console.log(res?.data?.data?.data, "Ressss frommm Screeennnn???")
+                setData(res?.data?.data?.data);
+                setLoader(false);
+            })
+            .catch(err => {
+                setLoader(false);
+            });
+    };
+
+    useEffect(() => {
+        getData();
+    }, [isFocused, navigation]);
+
+    if (loader) {
+        return <Loader />;
+    }
+
+
+
+    const renderPost = ({ item }) => (
+        <PostComponent
+            id={item?.id}
+            postID={item?.media[0]?.post_id}
+            avatar={item?.avatar}
+            name={item.name}
+            country={item.country ? item.country : ""}
+            time={dayjs(item?.media[0]?.date).format('hh:MM A')}
+            postText={item?.description}
+            postImage={item?.media[0]?.path}
+            likes={item.likes}
+            comments={item.comments}
+            share={item.share}
+            account={item.privacy}
+            onCommnetPress={() => setCommentsVisible(true)}
+            onSavePress={() => navigation.navigate("Saved")}
+            onLikePress={() => setrRactVisible(true)}
+            onDotPress={() => handleDotPress(item.id)}
+            modalVisible={activePostId === item.id}
+            handleBlockPress={() => {
+                // handleDotPress();
+                setDeleteVisible(true);
+            }}
+            handleReportPress={() => {
+                // handleDotPress();
+                navigation.navigate("CreatePost", { title: "Edit Post" });
+            }}
+        />
+    );
+
+    const renderEmpty = () => (
+        <View style={styles.emptyContainer}>
+            <InterRegular style={styles.emptyText}>No Posts to Show.</InterRegular>
+        </View>
+    );
+
     return (
         <ScrollView
             showsVerticalScrollIndicator={false}
         >
             <View style={styles.container}>
 
-                <CardComponent
+                {/* <CardComponent
                     onTextInput={() => navigation.navigate("CreatePost")}
                     onVideoPress={() => navigation.navigate("CreatePost")}
                     onImagePress={() => navigation.navigate("CreatePost")}
@@ -139,7 +216,29 @@ const MyPosts: React.FC = () => {
                         }}
 
                     />
-                ))}
+                ))} */}
+
+                <FlatList
+                    data={data}
+                    renderItem={renderPost}
+                    keyExtractor={(item) => item.id.toString()}
+                    showsVerticalScrollIndicator={false}
+                    ListEmptyComponent={renderEmpty}
+                    ListHeaderComponent={() => (
+                        <TouchableOpacity
+                            activeOpacity={0.8}
+                            onPress={() => navigation.navigate('CreatePost')}>
+                            <View pointerEvents="none">
+                                <CardComponent
+                                    onTextInput={() => navigation.navigate('CreatePost')}
+                                    onVideoPress={() => navigation.navigate('CreatePost')}
+                                    onImagePress={() => navigation.navigate('CreatePost')}
+                                />
+                            </View>
+                        </TouchableOpacity>
+                    )}
+
+                />
 
                 <CommentsModal
                     visible={commentsVisible}

@@ -10,6 +10,8 @@ const endpoints = {
   home: {
     feedPost: '/get-newsfeed',
     profileById: '/get-user',
+    createPost: '/post/create',
+    myPost: '/get-user',
   },
 };
 

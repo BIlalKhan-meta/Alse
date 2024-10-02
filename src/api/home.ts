@@ -13,3 +13,14 @@ export const fetchProfileById = (id: number) => {
 export const postLike = (id: number) => {
   return axiosInstance.post(`/post/${id}/like`);
 };
+
+export const createPost = (formData: FormData) => {
+  console.log(formData, 'Formmmm Dataaaa Createee possttt');
+  return axiosInstance.post(endpoints.home.createPost, formData, {
+    formData: true, // This triggers the form-data handling in the interceptor
+  });
+};
+
+export const fetchMyPost = (id: number) => {
+  return axiosInstance.get(endpoints.home.myPost + `/${id}/posts`);
+};

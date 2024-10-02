@@ -1,5 +1,11 @@
 import {createSlice, createAsyncThunk} from '@reduxjs/toolkit';
-import {fetchProfileById, newsFeed, postLike} from '../../api/home';
+import {
+  createPost,
+  fetchMyPost,
+  fetchProfileById,
+  newsFeed,
+  postLike,
+} from '../../api/home';
 
 interface HomeState {
   posts: [];
@@ -44,6 +50,19 @@ export const likePost = createAsyncThunk(
     return response;
   },
 );
+
+export const postCreate = createAsyncThunk(
+  'user/postCreate',
+  async (data: FormData) => {
+    const response = await createPost(data);
+    return response;
+  },
+);
+
+export const getMyPost = createAsyncThunk('user/MyPost', async (id: number) => {
+  const response = await fetchMyPost(id);
+  return response;
+});
 
 const homeSlice = createSlice({
   name: 'home',

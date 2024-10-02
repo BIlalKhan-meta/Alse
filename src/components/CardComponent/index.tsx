@@ -22,11 +22,12 @@ interface CardComponentProps {
   ListOptions?: any,
   privacy?: string
   setPrivacy?: () => void
+  handleOnChangeText: () => void;
 
   // dots: boolean;
 
 }
-const CardComponent: React.FC<CardComponentProps> = ({ onTextInput, onImagePress, onVideoPress, onCameraPress, ListOptions, value, setPrivacy, privacy }) => {
+const CardComponent: React.FC<CardComponentProps> = ({ handleOnChangeText, onImagePress, onVideoPress, onCameraPress, ListOptions, value, setPrivacy, privacy }) => {
   const [open, setOpen] = useState(false)
 
   return (
@@ -42,6 +43,9 @@ const CardComponent: React.FC<CardComponentProps> = ({ onTextInput, onImagePress
           style={styles.input}
           placeholder="What's on your mind?"
           placeholderTextColor={colors.inputText}
+          onChangeText={handleOnChangeText}
+          multiline
+          value={value}
         />
 
 

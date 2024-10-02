@@ -18,7 +18,8 @@ axiosInstance.interceptors.request.use(
 
     // If formData flag is true, set Content-Type to multipart/form-data
     if (config.formData) {
-      config.headers['Content-Type'] = 'multipart/form-data';
+      (config.headers['Accept'] = 'application/json'),
+        (config.headers['Content-Type'] = 'multipart/form-data');
     } else {
       config.headers['Content-Type'] = 'application/json';
     }
