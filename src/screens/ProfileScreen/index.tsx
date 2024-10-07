@@ -16,7 +16,7 @@ import GeneralModal from '../../components/GeneralModal';
 import ReactModal from '../../components/ReactModal';
 import { dummyComments, reactions } from '../../dummyData';
 import CommentsModal from '../../components/CommentsModal';
-import { getProfileById } from '../../store/slices/homeSlice';
+import { getCommentPost, getProfileById, likePost } from '../../store/slices/homeSlice';
 import { useAppDispatch } from '../../hooks/storeHooks';
 import dayjs from 'dayjs';
 import Loader from '../../components/Loader';
@@ -39,7 +39,11 @@ const ProfileScreen: React.FC = ({ navigation }) => {
   const [blockVisible, setBlockVisible] = useState(false);
   const [blockSuccess, setBlockSuccess] = useState(false);
   const [reactVisible, setrRactVisible] = useState(false);
-  const [commentsVisible, setCommentsVisible] = useState<boolean>(false)
+  const [commentsVisible, setCommentsVisible] = useState({
+    visiblity: false,
+    comments: [],
+    id: null,
+  })
   const [data, setData] = useState();
   const [loading, setLoading] = useState(false);
 
@@ -72,6 +76,34 @@ const ProfileScreen: React.FC = ({ navigation }) => {
   const handleBlockPress = () => {
     setModalVisible(false);
     setBlockVisible(true)
+  };
+
+
+  const handleCommentPress = id => {
+    dispatch(getCommentPost(id))
+      .then(res => {
+        console.log(res?.payload?.data?.data?.data, "Commentsss Ressss frommm screennnn ")
+        setCommentsVisible({
+          visiblity: true,
+          comments: res?.payload?.data?.data?.data,
+          id: id
+        })
+        // getData();
+      })
+      .catch(err => {
+        console.log('error from like post', err);
+      });
+  }
+
+  const handleLikePress = (id: number) => {
+    dispatch(likePost(id))
+      .then(res => {
+        console.log('response from like post ---->', res);
+        getData();
+      })
+      .catch(err => {
+        console.log('error from like post', err);
+      });
   };
 
   const handleClose = () => {
@@ -108,8 +140,12 @@ const ProfileScreen: React.FC = ({ navigation }) => {
       likes={item.likes}
       comments={item.comments}
       share={item.share}
-      onLikePress={() => setrRactVisible(true)}
-      onCommnetPress={() => setCommentsVisible(true)}
+      // onLikePress={() => setrRactVisible(true)}
+      // onCommnetPress={() => setCommentsVisible(true)}
+      onCommnetPress={() => handleCommentPress(item?.media[0]?.post_id)}
+
+      isLiked={item?.is_liked}
+      onLikePress={() => handleLikePress(item?.media[0]?.post_id)}
 
     />
   );
@@ -180,14 +216,18 @@ const ProfileScreen: React.FC = ({ navigation }) => {
 
 
         <CommentsModal
-          visible={commentsVisible}
-          closeModal={() => setCommentsVisible(false)}
+          visible={commentsVisible.visiblity}
+          closeModal={() => {
+            setCommentsVisible({ visiblity: false, comments: [], id: null })
+            getData()
+          }}
           // icon={CheckedIcon}
           title='Successfully'
           message='Password has been updated successfully'
           buttonText='Apply'
           onPress={() => navigation.navigate("Home")}
-          comments={dummyComments}
+          comments={commentsVisible?.comments}
+          postId={commentsVisible?.id}
         />
         <ReactModal
           visible={reactVisible}

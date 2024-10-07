@@ -9,12 +9,14 @@ import { useNavigation } from '@react-navigation/native';
 import { vh, vw } from '../../constant';
 import { colors } from '../../utils/theme';
 import { useAppDispatch } from '../../hooks/storeHooks';
-import { logout, LogoutUser } from '../../store/slices/authSlice';
+import { logout, LogoutUser, selectUserProfile } from '../../store/slices/authSlice';
+import { useSelector } from 'react-redux';
 
 const Menu: React.FC = () => {
   const navigation = useNavigation();
 
   const dispatch = useAppDispatch();
+  const user = useSelector(selectUserProfile);
 
 
   const handleLogout = () => {
@@ -32,9 +34,9 @@ const Menu: React.FC = () => {
           <TouchableOpacity onPress={() => navigation.navigate('MyProfile')}>
             <View style={styles.contentCon}>
               <View style={styles.avatarContainer}>
-                <Image source={images.user} style={styles.imageStyle} />
+                <Image source={user?.avatar ? { uri: user?.avatar } : images.user} style={[styles.imageStyle, { borderRadius: vw * 6 }]} />
               </View>
-              <InterRegular style={styles.userName}>Juliana David</InterRegular>
+              <InterRegular style={styles.userName}>{user?.full_name}</InterRegular>
             </View>
           </TouchableOpacity>
         </Card>

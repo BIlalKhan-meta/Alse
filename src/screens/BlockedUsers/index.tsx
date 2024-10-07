@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
 import { View, ScrollView, TouchableOpacity, FlatList, Image } from 'react-native';
 import Card from '../../components/Card';
 import styles from './styles';
@@ -8,13 +8,18 @@ import { images } from '../../utils/images';
 import HorizontalSeparator from '../../components/HorizontalSeparator';
 import GeneralModal from '../../components/GeneralModal';
 import { useNavigation } from '@react-navigation/native';
+import Loader from '../../components/Loader';
+import { getUserBlockList } from '../../store/slices/homeSlice';
+import { useAppDispatch } from '../../hooks/storeHooks';
 
 const BlockedUsers: React.FC = () => {
     const navigation = useNavigation()
+    const dispatch = useAppDispatch();
+
     const [blockVisible, setBlockVisible] = useState(false);
     const [blockSuccess, setBlockSuccess] = useState(false);
-
-
+    const [loading, setLoading] = useState(false)
+    const [blockList, setBlockList] = useState([])
 
     useLayoutEffect(() => {
         navigation.setOptions({
@@ -33,6 +38,25 @@ const BlockedUsers: React.FC = () => {
     }, [navigation]);
 
 
+    useEffect(() => {
+        getApi()
+    }, [])
+
+
+    const getApi = async () => {
+        setLoading(true)
+        const checkData = await dispatch(getUserBlockList());
+        setBlockList(checkData?.payload?.data?.data?.data);
+        setLoading(false)
+        console.log(checkData?.payload?.data?.data?.data, "checkkkkmetee")
+
+    }
+
+    if (loading) {
+        return <Loader />;
+    }
+
+
 
 
 
@@ -41,27 +65,27 @@ const BlockedUsers: React.FC = () => {
     };
 
     // Simulated data, replace with actual data fetching logic
-    const blockList = [
+    // const blockList = [
 
-        { id: 1, userAvatar: 'avatar1.jpg', name: 'Marvel Edward', type: 'follow' },
-        { id: 2, userAvatar: 'avatar2.jpg', name: 'Madvin', type: 'follow' },
-        { id: 3, userAvatar: 'avatar3.jpg', name: 'Marvel Edward', type: 'follow' },
-        { id: 4, userAvatar: 'avatar2.jpg', name: 'Juliana David', type: 'follow' },
-        { id: 5, userAvatar: 'avatar2.jpg', name: 'Roy Rose', type: 'follow' },
-        { id: 6, userAvatar: 'avatar2.jpg', name: 'Marvel Edward', type: 'remove' },
-        { id: 7, userAvatar: 'avatar2.jpg', name: 'Colin Shaien', type: 'remove' },
-        { id: 8, userAvatar: 'avatar2.jpg', name: 'Sam Alex', type: 'unfollow' },
-        { id: 9, userAvatar: 'avatar2.jpg', name: 'Peter Parker', type: 'unfollow' },
-        { id: 10, userAvatar: 'avatar1.jpg', name: 'Marvel Edward', type: 'follow' },
-        { id: 11, userAvatar: 'avatar2.jpg', name: 'Madvin', type: 'remove' },
-        { id: 12, userAvatar: 'avatar3.jpg', name: 'Marvel Edward', type: 'follow' },
-        { id: 13, userAvatar: 'avatar2.jpg', name: 'Juliana David', type: 'remove' },
-        { id: 14, userAvatar: 'avatar2.jpg', name: 'Roy Rose', type: 'follow' },
-        { id: 15, userAvatar: 'avatar2.jpg', name: 'Marvel Edward', type: 'remove' },
-        { id: 16, userAvatar: 'avatar2.jpg', name: 'Colin Shaien', type: 'remove' },
-        { id: 17, userAvatar: 'avatar2.jpg', name: 'Sam Alex', type: 'unfollow' },
-        { id: 18, userAvatar: 'avatar2.jpg', name: 'Peter Parker', type: 'unfollow' },
-    ];
+    //     { id: 1, userAvatar: 'avatar1.jpg', name: 'Marvel Edward', type: 'follow' },
+    //     { id: 2, userAvatar: 'avatar2.jpg', name: 'Madvin', type: 'follow' },
+    //     { id: 3, userAvatar: 'avatar3.jpg', name: 'Marvel Edward', type: 'follow' },
+    //     { id: 4, userAvatar: 'avatar2.jpg', name: 'Juliana David', type: 'follow' },
+    //     { id: 5, userAvatar: 'avatar2.jpg', name: 'Roy Rose', type: 'follow' },
+    //     { id: 6, userAvatar: 'avatar2.jpg', name: 'Marvel Edward', type: 'remove' },
+    //     { id: 7, userAvatar: 'avatar2.jpg', name: 'Colin Shaien', type: 'remove' },
+    //     { id: 8, userAvatar: 'avatar2.jpg', name: 'Sam Alex', type: 'unfollow' },
+    //     { id: 9, userAvatar: 'avatar2.jpg', name: 'Peter Parker', type: 'unfollow' },
+    //     { id: 10, userAvatar: 'avatar1.jpg', name: 'Marvel Edward', type: 'follow' },
+    //     { id: 11, userAvatar: 'avatar2.jpg', name: 'Madvin', type: 'remove' },
+    //     { id: 12, userAvatar: 'avatar3.jpg', name: 'Marvel Edward', type: 'follow' },
+    //     { id: 13, userAvatar: 'avatar2.jpg', name: 'Juliana David', type: 'remove' },
+    //     { id: 14, userAvatar: 'avatar2.jpg', name: 'Roy Rose', type: 'follow' },
+    //     { id: 15, userAvatar: 'avatar2.jpg', name: 'Marvel Edward', type: 'remove' },
+    //     { id: 16, userAvatar: 'avatar2.jpg', name: 'Colin Shaien', type: 'remove' },
+    //     { id: 17, userAvatar: 'avatar2.jpg', name: 'Sam Alex', type: 'unfollow' },
+    //     { id: 18, userAvatar: 'avatar2.jpg', name: 'Peter Parker', type: 'unfollow' },
+    // ];
 
     const renderUserItem = ({ item }: { item: { id: string, name: string, type: string } }) => (
         <>
@@ -85,6 +109,14 @@ const BlockedUsers: React.FC = () => {
         </>
     );
 
+
+    const renderEmpty = () => (
+        <View style={styles.emptyContainer}>
+            <InterRegular style={styles.emptyText}>No Blocked Users to Show.</InterRegular>
+        </View>
+    );
+
+
     return (
         <ScrollView showsVerticalScrollIndicator={false}>
             <View style={styles.container}>
@@ -98,6 +130,8 @@ const BlockedUsers: React.FC = () => {
                         renderItem={renderUserItem}
                         keyExtractor={item => item.id}
                         contentContainerStyle={styles.contentContainer}
+                        ListEmptyComponent={renderEmpty}
+
                     />
                 </Card>
 

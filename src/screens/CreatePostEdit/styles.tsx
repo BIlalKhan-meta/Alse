@@ -66,7 +66,8 @@ const styles = StyleSheet.create({
     postTxt: {
         color: colors.white,
         fontSize: fontSizes.f13
-    }
+    },
+    imageStyle: { width: 200, height: 200, marginTop: vh * 10 }
 
 });
 

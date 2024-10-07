@@ -11,7 +11,7 @@ import GeneralModal from '../../components/GeneralModal';
 import { dummyComments, reactions } from '../../dummyData';
 import HeaderComponent from '../../components/HeaderComponent';
 import { useAppDispatch, useAppSelector } from '../../hooks/storeHooks';
-import { GetNewsFeed, likePost } from '../../store/slices/homeSlice';
+import { getCommentPost, GetNewsFeed, likePost } from '../../store/slices/homeSlice';
 import InterRegular from '../../components/Text/InterRegular';
 import { colors } from '../../utils/theme';
 import dayjs from 'dayjs';
@@ -26,13 +26,31 @@ const Home: React.FC = () => {
   // Select posts and loading state from the Redux store
   const { posts, loading, error } = useAppSelector((state) => state.home);
 
-  const [commentsVisible, setCommentsVisible] = useState<boolean>(false);
+  const [commentsVisible, setCommentsVisible] = useState({
+    visiblity: false,
+    comments: [],
+    id: null,
+  })
   const [reactVisible, setrRactVisible] = useState(false);
   const [activePostId, setActivePostId] = useState<number | null>(null);
   const [deleteVisible, setDeleteVisible] = useState(false);
   const [deleteSuccess, setDeleteSuccess] = useState(false);
 
-
+  const handleCommentPress = id => {
+    dispatch(getCommentPost(id))
+      .then(res => {
+        console.log(res?.payload?.data?.data?.data, "Commentsss Ressss frommm screennnn ")
+        setCommentsVisible({
+          visiblity: true,
+          comments: res?.payload?.data?.data?.data,
+          id: id
+        })
+        // getData();
+      })
+      .catch(err => {
+        console.log('error from like post', err);
+      });
+  }
 
   useEffect(() => {
     getApi()
@@ -68,35 +86,44 @@ const Home: React.FC = () => {
 
 
 
-  const renderPost = ({ item }) => (
-    <PostComponent
-      id={item?.id}
-      postID={item?.media[0]?.post_id}
-      avatar={item?.avatar}
-      name={item.name}
-      country={item.country ? item.country : ""}
-      time={dayjs(item?.media[0]?.date).format('hh:MM A')}
-      postText={item?.description}
-      postImage={item?.media[0]?.path}
-      likes={item.likes}
-      comments={item.comments}
-      share={item.share}
-      account={item.privacy}
-      onCommnetPress={() => setCommentsVisible(true)}
-      onSavePress={() => navigation.navigate("Saved")}
-      onLikePress={() => setrRactVisible(true)}
-      onDotPress={() => handleDotPress(item.id)}
-      modalVisible={activePostId === item.id}
-      handleBlockPress={() => {
-        handleDotPress();
-        setDeleteVisible(true);
-      }}
-      handleReportPress={() => {
-        handleDotPress();
-        navigation.navigate("CreatePost", { title: "Edit Post" });
-      }}
-    />
-  );
+  const renderPost = ({ item }) => {
+    const mediaItem = item?.media && item?.media.length > 0 ? item?.media[0] : null;
+    return (
+      <PostComponent
+        id={item?.id}
+        postID={item?.media[0]?.post_id}
+        avatar={item?.avatar}
+        name={item.name}
+        country={item.country ? item.country : ""}
+        time={dayjs(item?.media[0]?.date).format('hh:MM A')}
+        postText={item?.description}
+        postImage={item?.media[0]?.path}
+        likes={item.likes}
+        comments={item.comments}
+        share={item.share}
+        account={item.privacy}
+        // onCommnetPress={() => setCommentsVisible(true)}
+        onCommnetPress={() => handleCommentPress(mediaItem?.post_id)}
+        onLikePress={() => handleLikePress(mediaItem?.post_id)}
+
+        onSavePress={() => navigation.navigate("Saved")}
+        // onLikePress={() => setrRactVisible(true)}
+        onDotPress={() => handleDotPress(item.id)}
+        modalVisible={activePostId === item.id}
+        handleBlockPress={() => {
+          handleDotPress();
+          setDeleteVisible(true);
+        }}
+        handleReportPress={() => {
+          handleDotPress();
+          navigation.navigate("CreatePost", { title: "Edit Post" });
+        }}
+        isLiked={item?.is_liked}
+
+      />
+    );
+  }
+
 
   const renderEmpty = () => (
     <View style={styles.emptyContainer}>
@@ -148,7 +175,7 @@ const Home: React.FC = () => {
           )}
 
 
-          <CommentsModal
+          {/* <CommentsModal
             visible={commentsVisible}
             closeModal={() => setCommentsVisible(false)}
             title='Successfully'
@@ -156,6 +183,21 @@ const Home: React.FC = () => {
             buttonText='Apply'
             onPress={() => navigation.navigate("Home")}
             comments={dummyComments}
+          /> */}
+
+          <CommentsModal
+            visible={commentsVisible.visiblity}
+            closeModal={() => {
+              setCommentsVisible({ visiblity: false, comments: [], id: null })
+              getApi()
+            }}
+            // icon={CheckedIcon}
+            title='Successfully'
+            message='Password has been updated successfully'
+            buttonText='Apply'
+            onPress={() => navigation.navigate("Home")}
+            comments={commentsVisible?.comments}
+            postId={commentsVisible?.id}
           />
 
           <ReactModal

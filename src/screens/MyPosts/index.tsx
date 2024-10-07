@@ -1,6 +1,6 @@
 // Home.tsx
 import React, { useEffect, useLayoutEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, FlatList } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, FlatList, TouchableWithoutFeedback } from 'react-native';
 import { images } from '../../utils/images';
 import CardComponent from '../../components/CardComponent';
 import { colors } from '../../utils/theme';
@@ -18,41 +18,13 @@ import GeneralModal from '../../components/GeneralModal';
 import { selectUserProfile } from '../../store/slices/authSlice';
 import { useSelector } from 'react-redux';
 import { useAppDispatch } from '../../hooks/storeHooks';
-import { getMyPost } from '../../store/slices/homeSlice';
+import { getCommentPost, getMyPost, likePost, PostDelete } from '../../store/slices/homeSlice';
 import InterRegular from '../../components/Text/InterRegular';
 import dayjs from 'dayjs';
 import Loader from '../../components/Loader';
+import { getMessage, Toast } from '../../utils/helpers';
 
-const posts = [
-    {
-        id: 1,
-        avatar: `${images.user}`,
-        name: 'John Doe',
-        country: 'Newyork, USA',
-        time: '12:30 AM',
-        postText: 'Haters will say what they want, but their hate will never stop you from casting your dreams just believe in yourself ...Read More',
-        postImage: `${images.postImage1}`,
-        likes: 120,
-        comments: 45,
-        share: 25,
-        account: "self"
-    },
-    {
-        id: 2,
-        avatar: `${images.user}`,
-        name: 'Jane Smith',
-        country: 'UK',
-        time: '5h ago',
-        postText: 'Haters will say what they want, but their hate will never stop you from casting your dreams just believe in yourself ...Read More',
-        postImage: `${images.postImage2}`,
-        likes: 80,
-        comments: 20,
-        share: 10,
-        account: "self"
 
-    },
-    // Add more posts as needed
-];
 
 
 
@@ -63,20 +35,78 @@ const MyPosts: React.FC = () => {
     const dispatch = useAppDispatch();
     const user = useSelector(selectUserProfile)
 
-    const [commentsVisible, setCommentsVisible] = useState<boolean>(false)
+    const [commentsVisible, setCommentsVisible] = useState({
+        visiblity: false,
+        comments: [],
+        id: null,
+    })
     const [reactVisible, setrRactVisible] = useState(false);
     const [activePostId, setActivePostId] = useState<number | null>(null);
-    const [deleteVisible, setDeleteVisible] = useState(false);
+    const [deleteVisible, setDeleteVisible] = useState({
+        visibility: false,
+        id: null,
+    });
     const [deleteSuccess, setDeleteSuccess] = useState(false);
     const [loader, setLoader] = useState(false);
     const [data, setData] = useState([]);
-
-    console.log('====================================');
-    console.log("Here userss=sss>", user?.id);
-    console.log('====================================');
+    const [reportLoader, setReportLoader] = useState(false);
 
     const handleDotPress = (postId: number) => {
         setActivePostId(activePostId === postId ? null : postId);
+    };
+
+    const handleLikePress = id => {
+        dispatch(likePost(id))
+            .then(res => {
+                console.log(res, "Ressss frommm screennnn ")
+                getData();
+            })
+            .catch(err => {
+                console.log('error from like post', err);
+            });
+    };
+
+    const handleCommentPress = id => {
+        dispatch(getCommentPost(id))
+            .then(res => {
+                console.log(res?.payload?.data?.data?.data, "Commentsss Ressss frommm screennnn ")
+                setCommentsVisible({
+                    visiblity: true,
+                    comments: res?.payload?.data?.data?.data,
+                    id: id
+                })
+                // getData();
+            })
+            .catch(err => {
+                console.log('error from like post', err);
+            });
+    }
+
+    const handleDelete = () => {
+        setReportLoader(true);
+        dispatch(PostDelete(deleteVisible?.id))
+            .unwrap()
+            .then(res => {
+                setDeleteVisible({
+                    visibility: false,
+                    id: null,
+                });
+                setReportLoader(false);
+                getData()
+                setDeleteSuccess(true);
+                handleDotPress(null)
+            })
+            .catch(err => {
+                setReportLoader(false);
+                setDeleteVisible({
+                    visibility: false,
+                    id: null,
+                });
+                handleDotPress(null)
+                Toast.error(getMessage(err?.message));
+
+                console.log('Errorr  errerrerrerrerrerrerrerrerrfrom ', err);
+            });
     };
 
     useLayoutEffect(() => {
@@ -127,7 +157,10 @@ const MyPosts: React.FC = () => {
     };
 
     useEffect(() => {
-        getData();
+        if (isFocused) {
+
+            getData();
+        }
     }, [isFocused, navigation]);
 
     if (loader) {
@@ -136,35 +169,42 @@ const MyPosts: React.FC = () => {
 
 
 
-    const renderPost = ({ item }) => (
-        <PostComponent
-            id={item?.id}
-            postID={item?.media[0]?.post_id}
-            avatar={item?.avatar}
-            name={item.name}
-            country={item.country ? item.country : ""}
-            time={dayjs(item?.media[0]?.date).format('hh:MM A')}
-            postText={item?.description}
-            postImage={item?.media[0]?.path}
-            likes={item.likes}
-            comments={item.comments}
-            share={item.share}
-            account={item.privacy}
-            onCommnetPress={() => setCommentsVisible(true)}
-            onSavePress={() => navigation.navigate("Saved")}
-            onLikePress={() => setrRactVisible(true)}
-            onDotPress={() => handleDotPress(item.id)}
-            modalVisible={activePostId === item.id}
-            handleBlockPress={() => {
-                // handleDotPress();
-                setDeleteVisible(true);
-            }}
-            handleReportPress={() => {
-                // handleDotPress();
-                navigation.navigate("CreatePost", { title: "Edit Post" });
-            }}
-        />
-    );
+    const renderPost = ({ item }) => {
+        const mediaItem = item?.media && item?.media.length > 0 ? item?.media[0] : null;
+        return (
+            <PostComponent
+                id={item?.id}
+                postID={item?.media[0]?.post_id}
+                avatar={item?.avatar}
+                name={item.name}
+                country={item.country ? item.country : ""}
+                // time={dayjs(item?.media[0]?.date).format('hh:MM A')}
+                time={mediaItem ? dayjs(mediaItem?.date).format('hh:MM A') : ""}
+                postText={item?.description}
+                postImage={item?.media[0]?.path}
+                likes={item.likes}
+                comments={item.comments}
+                share={item.share}
+                account={item.privacy}
+                // onCommnetPress={() => setCommentsVisible(true)}
+                onCommnetPress={() => handleCommentPress(mediaItem?.post_id)}
+                onSavePress={() => navigation.navigate("Saved")}
+                // onLikePress={() => setrRactVisible(true)}
+                onLikePress={() => handleLikePress(mediaItem?.post_id)}
+                onDotPress={() => handleDotPress(item.id)}
+                modalVisible={activePostId === item.id}
+                handleBlockPress={() => {
+                    // handleDelete();
+                    setDeleteVisible({ visibility: true, id: mediaItem?.post_id });
+                }}
+                handleReportPress={() => {
+                    handleDotPress(null)
+                    navigation.navigate("CreatePostEdit", { title: "Edit Post", data: item });
+                }}
+                isLiked={item?.is_liked}
+            />
+        )
+    }
 
     const renderEmpty = () => (
         <View style={styles.emptyContainer}>
@@ -172,13 +212,20 @@ const MyPosts: React.FC = () => {
         </View>
     );
 
+
+
     return (
+
+
         <ScrollView
             showsVerticalScrollIndicator={false}
         >
-            <View style={styles.container}>
+            <TouchableWithoutFeedback
+                onPress={() => handleDotPress(null)}
+            >
+                <View style={styles.container}>
 
-                {/* <CardComponent
+                    {/* <CardComponent
                     onTextInput={() => navigation.navigate("CreatePost")}
                     onVideoPress={() => navigation.navigate("CreatePost")}
                     onImagePress={() => navigation.navigate("CreatePost")}
@@ -218,75 +265,88 @@ const MyPosts: React.FC = () => {
                     />
                 ))} */}
 
-                <FlatList
-                    data={data}
-                    renderItem={renderPost}
-                    keyExtractor={(item) => item.id.toString()}
-                    showsVerticalScrollIndicator={false}
-                    ListEmptyComponent={renderEmpty}
-                    ListHeaderComponent={() => (
-                        <TouchableOpacity
-                            activeOpacity={0.8}
-                            onPress={() => navigation.navigate('CreatePost')}>
-                            <View pointerEvents="none">
-                                <CardComponent
-                                    onTextInput={() => navigation.navigate('CreatePost')}
-                                    onVideoPress={() => navigation.navigate('CreatePost')}
-                                    onImagePress={() => navigation.navigate('CreatePost')}
-                                />
-                            </View>
-                        </TouchableOpacity>
-                    )}
+                    <FlatList
+                        data={data}
+                        renderItem={renderPost}
+                        keyExtractor={(item) => item.id.toString()}
+                        showsVerticalScrollIndicator={false}
+                        ListEmptyComponent={renderEmpty}
+                        ListHeaderComponent={() => (
+                            <TouchableOpacity
+                                activeOpacity={0.8}
+                                onPress={() => navigation.navigate('CreatePost')}>
+                                <View pointerEvents="none">
+                                    <CardComponent
+                                        onTextInput={() => navigation.navigate('CreatePost')}
+                                        onVideoPress={() => navigation.navigate('CreatePost')}
+                                        onImagePress={() => navigation.navigate('CreatePost')}
+                                    />
+                                </View>
+                            </TouchableOpacity>
+                        )}
 
-                />
+                    />
 
-                <CommentsModal
-                    visible={commentsVisible}
-                    closeModal={() => setCommentsVisible(false)}
-                    // icon={CheckedIcon}
-                    title='Successfully'
-                    message='Password has been updated successfully'
-                    buttonText='Apply'
-                    onPress={() => navigation.navigate("Home")}
-                    comments={dummyComments}
-                />
+                    <CommentsModal
+                        visible={commentsVisible.visiblity}
+                        closeModal={() => setCommentsVisible({ visiblity: false, comments: [], id: null })}
+                        // icon={CheckedIcon}
+                        title='Successfully'
+                        message='Password has been updated successfully'
+                        buttonText='Apply'
+                        onPress={() => navigation.navigate("Home")}
+                        comments={commentsVisible?.comments}
+                        postId={commentsVisible?.id}
+                    />
 
-                <ReactModal
-                    visible={reactVisible}
-                    closeModal={() => setrRactVisible(false)}
-                    reactions={reactions}
-                />
+                    <ReactModal
+                        visible={reactVisible}
+                        closeModal={() => setrRactVisible(false)}
+                        reactions={reactions}
+                    />
 
-                <GeneralModal
-                    visible={deleteVisible}
-                    closeModal={() => setDeleteVisible(false)}
-                    icon={images.qmark}
-                    title='Delete Post'
-                    message='Are you sure you want to delete this Post?'
-                    SecondaryText1='Yes'
-                    SecondaryText2='No'
-                    onPress={() => {
-                        setDeleteVisible(false)
-                        setDeleteSuccess(true)
+                    <GeneralModal
+                        visible={deleteVisible.visibility}
+                        closeModal={() =>
+                            setDeleteVisible({
+                                visibility: false,
+                                id: null,
+                            })
+                        }
+                        icon={images.qmark}
+                        title='Delete Post'
+                        message='Are you sure you want to delete this Post?'
+                        SecondaryText1='Yes'
+                        SecondaryText2='No'
+                        // onPress={() => {
+                        //     setDeleteVisible(false)
+                        //     setDeleteSuccess(true)
 
-                    }}
-                    secondaryBtn={true}
-                />
+                        // }}
+                        onPress={handleDelete}
+                        loading={reportLoader}
 
-                <GeneralModal
-                    visible={deleteSuccess}
-                    closeModal={() => setDeleteSuccess(false)}
-                    icon={images.checkedIcon}
-                    title='Delete Post'
-                    message='Post has been delete successfully.'
-                    buttonText='Ok'
-                    onPress={() => {
-                        setDeleteSuccess(false)
-                    }}
-                    primaryBtn={true}
-                />
+                        secondaryBtn={true}
+                    />
 
-            </View>
+
+
+
+                    <GeneralModal
+                        visible={deleteSuccess}
+                        closeModal={() => setDeleteSuccess(false)}
+                        icon={images.checkedIcon}
+                        title='Delete Post'
+                        message='Post has been delete successfully.'
+                        buttonText='Ok'
+                        onPress={() => {
+                            setDeleteSuccess(false)
+                        }}
+                        primaryBtn={true}
+                    />
+
+                </View>
+            </TouchableWithoutFeedback>
         </ScrollView>
     );
 };

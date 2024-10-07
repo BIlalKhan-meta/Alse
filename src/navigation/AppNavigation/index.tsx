@@ -33,6 +33,7 @@ import SavedChatDetail from "../../screens/SavedChatDetail";
 import SavedScripts from "../../screens/SavedScripts";
 import { useSelector } from "react-redux";
 import { selectBearerToken } from "../../store/slices/authSlice";
+import CreatePostEdit from "../../screens/CreatePostEdit";
 
 
 
@@ -40,7 +41,7 @@ import { selectBearerToken } from "../../store/slices/authSlice";
 
 const AppNavigation = () => {
   const Stack = createNativeStackNavigator();
-  const token = useSelector(selectBearerToken)
+  const token = useSelector(selectBearerToken);
   console.log('====================================');
   console.log("Here ss=sss>", token);
   console.log('====================================');
@@ -56,6 +57,7 @@ const AppNavigation = () => {
         <Stack.Screen name="Shop" component={Shop} options={NavigationOptions} />
         <Stack.Screen name="ProductView" component={ProductView} options={NavigationOptions} />
         <Stack.Screen name="CreatePost" component={CreatePost} options={NavigationOptions} />
+        <Stack.Screen name="CreatePostEdit" component={CreatePostEdit} options={NavigationOptions} />
         <Stack.Screen name="ContactUs" component={ContactUs} />
         <Stack.Screen name="AboutUs" component={AboutUs} />
         <Stack.Screen name="ChatOngoing" component={ChatOngoing} options={NavigationOptions} />

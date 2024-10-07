@@ -52,7 +52,7 @@ const CardComponent: React.FC<CardComponentProps> = ({ handleOnChangeText, onIma
       </View>
       {
         ListOptions && privacy && setPrivacy &&
-        <View style={{ marginVertical: vh * 4 }}>
+        <View style={{ marginVertical: vh * 4, zIndex: 10 }}>
           <DropDownPicker
             open={open}
             setOpen={setOpen}

@@ -32,6 +32,8 @@ interface PostProps {
   handleReportPress: () => void;
   handleBlockPress: () => void;
   modalVisible: boolean;
+  isLiked?: boolean;
+
 }
 
 const PostComponent: React.FC<PostProps> = ({
@@ -53,7 +55,9 @@ const PostComponent: React.FC<PostProps> = ({
   onDotPress,
   modalVisible,
   handleReportPress,
-  handleBlockPress
+  handleBlockPress,
+  isLiked,
+
 }) => {
 
   const navigation = useNavigation();
@@ -101,6 +105,8 @@ const PostComponent: React.FC<PostProps> = ({
       );
     }
   };
+
+  console.log(isLiked, "ISlikeeddddddddd")
   return (
     <Card style={styles.card}>
       <View style={styles.header}>
@@ -146,12 +152,12 @@ const PostComponent: React.FC<PostProps> = ({
             tintColor={colors.blue}
             style={styles.icon}
           />
-          <InterRegular style={styles.actionText}>{likes}</InterRegular>
+          <InterRegular style={styles.actionText}>{likes?.length}</InterRegular>
           <Image
             source={images.comment}
             style={styles.icon}
           />
-          <InterRegular style={styles.actionText}>{comments} </InterRegular>
+          <InterRegular style={styles.actionText}>{comments?.length} </InterRegular>
           <Image
             source={images.share}
             style={styles.icon}
@@ -169,15 +175,20 @@ const PostComponent: React.FC<PostProps> = ({
       </View>
       <View style={styles.separator} />
       <View style={styles.bottomActions}>
-        <TouchableOpacity style={styles.button}
-          onPress={onLikePress}
-        >
-          <Image
-            source={images.like}
-            style={styles.buttonIcon}
-          />
-          <Text style={styles.buttonText}>Like</Text>
-        </TouchableOpacity>
+        {isLiked != undefined && (
+
+          <TouchableOpacity style={styles.button}
+            onPress={onLikePress}
+          >
+            <Image
+              // source={images.like}
+              source={isLiked ? images.likeFill : images?.like}
+              style={styles.buttonIcon}
+              tintColor={isLiked ? colors.blue : null}
+            />
+            <Text style={styles.buttonText}>Like</Text>
+          </TouchableOpacity>
+        )}
         <TouchableOpacity style={styles.button}
           onPress={onCommnetPress}
         >

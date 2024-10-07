@@ -14,6 +14,7 @@ import Menu from '../../screens/Menu';
 import Notifications from '../../screens/Notifications';
 import ContactUs from '../../screens/ContactUs';
 import Saved from '../../screens/Saved';
+import CreatePostEdit from '../../screens/CreatePostEdit';
 
 
 
@@ -80,7 +81,7 @@ const backButtonRoutes: { [key: string]: boolean } = {
     AddBlog: true,
     SavedChatDetail: true,
     AddStore: true,
-
+    CreatePostEdit: true
 
 };
 

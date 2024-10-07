@@ -78,13 +78,13 @@ const CreatePost: React.FC = () => {
     const body = new FormData();
     body.append('description', comment);
     body.append('privacy', privacy);
-    // if (imageData) {
-    //   await body.append('file[0]', {
-    //     name: imageData?.fileName,
-    //     uri: imageData?.uri,
-    //     type: imageData?.type,
-    //   });
-    // }
+    if (imageData) {
+      await body.append('file[0]', {
+        name: imageData?.fileName,
+        uri: imageData?.uri,
+        type: imageData?.type,
+      });
+    }
     console.log('body ==========>', body);
 
     setIsLoading(true);

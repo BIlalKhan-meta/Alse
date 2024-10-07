@@ -21,10 +21,11 @@ interface GeneralModalProps {
   SecondaryText1: string;
   SecondaryText2: string;
   redImage: boolean;
+  loading: boolean;
 
 }
 
-const GeneralModal: React.FC<GeneralModalProps> = ({ visible, closeModal, icon, title, message, buttonText, onPress, primaryBtn, secondaryBtn, SecondaryText1, SecondaryText2, redImage }) => {
+const GeneralModal: React.FC<GeneralModalProps> = ({ visible, closeModal, icon, title, message, buttonText, onPress, primaryBtn, secondaryBtn, SecondaryText1, SecondaryText2, redImage, loading }) => {
   return (
     <Modal
       visible={visible}
@@ -71,6 +72,7 @@ const GeneralModal: React.FC<GeneralModalProps> = ({ visible, closeModal, icon, 
             <View style={styles.secondaryBtnCon}>
               <CustomButton onPress={onPress} style={styles.secondaryBtn1}
                 containerStyle={styles.buttonContainerStyle}
+                loading={loading}
               >
                 {SecondaryText1}
               </CustomButton>

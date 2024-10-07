@@ -1,10 +1,18 @@
 import {createSlice, createAsyncThunk} from '@reduxjs/toolkit';
 import {
+  commentLike,
   createPost,
+  deletePost,
+  editPost,
   fetchMyPost,
   fetchProfileById,
+  getBlockedUsers,
+  getPostComment,
   newsFeed,
+  postComment,
   postLike,
+  userBlock,
+  userUnblock,
 } from '../../api/home';
 
 interface HomeState {
@@ -51,6 +59,37 @@ export const likePost = createAsyncThunk(
   },
 );
 
+export const likeComment = createAsyncThunk(
+  'post/likePost',
+  async ({id, commentId}: {id: number; commentId: number}) => {
+    const response = await commentLike(id, commentId);
+    return response;
+  },
+);
+
+export const getCommentPost = createAsyncThunk(
+  'post/likePost',
+  async (id: number) => {
+    const response = await getPostComment(id);
+    return response;
+  },
+);
+
+export const commentPost = createAsyncThunk(
+  'post/likePost',
+  async (
+    {formData, id}: {formData: FormData; id: number},
+    {rejectWithValue},
+  ) => {
+    try {
+      const response = await postComment(formData, id);
+      return response;
+    } catch (error: any) {
+      return rejectWithValue(error.response.data || 'post comments failed');
+    }
+  },
+);
+
 export const postCreate = createAsyncThunk(
   'user/postCreate',
   async (data: FormData) => {
@@ -59,10 +98,54 @@ export const postCreate = createAsyncThunk(
   },
 );
 
+export const postEdit = createAsyncThunk(
+  'user/postEdit',
+  async (
+    {formData, id}: {formData: FormData; id: number},
+    {rejectWithValue},
+  ) => {
+    console.log(formData, id, 'fromm sliceeee');
+    try {
+      const response = await editPost(formData, id);
+      return response;
+    } catch (error: any) {
+      return rejectWithValue(error.response.data || 'post update failed');
+    }
+  },
+);
+
+export const PostDelete = createAsyncThunk(
+  'post/delete',
+  async (id: number) => {
+    const response = await deletePost(id);
+    return response;
+  },
+);
+
 export const getMyPost = createAsyncThunk('user/MyPost', async (id: number) => {
   const response = await fetchMyPost(id);
   return response;
 });
+
+export const getUserBlockList = createAsyncThunk('user/blocklist', async () => {
+  const response = await getBlockedUsers();
+  return response;
+});
+
+export const blockUser = createAsyncThunk(
+  'user/blockUser',
+  async (id: number) => {
+    const response = await userBlock(id);
+    return response;
+  },
+);
+export const unBlockUser = createAsyncThunk(
+  'user/unBlockUser',
+  async (id: number) => {
+    const response = await userUnblock(id);
+    return response;
+  },
+);
 
 const homeSlice = createSlice({
   name: 'home',

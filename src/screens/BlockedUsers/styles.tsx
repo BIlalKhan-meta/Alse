@@ -5,7 +5,7 @@ import { colors } from '../../utils/theme';
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
+        backgroundColor: colors.headerColor,
         paddingHorizontal: 15,
         paddingTop: vh * 2,
         paddingBottom: 50,

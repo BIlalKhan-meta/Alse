@@ -11,7 +11,12 @@ const endpoints = {
     feedPost: '/get-newsfeed',
     profileById: '/get-user',
     createPost: '/post/create',
+    updatePost: '/post/update',
+    deletePost: '/post/delete',
     myPost: '/get-user',
+    getBlockedUser: 'get-blocked-users',
+    block: '/block-user',
+    unBlock: '/unblock-user',
   },
 };
 
