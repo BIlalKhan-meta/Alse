@@ -64,3 +64,34 @@ export const userUnblock = (id: number) => {
   console.log('id ================>', id);
   return axiosInstance.post(`${endpoints.home.unBlock}/${id}`);
 };
+
+export const getRequestFollow = () => {
+  return axiosInstance.get(endpoints.home.followRequest);
+};
+
+export const getFollowersList = () => {
+  return axiosInstance.get(endpoints.home.followers);
+};
+
+export const getFollowingList = () => {
+  return axiosInstance.get(endpoints.home.following);
+};
+
+export const userFollow = (id: number) => {
+  console.log('id ================>', id);
+  return axiosInstance.post(`${endpoints.home.follow}/${id}`);
+};
+export const userUnFollow = (id: number) => {
+  console.log('id ================>', id);
+  return axiosInstance.post(`${endpoints.home.unFollow}/${id}`);
+};
+
+export const userFollowAccept = (id: number) => {
+  console.log('id ================>', id);
+  return axiosInstance.post(`${endpoints.home.acceptFollow}/${id}`);
+};
+
+export const userFollowReject = (id: number) => {
+  console.log('id ================>', id);
+  return axiosInstance.post(`${endpoints.home.rejectFollow}/${id}`);
+};

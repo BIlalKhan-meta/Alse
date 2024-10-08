@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, ScrollView, TouchableWithoutFeedback, FlatList, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { images } from '../../utils/images';
 import CardComponent from '../../components/CardComponent';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useIsFocused, useNavigation } from '@react-navigation/native';
 import styles from './styles';
 import PostComponent from '../../components/PostComponent';
 import CommentsModal from '../../components/CommentsModal';
@@ -22,6 +22,7 @@ import Loader from '../../components/Loader';
 const Home: React.FC = () => {
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
+  const isFoused = useIsFocused();
 
   // Select posts and loading state from the Redux store
   const { posts, loading, error } = useAppSelector((state) => state.home);
@@ -54,15 +55,17 @@ const Home: React.FC = () => {
 
   useEffect(() => {
     getApi()
-  }, [])
+  }, [isFoused])
 
 
   const getApi = async () => {
     const checkData = await dispatch(GetNewsFeed());
 
-    console.log(checkData, "checkkkkmetee")
 
   }
+
+
+
 
   if (loading) {
     return <Loader />;
@@ -85,12 +88,21 @@ const Home: React.FC = () => {
   };
 
 
+  console.log('====================================');
+  console.log(posts, "itemssssssssssssssss");
+  console.log('====================================');
+
+
 
   const renderPost = ({ item }) => {
     const mediaItem = item?.media && item?.media.length > 0 ? item?.media[0] : null;
+
+
+
+
     return (
       <PostComponent
-        id={item?.id}
+        id={item?.user_id}
         postID={item?.media[0]?.post_id}
         avatar={item?.avatar}
         name={item.name}
@@ -135,55 +147,34 @@ const Home: React.FC = () => {
     <ScrollView showsVerticalScrollIndicator={false}>
       <TouchableWithoutFeedback onPress={() => handleDotPress(null)}>
         <View style={styles.container}>
-          {/* <HeaderComponent
-            label={'News Feed'}
-            onBackPress={() => navigation.goBack()}
-            notifiVisible={true}
-            onNofiPress={() => navigation.navigate("Notifications")}
-            searchVisible={true}
-          /> */}
-
-          {/* <CardComponent
-            onImagePress={() => navigation.navigate("CreatePost")}
-            onVideoPress={() => navigation.navigate("CreatePost")}
-            onCameraPress={() => navigation.navigate("CreatePost")}
-          /> */}
-
-          {posts.length > 0 && (
-
-            <FlatList
-              data={posts}
-              renderItem={renderPost}
-              keyExtractor={(item) => item.id.toString()}
-              showsVerticalScrollIndicator={false}
-              ListEmptyComponent={renderEmpty}
-              ListHeaderComponent={() => (
-                <TouchableOpacity
-                  activeOpacity={0.8}
-                  onPress={() => navigation.navigate('CreatePost')}>
-                  <View pointerEvents="none">
-                    <CardComponent
-                      onTextInput={() => navigation.navigate('CreatePost')}
-                      onVideoPress={() => navigation.navigate('CreatePost')}
-                      onImagePress={() => navigation.navigate('CreatePost')}
-                    />
-                  </View>
-                </TouchableOpacity>
-              )}
-
-            />
-          )}
 
 
-          {/* <CommentsModal
-            visible={commentsVisible}
-            closeModal={() => setCommentsVisible(false)}
-            title='Successfully'
-            message='Password has been updated successfully'
-            buttonText='Apply'
-            onPress={() => navigation.navigate("Home")}
-            comments={dummyComments}
-          /> */}
+
+
+          <FlatList
+            data={posts}
+            renderItem={renderPost}
+            keyExtractor={(item) => item.id.toString()}
+            showsVerticalScrollIndicator={false}
+            ListEmptyComponent={renderEmpty}
+            ListHeaderComponent={() => (
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => navigation.navigate('CreatePost')}>
+                <View pointerEvents="none">
+                  <CardComponent
+                    onTextInput={() => navigation.navigate('CreatePost')}
+                    onVideoPress={() => navigation.navigate('CreatePost')}
+                    onImagePress={() => navigation.navigate('CreatePost')}
+                  />
+                </View>
+              </TouchableOpacity>
+            )}
+
+          />
+
+
+
 
           <CommentsModal
             visible={commentsVisible.visiblity}

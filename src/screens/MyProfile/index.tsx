@@ -17,9 +17,14 @@ import InterMedium from '../../components/Text/InterMedium';
 import InterRegular from '../../components/Text/InterRegular';
 import Card from '../../components/Card';
 import ReportBlockModal from '../../components/ReportBlockModal';
+import { useSelector } from 'react-redux';
+import { selectUserProfile } from '../../store/slices/authSlice';
+import { vw } from '../../constant';
 
 const MyProfile: React.FC = () => {
   const navigation = useNavigation()
+  const user = useSelector(selectUserProfile);
+
   const [profileDetails, setProfileDetails] = useState<boolean>(true);
   const [profileUpdate, setProfileUpdate] = useState<boolean>(false);
   const [changePassword, setChangePassword] = useState<boolean>(false);
@@ -44,6 +49,7 @@ const MyProfile: React.FC = () => {
   const handlePublicPress = () => {
     setModalVisible(false)
   }
+
 
 
   useLayoutEffect(() => {
@@ -73,6 +79,10 @@ const MyProfile: React.FC = () => {
   }, [navigation, modalVisible]);
 
 
+  console.log('====================================');
+  console.log(user, "IDdddd", "Acccounttt");
+  console.log('====================================');
+
   return (
     <View>
 
@@ -88,18 +98,19 @@ const MyProfile: React.FC = () => {
           </View>
 
           <View style={styles.imagecontainer}>
-            <Image source={images.user2} style={styles.imageStyle} />
+
+            <Image source={user?.avatar ? { uri: user?.avatar } : images.user2} style={[styles.imageStyle, { borderRadius: vw * 15 }]} />
           </View>
 
           <TouchableOpacity style={styles.btnConatiner2}
             onPress={() => navigation.navigate("MyProfilePassword")}>
             <InterMedium style={styles.editTxt}>Change Password</InterMedium>
           </TouchableOpacity>
-          <InterMedium style={styles.username}>Ad Abc</InterMedium>
-          <InterMedium style={styles.email}>Test@2020</InterMedium>
+          <InterMedium style={styles.username}>{user?.full_name}</InterMedium>
+          <InterMedium style={styles.email}>{user?.email}</InterMedium>
 
           <View style={styles.profileBtn}>
-            <InterRegular style={styles.profileTxt}>Private</InterRegular>
+            <InterRegular style={styles.profileTxt}>{user?.is_private == 0 ? "Public" : "Private"}</InterRegular>
           </View>
 
 
@@ -112,8 +123,8 @@ const MyProfile: React.FC = () => {
             </View>
 
             <View style={styles.txtConatiner}>
-              <InterMedium style={styles.phoneTxt}>123-456-7890</InterMedium>
-              <InterMedium style={styles.phoneTxt}>16</InterMedium>
+              <InterMedium style={styles.phoneTxt}>{user?.dialing_code + user?.phone_number}</InterMedium>
+              <InterMedium style={styles.phoneTxt}>{user?.age}</InterMedium>
             </View>
 
             <View style={styles.headingConatiner}>
@@ -123,8 +134,8 @@ const MyProfile: React.FC = () => {
             </View>
 
             <View style={styles.txtConatiner}>
-              <InterMedium style={styles.phoneTxt}>16/12/2024</InterMedium>
-              <InterMedium style={styles.phoneTxt}>Female</InterMedium>
+              <InterMedium style={styles.phoneTxt}>{user?.dob}</InterMedium>
+              <InterMedium style={styles.phoneTxt}>{user?.gender}</InterMedium>
             </View>
 
 

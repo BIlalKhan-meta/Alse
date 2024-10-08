@@ -1,5 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { colors } from '../../utils/theme';
+import { vh } from '../../constant';
 
 const styles = StyleSheet.create({
     container: {
@@ -37,6 +38,14 @@ const styles = StyleSheet.create({
         fontSize: 16,
         marginLeft: 5,
     },
+    emptyContainer: {
+        flexGrow: 1,
+        height: "100%"
+
+    },
+    emptyText: {
+        marginVertical: vh * 4
+    }
 
 });
 

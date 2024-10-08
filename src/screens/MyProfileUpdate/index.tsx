@@ -23,9 +23,13 @@ import InterLight from '../../components/Text/InterLight';
 import DatePicker from 'react-native-date-picker';
 import { Picker } from '@react-native-picker/picker';
 import useImagePicker from '../../hooks/useImagePicker';
+import { useSelector } from 'react-redux';
+import { selectUserProfile } from '../../store/slices/authSlice';
 
 const MyProfileUpdate: React.FC = () => {
   const navigation = useNavigation()
+  const user = useSelector(selectUserProfile);
+
   const { image, captureImage, chooseImageFromLibrary } = useImagePicker();
 
   const [profileDetails, setProfileDetails] = useState<boolean>(true);
@@ -55,31 +59,36 @@ const MyProfileUpdate: React.FC = () => {
   }, [navigation]);
 
   interface FormValues {
+    firstName: string;
+    lastName: string;
     username: string;
     contactNo: string
-    email: string;
-    age: string;
+    // email: string;
+    // age: string;
     birthdate: string;
-
   }
 
 
 
   const initialValues = {
-    username: 'xyz',
-    contactNo: '3243545454',
-    email: 'abc#gmail.com',
-    age: '10 years',
-    birthdate: '12-5-2000',
+    firstName: user?.first_name,
+    lastName: user?.last_name,
+    username: user?.username,
+    contactNo: user?.phone_number,
+    // email: 'abc#gmail.com',
+    // age: '10 years',
+    birthdate: user?.dob,
 
   };
 
 
   const validationSchema: yup.AnySchema<FormValues> = yup.object().shape({
+    firstName: yup.string().required('First Name is required'),
+    lastName: yup.string().required('Last Name is required'),
     username: yup.string().required('User Name is required'),
     contactNo: yup.string().required('Contact Number is required'),
-    email: yup.string().required('Email is required'),
-    age: yup.string().required('Age is required'),
+    // email: yup.string().required('Email is required'),
+    // age: yup.string().required('Age is required'),
     birthdate: yup.string().required('birthDate is required'),
   });
 
@@ -150,7 +159,33 @@ const MyProfileUpdate: React.FC = () => {
                     </TouchableOpacity>
                   </View>
 
+
+
                   <View style={styles.inputContainer}>
+                    <RegularTextInput
+                      label="First Name *"
+                      placeholder="Enter First Name"
+                      placeholderTextColor="#9B9797"
+                      onChangeText={handleChange('firstName')}
+                      onBlur={handleBlur('firstName')}
+                      value={values.firstName}
+                      submitted={submitted}
+                      errors={errors.firstName}
+                      labelStyle={styles.txt}
+                    />
+
+                    <RegularTextInput
+                      label="Last Name *"
+                      placeholder="Enter Last Name"
+                      placeholderTextColor="#9B9797"
+                      onChangeText={handleChange('lastName')}
+                      onBlur={handleBlur('lastName')}
+                      value={values.lastName}
+                      submitted={submitted}
+                      errors={errors.lastName}
+                      labelStyle={styles.txt}
+                    />
+
                     <RegularTextInput
                       label="User Name *"
                       placeholder="Enter User Name"
@@ -171,6 +206,7 @@ const MyProfileUpdate: React.FC = () => {
                       onNumberChange={handleChange('contactNo')}
                       label="Phone Number *"
                       // style={styles.phoneContainer}
+                      initialCountryCode={user?.dialing_code}
                       submitted={submitted}
                       errors={errors.contactNo}
                       labelStyle={styles.txt}
@@ -187,10 +223,10 @@ const MyProfileUpdate: React.FC = () => {
                       errors={errors.lastname}
                     /> */}
 
-                    <View style={styles.txtConatiner}>
+                    {/* <View style={styles.txtConatiner}>
                       <InterMedium style={styles.txt}>Email</InterMedium>
                       <InterMedium style={styles.phoneTxt}>Test@2020</InterMedium>
-                    </View>
+                    </View> */}
 
                     <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
                       <View>
@@ -221,7 +257,7 @@ const MyProfileUpdate: React.FC = () => {
 
 
 
-                      <View>
+                      {/* <View>
                         <InterRegular style={styles.label}>
                           Age *
                         </InterRegular>
@@ -247,7 +283,7 @@ const MyProfileUpdate: React.FC = () => {
                           ))}
 
                         </Picker>
-                      </View>
+                      </View> */}
 
                     </View>
 

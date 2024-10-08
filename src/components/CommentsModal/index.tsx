@@ -96,9 +96,6 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
 
 
 
-  console.log('====================================');
-  console.log(comments, "commentsssssssss");
-  console.log('====================================');
 
 
   const handleLikePress = (id: number) => {

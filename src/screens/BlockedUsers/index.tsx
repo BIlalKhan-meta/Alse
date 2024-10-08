@@ -7,14 +7,16 @@ import InterRegular from '../../components/Text/InterRegular';
 import { images } from '../../utils/images';
 import HorizontalSeparator from '../../components/HorizontalSeparator';
 import GeneralModal from '../../components/GeneralModal';
-import { useNavigation } from '@react-navigation/native';
+import { useIsFocused, useNavigation } from '@react-navigation/native';
 import Loader from '../../components/Loader';
-import { getUserBlockList } from '../../store/slices/homeSlice';
+import { getUserBlockList, unBlockUser } from '../../store/slices/homeSlice';
 import { useAppDispatch } from '../../hooks/storeHooks';
+import { getMessage, Toast } from '../../utils/helpers';
 
 const BlockedUsers: React.FC = () => {
     const navigation = useNavigation()
     const dispatch = useAppDispatch();
+    const isFoused = useIsFocused();
 
     const [blockVisible, setBlockVisible] = useState(false);
     const [blockSuccess, setBlockSuccess] = useState(false);
@@ -40,7 +42,7 @@ const BlockedUsers: React.FC = () => {
 
     useEffect(() => {
         getApi()
-    }, [])
+    }, [isFoused])
 
 
     const getApi = async () => {
@@ -62,6 +64,22 @@ const BlockedUsers: React.FC = () => {
 
     const handleBlockButton = (userId: string) => {
         setBlockVisible(true)
+    };
+
+
+    const handleUnBlockUser = id => {
+        dispatch(unBlockUser(id))
+            .unwrap()
+            .then(res => {
+                // setBlockVisible(false);
+                // setBlockSuccess(true);
+                getApi();
+                console.log('response from unblock Usere', res);
+            })
+            .catch(err => {
+                Toast.error(getMessage(err?.message));
+                console.log('err from unblock Usere', err);
+            });
     };
 
     // Simulated data, replace with actual data fetching logic
@@ -91,13 +109,13 @@ const BlockedUsers: React.FC = () => {
         <>
             <View style={styles.userItem}>
                 <View style={styles.avatarConatiner}>
-                    <Image source={images.user} style={styles.userAvatar} />
+                    <Image source={item?.avatar ? { uri: item?.avatar } : images.user} style={styles.userAvatar} />
                     <InterRegular style={styles.userName}>{item.name}</InterRegular>
                 </View>
 
                 <TouchableOpacity
                     style={styles.actionButton}
-                    onPress={() => handleBlockButton(item.id)}
+                    onPress={() => handleUnBlockUser(item.id)}
                 >
                     <InterRegular style={styles.actionButtonText}>Unblock</InterRegular>
                 </TouchableOpacity>

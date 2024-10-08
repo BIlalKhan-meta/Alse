@@ -68,7 +68,7 @@ const PostComponent: React.FC<PostProps> = ({
     if (account === "self") {
       navigation.navigate('MyProfile', { account });
 
-    } else {
+    } else if (account) {
 
       navigation.navigate('Profile', { account, id });
     }
@@ -106,7 +106,6 @@ const PostComponent: React.FC<PostProps> = ({
     }
   };
 
-  console.log(isLiked, "ISlikeeddddddddd")
   return (
     <Card style={styles.card}>
       <View style={styles.header}>

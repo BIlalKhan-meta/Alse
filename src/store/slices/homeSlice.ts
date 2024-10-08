@@ -7,12 +7,19 @@ import {
   fetchMyPost,
   fetchProfileById,
   getBlockedUsers,
+  getFollowersList,
+  getFollowingList,
   getPostComment,
+  getRequestFollow,
   newsFeed,
   postComment,
   postLike,
   userBlock,
+  userFollow,
+  userFollowAccept,
+  userFollowReject,
   userUnblock,
+  userUnFollow,
 } from '../../api/home';
 
 interface HomeState {
@@ -34,7 +41,7 @@ export const GetNewsFeed = createAsyncThunk(
 
     try {
       const response = await newsFeed();
-      console.log(response, 'Responseee frommm newsFeedd sliceee');
+      console.log(response.data, 'Responseee frommm newsFeedd sliceee');
       return response.data;
     } catch (error: any) {
       console.log(error, 'errrorrr && type');
@@ -143,6 +150,55 @@ export const unBlockUser = createAsyncThunk(
   'user/unBlockUser',
   async (id: number) => {
     const response = await userUnblock(id);
+    return response;
+  },
+);
+
+export const getFollowRequest = createAsyncThunk(
+  'user/RequestFollow',
+  async () => {
+    const response = await getRequestFollow();
+    return response;
+  },
+);
+
+export const getFollowers = createAsyncThunk('user/Follower', async () => {
+  const response = await getFollowersList();
+  return response;
+});
+
+export const getFollowing = createAsyncThunk('user/Following', async () => {
+  const response = await getFollowingList();
+  return response;
+});
+
+export const followUser = createAsyncThunk(
+  'user/followUser',
+  async (id: number) => {
+    const response = await userFollow(id);
+    return response;
+  },
+);
+export const unFollowUser = createAsyncThunk(
+  'user/unFollowUser',
+  async (id: number) => {
+    const response = await userUnFollow(id);
+    return response;
+  },
+);
+
+export const acceptFollow = createAsyncThunk(
+  'user/AcceptfollowUser',
+  async (id: number) => {
+    const response = await userFollowAccept(id);
+    return response;
+  },
+);
+
+export const rejectFollow = createAsyncThunk(
+  'user/rejectfollowUser',
+  async (id: number) => {
+    const response = await userFollowReject(id);
     return response;
   },
 );

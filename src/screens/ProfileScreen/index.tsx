@@ -16,23 +16,24 @@ import GeneralModal from '../../components/GeneralModal';
 import ReactModal from '../../components/ReactModal';
 import { dummyComments, reactions } from '../../dummyData';
 import CommentsModal from '../../components/CommentsModal';
-import { getCommentPost, getProfileById, likePost } from '../../store/slices/homeSlice';
+import { blockUser, getCommentPost, getProfileById, likePost } from '../../store/slices/homeSlice';
 import { useAppDispatch } from '../../hooks/storeHooks';
 import dayjs from 'dayjs';
 import Loader from '../../components/Loader';
+import { getMessage, Toast } from '../../utils/helpers';
 
 const ProfileScreen: React.FC = ({ navigation }) => {
 
   const dispatch = useAppDispatch();
   const isFocused = useIsFocused();
   const route = useRoute();
-  const account = route?.params?.account === 2 ? "public" : "private";
-  console.log('====================================');
-  console.log(account);
-  console.log('====================================');
+  const account = (route?.params?.account === 2 || route?.params?.account === 1) ? "public" : "private";
+
 
   const id = route?.params?.id;
-
+  // console.log('====================================');
+  // console.log(id, "IDdddd", route?.params?.account, "Acccounttt");
+  // console.log('====================================');
   const [modalVisible, setModalVisible] = useState(false);
   const [reportVisible, setReportVisible] = useState(false);
   const [reportSuccess, setReportSuccess] = useState(false);
@@ -46,6 +47,8 @@ const ProfileScreen: React.FC = ({ navigation }) => {
   })
   const [data, setData] = useState();
   const [loading, setLoading] = useState(false);
+  const [blockUserLoader, setBlockUserLoader] = useState(false);
+
 
   const getData = () => {
     if (id) {
@@ -76,6 +79,25 @@ const ProfileScreen: React.FC = ({ navigation }) => {
   const handleBlockPress = () => {
     setModalVisible(false);
     setBlockVisible(true)
+  };
+
+  const handleBlockUser = () => {
+    setBlockUserLoader(true);
+    dispatch(blockUser(id))
+      .then(res => {
+        setBlockUserLoader(false);
+        // setModalVisible(false);
+        // setBlockVisible(true);
+        setBlockVisible(false);
+        setBlockSuccess(true);
+        console.log('res from block User ====>', res);
+      })
+      .catch(err => {
+        setBlockUserLoader(false);
+
+        console.log('error from block User ====>', err);
+        Toast.error(getMessage(err));
+      });
   };
 
 
@@ -150,6 +172,8 @@ const ProfileScreen: React.FC = ({ navigation }) => {
     />
   );
 
+
+
   return (
     <ScrollView>
 
@@ -162,6 +186,7 @@ const ProfileScreen: React.FC = ({ navigation }) => {
             avatar={data?.avatar}
             onPress={handleOpen}
             isFollowing={data?.is_following}
+            id={data?.posts[0]?.user_id}
           />
           {/* <ReportBlockModal
             isVisible={modalVisible}
@@ -176,7 +201,6 @@ const ProfileScreen: React.FC = ({ navigation }) => {
             isVisible={modalVisible}
             options={options}
             onClose={() => setModalVisible(false)}
-
             style={{ top: 55 }}
           />
         </Card>
@@ -284,12 +308,14 @@ const ProfileScreen: React.FC = ({ navigation }) => {
           message='Are you sure you want to block this user?'
           SecondaryText1='Yes'
           SecondaryText2='No'
-          onPress={() => {
-            setBlockVisible(false)
-            setBlockSuccess(true)
+          // onPress={() => {
+          //   setBlockVisible(false)
+          //   setBlockSuccess(true)
 
-          }}
+          // }}
           secondaryBtn={true}
+          onPress={handleBlockUser}
+          loading={blockUserLoader}
         />
 
         <GeneralModal

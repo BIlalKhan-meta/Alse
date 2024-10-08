@@ -7,7 +7,7 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: colors.headerColor,
         paddingHorizontal: 15,
-        paddingTop: Platform.OS=="ios"?vh*10:10,
+        paddingTop: Platform.OS == "ios" ? vh * 10 : 10,
         paddingBottom: 50,
 
     },
@@ -100,6 +100,28 @@ const styles = StyleSheet.create({
         width: vw * 70,
         height: vh * 5
     },
+    secondaryBtnCon: {
+        flexDirection: "row",
+        width: vw * 40,
+        // backgroundColor: "yellow",
+        justifyContent: "space-between",
+        paddingHorizontal: vw * 1
+    },
+    secondaryBtn1: {
+        width: vw * 18,
+        height: vh * 5
+    },
+    secondaryBtn2: {
+        width: vw * 18,
+        height: vh * 5,
+        backgroundColor: colors.white
+    },
+    buttonContainerStyle: {
+        marginTop: vh * 1.4,
+    },
+    btnTxt: {
+        fontSize: fontSizes.f10
+    }
 });
 
 export default styles;

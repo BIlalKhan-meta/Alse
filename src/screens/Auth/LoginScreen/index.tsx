@@ -49,7 +49,7 @@ const LoginScreen: React.FC = () => {
   // };
 
   const initialValues = {
-    email: __DEV__ ? 'logan@mailinator.com' : '',
+    email: __DEV__ ? 'tony@mailinator.com' : '',
     password: __DEV__ ? '12345678' : '',
   };
 

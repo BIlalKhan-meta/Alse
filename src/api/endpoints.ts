@@ -17,6 +17,16 @@ const endpoints = {
     getBlockedUser: 'get-blocked-users',
     block: '/block-user',
     unBlock: '/unblock-user',
+    followRequest: '/get-follow-requests',
+    followers: '/get-followers',
+    following: '/get-following',
+    follow: '/follow-user',
+    unFollow: '/unfollow-user',
+    acceptFollow: '/accept-follow-request',
+    rejectFollow: '/reject-follow-request',
+  },
+  profile: {
+    editProfile: '/edit-profile',
   },
 };
 
