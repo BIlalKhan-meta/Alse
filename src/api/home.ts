@@ -48,6 +48,13 @@ export const deletePost = (id: number) => {
   return axiosInstance.post(`${endpoints.home.deletePost}/${id}`);
 };
 
+export const reportPost = (formData: FormData) => {
+  console.log(formData, 'formData');
+  return axiosInstance.post(`${endpoints.home.reportPost}`, formData, {
+    formData: true,
+  });
+};
+
 export const fetchMyPost = (id: number) => {
   return axiosInstance.get(endpoints.home.myPost + `/${id}/posts`);
 };

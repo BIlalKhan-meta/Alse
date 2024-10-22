@@ -38,6 +38,7 @@ const PhoneNumberInput: React.FC<PhoneNumberInputProps> = ({
   };
 
   const handleCountryChange = (number: string) => {
+    console.log('Country Change Value:', number);
     if (onChangeCountry) {
       onChangeCountry(number);
     }
@@ -56,7 +57,12 @@ const PhoneNumberInput: React.FC<PhoneNumberInputProps> = ({
         onChangeFormattedText={handleChange}
         containerStyle={styles.phoneContainer}
         textContainerStyle={styles.textInput}
-        onChangeCountry={val => handleCountryChange(val?.callingCode[0])}
+        // onChangeCountry={val => handleCountryChange(val?.callingCode[0])}
+        onChangeCountry={val => {
+          if (val?.callingCode && val.callingCode.length > 0) {
+            handleCountryChange(val.callingCode[0]);
+          }
+        }}
 
       />
       {submitted && errors && <InterRegularSmallest style={styles.error}>{errors}</InterRegularSmallest>}

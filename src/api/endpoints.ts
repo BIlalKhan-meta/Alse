@@ -13,6 +13,7 @@ const endpoints = {
     createPost: '/post/create',
     updatePost: '/post/update',
     deletePost: '/post/delete',
+    reportPost: '/report/create',
     myPost: '/get-user',
     getBlockedUser: 'get-blocked-users',
     block: '/block-user',
@@ -27,6 +28,8 @@ const endpoints = {
   },
   profile: {
     editProfile: '/edit-profile',
+    getProfile: '/profile',
+    changePassword: '/change-password',
   },
 };
 

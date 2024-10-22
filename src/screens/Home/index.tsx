@@ -11,11 +11,13 @@ import GeneralModal from '../../components/GeneralModal';
 import { dummyComments, reactions } from '../../dummyData';
 import HeaderComponent from '../../components/HeaderComponent';
 import { useAppDispatch, useAppSelector } from '../../hooks/storeHooks';
-import { getCommentPost, GetNewsFeed, likePost } from '../../store/slices/homeSlice';
+import { getCommentPost, GetNewsFeed, likePost, PostDelete } from '../../store/slices/homeSlice';
 import InterRegular from '../../components/Text/InterRegular';
 import { colors } from '../../utils/theme';
 import dayjs from 'dayjs';
 import Loader from '../../components/Loader';
+import { getMessage, Toast } from '../../utils/helpers';
+import { reportPost } from '../../api/home';
 
 
 
@@ -34,8 +36,18 @@ const Home: React.FC = () => {
   })
   const [reactVisible, setrRactVisible] = useState(false);
   const [activePostId, setActivePostId] = useState<number | null>(null);
-  const [deleteVisible, setDeleteVisible] = useState(false);
+  const [deleteVisible, setDeleteVisible] = useState({
+    visibility: false,
+    id: null,
+  });
   const [deleteSuccess, setDeleteSuccess] = useState(false);
+  const [reportLoader, setReportLoader] = useState(false);
+
+  const [reportVisible, setReportVisible] = useState({
+    visibility: false,
+    id: null,
+  });
+  const [reportSuccess, setReportSuccess] = useState(false);
 
   const handleCommentPress = id => {
     dispatch(getCommentPost(id))
@@ -87,16 +99,79 @@ const Home: React.FC = () => {
       });
   };
 
+  const handleDelete = () => {
+    setReportLoader(true);
+    dispatch(PostDelete(deleteVisible?.id))
+      .unwrap()
+      .then(res => {
+        setDeleteVisible({
+          visibility: false,
+          id: null,
+        });
+        setReportLoader(false);
+        getApi()
+        setDeleteSuccess(true);
+        handleDotPress(null)
+      })
+      .catch(err => {
+        setReportLoader(false);
+        setDeleteVisible({
+          visibility: false,
+          id: null,
+        });
+        handleDotPress(null)
+        Toast.error(getMessage(err?.message));
 
-  console.log('====================================');
-  console.log(posts, "itemssssssssssssssss");
-  console.log('====================================');
+        console.log('Errorr  errerrerrerrerrerrerrerrerrfrom ', err);
+      });
+  };
+
+  const handleReport = async () => {
+
+    console.log(reportVisible.id, "Reportttt idddddd")
+    setReportLoader(true);
+    const data = {
+      reportable_type: 'App\Models\Post',
+      reportable_id: reportVisible?.id,
+      reason: "testingg"
+    };
+
+    let formData = new FormData();
+    Object.entries(data).forEach(item => {
+      formData.append(item[0], item[1]);
+    });
+    await reportPost(formData)
+      // .unwrap()
+      .then(res => {
+        setReportVisible({
+          visibility: false,
+          id: null,
+        });
+        setReportLoader(false);
+        getApi()
+        setReportSuccess(true);
+        handleDotPress(null)
+      })
+      .catch(err => {
+        setReportLoader(false);
+        setReportVisible({
+          visibility: false,
+          id: null,
+        });
+        handleDotPress(null)
+        Toast.error(getMessage(err?.message));
+
+        console.log('Errorr  errerrerrerrerrerrerrerrerrfrom ', err);
+      });
+  };
+
+
+
 
 
 
   const renderPost = ({ item }) => {
     const mediaItem = item?.media && item?.media.length > 0 ? item?.media[0] : null;
-
 
 
 
@@ -123,12 +198,17 @@ const Home: React.FC = () => {
         onDotPress={() => handleDotPress(item.id)}
         modalVisible={activePostId === item.id}
         handleBlockPress={() => {
-          handleDotPress();
-          setDeleteVisible(true);
+          // handleDotPress();
+          // setDeleteVisible(true);
+          setDeleteVisible({ visibility: true, id: mediaItem?.post_id });
+
+        }}
+        handleReportPost={() => {
+          setReportVisible({ visibility: true, id: mediaItem?.post_id })
         }}
         handleReportPress={() => {
           handleDotPress();
-          navigation.navigate("CreatePost", { title: "Edit Post" });
+          navigation.navigate("CreatePostEdit", { title: "Edit Post", data: item });
         }}
         isLiked={item?.is_liked}
 
@@ -198,18 +278,19 @@ const Home: React.FC = () => {
           />
 
           <GeneralModal
-            visible={deleteVisible}
-            closeModal={() => setDeleteVisible(false)}
+            visible={deleteVisible.visibility}
+            closeModal={() => setDeleteVisible({
+              visibility: false,
+              id: null,
+            })}
             icon={images.qmark}
             title='Delete Post'
             message='Are you sure you want to delete this Post?'
             SecondaryText1='Yes'
             SecondaryText2='No'
-            onPress={() => {
-              setDeleteVisible(false);
-              setDeleteSuccess(true);
-            }}
+            onPress={handleDelete}
             secondaryBtn={true}
+            loading={reportLoader}
           />
 
           <GeneralModal
@@ -224,6 +305,38 @@ const Home: React.FC = () => {
             }}
             primaryBtn={true}
           />
+
+          <GeneralModal
+            visible={reportVisible.visibility}
+            closeModal={() => setReportVisible({
+              visibility: false,
+              id: null,
+            })}
+            icon={images.qmark}
+            title='Report Post'
+            message='Are you sure you want to report this post?'
+            SecondaryText1='Yes'
+            SecondaryText2='No'
+            onPress={handleReport}
+            secondaryBtn={true}
+            loading={reportLoader}
+          />
+
+          <GeneralModal
+            visible={reportSuccess}
+            closeModal={() => setReportSuccess(false)}
+            icon={images.checkedIcon}
+            title='Report Post'
+            message='Post has been reported successfully!'
+            buttonText='Ok'
+            onPress={() => {
+              setReportSuccess(false)
+              // navigation.navigate("Profile", { account: account })
+            }}
+            primaryBtn={true}
+          />
+
+
         </View>
       </TouchableWithoutFeedback>
     </ScrollView>

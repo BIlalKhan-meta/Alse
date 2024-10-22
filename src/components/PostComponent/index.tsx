@@ -11,6 +11,8 @@ import InterLight from '../Text/InterLight';
 import InterRegular from '../Text/InterRegular';
 import { useNavigation } from '@react-navigation/native';
 import ReportBlockModal from '../ReportBlockModal';
+import { useSelector } from 'react-redux';
+import { selectUserProfile } from '../../store/slices/authSlice';
 
 interface PostProps {
   id?: number;
@@ -31,6 +33,7 @@ interface PostProps {
   onDotPress: () => void;
   handleReportPress: () => void;
   handleBlockPress: () => void;
+  handleReportPost: () => void;
   modalVisible: boolean;
   isLiked?: boolean;
 
@@ -56,16 +59,25 @@ const PostComponent: React.FC<PostProps> = ({
   modalVisible,
   handleReportPress,
   handleBlockPress,
+  handleReportPost,
   isLiked,
 
 }) => {
 
   const navigation = useNavigation();
+  const user = useSelector(selectUserProfile);
+
   const [showFullText, setShowFullText] = useState(false);
   const maxTextLength = 100;
 
+  const myAccount = user?.id == id ? true : false;
+
+  // console.log('====================================');
+  // console.log(user?.id, id, myAccount, "IDdddd", "Acccounttt");
+  // console.log('====================================');
+
   const goToProfile = () => {
-    if (account === "self") {
+    if (myAccount) {
       navigation.navigate('MyProfile', { account });
 
     } else if (account) {
@@ -74,9 +86,11 @@ const PostComponent: React.FC<PostProps> = ({
     }
   };
 
-  const options = [
+  const options = myAccount ? [
     { text: 'Edit', onPress: () => handleReportPress() },
     { text: 'Delete', onPress: () => handleBlockPress() },
+  ] : [
+    { text: 'Report', onPress: () => handleReportPost() }
   ];
 
   const handleReadMoreToggle = () => {

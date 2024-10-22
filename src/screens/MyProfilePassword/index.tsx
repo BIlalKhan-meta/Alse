@@ -13,6 +13,7 @@ import styles from './styles';
 import { colors } from '../../utils/theme';
 import CustomButton from '../../components/CustomButton';
 import Card from '../../components/Card';
+import { changePassword } from '../../api/profile';
 
 const MyProfilePassword: React.FC = () => {
   const navigation = useNavigation();
@@ -22,6 +23,7 @@ const MyProfilePassword: React.FC = () => {
   const [secureNewPassword, setSecureNewPassword] = useState<boolean>(true)
   const [secureconfirmPassword, setSecureconfirmPassword] = useState<boolean>(true)
   const [imageModal, setImageModal] = useState<boolean>(false);
+  const [submitted, setSubmitted] = useState<boolean>(false);
 
 
   // useLayoutEffect(() => {
@@ -73,11 +75,54 @@ const MyProfilePassword: React.FC = () => {
       .required('Confirm Password is required'),
   });
 
-  const handleSubmit = (values: FormValues, { resetForm }: { resetForm: () => void }) => {
-    console.log('PASSWORD CHANGED SUCCESSFULLY');
-    setChangePasswordModal(true);
-    // Additional actions after successful password change
-    // resetForm(); // Uncomment if you want to reset form fields after submission
+  // const handleSubmit = (values: FormValues, { resetForm }: { resetForm: () => void }) => {
+  //   console.log('PASSWORD CHANGED SUCCESSFULLY');
+  //   setChangePasswordModal(true);
+  //   // Additional actions after successful password change
+  //   // resetForm(); // Uncomment if you want to reset form fields after submission
+  // };
+
+  const handleSubmit = async (
+    values: object,
+    { resetForm }: { resetForm: () => void },
+  ) => {
+
+    console.log(values, "Valuessss====>>>")
+    const data = {
+      old_password: values?.currentPassword,
+      new_password: values?.password,
+      confirm_password: values?.cpassword,
+
+    };
+
+
+    let formData = new FormData();
+
+    Object.entries(data).forEach(item => {
+      formData.append(item[0], item[1]);
+    });
+    console.log('formData===>', formData);
+
+    setSubmitted(true);
+
+    await changePassword(formData)
+      // .unwrap()
+      .then(res => {
+        setSubmitted(false);
+
+        console.log('response form updated Profile==========>', res);
+        setChangePasswordModal(true);
+      })
+      .catch(err => {
+        setSubmitted(false);
+        console.log('error from Updated Profile =========>', err);
+      });
+    resetForm();
+    try {
+    } catch (err) {
+      console.log('error  ======>', err);
+      // navigation.navigate("Login")
+    }
   };
 
   return (
@@ -97,9 +142,10 @@ const MyProfilePassword: React.FC = () => {
                 onChangeText={handleChange('currentPassword')}
                 onBlur={handleBlur('currentPassword')}
                 value={values.currentPassword}
-                submitted={true} // You can use a state to manage this
+
                 errors={errors.currentPassword}
                 secureTextEntry={securePassword} // Toggle as needed
+                submitted={submitted}
 
                 onPressCurrentPassword={() => { setSecurePassword(!securePassword) }}
                 eyeColor={colors.black}
@@ -111,11 +157,13 @@ const MyProfilePassword: React.FC = () => {
                 onChangeText={handleChange('password')}
                 onBlur={handleBlur('password')}
                 value={values.password}
-                submitted={true} // You can use a state to manage this
+
                 errors={errors.password}
                 secureTextEntry={secureNewPassword} // Toggle as needed
                 onPressPassword={() => { setSecureNewPassword(!secureNewPassword) }}
                 eyeColor={colors.black}
+                submitted={submitted}
+
 
               />
               <RegularTextInput
@@ -124,11 +172,12 @@ const MyProfilePassword: React.FC = () => {
                 onChangeText={handleChange('cpassword')}
                 onBlur={handleBlur('cpassword')}
                 value={values.cpassword}
-                submitted={true} // You can use a state to manage this
+
                 errors={errors.cpassword}
                 secureTextEntry={secureconfirmPassword} // Toggle as needed
                 onPressCPassword={() => { setSecureconfirmPassword(!secureconfirmPassword) }}
                 eyeColor={colors.black}
+                submitted={submitted}
 
               />
 
@@ -136,7 +185,9 @@ const MyProfilePassword: React.FC = () => {
 
 
 
-              <CustomButton onPress={handleSubmit} style={styles.btnStyle}>
+              <CustomButton onPress={handleSubmit} style={styles.btnStyle}
+                loading={submitted}
+              >
                 Update
               </CustomButton>
             </Card>

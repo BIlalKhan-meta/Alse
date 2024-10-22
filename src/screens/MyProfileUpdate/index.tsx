@@ -2,7 +2,7 @@ import { Text, View, Image, TouchableOpacity } from 'react-native';
 import styles from './styles';
 
 
-import { useLayoutEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useState } from 'react';
 import * as yup from 'yup';
 import { Formik } from 'formik';
 import RegularTextInput from '../../components/TextInput/RegularTextInput';
@@ -25,12 +25,18 @@ import { Picker } from '@react-native-picker/picker';
 import useImagePicker from '../../hooks/useImagePicker';
 import { useSelector } from 'react-redux';
 import { selectUserProfile } from '../../store/slices/authSlice';
+import moment from 'moment';
+import { vw } from '../../constant';
+import { useAppDispatch } from '../../hooks/storeHooks';
+import { updateProfile } from '../../store/slices/profileSlice';
+import { editProfile } from '../../api/profile';
 
 const MyProfileUpdate: React.FC = () => {
   const navigation = useNavigation()
   const user = useSelector(selectUserProfile);
+  const dispatch = useAppDispatch();
 
-  const { image, captureImage, chooseImageFromLibrary } = useImagePicker();
+  const { imageData, image, captureImage, chooseImageFromLibrary } = useImagePicker();
 
   const [profileDetails, setProfileDetails] = useState<boolean>(true);
   const [profileUpdate, setProfileUpdate] = useState<boolean>(true);
@@ -44,7 +50,26 @@ const MyProfileUpdate: React.FC = () => {
   const [changePasswordModal, setChangePasswordModal] = useState<boolean>(false);
   const [imageModal, setImageModal] = useState<boolean>(false);
   const [openDate, setOpenDate] = useState<boolean>(false)
-  const [date, setDate] = useState<Date>(new Date())
+  // const [date, setDate] = useState<Date>(new Date())
+  const [date, setDate] = useState<Date>(user?.dob ? new Date(user.dob) : new Date());
+
+
+  // const [bannerImage, setBannerImage] = useState<string | null>(user?.cover_photo || null);
+  // const [profileImage, setProfileImage] = useState<string | null>(user?.avatar || null);
+
+  const [bannerImage, setBannerImage] = useState({
+    uri: user?.cover_photo || null,
+    name: '',
+    type: ''
+  });
+  const [profileImage, setProfileImage] = useState({
+    uri: user?.avatar || null,
+    name: '',
+    type: ''
+  });
+  const [updatingBanner, setUpdatingBanner] = useState<boolean>(false); // To track which image is being updated
+
+
   const genders = [
     { name: '10 years', id: 1 },
     { name: '12 years', id: 2 },
@@ -94,15 +119,117 @@ const MyProfileUpdate: React.FC = () => {
 
 
 
-  const handleSubmit = (
+  const handleSubmit = async (
     values: object,
     { resetForm }: { resetForm: () => void },
   ) => {
-    setProfileUpdateModal(true)
-    // navigation.navigate("Login")
+    const data = {
+      first_name: values?.firstName,
+      last_name: values?.lastName,
+
+      dialing_code: '+1',
+      phone_number: values?.contactNo,
+      dob: values?.birthdate
+    };
+    if (profileImage.type !== '') {
+      // let imagePath = image.split('/');
+
+      const uploadedImage = {
+        uri: profileImage?.uri,
+        name: profileImage?.name,
+        type: profileImage?.type,
+      };
+
+      console.log('uploadedImage= ==>', uploadedImage);
+      // console.log('uploadedCover= ==>', uploadedCover);
+
+      data['image'] = uploadedImage;
+    }
+
+    if (bannerImage && updatingBanner) {
+
+      const uploadedCover = {
+        uri: bannerImage.uri,
+        name: bannerImage?.name,
+        type: bannerImage?.type,
+      };
+      data['cover_image'] = uploadedCover;
+
+    }
+
+    let formData = new FormData();
+
+    Object.entries(data).forEach(item => {
+      formData.append(item[0], item[1]);
+    });
+    console.log('formData===>', formData);
+
+    setSubmitted(true);
+
+    await editProfile(formData)
+      // .unwrap()
+      .then(res => {
+        setSubmitted(false);
+
+        console.log('response form updated Profile==========>', res);
+        setProfileUpdateModal(true);
+      })
+      .catch(err => {
+        setSubmitted(false);
+        console.log('error from Updated Profile =========>', err);
+      });
+    resetForm();
+    try {
+    } catch (err) {
+      console.log('error  ======>', err);
+      // navigation.navigate("Login")
+    }
+  };
+  const handleImageSelection = (isBanner: boolean) => {
+    setUpdatingBanner(isBanner);
+    chooseImageFromLibrary();
   };
 
+  const handleImageCapture = (isBanner: boolean) => {
+    setUpdatingBanner(isBanner);
+    captureImage('photo');
+  };
 
+  // When image is selected or captured, update the correct image (banner or profile)
+  // if (imageData?.uri) {
+  //   if (updatingBanner) {
+  //     setBannerImage(imageData.uri); // Set banner image if updating banner
+  //   } else {
+  //     setProfileImage(imageData.uri); // Set profile image if updating profile
+  //   }
+  // }
+
+  useEffect(() => {
+    if (imageData?.uri) {
+      if (updatingBanner) {
+        setBannerImage({
+          uri: imageData?.uri,
+          name: imageData?.fileName,
+          type: imageData?.type
+        }); // Set banner image if updating banner
+      } else {
+        setProfileImage({
+          uri: imageData?.uri,
+          name: imageData?.fileName,
+          type: imageData?.type
+        }); // Set profile image if updating profile
+      }
+    }
+  }, [imageData, updatingBanner]);
+
+
+
+  console.log('====================================');
+  console.log(imageData?.uri, "Imageeee Dataaaa===>>>")
+  console.log(user, "user Dataaaa===>>>")
+  console.log(profileImage, "profileImage ===>>>")
+
+  console.log('====================================');
 
   return (
     <View >
@@ -125,6 +252,7 @@ const MyProfileUpdate: React.FC = () => {
           values,
           errors,
           resetForm,
+          setFieldValue,
         }) => (
           <>
             <KeyboardAwareScrollView style={styles.scrollview}>
@@ -132,9 +260,17 @@ const MyProfileUpdate: React.FC = () => {
                 <Card style={styles.cardContainer}>
 
                   <View style={styles.banner}>
-                    <Image source={images.profileBg} style={styles.imageStyle} />
+                    <Image
+                      source={
+                        bannerImage // If a new banner is selected or captured, show it
+                          ? { uri: bannerImage.uri }
+                          : user?.banner_image // Else, show the user’s banner if it exists
+                            ? { uri: user.banner_image }
+                            : images.profileBg // Fallback to default banner image
+                      }
+                      style={styles.imageStyle} />
                     <TouchableOpacity style={styles.editBtn}
-                      onPress={() => captureImage('photo')}
+                      onPress={() => handleImageCapture(true)}
 
                     >
                       <Image source={images.edit} style={styles.editImage} />
@@ -147,11 +283,21 @@ const MyProfileUpdate: React.FC = () => {
                   <View style={styles.profileConatiner}>
 
                     <View style={styles.imagecontainer}>
-                      <Image source={images.user2} style={styles.imageStyle} />
+                      <Image
+                        source={
+                          profileImage // If a new profile picture is selected or captured, show it
+                            ? { uri: profileImage.uri }
+                            : user?.profile_image // Else, show the user’s profile picture if it exists
+                              ? { uri: user.profile_image }
+                              : images.user2 // Fallback to default profile image
+                        }
+
+
+                        style={[styles.imageStyle, { borderRadius: vw * 15 }]} />
                     </View>
 
                     <TouchableOpacity style={styles.camBg}
-                      onPress={() => captureImage('photo')}
+                      onPress={() => handleImageCapture(false)}
                     >
                       <View style={styles.camcontainer}>
                         <Image source={images.camera} style={styles.imageStyle} />
@@ -201,7 +347,7 @@ const MyProfileUpdate: React.FC = () => {
 
 
 
-                    <PhoneNumberInput
+                    {/* <PhoneNumberInput
                       initialNumber={values.contactNo}
                       onNumberChange={handleChange('contactNo')}
                       label="Phone Number *"
@@ -210,23 +356,20 @@ const MyProfileUpdate: React.FC = () => {
                       submitted={submitted}
                       errors={errors.contactNo}
                       labelStyle={styles.txt}
-                    />
-
-                    {/* <RegularTextInput
-                      label="Last Name *"
-                      placeholder="Enter Last Name"
-                      placeholderTextColor="#9B9797"
-                      onChangeText={handleChange('lastname')}
-                      onBlur={handleBlur('lastname')}
-                      value={values.lastname}
-                      submitted={submitted}
-                      errors={errors.lastname}
                     /> */}
 
-                    {/* <View style={styles.txtConatiner}>
-                      <InterMedium style={styles.txt}>Email</InterMedium>
-                      <InterMedium style={styles.phoneTxt}>Test@2020</InterMedium>
-                    </View> */}
+
+                    <PhoneNumberInput
+                      initialNumber={values.contactNo}
+                      onNumberChange={handleChange('contactNo')}
+                      label="Phone Number *"
+                      // style={styles.phoneContainer}
+                      submitted={submitted}
+                      errors={errors.contactNo}
+                      labelStyle={styles.txt}
+                    />
+
+
 
                     <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
                       <View>
@@ -236,7 +379,12 @@ const MyProfileUpdate: React.FC = () => {
 
                         <TouchableOpacity onPress={() => setOpenDate(true)}>
                           <View style={[styles.textinputbox]}>
-                            <InterLight style={{}}>{'mm/dd/yyyy'}</InterLight>
+                            {/* <InterLight style={{}}>{'mm/dd/yyyy'}</InterLight> */}
+                            <InterLight>
+                              {values.birthdate
+                                ? moment(values.birthdate).format('MM/DD/YYYY')
+                                : 'mm/dd/yyyy'}
+                            </InterLight>
                             <Image source={images.calendericon} style={styles.calendericon} />
                           </View>
                         </TouchableOpacity>
@@ -248,6 +396,7 @@ const MyProfileUpdate: React.FC = () => {
                           onConfirm={(date) => {
                             setOpenDate(false)
                             setDate(date)
+                            setFieldValue('birthdate', moment(date).format('YYYY-MM-DD'));
                           }}
                           onCancel={() => {
                             setOpenDate(false)
@@ -295,6 +444,7 @@ const MyProfileUpdate: React.FC = () => {
                         // resetForm()
                         handleSubmit();
                       }}
+                      loading={submitted}
                     >
                       Update
                     </CustomButton>
@@ -351,4 +501,4 @@ const MyProfileUpdate: React.FC = () => {
   );
 };
 
-export default MyProfileUpdate;
+export default MyProfileUpdate; 

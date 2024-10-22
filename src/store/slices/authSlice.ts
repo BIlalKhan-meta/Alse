@@ -7,6 +7,7 @@ import {
   resetPassword as resetPasswordAPI,
   logout as logoutApi,
 } from '../../api/auth'; // Import the login function from the API file
+import {getProfile} from '../../api/profile';
 
 interface AuthState {
   user: any;
@@ -119,6 +120,22 @@ export const LogoutUser = createAsyncThunk(
 //   return response;
 // });
 
+export const GetUserProfile = createAsyncThunk(
+  'user/profile',
+  async (_, {rejectWithValue}) => {
+    console.log('comii frommm newsFeedd sliceee');
+
+    try {
+      const response = await getProfile();
+      console.log(response.data, 'Responseee frommm newsFeedd sliceee');
+      return response.data;
+    } catch (error: any) {
+      console.log(error, 'errrorrr && type');
+      return rejectWithValue(error.response.data || 'newsFeedd failed');
+    }
+  },
+);
+
 const authSlice = createSlice({
   name: 'auth',
   initialState,
@@ -143,6 +160,24 @@ const authSlice = createSlice({
         state.user = action.payload?.data?.user;
       })
       .addCase(login.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      .addCase(GetUserProfile.pending, state => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(GetUserProfile.fulfilled, (state, action) => {
+        state.loading = false;
+        console.log('====================================');
+        console.log(
+          'action.payload Profileeee =================>',
+          action.payload,
+        );
+        console.log('====================================');
+        state.user = action.payload?.data;
+      })
+      .addCase(GetUserProfile.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })

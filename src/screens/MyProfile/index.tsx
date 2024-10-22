@@ -1,7 +1,7 @@
 import { Text, View, Image, TouchableOpacity } from 'react-native';
 import styles from './styles';
 
-import { useLayoutEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useState } from 'react';
 import * as yup from 'yup';
 import { Formik } from 'formik';
 import RegularTextInput from '../../components/TextInput/RegularTextInput';
@@ -11,21 +11,26 @@ import GeneralModal from '../../components/GeneralModal';
 import { colors } from '../../utils/theme';
 // import ProfileModal from '../../components/ProfileModal';
 import { images } from '../../utils/images';
-import { useNavigation } from '@react-navigation/native';
+import { useIsFocused, useNavigation } from '@react-navigation/native';
 import CustomButton from '../../components/CustomButton';
 import InterMedium from '../../components/Text/InterMedium';
 import InterRegular from '../../components/Text/InterRegular';
 import Card from '../../components/Card';
 import ReportBlockModal from '../../components/ReportBlockModal';
 import { useSelector } from 'react-redux';
-import { selectUserProfile } from '../../store/slices/authSlice';
+import { GetUserProfile, selectUserProfile } from '../../store/slices/authSlice';
 import { vw } from '../../constant';
+import { useAppDispatch } from '../../hooks/storeHooks';
+import Loader from '../../components/Loader';
+import { editProfile } from '../../api/profile';
 
 const MyProfile: React.FC = () => {
   const navigation = useNavigation()
   const user = useSelector(selectUserProfile);
+  const dispatch = useAppDispatch();
+  const isFocused = useIsFocused();
 
-  const [profileDetails, setProfileDetails] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(false);
   const [profileUpdate, setProfileUpdate] = useState<boolean>(false);
   const [changePassword, setChangePassword] = useState<boolean>(false);
   const [modalVisible, setModalVisible] = useState<boolean>(false);
@@ -38,16 +43,47 @@ const MyProfile: React.FC = () => {
   const [imageModal, setImageModal] = useState<boolean>(false);
 
   const options = [
-    { text: 'Private', onPress: () => handlePrivatePress() },
-    { text: 'Public', onPress: () => handlePublicPress() },
+    { text: 'Private', onPress: () => handlePrivatePress("1") },
+    { text: 'Public', onPress: () => handlePrivatePress("0") },
   ];
 
-  const handlePrivatePress = () => {
-    setModalVisible(false)
+  const handlePrivatePress = async (isPrivate: string) => {
+    console.log(isPrivate)
+    const data = {
+      is_private: isPrivate,
+    };
+
+    let formData = new FormData();
+    Object.entries(data).forEach(item => {
+      formData.append(item[0], item[1]);
+    });
+    await editProfile(formData)
+      // .unwrap()
+      .then(res => {
+        setModalVisible(false)
+        getData()
+
+        console.log('response form updated Profile==========>', res);
+      })
+      .catch(err => {
+        setModalVisible(false)
+
+        console.log('error from Updated Profile =========>', err);
+      });
   }
 
-  const handlePublicPress = () => {
-    setModalVisible(false)
+
+
+
+  useEffect(() => {
+    getData()
+  }, [isFocused])
+
+  const getData = async () => {
+    setLoading(true)
+    await dispatch(GetUserProfile())
+    setLoading(false)
+
   }
 
 
@@ -79,9 +115,13 @@ const MyProfile: React.FC = () => {
   }, [navigation, modalVisible]);
 
 
-  console.log('====================================');
-  console.log(user, "IDdddd", "Acccounttt");
-  console.log('====================================');
+  // console.log('====================================');
+  // console.log(user, "IDdddd", "Acccounttt");
+  // console.log('====================================');
+
+  if (loading) {
+    return <Loader />
+  }
 
   return (
     <View>
