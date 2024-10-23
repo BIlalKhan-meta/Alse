@@ -1,6 +1,6 @@
-import React, { useState, useLayoutEffect } from 'react';
+import React, { useState, useLayoutEffect, useCallback } from 'react';
 import { View, FlatList, TouchableOpacity, Image, TouchableWithoutFeedback } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import FilterModal from '../../components/FilterModal';
 import styles from './styles';
 import { images } from '../../utils/images';
@@ -8,6 +8,8 @@ import Card from '../../components/Card';
 import InterMedium from '../../components/Text/InterMedium';
 import InterRegular from '../../components/Text/InterRegular';
 import { colors } from '../../utils/theme';
+import { GetSubscriptionsLogs } from '../../api/subscription';
+import moment from 'moment';
 
 // Sample data with ISO date formats for better comparison
 const subscriptionLogs = [
@@ -23,7 +25,8 @@ const SubscriptionLogs: React.FC = () => {
     const [fromDate, setFromDate] = useState<Date>(new Date());
     const [toDate, setToDate] = useState<Date>(new Date());
     const [activeTab, setActiveTab] = useState<'current' | 'past'>('current');
-
+    const [subscriptionLogs, setSubscriptionLogs] = useState([]);
+    const [loading, setLoading] = useState(false);
     // Function to check if a subscription is current based on today's date
     const isCurrentSubscription = (subscriptionDate: string, expirationDate: string): boolean => {
         const today = new Date();
@@ -40,6 +43,25 @@ const SubscriptionLogs: React.FC = () => {
             return !isCurrentSubscription(subscription.subscriptionDate, subscription.expirationDate);
         }
     });
+
+
+    const getApi = async () => {
+        setLoading(true);
+        const res = await GetSubscriptionsLogs();
+        console.log('====================================');
+        console.log(res?.data?.data?.data, "Subscriptionnn resss");
+        console.log('====================================');
+        setSubscriptionLogs(res?.data?.data?.data);
+        setLoading(false);
+    };
+
+    useFocusEffect(
+        useCallback(() => {
+            getApi();
+        }, []),
+    );
+
+
 
     useLayoutEffect(() => {
         navigation.setOptions({
@@ -70,15 +92,15 @@ const SubscriptionLogs: React.FC = () => {
             </View>
 
             <FlatList
-                data={filteredSubscriptions}
+                data={subscriptionLogs}
                 renderItem={({ item }) => (
                     <Card style={styles.card}>
                         <View style={styles.topHead}>
                             <InterMedium style={styles.heading}>Subscription Type</InterMedium>
-                            <InterMedium style={styles.heading}>{item.price}</InterMedium>
+                            <InterMedium style={styles.heading}>$ {item.price}</InterMedium>
                         </View>
                         <View style={styles.topHead}>
-                            <InterRegular style={styles.value}>{item.type}</InterRegular>
+                            <InterRegular style={styles.value}>{item.plan_name}</InterRegular>
                             <InterRegular style={styles.value}>{null}</InterRegular>
                         </View>
 
@@ -87,12 +109,12 @@ const SubscriptionLogs: React.FC = () => {
                             {activeTab !== 'past' && <InterMedium style={styles.heading}>Expires On</InterMedium>}
                         </View>
                         <View style={styles.topHead}>
-                            <InterRegular style={styles.value}>{item.subscriptionDate}</InterRegular>
-                            {activeTab !== 'past' && <InterRegular style={styles.value}>{item.expirationDate}</InterRegular>}
+                            <InterRegular style={styles.value}>{item.date}</InterRegular>
+                            {activeTab !== 'past' && <InterRegular style={styles.value}>{moment(item.end_at).format("YYYY-MM-DD")}</InterRegular>}
                         </View>
                     </Card>
                 )}
-                keyExtractor={item => item.subscriptionId}
+                keyExtractor={item => item.id}
                 contentContainerStyle={styles.listContainer}
                 showsVerticalScrollIndicator={false}
             />

@@ -10,7 +10,7 @@ import {
   useColorScheme,
   View,
 } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, useNavigation } from '@react-navigation/native';
 import AppNavigation from './src/navigation/AppNavigation';
 import { colors } from './src/utils/theme';
 import BootSplash from "react-native-bootsplash";
@@ -18,6 +18,8 @@ import { Provider } from 'react-redux';
 import store, { persistor } from './src/store';
 import Toast from 'react-native-toast-message';
 import { PersistGate } from 'redux-persist/integration/react';
+import { BacKgroundNotifListener, NotificationListener } from './src/utils/messaging.utils';
+import InAppBrowser from 'react-native-inappbrowser-reborn';
 
 type SectionProps = PropsWithChildren<{
   title: string;
@@ -25,7 +27,6 @@ type SectionProps = PropsWithChildren<{
 
 function App(): React.JSX.Element {
   const isDarkMode = useColorScheme() === 'dark';
-
   useEffect(() => {
     const init = async () => {
       // …do multiple sync or async tasks
@@ -37,11 +38,27 @@ function App(): React.JSX.Element {
     });
   }, []);
 
+
+  function handleNotification(remoteMessage: any) {
+    console.log('Message handled in the !', remoteMessage?.notification);
+    if (
+      remoteMessage?.notification
+    ) {
+      InAppBrowser.close();
+      // navigation.navigate("Home");
+      // navigate('DrawerNavigation1');
+      // RNRestart.restart();
+    }
+    // RNRestart.restart();
+  }
+
   return (
     <PersistGate loading={null} persistor={persistor}>
       <Provider store={store}>
         <SafeAreaView
           style={styles.container}>
+          <NotificationListener handleNotification={handleNotification} />
+          <BacKgroundNotifListener handleNotification={handleNotification} />
           <NavigationContainer>
             <StatusBar backgroundColor={colors.headerColor} barStyle={'dark-content'} />
             <AppNavigation />

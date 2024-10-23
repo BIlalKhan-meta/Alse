@@ -31,6 +31,11 @@ const endpoints = {
     getProfile: '/profile',
     changePassword: '/change-password',
   },
+  subscription: {
+    getSubscription: '/get-subscription-plans',
+    getSubscriptionLogs: '/get-subscription-logs',
+    subscribe: '/subscribe',
+  },
 };
 
 export default endpoints;

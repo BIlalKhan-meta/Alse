@@ -26,7 +26,10 @@ const initialState: AuthState = {
 // Thunk for login using the imported login API function
 export const login = createAsyncThunk(
   'auth/login',
-  async (credentials: {email: string; password: string}, {rejectWithValue}) => {
+  async (
+    credentials: {email: string; password: string; token: string},
+    {rejectWithValue},
+  ) => {
     try {
       const response = await loginAPI(credentials);
       console.log(response, 'Responseee frommm loginnn sliceee');

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "495074757073",
+    "project_id": "alse-7027e",
+    "storage_bucket": "alse-7027e.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:495074757073:android:765019e57938b669c978f0",
+        "android_client_info": {
+          "package_name": "com.alenga"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC62BjK9wOGCL-g4QnBEFyuzJymjAwXluw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

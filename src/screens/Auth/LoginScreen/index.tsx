@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   View, Text,
   TouchableOpacity,
@@ -27,6 +27,8 @@ import Card from '../../../components/Card';
 import SignupLastBottomText from '../../../components/SignupLastBottomText';
 import { useAppDispatch } from '../../../hooks/storeHooks';
 import { login } from '../../../store/slices/authSlice';
+import { getMessage, Toast } from '../../../utils/helpers';
+import { getFcmToken } from '../../../utils/messaging.utils';
 
 const LoginScreen: React.FC = () => {
 
@@ -37,6 +39,18 @@ const LoginScreen: React.FC = () => {
   const [submitted, setSubmitted] = useState<boolean>(false)
   const [securePassword, setSecurePassword] = useState<boolean>(true)
   const [isSelected, setIsSelected] = useState<boolean>(false);
+  const [deviceToken, setDeviceToken] = useState<string | undefined>('');
+
+
+  const getToken = async () => {
+    const token = await getFcmToken();
+    setDeviceToken(token);
+  };
+
+  useEffect(() => {
+    getToken();
+  }, []);
+
 
   interface FormValues {
     email: string,
@@ -66,14 +80,27 @@ const LoginScreen: React.FC = () => {
   });
 
   const handleSubmit = async (values: FormValues, { resetForm }: { resetForm: () => void }) => {
-    setSubmitted(true); // Mark the form as submitted
+
+    console.log(values, "Valuessssssss")
+    setSubmitted(true);
+    // Mark the form as submitted
     try {
-      await dispatch(login({ ...values, useFormData: true })).unwrap(); // Dispatch the login action
+
+      const apiData = {
+        email: values.email,
+        password: values.password,
+        token: deviceToken
+      }
+
+      await dispatch(login({ ...apiData, useFormData: true })).unwrap(); // Dispatch the login action
       resetForm(); // Reset the form on successful login
       navigation.navigate("Home"); // Navigate to Home screen
       setSubmitted(false)
     } catch (error) {
       console.error("Login error:", error); // Handle error (optional)
+      setSubmitted(false)
+      Toast.error(getMessage(error?.message));
+
     }
   };
 

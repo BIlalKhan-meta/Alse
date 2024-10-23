@@ -1,11 +1,18 @@
+import {Platform} from 'react-native';
 import axiosInstance from '.';
 import endpoints from './endpoints';
 
-export const login = (data: {email: string; password: string}) => {
+export const login = (data: {
+  email: string;
+  password: string;
+  token: string;
+}) => {
   // Initialize FormData
   const formData = new FormData();
   formData.append('email', data.email);
   formData.append('password', data.password);
+  formData.append('device_id', data.token);
+  formData.append('device_type', Platform.OS == 'ios' ? 'ios' : 'android');
   // Make API request with FormData
   return axiosInstance.post(endpoints.auth.login, formData, {
     formData: true, // This triggers the form-data handling in the interceptor

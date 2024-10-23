@@ -20,7 +20,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: vw * 2,
         borderRadius: 10,
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: "space-between",
         height: vh * 60,
     },
     planTitle: {
@@ -65,7 +65,7 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
     carasouelContainer: {
-        height: Platform.OS=="ios"?vh*60: vh * 65,
+        height: Platform.OS == "ios" ? vh * 60 : vh * 65,
         alignItems: "center",
         justifyContent: "center",
         paddingTop: vh * 2
