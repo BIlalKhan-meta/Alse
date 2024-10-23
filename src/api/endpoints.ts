@@ -36,6 +36,13 @@ const endpoints = {
     getSubscriptionLogs: '/get-subscription-logs',
     subscribe: '/subscribe',
   },
+  education : {
+    getArticles : '/articles',
+    getBlogs : '/blogs',
+    getVideos : '/videos',
+    getBlog : '/blog',
+    getArticle : '/article',
+  }
 };
 
 export default endpoints;

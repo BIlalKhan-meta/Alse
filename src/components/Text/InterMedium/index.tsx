@@ -8,11 +8,12 @@ import { fontSizes } from '../../../constant';
 interface InterMediumProps {
   style?: StyleProp<TextStyle>;
   children: React.ReactNode;
+  lines?: number;
 }
 
 const InterMedium: React.FC<InterMediumProps> = (props) => {
   return (
-    <TextWrapper style={[styles.text, props.style]}>
+    <TextWrapper  lines={props.lines} style={[styles.text, props.style]}>
       {props.children}
     </TextWrapper>
   );
