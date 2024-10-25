@@ -36,8 +36,11 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
   response => response,
   error => {
-    if (error.response && error.response.status === 401) {
+    if (error.response && error.response.status == 401) {
       store.dispatch(logout());
+    }
+    if (error.response && error.response.status == 422) {
+      return Promise.reject(error.response?.data);
     }
     return Promise.reject(error);
   },

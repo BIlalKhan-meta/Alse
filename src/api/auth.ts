@@ -21,7 +21,7 @@ export const login = (data: {
 
 // Signup API call
 export const signup = (data: {
-  first_name: string;
+  full_name: string;
   last_name: string;
   username: string;
   email: string;
@@ -35,7 +35,7 @@ export const signup = (data: {
   console.log(data, 'Data frommmm authhhh ');
   // Initialize FormData
   const formData = new FormData();
-  formData.append('first_name', data.first_name);
+  formData.append('full_name', data.first_name);
   formData.append('last_name', data.last_name);
   formData.append('username', data.username);
   formData.append('email', data.email);

@@ -6,16 +6,16 @@ import styles from './styles';
 import InterRegular from '../Text/InterRegular';
 import InterBoldAverage from '../Text/InterBoldAverage';
 
-interface Product {
-    id: string;
-    name: string;
-    price: number;
-    imageUrl: string;
-    size: string
-}
+// interface Product {
+//     id: string;
+//     name: string;
+//     price: number;
+//     imageUrl: string;
+//     size: string
+// }
 
 interface WishlistProps {
-    wishlist: Product[];
+    wishlist: [];
     onAddToCart: (productId: string) => void;
     onRemoveFromWishlist: (productId: string) => void;
     heart: boolean;
@@ -25,11 +25,13 @@ interface WishlistProps {
 }
 
 const WishlistScreen: React.FC<WishlistProps> = ({ wishlist, onAddToCart, onRemoveFromWishlist, heart, addCart, product, onPress }) => {
-    const renderItem = ({ item }: { item: Product }) => (
+
+    const renderItem = ({ item }) => (
         <TouchableOpacity style={styles.productContainer}
-            onPress={onPress}
+            // onPress={onPress}
+            onPress={() => onPress(item.id)}
         >
-            <Image source={item.imageUrl} style={styles.productImage} />
+            <Image source={item?.banner ? { uri: item.banner } : null} style={styles.productImage} />
             {heart &&
                 <TouchableOpacity onPress={() => onRemoveFromWishlist(item.id)} style={styles.heartIconContainer}>
                     <Image source={images.heartIcon} />
@@ -43,7 +45,7 @@ const WishlistScreen: React.FC<WishlistProps> = ({ wishlist, onAddToCart, onRemo
             <View>
                 <View style={styles.productDetails}>
 
-                    <InterRegular style={styles.productName}>{product ? "Product Name" : item.name}</InterRegular>
+                    <InterRegular style={styles.productName}>{product ? "Product Name" : item.shop_name}</InterRegular>
                     {item.price ? (
                         <InterBoldAverage style={styles.productPrice}>${item.price.toFixed(2)}</InterBoldAverage>
                     ) : <Text> </Text>}
@@ -51,10 +53,16 @@ const WishlistScreen: React.FC<WishlistProps> = ({ wishlist, onAddToCart, onRemo
                 {product && item.size &&
                     <InterRegular style={styles.product}>Size: {item.size}</InterRegular>
                 }
-              {item.colors &&  <InterRegular style={styles.product}>Color: Red, Green, Blue</InterRegular>}
+                {item.colors && <InterRegular style={styles.product}>Color: Red, Green, Blue</InterRegular>}
 
             </View>
         </TouchableOpacity>
+    );
+
+    const renderEmpty = () => (
+        <View style={styles.emptyContainer}>
+            <InterRegular style={styles.emptyText}>No Data to Show.</InterRegular>
+        </View>
     );
 
     return (
@@ -64,6 +72,8 @@ const WishlistScreen: React.FC<WishlistProps> = ({ wishlist, onAddToCart, onRemo
             keyExtractor={(item) => item.id}
             numColumns={2}
             contentContainerStyle={styles.container}
+            ListEmptyComponent={renderEmpty}
+
         />
     );
 };

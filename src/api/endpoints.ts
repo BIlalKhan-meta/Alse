@@ -36,6 +36,11 @@ const endpoints = {
     getSubscriptionLogs: '/get-subscription-logs',
     subscribe: '/subscribe',
   },
+  shop: {
+    allShop: '/shops',
+    createShop: '/shop/create',
+    shopDetail: '/shop',
+  },
 };
 
 export default endpoints;

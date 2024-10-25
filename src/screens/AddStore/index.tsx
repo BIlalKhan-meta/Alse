@@ -18,6 +18,7 @@ import InterBoldLabel from '../../components/Text/InterBoldLabel';
 import Card from '../../components/Card';
 import InterBoldSmall from '../../components/Text/InterBoldSmall';
 import InterRegularSmallest from '../../components/Text/InterRegularSmallest';
+import { createShop } from '../../api/shop';
 
 const AddStore: React.FC = () => {
     const navigation = useNavigation();
@@ -25,9 +26,11 @@ const AddStore: React.FC = () => {
 
     const title = route?.params?.title || "Create Shop";
 
-    const { image, captureImage, chooseImageFromLibrary } = useImagePicker();
+    const { imageData, image, captureImage, chooseImageFromLibrary } = useImagePicker();
     const [shopSuccess, setShopSuccess] = useState(false);
     const [submitted, setSubmitted] = useState<boolean>(false)
+    const [accountType, setAccountType] = useState<string | null>(null); // State for selected account type
+    const [bankName, setBankName] = useState<string | null>(null); // State for selected bank name
 
 
     useLayoutEffect(() => {
@@ -52,6 +55,19 @@ const AddStore: React.FC = () => {
         { label: 'Bank 2', value: 'bank2' },
     ];
 
+    const initialValues = {
+        shopName: '',
+        // shopImage: '',
+        accountHolderName: '',
+        // accountType: '',
+        // bankName: '',
+        routingNumber: '',
+        confirmRoutingNumber: '',
+        accountNumber: '',
+        confirmAccountNumber: '',
+
+    };
+
     const validationSchema = yup.object().shape({
         shopName: yup.string().required('Shop Name is required'),
         // shopImage: yup.string().required('Shop Image is required'),
@@ -68,29 +84,66 @@ const AddStore: React.FC = () => {
             .required('Confirm Account Number is required'),
     });
 
-    const initialValues = {
-        shopName: '',
-        // shopImage: '',
-        accountHolderName: '',
-        // accountType: '',
-        // bankName: '',
-        routingNumber: '',
-        confirmRoutingNumber: '',
-        accountNumber: '',
-        confirmAccountNumber: '',
 
-    };
 
     const handleDropdownChange = (value: string | null) => {
         console.log('Selected value:', value);
     };
 
-    const handleSubmit = (values: object, { resetForm }: { resetForm: () => void }) => {
-        console.log("SUBMITTED")
-        setShopSuccess(true);  // Set the modal for success message
-        resetForm()
+    const handleSubmit = async (values: object, { resetForm }: { resetForm: () => void }) => {
+        console.log("SUBMITTED valuessssssss", values)
+        console.log("accountType valuessssssss", accountType, bankName)
+        console.log("accountType valuessssssss", imageData,)
+
+        setSubmitted(true)
+        const data = {
+            name: values?.shopName,
+            delivery_fees: '40',
+            "bank_details[account_name]": values?.accountHolderName,
+            "bank_details[account_type]": accountType,
+            "bank_details[bank_name]": bankName,
+            "bank_details[routing_number]": values.routingNumber,
+            "bank_details[account_number]": values.accountNumber
+        };
+        if (imageData.type !== '') {
+            // let imagePath = image.split('/');
+
+            const uploadedImage = {
+                uri: imageData?.uri,
+                name: imageData?.fileName,
+                type: imageData?.type,
+            };
+
+            console.log('uploadedImage= ==>', uploadedImage);
+            // console.log('uploadedCover= ==>', uploadedCover);
+
+            data['shop_banner'] = uploadedImage;
+        }
+
+        let formData = new FormData();
+
+        Object.entries(data).forEach(item => {
+            formData.append(item[0], item[1]);
+        });
+        console.log('formData===>', formData);
+
+
+        await createShop(formData)
+            // .unwrap()
+            .then(res => {
+                setSubmitted(false);
+
+                console.log('response form updated createshoppppp==========>', res);
+                setShopSuccess(true);
+            })
+            .catch(err => {
+                setSubmitted(false);
+                console.log('error from Updated Profile =========>', err);
+            });
 
     }
+
+
 
 
     return (
@@ -166,7 +219,8 @@ const AddStore: React.FC = () => {
                                     items={accountTypes}
                                     defaultValue={accountTypes[0].value}
                                     placeholder="Select Account type"
-                                    onChangeValue={() => {
+                                    onChangeValue={(value) => {
+                                        setAccountType(value)
                                         handleChange('accountType');
                                         handleBlur('accountType')
                                         handleDropdownChange;
@@ -189,7 +243,12 @@ const AddStore: React.FC = () => {
                                     items={banks}
                                     defaultValue={banks[0].value}
                                     placeholder="Select Bank Name"
-                                    onChangeValue={handleDropdownChange}
+                                    onChangeValue={(value) => {
+                                        setBankName(value)
+                                        handleChange('accountType');
+                                        handleBlur('accountType')
+                                        handleDropdownChange;
+                                    }}
                                     style={styles.dropDown}
 
                                 />
@@ -260,7 +319,9 @@ const AddStore: React.FC = () => {
 
                                 setSubmitted(true)
                                 handleSubmit();
-                            }}>
+                            }}
+                            // loading={submitted}
+                            >
                                 {title == "Edit Shop" ? "UPDATE" : "CREATE"}
                             </CustomButton>
                         </Card>

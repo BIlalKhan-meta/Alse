@@ -45,16 +45,16 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         marginTop: vh * 2,
     },
-    sortInput:{
-        backgroundColor:colors.inputcolor,
+    sortInput: {
+        backgroundColor: colors.inputcolor,
         // backgroundColor:"yellow",
-        marginVertical:vh*1,
-        width:vw*40,
-        height:vh*5,
-        alignItems:"center",
-        justifyContent:"center"
-    
-        
+        marginVertical: vh * 1,
+        width: vw * 40,
+        height: vh * 5,
+        alignItems: "center",
+        justifyContent: "center"
+
+
     },
     heading: {
         color: colors.inputText,

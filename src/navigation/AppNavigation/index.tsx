@@ -34,6 +34,7 @@ import SavedScripts from "../../screens/SavedScripts";
 import { useSelector } from "react-redux";
 import { selectBearerToken } from "../../store/slices/authSlice";
 import CreatePostEdit from "../../screens/CreatePostEdit";
+import AddProduct from "../../screens/AddProduct";
 
 
 
@@ -77,6 +78,7 @@ const AppNavigation = () => {
         <Stack.Screen name="SavedChat" component={SavedChat} options={NavigationOptions} />
         <Stack.Screen name="SavedChatDetail" component={SavedChatDetail} options={NavigationOptions} />
         <Stack.Screen name="SavedScripts" component={SavedScripts} options={NavigationOptions} />
+        <Stack.Screen name="AddProduct" component={AddProduct} options={NavigationOptions} />
       </> : <><Stack.Screen name="AuthNavigation" component={AuthNavigation} /></>
 
       }</>

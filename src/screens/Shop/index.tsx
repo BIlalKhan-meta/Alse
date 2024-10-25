@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, TouchableWithoutFeedback } from 'react-native';
 import { images } from '../../utils/images';
 import CardComponent from '../../components/CardComponent';
@@ -10,7 +10,7 @@ import InterBold from '../../components/Text/InterBold';
 import CommentsModal from '../../components/CommentsModal';
 import styles from './styles';
 import HeaderComponent from '../../components/HeaderComponent';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import InterRegular from '../../components/Text/InterRegular';
 import WishlistScreen from '../../components/WishList';
 import ContentSavedScreen from '../../components/ContentSaved';
@@ -19,6 +19,8 @@ import InterMedium from '../../components/Text/InterMedium';
 import ReportBlockModal from '../../components/ReportBlockModal';
 import GeneralModal from '../../components/GeneralModal';
 import SortModal from '../../components/SortModal';
+import { getProductByShop, shopDetail } from '../../api/shop';
+import CustomButton from '../../components/CustomButton';
 
 const dummyWishlist = [
     {
@@ -27,7 +29,7 @@ const dummyWishlist = [
         price: 20,
         imageUrl: `${images.pro1}`,
         size: "L, M, S",
-        colors:"Green"
+        colors: "Green"
     },
     {
         id: '2',
@@ -35,7 +37,7 @@ const dummyWishlist = [
         price: 30,
         imageUrl: `${images.pro2}`,
         size: "L, M,",
-        colors:"Green"
+        colors: "Green"
 
     },
     {
@@ -44,7 +46,7 @@ const dummyWishlist = [
         price: 25,
         imageUrl: `${images.pro2}`,
         size: "L, M, S",
-        colors:"Green"
+        colors: "Green"
 
 
     },
@@ -54,7 +56,7 @@ const dummyWishlist = [
         price: 25,
         imageUrl: `${images.pro1}`,
         size: "L, M, S",
-        colors:"Green"
+        colors: "Green"
 
     },
     {
@@ -63,7 +65,7 @@ const dummyWishlist = [
         price: 25,
         imageUrl: `${images.pro1}`,
         size: "L, M, S",
-        colors:"Green"
+        colors: "Green"
 
 
     },
@@ -73,7 +75,7 @@ const dummyWishlist = [
         price: 25,
         imageUrl: `${images.pro2}`,
         size: "L, M, S",
-        colors:"Green"
+        colors: "Green"
 
 
     },
@@ -87,10 +89,17 @@ const productFilter = [
 
 const Shop: React.FC = () => {
     const navigation = useNavigation();
+    const route = useRoute();
+    const shopId = route?.params?.shopId;
+
+
+
     const [commentsVisible, setCommentsVisible] = useState<boolean>(false)
     const [active, setActive] = useState<number>(1)
     const [modalVisible, setModalVisible] = useState(false);
     const [ReportSuccess, setReportSuccess] = useState(false);
+    const [shopDetails, setShopDetails] = useState([]);
+    const [shopProduct, setShopProduct] = useState([]);
 
     // const [modalVisible, setModalVisible] = useState(false);
     const [sortValue, setSortValue] = useState<string>(''); // State for the selected sort value
@@ -140,6 +149,24 @@ const Shop: React.FC = () => {
         // { text: 'Block', onPress: () => { handleBlockPress(); } },
     ];
 
+
+    useEffect(() => {
+        getData()
+    }, [])
+
+    const getData = async () => {
+        const res = await shopDetail(shopId)
+        const res2 = await getProductByShop(shopId)
+
+        setShopDetails(res?.data?.data)
+        setShopProduct(res2?.data?.data)
+        console.log('====================================');
+        console.log(res?.data?.data, "====ressss");
+        console.log(res2?.data?.data, "====rssss producttttt");
+        console.log('====================================');
+    }
+
+
     return (
         <ScrollView
             showsVerticalScrollIndicator={false}
@@ -156,9 +183,14 @@ const Shop: React.FC = () => {
 
 
                     <Card style={styles.contentContainer}>
+
                         <View style={styles.banner}>
-                            <Image source={images.shop11} style={styles.imageStyle} />
+                            <Image
+                                // source={images.shop11} 
+                                source={{ uri: shopDetails?.banner }}
+                                style={styles.imageStyle} />
                         </View>
+
                         <View style={styles.sortConatiner}>
                             <InterMedium style={styles.mainheading}>Shop Name</InterMedium>
                             <View >
@@ -166,14 +198,14 @@ const Shop: React.FC = () => {
                                     Sort by:
                                 </InterRegular>
                                 <View>
-                                <TouchableOpacity 
-                                    onPress={() => setModalVisible(true)}
-                                    style={styles.sortInput}
+                                    <TouchableOpacity
+                                        onPress={() => setModalVisible(true)}
+                                        style={styles.sortInput}
                                     >
-                                <Text style={styles.sortText}>
-                                    {sortValue || 'Select an option'}
-                                </Text>
-                            </TouchableOpacity>
+                                        <Text style={styles.sortText}>
+                                            {sortValue || 'Select an option'}
+                                        </Text>
+                                    </TouchableOpacity>
                                     {/* <Picker
                                         style={[styles.pickercontainer]}
                                         dropdownIconColor={colors.inputText}
@@ -205,7 +237,7 @@ const Shop: React.FC = () => {
                         </View>
 
                         <WishlistScreen
-                            wishlist={dummyWishlist}
+                            wishlist={shopProduct}
                             onAddToCart={handleAddToCart}
                             onRemoveFromWishlist={handleRemoveFromWishlist}
                             heart={true}
@@ -214,6 +246,14 @@ const Shop: React.FC = () => {
                             onPress={() => navigation.navigate("ProductView")}
 
                         />
+
+
+                        <CustomButton style={styles.button}
+                            onPress={() => navigation.navigate("AddProduct", { shopId })}
+                        >
+                            Add Product
+                        </CustomButton>
+
                     </Card>
                     <SortModal
                         visible={modalVisible}

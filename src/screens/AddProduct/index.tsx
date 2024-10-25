@@ -7,22 +7,25 @@ import * as yup from 'yup';
 import styles from './styles'; // Ensure you have your styles defined
 import RegularTextInput from '../../components/TextInput/RegularTextInput';
 import DropDownTextInput from '../../components/TextInput/DropDownTextInput';
-import SignupButton from '../../components/SignupButton';
-import QanelasBoldLabel from '../../components/Text/QanelasBoldLabel';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import QanelasRegular from '../../components/Text/QanelasRegular';
 import { images } from '../../utils/images';
 import useImagePicker from '../../hooks/useImagePicker';
 import GeneralModal from '../../components/GeneralModal';
 import { colors } from '../../utils/theme';
+import CustomButton from '../../components/CustomButton';
+import InterBoldLabel from '../../components/Text/InterBoldLabel';
+import InterRegular from '../../components/Text/InterRegular';
+import { createProduct } from '../../api/shop';
 
 const AddProduct: React.FC = () => {
     const navigation = useNavigation();
     const route = useRoute();
+    const shopId = route?.params?.shopId;
     const title = route?.params?.title || "Add Product";
-    const { image, captureImage, chooseImageFromLibrary } = useImagePicker();
+    const { imageData, image, captureImage, chooseImageFromLibrary } = useImagePicker();
     const [productSuccess, setProductSuccess] = useState(false);
-
+    const [submitted, setSubmitted] = useState<boolean>(false)
+    const [status, setStatus] = useState()
     const statuses = [
         { label: 'Active', value: 'active' },
         { label: 'Inactive', value: 'inactive' },
@@ -31,8 +34,8 @@ const AddProduct: React.FC = () => {
     const validationSchema = yup.object().shape({
         productTitle: yup.string().required('Product Title is required'),
         productDescription: yup.string().required('Product Description is required'),
-        status: yup.string().required('Status is required'),
-        productImage: yup.string().required('Product Image is required'),
+        // status: yup.string().required('Status is required'),
+        // productImage: yup.string().required('Product Image is required'),
         price: yup.number().required('Price is required').positive('Price must be positive'),
         quantity: yup.number().required('Quantity is required').integer('Quantity must be an integer').positive('Quantity must be positive'),
     });
@@ -40,8 +43,8 @@ const AddProduct: React.FC = () => {
     const initialValues = {
         productTitle: '',
         productDescription: '',
-        status: statuses[0].value, // Initialize with default value
-        productImage: '',
+        // status: statuses[0].value, // Initialize with default value
+        // productImage: '',
         price: '',
         quantity: '',
     };
@@ -51,8 +54,60 @@ const AddProduct: React.FC = () => {
     };
 
 
-    const handleSubmit = (values: object) => {
-        console.log('Form submitted:', values);
+    // const handleSubmit = (values: object) => {
+    //     console.log('Form submitted:', values);
+    // };
+
+    const handleSubmit = async (values: typeof initialValues) => {
+        console.log('====================================');
+        console.log(values, "Fromm submitttt", status);
+        console.log('====================================');
+        let statusState;
+        if (status == "inactive") {
+            statusState = 0
+        } else {
+            statusState = 1
+        }
+        setSubmitted(true);
+
+        const data = {
+            title: values.productTitle,
+            // brand_name: values.brand_name,
+            description: values.productDescription,
+            price: values.price,
+            quantity: values.quantity,
+            status: statusState,
+        };
+
+        if (imageData.type !== '') {
+            // let imagePath = image.split('/');
+
+            const uploadedImage = {
+                uri: imageData?.uri,
+                name: imageData?.fileName,
+                type: imageData?.type,
+            };
+
+            console.log('uploadedImage= ==>', uploadedImage);
+            // console.log('uploadedCover= ==>', uploadedCover);
+
+            data['images[0]'] = uploadedImage;
+        }
+
+        let formData = new FormData();
+
+        Object.entries(data).forEach(item => {
+            formData.append(item[0], item[1]);
+        });
+
+        try {
+            const response = await createProduct(formData, shopId); // Adjust API function as needed
+            setSubmitted(false);
+            setProductSuccess(true);
+        } catch (error) {
+            console.log('Error creating product:', error);
+            setSubmitted(false);
+        }
     };
 
     useLayoutEffect(() => {
@@ -83,6 +138,8 @@ const AddProduct: React.FC = () => {
                                 value={values.productTitle}
                                 error={touched.productTitle && errors.productTitle}
                                 style={styles.inputStyle}
+                                submitted={submitted}
+
                             />
                             <RegularTextInput
                                 label="Product Description *"
@@ -94,32 +151,41 @@ const AddProduct: React.FC = () => {
                                 value={values.productDescription}
                                 error={touched.productDescription && errors.productDescription}
                                 style={styles.inputStyle}
-                                // multiline
-                                // numberOfLines={4}
+                                submitted={submitted}
+
+                            // multiline
+                            // numberOfLines={4}
                             />
 
-                            <QanelasBoldLabel style={styles.dropdownLabel}>
+                            <InterBoldLabel style={styles.dropdownLabel}>
                                 Status *
-                            </QanelasBoldLabel>
+                            </InterBoldLabel>
                             <DropDownTextInput
                                 items={statuses}
                                 defaultValue='active'
                                 // placeholder="Select Status"
-                                onChangeValue={handleDropdownChange('status')}
+                                onChangeValue={(val) => {
+                                    console.log(val, "Val Freom drop dowwnnnn ")
+                                    setStatus(val)
+
+                                    handleChange('status');
+                                    handleBlur('status')
+                                    handleDropdownChange
+                                }}
                                 style={styles.dropDown}
                             />
 
-                            <QanelasBoldLabel style={styles.dropdownLabel}>
+                            <InterBoldLabel style={styles.dropdownLabel}>
                                 Product Image*
-                            </QanelasBoldLabel>
+                            </InterBoldLabel>
 
                             <TouchableOpacity style={styles.uploadBtn}
                                 onPress={() => captureImage('photo')}
 
                             >
-                                <QanelasRegular style={styles.uploadTxt}>
+                                <InterRegular style={styles.uploadTxt}>
                                     Upload
-                                </QanelasRegular>
+                                </InterRegular>
                                 <Image source={images.upload} style={styles.uploadImg} />
                             </TouchableOpacity>
 
@@ -134,6 +200,8 @@ const AddProduct: React.FC = () => {
                                 error={touched.price && errors.price}
                                 style={styles.inputStyle}
                                 keyboardType="numeric"
+                                submitted={submitted}
+
                             />
 
                             <RegularTextInput
@@ -147,26 +215,32 @@ const AddProduct: React.FC = () => {
                                 error={touched.quantity && errors.quantity}
                                 style={styles.inputStyle}
                                 keyboardType="numeric"
+                                submitted={submitted}
+
                             />
                         </View>
 
-                        <SignupButton style={styles.submitButton} onPress={() => {
-                            // handleSubmit
-                            setProductSuccess(true)
+                        <CustomButton style={styles.submitButton} onPress={() => {
+                            handleSubmit()
+                            // setProductSuccess(true)
 
                         }}>
                             {title == "Edit Product" ? "UPDATE" : "ADD"}
-                        </SignupButton>
+                        </CustomButton>
 
                         <GeneralModal
                             visible={productSuccess}
                             closeModal={() => setProductSuccess(false)}
-                            icon={images.doubleCheck}
+                            icon={images.checkedIcon}
+
                             title={title == "Edit Product" ? 'Product  Updated successfully' : 'Product  Added successfully'}
                             // message='Group has been report successfully.'
                             buttonText='Ok'
+                            primaryBtn={true}
+
                             onPress={() => {
                                 setProductSuccess(false)
+                                navigation.goBack()
                             }}
                         />
                     </>

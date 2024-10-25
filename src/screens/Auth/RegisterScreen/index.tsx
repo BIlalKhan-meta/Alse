@@ -128,7 +128,7 @@ const RegisterScreen: React.FC = () => {
 
     }
     const signupData = {
-      first_name: values.name, // Assuming 'name' is first name
+      full_name: values.name, // Assuming 'name' is first name
       last_name: 'test', // If you want to add last name, update the input
       username: values.name, // Add username input in your form
       email: values.email,
@@ -166,7 +166,7 @@ const RegisterScreen: React.FC = () => {
       })
       .catch((error) => {
         console.error("Signup error:", error);
-        Toast.success(getMessage(error?.message));
+        Toast.error(getMessage(error?.message));
         setSubmitted(false)
       });
   };
@@ -411,11 +411,11 @@ const RegisterScreen: React.FC = () => {
 
                 <CustomButton onPress={() => {
                   // setSuccessModel(true)
-                  setSubmitted(true)
+                  // setSubmitted(true)
                   // resetForm()
                   handleSubmit()
                 }}
-                  loading={true}
+                  loading={submitted}
                 >
                   Create Account
                 </CustomButton>

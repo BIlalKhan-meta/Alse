@@ -44,7 +44,7 @@ export const signup = createAsyncThunk(
   'auth/signup',
   async (
     signupData: {
-      first_name: string;
+      full_name: string;
       last_name: string;
       username: string;
       email: string;

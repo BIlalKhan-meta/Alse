@@ -1,7 +1,7 @@
 
 
 // Home.tsx
-import React, { useLayoutEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from 'react-native';
 import { images } from '../../utils/images';
 import CardComponent from '../../components/CardComponent';
@@ -17,6 +17,7 @@ import styles from './styles';
 import WishlistScreen from '../../components/WishList';
 import SearchComponent from '../../components/SearchComponent';
 import CustomButton from '../../components/CustomButton';
+import { getAllShop } from '../../api/shop';
 
 const posts = [
   {
@@ -113,6 +114,7 @@ const Marketplace: React.FC = () => {
   const navigation = useNavigation();
 
   const [searchResults, setSearchResults] = useState<string[]>([]);
+  const [shops, setShops] = useState<string[]>([]);
 
   const handleSearch = (query: string) => {
     console.log(`Searching for shops with query: ${query}`);
@@ -120,16 +122,18 @@ const Marketplace: React.FC = () => {
     setSearchResults([`Shop 1 - ${query}`, `Shop 2 - ${query}`, `Shop 3 - ${query}`]);
   };
 
-  // useLayoutEffect(() => {
-  //   navigation.setOptions({
-  //     headerShown: true,
-  //     title: "Shops",
-  //     headerStyle: {
-  //       backgroundColor: colors.headerColor
-  //     },
+  useEffect(() => {
+    getData()
+  }, [])
 
-  //   });
-  // }, [navigation]);
+  const getData = async () => {
+    const res = await getAllShop()
+    setShops(res.data?.data?.data)
+    console.log('====================================');
+    console.log(res.data?.data?.data, "====ressss");
+    console.log('====================================');
+  }
+
   return (
     <ScrollView
       showsVerticalScrollIndicator={false}
@@ -144,8 +148,11 @@ const Marketplace: React.FC = () => {
         <Card>
           <SearchComponent onSearch={handleSearch} placeholder="Find shop" />
           <WishlistScreen
-            wishlist={dummyShops}
-            onPress={() => navigation.navigate("Shop")}
+            wishlist={shops}
+            onPress={(shopId) => {
+
+              navigation.navigate("Shop", { shopId })
+            }}
           />
 
           <CustomButton style={styles.button}
