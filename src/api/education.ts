@@ -32,3 +32,16 @@ export const getBlog = (id: number) => {
 export const getArticle = (id: number) => {
   return axiosInstance.get(`${endpoints.education.getArticle}/${id}`);
 };
+
+export const createArticle = (formData: FormData) => {
+  return axiosInstance.post(`${endpoints.education.createArticle}`, formData, {
+    formData: true,
+  });
+};
+
+export const createBlog = (formData: FormData) => {
+  console.log('INSTANNCEEEE DATA', JSON.stringify(formData, null, 4));
+  return axiosInstance.post(`${endpoints.education.createBlog}`, formData, {
+    formData: true
+  });
+};

@@ -14,7 +14,7 @@ const styles = StyleSheet.create({
     // margin: 5,
     borderRadius: 10,
     // overflow: 'hidden',
-    // backgroundColor: '#fff',
+    // backgroundColor: 'red',
     // backgroundColor: 'pink',
     // position: 'relative',
     padding: vh * 2,

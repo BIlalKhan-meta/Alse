@@ -42,7 +42,6 @@ const ContentSavedScreen: React.FC<ContentSavedProps> = ({
   userId,
   style,
 }) => {
-
   return (
     <TouchableOpacity
       style={[styles.productContainer, style]}

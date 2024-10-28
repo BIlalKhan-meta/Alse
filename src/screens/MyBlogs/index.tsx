@@ -1,4 +1,4 @@
-import {useNavigation, useRoute} from '@react-navigation/native';
+import {useIsFocused, useNavigation, useRoute} from '@react-navigation/native';
 import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {FlatList, ScrollView, Text, TouchableOpacity, View} from 'react-native';
 import {colors} from '../../utils/theme';
@@ -44,6 +44,7 @@ const MyBlogs: React.FC = () => {
   const [display, setDisplay] = useState([]);
 
   const user = useSelector(selectUserProfile);
+  const isFocused = useIsFocused();
 
   const fetchData = async () => {
     setLoading(true);
@@ -69,7 +70,7 @@ const MyBlogs: React.FC = () => {
 
   useEffect(() => {
     fetchData();
-  }, [title]);
+  }, [title, isFocused]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -113,10 +114,10 @@ const MyBlogs: React.FC = () => {
           renderItem={({item}) => (
             <Card style={styles.itemCard}>
               <MediaCard
-                type={item.type}
-                source={item.source}
-                title={item.title}
-                description={item.description}
+                type={item?.type}
+                source={item?.source}
+                title={item?.title}
+                // description={item.description}
                 category={item.category}
                 onBookmarkPress={() => {}}
                 onItemPress={() =>
@@ -143,10 +144,15 @@ const MyBlogs: React.FC = () => {
                 title={title == 'My Blogs' ? 'Blog Title' : 'Article Title'}
                 viewBtn="View Full Blog"
                 onItemPress={() =>
+                  // navigation.navigate('ViewBlog', {
+                  //   item,
+                  //   title: title == 'My Blogs' ? 'Blog Title' : 'Article Title',
+                  //   edit: true,
+                  // })
+
                   navigation.navigate('ViewBlog', {
-                    item,
+                    id: item.id,
                     title: title == 'My Blogs' ? 'Blog Title' : 'Article Title',
-                    edit: true,
                   })
                 }
                 //  onAddToCart={handleAddToCart}

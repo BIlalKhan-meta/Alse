@@ -50,6 +50,8 @@ const endpoints = {
     getMyBlogs: '/blogs/current-user',
     getMyArticles: '/articles/current-user',
     getMyVideos: '/videos/current-user',
+    createArticle: '/article/create',
+    createBlog: '/blog/create',
   },
 };
 

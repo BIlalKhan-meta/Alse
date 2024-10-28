@@ -45,7 +45,9 @@ const Blogs: React.FC = () => {
       }
 
       if (res?.data) {
-        setDisplay(res.data.data.data);
+        setDisplay(
+          res.data.data.data.filter((item: any) => item.user_id != user.id),
+        );
       }
     } catch (err) {
       console.error('GET ARTTTTTTICLESSSS ERRORRR', err);
@@ -73,7 +75,12 @@ const Blogs: React.FC = () => {
             style={styles.btn}
             onPress={() =>
               navigation.navigate('MyBlogs', {
-                title: active == 1 ? 'My Articles' : 'My Blogs',
+                title:
+                  active == 1
+                    ? 'My Articles'
+                    : active == 2
+                    ? 'My Blogs'
+                    : 'My Videos',
               })
             }>
             {title}
