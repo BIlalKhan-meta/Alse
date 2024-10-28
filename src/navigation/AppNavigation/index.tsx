@@ -43,9 +43,9 @@ import AddProduct from "../../screens/AddProduct";
 const AppNavigation = () => {
   const Stack = createNativeStackNavigator();
   const token = useSelector(selectBearerToken);
-  console.log('====================================');
-  console.log("Here ss=sss>", token);
-  console.log('====================================');
+  // console.log('====================================');
+  // console.log("Here ss=sss>", token);
+  // console.log('====================================');
   return (
     <Stack.Navigator
       screenOptions={{ headerShown: false }}

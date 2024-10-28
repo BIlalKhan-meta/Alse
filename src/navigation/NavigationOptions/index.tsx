@@ -86,7 +86,7 @@ const backButtonRoutes: { [key: string]: boolean } = {
 };
 
 const getTitle: React.FC<NavigationOptionsProps> = (props) => {
-    console.log('THIS IS GET TITLE', props?.route?.name);
+    // console.log('THIS IS GET TITLE', props?.route?.name);
     if (props?.route?.params?.screenName) {
         return props?.route?.params?.screenName;
     }
@@ -123,7 +123,7 @@ export const getHeaderRight: React.FC<NavigationOptionsProps> = (props) => {
 const getHeaderLeft: React.FC<NavigationOptionsProps> = (props) => {
 
     if (backButtonRoutes[props?.route?.name]) {
-        console.log("THIS ISPROPS.ROUTE.NAME", props?.route?.name);
+        // console.log("THIS ISPROPS.ROUTE.NAME", props?.route?.name);
 
         return (
             <TouchableOpacity

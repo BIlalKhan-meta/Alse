@@ -47,6 +47,9 @@ const endpoints = {
     getVideos: '/videos',
     getBlog: '/blog',
     getArticle: '/article',
+    getMyBlogs: '/blogs/current-user',
+    getMyArticles: '/articles/current-user',
+    getMyVideos: '/videos/current-user',
   },
 };
 
