@@ -41,6 +41,13 @@ const endpoints = {
     createShop: '/shop/create',
     shopDetail: '/shop',
   },
+  education: {
+    getArticles: '/articles',
+    getBlogs: '/blogs',
+    getVideos: '/videos',
+    getBlog: '/blog',
+    getArticle: '/article',
+  },
 };
 
 export default endpoints;
