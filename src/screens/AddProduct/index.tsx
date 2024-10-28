@@ -16,6 +16,7 @@ import CustomButton from '../../components/CustomButton';
 import InterBoldLabel from '../../components/Text/InterBoldLabel';
 import InterRegular from '../../components/Text/InterRegular';
 import { createProduct } from '../../api/shop';
+import Card from '../../components/Card';
 
 const AddProduct: React.FC = () => {
     const navigation = useNavigation();
@@ -59,6 +60,8 @@ const AddProduct: React.FC = () => {
     // };
 
     const handleSubmit = async (values: typeof initialValues) => {
+        setSubmitted(true);
+
         console.log('====================================');
         console.log(values, "Fromm submitttt", status);
         console.log('====================================');
@@ -68,7 +71,6 @@ const AddProduct: React.FC = () => {
         } else {
             statusState = 1
         }
-        setSubmitted(true);
 
         const data = {
             title: values.productTitle,
@@ -102,10 +104,11 @@ const AddProduct: React.FC = () => {
 
         try {
             const response = await createProduct(formData, shopId); // Adjust API function as needed
+            console.log(response, "responseeeeeee======>>>>>")
             setSubmitted(false);
             setProductSuccess(true);
         } catch (error) {
-            console.log('Error creating product:', error);
+            console.log('Error creating product:', error.response);
             setSubmitted(false);
         }
     };
@@ -127,7 +130,8 @@ const AddProduct: React.FC = () => {
                 onSubmit={handleSubmit}
             >
                 {({ handleChange, handleBlur, handleSubmit, values, errors, touched }) => (
-                    <>
+                    <Card style={styles.contentContainer}>
+
                         <View style={styles.section}>
                             <RegularTextInput
                                 label="Product Title *"
@@ -136,7 +140,7 @@ const AddProduct: React.FC = () => {
                                 onChangeText={handleChange('productTitle')}
                                 onBlur={handleBlur('productTitle')}
                                 value={values.productTitle}
-                                error={touched.productTitle && errors.productTitle}
+                                errors={touched.productTitle && errors.productTitle}
                                 style={styles.inputStyle}
                                 submitted={submitted}
 
@@ -149,7 +153,7 @@ const AddProduct: React.FC = () => {
                                 onChangeText={handleChange('productDescription')}
                                 onBlur={handleBlur('productDescription')}
                                 value={values.productDescription}
-                                error={touched.productDescription && errors.productDescription}
+                                errors={touched.productDescription && errors.productDescription}
                                 style={styles.inputStyle}
                                 submitted={submitted}
 
@@ -197,7 +201,7 @@ const AddProduct: React.FC = () => {
                                 onChangeText={handleChange('price')}
                                 onBlur={handleBlur('price')}
                                 value={values.price}
-                                error={touched.price && errors.price}
+                                errors={touched.price && errors.price}
                                 style={styles.inputStyle}
                                 keyboardType="numeric"
                                 submitted={submitted}
@@ -212,7 +216,7 @@ const AddProduct: React.FC = () => {
                                 onChangeText={handleChange('quantity')}
                                 onBlur={handleBlur('quantity')}
                                 value={values.quantity}
-                                error={touched.quantity && errors.quantity}
+                                errors={touched.quantity && errors.quantity}
                                 style={styles.inputStyle}
                                 keyboardType="numeric"
                                 submitted={submitted}
@@ -243,7 +247,7 @@ const AddProduct: React.FC = () => {
                                 navigation.goBack()
                             }}
                         />
-                    </>
+                    </Card>
                 )}
             </Formik>
         </KeyboardAwareScrollView>

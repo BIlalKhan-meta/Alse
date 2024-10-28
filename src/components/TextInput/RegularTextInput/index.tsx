@@ -72,7 +72,7 @@ const RegularTextInput: React.FC<RegularTextInputProps> = (props) => {
 
       </View>
 
-      {props?.submitted && props?.errors &&
+      {props?.errors &&
         <InterRegularSmallest style={styles.error}>
           {props?.errors}
         </InterRegularSmallest>}

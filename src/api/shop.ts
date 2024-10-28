@@ -21,7 +21,7 @@ export const getProductByShop = (id: number) => {
 };
 
 export const createProduct = (formData: FormData, id: number) => {
-  console.log(formData, 'Formmmm Dataaaa Createee possttt');
+  console.log(formData, id, 'Formmmm Dataaaa Createee possttt');
   return axiosInstance.post(
     `${endpoints.shop.shopDetail}/${id}/product/create`,
     formData,

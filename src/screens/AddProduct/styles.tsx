@@ -23,9 +23,9 @@ const styles = StyleSheet.create({
         marginBottom: 16,
         backgroundColor: colors.dropdownColor,
         paddingLeft: vw * 4,
-        height:vh*6,
-        justifyContent:"center",
-        alignItems:"center"
+        height: vh * 6,
+        justifyContent: "center",
+        alignItems: "center"
 
     },
     dropdownLabel: {
@@ -42,6 +42,7 @@ const styles = StyleSheet.create({
         // paddingVertical: 12,
         // alignItems: 'center',
         // borderRadius: 8,
+        alignSelf: "center"
     },
     uploadBtn: {
         flexDirection: "row",

@@ -87,7 +87,7 @@ const productFilter = [
 ];
 
 
-const Shop: React.FC = () => {
+const MyShop: React.FC = () => {
     const navigation = useNavigation();
     const route = useRoute();
     const shopId = route?.params?.shopId;
@@ -294,4 +294,4 @@ const Shop: React.FC = () => {
 
 
 
-export default Shop;
+export default MyShop;
