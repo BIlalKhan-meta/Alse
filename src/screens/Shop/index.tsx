@@ -21,6 +21,7 @@ import GeneralModal from '../../components/GeneralModal';
 import SortModal from '../../components/SortModal';
 import { getProductByShop, shopDetail } from '../../api/shop';
 import CustomButton from '../../components/CustomButton';
+import Loader from '../../components/Loader';
 
 const dummyWishlist = [
     {
@@ -100,6 +101,7 @@ const Shop: React.FC = () => {
     const [ReportSuccess, setReportSuccess] = useState(false);
     const [shopDetails, setShopDetails] = useState([]);
     const [shopProduct, setShopProduct] = useState([]);
+    const [loading, setLoading] = useState(false);
 
     // const [modalVisible, setModalVisible] = useState(false);
     const [sortValue, setSortValue] = useState<string>(''); // State for the selected sort value
@@ -155,15 +157,21 @@ const Shop: React.FC = () => {
     }, [])
 
     const getData = async () => {
+        setLoading(true)
         const res = await shopDetail(shopId)
         const res2 = await getProductByShop(shopId)
 
         setShopDetails(res?.data?.data)
-        setShopProduct(res2?.data?.data)
+        setShopProduct(res2?.data?.data?.data)
         console.log('====================================');
         console.log(res?.data?.data, "====ressss");
         console.log(res2?.data?.data, "====rssss producttttt");
         console.log('====================================');
+        setLoading(false)
+    }
+
+    if (loading) {
+        return (<Loader />)
     }
 
 
@@ -243,25 +251,15 @@ const Shop: React.FC = () => {
                             heart={true}
                             addCart={true}
                             product={true}
-                            onPress={() => navigation.navigate("ProductView")}
+                            onPress={(id) => {
+                                console.log('====================================');
+                                console.log(id, "Id Frommm producttt");
+                                console.log('====================================');
+                                navigation.navigate("ProductView", { productId: id })
+                            }}
 
                         />
-                        <View style={styles.btnConatiner}>
-                            <CustomButton style={styles.secondaryBtn1}
-                                onPress={() => navigation.navigate("AddProduct", { shopId })}
-                            >
-                                Add Product
-                            </CustomButton>
 
-                            <CustomButton
-                                style={styles.secondaryBtn2}
-                                containerStyle={styles.buttonContainerStyle}
-                                txtstyle={{ color: colors.themeColor }}
-                            // onPress={closeModal}
-                            >
-                                Orders
-                            </CustomButton>
-                        </View>
 
 
 

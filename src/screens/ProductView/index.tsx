@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, SafeAreaView, StatusBar, TouchableWithoutFeedback, Platform } from 'react-native';
 import { images } from '../../utils/images';
 import { colors } from '../../utils/theme';
@@ -18,6 +18,8 @@ import Swiper from 'react-native-swiper';
 import RatingandReviewComponent from '../../components/RatingandReviewComponent';
 import ShopComponent from '../../components/ShopComponent';
 import StoreOrderComponent from '../../components/StoreOrder';
+import { productDetail, productRating } from '../../api/product';
+import Loader from '../../components/Loader';
 
 
 
@@ -36,6 +38,10 @@ const bannerImages = [
 const ProductView: React.FC = () => {
     const navigation = useNavigation();
     const route = useRoute()
+    const { productId } = route.params;
+    console.log('====================================');
+    console.log(productId);
+    console.log('====================================');
     // const { type } = route?.params;
 
     const [commentsVisible, setCommentsVisible] = useState<boolean>(false)
@@ -44,7 +50,9 @@ const ProductView: React.FC = () => {
     const [reportVisible, setReportVisible] = useState(false);
     const [reportInput, setReportInput] = useState(false);
     const [ReportSuccess, setReportSuccess] = useState(false);
-
+    const [productDetails, setProductDetails] = useState([]);
+    const [productReviews, setProductReviews] = useState([]);
+    const [loading, setLoading] = useState(false);
     const handleReportPress = () => {
         setModalVisible(false);
         setReportVisible(true)
@@ -60,12 +68,34 @@ const ProductView: React.FC = () => {
         });
     }, [navigation]);
 
+    useEffect(() => {
+        getData()
+    }, [])
+
+    const getData = async () => {
+        setLoading(true)
+        const res = await productDetail(productId)
+        // const res2 = await productRating(productId)
+        // setProductDetails(res?.data?.data)
+        setProductDetails(res?.data?.data || {});
+        // setProductReviews()
+        setLoading(false)
+        console.log('====================================');
+        console.log(res?.data?.data, "====rssss producttttt");
+        // console.log(res2?.data?.data, "====rssss Reviewsss");
+        console.log('====================================');
+    }
+
+    if (loading) {
+        return (<Loader />)
+    }
+
 
     const renderContent = () => {
         switch (activeTab) {
             case 1:
                 return (
-                    <StoreOrderComponent />
+                    <StoreOrderComponent productItem={productDetails} />
                 );
             case 2:
                 return (
@@ -91,87 +121,97 @@ const ProductView: React.FC = () => {
 
                 <View style={[styles.container]}>
 
-
-                    <Card style={styles.cardContainer}>
-
-
-                        <View style={styles.banner}>
-                            {/* <Image source={images.shop11} style={styles.imageStyle} /> */}
-                            <Swiper
-                                // autoplay={true}
-                                showsPagination={false}
-                                // loop={true}
-                                // dotStyle={styles.dotStyle}
-                                // activeDotStyle={styles.activeDotStyle}
-                                // autoplayTimeout={3}
-                                showsButtons={true}
-                                nextButton={<Text style={styles.buttonText}>›</Text>}
-                                prevButton={<Text style={styles.buttonText}>‹</Text>}
-                            >
-                                {bannerImages.map((image, index) => (
-                                    <View key={index}>
-                                        <Image source={image} style={styles.imageStyle} />
-                                    </View>
-                                ))}
-                            </Swiper>
-
-                        </View>
+                    {productDetails && productDetails.images && (
+                        <Card style={styles.cardContainer}>
 
 
-                        <View style={styles.productDetails}>
+                            <View style={styles.banner}>
+                                {/* <Image source={images.shop11} style={styles.imageStyle} /> */}
+                                {productDetails?.images[0]?.path && (
 
-                            <InterMedium style={styles.productName}>{"Product Name"}</InterMedium>
-                            <View style={styles.priceContainer}>
-                                <InterRegular style={styles.ratingTxt}>4.5 (100+)</InterRegular>
-                                <InterBoldAverage style={styles.productPrice}>$45</InterBoldAverage>
+                                    <Swiper
+                                        // autoplay={true}
+                                        showsPagination={false}
+                                        // loop={true}
+                                        // dotStyle={styles.dotStyle}
+                                        // activeDotStyle={styles.activeDotStyle}
+                                        // autoplayTimeout={3}
+                                        showsButtons={true}
+                                        nextButton={<Text style={styles.buttonText}>›</Text>}
+                                        prevButton={<Text style={styles.buttonText}>‹</Text>}
+                                    >
+                                        {productDetails?.images?.map((image, index) => {
+
+                                            console.log('====================================');
+                                            console.log(image?.path, "Frommmm mappppp");
+                                            console.log('====================================');
+                                            return (
+
+                                                <View key={index}>
+                                                    <Image source={{ uri: image?.path }} style={styles.imageStyle} />
+                                                </View>
+                                            )
+                                        }
+                                        )}
+                                    </Swiper>
+                                )}
+
                             </View>
 
-                        </View>
 
-                        <View style={styles.vendorContainer}>
-                            <InterRegular style={styles.vendorTxt}>Vendor Abc</InterRegular>
+                            <View style={styles.productDetails}>
 
-                            <View style={styles.bulletTextContainer}>
-                                <View style={styles.bullet} />
-                                <InterRegular style={styles.vendorTxt}>Category</InterRegular>
+                                <InterMedium style={styles.productName}>{productDetails?.title}</InterMedium>
+                                <View style={styles.priceContainer}>
+                                    <InterRegular style={styles.ratingTxt}>4.5 (100+)</InterRegular>
+                                    <InterBoldAverage style={styles.productPrice}>{productDetails?.price}</InterBoldAverage>
+                                </View>
+
                             </View>
 
-                            <View style={styles.bulletTextContainer}>
-                                <View style={styles.bullet} />
-                                <InterRegular style={styles.vendorTxt}>SKU:564</InterRegular>
+                            <View style={styles.vendorContainer}>
+                                <InterRegular style={styles.vendorTxt}>Vendor Abc</InterRegular>
+
+                                <View style={styles.bulletTextContainer}>
+                                    <View style={styles.bullet} />
+                                    <InterRegular style={styles.vendorTxt}>Category</InterRegular>
+                                </View>
+
+                                {/* <View style={styles.bulletTextContainer}>
+        <View style={styles.bullet} />
+        <InterRegular style={styles.vendorTxt}>SKU:564</InterRegular>
+    </View> */}
+
                             </View>
 
-                        </View>
 
 
-                        {/* <View style={styles.contentContainer}> */}
-                        {/* <MyStoreTopTabsNavigation /> */}
-                        {/* </View> */}
 
-                        <View style={styles.tabBar}>
-                            <TouchableOpacity
-                                style={[styles.tab, activeTab === 1 && styles.activeTab]}
-                                onPress={() => setActiveTab(1)}
-                            >
-                                <Text style={activeTab === 1 ? styles.activeText : styles.inactiveText}>Description</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                style={[styles.tab, activeTab === 2 && styles.activeTab]}
-                                onPress={() => setActiveTab(2)}
-                            >
-                                <Text style={activeTab === 2 ? styles.activeText : styles.inactiveText}>Rating</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                style={[styles.tab, activeTab === 3 && styles.activeTab]}
-                                onPress={() => setActiveTab(3)}
-                            >
-                                <Text style={activeTab === 3 ? styles.activeText : styles.inactiveText}>Similar Products</Text>
-                            </TouchableOpacity>
-                        </View>
+                            <View style={styles.tabBar}>
+                                <TouchableOpacity
+                                    style={[styles.tab, activeTab === 1 && styles.activeTab]}
+                                    onPress={() => setActiveTab(1)}
+                                >
+                                    <Text style={activeTab === 1 ? styles.activeText : styles.inactiveText}>Description</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={[styles.tab, activeTab === 2 && styles.activeTab]}
+                                    onPress={() => setActiveTab(2)}
+                                >
+                                    <Text style={activeTab === 2 ? styles.activeText : styles.inactiveText}>Rating</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={[styles.tab, activeTab === 3 && styles.activeTab]}
+                                    onPress={() => setActiveTab(3)}
+                                >
+                                    <Text style={activeTab === 3 ? styles.activeText : styles.inactiveText}>Similar Products</Text>
+                                </TouchableOpacity>
+                            </View>
 
-                        {/* <RatingandReviewComponent/> */}
-                        {renderContent()}
-                    </Card>
+                            {renderContent()}
+                        </Card>
+                    )}
+
 
                     <GeneralModal
                         visible={reportVisible}

@@ -15,6 +15,7 @@ import Notifications from '../../screens/Notifications';
 import ContactUs from '../../screens/ContactUs';
 import Saved from '../../screens/Saved';
 import CreatePostEdit from '../../screens/CreatePostEdit';
+import MyShop from '../../screens/MyShop';
 
 
 
@@ -37,6 +38,7 @@ const titles: { [key: string]: string } = {
     Marketplace: "Shops",
     Menu: "Menu",
     Shop: "Shop",
+    MyShop: "My Shop",
     ProductView: "Product View",
     BlockedUsers: "Blocked Users",
     MyOrders: "My Orders",

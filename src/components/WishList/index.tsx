@@ -26,38 +26,45 @@ interface WishlistProps {
 
 const WishlistScreen: React.FC<WishlistProps> = ({ wishlist, onAddToCart, onRemoveFromWishlist, heart, addCart, product, onPress }) => {
 
-    const renderItem = ({ item }) => (
-        <TouchableOpacity style={styles.productContainer}
-            // onPress={onPress}
-            onPress={() => onPress(item.id)}
-        >
-            <Image source={item?.banner ? { uri: item.banner } : null} style={styles.productImage} />
-            {heart &&
-                <TouchableOpacity onPress={() => onRemoveFromWishlist(item.id)} style={styles.heartIconContainer}>
-                    <Image source={images.heartIcon} />
-                </TouchableOpacity>
-            }
-            {addCart &&
-                <TouchableOpacity onPress={() => onAddToCart(item.id)} style={styles.addButton}>
-                    <Text style={styles.addButtonText}>+</Text>
-                </TouchableOpacity>
-            }
-            <View>
-                <View style={styles.productDetails}>
-
-                    <InterRegular style={styles.productName}>{product ? "Product Name" : item.shop_name}</InterRegular>
-                    {item.price ? (
-                        <InterBoldAverage style={styles.productPrice}>${item.price.toFixed(2)}</InterBoldAverage>
-                    ) : <Text> </Text>}
-                </View>
-                {product && item.size &&
-                    <InterRegular style={styles.product}>Size: {item.size}</InterRegular>
+    const renderItem = ({ item }) => {
+        console.log('====================================');
+        console.log(item, "Itemmmm frommmm my shoppppppp????");
+        console.log('====================================');
+        return (
+            <TouchableOpacity style={styles.productContainer}
+                // onPress={onPress}
+                onPress={() => onPress(item.id, item.user_id)}
+            >
+                <Image source={item?.banner ? { uri: item.banner } : item?.images[0].path ? { uri: item.images[0].path } : null} style={styles.productImage} />
+                {heart &&
+                    <TouchableOpacity onPress={() => onRemoveFromWishlist(item.id)} style={styles.heartIconContainer}>
+                        <Image source={images.heartIcon} />
+                    </TouchableOpacity>
                 }
-                {item.colors && <InterRegular style={styles.product}>Color: Red, Green, Blue</InterRegular>}
+                {addCart &&
+                    <TouchableOpacity onPress={() => onAddToCart(item.id)} style={styles.addButton}>
+                        <Text style={styles.addButtonText}>+</Text>
+                    </TouchableOpacity>
+                }
+                <View>
+                    <View style={styles.productDetails}>
 
-            </View>
-        </TouchableOpacity>
-    );
+                        <InterRegular style={styles.productName}>{product ? item?.title : item.shop_name}</InterRegular>
+                        {item?.price ? (
+                            <InterBoldAverage style={styles.productPrice}>$
+                                {Number(item?.price)?.toFixed(2)}
+                            </InterBoldAverage>
+                        ) : <Text> </Text>}
+                    </View>
+                    {product && item.size &&
+                        <InterRegular style={styles.product}>Size: {item.size}</InterRegular>
+                    }
+                    {item.colors && <InterRegular style={styles.product}>Color: Red, Green, Blue</InterRegular>}
+
+                </View>
+            </TouchableOpacity>
+        )
+    }
 
     const renderEmpty = () => (
         <View style={styles.emptyContainer}>

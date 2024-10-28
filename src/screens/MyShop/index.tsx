@@ -21,6 +21,7 @@ import GeneralModal from '../../components/GeneralModal';
 import SortModal from '../../components/SortModal';
 import { getProductByShop, shopDetail } from '../../api/shop';
 import CustomButton from '../../components/CustomButton';
+import Loader from '../../components/Loader';
 
 const dummyWishlist = [
     {
@@ -100,6 +101,8 @@ const MyShop: React.FC = () => {
     const [ReportSuccess, setReportSuccess] = useState(false);
     const [shopDetails, setShopDetails] = useState([]);
     const [shopProduct, setShopProduct] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [modalVisibleSort, setModalVisibleSort] = useState(false);
 
     // const [modalVisible, setModalVisible] = useState(false);
     const [sortValue, setSortValue] = useState<string>(''); // State for the selected sort value
@@ -155,15 +158,21 @@ const MyShop: React.FC = () => {
     }, [])
 
     const getData = async () => {
+        setLoading(true)
         const res = await shopDetail(shopId)
         const res2 = await getProductByShop(shopId)
 
         setShopDetails(res?.data?.data)
-        setShopProduct(res2?.data?.data)
-        console.log('====================================');
-        console.log(res?.data?.data, "====ressss");
-        console.log(res2?.data?.data, "====rssss producttttt");
-        console.log('====================================');
+        setShopProduct(res2?.data?.data?.data)
+        setLoading(false)
+        // console.log('====================================');
+        // console.log(res?.data?.data, "====ressss");
+        // console.log(res2?.data?.data, "====rssss producttttt");
+        // console.log('====================================');
+    }
+
+    if (loading) {
+        return (<Loader />)
     }
 
 
@@ -184,12 +193,12 @@ const MyShop: React.FC = () => {
 
                     <Card style={styles.contentContainer}>
 
-                        <View style={styles.banner}>
+                        {/* <View style={styles.banner}>
                             <Image
                                 // source={images.shop11} 
                                 source={{ uri: shopDetails?.banner }}
                                 style={styles.imageStyle} />
-                        </View>
+                        </View> */}
 
                         <View style={styles.sortConatiner}>
                             <InterMedium style={styles.mainheading}>Shop Name</InterMedium>
@@ -199,7 +208,7 @@ const MyShop: React.FC = () => {
                                 </InterRegular>
                                 <View>
                                     <TouchableOpacity
-                                        onPress={() => setModalVisible(true)}
+                                        onPress={() => setModalVisibleSort(true)}
                                         style={styles.sortInput}
                                     >
                                         <Text style={styles.sortText}>
@@ -243,7 +252,14 @@ const MyShop: React.FC = () => {
                             heart={true}
                             addCart={true}
                             product={true}
-                            onPress={() => navigation.navigate("ProductView")}
+                            onPress={(id) => {
+                                console.log('====================================');
+                                console.log(id, "Id Frommm producttt");
+                                console.log('====================================');
+                                // navigation.navigate("ProductView")
+                                navigation.navigate("ProductView", { productId: id })
+
+                            }}
 
                         />
                         <View style={styles.btnConatiner}>
@@ -267,8 +283,8 @@ const MyShop: React.FC = () => {
 
                     </Card>
                     <SortModal
-                        visible={modalVisible}
-                        onClose={() => setModalVisible(false)}
+                        visible={modalVisibleSort}
+                        onClose={() => setModalVisibleSort(false)}
                         onSelect={handleSelectSort}
                     />
                     <GeneralModal

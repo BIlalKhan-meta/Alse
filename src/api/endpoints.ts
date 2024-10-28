@@ -41,6 +41,9 @@ const endpoints = {
     createShop: '/shop/create',
     shopDetail: '/shop',
   },
+  products: {
+    productDetail: '/product',
+  },
   education: {
     getArticles: '/articles',
     getBlogs: '/blogs',

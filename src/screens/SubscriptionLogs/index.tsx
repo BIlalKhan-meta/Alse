@@ -10,6 +10,7 @@ import InterRegular from '../../components/Text/InterRegular';
 import { colors } from '../../utils/theme';
 import { GetSubscriptionsLogs } from '../../api/subscription';
 import moment from 'moment';
+import { current } from '@reduxjs/toolkit';
 
 // Sample data with ISO date formats for better comparison
 const subscriptionLogs = [
@@ -26,32 +27,38 @@ const SubscriptionLogs: React.FC = () => {
     const [toDate, setToDate] = useState<Date>(new Date());
     const [activeTab, setActiveTab] = useState<'current' | 'past'>('current');
     const [subscriptionLogs, setSubscriptionLogs] = useState([]);
+    const [pastSubscriptionLogs, setPastSubscriptionLogs] = useState([]);
     const [loading, setLoading] = useState(false);
     // Function to check if a subscription is current based on today's date
-    const isCurrentSubscription = (subscriptionDate: string, expirationDate: string): boolean => {
-        const today = new Date();
-        const subscription = new Date(subscriptionDate);
-        const expiration = new Date(expirationDate);
-        return subscription <= today && today <= expiration;
-    };
+    // const isCurrentSubscription = (subscriptionDate: string, expirationDate: string): boolean => {
+    //     const today = new Date();
+    //     const subscription = new Date(subscriptionDate);
+    //     const expiration = new Date(expirationDate);
+    //     return subscription <= today && today <= expiration;
+    // };
 
-    // Filter subscriptions based on the selected tab
-    const filteredSubscriptions = subscriptionLogs.filter(subscription => {
-        if (activeTab === 'current') {
-            return isCurrentSubscription(subscription.subscriptionDate, subscription.expirationDate);
-        } else {
-            return !isCurrentSubscription(subscription.subscriptionDate, subscription.expirationDate);
-        }
-    });
+    // // Filter subscriptions based on the selected tab
+    // const filteredSubscriptions = subscriptionLogs.filter(subscription => {
+    //     if (activeTab === 'current') {
+    //         return isCurrentSubscription(subscription.subscriptionDate, subscription.expirationDate);
+    //     } else {
+    //         return !isCurrentSubscription(subscription.subscriptionDate, subscription.expirationDate);
+    //     }
+    // });
 
 
     const getApi = async () => {
         setLoading(true);
         const res = await GetSubscriptionsLogs();
         console.log('====================================');
-        console.log(res?.data?.data?.data, "Subscriptionnn resss");
+        console.log(res?.data?.data?.current, "Subscriptionnn resss");
         console.log('====================================');
-        setSubscriptionLogs(res?.data?.data?.data);
+        if (res?.data?.data?.current) {
+
+            setSubscriptionLogs(res?.data?.data?.current);
+        } else {
+            setPastSubscriptionLogs(res?.data?.data?.past)
+        }
         setLoading(false);
     };
 
@@ -60,6 +67,14 @@ const SubscriptionLogs: React.FC = () => {
             getApi();
         }, []),
     );
+
+    const renderEmpty = () => (
+        <View style={styles.emptyContainer}>
+            <InterRegular style={styles.emptyText}>No Subscription to Show.</InterRegular>
+        </View>
+    );
+
+    console.log(subscriptionLogs)
 
 
 
@@ -91,33 +106,68 @@ const SubscriptionLogs: React.FC = () => {
                 </TouchableOpacity>
             </View>
 
-            <FlatList
-                data={subscriptionLogs}
-                renderItem={({ item }) => (
-                    <Card style={styles.card}>
-                        <View style={styles.topHead}>
-                            <InterMedium style={styles.heading}>Subscription Type</InterMedium>
-                            <InterMedium style={styles.heading}>$ {item.price}</InterMedium>
-                        </View>
-                        <View style={styles.topHead}>
-                            <InterRegular style={styles.value}>{item.plan_name}</InterRegular>
-                            <InterRegular style={styles.value}>{null}</InterRegular>
-                        </View>
+            {activeTab == "current" ? (
+                <>
 
-                        <View style={styles.topHead}>
-                            <InterMedium style={styles.heading}>Subscribed On</InterMedium>
-                            {activeTab !== 'past' && <InterMedium style={styles.heading}>Expires On</InterMedium>}
-                        </View>
-                        <View style={styles.topHead}>
-                            <InterRegular style={styles.value}>{item.date}</InterRegular>
-                            {activeTab !== 'past' && <InterRegular style={styles.value}>{moment(item.end_at).format("YYYY-MM-DD")}</InterRegular>}
-                        </View>
-                    </Card>
-                )}
-                keyExtractor={item => item.id}
-                contentContainerStyle={styles.listContainer}
-                showsVerticalScrollIndicator={false}
-            />
+                    {subscriptionLogs !== [] ? (
+
+                        <Card style={styles.card}>
+                            <View style={styles.topHead}>
+                                <InterMedium style={styles.heading}>Subscription Type</InterMedium>
+                                <InterMedium style={styles.heading}>$ {subscriptionLogs?.price}</InterMedium>
+                            </View>
+                            <View style={styles.topHead}>
+                                <InterRegular style={styles.value}>{subscriptionLogs?.plan_name}</InterRegular>
+                                <InterRegular style={styles.value}>{null}</InterRegular>
+                            </View>
+
+                            <View style={styles.topHead}>
+                                <InterMedium style={styles.heading}>Subscribed On</InterMedium>
+                                {activeTab !== 'past' && <InterMedium style={styles.heading}>Expires On</InterMedium>}
+                            </View>
+                            <View style={styles.topHead}>
+                                <InterRegular style={styles.value}>{subscriptionLogs?.date}</InterRegular>
+                                {activeTab !== 'past' && <InterRegular style={styles.value}>{moment(subscriptionLogs?.end_at).format("YYYY-MM-DD")}</InterRegular>}
+                            </View>
+                        </Card>
+                    ) : (
+                        renderEmpty()
+                    )}
+                </>
+
+            ) : (
+                <FlatList
+                    data={pastSubscriptionLogs}
+                    renderItem={({ item }) => (
+                        <Card style={styles.card}>
+                            <View style={styles.topHead}>
+                                <InterMedium style={styles.heading}>Subscription Type</InterMedium>
+                                <InterMedium style={styles.heading}>$ {item.price}</InterMedium>
+                            </View>
+                            <View style={styles.topHead}>
+                                <InterRegular style={styles.value}>{item.plan_name}</InterRegular>
+                                <InterRegular style={styles.value}>{null}</InterRegular>
+                            </View>
+
+                            <View style={styles.topHead}>
+                                <InterMedium style={styles.heading}>Subscribed On</InterMedium>
+                                {activeTab !== 'past' && <InterMedium style={styles.heading}>Expires On</InterMedium>}
+                            </View>
+                            <View style={styles.topHead}>
+                                <InterRegular style={styles.value}>{item.date}</InterRegular>
+                                {activeTab !== 'past' && <InterRegular style={styles.value}>{moment(item.end_at).format("YYYY-MM-DD")}</InterRegular>}
+                            </View>
+                        </Card>
+                    )}
+                    keyExtractor={item => item.id}
+                    contentContainerStyle={styles.listContainer}
+                    showsVerticalScrollIndicator={false}
+                    ListEmptyComponent={renderEmpty}
+
+                />
+            )}
+
+
         </View>
     );
 };

@@ -35,6 +35,8 @@ const AddProduct: React.FC = () => {
     const validationSchema = yup.object().shape({
         productTitle: yup.string().required('Product Title is required'),
         productDescription: yup.string().required('Product Description is required'),
+        // sku: yup.string().required('SKU is required'),
+        brand_name: yup.string().required('Brand Name is required'),
         // status: yup.string().required('Status is required'),
         // productImage: yup.string().required('Product Image is required'),
         price: yup.number().required('Price is required').positive('Price must be positive'),
@@ -44,6 +46,8 @@ const AddProduct: React.FC = () => {
     const initialValues = {
         productTitle: '',
         productDescription: '',
+        sku: '',
+        brand_name: '',
         // status: statuses[0].value, // Initialize with default value
         // productImage: '',
         price: '',
@@ -160,6 +164,24 @@ const AddProduct: React.FC = () => {
                             // multiline
                             // numberOfLines={4}
                             />
+
+                            <RegularTextInput
+                                label="Brand Name *"
+                                placeholder="Enter Brand Name"
+                                placeholderTextColor={colors.darkText}
+
+                                onChangeText={handleChange('brand_name')}
+                                onBlur={handleBlur('brand_name')}
+                                value={values.brand_name}
+                                errors={touched.brand_name && errors.brand_name}
+                                style={styles.inputStyle}
+                                submitted={submitted}
+
+                            // multiline
+                            // numberOfLines={4}
+                            />
+
+
 
                             <InterBoldLabel style={styles.dropdownLabel}>
                                 Status *

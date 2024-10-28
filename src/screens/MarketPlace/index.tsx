@@ -18,6 +18,9 @@ import WishlistScreen from '../../components/WishList';
 import SearchComponent from '../../components/SearchComponent';
 import CustomButton from '../../components/CustomButton';
 import { getAllShop } from '../../api/shop';
+import { useSelector } from 'react-redux';
+import { selectUserProfile } from '../../store/slices/authSlice';
+import Loader from '../../components/Loader';
 
 const posts = [
   {
@@ -112,9 +115,11 @@ const dummyShops = [
 
 const Marketplace: React.FC = () => {
   const navigation = useNavigation();
+  const user = useSelector(selectUserProfile);
 
   const [searchResults, setSearchResults] = useState<string[]>([]);
   const [shops, setShops] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const handleSearch = (query: string) => {
     console.log(`Searching for shops with query: ${query}`);
@@ -127,11 +132,19 @@ const Marketplace: React.FC = () => {
   }, [])
 
   const getData = async () => {
+    setLoading(true)
+
     const res = await getAllShop()
+    setLoading(false)
+
     setShops(res.data?.data?.data)
     console.log('====================================');
     console.log(res.data?.data?.data, "====ressss");
     console.log('====================================');
+  }
+
+  if (loading) {
+    return (<Loader />)
   }
 
   return (
@@ -149,9 +162,18 @@ const Marketplace: React.FC = () => {
           <SearchComponent onSearch={handleSearch} placeholder="Find shop" />
           <WishlistScreen
             wishlist={shops}
-            onPress={(shopId) => {
+            onPress={(shopId, userId) => {
+              console.log('====================================');
+              console.log(user, "User", "iddddddddd", userId);
+              console.log('====================================');
 
-              navigation.navigate("Shop", { shopId })
+              if (user.id == userId) {
+                navigation.navigate("MyShop", { shopId })
+
+              } else {
+                navigation.navigate("Shop", { shopId })
+
+              }
             }}
           />
 

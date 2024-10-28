@@ -14,8 +14,13 @@ import { useNavigation } from '@react-navigation/native';
 const colorsType = ['red', 'blue', 'green',];
 const sizes = ['S', 'M', 'L'];
 
-const StoreOrderComponent: React.FC = () => {
+const StoreOrderComponent: React.FC = (props) => {
+
     const navigation = useNavigation();
+    const productItem = props?.productItem;
+    console.log('====================================');
+    console.log(productItem, "Frommm propssssss ");
+    console.log('====================================');
     const [selectedColor, setSelectedColor] = useState<string | null>('red');
     const [selectedSize, setSelectedSize] = useState<string | null>('L');
 
@@ -49,7 +54,7 @@ const StoreOrderComponent: React.FC = () => {
 
             <View>
                 <InterRegular style={styles.label}>
-                    It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution.
+                    {productItem?.description}
                 </InterRegular>
             </View>
 
