@@ -1,18 +1,27 @@
-import React from "react";
-import { TextInput, TextInputProps, StyleProp, TextStyle, View, Image, TouchableOpacity, ViewStyle } from "react-native";
-import TextInputWrapper from '../TextInputWrapper'
-import { StyleSheet } from "react-native";
-import InterBoldLabel from "../../Text/InterBoldLabel";
-import { fontSizes, vh, vw } from "../../../constant";
-import { colors } from "../../../utils/theme";
-import fonts from "../../../assets/fonts";
+import React from 'react';
+import {
+  TextInput,
+  TextInputProps,
+  StyleProp,
+  TextStyle,
+  View,
+  Image,
+  TouchableOpacity,
+  ViewStyle,
+} from 'react-native';
+import TextInputWrapper from '../TextInputWrapper';
+import {StyleSheet} from 'react-native';
+import InterBoldLabel from '../../Text/InterBoldLabel';
+import {fontSizes, vh, vw} from '../../../constant';
+import {colors} from '../../../utils/theme';
+import fonts from '../../../assets/fonts';
 // import VisibilityOffIcon from '../../../assets/icons/visibilityofficon.png';
 // import EyeIcon from '../../../assets/icons/eyeicon.png';
-import InterRegularSmall from "../../Text/InterRegularSmall";
-import InterRegularSmaller from "../../Text/InterRegularSmaller";
-import InterRegularSmallest from "../../Text/InterRegularSmallest";
-import InterRegular from "../../Text/InterRegular";
-import { images } from "../../../utils/images";
+import InterRegularSmall from '../../Text/InterRegularSmall';
+import InterRegularSmaller from '../../Text/InterRegularSmaller';
+import InterRegularSmallest from '../../Text/InterRegularSmallest';
+import InterRegular from '../../Text/InterRegular';
+import {images} from '../../../utils/images';
 
 interface RegularTextInputProps extends TextInputProps {
   style?: StyleProp<ViewStyle>;
@@ -26,38 +35,72 @@ interface RegularTextInputProps extends TextInputProps {
   errors?: string;
   labelStyle?: StyleProp<TextStyle>;
   multiline?: boolean;
-  maxLength: number;
+  maxLength?: number;
 }
 
-const RegularTextInput: React.FC<RegularTextInputProps> = (props) => {
-  const textInputStyle = props.multiline ? styles.textinputMultiline : styles.textinput;
+const RegularTextInput: React.FC<RegularTextInputProps> = props => {
+  const textInputStyle = props.multiline
+    ? styles.textinputMultiline
+    : styles.textinput;
 
   return (
     <>
       <View style={[styles.container, props.containerStyle]}>
-        {props.label &&
+        {props.label && (
           <InterRegular style={[styles.label, props.labelStyle]}>
             {props?.label}
-          </InterRegular>}
-        <TextInputWrapper style={[textInputStyle, props.style]}
+          </InterRegular>
+        )}
+        <TextInputWrapper
+          style={[textInputStyle, props.style]}
           {...props}
           maxLength={props.maxLength}
         />
-        {(props.label === 'Password' || props.label === 'New Password') &&
-          <TouchableOpacity onPress={props?.onPressPassword} style={styles.eyeicon}>
-            <Image source={props?.secureTextEntry ? images.VisibilityOffIcon : images.EyeIcon} tintColor={colors.black} />
-          </TouchableOpacity>}
-
-        {(props.label === 'Confirm Password' || props.label === 'Confirm New Password') &&
-          <TouchableOpacity onPress={props?.onPressCPassword} style={styles.eyeicon}>
-            <Image source={props?.secureTextEntry ? images.VisibilityOffIcon : images.EyeIcon} tintColor={colors.black} />
-          </TouchableOpacity>}
-
-        {props.label === 'Current Password' &&
-          <TouchableOpacity onPress={props?.onPressCurrentPassword} style={styles.eyeicon}>
-            <Image source={props?.secureTextEntry ? images.EyeIcon : images.VisibilityOffIcon} tintColor={colors.black} />
+        {(props.label === 'Password' || props.label === 'New Password') && (
+          <TouchableOpacity
+            onPress={props?.onPressPassword}
+            style={styles.eyeicon}>
+            <Image
+              source={
+                props?.secureTextEntry
+                  ? images.VisibilityOffIcon
+                  : images.EyeIcon
+              }
+              tintColor={colors.black}
+            />
           </TouchableOpacity>
-        }
+        )}
+
+        {(props.label === 'Confirm Password' ||
+          props.label === 'Confirm New Password') && (
+          <TouchableOpacity
+            onPress={props?.onPressCPassword}
+            style={styles.eyeicon}>
+            <Image
+              source={
+                props?.secureTextEntry
+                  ? images.VisibilityOffIcon
+                  : images.EyeIcon
+              }
+              tintColor={colors.black}
+            />
+          </TouchableOpacity>
+        )}
+
+        {props.label === 'Current Password' && (
+          <TouchableOpacity
+            onPress={props?.onPressCurrentPassword}
+            style={styles.eyeicon}>
+            <Image
+              source={
+                props?.secureTextEntry
+                  ? images.EyeIcon
+                  : images.VisibilityOffIcon
+              }
+              tintColor={colors.black}
+            />
+          </TouchableOpacity>
+        )}
 
         {/* {props.label=== 'New Password' && 
         <TouchableOpacity onPress={props?.onPressPassword} style={styles.eyeicon}>
@@ -68,24 +111,23 @@ const RegularTextInput: React.FC<RegularTextInputProps> = (props) => {
         <TouchableOpacity onPress={props?.onPressCPassword} style={styles.eyeicon}>
         <Image source={props?.secureTextEntry ? EyeIcon : VisibilityOffIcon}/>
         </TouchableOpacity>} */}
-
-
       </View>
 
-      {props?.errors &&
+      {props?.errors && (
         <InterRegularSmallest style={styles.error}>
           {props?.errors}
-        </InterRegularSmallest>}
+        </InterRegularSmallest>
+      )}
     </>
-  )
-}
+  );
+};
 
 const styles = StyleSheet.create({
-  container: { marginTop: vh * 4 },
+  container: {marginTop: vh * 4},
   label: {
     marginLeft: vw * 2,
     color: colors.black,
-    fontSize: fontSizes.f14
+    fontSize: fontSizes.f14,
   },
   textinput: {
     // fontFamily: fonts.Inter.Bold,
@@ -116,19 +158,18 @@ const styles = StyleSheet.create({
     // backgroundColor:'rgba(48, 86, 112, 0.05)',
     backgroundColor: colors.inputcolor,
     textAlignVertical: 'top',
-
   },
   eyeicon: {
     position: 'absolute',
     marginTop: vh * 7,
     marginLeft: vw * 77,
     height: vh * 4,
-    width: vw * 8
+    width: vw * 8,
   },
   error: {
     color: colors.redText,
-    marginTop: vh * 1
-  }
+    marginTop: vh * 1,
+  },
 });
 
-export default RegularTextInput; 
+export default RegularTextInput;

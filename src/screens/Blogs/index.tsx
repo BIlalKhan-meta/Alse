@@ -1,33 +1,28 @@
 // Home.tsx
 import React, {act, useEffect, useLayoutEffect, useState} from 'react';
-import {
-  View,
-  TouchableOpacity,
-  FlatList,
-  ActivityIndicator,
-} from 'react-native';
+import {View, TouchableOpacity, FlatList} from 'react-native';
 import {colors} from '../../utils/theme';
 import Card from '../../components/Card';
 import styles from './styles';
 import {useNavigation} from '@react-navigation/native';
 import InterRegular from '../../components/Text/InterRegular';
 import ContentSavedScreen from '../../components/ContentSaved';
-import {dummyContentSaved} from '../../dummyData';
 import CustomButton from '../../components/CustomButton';
 import MediaCard from '../../components/MediaCard';
 import {getArticles, getBlogs, getVideos} from '../../api/education';
 import {vh} from '../../constant';
 import {EmptyComponent} from '../../components/EmptyComponent';
-import {images} from '../../utils/images';
 import Loader from '../../components/Loader';
-
-const mediaData = [];
+import {useSelector} from 'react-redux';
+import {selectUserProfile} from '../../store/slices/authSlice';
 
 const Blogs: React.FC = () => {
   const navigation = useNavigation();
   const [active, setActive] = useState<number>(1);
   const [display, setDisplay] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  const user = useSelector(selectUserProfile);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -48,8 +43,11 @@ const Blogs: React.FC = () => {
       } else {
         res = await getVideos();
       }
+
       if (res?.data) {
-        setDisplay(res.data.data.data);
+        setDisplay(
+          res.data.data.data.filter((item: any) => item.user_id != user.id),
+        );
       }
     } catch (err) {
       console.error('GET ARTTTTTTICLESSSS ERRORRR', err);
@@ -75,7 +73,16 @@ const Blogs: React.FC = () => {
         ListFooterComponent={() => (
           <CustomButton
             style={styles.btn}
-            onPress={() => navigation.navigate('MyBlogs', {title})}>
+            onPress={() =>
+              navigation.navigate('MyBlogs', {
+                title:
+                  active == 1
+                    ? 'My Articles'
+                    : active == 2
+                    ? 'My Blogs'
+                    : 'My Videos',
+              })
+            }>
             {title}
           </CustomButton>
         )}
@@ -88,11 +95,12 @@ const Blogs: React.FC = () => {
       {active == 1 || active == 2 ? (
         <ContentSavedScreen
           item={item}
+          userId={user?.id}
           viewBtn="View Full Article"
           onItemPress={() =>
             navigation.navigate('ViewBlog', {
-              id: item.id,
-              title: active == 1 ? 'View Article' : 'View Blog',
+              id: item?.id,
+              title: item?.title,
             })
           }
         />
@@ -101,11 +109,15 @@ const Blogs: React.FC = () => {
           type={'video'}
           source={item?.video}
           title={item?.title}
-          description={item?.description}
+          description={item?.content}
           category={item?.category?.title}
           onBookmarkPress={() => {}}
           onItemPress={() =>
-            navigation.navigate('ViewBlog', {item, title: 'Video', edit: true})
+            navigation.navigate('ViewBlog', {
+              id: item?.id,
+              title: item?.title,
+              type: 'video',
+            })
           }
         />
       )}

@@ -53,8 +53,7 @@ export const images = {
   recordingIcon: require('../assets/Icons/recordingIcon.png'),
   face: require('../assets/Icons/face.png'),
   calendericon: require('../assets/Icons/calendericon.png'),
-
-
+  cross: require('../assets/Icons/cross.png'),
 
   //Imagesssss/////
   shop1: require('../assets/images/shop1.png'),

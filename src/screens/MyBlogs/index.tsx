@@ -1,118 +1,155 @@
-
-
-import { useNavigation, useRoute } from '@react-navigation/native';
-import React, { useLayoutEffect } from 'react';
-import { FlatList, ScrollView, Text, TouchableOpacity, View } from 'react-native';
-import { colors } from '../../utils/theme';
+import {useIsFocused, useNavigation, useRoute} from '@react-navigation/native';
+import React, {useEffect, useLayoutEffect, useState} from 'react';
+import {FlatList, ScrollView, Text, TouchableOpacity, View} from 'react-native';
+import {colors} from '../../utils/theme';
 import InterMedium from '../../components/Text/InterMedium';
 import styles from './styles';
-import { dummyContentSaved } from '../../dummyData';
 import Card from '../../components/Card';
 import ContentSavedScreen from '../../components/ContentSaved';
-import CustomButton from '../../components/CustomButton';
 import MediaCard from '../../components/MediaCard';
+import {selectUserProfile} from '../../store/slices/authSlice';
+import {useSelector} from 'react-redux';
+import {getMyArticles, getMyBlogs, getMyVideos} from '../../api/education';
+import Loader from '../../components/Loader';
+import {EmptyComponent} from '../../components/EmptyComponent';
 
-
-const mediaData = [
-    {
-        id: 1,
-        type: 'video',
-        source: 'https://example.com/video.mp4',
-        title: 'Topic Name',
-        description: 'It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout.',
-        category: 'Category A',
-    },
-    {
-        id: 2,
-        type: 'video',
-        source: 'https://example.com/video.mp4',
-        title: 'Topic Name',
-        description: 'It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout.',
-        category: 'Category A',
-    },
-    // Add more items as needed
-];
 const MyBlogs: React.FC = () => {
-    const navigation = useNavigation();
-    const route = useRoute();
-    const title = route?.params?.title || ""
+  const navigation = useNavigation();
+  const route = useRoute();
+  const title = route?.params?.title || '';
 
+  const [loading, setLoading] = useState(false);
+  const [display, setDisplay] = useState([]);
 
-    useLayoutEffect(() => {
-        navigation.setOptions({
-            headerStyle: {
-                backgroundColor: colors.headerColor
-            },
-            title: title,
-            headerRight: () => (
-                <TouchableOpacity style={styles.postButton} onPress={() => {
-                    if (title == "My Blogs") {
-                        navigation.navigate("AddBlog", { title: "Add Blog" })
-                    } else if (title == "My Videos") {
-                        navigation.navigate("AddBlog", { title: "Add Videos" })
+  const user = useSelector(selectUserProfile);
+  const isFocused = useIsFocused();
 
-                    } else {
-                        navigation.navigate("AddBlog", { title: "Add Article" })
-                    }
-                }}>
-                    <InterMedium style={styles.postTxt}>{title == "My Blogs" ? "Add Blog" : title == "My Videos" ? "Add Videos" : "Add Article"}</InterMedium>
-                </TouchableOpacity>
-            ),
-        });
-    }, [navigation]);
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      let res;
+      if (title == 'My Articles') {
+        res = await getMyArticles();
+      } else if (title == 'My Blogs') {
+        res = await getMyBlogs();
+      } else {
+        res = await getMyVideos();
+      }
 
-    return (
-        <ScrollView
-            showsVerticalScrollIndicator={false}
-        >
-            <View style={styles.container}>
-                {title == "My Videos" ? (
-                    <FlatList
-                        data={mediaData}
-                        renderItem={({ item }) => (
-                            <Card style={styles.itemCard}>
-                                <MediaCard
-                                    type={item.type}
-                                    source={item.source}
-                                    title={item.title}
-                                    description={item.description}
-                                    category={item.category}
-                                    onBookmarkPress={() => { }}
-                                    onItemPress={() => navigation.navigate("ViewBlog", { item, title: "Video", edit: true })}
+      if (res?.data) {
+        setDisplay(res.data.data.data);
+      }
+    } catch (err) {
+      console.error('GET ARTTTTTTICLESSSS ERRORRR', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-                                />
-                            </Card>
-                        )}
-                        keyExtractor={(item) => item.id}
-                        contentContainerStyle={styles.container}
-                    />
-                ) : (
-                    <FlatList
-                        data={dummyContentSaved}
-                        renderItem={({ item }) => (
-                            <Card style={styles.itemCard}>
-                                <ContentSavedScreen
-                                    item={item}
-                                    ContentSaved={dummyContentSaved}
-                                    title={title == "My Blogs" ? 'Blog Title' : "Article Title"}
-                                    viewBtn='View Full Blog'
-                                    onItemPress={() => navigation.navigate("ViewBlog", { item, title: title == "My Blogs" ? 'Blog Title' : "Article Title", edit: true })}
-                                //  onAddToCart={handleAddToCart}
-                                // onRemoveFromWishlist={handleRemoveFromWishlist}
-                                />
-                            </Card>
-                        )}
-                        keyExtractor={(item) => item.id}
-                        contentContainerStyle={styles.container}
-                    />
-                )}
+  useEffect(() => {
+    fetchData();
+  }, [title, isFocused]);
 
-            </View>
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerStyle: {
+        backgroundColor: colors.headerColor,
+      },
+      title: title,
+      headerRight: () => (
+        <TouchableOpacity
+          style={styles.postButton}
+          onPress={() => {
+            if (title == 'My Blogs') {
+              navigation.navigate('AddBlog', {title: 'Add Blog'});
+            } else if (title == 'My Videos') {
+              navigation.navigate('AddBlog', {title: 'Add Videos'});
+            } else {
+              navigation.navigate('AddBlog', {title: 'Add Article'});
+            }
+          }}>
+          <InterMedium style={styles.postTxt}>
+            {title == 'My Blogs'
+              ? 'Add Blog'
+              : title == 'My Videos'
+              ? 'Add Videos'
+              : 'Add Article'}
+          </InterMedium>
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation]);
 
+  return (
+    <View style={styles.container}>
+      {loading ? (
+        <Loader />
+      ) : display.length == 0 ? (
+        <EmptyComponent text={'No Data Available'} />
+      ) : title == 'My Videos' ? (
+        <FlatList
+          data={display}
+          renderItem={({item}) => (
+            <Card style={styles.itemCard}>
+              <MediaCard
+                type={item?.type}
+                source={item?.source}
+                title={item?.title}
+                // description={item.description}
+                category={item.category}
+                onBookmarkPress={() => {}}
+                onItemPress={() =>
+                  navigation.navigate('ViewBlog', {
+                    id: item?.id,
+                    title: item?.title,
+                    type: 'video',
+                  })
+                }
+              />
+            </Card>
+          )}
+          keyExtractor={item => item.id}
+          contentContainerStyle={styles.container}
+        />
+      ) : (
+        <FlatList
+          data={display}
+          renderItem={({item}) => (
+            <Card style={styles.itemCard}>
+              <ContentSavedScreen
+                item={item}
+                userId={user?.id}
+                title={title == 'My Blogs' ? 'Blog Title' : 'Article Title'}
+                viewBtn="View Full Blog"
+                onItemPress={() =>
+                  // navigation.navigate('ViewBlog', {
+                  //   item,
+                  //   title: title == 'My Blogs' ? 'Blog Title' : 'Article Title',
+                  //   edit: true,
+                  // })
 
-        </ScrollView>
-    );
+                  navigation.navigate('ViewBlog', {
+                    id: item?.id,
+                    title: item?.title,
+                    type:
+                      title == 'My Blogs'
+                        ? 'blog'
+                        : title == 'My Articles'
+                        ? 'article'
+                        : null,
+                  })
+                }
+                //  onAddToCart={handleAddToCart}
+                // onRemoveFromWishlist={handleRemoveFromWishlist}
+              />
+            </Card>
+          )}
+          keyExtractor={item => item.id}
+          contentContainerStyle={styles.container}
+        />
+      )}
+    </View>
+  );
 };
 
 export default MyBlogs;
-

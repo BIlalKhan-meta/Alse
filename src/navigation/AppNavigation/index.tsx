@@ -36,6 +36,7 @@ import { selectBearerToken } from "../../store/slices/authSlice";
 import CreatePostEdit from "../../screens/CreatePostEdit";
 import AddProduct from "../../screens/AddProduct";
 import MyShop from "../../screens/MyShop";
+import EditBlog from "../../screens/EditBlog";
 
 
 
@@ -44,9 +45,9 @@ import MyShop from "../../screens/MyShop";
 const AppNavigation = () => {
   const Stack = createNativeStackNavigator();
   const token = useSelector(selectBearerToken);
-  console.log('====================================');
-  console.log("Here ss=sss>", token);
-  console.log('====================================');
+  // console.log('====================================');
+  // console.log("Here ss=sss>", token);
+  // console.log('====================================');
   return (
     <Stack.Navigator
       screenOptions={{ headerShown: false }}
@@ -76,6 +77,7 @@ const AppNavigation = () => {
         <Stack.Screen name="ViewBlog" component={ViewBlog} options={NavigationOptions} />
         <Stack.Screen name="MyBlogs" component={MyBlogs} options={NavigationOptions} />
         <Stack.Screen name="AddBlog" component={AddBlog} options={NavigationOptions} />
+        <Stack.Screen name="EditBlog" component={EditBlog} options={NavigationOptions} />
         <Stack.Screen name="SavedChat" component={SavedChat} options={NavigationOptions} />
         <Stack.Screen name="SavedChatDetail" component={SavedChatDetail} options={NavigationOptions} />
         <Stack.Screen name="SavedScripts" component={SavedScripts} options={NavigationOptions} />

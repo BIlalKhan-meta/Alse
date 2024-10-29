@@ -25,11 +25,12 @@ interface Product {
 interface ContentSavedProps {
   title: string;
   viewBtn: string;
-  item: {};
+  item: any;
   onAddToCart: (productId: string) => void;
   onRemoveFromContentSaved: (productId: string) => void;
   onItemPress: () => void;
   style: ViewStyle;
+  userId: number;
 }
 
 const ContentSavedScreen: React.FC<ContentSavedProps> = ({
@@ -38,9 +39,9 @@ const ContentSavedScreen: React.FC<ContentSavedProps> = ({
   onRemoveFromContentSaved,
   viewBtn,
   onItemPress,
+  userId,
   style,
 }) => {
-
   return (
     <TouchableOpacity
       style={[styles.productContainer, style]}
@@ -64,17 +65,13 @@ const ContentSavedScreen: React.FC<ContentSavedProps> = ({
             </TouchableOpacity>
           )}
         </View>
-        {item.active ? (
+        {userId == item?.user_id && (
           <TouchableOpacity
             // onPress={() => onAddToCart(item.id)}
-            style={styles.activeButton}>
-            <InterRegular style={styles.addButtonText}>Active</InterRegular>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity
-            // onPress={() => onAddToCart(item.id)}
-            style={styles.inactiveButton}>
-            <InterRegular style={styles.addButtonText}>InActive</InterRegular>
+            style={item?.status ? styles.activeButton : styles.inactiveButton}>
+            <InterRegular style={styles.addButtonText}>
+              {item?.status ? 'Active' : 'Inactive'}
+            </InterRegular>
           </TouchableOpacity>
         )}
       </View>
