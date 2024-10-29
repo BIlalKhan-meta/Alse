@@ -35,6 +35,7 @@ import { useSelector } from "react-redux";
 import { selectBearerToken } from "../../store/slices/authSlice";
 import CreatePostEdit from "../../screens/CreatePostEdit";
 import AddProduct from "../../screens/AddProduct";
+import EditBlog from "../../screens/EditBlog";
 
 
 
@@ -75,6 +76,7 @@ const AppNavigation = () => {
         <Stack.Screen name="ViewBlog" component={ViewBlog} options={NavigationOptions} />
         <Stack.Screen name="MyBlogs" component={MyBlogs} options={NavigationOptions} />
         <Stack.Screen name="AddBlog" component={AddBlog} options={NavigationOptions} />
+        <Stack.Screen name="EditBlog" component={EditBlog} options={NavigationOptions} />
         <Stack.Screen name="SavedChat" component={SavedChat} options={NavigationOptions} />
         <Stack.Screen name="SavedChatDetail" component={SavedChatDetail} options={NavigationOptions} />
         <Stack.Screen name="SavedScripts" component={SavedScripts} options={NavigationOptions} />

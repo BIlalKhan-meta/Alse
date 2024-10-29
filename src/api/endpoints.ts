@@ -47,11 +47,16 @@ const endpoints = {
     getVideos: '/videos',
     getBlog: '/blog',
     getArticle: '/article',
+    getVideo: '/video',
+    similarVideos :"/video",
     getMyBlogs: '/blogs/current-user',
     getMyArticles: '/articles/current-user',
     getMyVideos: '/videos/current-user',
     createArticle: '/article/create',
     createBlog: '/blog/create',
+    createVideo : '/video/create',
+    updateArticleStatus : '/article/update-status',
+    updateBlogStatus : '/blog/update-status'
   },
 };
 

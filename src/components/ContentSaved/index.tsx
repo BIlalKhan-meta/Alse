@@ -68,9 +68,9 @@ const ContentSavedScreen: React.FC<ContentSavedProps> = ({
         {userId == item?.user_id && (
           <TouchableOpacity
             // onPress={() => onAddToCart(item.id)}
-            style={item?.active ? styles.activeButton : styles.inactiveButton}>
+            style={item?.status ? styles.activeButton : styles.inactiveButton}>
             <InterRegular style={styles.addButtonText}>
-              {item?.active ? 'Active' : 'Inactive'}
+              {item?.status ? 'Active' : 'Inactive'}
             </InterRegular>
           </TouchableOpacity>
         )}

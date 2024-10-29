@@ -19,7 +19,7 @@ import Toast from 'react-native-toast-message';
 import Row from '../../components/Row';
 import {vh} from '../../constant';
 import InterLightSmall from '../../components/Text/InterLightSmall';
-import {createArticle, createBlog, createVideo} from '../../api/education';
+import {createArticle, createBlog} from '../../api/education';
 
 const statuses = [
   {label: 'Active', value: 'active'},
@@ -48,16 +48,26 @@ const videoSchema = yup.object().shape({
 //   status: '',
 // };
 
-const AddBlog = () => {
+const EditBlog = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const title = route?.params?.title || '';
   const editItem = route?.params?.item || {};
   const [selected, setSelected] = useState('children');
   const [visible, setVisible] = useState(false);
-  const [media, setMedia] = useState<object[]>([]);
-  const {image, imageData, captureImage, chooseImageFromLibrary} =
-    useImagePicker();
+  const [media, setMedia] = useState<object[]>(
+    // [
+    //   {
+    //     uri: editItem[
+    //       title == 'Update Blog' || 'Update Article' ? 'image' : 'video'
+    //     ],
+    //     type : ''
+    //   },
+    // ]
+    // ||
+    [],
+  );
+  const {imageData, captureImage, chooseImageFromLibrary} = useImagePicker();
   const [loading, setLoading] = useState(false);
 
   const initialValues = {
@@ -76,11 +86,14 @@ const AddBlog = () => {
     });
   }, [navigation]);
 
+  console.log(imageData);
+
+
   const handleForm = async (data: any) => {
     if (media.length == 0) {
       return Toast.show({
-        text1: 'Upload Images',
-        text2: 'Minimum 1 Image is Required',
+        text1: 'Upload Media',
+        text2: 'Minimum 1 Media is Required',
         type: 'error',
       });
     }
@@ -89,9 +102,9 @@ const AddBlog = () => {
     const temp = {
       ...data,
       privacy: selected,
-      ...(title == 'Add Blog' ? {blog_image: media[0]} : {}),
-      ...(title == 'Add Article' ? {article_image: media[0]} : {}),
-      ...(title == 'Add Videos' ? {video_file: media[0]} : {}),
+      ...(title == 'Add Blog'&& imageData ? {blog_image: imageData} : {}),
+      ...(title == 'Add Article' && imageData ? {article_image: imageData} : {}),
+      ...(title == 'Add Videos' && imageData ? {video_file: imageData} : {}),
     };
 
     const form = new FormData();
@@ -126,21 +139,8 @@ const AddBlog = () => {
         .finally(() => {
           setLoading(false);
         });
-    } else {
-      await createVideo(form)
-        .then(res => {
-          if (res?.data) {
-            console.log('VIDEOOOOOOOOOOO', res?.data);
-            navigation.goBack();
-          }
-        })
-        .catch(err => {
-          console.log('ADDDDD Article ERRRORRRRR', err);
-        })
-        .finally(() => {
-          setLoading(false);
-        });
     }
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -169,11 +169,7 @@ const AddBlog = () => {
         onClose={() => setVisible(false)}
         visible={visible}
         button={[
-          {
-            text: 'Open Camera',
-            onPress: () =>
-              captureImage(title == 'Add Videos' ? 'video' : 'photo'),
-          },
+          {text: 'Open Camera', onPress: () => captureImage('photo')},
           {text: 'Open Gallery', onPress: chooseImageFromLibrary},
         ]}
       />
@@ -248,7 +244,7 @@ const AddBlog = () => {
 
             <TouchableOpacity
               onPress={() => setVisible(true)}
-              disabled={media.length > 0}
+              disabled={media.length>0}
               style={styles.uploadBtn}>
               <InterRegular style={styles.uploadTxt}>Upload</InterRegular>
               <Image source={images.upload} style={styles.uploadImg} />
@@ -332,4 +328,4 @@ const AddBlog = () => {
   );
 };
 
-export default AddBlog;
+export default EditBlog;

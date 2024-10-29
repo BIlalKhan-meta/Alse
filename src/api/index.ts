@@ -21,12 +21,14 @@ axiosInstance.interceptors.request.use(
       (config.headers['Accept'] = 'application/json'),
         (config.headers['Content-Type'] = 'multipart/form-data');
     } else {
+      // config.headers['Content-Type'] = 'multipart/form-data';
       config.headers['Content-Type'] = 'application/json';
     }
 
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
     }
+    // console.log('HEADERRSSSSSSSSSS', config.headers);
 
     return config;
   },

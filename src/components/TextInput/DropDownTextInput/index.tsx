@@ -1,9 +1,9 @@
 // DropdownComponent.tsx
-import React, { useEffect, useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import DropDownPicker from 'react-native-dropdown-picker';
 // import styles from './styles'
-import { StyleProp, StyleSheet, Text, TextStyle, ViewStyle } from 'react-native';
-import { colors } from '../../../utils/theme';
+import {StyleProp, StyleSheet, Text, TextStyle, ViewStyle} from 'react-native';
+import {colors} from '../../../utils/theme';
 interface DropdownItem {
   label: string;
   value: string;
@@ -13,8 +13,8 @@ interface DropdownComponentProps {
   items: DropdownItem[];
   placeholder: string;
   defaultValue?: string;
-  onChangeValue?: (value: string | null) => void;
-  style?: StyleProp<ViewStyle>
+  onChangeValue: (value: string) => void;
+  style?: StyleProp<ViewStyle>;
 }
 
 const DropDownTextInput: React.FC<DropdownComponentProps> = ({
@@ -22,7 +22,7 @@ const DropDownTextInput: React.FC<DropdownComponentProps> = ({
   placeholder,
   defaultValue = null,
   onChangeValue,
-  style
+  style,
 }) => {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState<string | null>(defaultValue);
@@ -36,18 +36,18 @@ const DropDownTextInput: React.FC<DropdownComponentProps> = ({
       value={value}
       items={dropdownItems}
       setOpen={setOpen}
-      setValue={(val) => {
-        setValue(val);
-        if (onChangeValue) {
-          onChangeValue(val);
-        }
-      }}
+      // setValue={(val) => {
+      //   setValue(val);
+      //   if (onChangeValue) {
+      //     onChangeValue(val);
+      //   }
+      // }}
+      onSelectItem={e => onChangeValue(e?.value)}
+      // zIndex={100}
       setItems={setDropdownItems}
       placeholder={placeholder}
       style={[styles.dropdown, style]}
-
-      iconContainerStyle={{ backgroundColor: colors.pattenBlue }}
-
+      iconContainerStyle={{backgroundColor: colors.pattenBlue}}
     />
   );
 };
@@ -58,8 +58,7 @@ const styles = StyleSheet.create({
     //   borderColor: 'grey',
     borderRadius: 10,
     opacity: 0.3,
-    color: "red",
-
+    color: 'red',
   },
 
   icon: {

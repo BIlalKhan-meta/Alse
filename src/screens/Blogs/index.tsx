@@ -99,8 +99,8 @@ const Blogs: React.FC = () => {
           viewBtn="View Full Article"
           onItemPress={() =>
             navigation.navigate('ViewBlog', {
-              id: item.id,
-              title: active == 1 ? 'View Article' : 'View Blog',
+              id: item?.id,
+              title: item?.title,
             })
           }
         />
@@ -109,11 +109,15 @@ const Blogs: React.FC = () => {
           type={'video'}
           source={item?.video}
           title={item?.title}
-          description={item?.description}
+          description={item?.content}
           category={item?.category?.title}
           onBookmarkPress={() => {}}
           onItemPress={() =>
-            navigation.navigate('ViewBlog', {item, title: 'Video', edit: true})
+            navigation.navigate('ViewBlog', {
+              id: item?.id,
+              title: item?.title,
+              type: 'video',
+            })
           }
         />
       )}

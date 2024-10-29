@@ -1,4 +1,11 @@
-import {Text, View, Image, TouchableOpacity} from 'react-native';
+import {
+  Text,
+  View,
+  Image,
+  TouchableOpacity,
+  ScrollView,
+  FlatList,
+} from 'react-native';
 import styles from './styles';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {useEffect, useLayoutEffect, useState} from 'react';
@@ -7,25 +14,46 @@ import Card from '../../components/Card';
 import {images} from '../../utils/images';
 import CustomButton from '../../components/CustomButton';
 import InterRegular from '../../components/Text/InterRegular';
-import InterMedium from '../../components/Text/InterMedium';
 import Loader from '../../components/Loader';
-import {getBlog} from '../../api/education';
+import {
+  getArticle,
+  getBlog,
+  getSimilarVideos,
+  getVideo,
+  updateArticleStatus,
+  updateBlogStatus,
+} from '../../api/education';
 import {EmptyComponent} from '../../components/EmptyComponent';
+import {useSelector} from 'react-redux';
+import {selectUserProfile} from '../../store/slices/authSlice';
+import Video from 'react-native-video';
+import InterBoldLabel from '../../components/Text/InterBoldLabel';
+import MediaCard from '../../components/MediaCard';
+import {vh} from '../../constant';
 
 const ViewBlog: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const [loading, setLoading] = useState(false);
   const [item, setItem] = useState(null);
+  const [similar, setSimilar] = useState([]);
 
-  const {id, title, edit} = route?.params;
+  const {id, title, type} = route?.params;
+  const user = useSelector(selectUserProfile);
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await getBlog(id);
+      let res;
+      if (type == 'blog') {
+        res = await getBlog(id);
+      } else if (type == 'article') {
+        res = await getArticle(id);
+      } else {
+        res = await getVideo(id);
+      }
+      console.log('RESSSSSSSSSSSSSSSS');
       if (res?.data) {
-        // console.log('BLOGGGGGGGGGGGGG', res?.data?.data);
         setItem(res?.data.data);
       }
     } catch (err) {
@@ -35,16 +63,72 @@ const ViewBlog: React.FC = () => {
     }
   };
 
+  const fetchSimilar = async () => {
+    try {
+      let res = await getSimilarVideos(id);
+      if (res?.data) {
+        setSimilar(res?.data?.data);
+      }
+    } catch (err) {
+      console.log('SIMILAR ERRRORRRRRRRRRRRR', err);
+    }
+  };
+
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (id) {
+      fetchData();
+      fetchSimilar();
+    }
+  }, [id]);
+
+  const statusUpdate = async () => {
+    if (type == 'blog') {
+      await updateBlogStatus(id).then(res => {
+        if (res?.data) {
+          fetchData();
+        }
+      });
+    } else {
+      await updateArticleStatus(id).then(res => {
+        if (res?.data) {
+          fetchData();
+        }
+      });
+    }
+  };
+
+  const renderItem = ({item}: any) => {
+    return (
+      <MediaCard
+        type={'video'}
+        source={item?.video}
+        title={item?.title}
+        description={item?.content}
+        category={item?.category?.title}
+        onBookmarkPress={() => {}}
+        onItemPress={() =>
+          navigation.navigate('ViewBlog', {
+            id: item?.id,
+            title: item?.title,
+            type: 'video',
+          })
+        }
+      />
+    );
+  };
 
   useLayoutEffect(() => {
     navigation.setOptions({
       headerStyle: {
         backgroundColor: colors.headerColor,
       },
-      headerTitle: `${title}`,
+      headerTitle: () => {
+        return (
+          <Text numberOfLines={2} style={styles.header_title}>
+            {title}
+          </Text>
+        );
+      },
       headerTitleStyle: {
         color: colors.black,
       },
@@ -77,16 +161,30 @@ const ViewBlog: React.FC = () => {
   if (item == null) {
     return <EmptyComponent text={'No detail found'} />;
   }
+
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <Card style={styles.contentContainer}>
         <View>
-          <Image
-            source={item?.image ? {uri: item?.image} : images.blog1} // Replace with the correct image URL or require local image
-            style={styles.blogImage}
-            resizeMode="cover"
-          />
-          {edit && (
+          {type == 'video' ? (
+            <Video
+              source={{
+                uri: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+              }}
+              style={styles.media}
+              controls={true}
+              paused={false}
+              repeat={true}
+              resizeMode="cover"
+            />
+          ) : (
+            <Image
+              source={item?.image ? {uri: item?.image} : images.blog1} // Replace with the correct image URL or require local image
+              style={styles.blogImage}
+              resizeMode="cover"
+            />
+          )}
+          {item?.user_id == user?.id && (
             <View
               style={[
                 styles.statusContainer,
@@ -106,33 +204,40 @@ const ViewBlog: React.FC = () => {
           <InterRegular style={styles.category}>{item.category}</InterRegular>
         )}
 
-        {edit && (
+        {item?.user_id == user?.id && (
           <View style={styles.btnContainer}>
             <CustomButton
               style={styles.checkoutButton}
               txtstyle={styles.buttonTxt}
               onPress={() => {
                 if (title == 'My Blogs') {
-                  navigation.navigate('AddBlog', {title: 'Update Blog'});
+                  navigation.navigate('EditBlog', {title: 'Update Blog', item});
                 } else if (title == 'Blog Title') {
-                  navigation.navigate('AddBlog', {title: 'Update Blog'});
+                  navigation.navigate('EditBlog', {title: 'Update Blog', item});
                 } else if (title == 'Video') {
-                  navigation.navigate('AddBlog', {title: 'Update Video'});
+                  navigation.navigate('EditBlog', {
+                    title: 'Update Video',
+                    item,
+                  });
                 } else {
-                  navigation.navigate('AddBlog', {title: 'Update Article'});
+                  navigation.navigate('EditBlog', {
+                    title: 'Update Article',
+                    item,
+                  });
                 }
               }}>
               {title == 'My Blogs'
-                ? 'Blog'
+                ? 'Edit Blog'
                 : title == 'Video'
                 ? 'Video'
-                : 'Article'}
+                : 'Edit Article'}
             </CustomButton>
 
             <CustomButton
               style={styles.shoppingButton}
-              txtstyle={styles.shoppingTxt}>
-              Inactive{' '}
+              txtstyle={styles.shoppingTxt}
+              onPress={statusUpdate}>
+              {item?.status ? 'Inactive ' : 'Active '}
               {title == 'My Blogs'
                 ? 'Blog'
                 : title == 'Video'
@@ -142,7 +247,21 @@ const ViewBlog: React.FC = () => {
           </View>
         )}
       </Card>
-    </View>
+
+      {item?.user_id != user?.id && similar.length != 0 && (
+        <>
+          <InterBoldLabel style={styles.similar_header}>
+            Similar Videos
+          </InterBoldLabel>
+          <FlatList
+            data={similar}
+            renderItem={renderItem}
+            keyExtractor={(item: any) => item?.id.toString()}
+            contentContainerStyle={{paddingTop: vh * 2}}
+          />
+        </>
+      )}
+    </ScrollView>
   );
 };
 

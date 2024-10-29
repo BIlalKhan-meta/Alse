@@ -4,7 +4,6 @@ import {FlatList, ScrollView, Text, TouchableOpacity, View} from 'react-native';
 import {colors} from '../../utils/theme';
 import InterMedium from '../../components/Text/InterMedium';
 import styles from './styles';
-import {dummyContentSaved} from '../../dummyData';
 import Card from '../../components/Card';
 import ContentSavedScreen from '../../components/ContentSaved';
 import MediaCard from '../../components/MediaCard';
@@ -14,27 +13,6 @@ import {getMyArticles, getMyBlogs, getMyVideos} from '../../api/education';
 import Loader from '../../components/Loader';
 import {EmptyComponent} from '../../components/EmptyComponent';
 
-const mediaData = [
-  {
-    id: 1,
-    type: 'video',
-    source: 'https://example.com/video.mp4',
-    title: 'Topic Name',
-    description:
-      'It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout.',
-    category: 'Category A',
-  },
-  {
-    id: 2,
-    type: 'video',
-    source: 'https://example.com/video.mp4',
-    title: 'Topic Name',
-    description:
-      'It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout.',
-    category: 'Category A',
-  },
-  // Add more items as needed
-];
 const MyBlogs: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute();
@@ -122,9 +100,9 @@ const MyBlogs: React.FC = () => {
                 onBookmarkPress={() => {}}
                 onItemPress={() =>
                   navigation.navigate('ViewBlog', {
-                    item,
-                    title: 'Video',
-                    edit: true,
+                    id: item?.id,
+                    title: item?.title,
+                    type: 'video',
                   })
                 }
               />
@@ -151,8 +129,14 @@ const MyBlogs: React.FC = () => {
                   // })
 
                   navigation.navigate('ViewBlog', {
-                    id: item.id,
-                    title: title == 'My Blogs' ? 'Blog Title' : 'Article Title',
+                    id: item?.id,
+                    title: item?.title,
+                    type:
+                      title == 'My Blogs'
+                        ? 'blog'
+                        : title == 'My Articles'
+                        ? 'article'
+                        : null,
                   })
                 }
                 //  onAddToCart={handleAddToCart}
