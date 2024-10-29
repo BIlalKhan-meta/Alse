@@ -18,8 +18,9 @@ import Swiper from 'react-native-swiper';
 import RatingandReviewComponent from '../../components/RatingandReviewComponent';
 import ShopComponent from '../../components/ShopComponent';
 import StoreOrderComponent from '../../components/StoreOrder';
-import { productDetail, productRating } from '../../api/product';
+import { addProductToCart, productDetail, productRating } from '../../api/product';
 import Loader from '../../components/Loader';
+import { getMessage, Toast } from '../../utils/helpers';
 
 
 
@@ -40,7 +41,7 @@ const ProductView: React.FC = () => {
     const route = useRoute()
     const { productId } = route.params;
     console.log('====================================');
-    console.log(productId);
+    console.log(productId, "ProducttttIddd");
     console.log('====================================');
     // const { type } = route?.params;
 
@@ -75,16 +76,19 @@ const ProductView: React.FC = () => {
     const getData = async () => {
         setLoading(true)
         const res = await productDetail(productId)
-        // const res2 = await productRating(productId)
-        // setProductDetails(res?.data?.data)
+        const res2 = await productRating(productId)
         setProductDetails(res?.data?.data || {});
-        // setProductReviews()
+        setProductReviews(res2?.data?.data?.data)
         setLoading(false)
         console.log('====================================');
-        console.log(res?.data?.data, "====rssss producttttt");
-        // console.log(res2?.data?.data, "====rssss Reviewsss");
+        // console.log(res?.data?.data, "====rssss producttttt");
+        console.log(res2?.data?.data?.data, "====rssss Reviewsss");
         console.log('====================================');
     }
+
+
+
+
 
     if (loading) {
         return (<Loader />)
@@ -99,7 +103,7 @@ const ProductView: React.FC = () => {
                 );
             case 2:
                 return (
-                    <RatingandReviewComponent />
+                    <RatingandReviewComponent reviews={productReviews} />
                 );
             case 3:
                 return (
@@ -170,11 +174,11 @@ const ProductView: React.FC = () => {
                             </View>
 
                             <View style={styles.vendorContainer}>
-                                <InterRegular style={styles.vendorTxt}>Vendor Abc</InterRegular>
+                                <InterRegular style={styles.vendorTxt}>{productDetails?.shop?.shop_name}</InterRegular>
 
                                 <View style={styles.bulletTextContainer}>
                                     <View style={styles.bullet} />
-                                    <InterRegular style={styles.vendorTxt}>Category</InterRegular>
+                                    <InterRegular style={styles.vendorTxt}>{productDetails?.category?.title}</InterRegular>
                                 </View>
 
                                 {/* <View style={styles.bulletTextContainer}>

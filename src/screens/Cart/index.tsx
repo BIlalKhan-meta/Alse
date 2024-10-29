@@ -1,9 +1,9 @@
-import React, { useLayoutEffect } from 'react';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ScrollView } from 'react-native';
 import styles from './styles';
 
 
-import { useNavigation } from '@react-navigation/native';
+import { useIsFocused, useNavigation } from '@react-navigation/native';
 import CartItem from '../../components/CartItem';
 import Summary from '../../components/SummaryComponent';
 import { products } from '../../dummyData';
@@ -11,10 +11,15 @@ import InterMedium from '../../components/Text/InterMedium';
 import CustomButton from '../../components/CustomButton';
 import Card from '../../components/Card';
 import { colors } from '../../utils/theme';
+import { getCart } from '../../api/product';
+import Loader from '../../components/Loader';
 
 
 const Cart = () => {
     const navigation = useNavigation();
+    const isFoused = useIsFocused();
+    const [loading, setLoading] = useState(false);
+    const [cartData, setCartData] = useState([]);
 
     const subTotal = products.reduce((total, product) => total + product.price * product.quantity, 0);
     const deliveryCharges = 15;
@@ -42,6 +47,24 @@ const Cart = () => {
     };
 
 
+    useEffect(() => {
+        getData()
+    }, [isFoused])
+
+    const getData = async () => {
+        setLoading(true)
+        const res = await getCart()
+
+
+        setCartData(res?.data?.data?.carts?.data)
+        // setShopProduct(res2?.data?.data?.data)
+        setLoading(false)
+        console.log('====================================');
+        console.log(res?.data?.data?.carts?.data, "====ressss");
+        console.log('====================================');
+    }
+
+
     useLayoutEffect(() => {
         navigation.setOptions({
             headerStyle: {
@@ -51,6 +74,10 @@ const Cart = () => {
         });
     }, [navigation]);
 
+    if (loading) {
+        return (<Loader />)
+    }
+
     return (
         <ScrollView
             showsVerticalScrollIndicator={false}
@@ -58,7 +85,7 @@ const Cart = () => {
             <View style={styles.container}>
                 <Card style={styles.contentContainer}>
                     <FlatList
-                        data={products}
+                        data={cartData}
                         renderItem={({ item, index }) => (
                             <>
                                 <CartItem
@@ -90,7 +117,7 @@ const Cart = () => {
                 <CustomButton style={styles.checkoutButton}
                     onPress={() => navigation.navigate("CheckoutScreen")}
                 >
-                    Procced to Checkout
+                    Proceed to Checkout
                 </CustomButton>
 
                 <CustomButton style={styles.shoppingButton} txtstyle={styles.shoppingTxt}

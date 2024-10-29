@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, FlatList } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { Formik } from 'formik';
@@ -11,7 +11,7 @@ import CartItem from '../../components/CartItem';
 
 import Summary from '../../components/SummaryComponent';
 import PhoneNumberInput from '../../components/TextInput/PhoneNumberInput';
-import { useNavigation } from '@react-navigation/native';
+import { useIsFocused, useNavigation } from '@react-navigation/native';
 import DropDownTextInput from '../../components/TextInput/DropDownTextInput';
 import BillingAddressSame from '../../components/BillingAddressSame';
 import CustomButton from '../../components/CustomButton';
@@ -19,12 +19,16 @@ import { products } from '../../dummyData';
 import InterBoldLabel from '../../components/Text/InterBoldLabel';
 import Card from '../../components/Card';
 import { colors } from '../../utils/theme';
+import { getCart } from '../../api/product';
 
 const CheckoutScreen: React.FC = () => {
     const navigation = useNavigation();
+    const isFoused = useIsFocused();
+
     const [isSelected, setIsSelected] = useState<boolean>(false);
     const [submitted, setSubmitted] = useState<boolean>(false)
-
+    const [loading, setLoading] = useState(false);
+    const [cartData, setCartData] = useState([]);
     const subTotal = products.reduce((total, product) => total + product.price * product.quantity, 0);
     const adminCommission = 5;
     const grandTotal = subTotal + adminCommission;
@@ -101,6 +105,24 @@ const CheckoutScreen: React.FC = () => {
 
         });
     }, [navigation]);
+
+
+    useEffect(() => {
+        getData()
+    }, [isFoused])
+
+    const getData = async () => {
+        setLoading(true)
+        const res = await getCart()
+
+
+        setCartData(res?.data?.data?.carts?.data)
+        // setShopProduct(res2?.data?.data?.data)
+        setLoading(false)
+        console.log('====================================');
+        console.log(res?.data?.data?.carts?.data, "====ressss");
+        console.log('====================================');
+    }
     return (
         <KeyboardAwareScrollView contentContainerStyle={styles.container}
             showsVerticalScrollIndicator={false}
@@ -115,13 +137,13 @@ const CheckoutScreen: React.FC = () => {
                         <Card style={styles.contentContainer}>
 
                             <FlatList
-                                data={products}
+                                data={cartData}
                                 renderItem={({ item, index }) => (
                                     <CartItem
                                         item={item}
                                         showQuantityControls={false}
                                         showSeparator={index !== products.length - 1}
-                                        quantity={1}
+                                        quantity={true}
                                     />
                                 )}
                                 keyExtractor={(item) => item.id.toString()}

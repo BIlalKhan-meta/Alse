@@ -10,7 +10,7 @@ import InterBold from '../../components/Text/InterBold';
 import CommentsModal from '../../components/CommentsModal';
 import styles from './styles';
 import HeaderComponent from '../../components/HeaderComponent';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useIsFocused, useNavigation, useRoute } from '@react-navigation/native';
 import InterRegular from '../../components/Text/InterRegular';
 import WishlistScreen from '../../components/WishList';
 import ContentSavedScreen from '../../components/ContentSaved';
@@ -90,6 +90,7 @@ const productFilter = [
 
 const MyShop: React.FC = () => {
     const navigation = useNavigation();
+    const isFoused = useIsFocused();
     const route = useRoute();
     const shopId = route?.params?.shopId;
 
@@ -155,7 +156,7 @@ const MyShop: React.FC = () => {
 
     useEffect(() => {
         getData()
-    }, [])
+    }, [isFoused])
 
     const getData = async () => {
         setLoading(true)
@@ -253,9 +254,9 @@ const MyShop: React.FC = () => {
                             addCart={true}
                             product={true}
                             onPress={(id) => {
-                                console.log('====================================');
-                                console.log(id, "Id Frommm producttt");
-                                console.log('====================================');
+                                // console.log('====================================');
+                                // console.log(id, "Id Frommm producttt");
+                                // console.log('====================================');
                                 // navigation.navigate("ProductView")
                                 navigation.navigate("ProductView", { productId: id })
 

@@ -8,6 +8,7 @@ import HorizontalSeparator from '../HorizontalSeparator';
 import { reviews } from '../../dummyData';
 import InterBoldLabel from '../Text/InterBoldLabel';
 import InterRegularSmallest from '../Text/InterRegularSmallest';
+import InterRegular from '../Text/InterRegular';
 
 interface Review {
   id: number;
@@ -20,22 +21,28 @@ interface Review {
 
 
 
-const RatingandReviewComponent: React.FC = () => {
-  const renderReviewItem = ({ item }: { item: Review }) => (
+const RatingandReviewComponent: React.FC = (props) => {
+  const renderReviewItem = ({ item }) => (
     <View style={styles.mainContainer} key={item.id}>
       <View style={styles.ratingPersonInfoContainer}>
-        <Image source={images.user} style={styles.avatar} />
+        <Image source={item?.avatar ? { uri: item?.avatar } : images.user} style={styles.avatar} />
         <View style={styles.nameContainer}>
-          <InterBoldLabel style={styles.name}>{item.userName}</InterBoldLabel>
+          <InterBoldLabel style={styles.name}>{item.username}</InterBoldLabel>
           <View style={styles.starCon}>
             <Image source={images.ratingstaricon} style={styles.starIcon} />
             <InterRegularSmallest style={styles.rating}>{item.rating}</InterRegularSmallest>
           </View>
         </View>
       </View>
-      <InterRegularSmallest style={styles.reviewText}>{item.reviewText}</InterRegularSmallest>
+      <InterRegularSmallest style={styles.reviewText}>{item.review}</InterRegularSmallest>
       <InterRegularSmallest style={styles.date}>{item.date}</InterRegularSmallest>
       <HorizontalSeparator />
+    </View>
+  );
+
+  const renderEmpty = () => (
+    <View style={styles.emptyContainer}>
+      <InterRegular style={styles.emptyText}>No Reviews.</InterRegular>
     </View>
   );
 
@@ -43,12 +50,14 @@ const RatingandReviewComponent: React.FC = () => {
   return (
     <View style={styles.container}>
       <FlatList
-        data={reviews}
+        data={props?.reviews}
         renderItem={renderReviewItem}
         keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={styles.listContainer}
+        ListEmptyComponent={renderEmpty}
+
       />
-   </View>
+    </View>
   );
 };
 
@@ -58,8 +67,8 @@ const styles = StyleSheet.create({
     paddingVertical: vh * 1,
     paddingHorizontal: vw * 2,
     // flex: 1,
-    flexGrow:1
-    
+    flexGrow: 1
+
   },
   listContainer: {
     paddingBottom: vh * 2,

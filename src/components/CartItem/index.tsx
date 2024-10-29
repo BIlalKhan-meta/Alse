@@ -12,30 +12,30 @@ import InterBoldSmall from '../Text/InterBoldSmall';
 import { Product } from '../../dummyData';
 
 interface Props {
-    item: Product;
+    item: [];
     showQuantityControls: boolean;
     onIncrement: () => void;
     onDecrement: () => void;
     onDelete: () => void;
     showSeparator: boolean;
-    quantity: number;
+    quantity: boolean;
     showDelete: boolean;
 }
 
 const CartItem: React.FC<Props> = ({ item, showQuantityControls, onIncrement, onDecrement, onDelete, showSeparator, quantity, showDelete }) => (
     <>
         <View style={styles.productContainer}>
-            <Image source={item.image} style={styles.productImage} />
+            <Image source={item.product_image ? { uri: item.product_image } : null} style={styles.productImage} />
             <View style={styles.productDetails}>
-                <InterMedium style={styles.productName}>{item.name}</InterMedium>
-                <View style={styles.colorContainer}>
+                <InterMedium style={styles.productName}>{item.product_name}</InterMedium>
+                {/* <View style={styles.colorContainer}>
                     <InterRegular style={styles.productColor}>Color</InterRegular>
                     <InterRegular style={styles.colorValue}>{item.color}</InterRegular>
                 </View>
                 <View style={styles.colorContainer}>
                     <InterRegular style={styles.productColor}>Size</InterRegular>
                     <InterRegular style={styles.colorValue}>{item.size}</InterRegular>
-                </View>
+                </View> */}
                 {showQuantityControls && (
                     <View style={styles.quantityContainer}>
                         <TouchableOpacity onPress={onDecrement}>
@@ -57,11 +57,11 @@ const CartItem: React.FC<Props> = ({ item, showQuantityControls, onIncrement, on
                     </TouchableOpacity>
                 )}
 
-                <InterBoldSmall style={styles.productPrice}>${item.price}</InterBoldSmall>
+                <InterBoldSmall style={styles.productPrice}>${item.product_price}</InterBoldSmall>
 
 
                 {quantity && <View style={styles.quantityContainer}>
-                    <InterRegular style={styles.quantityText2}>Qty:{quantity}</InterRegular>
+                    <InterRegular style={styles.quantityText2}>Qty:{item.quantity}</InterRegular>
                 </View>}
             </View>
         </View>

@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Image } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { Formik } from 'formik';
@@ -17,6 +17,8 @@ import InterBoldLabel from '../../components/Text/InterBoldLabel';
 import InterRegular from '../../components/Text/InterRegular';
 import { createProduct } from '../../api/shop';
 import Card from '../../components/Card';
+import { getCategories } from '../../api/product';
+import CategoryDropdownComponent from '../../components/TextInput/CategoryDropdownComponent';
 
 const AddProduct: React.FC = () => {
     const navigation = useNavigation();
@@ -27,10 +29,36 @@ const AddProduct: React.FC = () => {
     const [productSuccess, setProductSuccess] = useState(false);
     const [submitted, setSubmitted] = useState<boolean>(false)
     const [status, setStatus] = useState()
+    const [loading, setLoading] = useState(false);
+    const [categories, setCategories] = useState([]);
+    const [categoryId, setCategoryId] = useState();
+
     const statuses = [
         { label: 'Active', value: 'active' },
         { label: 'Inactive', value: 'inactive' },
     ];
+
+
+    useEffect(() => {
+        getData()
+    }, [])
+
+    const getData = async () => {
+        setLoading(true)
+        const res = await getCategories()
+        const fetchedCategories = res?.data?.data;
+        setCategories(fetchedCategories);
+
+        // Set initial categoryId to the first category's ID
+        if (fetchedCategories?.length > 0) {
+            setCategoryId(fetchedCategories[0].id);
+        }
+        console.log('====================================');
+        console.log(res?.data?.data, "====ressssCategoryyyyy");
+
+        console.log('====================================');
+    }
+
 
     const validationSchema = yup.object().shape({
         productTitle: yup.string().required('Product Title is required'),
@@ -41,6 +69,9 @@ const AddProduct: React.FC = () => {
         // productImage: yup.string().required('Product Image is required'),
         price: yup.number().required('Price is required').positive('Price must be positive'),
         quantity: yup.number().required('Quantity is required').integer('Quantity must be an integer').positive('Quantity must be positive'),
+        color: yup.string().required('Color is required'),
+        size: yup.string().required('Size is required'),
+
     });
 
     const initialValues = {
@@ -52,6 +83,8 @@ const AddProduct: React.FC = () => {
         // productImage: '',
         price: '',
         quantity: '',
+        color: '',
+        size: ''
     };
 
     const handleDropdownChange = (value: string | null) => {
@@ -62,6 +95,12 @@ const AddProduct: React.FC = () => {
     // const handleSubmit = (values: object) => {
     //     console.log('Form submitted:', values);
     // };
+
+
+    console.log('====================================');
+    console.log(categoryId, "====ressssCategoryyyyyId");
+
+    console.log('====================================');
 
     const handleSubmit = async (values: typeof initialValues) => {
         setSubmitted(true);
@@ -78,11 +117,14 @@ const AddProduct: React.FC = () => {
 
         const data = {
             title: values.productTitle,
-            // brand_name: values.brand_name,
+            brand_name: values.brand_name,
             description: values.productDescription,
             price: values.price,
             quantity: values.quantity,
             status: statusState,
+            color: values.color,
+            size: values.size,
+            category_id: categoryId
         };
 
         if (imageData.type !== '') {
@@ -148,6 +190,8 @@ const AddProduct: React.FC = () => {
                                 style={styles.inputStyle}
                                 submitted={submitted}
 
+
+
                             />
                             <RegularTextInput
                                 label="Product Description *"
@@ -183,9 +227,9 @@ const AddProduct: React.FC = () => {
 
 
 
-                            <InterBoldLabel style={styles.dropdownLabel}>
+                            <InterRegular style={styles.dropdownLabel}>
                                 Status *
-                            </InterBoldLabel>
+                            </InterRegular>
                             <DropDownTextInput
                                 items={statuses}
                                 defaultValue='active'
@@ -201,9 +245,9 @@ const AddProduct: React.FC = () => {
                                 style={styles.dropDown}
                             />
 
-                            <InterBoldLabel style={styles.dropdownLabel}>
+                            <InterRegular style={styles.dropdownLabel}>
                                 Product Image*
-                            </InterBoldLabel>
+                            </InterRegular>
 
                             <TouchableOpacity style={styles.uploadBtn}
                                 onPress={() => captureImage('photo')}
@@ -244,6 +288,86 @@ const AddProduct: React.FC = () => {
                                 submitted={submitted}
 
                             />
+
+
+                            <InterRegular style={styles.dropdownLabel}>
+                                Category *
+                            </InterRegular>
+                            {/* <DropDownTextInput
+                                items={categories}
+                                defaultValue='active'
+                                // placeholder="Select Status"
+                                onChangeValue={(val) => {
+                                    console.log(val, "Val Freom drop dowwnnnn ")
+                                    setStatus(val)
+
+                                    handleChange('status');
+                                    handleBlur('status')
+                                    handleDropdownChange
+                                }}
+                                style={styles.dropDown}
+                            /> */}
+                            <CategoryDropdownComponent
+                                categories={categories}
+                                placeholder="Select Category"
+                                onChangeCategory={(id) => {
+                                    console.log('Selected Category ID:', id)
+                                    setCategoryId(id)
+
+                                    // handleChange('status');
+                                    // handleBlur('status')
+
+                                }}
+                                style={styles.dropDown}
+
+                            />
+
+
+                            <View style={styles.inputConatiner}>
+                                <View>
+
+                                    <RegularTextInput
+                                        label="Color *"
+                                        placeholder="Enter Color"
+                                        placeholderTextColor={colors.darkText}
+
+                                        onChangeText={handleChange('color')}
+                                        onBlur={handleBlur('color')}
+                                        value={values.color}
+                                        errors={touched.color && errors.color}
+                                        style={styles.inputStyle2}
+                                        keyboardType="numeric"
+                                        submitted={submitted}
+
+                                    />
+                                </View>
+
+
+                                <View>
+
+                                    <RegularTextInput
+                                        label="Size *"
+                                        placeholder="Enter Size"
+                                        placeholderTextColor={colors.darkText}
+
+                                        onChangeText={handleChange('size')}
+                                        onBlur={handleBlur('size')}
+                                        value={values.size}
+                                        errors={touched.size && errors.size}
+                                        style={styles.inputStyle2}
+                                        keyboardType="numeric"
+                                        submitted={submitted}
+
+                                    />
+                                </View>
+
+                            </View>
+
+
+
+
+
+
                         </View>
 
                         <CustomButton style={styles.submitButton} onPress={() => {

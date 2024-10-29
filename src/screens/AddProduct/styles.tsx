@@ -11,6 +11,10 @@ const styles = StyleSheet.create({
         alignItems: "center",
         paddingBottom: vh * 2
     },
+    contentContainer: {
+        width: vw * 94,
+        marginTop: vw
+    },
     section: {
         // marginBottom: 24,
     },
@@ -21,27 +25,46 @@ const styles = StyleSheet.create({
     },
     inputStyle: {
         marginBottom: 16,
-        backgroundColor: colors.dropdownColor,
+        backgroundColor: colors.inputcolor,
         paddingLeft: vw * 4,
         height: vh * 6,
         justifyContent: "center",
         alignItems: "center"
 
     },
+    inputConatiner: {
+        flexDirection: "row",
+        justifyContent: "space-between"
+    },
+    inputStyle2: {
+        marginBottom: 16,
+        backgroundColor: colors.inputcolor,
+        // backgroundColor: "yellow",
+        paddingLeft: vw * 4,
+        height: vh * 6,
+        justifyContent: "center",
+        alignItems: "center",
+        width: vw * 30
+    },
     dropdownLabel: {
-        fontSize: 16,
-        fontWeight: 'bold',
+        color: colors.black,
+        fontSize: fontSizes.f14,
+        // fontWeight: 'bold',
         marginBottom: 8,
     },
     dropDown: {
         marginBottom: 16,
-        borderWidth: 0
+        borderWidth: 0,
+        backgroundColor: colors.inputcolor,
+        // opacity: 4
+
     },
     submitButton: {
         // backgroundColor: colors.primary,
         // paddingVertical: 12,
         // alignItems: 'center',
         // borderRadius: 8,
+        // marginTop: 300,
         alignSelf: "center"
     },
     uploadBtn: {

@@ -64,7 +64,7 @@ const ShopComponent: React.FC = () => {
         >
             <View style={styles.contentContainer}>
 
-                <WishlistScreen
+                {/* <WishlistScreen
                     wishlist={dummyWishlist}
                     onAddToCart={handleAddToCart}
                     onRemoveFromWishlist={handleRemoveFromWishlist}
@@ -72,7 +72,7 @@ const ShopComponent: React.FC = () => {
                     addCart={true}
                     product={true}
                     type={type}
-                />
+                /> */}
             </View>
         </View>
     )

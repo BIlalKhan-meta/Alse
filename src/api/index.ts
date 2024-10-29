@@ -42,6 +42,9 @@ axiosInstance.interceptors.response.use(
     if (error.response && error.response.status == 422) {
       return Promise.reject(error.response?.data);
     }
+    if (error.response && error.response.status == 405) {
+      return Promise.reject(error.response?.data);
+    }
     return Promise.reject(error);
   },
 );

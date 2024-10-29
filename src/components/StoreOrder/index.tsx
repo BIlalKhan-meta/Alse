@@ -10,6 +10,8 @@ import CustomButton from '../CustomButton';
 import QunatityControls from '../QuantityControls';
 import Selection from '../Selection';
 import { useNavigation } from '@react-navigation/native';
+import { addProductToCart } from '../../api/product';
+import { getMessage, Toast } from '../../utils/helpers';
 
 const colorsType = ['red', 'blue', 'green',];
 const sizes = ['S', 'M', 'L'];
@@ -40,6 +42,35 @@ const StoreOrderComponent: React.FC = (props) => {
         console.log('Decrement item at index:', index);
         index - 1
     };
+
+
+    const handleAddToCart = async () => {
+
+        try {
+            const res = await addProductToCart(productItem?.id)
+            console.log('response from addtocartttt ====>', res?.data?.message);
+            Toast.success(getMessage(res?.data?.message));
+
+        } catch (error) {
+            Toast.error(getMessage(error?.message));
+            console.log("Fromm add tocartt erro", error);
+        }
+
+
+        // .then((res) => {
+        //     console.log('response from addtocartttt ====>', res);
+
+        //     // Optionally navigate or show success message
+        //     // navigation.navigate("Login");
+        //     // resetForm()
+        //     // setSuccessModel(true)
+        //     // setSubmitted(false)
+        // })
+        // .catch((error) => {
+        //     console.error("addtoCarttt error:", error.response);
+        //     Toast.error(getMessage(error?.message));
+        // });
+    }
 
 
     // return(
@@ -77,7 +108,8 @@ const StoreOrderComponent: React.FC = (props) => {
 
             <View style={styles.btnContainer}>
                 <CustomButton containerStyle={styles.checkoutButton}
-                    onPress={() => navigation.navigate("Cart")}
+                    // onPress={() => navigation.navigate("Cart")}
+                    onPress={() => handleAddToCart()}
                 >
                     Add to Cart
                 </CustomButton>

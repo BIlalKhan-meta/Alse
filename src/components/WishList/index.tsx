@@ -27,15 +27,15 @@ interface WishlistProps {
 const WishlistScreen: React.FC<WishlistProps> = ({ wishlist, onAddToCart, onRemoveFromWishlist, heart, addCart, product, onPress }) => {
 
     const renderItem = ({ item }) => {
-        console.log('====================================');
-        console.log(item, "Itemmmm frommmm my shoppppppp????");
-        console.log('====================================');
+        // console.log('====================================');
+        // console.log(item, "Itemmmm frommmm my shoppppppp????");
+        // console.log('====================================');
         return (
             <TouchableOpacity style={styles.productContainer}
                 // onPress={onPress}
                 onPress={() => onPress(item.id, item.user_id)}
             >
-                <Image source={item?.banner ? { uri: item.banner } : item?.images[0].path ? { uri: item.images[0].path } : null} style={styles.productImage} />
+                <Image source={item?.banner ? { uri: item.banner } : item?.images[0].path ? { uri: item.images[0].path } : images.pro1} style={styles.productImage} />
                 {heart &&
                     <TouchableOpacity onPress={() => onRemoveFromWishlist(item.id)} style={styles.heartIconContainer}>
                         <Image source={images.heartIcon} />

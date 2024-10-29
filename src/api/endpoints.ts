@@ -43,6 +43,9 @@ const endpoints = {
   },
   products: {
     productDetail: '/product',
+    category: '/categories',
+    cart: '/add-to-cart',
+    getCart: '/get-cart',
   },
   education: {
     getArticles: '/articles',
