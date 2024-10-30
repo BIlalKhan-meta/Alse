@@ -15,6 +15,7 @@ import {EmptyComponent} from '../../components/EmptyComponent';
 import Loader from '../../components/Loader';
 import {useSelector} from 'react-redux';
 import {selectUserProfile} from '../../store/slices/authSlice';
+import InterBoldLabel from '../../components/Text/InterBoldLabel';
 
 const Blogs: React.FC = () => {
   const navigation = useNavigation();
@@ -23,6 +24,8 @@ const Blogs: React.FC = () => {
   const [loading, setLoading] = useState(false);
 
   const user = useSelector(selectUserProfile);
+
+  console.log('USEEEERRRRRRRRRRRRR', user?.has_subscription);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -50,7 +53,7 @@ const Blogs: React.FC = () => {
         );
       }
     } catch (err) {
-      console.error('GET ARTTTTTTICLESSSS ERRORRR', err);
+      // console.error('GET ARTTTTTTICLESSSS ERRORRR', err);
     } finally {
       setLoading(false);
     }
@@ -124,9 +127,23 @@ const Blogs: React.FC = () => {
     </Card>
   );
 
-  //   if (display.length == 0) {
-  //     return <EmptyComponent text={'No Data Available'} />;
-  //   }
+
+  if (!user?.has_subscription) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: colors.headerColor,
+        }}>
+        <InterBoldLabel>Subscription Required</InterBoldLabel>
+        <CustomButton onPress={() => navigation.navigate('SubscriptionPlan')}>
+          Subscribe
+        </CustomButton>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
