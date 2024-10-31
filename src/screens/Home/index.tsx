@@ -1,25 +1,42 @@
-import React, { useEffect, useState } from 'react';
-import { View, ScrollView, TouchableWithoutFeedback, FlatList, ActivityIndicator, TouchableOpacity } from 'react-native';
-import { images } from '../../utils/images';
+import React, {useEffect, useState} from 'react';
+import {
+  View,
+  ScrollView,
+  TouchableWithoutFeedback,
+  FlatList,
+  ActivityIndicator,
+  TouchableOpacity,
+} from 'react-native';
+import {images} from '../../utils/images';
 import CardComponent from '../../components/CardComponent';
-import { useFocusEffect, useIsFocused, useNavigation } from '@react-navigation/native';
+import {
+  useFocusEffect,
+  useIsFocused,
+  useNavigation,
+} from '@react-navigation/native';
 import styles from './styles';
 import PostComponent from '../../components/PostComponent';
 import CommentsModal from '../../components/CommentsModal';
 import ReactModal from '../../components/ReactModal';
 import GeneralModal from '../../components/GeneralModal';
-import { dummyComments, reactions } from '../../dummyData';
+import {dummyComments, reactions} from '../../dummyData';
 import HeaderComponent from '../../components/HeaderComponent';
-import { useAppDispatch, useAppSelector } from '../../hooks/storeHooks';
-import { getCommentPost, GetNewsFeed, likePost, PostDelete } from '../../store/slices/homeSlice';
+import {useAppDispatch, useAppSelector} from '../../hooks/storeHooks';
+import {
+  getCommentPost,
+  GetNewsFeed,
+  likePost,
+  PostDelete,
+  updateLike,
+} from '../../store/slices/homeSlice';
 import InterRegular from '../../components/Text/InterRegular';
-import { colors } from '../../utils/theme';
+import {colors} from '../../utils/theme';
 import dayjs from 'dayjs';
 import Loader from '../../components/Loader';
-import { getMessage, Toast } from '../../utils/helpers';
-import { reportPost } from '../../api/home';
-
-
+import {getMessage, Toast} from '../../utils/helpers';
+import {reportPost} from '../../api/home';
+import {useSelector} from 'react-redux';
+import {selectUserProfile} from '../../store/slices/authSlice';
 
 const Home: React.FC = () => {
   const navigation = useNavigation();
@@ -27,13 +44,14 @@ const Home: React.FC = () => {
   const isFoused = useIsFocused();
 
   // Select posts and loading state from the Redux store
-  const { posts, loading, error } = useAppSelector((state) => state.home);
+  const {posts, loading, error} = useAppSelector(state => state.home);
+  const user = useSelector(selectUserProfile);
 
   const [commentsVisible, setCommentsVisible] = useState({
     visiblity: false,
     comments: [],
     id: null,
-  })
+  });
   const [reactVisible, setrRactVisible] = useState(false);
   const [activePostId, setActivePostId] = useState<number | null>(null);
   const [deleteVisible, setDeleteVisible] = useState({
@@ -52,32 +70,29 @@ const Home: React.FC = () => {
   const handleCommentPress = id => {
     dispatch(getCommentPost(id))
       .then(res => {
-        console.log(res?.payload?.data?.data?.data, "Commentsss Ressss frommm screennnn ")
+        console.log(
+          res?.payload?.data?.data?.data,
+          'Commentsss Ressss frommm screennnn ',
+        );
         setCommentsVisible({
           visiblity: true,
           comments: res?.payload?.data?.data?.data,
-          id: id
-        })
+          id: id,
+        });
         // getData();
       })
       .catch(err => {
         console.log('error from like post', err);
       });
-  }
+  };
 
   useEffect(() => {
-    getApi()
-  }, [isFoused])
-
+    getApi();
+  }, [isFoused]);
 
   const getApi = async () => {
     const checkData = await dispatch(GetNewsFeed());
-
-
-  }
-
-
-
+  };
 
   if (loading) {
     return <Loader />;
@@ -85,14 +100,15 @@ const Home: React.FC = () => {
 
   const handleDotPress = (postId: number) => {
     setActivePostId(postId ? postId : null);
-  }
-
+  };
 
   const handleLikePress = (id: number) => {
+    // console.log('POSTSSSSSSSSSSSSSSSSSSSSSSSS', posts[index]);
+    dispatch(updateLike(id));
     dispatch(likePost(id))
       .then(res => {
-        console.log('response from like post ---->', res);
-        getApi();
+        // console.log('response from like post ---->', res);
+        // getApi();
       })
       .catch(err => {
         console.log('error from like post', err);
@@ -109,9 +125,9 @@ const Home: React.FC = () => {
           id: null,
         });
         setReportLoader(false);
-        getApi()
+        getApi();
         setDeleteSuccess(true);
-        handleDotPress(null)
+        handleDotPress(null);
       })
       .catch(err => {
         setReportLoader(false);
@@ -119,7 +135,7 @@ const Home: React.FC = () => {
           visibility: false,
           id: null,
         });
-        handleDotPress(null)
+        handleDotPress(null);
         Toast.error(getMessage(err?.message));
 
         console.log('Errorr  errerrerrerrerrerrerrerrerrfrom ', err);
@@ -127,13 +143,12 @@ const Home: React.FC = () => {
   };
 
   const handleReport = async () => {
-
-    console.log(reportVisible.id, "Reportttt idddddd")
+    console.log(reportVisible.id, 'Reportttt idddddd');
     setReportLoader(true);
     const data = {
-      reportable_type: 'App\Models\Post',
+      reportable_type: 'AppModelsPost',
       reportable_id: reportVisible?.id,
-      reason: "testingg"
+      reason: 'testingg',
     };
 
     let formData = new FormData();
@@ -148,9 +163,9 @@ const Home: React.FC = () => {
           id: null,
         });
         setReportLoader(false);
-        getApi()
+        getApi();
         setReportSuccess(true);
-        handleDotPress(null)
+        handleDotPress(null);
       })
       .catch(err => {
         setReportLoader(false);
@@ -158,22 +173,21 @@ const Home: React.FC = () => {
           visibility: false,
           id: null,
         });
-        handleDotPress(null)
+        handleDotPress(null);
         Toast.error(getMessage(err?.message));
 
         console.log('Errorr  errerrerrerrerrerrerrerrerrfrom ', err);
       });
   };
 
+  // const checkLiked = item => {
+  //   // item?.likes.includes(item => item?.user?.role_id == user?.user_id);
+  //   return false;
+  // };
 
-
-
-
-
-  const renderPost = ({ item }) => {
-    const mediaItem = item?.media && item?.media.length > 0 ? item?.media[0] : null;
-
-
+  const renderPost = ({item}) => {
+    const mediaItem =
+      item?.media && item?.media.length > 0 ? item?.media[0] : null;
 
     return (
       <PostComponent
@@ -181,7 +195,7 @@ const Home: React.FC = () => {
         postID={item?.media[0]?.post_id}
         avatar={item?.avatar}
         name={item.name}
-        country={item.country ? item.country : ""}
+        country={item.country ? item.country : ''}
         time={dayjs(item?.media[0]?.date).format('hh:MM A')}
         postText={item?.description}
         postImage={item?.media[0]?.path}
@@ -192,30 +206,29 @@ const Home: React.FC = () => {
         // onCommnetPress={() => setCommentsVisible(true)}
         onCommnetPress={() => handleCommentPress(mediaItem?.post_id)}
         onLikePress={() => handleLikePress(mediaItem?.post_id)}
-
-        onSavePress={() => navigation.navigate("Saved")}
+        onSavePress={() => navigation.navigate('Saved')}
         // onLikePress={() => setrRactVisible(true)}
         onDotPress={() => handleDotPress(item.id)}
         modalVisible={activePostId === item.id}
         handleBlockPress={() => {
           // handleDotPress();
           // setDeleteVisible(true);
-          setDeleteVisible({ visibility: true, id: mediaItem?.post_id });
-
+          setDeleteVisible({visibility: true, id: mediaItem?.post_id});
         }}
         handleReportPost={() => {
-          setReportVisible({ visibility: true, id: mediaItem?.post_id })
+          setReportVisible({visibility: true, id: mediaItem?.post_id});
         }}
         handleReportPress={() => {
           handleDotPress();
-          navigation.navigate("CreatePostEdit", { title: "Edit Post", data: item });
+          navigation.navigate('CreatePostEdit', {
+            title: 'Edit Post',
+            data: item,
+          });
         }}
         isLiked={item?.is_liked}
-
       />
     );
-  }
-
+  };
 
   const renderEmpty = () => (
     <View style={styles.emptyContainer}>
@@ -227,14 +240,12 @@ const Home: React.FC = () => {
     <ScrollView showsVerticalScrollIndicator={false}>
       <TouchableWithoutFeedback onPress={() => handleDotPress(null)}>
         <View style={styles.container}>
-
-
-
-
           <FlatList
             data={posts}
+            onRefresh={getApi}
+            refreshing={loading}
             renderItem={renderPost}
-            keyExtractor={(item) => item.id.toString()}
+            keyExtractor={item => item.id.toString()}
             showsVerticalScrollIndicator={false}
             ListEmptyComponent={renderEmpty}
             ListHeaderComponent={() => (
@@ -250,23 +261,19 @@ const Home: React.FC = () => {
                 </View>
               </TouchableOpacity>
             )}
-
           />
-
-
-
 
           <CommentsModal
             visible={commentsVisible.visiblity}
             closeModal={() => {
-              setCommentsVisible({ visiblity: false, comments: [], id: null })
-              getApi()
+              setCommentsVisible({visiblity: false, comments: [], id: null});
+              getApi();
             }}
             // icon={CheckedIcon}
-            title='Successfully'
-            message='Password has been updated successfully'
-            buttonText='Apply'
-            onPress={() => navigation.navigate("Home")}
+            title="Successfully"
+            message="Password has been updated successfully"
+            buttonText="Apply"
+            onPress={() => navigation.navigate('Home')}
             comments={commentsVisible?.comments}
             postId={commentsVisible?.id}
           />
@@ -279,15 +286,17 @@ const Home: React.FC = () => {
 
           <GeneralModal
             visible={deleteVisible.visibility}
-            closeModal={() => setDeleteVisible({
-              visibility: false,
-              id: null,
-            })}
+            closeModal={() =>
+              setDeleteVisible({
+                visibility: false,
+                id: null,
+              })
+            }
             icon={images.qmark}
-            title='Delete Post'
-            message='Are you sure you want to delete this Post?'
-            SecondaryText1='Yes'
-            SecondaryText2='No'
+            title="Delete Post"
+            message="Are you sure you want to delete this Post?"
+            SecondaryText1="Yes"
+            SecondaryText2="No"
             onPress={handleDelete}
             secondaryBtn={true}
             loading={reportLoader}
@@ -297,9 +306,9 @@ const Home: React.FC = () => {
             visible={deleteSuccess}
             closeModal={() => setDeleteSuccess(false)}
             icon={images.checkedIcon}
-            title='Delete Post'
-            message='Post has been deleted successfully.'
-            buttonText='Ok'
+            title="Delete Post"
+            message="Post has been deleted successfully."
+            buttonText="Ok"
             onPress={() => {
               setDeleteSuccess(false);
             }}
@@ -308,15 +317,17 @@ const Home: React.FC = () => {
 
           <GeneralModal
             visible={reportVisible.visibility}
-            closeModal={() => setReportVisible({
-              visibility: false,
-              id: null,
-            })}
+            closeModal={() =>
+              setReportVisible({
+                visibility: false,
+                id: null,
+              })
+            }
             icon={images.qmark}
-            title='Report Post'
-            message='Are you sure you want to report this post?'
-            SecondaryText1='Yes'
-            SecondaryText2='No'
+            title="Report Post"
+            message="Are you sure you want to report this post?"
+            SecondaryText1="Yes"
+            SecondaryText2="No"
             onPress={handleReport}
             secondaryBtn={true}
             loading={reportLoader}
@@ -326,17 +337,15 @@ const Home: React.FC = () => {
             visible={reportSuccess}
             closeModal={() => setReportSuccess(false)}
             icon={images.checkedIcon}
-            title='Report Post'
-            message='Post has been reported successfully!'
-            buttonText='Ok'
+            title="Report Post"
+            message="Post has been reported successfully!"
+            buttonText="Ok"
             onPress={() => {
-              setReportSuccess(false)
+              setReportSuccess(false);
               // navigation.navigate("Profile", { account: account })
             }}
             primaryBtn={true}
           />
-
-
         </View>
       </TouchableWithoutFeedback>
     </ScrollView>

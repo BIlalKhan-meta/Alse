@@ -206,7 +206,17 @@ export const rejectFollow = createAsyncThunk(
 const homeSlice = createSlice({
   name: 'home',
   initialState,
-  reducers: {},
+  reducers: {
+    updateLike: (state, action) => {
+      let index = state.posts.findIndex(
+        item => item?.id == action?.payload,
+      );
+      console.log('STATEEEEEEEEEEEEEEEEEEEEE', state.posts[index]);
+      if (index != -1) {
+        state.posts[index].is_liked = !state.posts[index].is_liked;
+      }
+    },
+  },
   extraReducers: builder => {
     builder
       .addCase(GetNewsFeed.pending, state => {
@@ -221,7 +231,10 @@ const homeSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       });
+    // .addCase(likePost.fulfilled, (state, action) => {});
   },
 });
+
+export const {updateLike} = homeSlice.actions;
 
 export default homeSlice.reducer;
