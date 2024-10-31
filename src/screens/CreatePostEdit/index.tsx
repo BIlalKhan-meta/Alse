@@ -1,66 +1,71 @@
 // Home.tsx
-import React, { useLayoutEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, Button, } from 'react-native';
-import { images } from '../../utils/images';
+import React, {useLayoutEffect, useState} from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  ScrollView,
+  Button,
+} from 'react-native';
+import {images} from '../../utils/images';
 import CardComponent from '../../components/CardComponent';
-import { colors } from '../../utils/theme';
-import { fontSizes, vh, vw } from '../../constant';
+import {colors} from '../../utils/theme';
+import {fontSizes, vh, vw} from '../../constant';
 import Card from '../../components/Card';
 import PostComponent from '../../components/PostComponent';
 import InterBold from '../../components/Text/InterBold';
 import CommentsModal from '../../components/CommentsModal';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import HeaderComponent from '../../components/HeaderComponent';
 import styles from './styles';
 import BottomModal from '../../components/BottomModel';
 import ImagePickerComponent from '../../components/ImagePickerComponent';
 import useImagePicker from '../../hooks/useImagePicker';
 import InterMedium from '../../components/Text/InterMedium';
-import { postEdit } from '../../store/slices/homeSlice';
-import { useAppDispatch } from '../../hooks/storeHooks';
-import { getMessage, Toast } from '../../utils/helpers';
-
+import {postEdit} from '../../store/slices/homeSlice';
+import {useAppDispatch} from '../../hooks/storeHooks';
+import {getMessage, Toast} from '../../utils/helpers';
+import Loader from '../../components/Loader';
 
 const ListOptions = [
-  { label: 'Public', value: "2" },
-  { label: 'Friends', value: "1" },
-  { label: 'Only Me', value: "0" },
+  {label: 'Public', value: '2'},
+  {label: 'Friends', value: '1'},
+  {label: 'Only Me', value: '0'},
 ];
 const CreatePostEdit: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const route = useRoute();
-  const title = route?.params?.title || "Create Post";
-  const data = route?.params?.data || "Create Post";
+  const title = route?.params?.title || 'Create Post';
+  const data = route?.params?.data || 'Create Post';
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [bottomVisible, setbottomVisible] = useState<boolean>(true)
+  const [bottomVisible, setbottomVisible] = useState<boolean>(true);
   const [selectedMedia, setSelectedMedia] = useState<string | null>(null);
-  const [privacy, setPrivacy] = useState(
-    `${route?.params?.data?.privacy}`
-  );
+  const [privacy, setPrivacy] = useState(`${route?.params?.data?.privacy}`);
   const [comment, setComment] = useState<string>(
     route?.params?.data?.description || '',
   );
   const [mediaType, setMediaType] = useState<'photo' | 'video'>('photo');
-  const { image, imageData, captureImage, chooseImageFromLibrary } = useImagePicker();
+  const {image, imageData, captureImage, chooseImageFromLibrary} =
+    useImagePicker();
 
   useLayoutEffect(() => {
     navigation.setOptions({
       title: title,
       headerRight: () => (
-        <TouchableOpacity style={styles.postButton} onPress={handlePost}>
-          <InterMedium style={styles.postTxt}>{title == "Edit Post" ? "Edit" : "Post"}</InterMedium>
+        <TouchableOpacity
+          disabled={isLoading}
+          style={styles.postButton}
+          onPress={handlePost}>
+          <InterMedium style={styles.postTxt}>
+            {title == 'Edit Post' ? 'Update' : 'Post'}
+          </InterMedium>
         </TouchableOpacity>
       ),
     });
   }, [navigation, , isLoading, comment, privacy, imageData]);
-
-  // console.log('====================================');
-  // console.log(data);
-  // console.log('====================================');
-
-
-
 
   const handlePost = async () => {
     // try {
@@ -90,7 +95,7 @@ const CreatePostEdit: React.FC = () => {
     setIsLoading(true);
 
     const id = route?.params?.data?.media[0]?.post_id;
-    dispatch(postEdit({ formData: body, id }))
+    dispatch(postEdit({formData: body, id}))
       .unwrap()
       .then(res => {
         console.log('Reponse from postEdit ==>', res);
@@ -104,21 +109,15 @@ const CreatePostEdit: React.FC = () => {
 
         Toast.error(getMessage(err?.message));
       });
-
-
   };
 
-  const handleSelectMedia = (mediaUri: string) => {
-    setSelectedMedia(mediaUri);
-  };
-
+  if (isLoading) {
+    return <Loader />;
+  }
 
   return (
-    <ScrollView
-      showsVerticalScrollIndicator={false}
-    >
+    <ScrollView showsVerticalScrollIndicator={false}>
       <View style={styles.container}>
-
         <CardComponent
           onImagePress={() => setbottomVisible(true)}
           onVideoPress={() => setbottomVisible(true)}
@@ -128,7 +127,6 @@ const CreatePostEdit: React.FC = () => {
           ListOptions={ListOptions}
           privacy={privacy}
           setPrivacy={setPrivacy}
-
         />
         <BottomModal
           visible={bottomVisible}
@@ -136,15 +134,16 @@ const CreatePostEdit: React.FC = () => {
           onPressImage={() => captureImage('photo')}
           onPressGallery={() => chooseImageFromLibrary()}
           onPress={() => captureImage('video')}
-
-
         />
-        {(image || route?.params?.data?.media[0]?.path) && <Image source={{ uri: image ? image : route?.params?.data?.media[0]?.path, }} style={styles.imageStyle} />}
+        {(image || route?.params?.data?.media[0]?.path) && (
+          <Image
+            source={{uri: image ? image : route?.params?.data?.media[0]?.path}}
+            style={styles.imageStyle}
+          />
+        )}
       </View>
     </ScrollView>
   );
 };
-
-
 
 export default CreatePostEdit;

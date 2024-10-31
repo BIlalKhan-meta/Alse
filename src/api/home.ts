@@ -18,6 +18,12 @@ export const commentLike = (id: number, commentId: number) => {
   return axiosInstance.post(`/post/${id}/comment/${commentId}/like`);
 };
 
+export const savePost = (formData: FormData) => {
+  return axiosInstance.post(`${endpoints.home.saveItem}`, formData, {
+    formData: true,
+  });
+};
+
 export const getPostComment = (id: number) => {
   return axiosInstance.get(`/post/${id}/comments`);
 };

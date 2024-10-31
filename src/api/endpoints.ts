@@ -13,6 +13,7 @@ const endpoints = {
     createPost: '/post/create',
     updatePost: '/post/update',
     deletePost: '/post/delete',
+    saveItem: '/save-item',
     reportPost: '/report/create',
     myPost: '/get-user',
     getBlockedUser: 'get-blocked-users',

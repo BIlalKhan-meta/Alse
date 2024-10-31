@@ -28,6 +28,7 @@ import {commentPost, likeComment} from '../../store/slices/homeSlice';
 import {useAppDispatch} from '../../hooks/storeHooks';
 import {selectUserProfile} from '../../store/slices/authSlice';
 import {useSelector} from 'react-redux';
+import {capitalize} from '../../utils';
 
 interface Comment {
   id: number;
@@ -66,12 +67,18 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
   } = props;
   const [newComment, setNewComment] = useState('');
   const [commentsData, setCommentsData] = useState(comments);
+  const [likes, setLikes] = useState<object[]>();
 
   useEffect(() => {
-    setCommentsData(comments);
+    if (comments) {
+      setCommentsData(comments);
+      setLikes(
+        comments.map(item => {
+          return {id: item?.id, total_likes: item?.total_likes};
+        }),
+      );
+    }
   }, [comments]);
-
-  console.log('DATAAAAAAAAAAAAAAAAA', comments[0]?.is_liked);
 
   const handleCommentSubmit = async () => {
     const id = postId;
@@ -111,7 +118,13 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
 
   const handleLikePress = (id: number) => {
     const arr = [...commentsData];
-    arr[0].is_liked = !arr[0].is_liked;
+    let index = arr.findIndex(item => item?.id == id);
+    if (arr[index].is_liked) {
+      likes[index].total_likes = likes[index].total_likes - 1;
+    } else {
+      likes[index].total_likes = likes[index].total_likes + 1;
+    }
+    arr[index].is_liked = !arr[index].is_liked;
     setCommentsData(arr);
     dispatch(likeComment({id: postId, commentId: id}))
       .then(res => {
@@ -141,7 +154,7 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
           <View style={styles.container}>
             {commentsData && commentsData?.length > 0 && (
               <>
-                {commentsData.map(comment => (
+                {commentsData.map((comment, index) => (
                   <View key={comment.id}>
                     <View style={styles.commentContainer}>
                       <View style={styles.avatarContainer}>
@@ -156,7 +169,10 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
                       </View>
                       <View style={styles.contentContainer}>
                         <InterMedium style={styles.userName}>
-                          {comment?.fullname}
+                          {commentsData[0]?.user?.full_name ||
+                            capitalize(commentsData[0]?.user?.first_name) +
+                              ' ' +
+                              capitalize(commentsData[0]?.user?.last_name)}
                         </InterMedium>
                         <InterRegular style={styles.comment}>
                           {comment.comment}
@@ -167,9 +183,7 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
                         onPress={() => handleLikePress(comment?.id)}>
                         <Image
                           source={
-                            commentsData[0].is_liked
-                              ? images.likeFill
-                              : images.like
+                            comment.is_liked ? images.likeFill : images.like
                           }
                           style={styles.likeIcon}
                           tintColor={colors.blue}
@@ -179,9 +193,9 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
 
                     <View style={styles.postActions}>
                       <View style={styles.leftActions}>
-                        <Image source={images.heartIcon} style={styles.icon} />
+                        <Image source={images.like} style={styles.icon} />
                         <InterRegular style={styles.actionText}>
-                          {comment?.likes?.length}
+                          {likes[index].total_likes}
                         </InterRegular>
                         <Image source={images.comment} style={styles.icon} />
                         <InterRegular style={styles.actionText}>

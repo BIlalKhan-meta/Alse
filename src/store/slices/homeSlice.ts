@@ -216,6 +216,9 @@ const homeSlice = createSlice({
         state.posts[index].is_liked = !state.posts[index].is_liked;
       }
     },
+    postSave : (state,action)=>{
+      
+    }
   },
   extraReducers: builder => {
     builder

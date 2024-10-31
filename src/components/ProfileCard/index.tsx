@@ -1,18 +1,18 @@
 // ProfileCard.tsx
-import React, { useState } from 'react';
-import { View, StyleSheet, Image, TouchableOpacity } from 'react-native';
-import { images } from '../../utils/images';
-import { vw } from '../../constant';
+import React, {useState} from 'react';
+import {View, StyleSheet, Image, TouchableOpacity} from 'react-native';
+import {images} from '../../utils/images';
+import {vw} from '../../constant';
 import InterBold from '../../components/Text/InterBold';
 import InterMedium from '../../components/Text/InterMedium';
 import CustomButton from '../CustomButton';
 import styles from './styles';
-import { useNavigation } from '@react-navigation/native';
-import { useAppDispatch } from '../../hooks/storeHooks';
-import { followUser } from '../../store/slices/homeSlice';
-import { getMessage, Toast } from '../../utils/helpers';
-import { useSelector } from 'react-redux';
-import { selectUserProfile } from '../../store/slices/authSlice';
+import {useNavigation} from '@react-navigation/native';
+import {useAppDispatch} from '../../hooks/storeHooks';
+import {followUser} from '../../store/slices/homeSlice';
+import {getMessage, Toast} from '../../utils/helpers';
+import {useSelector} from 'react-redux';
+import {selectUserProfile} from '../../store/slices/authSlice';
 
 interface ProfileCardProps {
   name: string;
@@ -21,19 +21,25 @@ interface ProfileCardProps {
   avatar: string;
   isFollowing: boolean;
   onPress: () => void;
-  id: number
-
+  id: number;
 }
 
-const ProfileCard: React.FC<ProfileCardProps> = ({ name, description, stats, avatar, onPress, isFollowing, id }) => {
-  const navigation = useNavigation()
+const ProfileCard: React.FC<ProfileCardProps> = ({
+  name,
+  description,
+  stats,
+  avatar,
+  onPress,
+  isFollowing,
+  id,
+}) => {
+  const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const user = useSelector(selectUserProfile);
 
   const [followLoader, setFollowLoader] = useState(false);
   const [checkFollow, setCheckFollow] = useState(isFollowing);
-  console.log(user, "iddddddddddddddddddddd")
-
+  console.log(user, 'iddddddddddddddddddddd');
 
   const handleFollow = () => {
     dispatch(followUser(id))
@@ -47,7 +53,8 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ name, description, stats, ava
         console.log('error from block User ====>', err);
         Toast.error(getMessage(err));
       });
-  }
+  };
+
 
   return (
     <View style={styles.container}>
@@ -55,26 +62,18 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ name, description, stats, ava
       <View style={styles.header}>
         {/* Back Icon */}
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Image
-            source={images.backicon}
-            style={styles.icon}
-          />
+          <Image source={images.backicon} style={styles.icon} />
         </TouchableOpacity>
 
         {/* Avatar */}
         <Image
-          source={avatar ? { uri: avatar } : images.user}
+          source={avatar ? {uri: avatar} : images.user}
           style={styles.avatar}
         />
 
         {/* Three Dots Icon */}
-        <TouchableOpacity style={styles.threeDots}
-          onPress={onPress}
-        >
-          <Image
-            source={images.dots}
-            style={styles.imageStyle}
-          />
+        <TouchableOpacity style={styles.threeDots} onPress={onPress}>
+          <Image source={images.dots} style={styles.imageStyle} />
         </TouchableOpacity>
       </View>
 
@@ -86,19 +85,17 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ name, description, stats, ava
         {/* Follow Button */}
 
         {user?.id !== id && (
-
-          <CustomButton style={styles.followButton}
+          <CustomButton
+            style={styles.followButton}
             disable={checkFollow ? true : false}
             onPress={handleFollow}
-            loading={followLoader}
-          >
-            {checkFollow ? "Following" : "Follow"}
+            loading={followLoader}>
+            {checkFollow ? 'Following' : 'Follow'}
           </CustomButton>
         )}
       </View>
     </View>
   );
 };
-
 
 export default ProfileCard;

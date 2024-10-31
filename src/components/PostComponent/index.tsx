@@ -1,18 +1,25 @@
 // PostComponent.tsx
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, Share } from 'react-native';
-import { images } from '../../utils/images';
+import React, {useState} from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  Share,
+} from 'react-native';
+import {images} from '../../utils/images';
 import Card from '../Card';
-import { fontSizes, vh } from '../../constant';
+import {fontSizes, vh} from '../../constant';
 import InterMedium from '../Text/InterMedium';
-import { colors } from '../../utils/theme';
+import {colors} from '../../utils/theme';
 import InterBold from '../Text/InterBold';
 import InterLight from '../Text/InterLight';
 import InterRegular from '../Text/InterRegular';
-import { useNavigation } from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 import ReportBlockModal from '../ReportBlockModal';
-import { useSelector } from 'react-redux';
-import { selectUserProfile } from '../../store/slices/authSlice';
+import {useSelector} from 'react-redux';
+import {selectUserProfile} from '../../store/slices/authSlice';
 
 interface PostProps {
   id?: number;
@@ -26,7 +33,7 @@ interface PostProps {
   likes: number;
   comments: number;
   share: number;
-  account: string
+  account: string;
   onCommnetPress: () => void;
   onSavePress: () => void;
   onLikePress: () => void;
@@ -36,7 +43,6 @@ interface PostProps {
   handleReportPost: () => void;
   modalVisible: boolean;
   isLiked?: boolean;
-
 }
 
 const PostComponent: React.FC<PostProps> = ({
@@ -61,9 +67,7 @@ const PostComponent: React.FC<PostProps> = ({
   handleBlockPress,
   handleReportPost,
   isLiked,
-
 }) => {
-
   const navigation = useNavigation();
   const user = useSelector(selectUserProfile);
 
@@ -72,26 +76,23 @@ const PostComponent: React.FC<PostProps> = ({
 
   const myAccount = user?.id == id ? true : false;
 
-  // console.log('====================================');
-  // console.log(user?.id, id, myAccount, "IDdddd", "Acccounttt");
-  // console.log('====================================');
-
   const goToProfile = () => {
-    if (myAccount) {
-      navigation.navigate('MyProfile', { account });
+    // if (myAccount) {
+    //   navigation.navigate('MyProfile', { account });
 
-    } else if (account) {
+    // } else if (account) {
 
-      navigation.navigate('Profile', { account, id });
-    }
+    //   navigation.navigate('Profile', { account, id });
+    // }
+    navigation.navigate('Profile', {account, id});
   };
 
-  const options = myAccount ? [
-    { text: 'Edit', onPress: () => handleReportPress() },
-    { text: 'Delete', onPress: () => handleBlockPress() },
-  ] : [
-    { text: 'Report', onPress: () => handleReportPost() }
-  ];
+  const options = myAccount
+    ? [
+        {text: 'Edit', onPress: () => handleReportPress()},
+        {text: 'Delete', onPress: () => handleBlockPress()},
+      ]
+    : [{text: 'Report', onPress: () => handleReportPost()}];
 
   const handleReadMoreToggle = () => {
     setShowFullText(!showFullText);
@@ -124,9 +125,9 @@ const PostComponent: React.FC<PostProps> = ({
     <Card style={styles.card}>
       <View style={styles.header}>
         <View style={styles.userInfo}>
-          <TouchableOpacity onPress={goToProfile}>
+          <TouchableOpacity disabled={myAccount} onPress={goToProfile}>
             <Image
-              source={avatar ? { uri: avatar } : images.user}
+              source={avatar ? {uri: avatar} : images.user}
               style={styles.avatar}
             />
           </TouchableOpacity>
@@ -138,24 +139,15 @@ const PostComponent: React.FC<PostProps> = ({
             </View>
           </View>
         </View>
-        <TouchableOpacity
-          onPress={onDotPress}
-        >
-          <Image
-            source={images.dots}
-            style={styles.threeDots}
-          />
+        <TouchableOpacity onPress={onDotPress}>
+          <Image source={images.dots} style={styles.threeDots} />
         </TouchableOpacity>
       </View>
 
       {/* <InterLight style={styles.postText}>{postText}</InterLight> */}
       <View style={styles.postContent}>{renderPostText()}</View>
       {postImage && (
-
-        <Image
-          source={{ uri: postImage }}
-          style={styles.postImage}
-        />
+        <Image source={{uri: postImage}} style={styles.postImage} />
       )}
       <View style={styles.postActions}>
         <View style={styles.leftActions}>
@@ -166,33 +158,21 @@ const PostComponent: React.FC<PostProps> = ({
             style={styles.icon}
           />
           <InterRegular style={styles.actionText}>{likes?.length}</InterRegular>
-          <Image
-            source={images.comment}
-            style={styles.icon}
-          />
-          <InterRegular style={styles.actionText}>{comments?.length} </InterRegular>
-          <Image
-            source={images.share}
-            style={styles.icon}
-          />
+          <Image source={images.comment} style={styles.icon} />
+          <InterRegular style={styles.actionText}>
+            {comments?.length}{' '}
+          </InterRegular>
+          <Image source={images.share} style={styles.icon} />
           <InterRegular style={styles.actionText}>{share}</InterRegular>
         </View>
-        <TouchableOpacity
-          onPress={onSavePress}
-        >
-          <Image
-            source={images.save}
-            style={styles.icon}
-          />
+        <TouchableOpacity onPress={onSavePress}>
+          <Image source={images.save} style={styles.icon} />
         </TouchableOpacity>
       </View>
       <View style={styles.separator} />
       <View style={styles.bottomActions}>
         {isLiked != undefined && (
-
-          <TouchableOpacity style={styles.button}
-            onPress={onLikePress}
-          >
+          <TouchableOpacity style={styles.button} onPress={onLikePress}>
             <Image
               // source={images.like}
               source={isLiked ? images.likeFill : images?.like}
@@ -202,20 +182,12 @@ const PostComponent: React.FC<PostProps> = ({
             <Text style={styles.buttonText}>Like</Text>
           </TouchableOpacity>
         )}
-        <TouchableOpacity style={styles.button}
-          onPress={onCommnetPress}
-        >
-          <Image
-            source={images.comment}
-            style={styles.buttonIcon}
-          />
+        <TouchableOpacity style={styles.button} onPress={onCommnetPress}>
+          <Image source={images.comment} style={styles.buttonIcon} />
           <Text style={styles.buttonText}>Comment</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.button}>
-          <Image
-            source={images.share}
-            style={styles.buttonIcon}
-          />
+          <Image source={images.share} style={styles.buttonIcon} />
           <Text style={styles.buttonText}>Share</Text>
         </TouchableOpacity>
       </View>
@@ -223,16 +195,15 @@ const PostComponent: React.FC<PostProps> = ({
         isVisible={modalVisible}
         options={options}
         onClose={onDotPress}
-        style={{ top: 55 }}
+        style={{top: 55}}
       />
     </Card>
-
   );
 };
 
 const styles = StyleSheet.create({
   card: {
-    marginVertical: vh * 4
+    marginVertical: vh * 4,
   },
   header: {
     flexDirection: 'row',
@@ -253,7 +224,7 @@ const styles = StyleSheet.create({
   name: {
     fontSize: fontSizes.f16,
     color: colors.black,
-    fontWeight: "bold"
+    fontWeight: 'bold',
   },
   userMeta: {
     flexDirection: 'row',
@@ -317,16 +288,16 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     fontSize: fontSizes.f14,
-    color: colors.inputText
+    color: colors.inputText,
   },
   postText: {
     fontSize: fontSizes.f14,
     // marginBottom: 10,
-    color: colors.inputText
+    color: colors.inputText,
   },
   postContent: {
     // marginVertical: 10,
-    marginBottom: vh * 2
+    marginBottom: vh * 2,
   },
 
   readMoreText: {

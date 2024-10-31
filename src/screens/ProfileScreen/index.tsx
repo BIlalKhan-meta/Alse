@@ -1,34 +1,46 @@
 // ProfileScreen.tsx
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, FlatList } from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  ScrollView,
+  FlatList,
+} from 'react-native';
 import styles from './styles';
-import { images } from '../../utils/images';
+import {images} from '../../utils/images';
 import Card from '../../components/Card';
-import CustomButton from '../../components/CustomButton';
-import { vw } from '../../constant';
-import InterBold from '../../components/Text/InterBold';
 import InterMedium from '../../components/Text/InterMedium';
 import ProfileCard from '../../components/ProfileCard';
 import PostComponent from '../../components/PostComponent';
-import { useIsFocused, useRoute } from '@react-navigation/native';
+import {useIsFocused, useRoute} from '@react-navigation/native';
 import ReportBlockModal from '../../components/ReportBlockModal';
 import GeneralModal from '../../components/GeneralModal';
 import ReactModal from '../../components/ReactModal';
-import { dummyComments, reactions } from '../../dummyData';
+import {dummyComments, reactions} from '../../dummyData';
 import CommentsModal from '../../components/CommentsModal';
-import { blockUser, getCommentPost, getProfileById, likePost } from '../../store/slices/homeSlice';
-import { useAppDispatch } from '../../hooks/storeHooks';
+import {
+  blockUser,
+  getCommentPost,
+  getProfileById,
+  likePost,
+} from '../../store/slices/homeSlice';
+import {useAppDispatch} from '../../hooks/storeHooks';
 import dayjs from 'dayjs';
 import Loader from '../../components/Loader';
-import { getMessage, Toast } from '../../utils/helpers';
+import {getMessage, Toast} from '../../utils/helpers';
+import {capitalize} from '../../utils';
 
-const ProfileScreen: React.FC = ({ navigation }) => {
-
+const ProfileScreen: React.FC = ({navigation}) => {
   const dispatch = useAppDispatch();
   const isFocused = useIsFocused();
   const route = useRoute();
-  const account = (route?.params?.account === 2 || route?.params?.account === 1) ? "public" : "private";
-
+  const account =
+    route?.params?.account === 2 || route?.params?.account === 1
+      ? 'public'
+      : 'private';
 
   const id = route?.params?.id;
   // console.log('====================================');
@@ -44,11 +56,10 @@ const ProfileScreen: React.FC = ({ navigation }) => {
     visiblity: false,
     comments: [],
     id: null,
-  })
+  });
   const [data, setData] = useState();
   const [loading, setLoading] = useState(false);
   const [blockUserLoader, setBlockUserLoader] = useState(false);
-
 
   const getData = () => {
     if (id) {
@@ -56,7 +67,10 @@ const ProfileScreen: React.FC = ({ navigation }) => {
       dispatch(getProfileById(id))
         .unwrap()
         .then(res => {
-          console.log('response from User Profile ====================>', res?.data?.data);
+          console.log(
+            'response from User Profile ====================>',
+            res?.data?.data,
+          );
           setData(res?.data?.data);
           setLoading(false);
         })
@@ -73,12 +87,12 @@ const ProfileScreen: React.FC = ({ navigation }) => {
 
   const handleReportPress = () => {
     setModalVisible(false);
-    setReportVisible(true)
+    setReportVisible(true);
   };
 
   const handleBlockPress = () => {
     setModalVisible(false);
-    setBlockVisible(true)
+    setBlockVisible(true);
   };
 
   const handleBlockUser = () => {
@@ -100,22 +114,24 @@ const ProfileScreen: React.FC = ({ navigation }) => {
       });
   };
 
-
   const handleCommentPress = id => {
     dispatch(getCommentPost(id))
       .then(res => {
-        console.log(res?.payload?.data?.data?.data, "Commentsss Ressss frommm screennnn ")
+        console.log(
+          res?.payload?.data?.data?.data,
+          'Commentsss Ressss frommm screennnn ',
+        );
         setCommentsVisible({
           visiblity: true,
           comments: res?.payload?.data?.data?.data,
-          id: id
-        })
+          id: id,
+        });
         // getData();
       })
       .catch(err => {
         console.log('error from like post', err);
       });
-  }
+  };
 
   const handleLikePress = (id: number) => {
     dispatch(likePost(id))
@@ -137,20 +153,15 @@ const ProfileScreen: React.FC = ({ navigation }) => {
   };
 
   const options = [
-    { text: 'Report', onPress: () => handleReportPress() },
-    { text: 'Block', onPress: () => handleBlockPress() },
+    {text: 'Report', onPress: () => handleReportPress()},
+    {text: 'Block', onPress: () => handleBlockPress()},
   ];
-
-
-
-
 
   if (loading) {
     return <Loader />;
   }
 
-
-  const renderPost = ({ item, index }) => (
+  const renderPost = ({item, index}) => (
     <PostComponent
       key={index}
       avatar={item.avatar}
@@ -165,22 +176,20 @@ const ProfileScreen: React.FC = ({ navigation }) => {
       // onLikePress={() => setrRactVisible(true)}
       // onCommnetPress={() => setCommentsVisible(true)}
       onCommnetPress={() => handleCommentPress(item?.media[0]?.post_id)}
-
       isLiked={item?.is_liked}
       onLikePress={() => handleLikePress(item?.media[0]?.post_id)}
-
     />
   );
 
-
-
   return (
     <ScrollView>
-
       <View style={styles.container}>
         <Card>
           <ProfileCard
-            name={data?.full_name}
+            name={
+              data?.full_name ||
+              capitalize(data?.first_name) + ' ' + capitalize(data?.last_name)
+            }
             // description="A Freelance Photographer living best life"
             stats={`${data?.posts.length} posts   ${data?.followers.length} followers   ${data?.following.length} following`}
             avatar={data?.avatar}
@@ -201,19 +210,15 @@ const ProfileScreen: React.FC = ({ navigation }) => {
             isVisible={modalVisible}
             options={options}
             onClose={() => setModalVisible(false)}
-            style={{ top: 55 }}
+            style={{top: 55}}
           />
         </Card>
 
-
-
-
-
-        {account == "public" && (
+        {account == 'public' && (
           <>
             <FlatList
               data={data?.posts}
-              keyExtractor={(item) => item.id.toString()}
+              keyExtractor={item => item.id.toString()}
               renderItem={renderPost}
               ListEmptyComponent={<Text>No Posts Found</Text>}
             />
@@ -238,18 +243,17 @@ const ProfileScreen: React.FC = ({ navigation }) => {
           </>
         )}
 
-
         <CommentsModal
           visible={commentsVisible.visiblity}
           closeModal={() => {
-            setCommentsVisible({ visiblity: false, comments: [], id: null })
-            getData()
+            setCommentsVisible({visiblity: false, comments: [], id: null});
+            getData();
           }}
           // icon={CheckedIcon}
-          title='Successfully'
-          message='Password has been updated successfully'
-          buttonText='Apply'
-          onPress={() => navigation.navigate("Home")}
+          title="Successfully"
+          message="Password has been updated successfully"
+          buttonText="Apply"
+          onPress={() => navigation.navigate('Home')}
           comments={commentsVisible?.comments}
           postId={commentsVisible?.id}
         />
@@ -259,7 +263,7 @@ const ProfileScreen: React.FC = ({ navigation }) => {
           reactions={reactions}
         />
 
-        {account == "private" && (
+        {account == 'private' && (
           <Card style={styles.lockContainer}>
             <Image source={images.lock} />
 
@@ -269,19 +273,17 @@ const ProfileScreen: React.FC = ({ navigation }) => {
           </Card>
         )}
 
-
         <GeneralModal
           visible={reportVisible}
           closeModal={() => setReportVisible(false)}
           icon={images.qmark}
-          title='Report User'
-          message='Are you sure you want to report this user?'
-          SecondaryText1='Yes'
-          SecondaryText2='No'
+          title="Report User"
+          message="Are you sure you want to report this user?"
+          SecondaryText1="Yes"
+          SecondaryText2="No"
           onPress={() => {
-            setReportVisible(false)
-            setReportSuccess(true)
-
+            setReportVisible(false);
+            setReportSuccess(true);
           }}
           secondaryBtn={true}
         />
@@ -290,12 +292,12 @@ const ProfileScreen: React.FC = ({ navigation }) => {
           visible={reportSuccess}
           closeModal={() => setReportSuccess(false)}
           icon={images.checkedIcon}
-          title='Report User'
-          message='User has been reported successfully!'
-          buttonText='Ok'
+          title="Report User"
+          message="User has been reported successfully!"
+          buttonText="Ok"
           onPress={() => {
-            setReportSuccess(false)
-            navigation.navigate("Profile", { account: account })
+            setReportSuccess(false);
+            navigation.navigate('Profile', {account: account});
           }}
           primaryBtn={true}
         />
@@ -304,10 +306,10 @@ const ProfileScreen: React.FC = ({ navigation }) => {
           visible={blockVisible}
           closeModal={() => setBlockVisible(false)}
           icon={images.qmark}
-          title='Block User'
-          message='Are you sure you want to block this user?'
-          SecondaryText1='Yes'
-          SecondaryText2='No'
+          title="Block User"
+          message="Are you sure you want to block this user?"
+          SecondaryText1="Yes"
+          SecondaryText2="No"
           // onPress={() => {
           //   setBlockVisible(false)
           //   setBlockSuccess(true)
@@ -322,17 +324,15 @@ const ProfileScreen: React.FC = ({ navigation }) => {
           visible={blockSuccess}
           closeModal={() => setBlockSuccess(false)}
           icon={images.checkedIcon}
-          title='Block User'
-          message='User has been blocked successfully!'
-          buttonText='Ok'
+          title="Block User"
+          message="User has been blocked successfully!"
+          buttonText="Ok"
           onPress={() => {
-            setBlockSuccess(false)
-            navigation.navigate("Profile", { account: account })
+            setBlockSuccess(false);
+            navigation.navigate('Profile', {account: account});
           }}
           primaryBtn={true}
         />
-
-
       </View>
     </ScrollView>
   );

@@ -34,7 +34,7 @@ import {colors} from '../../utils/theme';
 import dayjs from 'dayjs';
 import Loader from '../../components/Loader';
 import {getMessage, Toast} from '../../utils/helpers';
-import {reportPost} from '../../api/home';
+import {reportPost, savePost} from '../../api/home';
 import {useSelector} from 'react-redux';
 import {selectUserProfile} from '../../store/slices/authSlice';
 
@@ -185,6 +185,20 @@ const Home: React.FC = () => {
   //   return false;
   // };
 
+  const handleSave = async (id: number) => {
+    const data = {
+      item_id: id,
+      item_type: 'post',
+    };
+    const form = new FormData();
+    Object.entries(data).map(([key, value]) => {
+      form.append(key, value);
+    });
+    await savePost(form)
+      .then(res => console.log('POSTTTT SAVEEEDDDDDDD', res))
+      .catch(err => console.log('SAVEEEEDDDDDD POSTTTTT ERRORRRRRR', err));
+  };
+
   const renderPost = ({item}) => {
     const mediaItem =
       item?.media && item?.media.length > 0 ? item?.media[0] : null;
@@ -206,7 +220,7 @@ const Home: React.FC = () => {
         // onCommnetPress={() => setCommentsVisible(true)}
         onCommnetPress={() => handleCommentPress(mediaItem?.post_id)}
         onLikePress={() => handleLikePress(mediaItem?.post_id)}
-        onSavePress={() => navigation.navigate('Saved')}
+        onSavePress={() => handleSave(item?.id)}
         // onLikePress={() => setrRactVisible(true)}
         onDotPress={() => handleDotPress(item.id)}
         modalVisible={activePostId === item.id}

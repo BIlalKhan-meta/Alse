@@ -4,3 +4,7 @@ export function formatDate(date: Date): string {
   const year = date.getFullYear();
   return `${month}/${day}/${year}`;
 }
+
+export function capitalize(name: string) {
+  return String(name).charAt(0).toUpperCase() + String(name).slice(1);
+}

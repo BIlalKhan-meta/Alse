@@ -2,7 +2,6 @@
 import React, { useLayoutEffect, useState } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, FlatList } from 'react-native';
 import { images } from '../../utils/images';
-import CardComponent from '../../components/CardComponent';
 import { colors } from '../../utils/theme';
 import { fontSizes, vh, vw } from '../../constant';
 import Card from '../../components/Card';
