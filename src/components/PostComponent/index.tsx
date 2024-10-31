@@ -87,6 +87,7 @@ const PostComponent: React.FC<PostProps> = ({
     navigation.navigate('Profile', {account, id});
   };
 
+
   const options = myAccount
     ? [
         {text: 'Edit', onPress: () => handleReportPress()},
@@ -98,7 +99,7 @@ const PostComponent: React.FC<PostProps> = ({
     setShowFullText(!showFullText);
   };
   const renderPostText = () => {
-    if (postText.length <= maxTextLength || showFullText) {
+    if (postText?.length <= maxTextLength || showFullText) {
       return (
         <Text style={styles.postText}>
           {postText}{' '}
@@ -112,7 +113,7 @@ const PostComponent: React.FC<PostProps> = ({
     } else {
       return (
         <Text style={styles.postText}>
-          {`${postText.substring(0, maxTextLength)}... `}{' '}
+          {`${postText?.substring(0, maxTextLength)}... `}{' '}
           <Text style={styles.readMoreText} onPress={handleReadMoreToggle}>
             Read More
           </Text>
@@ -171,17 +172,15 @@ const PostComponent: React.FC<PostProps> = ({
       </View>
       <View style={styles.separator} />
       <View style={styles.bottomActions}>
-        {isLiked != undefined && (
-          <TouchableOpacity style={styles.button} onPress={onLikePress}>
-            <Image
-              // source={images.like}
-              source={isLiked ? images.likeFill : images?.like}
-              style={styles.buttonIcon}
-              tintColor={isLiked ? colors.blue : null}
-            />
-            <Text style={styles.buttonText}>Like</Text>
-          </TouchableOpacity>
-        )}
+        <TouchableOpacity style={styles.button} onPress={onLikePress}>
+          <Image
+            // source={images.like}
+            source={isLiked ? images.likeFill : images?.like}
+            style={styles.buttonIcon}
+            tintColor={isLiked ? colors.blue : null}
+          />
+          <Text style={styles.buttonText}>Like</Text>
+        </TouchableOpacity>
         <TouchableOpacity style={styles.button} onPress={onCommnetPress}>
           <Image source={images.comment} style={styles.buttonIcon} />
           <Text style={styles.buttonText}>Comment</Text>

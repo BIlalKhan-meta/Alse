@@ -68,6 +68,9 @@ const endpoints = {
   chat: {
     chatList: '/get-chat-list',
   },
+  menu: {
+    getSavedItems: '/get-saved-items',
+  },
 };
 
 export default endpoints;
