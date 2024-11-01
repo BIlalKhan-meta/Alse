@@ -34,7 +34,8 @@ import {colors} from '../../utils/theme';
 import dayjs from 'dayjs';
 import Loader from '../../components/Loader';
 import {getMessage, Toast} from '../../utils/helpers';
-import {reportPost, savePost} from '../../api/home';
+import {reportPost} from '../../api/home';
+import {saveItem} from '../../api/menu';
 import {useSelector} from 'react-redux';
 import {selectUserProfile} from '../../store/slices/authSlice';
 
@@ -194,7 +195,7 @@ const Home: React.FC = () => {
     Object.entries(data).map(([key, value]) => {
       form.append(key, value);
     });
-    await savePost(form)
+    await saveItem(form)
       .then(res => console.log('POSTTTT SAVEEEDDDDDDD', res))
       .catch(err => console.log('SAVEEEEDDDDDD POSTTTTT ERRORRRRRR', err));
   };

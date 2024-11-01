@@ -11,7 +11,7 @@ const axiosInstance = axios.create({
 axiosInstance.interceptors.request.use(
   config => {
     const token = store.getState().auth.token;
-    console.log(token, 'tokennnn', config, 'Configgggggg');
+    // console.log(token, 'tokennnn', config, 'Configgggggg');
     if (!config.headers) {
       config.headers = {};
     }

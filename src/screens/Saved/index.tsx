@@ -38,6 +38,8 @@ import {reportPost, savePost} from '../../api/home';
 import GeneralModal from '../../components/GeneralModal';
 import {getMessage} from '../../utils/helpers';
 import Toast from 'react-native-toast-message';
+import Loader from '../../components/Loader';
+import {EmptyComponent} from '../../components/EmptyComponent';
 
 const dummyWishlist = [
   {
@@ -146,43 +148,34 @@ const Saved: React.FC = () => {
 
   const [activePostId, setActivePostId] = useState<number | null>(null);
 
-  const handleAddToCart = (productId: string) => {
-    // Implement your logic to add the product to cart
-    console.log(`Product with id ${productId} added to cart`);
-  };
-
-  const handleRemoveFromWishlist = (productId: string) => {
-    // Implement your logic to remove the product from wishlist
-    console.log(`Product with id ${productId} removed from wishlist`);
-  };
-
   const fetchData = async () => {
     setLoading(true);
-    let res;
-    if (active == 1) {
-      res = await getSavedItems()
-        .then(res => {
-          if (res?.data) {
-            // console.log('RESSSSSSSSSS', res?.data?.data?.data);
-            setDisplayPost(
-              res?.data?.data?.data?.filter(
-                item => item.savable_type == `App\\Models\\Post`,
-              ),
-            );
-          }
-        })
-        .catch(err => {
-          console.log('ERRRRRRORRRRR SAVEDDDDDDDDDDDD', err);
-        })
-        .finally(() => {
-          setLoading(false);
-        });
-    }
+    let type =
+      active == 1
+        ? `App\\Models\\Post`
+        : active == 2
+        ? `App\\Models\\Product`
+        : `App\\Models\\Blog`;
+    await getSavedItems()
+      .then(res => {
+        if (res?.data) {
+          // console.log('RESSSSSSSSSS', res?.data?.data?.data);
+          setDisplayPost(
+            res?.data?.data?.data?.filter(item => item.savable_type == type),
+          );
+        }
+      })
+      .catch(err => {
+        console.log('ERRRRRRORRRRR SAVEDDDDDDDDDDDD', err);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   };
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [active]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -338,13 +331,13 @@ const Saved: React.FC = () => {
     return (
       <PostComponent
         id={item?.savable_item?.user_id}
-        postID={item?.savable_item?.media[0]?.post_id}
+        // postID={item?.savable_item?.media[0]?.post_id}
         avatar={item?.savable_item?.avatar}
         name={item.savable_item?.name}
         country={item.savable_item?.country ? item.country : ''}
-        time={dayjs(item?.savable_item?.media[0]?.date).format('hh:MM A')}
+        time={dayjs(item?.savable_item?.date).format('hh:MM A')}
         postText={item?.savable_item?.description}
-        postImage={item?.savable_item?.media[0]?.path}
+        postImage={mediaItem?.path}
         likes={item.savable_item?.likes}
         comments={item.savable_item?.comments}
         share={item.savable_item?.share}
@@ -380,6 +373,10 @@ const Saved: React.FC = () => {
       <InterRegular style={styles.emptyText}>No Posts to Show.</InterRegular>
     </View>
   );
+
+  if (loading) {
+    return <Loader />;
+  }
 
   return (
     <ScrollView showsVerticalScrollIndicator={false}>
@@ -431,7 +428,7 @@ const Saved: React.FC = () => {
               renderItem={renderPost}
               //   keyExtractor={item => item?.id.toString()}
               showsVerticalScrollIndicator={false}
-              ListEmptyComponent={renderEmpty}
+              // ListEmptyComponent={renderEmpty}
             />
 
             <CommentsModal
@@ -554,21 +551,28 @@ const Saved: React.FC = () => {
               </TouchableOpacity>
             </View>
 
-            {/* <WishlistScreen
-              wishlist={dummyWishlist}
-              onAddToCart={handleAddToCart}
-              onRemoveFromWishlist={handleRemoveFromWishlist}
+            <WishlistScreen
+              wishlist={displayPost.map(item => {
+                return item?.savable_item;
+              })}
               heart={true}
               addCart={true}
               product={true}
-            /> */}
+            />
           </Card>
         )}
 
         {active == 3 && (
           <Card style={styles.contentContainer}>
             <FlatList
-              data={dummyContentSaved}
+              data={displayPost.map(item => {
+                return item?.savable_item;
+              })}
+              onRefresh={fetchData}
+              refreshing={loading}
+              ListEmptyComponent={() => (
+                <EmptyComponent text={'No Data Available'} />
+              )}
               renderItem={({item}) => (
                 <ContentSavedScreen
                   item={item}
@@ -584,7 +588,7 @@ const Saved: React.FC = () => {
                 />
                 // </View>
               )}
-              keyExtractor={item => item.id}
+              keyExtractor={item => item?.id?.toString()}
             />
           </Card>
         )}

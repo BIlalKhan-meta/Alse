@@ -14,7 +14,7 @@ export const getCategories = () => {
 };
 
 export const addProductToCart = (id: number) => {
-  console.log('addcartttt ', `${endpoints.products.cart}/${id}`);
+  // console.log('addcartttt ', `${endpoints.products.cart}/${id}`);
   return axiosInstance.post(`${endpoints.products.cart}/${id}`);
 };
 
