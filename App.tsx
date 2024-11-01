@@ -2,6 +2,7 @@ import 'react-native-gesture-handler';
 import React, { useEffect } from 'react';
 import type { PropsWithChildren } from 'react';
 import {
+  Platform,
   SafeAreaView,
   ScrollView,
   StatusBar,
@@ -20,6 +21,7 @@ import Toast from 'react-native-toast-message';
 import { PersistGate } from 'redux-persist/integration/react';
 import { BacKgroundNotifListener, NotificationListener } from './src/utils/messaging.utils';
 import InAppBrowser from 'react-native-inappbrowser-reborn';
+import { checkNotifications, PERMISSIONS, request } from 'react-native-permissions';
 
 type SectionProps = PropsWithChildren<{
   title: string;
@@ -27,16 +29,34 @@ type SectionProps = PropsWithChildren<{
 
 function App(): React.JSX.Element {
   const isDarkMode = useColorScheme() === 'dark';
-  useEffect(() => {
-    const init = async () => {
-      // …do multiple sync or async tasks
-    };
+  const checkNotificationPermission = async () => {
+    try {
+      const res = await checkNotifications();
+      if (
+        res?.status == 'denied' ||
+        res?.status == 'blocked' ||
+        res?.status == 'unavailable' ||
+        res?.status == 'limited'
+      ) {
+        const requestResult = await request(
+          PERMISSIONS.ANDROID.POST_NOTIFICATIONS,
+        );
+      }
+    } catch (error) {
+      console.error('Error checking notification permission:', error);
+    }
+  };
 
-    init().finally(async () => {
-      await BootSplash.hide({ fade: true });
-      console.log("BootSplash has been hidden successfully");
-    });
+  useEffect(() => {
+    BootSplash.hide();
+    if (Platform.OS === 'android') {
+      checkNotificationPermission();
+    }
   }, []);
+
+  function handleNotificationPress(remoteMessage: object) {
+    console.log(remoteMessage);
+  }
 
 
   function handleNotification(remoteMessage: any) {
@@ -57,7 +77,7 @@ function App(): React.JSX.Element {
       <Provider store={store}>
         <SafeAreaView
           style={styles.container}>
-          <NotificationListener handleNotification={handleNotification} />
+          <NotificationListener handleNotification={handleNotificationPress} />
           <BacKgroundNotifListener handleNotification={handleNotification} />
           <NavigationContainer>
             <StatusBar backgroundColor={colors.headerColor} barStyle={'dark-content'} />

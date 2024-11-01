@@ -2438,18 +2438,18 @@
     prompts "^2.4.2"
     semver "^7.5.2"
 
-"@react-native-firebase/app@^21.2.0":
-  version "21.2.0"
-  resolved "https://registry.yarnpkg.com/@react-native-firebase/app/-/app-21.2.0.tgz#63233d1cfa9d294d4e8352a4c11361658b85a2bc"
-  integrity sha512-3lkJNWHU5Iod6n1k9Q6VmCbI84D5M/pVSwaRtxc3sf/c2eU7Bdrhv6ql4Sv3+2TqdQ4FMD9wqTBrFkJHchhfTw==
+"@react-native-firebase/app@^21.3.0":
+  version "21.3.0"
+  resolved "https://registry.yarnpkg.com/@react-native-firebase/app/-/app-21.3.0.tgz#0dce61af8bf9bcb17085e6000c0683990c493072"
+  integrity sha512-9Y1LzXuH8Aaa306awzX1493NqzvXqEfllPt0FJTZ+u9f7SXP5pIgcjupnROU8jKYmQQ7wi64T+dhjwPSe01QWg==
   dependencies:
     firebase "10.13.2"
     superstruct "^0.6.2"
 
-"@react-native-firebase/messaging@^21.2.0":
-  version "21.2.0"
-  resolved "https://registry.yarnpkg.com/@react-native-firebase/messaging/-/messaging-21.2.0.tgz#9bd0eae5ba603f6ddf85dc429cc1e365d368a7f8"
-  integrity sha512-KB6/sBREqloeU3ehAxEE/jeyV8WFLBxxp2wFewxImbGfWGgv/HS7opexgAEhugb50lAhx4v4ZQQMTYVD+ghS/w==
+"@react-native-firebase/messaging@^21.3.0":
+  version "21.3.0"
+  resolved "https://registry.yarnpkg.com/@react-native-firebase/messaging/-/messaging-21.3.0.tgz#ca5206c08289d367abe72e35668f58436e715afc"
+  integrity sha512-zQY76kQC6eUuJp2Y4ZL9HtSapobz4dE5Sh1sK6h2fum4J2FMHqwyob/+fQ8aPGLBPmFUfV+LBk3nc0JvQwnkLw==
 
 "@react-native-picker/picker@^2.7.6":
   version "2.7.7"
@@ -7628,6 +7628,11 @@ react-native-phone-number-input@^2.1.0:
   dependencies:
     google-libphonenumber "^3.2.10"
     react-native-country-picker-modal "^2.0.0"
+
+react-native-push-notification@^8.1.1:
+  version "8.1.1"
+  resolved "https://registry.yarnpkg.com/react-native-push-notification/-/react-native-push-notification-8.1.1.tgz#a41d20c70ea5a7709417e96261b225461f8dc73a"
+  integrity sha512-XpBtG/w+a6WXTxu6l1dNYyTiHnbgnvjoc3KxPTxYkaIABRmvuJZkFxqruyGvfCw7ELAlZEAJO+dthdTabCe1XA==
 
 react-native-safe-area-context@^4.10.1:
   version "4.10.9"
