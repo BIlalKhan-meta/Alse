@@ -1,6 +1,6 @@
 import 'react-native-gesture-handler';
-import React, { useEffect } from 'react';
-import type { PropsWithChildren } from 'react';
+import React, {useEffect} from 'react';
+import type {PropsWithChildren} from 'react';
 import {
   Platform,
   SafeAreaView,
@@ -11,24 +11,38 @@ import {
   useColorScheme,
   View,
 } from 'react-native';
-import { NavigationContainer, useNavigation } from '@react-navigation/native';
+import {
+  DefaultTheme,
+  NavigationContainer,
+  useNavigation,
+} from '@react-navigation/native';
 import AppNavigation from './src/navigation/AppNavigation';
-import { colors } from './src/utils/theme';
-import BootSplash from "react-native-bootsplash";
-import { Provider } from 'react-redux';
-import store, { persistor } from './src/store';
+import {colors} from './src/utils/theme';
+import BootSplash from 'react-native-bootsplash';
+import {Provider} from 'react-redux';
+import store, {persistor} from './src/store';
 import Toast from 'react-native-toast-message';
-import { PersistGate } from 'redux-persist/integration/react';
-import { BacKgroundNotifListener, NotificationListener } from './src/utils/messaging.utils';
+import {PersistGate} from 'redux-persist/integration/react';
+import {
+  BacKgroundNotifListener,
+  NotificationListener,
+} from './src/utils/messaging.utils';
 import InAppBrowser from 'react-native-inappbrowser-reborn';
-import { checkNotifications, PERMISSIONS, request } from 'react-native-permissions';
+import {
+  checkNotifications,
+  PERMISSIONS,
+  request,
+} from 'react-native-permissions';
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
+const theme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    background: colors.headerColor,
+  },
+};
 
 function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
   const checkNotificationPermission = async () => {
     try {
       const res = await checkNotifications();
@@ -58,12 +72,9 @@ function App(): React.JSX.Element {
     console.log(remoteMessage);
   }
 
-
   function handleNotification(remoteMessage: any) {
     console.log('Message handled in the !', remoteMessage?.notification);
-    if (
-      remoteMessage?.notification
-    ) {
+    if (remoteMessage?.notification) {
       InAppBrowser.close();
       // navigation.navigate("Home");
       // navigate('DrawerNavigation1');
@@ -75,17 +86,18 @@ function App(): React.JSX.Element {
   return (
     <PersistGate loading={null} persistor={persistor}>
       <Provider store={store}>
-        <SafeAreaView
-          style={styles.container}>
+        <SafeAreaView style={styles.container}>
           <NotificationListener handleNotification={handleNotificationPress} />
           <BacKgroundNotifListener handleNotification={handleNotification} />
-          <NavigationContainer>
-            <StatusBar backgroundColor={colors.headerColor} barStyle={'dark-content'} />
+          <NavigationContainer theme={theme}>
+            <StatusBar
+              backgroundColor={colors.headerColor}
+              barStyle={'dark-content'}
+            />
             <AppNavigation />
           </NavigationContainer>
 
           <Toast />
-
         </SafeAreaView>
       </Provider>
     </PersistGate>
@@ -95,9 +107,8 @@ function App(): React.JSX.Element {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.white
+    backgroundColor: colors.white,
   },
-
 });
 
 export default App;

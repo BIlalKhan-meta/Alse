@@ -11,6 +11,7 @@ import Card from '../../components/Card';
 import {colors} from '../../utils/theme';
 import {getCart, removeCartItem} from '../../api/product';
 import Loader from '../../components/Loader';
+import {EmptyComponent} from '../../components/EmptyComponent';
 
 const deliveryCharges = 15;
 const discount = 10;
@@ -97,6 +98,7 @@ const Cart = () => {
           )}
           contentContainerStyle={styles.contentContainer}
           keyExtractor={item => item.id}
+          ListEmptyComponent={<EmptyComponent text={'No Items In Cart'} />}
         />
 
         {cartData?.carts?.data?.length != 0 && (

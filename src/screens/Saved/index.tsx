@@ -102,6 +102,46 @@ const Saved: React.FC = () => {
     fetchData();
   }, [active]);
 
+  const handleRemoveFromWishlist = async (
+    productId: number,
+    saved: boolean,
+  ) => {
+    if (saved) {
+      console.log('CHECKKKKKKKKKKKKKKKKKKKKK', productId);
+      let index = displayPost.findIndex(
+        item => item?.savable_item?.id == productId,
+      );
+      console.log('INDEXXXXXXXXXXXXXXXXXX', index);
+      let arr = [...displayPost];
+      arr.splice(index, 1);
+      setDisplayPost(arr);
+      await removeSavedItem(displayPost[index].id).then(res => {
+        if (res?.data) {
+        }
+      });
+    } else {
+      const data = {
+        item_id: productId,
+        item_type: 'product',
+      };
+
+      const form = new FormData();
+      Object.entries(data).map(([key, value]) => {
+        form.append(key, value);
+      });
+
+      await saveItem(form)
+        .then(res => {
+          if (res?.data) {
+            //   console.log('RESSSSSSSSSS SAVEEEEEEEEEEEEEEE', res?.data);
+          }
+        })
+        .catch(err => {
+          console.log('ERRRRRORRR SAVEEEEEEEEEEEEEEEEE', err);
+        });
+    }
+  };
+
   useLayoutEffect(() => {
     navigation.setOptions({
       headerStyle: {
@@ -305,7 +345,6 @@ const Saved: React.FC = () => {
   if (loading) {
     return <Loader />;
   }
-
   return (
     <ScrollView showsVerticalScrollIndicator={false}>
       <View style={styles.container}>
@@ -483,6 +522,7 @@ const Saved: React.FC = () => {
               wishlist={displayPost.map(item => {
                 return item?.savable_item;
               })}
+              handleRemove={handleRemoveFromWishlist}
               heart={true}
               addCart={true}
               product={true}
@@ -499,7 +539,7 @@ const Saved: React.FC = () => {
               onRefresh={fetchData}
               refreshing={loading}
               ListEmptyComponent={() => (
-                <EmptyComponent text={'No Data Available'} />
+                <EmptyComponent text={'No Saved Content'} />
               )}
               renderItem={({item}) => (
                 <ContentSavedScreen

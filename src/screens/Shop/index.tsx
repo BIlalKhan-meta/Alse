@@ -21,7 +21,7 @@ import GeneralModal from '../../components/GeneralModal';
 import SortModal from '../../components/SortModal';
 import {getProductByShop, shopDetail} from '../../api/shop';
 import Loader from '../../components/Loader';
-import {saveItem} from '../../api/menu';
+import {removeSavedItem, saveItem} from '../../api/menu';
 
 const Shop: React.FC = () => {
   const navigation = useNavigation();
@@ -98,6 +98,42 @@ const Shop: React.FC = () => {
     return <Loader />;
   }
 
+  const handleRemoveFromWishlist = async (
+    productId: number,
+    saved: boolean,
+  ) => {
+    if (saved) {
+      await removeSavedItem(productId).then(res => {
+        if (res?.data) {
+          let index = shopProduct.findIndex(item => item?.id == productId);
+          let arr = [...shopProduct];
+          arr.splice(index, 1);
+          setShopProduct(arr);
+        }
+      });
+    } else {
+      const data = {
+        item_id: productId,
+        item_type: 'product',
+      };
+
+      const form = new FormData();
+      Object.entries(data).map(([key, value]) => {
+        form.append(key, value);
+      });
+
+      await saveItem(form)
+        .then(res => {
+          if (res?.data) {
+            //   console.log('RESSSSSSSSSS SAVEEEEEEEEEEEEEEE', res?.data);
+          }
+        })
+        .catch(err => {
+          console.log('ERRRRRORRR SAVEEEEEEEEEEEEEEEEE', err);
+        });
+    }
+  };
+
   return (
     <ScrollView showsVerticalScrollIndicator={false}>
       <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
@@ -157,6 +193,7 @@ const Shop: React.FC = () => {
               heart={true}
               addCart={true}
               product={true}
+              handleRemove={handleRemoveFromWishlist}
               onPress={id => {
                 console.log('====================================');
                 console.log(id, 'Id Frommm producttt');
