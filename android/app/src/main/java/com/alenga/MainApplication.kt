@@ -1,4 +1,4 @@
-package com.alenga
+package com.blitzapp.alenga
 
 import android.app.Application
 import com.facebook.react.PackageList
