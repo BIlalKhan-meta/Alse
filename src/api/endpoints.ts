@@ -47,6 +47,7 @@ const endpoints = {
     category: '/categories',
     cart: '/add-to-cart',
     getCart: '/get-cart',
+    removeCartItem: '/remove-from-cart',
   },
   education: {
     getArticles: '/articles',
@@ -71,6 +72,7 @@ const endpoints = {
   menu: {
     getSavedItems: '/get-saved-items',
     saveItem: '/save-item',
+    removeSaved: '/remove-saved-item',
   },
 };
 

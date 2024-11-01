@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState} from 'react';
 import {
   View,
   Text,
@@ -8,20 +8,11 @@ import {
   FlatList,
 } from 'react-native';
 import {images} from '../../utils/images';
-import {vh} from '../../constant';
 import styles from './styles';
 import InterRegular from '../Text/InterRegular';
 import InterBoldAverage from '../Text/InterBoldAverage';
-import {saveItem} from '../../api/menu';
+import {removeSavedItem, saveItem} from '../../api/menu';
 import {addProductToCart} from '../../api/product';
-
-// interface Product {
-//     id: string;
-//     name: string;
-//     price: number;
-//     imageUrl: string;
-//     size: string
-// }
 
 interface WishlistProps {
   wishlist: [];
@@ -38,6 +29,8 @@ const WishlistScreen: React.FC<WishlistProps> = ({
   product,
   onPress,
 }) => {
+  const [display, setDisplay] = useState(wishlist);
+
   const handleAddToCart = async (productId: string) => {
     // Implement your logic to add the product to cart
     // console.log(`Product with id ${productId} added to cart`);
@@ -52,28 +45,40 @@ const WishlistScreen: React.FC<WishlistProps> = ({
       });
   };
 
-  const handleRemoveFromWishlist = async (productId: string) => {
-    // Implement your logic to remove the product from wishlist
-    // console.log(`Product with id ${productId} removed from wishlist`);
-    const data = {
-      item_id: productId,
-      item_type: 'product',
-    };
-
-    const form = new FormData();
-    Object.entries(data).map(([key, value]) => {
-      form.append(key, value);
-    });
-
-    await saveItem(form)
-      .then(res => {
+  const handleRemoveFromWishlist = async (
+    productId: number,
+    saved: boolean,
+  ) => {
+    if (saved) {
+      await removeSavedItem(productId).then(res => {
         if (res?.data) {
-          //   console.log('RESSSSSSSSSS SAVEEEEEEEEEEEEEEE', res?.data);
+          let index = display.findIndex(item => item.id == productId);
+          let arr = [...display];
+          arr.splice(index, 1);
+          setDisplay(arr);
         }
-      })
-      .catch(err => {
-        console.log('ERRRRRORRR SAVEEEEEEEEEEEEEEEEE', err);
       });
+    } else {
+      const data = {
+        item_id: productId,
+        item_type: 'product',
+      };
+
+      const form = new FormData();
+      Object.entries(data).map(([key, value]) => {
+        form.append(key, value);
+      });
+
+      await saveItem(form)
+        .then(res => {
+          if (res?.data) {
+            //   console.log('RESSSSSSSSSS SAVEEEEEEEEEEEEEEE', res?.data);
+          }
+        })
+        .catch(err => {
+          console.log('ERRRRRORRR SAVEEEEEEEEEEEEEEEEE', err);
+        });
+    }
   };
 
   const renderItem = ({item}) => {
@@ -94,9 +99,12 @@ const WishlistScreen: React.FC<WishlistProps> = ({
         />
         {heart && (
           <TouchableOpacity
-            onPress={() => handleRemoveFromWishlist(item.id)}
+            onPress={() => handleRemoveFromWishlist(item.id, item?.is_saved)}
             style={styles.heartIconContainer}>
-            <Image source={images.heartIcon} />
+            <Image
+              source={item?.is_saved ? images.heartIcon : images.unfillHeart}
+              style={{tintColor: 'red'}}
+            />
           </TouchableOpacity>
         )}
         {addCart && (
@@ -142,7 +150,7 @@ const WishlistScreen: React.FC<WishlistProps> = ({
 
   return (
     <FlatList
-      data={wishlist}
+      data={display}
       renderItem={renderItem}
       keyExtractor={item => item?.id?.toString()}
       numColumns={2}

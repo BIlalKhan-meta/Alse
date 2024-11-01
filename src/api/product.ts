@@ -17,6 +17,9 @@ export const addProductToCart = (id: number) => {
   // console.log('addcartttt ', `${endpoints.products.cart}/${id}`);
   return axiosInstance.post(`${endpoints.products.cart}/${id}`);
 };
+export const removeCartItem = (id: number) => {
+  return axiosInstance.post(`${endpoints.products.removeCartItem}/${id}`);
+};
 
 export const getCart = () => {
   return axiosInstance.get(`${endpoints.products.getCart}`);

@@ -54,6 +54,8 @@ export const images = {
   face: require('../assets/Icons/face.png'),
   calendericon: require('../assets/Icons/calendericon.png'),
   cross: require('../assets/Icons/cross.png'),
+  unsave: require('../assets/Icons/unsave.png'),
+  unfillHeart: require('../assets/Icons/unfillHeart.png'),
 
   //Imagesssss/////
   shop1: require('../assets/images/shop1.png'),

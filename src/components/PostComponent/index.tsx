@@ -43,6 +43,7 @@ interface PostProps {
   handleReportPost: () => void;
   modalVisible: boolean;
   isLiked?: boolean;
+  isSaved?: boolean;
 }
 
 const PostComponent: React.FC<PostProps> = ({
@@ -67,6 +68,7 @@ const PostComponent: React.FC<PostProps> = ({
   handleBlockPress,
   handleReportPost,
   isLiked,
+  isSaved,
 }) => {
   const navigation = useNavigation();
   const user = useSelector(selectUserProfile);
@@ -86,7 +88,6 @@ const PostComponent: React.FC<PostProps> = ({
     // }
     navigation.navigate('Profile', {account, id});
   };
-
 
   const options = myAccount
     ? [
@@ -167,7 +168,10 @@ const PostComponent: React.FC<PostProps> = ({
           <InterRegular style={styles.actionText}>{share}</InterRegular>
         </View>
         <TouchableOpacity onPress={onSavePress}>
-          <Image source={images.save} style={styles.icon} />
+          <Image
+            source={isSaved ? images?.unsave : images.save}
+            style={styles.icon}
+          />
         </TouchableOpacity>
       </View>
       <View style={styles.separator} />

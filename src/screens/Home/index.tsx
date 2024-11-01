@@ -27,6 +27,7 @@ import {
   GetNewsFeed,
   likePost,
   PostDelete,
+  postSave,
   updateLike,
 } from '../../store/slices/homeSlice';
 import InterRegular from '../../components/Text/InterRegular';
@@ -35,7 +36,7 @@ import dayjs from 'dayjs';
 import Loader from '../../components/Loader';
 import {getMessage, Toast} from '../../utils/helpers';
 import {reportPost} from '../../api/home';
-import {saveItem} from '../../api/menu';
+import {removeSavedItem, saveItem} from '../../api/menu';
 import {useSelector} from 'react-redux';
 import {selectUserProfile} from '../../store/slices/authSlice';
 
@@ -186,18 +187,25 @@ const Home: React.FC = () => {
   //   return false;
   // };
 
-  const handleSave = async (id: number) => {
-    const data = {
-      item_id: id,
-      item_type: 'post',
-    };
-    const form = new FormData();
-    Object.entries(data).map(([key, value]) => {
-      form.append(key, value);
-    });
-    await saveItem(form)
-      .then(res => console.log('POSTTTT SAVEEEDDDDDDD', res))
-      .catch(err => console.log('SAVEEEEDDDDDD POSTTTTT ERRORRRRRR', err));
+  const handleSave = async (id: number, isSaved: boolean) => {
+    dispatch(postSave(id));
+    if (isSaved) {
+      await removeSavedItem(id)
+        .then(res => console.log('SAVEDDD POSTTTTT REMOOVEEEDDDD', res))
+        .catch(err => console.log('ERRRORRRRRRRRR SAVEDDDDDDDDDDD', err));
+    } else {
+      const data = {
+        item_id: id,
+        item_type: 'post',
+      };
+      const form = new FormData();
+      Object.entries(data).map(([key, value]) => {
+        form.append(key, value);
+      });
+      await saveItem(form)
+        .then(res => console.log('POSTTTT SAVEEEDDDDDDD', res))
+        .catch(err => console.log('SAVEEEEDDDDDD POSTTTTT ERRORRRRRR', err));
+    }
   };
 
   const renderPost = ({item}) => {
@@ -221,7 +229,7 @@ const Home: React.FC = () => {
         // onCommnetPress={() => setCommentsVisible(true)}
         onCommnetPress={() => handleCommentPress(mediaItem?.post_id)}
         onLikePress={() => handleLikePress(mediaItem?.post_id)}
-        onSavePress={() => handleSave(item?.id)}
+        onSavePress={() => handleSave(item?.id, item?.is_saved)}
         // onLikePress={() => setrRactVisible(true)}
         onDotPress={() => handleDotPress(item.id)}
         modalVisible={activePostId === item.id}
@@ -241,6 +249,7 @@ const Home: React.FC = () => {
           });
         }}
         isLiked={item?.is_liked}
+        isSaved={item?.is_saved}
       />
     );
   };

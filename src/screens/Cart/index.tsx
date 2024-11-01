@@ -9,7 +9,7 @@ import {products} from '../../dummyData';
 import CustomButton from '../../components/CustomButton';
 import Card from '../../components/Card';
 import {colors} from '../../utils/theme';
-import {getCart} from '../../api/product';
+import {getCart, removeCartItem} from '../../api/product';
 import Loader from '../../components/Loader';
 
 const deliveryCharges = 15;
@@ -33,11 +33,6 @@ const Cart = () => {
     index - 1;
   };
 
-  const handleDelete = (index: number) => {
-    // Implement delete logic here
-    console.log('Delete item at index:', index);
-  };
-
   useEffect(() => {
     getData();
   }, [isFoused]);
@@ -55,6 +50,21 @@ const Cart = () => {
     console.log('====================================');
   };
 
+  const handleDelete = async (index: number) => {
+    // Implement delete logic here
+    // console.log('Delete item at index:', index);
+    await removeCartItem(index)
+      .then(res => {
+        if (res?.data) {
+          console.log('RESSSSSSSSSSSSS DELETEEEEEE', res);
+          getData();
+        }
+      })
+      .catch(err => {
+        console.log('ERRORRRR DELEETEEEEEEEEE', err);
+      });
+  };
+
   useLayoutEffect(() => {
     navigation.setOptions({
       headerStyle: {
@@ -70,46 +80,49 @@ const Cart = () => {
   return (
     <ScrollView showsVerticalScrollIndicator={false}>
       <View style={styles.container}>
-        <Card style={styles.contentContainer}>
-          <FlatList
-            data={cartData?.carts?.data}
-            renderItem={({item, index}) => (
-              <>
-                <CartItem
-                  item={item}
-                  showQuantityControls={true} // Show increment/decrement buttons
-                  onIncrement={() => handleIncrement(index)}
-                  onDecrement={() => handleDecrement(index)}
-                  onDelete={() => handleDelete(index)}
-                  showSeparator={index !== products.length - 1}
-                  showDelete={true}
-                />
-              </>
-            )}
-            keyExtractor={item => item.id}
-          />
-        </Card>
-
-        <Summary
-          subTotal={cartData?.total_amount}
-          deliveryCharges={deliveryCharges}
-          discount={discount}
-          // grandTotal={grandTotal}
-          grandTotal={cartData?.total_amount + deliveryCharges - discount}
+        <FlatList
+          data={cartData?.carts?.data}
+          renderItem={({item, index}) => (
+            <>
+              <CartItem
+                item={item}
+                showQuantityControls={true} // Show increment/decrement buttons
+                onIncrement={() => handleIncrement(index)}
+                onDecrement={() => handleDecrement(index)}
+                onDelete={handleDelete}
+                showSeparator={index !== products.length - 1}
+                showDelete={true}
+              />
+            </>
+          )}
+          contentContainerStyle={styles.contentContainer}
+          keyExtractor={item => item.id}
         />
 
-        <CustomButton
-          style={styles.checkoutButton}
-          onPress={() => navigation.navigate('CheckoutScreen')}>
-          Proceed to Checkout
-        </CustomButton>
+        {cartData?.carts?.data?.length != 0 && (
+          <>
+            <Summary
+              subTotal={cartData?.total_amount}
+              deliveryCharges={deliveryCharges}
+              discount={discount}
+              // grandTotal={grandTotal}
+              grandTotal={cartData?.total_amount + deliveryCharges - discount}
+            />
 
-        <CustomButton
-          style={styles.shoppingButton}
-          txtstyle={styles.shoppingTxt}
-          onPress={() => navigation.navigate('Shop')}>
-          Continue Shopping
-        </CustomButton>
+            <CustomButton
+              style={styles.checkoutButton}
+              onPress={() => navigation.navigate('CheckoutScreen')}>
+              Proceed to Checkout
+            </CustomButton>
+
+            <CustomButton
+              style={styles.shoppingButton}
+              txtstyle={styles.shoppingTxt}
+              onPress={() => navigation.navigate('Shop')}>
+              Continue Shopping
+            </CustomButton>
+          </>
+        )}
       </View>
     </ScrollView>
   );

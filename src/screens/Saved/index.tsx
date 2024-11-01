@@ -25,7 +25,7 @@ import ContentSavedScreen from '../../components/ContentSaved';
 import {Picker} from '@react-native-picker/picker';
 import ReactModal from '../../components/ReactModal';
 import {reactions} from '../../dummyData';
-import {getSavedItems} from '../../api/menu';
+import {getSavedItems, removeSavedItem, saveItem} from '../../api/menu';
 import dayjs from 'dayjs';
 import {
   getCommentPost,
@@ -41,86 +41,11 @@ import Toast from 'react-native-toast-message';
 import Loader from '../../components/Loader';
 import {EmptyComponent} from '../../components/EmptyComponent';
 
-const dummyWishlist = [
-  {
-    id: '1',
-    name: 'Product 1',
-    price: 20,
-    imageUrl: `${images.pro1}`,
-  },
-  {
-    id: '2',
-    name: 'Product 2',
-    price: 30,
-    imageUrl: `${images.pro2}`,
-  },
-  {
-    id: '3',
-    name: 'Product 3',
-    price: 25,
-    imageUrl: `${images.pro2}`,
-  },
-  {
-    id: '4',
-    name: 'Product 4',
-    price: 25,
-    imageUrl: `${images.pro1}`,
-  },
-  {
-    id: '5',
-    name: 'Product 5',
-    price: 25,
-    imageUrl: `${images.pro1}`,
-  },
-  {
-    id: '6',
-    name: 'Product 6',
-    price: 25,
-    imageUrl: `${images.pro2}`,
-  },
-];
-const dummyContentSaved = [
-  {
-    id: '1',
-    name: 'It is a long established fact that a reader will be distracted by the readable content ',
-    active: true,
-    imageUrl: `${images.blog1}`,
-  },
-  {
-    id: '2',
-    name: 'It is a long established fact that a reader will be distracted by the readable content ',
-    active: true,
-    imageUrl: `${images.blog1}`,
-  },
-  {
-    id: '3',
-    name: 'It is a long established fact that a reader will be distracted by the readable content ',
-    active: false,
-    imageUrl: `${images.blog1}`,
-  },
-  {
-    id: '4',
-    name: 'It is a long established fact that a reader will be distracted by the readable content ',
-    active: true,
-    imageUrl: `${images.blog1}`,
-  },
-  {
-    id: '5',
-    name: 'It is a long established fact that a reader will be distracted by the readable content ',
-    active: false,
-    imageUrl: `${images.blog1}`,
-  },
-  {
-    id: '6',
-    name: 'It is a long established fact that a reader will be distracted by the readable content ',
-    active: true,
-    imageUrl: `${images.blog1}`,
-  },
-];
 const productFilter = [
   {name: 'a', id: 1},
   {name: 'b', id: 2},
 ];
+
 const Saved: React.FC = () => {
   const navigation = useNavigation();
   const [reactVisible, setrRactVisible] = useState(false);
@@ -225,6 +150,8 @@ const Saved: React.FC = () => {
       });
   };
 
+  console.log('POSTSSSSSSSSSSSSSSSS', displayPost);
+
   const handleLikePress = (id: number) => {
     console.log('POSTSSSSSSSSSSSSSSSSSSSSSSSS', id);
     // dispatch(updateLike(id));
@@ -239,18 +166,18 @@ const Saved: React.FC = () => {
       });
   };
 
-  const handleSave = async (id: number) => {
-    const data = {
-      item_id: id,
-      item_type: 'post',
-    };
-    const form = new FormData();
-    Object.entries(data).map(([key, value]) => {
-      form.append(key, value);
-    });
-    await savePost(form)
-      .then(res => console.log('POSTTTT SAVEEEDDDDDDD', res))
-      .catch(err => console.log('SAVEEEEDDDDDD POSTTTTT ERRORRRRRR', err));
+  const handleSave = async (id: number, isSaved: boolean) => {
+    await removeSavedItem(id)
+      .then(res => {
+        if (res?.data) {
+          // fetchData();
+          let index = displayPost.findIndex(item => item.id == id);
+          const arr = [...displayPost];
+          arr.splice(index, 1);
+          setDisplayPost(arr);
+        }
+      })
+      .catch(err => console.log('ERRRORRRRRRRRR SAVEDDDDDDDDDDD', err));
   };
 
   const handleDotPress = (postId: number) => {
@@ -365,6 +292,7 @@ const Saved: React.FC = () => {
           });
         }}
         isLiked={item?.savable_item?.is_liked}
+        isSaved={item?.savable_item?.is_saved}
       />
     );
   };

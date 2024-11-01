@@ -208,17 +208,18 @@ const homeSlice = createSlice({
   initialState,
   reducers: {
     updateLike: (state, action) => {
-      let index = state.posts.findIndex(
-        item => item?.id == action?.payload,
-      );
+      let index = state.posts.findIndex(item => item?.id == action?.payload);
       console.log('STATEEEEEEEEEEEEEEEEEEEEE', state.posts[index]);
       if (index != -1) {
         state.posts[index].is_liked = !state.posts[index].is_liked;
       }
     },
-    postSave : (state,action)=>{
-      
-    }
+    postSave: (state, action) => {
+      let index = state.posts.findIndex(item => item?.id == action?.payload);
+      if (index! - 1) {
+        state.posts[index].is_saved = !state.posts[index].is_saved;
+      }
+    },
   },
   extraReducers: builder => {
     builder
@@ -238,6 +239,6 @@ const homeSlice = createSlice({
   },
 });
 
-export const {updateLike} = homeSlice.actions;
+export const {updateLike,postSave} = homeSlice.actions;
 
 export default homeSlice.reducer;
