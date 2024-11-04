@@ -20,6 +20,10 @@ export const getProductByShop = (id: number) => {
   return axiosInstance.get(`${endpoints.shop.shopDetail}/${id}/products`);
 };
 
+export const updateShop = (formData: FormData, id: number) => {
+  return axiosInstance.post(`${endpoints.shop.updateShop}/${id}`);
+};
+
 export const createProduct = (formData: FormData, id: number) => {
   console.log(formData, id, 'Formmmm Dataaaa Createee possttt');
   return axiosInstance.post(

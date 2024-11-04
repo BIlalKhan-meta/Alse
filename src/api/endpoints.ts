@@ -40,6 +40,7 @@ const endpoints = {
     allShop: '/shops',
     createShop: '/shop/create',
     shopDetail: '/shop',
+    updateShop: '/shop/update',
   },
   products: {
     productDetail: '/product',

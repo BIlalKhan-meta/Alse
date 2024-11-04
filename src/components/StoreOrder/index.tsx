@@ -120,6 +120,7 @@ const StoreOrderComponent: React.FC = props => {
             navigation.navigate('AddProduct', {
               shopId: productItem?.shop.id,
               title: 'Edit Product',
+              item: productItem,
             })
           }>
           Edit Product

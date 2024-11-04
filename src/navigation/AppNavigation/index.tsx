@@ -37,6 +37,7 @@ import CreatePostEdit from "../../screens/CreatePostEdit";
 import AddProduct from "../../screens/AddProduct";
 import MyShop from "../../screens/MyShop";
 import EditBlog from "../../screens/EditBlog";
+import { EditShop } from "../../screens/EditShop";
 
 
 
@@ -83,6 +84,7 @@ const AppNavigation = () => {
         <Stack.Screen name="SavedScripts" component={SavedScripts} options={NavigationOptions} />
         <Stack.Screen name="AddProduct" component={AddProduct} options={NavigationOptions} />
         <Stack.Screen name="MyShop" component={MyShop} options={NavigationOptions} />
+        <Stack.Screen name="EditShop" component={EditShop} options={NavigationOptions} />
 
       </> : <><Stack.Screen name="AuthNavigation" component={AuthNavigation} /></>
 

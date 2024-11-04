@@ -92,9 +92,6 @@ const MyShop: React.FC = () => {
   const route = useRoute();
   const shopId = route?.params?.shopId;
 
-  const [commentsVisible, setCommentsVisible] = useState<boolean>(false);
-  const [active, setActive] = useState<number>(1);
-  const [modalVisible, setModalVisible] = useState(false);
   const [ReportSuccess, setReportSuccess] = useState(false);
   const [shopDetails, setShopDetails] = useState([]);
   const [shopProduct, setShopProduct] = useState([]);
@@ -118,10 +115,6 @@ const MyShop: React.FC = () => {
     // Implement your logic to remove the product from wishlist
     console.log(`Product with id ${productId} removed from wishlist`);
   };
-  const handleReportPress = () => {
-    setModalVisible(false);
-    setReportSuccess(true);
-  };
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -131,24 +124,13 @@ const MyShop: React.FC = () => {
       headerRight: () => (
         <TouchableOpacity
           onPress={() => {
-            setModalVisible(!modalVisible);
+            navigation.navigate('EditShop', {shopId});
           }}>
-          <Image source={images.dots} style={styles.threeDots} />
+          <Image source={images.edit} style={styles.threeDots} />
         </TouchableOpacity>
       ),
     });
-  }, [navigation, modalVisible]);
-
-  const options = [
-    // { text: 'Get Link', onPress: () => { handleGetLink(); } },
-    {
-      text: 'Report Shop',
-      onPress: () => {
-        handleReportPress();
-      },
-    },
-    // { text: 'Block', onPress: () => { handleBlockPress(); } },
-  ];
+  }, [navigation]);
 
   useEffect(() => {
     getData();
@@ -162,10 +144,6 @@ const MyShop: React.FC = () => {
     setShopDetails(res?.data?.data);
     setShopProduct(res2?.data?.data?.data);
     setLoading(false);
-    // console.log('====================================');
-    // console.log(res?.data?.data, "====ressss");
-    // console.log(res2?.data?.data, "====rssss producttttt");
-    // console.log('====================================');
   };
 
   if (loading) {
@@ -174,109 +152,75 @@ const MyShop: React.FC = () => {
 
   return (
     <ScrollView showsVerticalScrollIndicator={false}>
-      <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
-        <View style={styles.container}>
-          <ReportBlockModal isVisible={modalVisible} options={options} />
-
-          <Card style={styles.contentContainer}>
-            {/* <View style={styles.banner}>
-                            <Image
-                                // source={images.shop11} 
-                                source={{ uri: shopDetails?.banner }}
-                                style={styles.imageStyle} />
-                        </View> */}
-
-            <View style={styles.sortConatiner}>
-              <InterMedium style={styles.mainheading}>Shop Name</InterMedium>
+      <View style={styles.container}>
+        <Card style={styles.contentContainer}>
+          <View style={styles.sortConatiner}>
+            <InterMedium style={styles.mainheading}>Shop Name</InterMedium>
+            <View>
+              <InterRegular style={styles.heading}>Sort by:</InterRegular>
               <View>
-                <InterRegular style={styles.heading}>Sort by:</InterRegular>
-                <View>
-                  <TouchableOpacity
-                    onPress={() => setModalVisibleSort(true)}
-                    style={styles.sortInput}>
-                    <Text style={styles.sortText}>
-                      {sortValue || 'Select an option'}
-                    </Text>
-                  </TouchableOpacity>
-                  {/* <Picker
-                                        style={[styles.pickercontainer]}
-                                        dropdownIconColor={colors.inputText}
-                                        enabled={true}
-                                        mode='dialog'
-                                        placeholder={"Product name (a-z)"}
-
-                                    // onValueChange={handleChange('gender')}
-                                    // selectedValue={values.gender}
-                                    // data={genders}
-                                    >
-
-                                        <Picker.Item label={"Product name (a-z)"} value="" />
-
-                                        {productFilter.map((item) => (
-                                            <Picker.Item
-                                                label={item.name.toString()}
-                                                value={item.name.toString()}
-                                                key={item.id.toString()}
-                                            />
-                                        ))}
-
-                                    </Picker> */}
-                </View>
+                <TouchableOpacity
+                  onPress={() => setModalVisibleSort(true)}
+                  style={styles.sortInput}>
+                  <Text style={styles.sortText}>
+                    {sortValue || 'Select an option'}
+                  </Text>
+                </TouchableOpacity>
               </View>
             </View>
+          </View>
 
-            <WishlistScreen
-              wishlist={shopProduct}
-              onAddToCart={handleAddToCart}
-              onRemoveFromWishlist={handleRemoveFromWishlist}
-              heart={true}
-              addCart={true}
-              product={true}
-              onPress={id => {
-                // console.log('====================================');
-                // console.log(id, "Id Frommm producttt");
-                // console.log('====================================');
-                // navigation.navigate("ProductView")
-                navigation.navigate('ProductView', {productId: id});
-              }}
-            />
-            <View style={styles.btnConatiner}>
-              <CustomButton
-                style={styles.secondaryBtn1}
-                onPress={() => navigation.navigate('AddProduct', {shopId})}>
-                Add Product
-              </CustomButton>
-
-              <CustomButton
-                style={styles.secondaryBtn2}
-                containerStyle={styles.buttonContainerStyle}
-                txtstyle={{color: colors.themeColor}}
-                // onPress={closeModal}
-              >
-                Orders
-              </CustomButton>
-            </View>
-          </Card>
-          <SortModal
-            visible={modalVisibleSort}
-            onClose={() => setModalVisibleSort(false)}
-            onSelect={handleSelectSort}
-          />
-          <GeneralModal
-            visible={ReportSuccess}
-            closeModal={() => setReportSuccess(false)}
-            // icon={images.checkedIcon}
-            redImage={true}
-            title="Report Shop"
-            message="Shop has been reported"
-            buttonText="Ok"
-            onPress={() => {
-              setReportSuccess(false);
+          <WishlistScreen
+            wishlist={shopProduct}
+            onAddToCart={handleAddToCart}
+            onRemoveFromWishlist={handleRemoveFromWishlist}
+            heart={true}
+            addCart={true}
+            product={true}
+            onPress={id => {
+              // console.log('====================================');
+              // console.log(id, "Id Frommm producttt");
+              // console.log('====================================');
+              // navigation.navigate("ProductView")
+              navigation.navigate('ProductView', {productId: id});
             }}
-            primaryBtn={true}
           />
-        </View>
-      </TouchableWithoutFeedback>
+          <View style={styles.btnConatiner}>
+            <CustomButton
+              style={styles.secondaryBtn1}
+              onPress={() => navigation.navigate('AddProduct', {shopId})}>
+              Add Product
+            </CustomButton>
+
+            <CustomButton
+              style={styles.secondaryBtn2}
+              containerStyle={styles.buttonContainerStyle}
+              txtstyle={{color: colors.themeColor}}
+              // onPress={closeModal}
+            >
+              Orders
+            </CustomButton>
+          </View>
+        </Card>
+        <SortModal
+          visible={modalVisibleSort}
+          onClose={() => setModalVisibleSort(false)}
+          onSelect={handleSelectSort}
+        />
+        <GeneralModal
+          visible={ReportSuccess}
+          closeModal={() => setReportSuccess(false)}
+          // icon={images.checkedIcon}
+          redImage={true}
+          title="Report Shop"
+          message="Shop has been reported"
+          buttonText="Ok"
+          onPress={() => {
+            setReportSuccess(false);
+          }}
+          primaryBtn={true}
+        />
+      </View>
     </ScrollView>
   );
 };

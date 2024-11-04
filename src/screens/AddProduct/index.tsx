@@ -19,11 +19,15 @@ import {createProduct} from '../../api/shop';
 import Card from '../../components/Card';
 import {getCategories} from '../../api/product';
 import CategoryDropdownComponent from '../../components/TextInput/CategoryDropdownComponent';
+import InterLightSmall from '../../components/Text/InterLightSmall';
+import {vh} from '../../constant';
+import Row from '../../components/Row';
 
 const AddProduct: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const shopId = route?.params?.shopId;
+  const item = route?.params?.item;
   const title = route?.params?.title || 'Add Product';
   const {imageData, image, captureImage, chooseImageFromLibrary} =
     useImagePicker();
@@ -49,14 +53,9 @@ const AddProduct: React.FC = () => {
     const fetchedCategories = res?.data?.data;
     setCategories(fetchedCategories);
 
-    // Set initial categoryId to the first category's ID
     if (fetchedCategories?.length > 0) {
       setCategoryId(fetchedCategories[0].id);
     }
-    // console.log('====================================');
-    // console.log(res?.data?.data, '====ressssCategoryyyyy');
-
-    // console.log('====================================');
   };
 
   const validationSchema = yup.object().shape({
@@ -64,10 +63,7 @@ const AddProduct: React.FC = () => {
     productDescription: yup
       .string()
       .required('Product Description is required'),
-    // sku: yup.string().required('SKU is required'),
     brand_name: yup.string().required('Brand Name is required'),
-    // status: yup.string().required('Status is required'),
-    // productImage: yup.string().required('Product Image is required'),
     price: yup
       .number()
       .required('Price is required')
@@ -82,14 +78,12 @@ const AddProduct: React.FC = () => {
   });
 
   const initialValues = {
-    productTitle: '',
-    productDescription: '',
-    sku: '',
-    brand_name: '',
-    // status: statuses[0].value, // Initialize with default value
-    // productImage: '',
-    price: '',
-    quantity: '',
+    productTitle: item?.title || '',
+    productDescription: item?.description || '',
+    sku: item?.sku || '',
+    brand_name: item?.brand_name || '',
+    price: item?.price || '',
+    quantity: item?.quantity || '',
     color: '',
     size: '',
   };
@@ -98,21 +92,8 @@ const AddProduct: React.FC = () => {
     console.log('Selected value:', value);
   };
 
-  // const handleSubmit = (values: object) => {
-  //     console.log('Form submitted:', values);
-  // };
-
-  // console.log('====================================');
-  // console.log(categoryId, "====ressssCategoryyyyyId");
-
-  // console.log('====================================');
-
   const handleSubmit = async (values: typeof initialValues) => {
     setSubmitted(true);
-
-    // console.log('====================================');
-    // console.log(values, 'Fromm submitttt', status);
-    // console.log('====================================');
     let statusState;
     if (status == 'inactive') {
       statusState = 0;
@@ -176,6 +157,7 @@ const AddProduct: React.FC = () => {
       showsVerticalScrollIndicator={false}>
       <Formik
         initialValues={initialValues}
+        enableReinitialize
         validationSchema={validationSchema}
         onSubmit={handleSubmit}>
         {({
@@ -191,22 +173,22 @@ const AddProduct: React.FC = () => {
               <RegularTextInput
                 label="Product Title *"
                 placeholder="Enter Product Title"
-                placeholderTextColor={colors.darkText}
+                // placeholderTextColor={colors.darkText}
                 onChangeText={handleChange('productTitle')}
                 onBlur={handleBlur('productTitle')}
                 value={values.productTitle}
-                errors={touched.productTitle && errors.productTitle}
+                errors={errors.productTitle}
                 style={styles.inputStyle}
                 submitted={submitted}
               />
               <RegularTextInput
                 label="Product Description *"
                 placeholder="Enter Product Description"
-                placeholderTextColor={colors.darkText}
+                // placeholderTextColor={colors.darkText}
                 onChangeText={handleChange('productDescription')}
                 onBlur={handleBlur('productDescription')}
                 value={values.productDescription}
-                errors={touched.productDescription && errors.productDescription}
+                errors={errors.productDescription}
                 style={styles.inputStyle}
                 submitted={submitted}
 
@@ -217,11 +199,11 @@ const AddProduct: React.FC = () => {
               <RegularTextInput
                 label="Brand Name *"
                 placeholder="Enter Brand Name"
-                placeholderTextColor={colors.darkText}
+                // placeholderTextColor={colors.darkText}
                 onChangeText={handleChange('brand_name')}
                 onBlur={handleBlur('brand_name')}
                 value={values.brand_name}
-                errors={touched.brand_name && errors.brand_name}
+                errors={errors.brand_name}
                 style={styles.inputStyle}
                 submitted={submitted}
 
@@ -237,7 +219,6 @@ const AddProduct: React.FC = () => {
                 onChangeValue={val => {
                   console.log(val, 'Val Freom drop dowwnnnn ');
                   setStatus(val);
-
                   handleChange('status');
                   handleBlur('status');
                   handleDropdownChange;
@@ -256,14 +237,31 @@ const AddProduct: React.FC = () => {
                 <Image source={images.upload} style={styles.uploadImg} />
               </TouchableOpacity>
 
+              <View>
+                {(imageData || item?.images.length != 0) && (
+                  <Image
+                    source={
+                      imageData
+                        ? {uri: imageData.uri}
+                        : {uri: item?.images[0].path}
+                    }
+                    style={{
+                      width: '100%',
+                      height: vh * 15,
+                      resizeMode: 'cover',
+                    }}
+                  />
+                )}
+              </View>
+
               <RegularTextInput
                 label="Price *"
                 placeholder="Enter Price"
-                placeholderTextColor={colors.darkText}
+                // placeholderTextColor={colors.darkText}
                 onChangeText={handleChange('price')}
                 onBlur={handleBlur('price')}
                 value={values.price}
-                errors={touched.price && errors.price}
+                errors={errors.price}
                 style={styles.inputStyle}
                 keyboardType="numeric"
                 submitted={submitted}
@@ -272,11 +270,11 @@ const AddProduct: React.FC = () => {
               <RegularTextInput
                 label="Quantity *"
                 placeholder="Enter Quantity"
-                placeholderTextColor={colors.darkText}
+                // placeholderTextColor={colors.darkText}
                 onChangeText={handleChange('quantity')}
                 onBlur={handleBlur('quantity')}
-                value={values.quantity}
-                errors={touched.quantity && errors.quantity}
+                value={values.quantity.toString()}
+                errors={errors.quantity}
                 style={styles.inputStyle}
                 keyboardType="numeric"
                 submitted={submitted}
@@ -317,11 +315,11 @@ const AddProduct: React.FC = () => {
                   <RegularTextInput
                     label="Color *"
                     placeholder="Enter Color"
-                    placeholderTextColor={colors.darkText}
+                    // placeholderTextColor={colors.darkText}
                     onChangeText={handleChange('color')}
                     onBlur={handleBlur('color')}
                     value={values.color}
-                    errors={touched.color && errors.color}
+                    errors={errors.color}
                     style={styles.inputStyle2}
                     keyboardType="numeric"
                     submitted={submitted}
@@ -332,11 +330,11 @@ const AddProduct: React.FC = () => {
                   <RegularTextInput
                     label="Size *"
                     placeholder="Enter Size"
-                    placeholderTextColor={colors.darkText}
+                    // placeholderTextColor={colors.darkText}
                     onChangeText={handleChange('size')}
                     onBlur={handleBlur('size')}
                     value={values.size}
-                    errors={touched.size && errors.size}
+                    errors={errors.size}
                     style={styles.inputStyle2}
                     keyboardType="numeric"
                     submitted={submitted}
