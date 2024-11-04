@@ -35,6 +35,8 @@ import {
 } from '../../api/product';
 import Loader from '../../components/Loader';
 import {getMessage, Toast} from '../../utils/helpers';
+import {useSelector} from 'react-redux';
+import {selectUserProfile} from '../../store/slices/authSlice';
 
 const productFilter = [
   {name: 'a', id: 1},
@@ -51,9 +53,9 @@ const ProductView: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const {productId} = route.params;
-  console.log('====================================');
-  console.log(productId, 'ProducttttIddd');
-  console.log('====================================');
+  // console.log('====================================');
+  // console.log(productId, 'ProducttttIddd');
+  // console.log('====================================');
   // const { type } = route?.params;
 
   const [commentsVisible, setCommentsVisible] = useState<boolean>(false);
@@ -69,7 +71,6 @@ const ProductView: React.FC = () => {
     setModalVisible(false);
     setReportVisible(true);
   };
-
   useLayoutEffect(() => {
     navigation.setOptions({
       headerStyle: {
@@ -89,11 +90,13 @@ const ProductView: React.FC = () => {
     setProductDetails(res?.data?.data || {});
     setProductReviews(res2?.data?.data?.data);
     setLoading(false);
-    console.log('====================================');
-    // console.log(res?.data?.data, "====rssss producttttt");
-    console.log(res2?.data?.data?.data, '====rssss Reviewsss');
-    console.log('====================================');
+    // console.log('====================================');
+    // // console.log(res?.data?.data, "====rssss producttttt");
+    // console.log(res2?.data?.data?.data, '====rssss Reviewsss');
+    // console.log('====================================');
   };
+
+  // console.log('PRODUCTTTTTTTTTTTTTT', productDetails.shop.user_id);
 
   if (loading) {
     return <Loader />;

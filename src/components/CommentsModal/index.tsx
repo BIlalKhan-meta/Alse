@@ -29,6 +29,7 @@ import {useAppDispatch} from '../../hooks/storeHooks';
 import {selectUserProfile} from '../../store/slices/authSlice';
 import {useSelector} from 'react-redux';
 import {capitalize} from '../../utils';
+import {postComment} from '../../api/home';
 
 interface Comment {
   id: number;
@@ -54,20 +55,12 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
   const dispatch = useAppDispatch();
   const user = useSelector(selectUserProfile);
 
-  const {
-    visible,
-    closeModal,
-    icon,
-    title,
-    message,
-    buttonText,
-    onPress,
-    comments,
-    postId,
-  } = props;
+  const {visible, closeModal, comments, postId} = props;
   const [newComment, setNewComment] = useState('');
   const [commentsData, setCommentsData] = useState(comments);
   const [likes, setLikes] = useState<object[]>();
+
+  console.log('COMEENTTTTTTTTTTTTTTTTSSSSSSSS', comments);
 
   useEffect(() => {
     if (comments) {
@@ -80,49 +73,73 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
     }
   }, [comments]);
 
+  console.log('LIKESSSSSSSSSSSSSSSSSSSSS', postId);
+
   const handleCommentSubmit = async () => {
-    const id = postId;
-    if (newComment.trim()) {
-      // Create a new comment object
-      const comment: Comment = {
-        id: Date.now(), // Temporary ID until the backend responds
-        avatar: user?.avatar, // Replace with actual user avatar
-        fullname: user?.full_name, // Replace with actual user name
-        comment: newComment,
-      };
-
-      // Update local comments immediately
-      setCommentsData(prev => [comment, ...prev]);
-
-      // Reset the input
-      setNewComment('');
-      const body = new FormData();
-      body.append('comment', newComment);
-      dispatch(commentPost({formData: body, id}))
-        .unwrap()
-        .then(res => {
-          console.log('Reponse from post ==>', res);
-          // setNewComment('');
-
-          // setIsLoading(false);
-          // Toast.success('Posted Successfully');
-          // navigation.goBack();
-        })
-        .catch(err => {
-          console.log(err, 'errorrrr fromm screen ');
-          // setIsLoading(false);
-          // Toast.error(getMessage(err?.message));
-        });
+    if (newComment.length == 0) {
+      return;
     }
+    let form = new FormData();
+    form.append('comment', newComment.trim());
+
+    console.log(JSON.stringify(form, null, 4));
+
+    const comment: Comment = {
+      id: Date.now(), // Temporary ID until the backend responds
+      avatar: user?.avatar, // Replace with actual user avatar
+      full_name: user?.first_name, // Replace with actual user name
+      comment: newComment.trim(),
+      is_liked: false,
+      total_likes: 0,
+    };
+
+    setCommentsData([...commentsData, comment]);
+    setNewComment('');
+    await postComment(form, postId)
+      .then(res => console.log('RESSSSSSSSSSSSSS', res))
+      .catch(err => console.log('ERROOOOOOOOOORRRRRRRRRRRR', err));
+
+    // if (newComment.trim()) {
+    //   // Create a new comment object
+    //   const comment: Comment = {
+    //     id: Date.now(), // Temporary ID until the backend responds
+    //     avatar: user?.avatar, // Replace with actual user avatar
+    //     fullname: user?.full_name, // Replace with actual user name
+    //     comment: newComment,
+    //   };
+
+    //   // Update local comments immediately
+    //   setCommentsData(prev => [comment, ...prev]);
+
+    //   // Reset the input
+    //   setNewComment('');
+    //   const body = new FormData();
+    //   body.append('comment', newComment);
+    //   dispatch(commentPost({formData: body, id}))
+    //     .unwrap()
+    //     .then(res => {
+    //       console.log('Reponse from post ==>', res);
+    //       // setNewComment('');
+
+    //       // setIsLoading(false);
+    //       // Toast.success('Posted Successfully');
+    //       // navigation.goBack();
+    //     })
+    //     .catch(err => {
+    //       console.log(err, 'errorrrr fromm screen ');
+    //       // setIsLoading(false);
+    //       // Toast.error(getMessage(err?.message));
+    //     });
+    // }
   };
 
   const handleLikePress = (id: number) => {
     const arr = [...commentsData];
     let index = arr.findIndex(item => item?.id == id);
     if (arr[index].is_liked) {
-      likes[index].total_likes = likes[index].total_likes - 1;
+      arr[index].total_likes = arr[index].total_likes - 1;
     } else {
-      likes[index].total_likes = likes[index].total_likes + 1;
+      arr[index].total_likes = arr[index].total_likes + 1;
     }
     arr[index].is_liked = !arr[index].is_liked;
     setCommentsData(arr);
@@ -169,7 +186,7 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
                       </View>
                       <View style={styles.contentContainer}>
                         <InterMedium style={styles.userName}>
-                          {commentsData[0]?.user?.full_name ||
+                          {comment.full_name ||
                             capitalize(commentsData[0]?.user?.first_name) +
                               ' ' +
                               capitalize(commentsData[0]?.user?.last_name)}
@@ -194,25 +211,10 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
                     <View style={styles.postActions}>
                       <View style={styles.leftActions}>
                         <Image source={images.like} style={styles.icon} />
-                        {/* <InterRegular style={styles.actionText}>
-                          {likes[index].total_likes}
-                        </InterRegular> */}
-                        <Image source={images.comment} style={styles.icon} />
                         <InterRegular style={styles.actionText}>
-                          {comments?.length}{' '}
+                          {comment.total_likes}
                         </InterRegular>
-                        {/* <Image
-                      source={images.share}
-                      style={styles.icon}
-                    /> */}
-                        {/* <InterRegular style={styles.actionText}>{share}</InterRegular> */}
                       </View>
-                      {/* <TouchableOpacity>
-          <Image
-            source={images.save}
-            style={styles.icon}
-          />
-        </TouchableOpacity> */}
                     </View>
                     <View style={styles.separator} />
                   </View>

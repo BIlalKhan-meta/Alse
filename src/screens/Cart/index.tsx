@@ -9,7 +9,7 @@ import {products} from '../../dummyData';
 import CustomButton from '../../components/CustomButton';
 import Card from '../../components/Card';
 import {colors} from '../../utils/theme';
-import {getCart, removeCartItem} from '../../api/product';
+import {getCart, removeCartItem, updateCartItem} from '../../api/product';
 import Loader from '../../components/Loader';
 import {EmptyComponent} from '../../components/EmptyComponent';
 
@@ -20,18 +20,30 @@ const Cart = () => {
   const navigation = useNavigation();
   const isFoused = useIsFocused();
   const [loading, setLoading] = useState(false);
-  const [cartData, setCartData] = useState([]);
+  const [cartData, setCartData] = useState<any>();
 
-  const handleIncrement = (index: number) => {
+  // console.log('CARTTTTTTTTTTTTTTTTTTTTTT', cartData?.carts?.data[0].quantity);
+
+  const handleChange = async (label: string, id: number) => {
     // Implement increment logic here
-    console.log('Increment item at index:', index);
-    index + 1;
-  };
+    // console.log('Increment item at index:', index);
 
-  const handleDecrement = (index: number) => {
-    // Implement decrement logic here
-    console.log('Decrement item at index:', index);
-    index - 1;
+    let index = cartData?.carts?.data?.findIndex(item => item.id == id);
+
+    let arr = [...cartData?.carts?.data];
+    if (arr[index].quantity == 1 && label == 'decrement') {
+      return;
+    }
+    if (label == 'increment') {
+      arr[index].quantity = arr[index].quantity + 1;
+    } else {
+      arr[index].quantity = arr[index].quantity - 1;
+    }
+
+    setCartData({...cartData, data: arr});
+    const form = new FormData();
+    form.append('quantity', arr[index].quantity);
+    await updateCartItem(form, id);
   };
 
   useEffect(() => {
@@ -83,13 +95,14 @@ const Cart = () => {
       <View style={styles.container}>
         <FlatList
           data={cartData?.carts?.data}
+          refreshing={loading}
+          onRefresh={getData}
           renderItem={({item, index}) => (
             <>
               <CartItem
                 item={item}
                 showQuantityControls={true} // Show increment/decrement buttons
-                onIncrement={() => handleIncrement(index)}
-                onDecrement={() => handleDecrement(index)}
+                handleChange={handleChange}
                 onDelete={handleDelete}
                 showSeparator={index !== products.length - 1}
                 showDelete={true}

@@ -102,13 +102,18 @@ const Shop: React.FC = () => {
     productId: number,
     saved: boolean,
   ) => {
+    let arr = [...shopProduct];
+    let index = shopProduct.findIndex(item => item?.id == productId);
+    arr[index].is_saved = !arr[index].is_saved;
+    setShopProduct(arr);
+
     if (saved) {
-      await removeSavedItem(productId).then(res => {
+      await removeSavedItem(itemId).then(res => {
         if (res?.data) {
-          let index = shopProduct.findIndex(item => item?.id == productId);
-          let arr = [...shopProduct];
-          arr.splice(index, 1);
-          setShopProduct(arr);
+          let index = shopProduct.findIndex(item => item?.id == itemId);
+          // let arr = [...shopProduct];
+          // arr.splice(index, 1);
+          // setShopProduct(arr);
         }
       });
     } else {

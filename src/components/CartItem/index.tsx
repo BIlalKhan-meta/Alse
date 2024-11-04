@@ -14,8 +14,7 @@ import {Product} from '../../dummyData';
 interface Props {
   item: [];
   showQuantityControls: boolean;
-  onIncrement: () => void;
-  onDecrement: () => void;
+  handleChange: (value: string, id: number) => void;
   onDelete: (index: number) => void;
   showSeparator: boolean;
   quantity: boolean;
@@ -25,8 +24,7 @@ interface Props {
 const CartItem: React.FC<Props> = ({
   item,
   showQuantityControls,
-  onIncrement,
-  onDecrement,
+  handleChange,
   onDelete,
   showSeparator,
   quantity,
@@ -53,13 +51,15 @@ const CartItem: React.FC<Props> = ({
                     </View> */}
           {showQuantityControls && (
             <View style={styles.quantityContainer}>
-              <TouchableOpacity onPress={onDecrement}>
+              <TouchableOpacity
+                onPress={() => handleChange('decrement', item?.id)}>
                 <Text style={styles.quantityText}>-</Text>
               </TouchableOpacity>
               <View style={styles.quantityButton}>
                 <Text style={styles.quantityButtonText}>{item.quantity}</Text>
               </View>
-              <TouchableOpacity onPress={onIncrement}>
+              <TouchableOpacity
+                onPress={() => handleChange('increment', item?.id)}>
                 <Text style={styles.quantityText}>+</Text>
               </TouchableOpacity>
             </View>
@@ -75,7 +75,7 @@ const CartItem: React.FC<Props> = ({
           )}
 
           <InterBoldSmall style={styles.productPrice}>
-            ${item.total_price}
+            ${Number(item.product_price) * item?.quantity}
           </InterBoldSmall>
 
           {quantity && (

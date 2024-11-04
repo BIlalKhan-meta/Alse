@@ -23,8 +23,6 @@ export const getPostComment = (id: number) => {
 };
 
 export const postComment = (formData: FormData, id: number) => {
-  console.log('body, id body, idbody, idbody, idbody, id ==>', formData, id);
-
   return axiosInstance.post(`/post/${id}/comment`, formData, {
     formData: true,
   });

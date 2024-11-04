@@ -33,8 +33,8 @@ const WishlistScreen: React.FC<WishlistProps> = ({
   onPress,
   handleRemove,
 }) => {
-  const [display, setDisplay] = useState(wishlist);
 
+  
   const handleAddToCart = async (productId: string) => {
     // Implement your logic to add the product to cart
     // console.log(`Product with id ${productId} added to cart`);
@@ -49,43 +49,8 @@ const WishlistScreen: React.FC<WishlistProps> = ({
       });
   };
 
-  // const handleRemoveFromWishlist = async (
-  //   productId: number,
-  //   saved: boolean,
-  // ) => {
-  //   if (saved) {
-  //     await removeSavedItem(productId).then(res => {
-  //       if (res?.data) {
-  //         let index = display.findIndex(item => item.id == productId);
-  //         let arr = [...display];
-  //         arr.splice(index, 1);
-  //         setDisplay(arr);
-  //       }
-  //     });
-  //   } else {
-  //     const data = {
-  //       item_id: productId,
-  //       item_type: 'product',
-  //     };
-
-  //     const form = new FormData();
-  //     Object.entries(data).map(([key, value]) => {
-  //       form.append(key, value);
-  //     });
-
-  //     await saveItem(form)
-  //       .then(res => {
-  //         if (res?.data) {
-  //           //   console.log('RESSSSSSSSSS SAVEEEEEEEEEEEEEEE', res?.data);
-  //         }
-  //       })
-  //       .catch(err => {
-  //         console.log('ERRRRRORRR SAVEEEEEEEEEEEEEEEEE', err);
-  //       });
-  //   }
-  // };
-
   const renderItem = ({item}) => {
+    // console.log('IDDDDDDDDDDDDDDDDDDD', item);
     return (
       <TouchableOpacity
         style={styles.productContainer}
@@ -103,7 +68,9 @@ const WishlistScreen: React.FC<WishlistProps> = ({
         />
         {heart && (
           <TouchableOpacity
-            onPress={() => handleRemove(item.id, item?.is_saved)}
+            onPress={() =>
+              handleRemove(item?.id, item?.is_saved)
+            }
             style={styles.heartIconContainer}>
             <Image
               source={item?.is_saved ? images.heartIcon : images.unfillHeart}

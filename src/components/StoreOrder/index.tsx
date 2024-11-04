@@ -17,8 +17,10 @@ import CustomButton from '../CustomButton';
 import QunatityControls from '../QuantityControls';
 import Selection from '../Selection';
 import {useNavigation} from '@react-navigation/native';
-import {addProductToCart} from '../../api/product';
+import {addProductToCart, productDetail} from '../../api/product';
 import {getMessage, Toast} from '../../utils/helpers';
+import {useSelector} from 'react-redux';
+import {selectUserProfile} from '../../store/slices/authSlice';
 
 const colorsType = ['red', 'blue', 'green'];
 const sizes = ['S', 'M', 'L'];
@@ -26,11 +28,12 @@ const sizes = ['S', 'M', 'L'];
 const StoreOrderComponent: React.FC = props => {
   const navigation = useNavigation();
   const productItem = props?.productItem;
-  console.log('====================================');
-  console.log(productItem, 'Frommm propssssss ');
-  console.log('====================================');
+  // console.log('====================================');
+  // console.log(productItem, 'Frommm propssssss ');
+  // console.log('====================================');
   const [selectedColor, setSelectedColor] = useState<string | null>('red');
   const [selectedSize, setSelectedSize] = useState<string | null>('L');
+  const user = useSelector(selectUserProfile);
 
   const handleIncrement = (index: number) => {
     // Implement increment logic here
@@ -98,19 +101,30 @@ const StoreOrderComponent: React.FC = props => {
         />
       </View>
 
-      <View style={styles.btnContainer}>
-        <CustomButton
-          containerStyle={styles.checkoutButton}
-          onPress={handleAddToCart}>
-          Add to Cart
-        </CustomButton>
+      {user?.id != productItem.shop.user_id ? (
+        <View style={styles.btnContainer}>
+          <CustomButton style={styles.checkoutButton} onPress={handleAddToCart}>
+            Add to Cart
+          </CustomButton>
 
-        <QunatityControls
-          quantity={1}
-          onIncrement={() => handleIncrement(1)}
-          onDecrement={() => handleDecrement(1)}
-        />
-      </View>
+          <QunatityControls
+            quantity={1}
+            onIncrement={() => handleIncrement(1)}
+            onDecrement={() => handleDecrement(1)}
+          />
+        </View>
+      ) : (
+        <CustomButton
+          style={styles.checkoutButton}
+          onPress={() =>
+            navigation.navigate('AddProduct', {
+              shopId: productItem?.shop.id,
+              title: 'Edit Product',
+            })
+          }>
+          Edit Product
+        </CustomButton>
+      )}
     </View>
   );
 };

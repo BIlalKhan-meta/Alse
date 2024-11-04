@@ -20,6 +20,20 @@ export const addProductToCart = (id: number) => {
 export const removeCartItem = (id: number) => {
   return axiosInstance.post(`${endpoints.products.removeCartItem}/${id}`);
 };
+export const updateCartItem = (formData: FormData, id: number) => {
+  return axiosInstance.post(
+    `${endpoints.products.updateCart}/${id}`,
+    formData,
+    {
+      formData: true,
+    },
+  );
+};
+export const checkout = (formData: FormData) => {
+  return axiosInstance.post(`${endpoints.products.checkout}`, formData, {
+    formData: true,
+  });
+};
 
 export const getCart = () => {
   return axiosInstance.get(`${endpoints.products.getCart}`);

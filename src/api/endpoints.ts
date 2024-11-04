@@ -13,7 +13,6 @@ const endpoints = {
     createPost: '/post/create',
     updatePost: '/post/update',
     deletePost: '/post/delete',
-
     reportPost: '/report/create',
     myPost: '/get-user',
     getBlockedUser: 'get-blocked-users',
@@ -48,6 +47,8 @@ const endpoints = {
     cart: '/add-to-cart',
     getCart: '/get-cart',
     removeCartItem: '/remove-from-cart',
+    updateCart: '/update-cart',
+    checkout: '/order/checkout',
   },
   education: {
     getArticles: '/articles',

@@ -227,7 +227,7 @@ const Home: React.FC = () => {
         share={item.share}
         account={item.privacy}
         // onCommnetPress={() => setCommentsVisible(true)}
-        onCommnetPress={() => handleCommentPress(mediaItem?.post_id)}
+        onCommnetPress={() => handleCommentPress(item?.id)}
         onLikePress={() => handleLikePress(mediaItem?.post_id)}
         onSavePress={() => handleSave(item?.id, item?.is_saved)}
         // onLikePress={() => setrRactVisible(true)}
