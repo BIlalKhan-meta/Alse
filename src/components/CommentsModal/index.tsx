@@ -194,12 +194,12 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
                     <View style={styles.postActions}>
                       <View style={styles.leftActions}>
                         <Image source={images.like} style={styles.icon} />
-                        <InterRegular style={styles.actionText}>
+                        {/* <InterRegular style={styles.actionText}>
                           {likes[index].total_likes}
-                        </InterRegular>
+                        </InterRegular> */}
                         <Image source={images.comment} style={styles.icon} />
                         <InterRegular style={styles.actionText}>
-                          {comments.length}{' '}
+                          {comments?.length}{' '}
                         </InterRegular>
                         {/* <Image
                       source={images.share}
