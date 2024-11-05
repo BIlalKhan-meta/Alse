@@ -39,6 +39,7 @@ import {reportPost} from '../../api/home';
 import {removeSavedItem, saveItem} from '../../api/menu';
 import {useSelector} from 'react-redux';
 import {selectUserProfile} from '../../store/slices/authSlice';
+import {vh} from '../../constant';
 
 const Home: React.FC = () => {
   const navigation = useNavigation();
@@ -47,7 +48,7 @@ const Home: React.FC = () => {
 
   // Select posts and loading state from the Redux store
   const {posts, loading, error} = useAppSelector(state => state.home);
-  const user = useSelector(selectUserProfile);
+  const [loader, setLoader] = useState(false);
 
   const [commentsVisible, setCommentsVisible] = useState({
     visiblity: false,
@@ -93,12 +94,12 @@ const Home: React.FC = () => {
   }, [isFoused]);
 
   const getApi = async () => {
-    const checkData = await dispatch(GetNewsFeed());
+    const checkData = await dispatch(GetNewsFeed()).then(() => {});
   };
 
-  if (loading) {
-    return <Loader />;
-  }
+  // if (loading) {
+  //   return <Loader />;
+  // }
 
   const handleDotPress = (postId: number) => {
     setActivePostId(activePostId == null ? postId : null);
@@ -261,13 +262,13 @@ const Home: React.FC = () => {
   );
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false}>
+    <View style={{padding: vh * 2}}>
       <TouchableWithoutFeedback onPress={() => handleDotPress(null)}>
-        <View style={styles.container}>
+        <View>
           <FlatList
             data={posts}
             onRefresh={getApi}
-            refreshing={loading}
+            refreshing={loader}
             renderItem={renderPost}
             keyExtractor={item => item.id.toString()}
             showsVerticalScrollIndicator={false}
@@ -372,7 +373,7 @@ const Home: React.FC = () => {
           />
         </View>
       </TouchableWithoutFeedback>
-    </ScrollView>
+    </View>
   );
 };
 
