@@ -19,7 +19,12 @@ import Toast from 'react-native-toast-message';
 import Row from '../../components/Row';
 import {vh} from '../../constant';
 import InterLightSmall from '../../components/Text/InterLightSmall';
-import {createArticle, createBlog} from '../../api/education';
+import {
+  createArticle,
+  createBlog,
+  updateArticle,
+  updateBlog,
+} from '../../api/education';
 
 const statuses = [
   {label: 'Active', value: 'active'},
@@ -77,6 +82,8 @@ const EditBlog = () => {
     status: editItem?.status || '',
   };
 
+  console.log('EDITTTTTTTTTTTTTTTT', editItem);
+
   useLayoutEffect(() => {
     navigation.setOptions({
       headerStyle: {
@@ -88,9 +95,8 @@ const EditBlog = () => {
 
   console.log(imageData);
 
-
   const handleForm = async (data: any) => {
-    if (media.length == 0) {
+    if (imageData == undefined && editItem?.image == undefined) {
       return Toast.show({
         text1: 'Upload Media',
         text2: 'Minimum 1 Media is Required',
@@ -98,13 +104,19 @@ const EditBlog = () => {
       });
     }
 
+    const image = {
+      uri: imageData?.uri,
+      name: imageData?.fileName,
+      type: imageData?.type,
+    };
+
     setLoading(true);
     const temp = {
       ...data,
       privacy: selected,
-      ...(title == 'Add Blog'&& imageData ? {blog_image: imageData} : {}),
-      ...(title == 'Add Article' && imageData ? {article_image: imageData} : {}),
-      ...(title == 'Add Videos' && imageData ? {video_file: imageData} : {}),
+      ...(title == 'Update Blog' && imageData ? {blog_image: image} : {}),
+      ...(title == 'Update Article' && imageData ? {article_image: image} : {}),
+      ...(title == 'Add Videos' && imageData ? {video_file: image} : {}),
     };
 
     const form = new FormData();
@@ -112,8 +124,8 @@ const EditBlog = () => {
       form.append(key, value);
     });
     console.log('DATAAAAAAA', JSON.stringify(form, null, 4));
-    if (title == 'Add Blog') {
-      await createBlog(form)
+    if (title == 'Update Blog') {
+      await updateBlog(form, editItem?.id)
         .then(res => {
           if (res?.data) {
             navigation.goBack();
@@ -126,8 +138,8 @@ const EditBlog = () => {
           setLoading(false);
           navigation.goBack();
         });
-    } else if (title == 'Add Article') {
-      await createArticle(form)
+    } else if (title == 'Update Article') {
+      await updateArticle(form, editItem?.id)
         .then(res => {
           if (res?.data) {
             navigation.goBack();
@@ -244,32 +256,28 @@ const EditBlog = () => {
 
             <TouchableOpacity
               onPress={() => setVisible(true)}
-              disabled={media.length>0}
+              disabled={media.length > 0}
               style={styles.uploadBtn}>
               <InterRegular style={styles.uploadTxt}>Upload</InterRegular>
               <Image source={images.upload} style={styles.uploadImg} />
             </TouchableOpacity>
 
             <View>
-              {media.map((item, index) => {
-                return (
-                  <Row justify="space-between" style={styles.row_style}>
-                    <InterLightSmall>
-                      {title == 'Add Videos' ? 'Video' : 'Image'}
-                    </InterLightSmall>
-                    <TouchableOpacity onPress={() => handleDelete(index)}>
-                      <Image
-                        source={images.bin}
-                        style={{
-                          width: vh * 2,
-                          height: vh * 2,
-                          resizeMode: 'contain',
-                        }}
-                      />
-                    </TouchableOpacity>
-                  </Row>
-                );
-              })}
+              {(imageData || editItem?.image) && (
+                <Row justify="space-between" style={styles.row_style}>
+                  <InterLightSmall>Media</InterLightSmall>
+                  {/* <TouchableOpacity onPress={() => handleDelete(index)}>
+                    <Image
+                      source={images.bin}
+                      style={{
+                        width: vh * 2,
+                        height: vh * 2,
+                        resizeMode: 'contain',
+                      }}
+                    />
+                  </TouchableOpacity> */}
+                </Row>
+              )}
             </View>
 
             <RegularTextInput

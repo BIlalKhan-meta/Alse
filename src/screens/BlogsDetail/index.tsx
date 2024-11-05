@@ -7,7 +7,12 @@ import {
   FlatList,
 } from 'react-native';
 import styles from './styles';
-import {useNavigation, useRoute} from '@react-navigation/native';
+import {
+  useFocusEffect,
+  useIsFocused,
+  useNavigation,
+  useRoute,
+} from '@react-navigation/native';
 import {useEffect, useLayoutEffect, useState} from 'react';
 import {colors} from '../../utils/theme';
 import Card from '../../components/Card';
@@ -41,6 +46,7 @@ const ViewBlog: React.FC = () => {
 
   const {id, title, type} = route?.params;
   const user = useSelector(selectUserProfile);
+  const isFocused = useIsFocused();
 
   const fetchData = async () => {
     setLoading(true);
@@ -78,9 +84,9 @@ const ViewBlog: React.FC = () => {
   useEffect(() => {
     if (id) {
       fetchData();
-      fetchSimilar();
+      // fetchSimilar();
     }
-  }, [id]);
+  }, [id,isFocused]);
 
   const statusUpdate = async () => {
     if (type == 'blog') {
@@ -247,7 +253,7 @@ const ViewBlog: React.FC = () => {
         )}
       </Card>
 
-      {item?.user_id != user?.id && similar.length != 0 && (
+      {item?.user_id != user?.id && similar.length != 0 && type == 'video' && (
         <>
           <InterBoldLabel style={styles.similar_header}>
             Similar Videos

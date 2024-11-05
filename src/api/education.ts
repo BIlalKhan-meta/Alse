@@ -64,3 +64,30 @@ export const updateArticleStatus = (id: number) => {
 export const updateBlogStatus = (id: number) => {
   return axiosInstance.post(`${endpoints.education.updateBlogStatus}/${id}`);
 };
+export const updateBlog = (formData: FormData, id: number) => {
+  return axiosInstance.post(
+    `${endpoints.education.updateBlog}/${id}`,
+    formData,
+    {
+      formData: true,
+    },
+  );
+};
+export const updateArticle = (formData: FormData, id: number) => {
+  return axiosInstance.post(
+    `${endpoints.education.updateArticle}/${id}`,
+    formData,
+    {
+      formData: true,
+    },
+  );
+};
+export const updateVideo = (formData: FormData, id: number) => {
+  return axiosInstance.post(
+    `${endpoints.education.updateVideo}/${id}`,
+    formData,
+    {
+      formData: true,
+    },
+  );
+};

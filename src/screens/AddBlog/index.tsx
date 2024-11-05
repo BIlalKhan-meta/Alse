@@ -41,13 +41,6 @@ const videoSchema = yup.object().shape({
   status: yup.string().required('Status is required'),
 });
 
-// const initialValues = {
-//   title: '',
-//   content: '',
-//   category: '',
-//   status: '',
-// };
-
 const AddBlog = () => {
   const navigation = useNavigation();
   const route = useRoute();

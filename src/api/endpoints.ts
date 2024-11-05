@@ -67,6 +67,9 @@ const endpoints = {
     createVideo: '/video/create',
     updateArticleStatus: '/article/update-status',
     updateBlogStatus: '/blog/update-status',
+    updateBlog: '/blog/update',
+    updateArticle: '/article/update',
+    updateVideo: '/video/update',
   },
   chat: {
     chatList: '/get-chat-list',

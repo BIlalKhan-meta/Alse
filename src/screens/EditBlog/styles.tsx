@@ -11,8 +11,10 @@ const styles = StyleSheet.create({
     // flex: 1
   },
   row_style: {
-    width: '90%',
+    width: '95%',
     alignSelf: 'center',
+    backgroundColor: colors.headerColor,
+    padding: vh,
   },
   cardStyle: {
     // marginVertical: vh,
