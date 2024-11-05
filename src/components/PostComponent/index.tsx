@@ -141,7 +141,7 @@ const PostComponent: React.FC<PostProps> = ({
             </View>
           </View>
         </View>
-        <TouchableOpacity onPress={onDotPress}>
+        <TouchableOpacity style={{padding: vh}} onPress={onDotPress}>
           <Image source={images.dots} style={styles.threeDots} />
         </TouchableOpacity>
       </View>
@@ -241,8 +241,9 @@ const styles = StyleSheet.create({
     color: colors.lightGrey,
   },
   threeDots: {
-    width: 4,
-    height: 19,
+    width: vh * 2,
+    height: vh * 2,
+    resizeMode: 'contain',
   },
 
   postImage: {
