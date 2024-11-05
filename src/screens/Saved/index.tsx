@@ -107,11 +107,11 @@ const Saved: React.FC = () => {
     saved: boolean,
   ) => {
     if (saved) {
-      console.log('CHECKKKKKKKKKKKKKKKKKKKKK', productId);
+      // console.log('CHECKKKKKKKKKKKKKKKKKKKKK', productId);
       let index = displayPost.findIndex(
         item => item?.savable_item?.id == productId,
       );
-      console.log('INDEXXXXXXXXXXXXXXXXXX', index);
+      // console.log('INDEXXXXXXXXXXXXXXXXXX', index);
       let arr = [...displayPost];
       arr.splice(index, 1);
       setDisplayPost(arr);

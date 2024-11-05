@@ -101,7 +101,7 @@ const Home: React.FC = () => {
   }
 
   const handleDotPress = (postId: number) => {
-    setActivePostId(postId ? postId : null);
+    setActivePostId(activePostId == null ? postId : null);
   };
 
   const handleLikePress = (id: number) => {

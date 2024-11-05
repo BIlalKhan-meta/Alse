@@ -21,15 +21,13 @@ import GeneralModal from '../../components/GeneralModal';
 import SortModal from '../../components/SortModal';
 import {getProductByShop, shopDetail} from '../../api/shop';
 import Loader from '../../components/Loader';
-import {removeSavedItem, saveItem} from '../../api/menu';
+import {getSavedItems, removeSavedItem, saveItem} from '../../api/menu';
 
 const Shop: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const shopId = route?.params?.shopId;
 
-  const [commentsVisible, setCommentsVisible] = useState<boolean>(false);
-  const [active, setActive] = useState<number>(1);
   const [modalVisible, setModalVisible] = useState(false);
   const [ReportSuccess, setReportSuccess] = useState(false);
   const [shopDetails, setShopDetails] = useState([]);
@@ -108,14 +106,22 @@ const Shop: React.FC = () => {
     setShopProduct(arr);
 
     if (saved) {
-      await removeSavedItem(itemId).then(res => {
-        if (res?.data) {
-          let index = shopProduct.findIndex(item => item?.id == itemId);
-          // let arr = [...shopProduct];
-          // arr.splice(index, 1);
-          // setShopProduct(arr);
-        }
-      });
+      let saved_item;
+      await getSavedItems()
+        .then(res => {
+          if (res?.data) {
+            saved_item = res?.data?.data?.data?.filter(
+              item =>
+                item.savable_type == `App\\Models\\Product` &&
+                item.savable_id == productId,
+            );
+          }
+        })
+        .catch(err => {
+          console.log('ERRRRRRORRRRR SAVEDDDDDDDDDDDD', err);
+        });
+
+      await removeSavedItem(saved_item[0].id);
     } else {
       const data = {
         item_id: productId,
@@ -127,15 +133,9 @@ const Shop: React.FC = () => {
         form.append(key, value);
       });
 
-      await saveItem(form)
-        .then(res => {
-          if (res?.data) {
-            //   console.log('RESSSSSSSSSS SAVEEEEEEEEEEEEEEE', res?.data);
-          }
-        })
-        .catch(err => {
-          console.log('ERRRRRORRR SAVEEEEEEEEEEEEEEEEE', err);
-        });
+      await saveItem(form).catch(err => {
+        console.log('ERRRRRORRR SAVEEEEEEEEEEEEEEEEE', err);
+      });
     }
   };
 

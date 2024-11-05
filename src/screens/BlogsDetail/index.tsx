@@ -30,6 +30,7 @@ import Video from 'react-native-video';
 import InterBoldLabel from '../../components/Text/InterBoldLabel';
 import MediaCard from '../../components/MediaCard';
 import {vh} from '../../constant';
+import InterBoldSmall from '../../components/Text/InterBoldSmall';
 
 const ViewBlog: React.FC = () => {
   const navigation = useNavigation();
@@ -124,33 +125,31 @@ const ViewBlog: React.FC = () => {
       },
       headerTitle: () => {
         return (
-          <Text numberOfLines={2} style={styles.header_title}>
-            {title}
-          </Text>
+          <InterBoldSmall style={styles.header_title}>{title}</InterBoldSmall>
         );
       },
-      headerTitleStyle: {
-        color: colors.black,
-      },
-      headerRight: () => (
-        <>
-          <TouchableOpacity
-            style={styles.postButton}
-            onPress={() => {
-              if (title == 'My Blogs') {
-                navigation.navigate('AddBlog', {title: 'Update Blog'});
-              } else if (title == 'Blog Title') {
-                navigation.navigate('AddBlog', {title: 'Update Blog'});
-              } else if (title == 'Video') {
-                navigation.navigate('AddBlog', {title: 'Update Video'});
-              } else {
-                navigation.navigate('AddBlog', {title: 'Update Article'});
-              }
-            }}>
-            <Image source={images.edit} />
-          </TouchableOpacity>
-        </>
-      ),
+      // headerTitleStyle: {
+      //   color: colors.black,
+      // },
+      // headerRight: () => (
+      //   <>
+      //     <TouchableOpacity
+      //       style={styles.postButton}
+      //       onPress={() => {
+      //         if (title == 'My Blogs') {
+      //           navigation.navigate('AddBlog', {title: 'Update Blog'});
+      //         } else if (title == 'Blog Title') {
+      //           navigation.navigate('AddBlog', {title: 'Update Blog'});
+      //         } else if (title == 'Video') {
+      //           navigation.navigate('AddBlog', {title: 'Update Video'});
+      //         } else {
+      //           navigation.navigate('AddBlog', {title: 'Update Article'});
+      //         }
+      //       }}>
+      //       <Image source={images.edit} />
+      //     </TouchableOpacity>
+      //   </>
+      // ),
     });
   }, [navigation]);
 
