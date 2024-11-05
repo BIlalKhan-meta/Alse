@@ -1,4 +1,5 @@
 import {
+  FlatList,
   Image,
   ImageSourcePropType,
   Modal,
@@ -73,8 +74,6 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
     }
   }, [comments]);
 
-  console.log('LIKESSSSSSSSSSSSSSSSSSSSS', postId);
-
   const handleCommentSubmit = async () => {
     if (newComment.length == 0) {
       return;
@@ -98,39 +97,6 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
     await postComment(form, postId)
       .then(res => console.log('RESSSSSSSSSSSSSS', res))
       .catch(err => console.log('ERROOOOOOOOOORRRRRRRRRRRR', err));
-
-    // if (newComment.trim()) {
-    //   // Create a new comment object
-    //   const comment: Comment = {
-    //     id: Date.now(), // Temporary ID until the backend responds
-    //     avatar: user?.avatar, // Replace with actual user avatar
-    //     fullname: user?.full_name, // Replace with actual user name
-    //     comment: newComment,
-    //   };
-
-    //   // Update local comments immediately
-    //   setCommentsData(prev => [comment, ...prev]);
-
-    //   // Reset the input
-    //   setNewComment('');
-    //   const body = new FormData();
-    //   body.append('comment', newComment);
-    //   dispatch(commentPost({formData: body, id}))
-    //     .unwrap()
-    //     .then(res => {
-    //       console.log('Reponse from post ==>', res);
-    //       // setNewComment('');
-
-    //       // setIsLoading(false);
-    //       // Toast.success('Posted Successfully');
-    //       // navigation.goBack();
-    //     })
-    //     .catch(err => {
-    //       console.log(err, 'errorrrr fromm screen ');
-    //       // setIsLoading(false);
-    //       // Toast.error(getMessage(err?.message));
-    //     });
-    // }
   };
 
   const handleLikePress = (id: number) => {
@@ -153,6 +119,8 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
       });
   };
 
+  console.log('COMENTTTTTTTTTTTS', commentsData);
+
   return (
     <>
       <Modal
@@ -170,56 +138,111 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
         <View style={styles.container}>
           <View style={styles.container}>
             {commentsData && commentsData?.length > 0 && (
-              <>
-                {commentsData.map((comment, index) => (
-                  <View key={comment.id}>
-                    <View style={styles.commentContainer}>
-                      <View style={styles.avatarContainer}>
-                        <Image
-                          source={
-                            comment?.avatar
-                              ? {uri: comment?.avatar}
-                              : images.user
-                          }
-                          style={styles.avatar}
-                        />
+              // <View />
+              <FlatList
+                style={{flex: 1, width: '90%'}}
+                showsVerticalScrollIndicator={false}
+                data={commentsData}
+                keyExtractor={item => item.id.toString()}
+                renderItem={({item}) => {
+                  return (
+                    <View key={item.id}>
+                      <View style={styles.commentContainer}>
+                        <View style={styles.avatarContainer}>
+                          <Image
+                            source={
+                              item?.avatar ? {uri: item?.avatar} : images.user
+                            }
+                            style={styles.avatar}
+                          />
+                        </View>
+                        <View style={styles.contentContainer}>
+                          <InterMedium style={styles.userName}>
+                            {item.full_name ||
+                              capitalize(commentsData[0]?.user?.first_name) +
+                                ' ' +
+                                capitalize(commentsData[0]?.user?.last_name)}
+                          </InterMedium>
+                          <InterRegular style={styles.comment}>
+                            {item.comment}
+                          </InterRegular>
+                        </View>
+                        <TouchableOpacity
+                          style={styles.likeButton}
+                          onPress={() => handleLikePress(item?.id)}>
+                          <Image
+                            source={
+                              item.is_liked ? images.likeFill : images.like
+                            }
+                            style={styles.likeIcon}
+                            tintColor={colors.blue}
+                          />
+                        </TouchableOpacity>
                       </View>
-                      <View style={styles.contentContainer}>
-                        <InterMedium style={styles.userName}>
-                          {comment.full_name ||
-                            capitalize(commentsData[0]?.user?.first_name) +
-                              ' ' +
-                              capitalize(commentsData[0]?.user?.last_name)}
-                        </InterMedium>
-                        <InterRegular style={styles.comment}>
-                          {comment.comment}
-                        </InterRegular>
-                      </View>
-                      <TouchableOpacity
-                        style={styles.likeButton}
-                        onPress={() => handleLikePress(comment?.id)}>
-                        <Image
-                          source={
-                            comment.is_liked ? images.likeFill : images.like
-                          }
-                          style={styles.likeIcon}
-                          tintColor={colors.blue}
-                        />
-                      </TouchableOpacity>
-                    </View>
 
-                    <View style={styles.postActions}>
-                      <View style={styles.leftActions}>
-                        <Image source={images.like} style={styles.icon} />
-                        <InterRegular style={styles.actionText}>
-                          {comment.total_likes}
-                        </InterRegular>
+                      <View style={styles.postActions}>
+                        <View style={styles.leftActions}>
+                          <Image source={images.like} style={styles.icon} />
+                          <InterRegular style={styles.actionText}>
+                            {item.total_likes}
+                          </InterRegular>
+                        </View>
                       </View>
+                      <View style={styles.separator} />
                     </View>
-                    <View style={styles.separator} />
-                  </View>
-                ))}
-              </>
+                  );
+                }}
+              />
+              // <>
+              //   {commentsData.map((comment, index) => (
+              //     <View key={comment.id}>
+              //       <View style={styles.commentContainer}>
+              //         <View style={styles.avatarContainer}>
+              //           <Image
+              //             source={
+              //               comment?.avatar
+              //                 ? {uri: comment?.avatar}
+              //                 : images.user
+              //             }
+              //             style={styles.avatar}
+              //           />
+              //         </View>
+              //         <View style={styles.contentContainer}>
+              //           <InterMedium style={styles.userName}>
+              //             {comment.full_name ||
+              //               capitalize(commentsData[0]?.user?.first_name) +
+              //                 ' ' +
+              //                 capitalize(commentsData[0]?.user?.last_name)}
+              //           </InterMedium>
+              //           <InterRegular style={styles.comment}>
+              //             {comment.comment}
+              //           </InterRegular>
+              //         </View>
+              //         <TouchableOpacity
+              //           style={styles.likeButton}
+              //           onPress={() => handleLikePress(comment?.id)}>
+              //           <Image
+              //             source={
+              //               comment.is_liked ? images.likeFill : images.like
+              //             }
+              //             style={styles.likeIcon}
+              //             tintColor={colors.blue}
+              //           />
+              //         </TouchableOpacity>
+              //       </View>
+
+              //       <View style={styles.postActions}>
+              //         <View style={styles.leftActions}>
+              //           <Image source={images.like} style={styles.icon} />
+              //           <InterRegular style={styles.actionText}>
+              //             {comment.total_likes}
+              //           </InterRegular>
+              //         </View>
+              //       </View>
+              //       <View style={styles.separator} />
+              //     </View>
+              //   ))}
+              // </>
             )}
           </View>
           <View style={styles.inputConatiner}>

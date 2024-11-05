@@ -1,6 +1,6 @@
-import { StyleSheet } from 'react-native';
-import { colors } from '../../utils/theme';
-import { fontSizes, vh, vw } from '../../constant';
+import {StyleSheet} from 'react-native';
+import {colors} from '../../utils/theme';
+import {fontSizes, vh, vw} from '../../constant';
 
 const styles = StyleSheet.create({
   container: {
@@ -13,12 +13,12 @@ const styles = StyleSheet.create({
     // borderTopWidth:vw*1,
     alignItems: 'center',
     paddingVertical: vh * 3,
-    paddingHorizontal: vh * 2
+    paddingHorizontal: vh * 2,
   },
   blurcontainer: {
     position: 'absolute',
     width: '100%',
-    height: '100%'
+    height: '100%',
   },
   absolute: {
     position: 'absolute',
@@ -26,13 +26,12 @@ const styles = StyleSheet.create({
     left: 0,
     bottom: 0,
     right: 0,
-
   },
   titleContainer: {
-    alignSelf: "flex-start",
-    flexDirection: "row",
-    alignItems: "center",
-    marginLeft: vh * 1.5
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: vh * 1.5,
   },
   title: {
     color: colors.filterTxt,
@@ -41,14 +40,14 @@ const styles = StyleSheet.create({
     // fontWeight: "600"
   },
   message: {
-    color: colors.darkGray
+    color: colors.darkGray,
   },
 
   commentContainer: {
     flexDirection: 'row',
     marginBottom: 10,
     alignItems: 'center',
-    width: "80%"
+    // width: '80%',
   },
   avatarContainer: {
     marginRight: 10,
@@ -72,7 +71,7 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: fontSizes.f14,
     color: colors.black,
-    fontWeight: "bold"
+    fontWeight: 'bold',
   },
   comment: {
     fontSize: fontSizes.f12,
@@ -87,8 +86,10 @@ const styles = StyleSheet.create({
   },
   postActions: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    // justifyContent: 'space-between',
+    // alignItems: 'center',
+    // alignSelf: 'flex-start',
+    // backgroundColor: 'red',
     marginBottom: 10,
   },
   leftActions: {
@@ -111,36 +112,35 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   inputConatiner: {
-    flexDirection: "row",
+    flexDirection: 'row',
     // backgroundColor: "yellow",
-    justifyContent: "space-between",
-    alignContent: "center",
-    width: "100%",
+    justifyContent: 'space-between',
+    alignContent: 'center',
+    width: '100%',
     backgroundColor: colors.inputcolor,
     height: vh * 6,
     paddingHorizontal: vw * 2,
-    borderRadius: 5
-
+    borderRadius: 5,
   },
   inputCon: {
-    width: "80%",
+    width: '80%',
     // backgroundColor: "red",
-    justifyContent: "center",
-    alignContent: "center"
+    justifyContent: 'center',
+    alignContent: 'center',
   },
   input: {
-    width: "80%",
-    height: "100%",
+    width: '80%',
+    height: '100%',
   },
   send: {
     // backgroundColor: "pink",
-    alignSelf: "flex-end",
-    height: "100%",
-    alignContent: "center",
-    alignItems: "center",
-    justifyContent: "center"
+    alignSelf: 'flex-end',
+    height: '100%',
+    alignContent: 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
     // marginBottom: 10
-  }
+  },
 });
 
 export default styles;
