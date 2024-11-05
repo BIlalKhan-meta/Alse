@@ -7,6 +7,7 @@ import {
   Image,
   TouchableOpacity,
   Share,
+  Pressable,
 } from 'react-native';
 import {images} from '../../utils/images';
 import Card from '../Card';
@@ -44,6 +45,7 @@ interface PostProps {
   modalVisible: boolean;
   isLiked?: boolean;
   isSaved?: boolean;
+  onCardPress:() => void
 }
 
 const PostComponent: React.FC<PostProps> = ({
@@ -69,6 +71,7 @@ const PostComponent: React.FC<PostProps> = ({
   handleReportPost,
   isLiked,
   isSaved,
+  onCardPress
 }) => {
   const navigation = useNavigation();
   const user = useSelector(selectUserProfile);
@@ -124,6 +127,7 @@ const PostComponent: React.FC<PostProps> = ({
   };
 
   return (
+    <Pressable onPress={onCardPress}>
     <Card style={styles.card}>
       <View style={styles.header}>
         <View style={styles.userInfo}>
@@ -201,6 +205,7 @@ const PostComponent: React.FC<PostProps> = ({
         style={{top: 55}}
       />
     </Card>
+    </Pressable>
   );
 };
 

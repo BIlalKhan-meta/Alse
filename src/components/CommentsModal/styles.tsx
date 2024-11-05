@@ -121,6 +121,7 @@ const styles = StyleSheet.create({
     height: vh * 6,
     paddingHorizontal: vw * 2,
     borderRadius: 5,
+    bottom:20
   },
   inputCon: {
     width: '80%',

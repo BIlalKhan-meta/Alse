@@ -321,6 +321,7 @@ const Saved: React.FC = () => {
           // setDeleteVisible(true);
           setDeleteVisible({visibility: true, id: mediaItem?.post_id});
         }}
+        onCardPress={() => setActivePostId(null) }
         handleReportPost={() => {
           setReportVisible({visibility: true, id: mediaItem?.post_id});
         }}
@@ -488,9 +489,9 @@ const Saved: React.FC = () => {
             <View
               style={{flexDirection: 'row', justifyContent: 'space-between'}}>
               <View>
-                <InterRegular style={styles.heading}>Sort by:</InterRegular>
+                {/* <InterRegular style={styles.heading}>Sort by:</InterRegular> */}
                 <View>
-                  <Picker
+                  {/* <Picker
                     style={[styles.pickercontainer]}
                     dropdownIconColor={colors.inputText}
                     enabled={true}
@@ -509,13 +510,13 @@ const Saved: React.FC = () => {
                         key={item.id.toString()}
                       />
                     ))}
-                  </Picker>
+                  </Picker> */}
                 </View>
               </View>
 
-              <TouchableOpacity>
+              {/* <TouchableOpacity>
                 <Image source={images.filter} />
-              </TouchableOpacity>
+              </TouchableOpacity> */}
             </View>
 
             <WishlistScreen

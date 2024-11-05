@@ -234,6 +234,7 @@ const Home: React.FC = () => {
         // onLikePress={() => setrRactVisible(true)}
         onDotPress={() => handleDotPress(item.id)}
         modalVisible={activePostId === item.id}
+        onCardPress={() => setActivePostId(null) }
         handleBlockPress={() => {
           // handleDotPress();
           // setDeleteVisible(true);
@@ -263,7 +264,7 @@ const Home: React.FC = () => {
 
   return (
     <View style={{padding: vh * 2}}>
-      <TouchableWithoutFeedback onPress={() => handleDotPress(null)}>
+      {/* <TouchableWithoutFeedback onPress={() => handleDotPress(null)}> */}
         <View>
           <FlatList
             data={posts}
@@ -372,7 +373,7 @@ const Home: React.FC = () => {
             primaryBtn={true}
           />
         </View>
-      </TouchableWithoutFeedback>
+      {/* </TouchableWithoutFeedback> */}
     </View>
   );
 };
