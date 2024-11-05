@@ -85,7 +85,8 @@ const backButtonRoutes: {[key: string]: boolean} = {
   CreatePostEdit: true,
   MyShop: true,
   EditShop: true,
-  AddProduct : true
+  AddProduct : true,
+  Saved : true,
 };
 
 const getTitle: React.FC<NavigationOptionsProps> = props => {

@@ -228,7 +228,7 @@ const Home: React.FC = () => {
         account={item.privacy}
         // onCommnetPress={() => setCommentsVisible(true)}
         onCommnetPress={() => handleCommentPress(item?.id)}
-        onLikePress={() => handleLikePress(mediaItem?.post_id)}
+        onLikePress={() => handleLikePress(item?.id)}
         onSavePress={() => handleSave(item?.id, item?.is_saved)}
         // onLikePress={() => setrRactVisible(true)}
         onDotPress={() => handleDotPress(item.id)}
@@ -236,10 +236,10 @@ const Home: React.FC = () => {
         handleBlockPress={() => {
           // handleDotPress();
           // setDeleteVisible(true);
-          setDeleteVisible({visibility: true, id: mediaItem?.post_id});
+          setDeleteVisible({visibility: true, id: item?.id});
         }}
         handleReportPost={() => {
-          setReportVisible({visibility: true, id: mediaItem?.post_id});
+          setReportVisible({visibility: true, id: item?.id});
         }}
         handleReportPress={() => {
           handleDotPress();

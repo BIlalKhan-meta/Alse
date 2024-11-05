@@ -48,18 +48,17 @@ const WishlistScreen: React.FC<WishlistProps> = ({
   };
 
   const renderItem = ({item}) => {
-    console.log('IDDDDDDDDDDDDDDDDDDD', item.sizes);
     return (
       <TouchableOpacity
         style={styles.productContainer}
         // onPress={onPress}
-        onPress={() => onPress(item.id, item.user_id)}>
+        onPress={() => onPress(item?.id, item?.user_id)}>
         <Image
           source={
             item?.banner
-              ? {uri: item.banner}
-              : item?.images.length != 0
-              ? {uri: item.images[0].path}
+              ? {uri: item?.banner}
+              : item?.images?.length
+              ? {uri: item?.images[0].path}
               : images.pro1
           }
           style={styles.productImage}
@@ -97,12 +96,12 @@ const WishlistScreen: React.FC<WishlistProps> = ({
               <Text> </Text>
             )}
           </View>
-          {item.sizes != undefined && item.sizes.length != 0 && (
+          {item?.sizes != undefined && item?.sizes?.length !=0 && (
             <InterRegular style={styles.product}>
               Size: {item.sizes[0].size}
             </InterRegular>
           )}
-          {item.colors != undefined && item.colors.length != 0 && (
+          {item?.colors != undefined && item?.colors?.length !=0 && (
             <InterRegular style={styles.product}>
               Color: {item.colors[0].color}
             </InterRegular>
