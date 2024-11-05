@@ -263,7 +263,7 @@ const Home: React.FC = () => {
   );
 
   return (
-    <View style={{padding: vh * 2}}>
+    <View style={{paddingTop: vh * 10, paddingHorizontal: vh * 2}}>
       {/* <TouchableWithoutFeedback onPress={() => handleDotPress(null)}> */}
         <View>
           <FlatList
