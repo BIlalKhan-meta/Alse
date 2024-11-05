@@ -21,8 +21,12 @@ import {addProductToCart, productDetail} from '../../api/product';
 import {getMessage, Toast} from '../../utils/helpers';
 import {useSelector} from 'react-redux';
 import {selectUserProfile} from '../../store/slices/authSlice';
+import InterBoldAverage from '../Text/InterBoldAverage';
+import InterBoldSmall from '../Text/InterBoldSmall';
+import InterMedium from '../Text/InterMedium';
+import InterBoldLabel from '../Text/InterBoldLabel';
 
-const colorsType = ['red', 'blue', 'green'];
+const colorsType = ['Red', 'Blue', 'Green'];
 const sizes = ['S', 'M', 'L'];
 
 const StoreOrderComponent: React.FC = props => {
@@ -31,7 +35,7 @@ const StoreOrderComponent: React.FC = props => {
   // console.log('====================================');
   // console.log(productItem, 'Frommm propssssss ');
   // console.log('====================================');
-  const [selectedColor, setSelectedColor] = useState<string | null>('red');
+  const [selectedColor, setSelectedColor] = useState<string | null>('Red');
   const [selectedSize, setSelectedSize] = useState<string | null>('L');
   const user = useSelector(selectUserProfile);
 
@@ -56,27 +60,7 @@ const StoreOrderComponent: React.FC = props => {
       Toast.error(getMessage(error?.message));
       console.log('Fromm add tocartt erro', error);
     }
-
-    // .then((res) => {
-    //     console.log('response from addtocartttt ====>', res);
-
-    //     // Optionally navigate or show success message
-    //     // navigation.navigate("Login");
-    //     // resetForm()
-    //     // setSuccessModel(true)
-    //     // setSubmitted(false)
-    // })
-    // .catch((error) => {
-    //     console.error("addtoCarttt error:", error.response);
-    //     Toast.error(getMessage(error?.message));
-    // });
   };
-
-  // return(
-  //     <View style={{backgroundColor:"red",flex:1,borderWidth:1}}>
-  //         <Text>HRy</Text>
-  //     </View>
-  // )
 
   return (
     <View style={styles.container}>
@@ -87,7 +71,13 @@ const StoreOrderComponent: React.FC = props => {
       </View>
 
       <View style={styles.selectionCon}>
-        <Selection
+        {productItem.colors && productItem.colors.length != 0 && (
+          <InterMedium>Color : {productItem.colors[0].color}</InterMedium>
+        )}
+        {productItem.sizes && productItem.sizes.length != 0 && (
+          <InterMedium>Size : {productItem.sizes[0].size}</InterMedium>
+        )}
+        {/* <Selection
           mode="color"
           options={colorsType}
           selectedOption={selectedColor}
@@ -98,7 +88,7 @@ const StoreOrderComponent: React.FC = props => {
           options={sizes}
           selectedOption={selectedSize}
           setSelectedOption={setSelectedSize}
-        />
+        /> */}
       </View>
 
       {user?.id != productItem.shop.user_id ? (

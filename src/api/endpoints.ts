@@ -50,6 +50,7 @@ const endpoints = {
     removeCartItem: '/remove-from-cart',
     updateCart: '/update-cart',
     checkout: '/order/checkout',
+    deleteProductImage  : '/product',
   },
   education: {
     getArticles: '/articles',

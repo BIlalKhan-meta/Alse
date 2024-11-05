@@ -11,17 +11,17 @@ import {useNavigation, useRoute} from '@react-navigation/native';
 import {images} from '../../utils/images';
 import useImagePicker from '../../hooks/useImagePicker';
 import GeneralModal from '../../components/GeneralModal';
-import {colors} from '../../utils/theme';
 import CustomButton from '../../components/CustomButton';
-import InterBoldLabel from '../../components/Text/InterBoldLabel';
 import InterRegular from '../../components/Text/InterRegular';
-import {createProduct} from '../../api/shop';
+import {createProduct, updateProduct} from '../../api/shop';
 import Card from '../../components/Card';
-import {getCategories} from '../../api/product';
+import {getCategories, productImageDelete} from '../../api/product';
 import CategoryDropdownComponent from '../../components/TextInput/CategoryDropdownComponent';
-import InterLightSmall from '../../components/Text/InterLightSmall';
-import {vh} from '../../constant';
+import {vh, vw} from '../../constant';
 import Row from '../../components/Row';
+import {DialogBox} from '../../components/DialogBox';
+import Toast from 'react-native-toast-message';
+import Loader from '../../components/Loader';
 
 const AddProduct: React.FC = () => {
   const navigation = useNavigation();
@@ -29,14 +29,16 @@ const AddProduct: React.FC = () => {
   const shopId = route?.params?.shopId;
   const item = route?.params?.item;
   const title = route?.params?.title || 'Add Product';
-  const {imageData, image, captureImage, chooseImageFromLibrary} =
-    useImagePicker();
+  const {imageData, captureImage, chooseImageFromLibrary} = useImagePicker();
   const [productSuccess, setProductSuccess] = useState(false);
   const [submitted, setSubmitted] = useState<boolean>(false);
   const [status, setStatus] = useState();
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState([]);
+  const [media, setMedia] = useState<object[]>([]);
   const [categoryId, setCategoryId] = useState();
+  const [visible, setVisible] = useState(false);
+  const [colors, setColors] = useState([]);
 
   const statuses = [
     {label: 'Active', value: 'active'},
@@ -48,7 +50,7 @@ const AddProduct: React.FC = () => {
   }, []);
 
   const getData = async () => {
-    setLoading(true);
+    // setLoading(true);
     const res = await getCategories();
     const fetchedCategories = res?.data?.data;
     setCategories(fetchedCategories);
@@ -56,6 +58,38 @@ const AddProduct: React.FC = () => {
     if (fetchedCategories?.length > 0) {
       setCategoryId(fetchedCategories[0].id);
     }
+  };
+
+  useEffect(() => {
+    if (imageData) {
+      setMedia([
+        ...media,
+        {uri: imageData?.uri, name: imageData?.fileName, type: imageData?.type},
+      ]);
+      setVisible(false);
+    }
+  }, [imageData]);
+
+  useEffect(() => {
+    if (item && item.images.length != 0) {
+      const arr = item.images.map(item => {
+        return {uri: item.path, id: item?.id};
+      });
+      setMedia([...media, ...arr]);
+    }
+  }, [item]);
+
+  const handleDelete = async (index: number) => {
+    const arr = [...media];
+    let newId;
+    if (arr[index]?.id) {
+      newId = arr[index]?.id;
+    }
+    arr.splice(index, 1);
+    setMedia(arr);
+    await productImageDelete(item?.id, newId)
+      .then(res => {})
+      .catch(err => console.log('ERORRRRRRRRRRRRRRRR', err));
   };
 
   const validationSchema = yup.object().shape({
@@ -84,8 +118,8 @@ const AddProduct: React.FC = () => {
     brand_name: item?.brand_name || '',
     price: item?.price || '',
     quantity: item?.quantity || '',
-    color: '',
-    size: '',
+    color: item.colors.length != 0 ? item.colors[0].color : '',
+    size: item.sizes.length != 0 ? item.sizes[0].size : '',
   };
 
   const handleDropdownChange = (value: string | null) => {
@@ -94,6 +128,13 @@ const AddProduct: React.FC = () => {
 
   const handleSubmit = async (values: typeof initialValues) => {
     setSubmitted(true);
+    if (media.length == 0) {
+      return Toast.show({
+        type: 'error',
+        text1: 'Upload Media',
+        text2: 'Media is required',
+      });
+    }
     let statusState;
     if (status == 'inactive') {
       statusState = 0;
@@ -108,40 +149,37 @@ const AddProduct: React.FC = () => {
       price: values.price,
       quantity: values.quantity,
       status: statusState,
-      color: values.color,
-      size: values.size,
+      // color: values.color,
+      // size: values.size,
       category_id: categoryId,
     };
 
-    if (imageData.type !== '') {
-      // let imagePath = image.split('/');
+    data['colors[0]'] = values.color;
+    data['sizes[0]'] = values.size;
 
-      const uploadedImage = {
-        uri: imageData?.uri,
-        name: imageData?.fileName,
-        type: imageData?.type,
-      };
-
-      console.log('uploadedImage= ==>', uploadedImage);
-      // console.log('uploadedCover= ==>', uploadedCover);
-
-      data['images[0]'] = uploadedImage;
-    }
-
-    let formData = new FormData();
-
-    Object.entries(data).forEach(item => {
-      formData.append(item[0], item[1]);
+    const form = new FormData();
+    Object.entries(data).forEach(([key, value]) => {
+      form.append(key, value);
     });
 
-    try {
-      const response = await createProduct(formData, shopId); // Adjust API function as needed
-      console.log(response, 'responseeeeeee======>>>>>');
-      setSubmitted(false);
-      setProductSuccess(true);
-    } catch (error) {
-      console.log('Error creating product:', error.response);
-      setSubmitted(false);
+    let newIndex = 0;
+    media.map((item, index) => {
+      if (!item?.id) {
+        form.append(`images[${newIndex}]`, item);
+        newIndex = newIndex + 1;
+      }
+    });
+
+    console.log(JSON.stringify(form, null, 4));
+
+    if (title == 'Edit Product') {
+      await updateProduct(form, shopId, item?.id)
+        .then(res => navigation.goBack())
+        .catch(err => console.log('ERRRRRRRRRRRRRRRRRRR', err));
+    } else {
+      await createProduct(form, shopId)
+        .then(res => navigation.goBack())
+        .catch(err => console.log('ERRRRRRRRRRRRRRRRRRR', err));
     }
   };
 
@@ -151,10 +189,24 @@ const AddProduct: React.FC = () => {
     });
   }, [navigation]);
 
+  if (loading) {
+    return <Loader />;
+  }
+
   return (
     <KeyboardAwareScrollView
       contentContainerStyle={styles.container}
       showsVerticalScrollIndicator={false}>
+      <DialogBox
+        status="upload"
+        heading="Upload Media"
+        onClose={() => setVisible(false)}
+        visible={visible}
+        button={[
+          {text: 'Open Camera', onPress: () => captureImage('photo')},
+          {text: 'Open Gallery', onPress: chooseImageFromLibrary},
+        ]}
+      />
       <Formik
         initialValues={initialValues}
         enableReinitialize
@@ -232,27 +284,45 @@ const AddProduct: React.FC = () => {
 
               <TouchableOpacity
                 style={styles.uploadBtn}
-                onPress={() => captureImage('photo')}>
+                onPress={() => setVisible(true)}>
                 <InterRegular style={styles.uploadTxt}>Upload</InterRegular>
                 <Image source={images.upload} style={styles.uploadImg} />
               </TouchableOpacity>
 
-              <View>
-                {(imageData || item?.images.length != 0) && (
-                  <Image
-                    source={
-                      imageData
-                        ? {uri: imageData.uri}
-                        : {uri: item?.images[0].path}
-                    }
-                    style={{
-                      width: '100%',
-                      height: vh * 15,
-                      resizeMode: 'cover',
-                    }}
-                  />
-                )}
-              </View>
+              <Row justify="space-between" style={{flexWrap: 'wrap'}}>
+                {media.map((item, index) => {
+                  return (
+                    <View
+                      style={{
+                        width: '48%',
+                        height: vh * 15,
+                        marginBottom: vh,
+                      }}>
+                      <Image
+                        source={{uri: item?.uri}}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          resizeMode: 'cover',
+                        }}
+                      />
+                      <TouchableOpacity
+                        onPress={() => handleDelete(index)}
+                        style={{position: 'absolute', right: vw * 2, top: vh}}>
+                        <Image
+                          source={images.bin}
+                          style={{
+                            tintColor: 'red',
+                            width: vh * 2,
+                            height: vh * 2,
+                            resizeMode: 'contain',
+                          }}
+                        />
+                      </TouchableOpacity>
+                    </View>
+                  );
+                })}
+              </Row>
 
               <RegularTextInput
                 label="Price *"
@@ -283,20 +353,6 @@ const AddProduct: React.FC = () => {
               <InterRegular style={styles.dropdownLabel}>
                 Category *
               </InterRegular>
-              {/* <DropDownTextInput
-                                items={categories}
-                                defaultValue='active'
-                                // placeholder="Select Status"
-                                onChangeValue={(val) => {
-                                    console.log(val, "Val Freom drop dowwnnnn ")
-                                    setStatus(val)
-
-                                    handleChange('status');
-                                    handleBlur('status')
-                                    handleDropdownChange
-                                }}
-                                style={styles.dropDown}
-                            /> */}
               <CategoryDropdownComponent
                 categories={categories}
                 placeholder="Select Category"

@@ -15,7 +15,7 @@ import Card from '../../components/Card';
 import PostComponent from '../../components/PostComponent';
 import InterBold from '../../components/Text/InterBold';
 import CommentsModal from '../../components/CommentsModal';
-import {useNavigation} from '@react-navigation/native';
+import {useIsFocused, useNavigation} from '@react-navigation/native';
 import HeaderComponent from '../../components/HeaderComponent';
 import styles from './styles';
 import WishlistScreen from '../../components/WishList';
@@ -121,6 +121,7 @@ const Marketplace: React.FC = () => {
   const [searchResults, setSearchResults] = useState<string[]>([]);
   const [shops, setShops] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const isFocused = useIsFocused();
 
   const handleSearch = (query: string) => {
     console.log(`Searching for shops with query: ${query}`);
@@ -134,7 +135,7 @@ const Marketplace: React.FC = () => {
 
   useEffect(() => {
     getData();
-  }, []);
+  }, [isFocused]);
 
   const getData = async () => {
     setLoading(true);

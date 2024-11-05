@@ -33,8 +33,6 @@ const WishlistScreen: React.FC<WishlistProps> = ({
   onPress,
   handleRemove,
 }) => {
-
-  
   const handleAddToCart = async (productId: string) => {
     // Implement your logic to add the product to cart
     // console.log(`Product with id ${productId} added to cart`);
@@ -50,7 +48,7 @@ const WishlistScreen: React.FC<WishlistProps> = ({
   };
 
   const renderItem = ({item}) => {
-    // console.log('IDDDDDDDDDDDDDDDDDDD', item);
+    console.log('IDDDDDDDDDDDDDDDDDDD', item.sizes);
     return (
       <TouchableOpacity
         style={styles.productContainer}
@@ -60,7 +58,7 @@ const WishlistScreen: React.FC<WishlistProps> = ({
           source={
             item?.banner
               ? {uri: item.banner}
-              : item?.images
+              : item?.images.length != 0
               ? {uri: item.images[0].path}
               : images.pro1
           }
@@ -68,9 +66,7 @@ const WishlistScreen: React.FC<WishlistProps> = ({
         />
         {heart && (
           <TouchableOpacity
-            onPress={() =>
-              handleRemove(item?.id, item?.is_saved)
-            }
+            onPress={() => handleRemove(item?.id, item?.is_saved)}
             style={styles.heartIconContainer}>
             <Image
               source={item?.is_saved ? images.heartIcon : images.unfillHeart}
@@ -101,16 +97,16 @@ const WishlistScreen: React.FC<WishlistProps> = ({
               <Text> </Text>
             )}
           </View>
-          {/* {product && item.size && (
+          {item.sizes != undefined && item.sizes.length != 0 && (
             <InterRegular style={styles.product}>
-              Size: {item.size}
+              Size: {item.sizes[0].size}
             </InterRegular>
           )}
-          {item.colors && (
+          {item.colors != undefined && item.colors.length != 0 && (
             <InterRegular style={styles.product}>
-              Color: Red, Green, Blue
+              Color: {item.colors[0].color}
             </InterRegular>
-          )} */}
+          )}
         </View>
       </TouchableOpacity>
     );

@@ -67,10 +67,6 @@ const ProductView: React.FC = () => {
   const [productDetails, setProductDetails] = useState([]);
   const [productReviews, setProductReviews] = useState([]);
   const [loading, setLoading] = useState(false);
-  const handleReportPress = () => {
-    setModalVisible(false);
-    setReportVisible(true);
-  };
   useLayoutEffect(() => {
     navigation.setOptions({
       headerStyle: {
@@ -135,9 +131,9 @@ const ProductView: React.FC = () => {
                     nextButton={<Text style={styles.buttonText}>›</Text>}
                     prevButton={<Text style={styles.buttonText}>‹</Text>}>
                     {productDetails?.images?.map((image, index) => {
-                      console.log('====================================');
-                      console.log(image?.path, 'Frommmm mappppp');
-                      console.log('====================================');
+                      // console.log('====================================');
+                      // console.log(image?.path, 'Frommmm mappppp');
+                      // console.log('====================================');
                       return (
                         <View key={index}>
                           <Image

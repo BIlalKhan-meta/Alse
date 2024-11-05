@@ -170,12 +170,14 @@ const MyShop: React.FC = () => {
             </View>
           </View>
 
+
+          {console.log("MYYY PRODUCCCCCCTSSSSSSSSSSSSSSSSSSSS",shopProduct)}
+
           <WishlistScreen
             wishlist={shopProduct}
             onAddToCart={handleAddToCart}
             onRemoveFromWishlist={handleRemoveFromWishlist}
             heart={true}
-            addCart={true}
             product={true}
             onPress={id => {
               // console.log('====================================');

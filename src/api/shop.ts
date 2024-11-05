@@ -21,13 +21,30 @@ export const getProductByShop = (id: number) => {
 };
 
 export const updateShop = (formData: FormData, id: number) => {
-  return axiosInstance.post(`${endpoints.shop.updateShop}/${id}`);
+  return axiosInstance.post(`${endpoints.shop.updateShop}/${id}`, formData, {
+    formData: true,
+  });
 };
 
 export const createProduct = (formData: FormData, id: number) => {
-  console.log(formData, id, 'Formmmm Dataaaa Createee possttt');
+  // console.log(formData, id, 'Formmmm Dataaaa Createee possttt');
   return axiosInstance.post(
     `${endpoints.shop.shopDetail}/${id}/product/create`,
+    formData,
+    {
+      formData: true, // This triggers the form-data handling in the interceptor
+    },
+  );
+};
+
+export const updateProduct = (
+  formData: FormData,
+  shopId: number,
+  productId: number,
+) => {
+  // console.log(formData, id, 'Formmmm Dataaaa Createee possttt');
+  return axiosInstance.post(
+    `${endpoints.shop.shopDetail}/${shopId}/product/update/${productId}`,
     formData,
     {
       formData: true, // This triggers the form-data handling in the interceptor

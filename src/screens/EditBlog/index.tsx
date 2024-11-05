@@ -60,18 +60,7 @@ const EditBlog = () => {
   const editItem = route?.params?.item || {};
   const [selected, setSelected] = useState('children');
   const [visible, setVisible] = useState(false);
-  const [media, setMedia] = useState<object[]>(
-    // [
-    //   {
-    //     uri: editItem[
-    //       title == 'Update Blog' || 'Update Article' ? 'image' : 'video'
-    //     ],
-    //     type : ''
-    //   },
-    // ]
-    // ||
-    [],
-  );
+  const [media, setMedia] = useState<object[]>([]);
   const {imageData, captureImage, chooseImageFromLibrary} = useImagePicker();
   const [loading, setLoading] = useState(false);
 

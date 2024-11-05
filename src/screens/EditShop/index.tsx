@@ -15,6 +15,7 @@ import Toast from 'react-native-toast-message';
 
 export const EditShop = () => {
   const [name, setName] = useState('');
+  const [fees, setFees] = useState('');
   const navigation = useNavigation();
   const [display, setDisplay] = useState();
   const [loading, setLoading] = useState(false);
@@ -30,6 +31,7 @@ export const EditShop = () => {
         if (res?.data) {
           setDisplay(res?.data?.data);
           setName(res?.data?.data?.shop_name);
+          setFees(res?.data?.data?.delivery_fees);
         }
       })
       .catch(err => console.log('ERORRRRRRRRRRRRR', err))
@@ -45,26 +47,39 @@ export const EditShop = () => {
   }, [shopId]);
 
   const handleSubmit = async () => {
-    if (name.length == 0) {
+    if (name.length == 0 || fees.length == 0) {
       return Toast.show({
         type: 'error',
-        text1: 'Name',
-        text2: 'Name is required',
+        text1: 'Missing Fields',
+        text2: 'All Fields are required',
       });
     }
+    const image = {
+      uri: imageData?.uri,
+      name: imageData?.fileName,
+      type: imageData?.type,
+    };
     const data = {
       name: name,
-      shop_banner: image ? imageData : display?.banner,
+      delivery_fees: fees,
+      // shop_banner: image ? image : display?.banner,
+      ...(imageData ? {shop_banner: image} : {}),
     };
     const form = new FormData();
     Object.entries(data).forEach(([key, value]) => {
       form.append(key, value);
     });
-    await updateShop(form, display?.id).then(res => {
-      if (res?.data) {
-        navigation.goBack();
-      }
-    });
+
+    console.log('FORMMMMMMMMMMMM', JSON.stringify(form, null, 4));
+    await updateShop(form, display?.id)
+      .then(res => {
+        if (res?.data) {
+          navigation.goBack();
+        }
+      })
+      .catch(err => {
+        console.log('ERORRRRRRRRRRRRRRRR', err);
+      });
   };
 
   if (loading) {
@@ -79,7 +94,15 @@ export const EditShop = () => {
           placeholder="Enter Shop Name"
           // placeholderTextColor={colors.darkText}
           onChangeText={setName}
-          value={display?.shop_name}
+          value={name || display?.shop_name}
+          style={styles.inputStyle}
+        />
+        <RegularTextInput
+          label="Delivery Fees *"
+          placeholder="Enter Shop Name"
+          // placeholderTextColor={colors.darkText}
+          onChangeText={setFees}
+          value={fees || display?.delivery_fees}
           style={styles.inputStyle}
         />
 
