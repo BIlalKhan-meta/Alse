@@ -43,3 +43,10 @@ export const checkout = (formData: FormData) => {
 export const getCart = () => {
   return axiosInstance.get(`${endpoints.products.getCart}`);
 };
+export const getOrders = () => {
+  return axiosInstance.get(`${endpoints.products.ordersList}`);
+};
+
+export const getOrderDetail = (id: number) => {
+  return axiosInstance.get(`${endpoints.products.orderDetail}/${id}`);
+};

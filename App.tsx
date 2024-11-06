@@ -1,21 +1,7 @@
 import 'react-native-gesture-handler';
 import React, {useEffect} from 'react';
-import type {PropsWithChildren} from 'react';
-import {
-  Platform,
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
-import {
-  DefaultTheme,
-  NavigationContainer,
-  useNavigation,
-} from '@react-navigation/native';
+import {Platform, SafeAreaView, StatusBar, StyleSheet} from 'react-native';
+import {DefaultTheme, NavigationContainer} from '@react-navigation/native';
 import AppNavigation from './src/navigation/AppNavigation';
 import {colors} from './src/utils/theme';
 import BootSplash from 'react-native-bootsplash';

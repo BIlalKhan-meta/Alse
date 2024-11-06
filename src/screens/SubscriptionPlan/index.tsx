@@ -1,177 +1,150 @@
-import React, { useCallback, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions, ScrollView, Linking } from 'react-native';
+import React, {useCallback, useState} from 'react';
+import {View, Text, Dimensions, ScrollView, Linking} from 'react-native';
 import Carousel from 'react-native-snap-carousel';
 import styles from './styles';
 import CustomButton from '../../components/CustomButton';
 import Card from '../../components/Card';
-import { vh, vw } from '../../constant';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { GetSubscriptions, makePayment } from '../../api/subscription';
-import { getMessage, Toast } from '../../utils/helpers';
+import {vh, vw} from '../../constant';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
+import {GetSubscriptions, makePayment} from '../../api/subscription';
+import {getMessage} from '../../utils/helpers';
 import InAppBrowser from 'react-native-inappbrowser-reborn';
-import { GetUserProfile } from '../../store/slices/authSlice';
+import {GetUserProfile} from '../../store/slices/authSlice';
+import Loader from '../../components/Loader';
+import Toast from 'react-native-toast-message';
 
-const { width: viewportWidth } = Dimensions.get('window');
-
-const plans = [
-    {
-        title: 'Monthly',
-        description: [
-            'It is a long established fact that a reader will be distracted by the readable',
-            'It is a long established fact that a reader will be distracted by the readable',
-            'It is a long established fact that a reader will be distracted by the readable',
-            'It is a long established fact that a reader will be distracted by the readable',
-            'It is a long established fact that a reader will be distracted by the readable',
-        ],
-        price: '$10'
-    },
-    {
-        title: 'Yearly',
-        description: [
-            'It is a long established fact that a reader will be distracted by the readable',
-            'It is a long established fact that a reader will be distracted by the readable',
-            'It is a long established fact that a reader will be distracted by the readable',
-            'It is a long established fact that a reader will be distracted by the readable',
-            'It is a long established fact that a reader will be distracted by the readable',
-        ],
-        price: '$50'
-    }
-];
-
-
+const {width: viewportWidth} = Dimensions.get('window');
 
 const SubscriptionPlan: React.FC = () => {
-    const navigation = useNavigation();
-    const [subscriptionPlans, setSubscriptionPlans] = useState([]);
-    const [loading, setLoading] = useState(false);
+  const navigation = useNavigation();
+  const [subscriptionPlans, setSubscriptionPlans] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-
-
-    const getApi = async () => {
-        setLoading(true);
-        const res = await GetSubscriptions();
-        console.log('====================================');
-        console.log(res?.data?.data, "Subscriptionnn resss");
-        console.log('====================================');
-        setSubscriptionPlans(res?.data?.data);
+  const getApi = async () => {
+    setLoading(true);
+    await GetSubscriptions()
+      .then(res => {
+        if (res?.data) {
+          setSubscriptionPlans(res?.data?.data);
+        }
+      })
+      .finally(() => {
         setLoading(false);
-    };
+      });
+  };
 
-    useFocusEffect(
-        useCallback(() => {
-            getApi();
-        }, []),
-    );
+  useFocusEffect(
+    useCallback(() => {
+      getApi();
+    }, []),
+  );
 
+  if (loading) {
+    return <Loader />;
+  }
 
-    const sleep = async timeout => {
-        return new Promise(resolve => setTimeout(resolve, timeout));
-    };
+  const sleep = async timeout => {
+    return new Promise(resolve => setTimeout(resolve, timeout));
+  };
 
-    const openLink = async url => {
-        try {
-            if (await InAppBrowser.isAvailable()) {
-                const result = await InAppBrowser.open(url);
-                if (result) {
-                    loadData();
-                }
-                await sleep(800);
-                console.log('Inappppp result', result);
-
-                if (result?.type === 'dismiss') {
-                    loadData();
-                }
-                // if (isSubscribed) {
-                //   navigate('DrawerNavigation1');
-                // }
-                // RNRestart.restart();
-            } else Linking.openURL(url);
-        } catch (error) {
-
-            Toast.error(getMessage(error?.message));
-
+  const openLink = async url => {
+    try {
+      if (await InAppBrowser.isAvailable()) {
+        const result = await InAppBrowser.open(url);
+        if (result) {
+          loadData();
         }
+        await sleep(800);
+        console.log('Inappppp result', result);
+
+        if (result?.type === 'dismiss') {
+          loadData();
+        }
+        // if (isSubscribed) {
+        //   navigate('DrawerNavigation1');
+        // }
+        // RNRestart.restart();
+      } else Linking.openURL(url);
+    } catch (error) {
+      Toast.error(getMessage(error?.message));
+    }
+  };
+
+  const onChoosePlan = async (id: number) => {
+    const apiData = {
+      plan_id: id,
     };
 
-    const onChoosePlan = async (id: number) => {
-        console.log(id, 'IDdddddd');
-        try {
-            const apiData = {
-                plan_id: id,
-            };
+    let formData = new FormData();
 
-            let formData = new FormData();
+    Object.entries(apiData).forEach(item => {
+      formData.append(item[0], item[1]);
+    });
 
-            Object.entries(apiData).forEach(item => {
-                formData.append(item[0], item[1]);
+    await makePayment(formData)
+      .then(res => {
+        if (res?.data) {
+          if (res?.data?.status) {
+            openLink(res?.data?.data?.url);
+          } else {
+            return Toast.show({
+              type: 'success',
+              text1: 'Subscription',
+              text2: res?.data?.message,
             });
-
-            const response = await makePayment(formData);
-            console.log(response?.data?.data?.url, 'Response Fromm screen makingg paymentttttt');
-            if (response) {
-                openLink(response?.data?.data?.url);
-            }
-        } catch (error) {
-
-            Toast.error(getMessage(error?.message));
-
+          }
         }
-    };
+      })
+      .catch(err => {
+        console.log('ERRORRRRRRRRRRRRR', err);
+      });
+  };
 
-    const loadData = async () => {
-        try {
-            setLoading(true);
-            await GetUserProfile();
-            setLoading(false);
-        } catch (e) {
-            setLoading(false);
-            console.log('Error', e);
-        }
-    };
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      await GetUserProfile();
+      setLoading(false);
+    } catch (e) {
+      setLoading(false);
+      console.log('Error', e);
+    }
+  };
 
+  const renderItem = ({item}) => (
+    <View style={styles.planDetails}>
+      <View>
+        <Text style={styles.planTitle}>{item.name}</Text>
+        <Text style={styles.planDescription}> {item.description}</Text>
+        <Text style={styles.price}>Price: {item.price}</Text>
+      </View>
+      <CustomButton style={styles.button} onPress={() => onChoosePlan(item.id)}>
+        Choose Plan
+      </CustomButton>
+    </View>
+  );
 
-    const renderItem = ({ item }) => (
-        <View style={styles.planDetails}>
-
-            <View>
-                <Text style={styles.planTitle}>{item.name}</Text>
-                <Text style={styles.planDescription}> {item.description}</Text>
-                <Text style={styles.price}>Price: {item.price}</Text>
-            </View>
-            <CustomButton style={styles.button}
-                onPress={() => onChoosePlan(item.id)}
-            >
-                Choose Plan
-            </CustomButton>
+  return (
+    <ScrollView contentContainerStyle={styles.container}>
+      <Card>
+        <View style={styles.carasouelContainer}>
+          <Carousel
+            data={subscriptionPlans}
+            renderItem={renderItem}
+            sliderWidth={viewportWidth}
+            // itemWidth={viewportWidth * 0.6}
+            itemWidth={vw * 70}
+            layout={'default'}
+          />
         </View>
-    );
-
-
-
-    return (
-
-        <ScrollView contentContainerStyle={styles.container}>
-            <Card>
-                <View style={styles.carasouelContainer}>
-                    <Carousel
-                        data={subscriptionPlans}
-                        renderItem={renderItem}
-                        sliderWidth={viewportWidth}
-                        // itemWidth={viewportWidth * 0.6}
-                        itemWidth={vw * 70}
-                        layout={'default'}
-                    />
-                </View>
-                <CustomButton style={styles.logButton}
-                    onPress={() => navigation.navigate("SubscriptionLogs")}
-                >
-                    View Subscription Log
-                </CustomButton>
-            </Card>
-        </ScrollView>
-    );
+        <CustomButton
+          style={styles.logButton}
+          onPress={() => navigation.navigate('SubscriptionLogs')}>
+          View Subscription Log
+        </CustomButton>
+      </Card>
+    </ScrollView>
+  );
 };
-
-
 
 export default SubscriptionPlan;

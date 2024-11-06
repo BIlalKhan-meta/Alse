@@ -33,8 +33,8 @@ import {selectUserProfile} from '../../store/slices/authSlice';
 import {useSelector} from 'react-redux';
 import {capitalize} from '../../utils';
 import {postComment} from '../../api/home';
-import { vh, vw } from '../../constant';
-import { EmptyComponent } from '../EmptyComponent';
+import {vh, vw} from '../../constant';
+import {EmptyComponent} from '../EmptyComponent';
 
 interface Comment {
   id: number;
@@ -64,8 +64,6 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
   const [newComment, setNewComment] = useState('');
   const [commentsData, setCommentsData] = useState(comments);
   const [likes, setLikes] = useState<object[]>();
-
-  console.log('COMEENTTTTTTTTTTTTTTTTSSSSSSSS', comments);
 
   useEffect(() => {
     if (comments) {
@@ -123,8 +121,6 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
       });
   };
 
-  console.log('COMENTTTTTTTTTTTS', commentsData);
-
   return (
     <>
       <Modal
@@ -144,67 +140,60 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           keyboardVerticalOffset={Platform.OS === 'ios' ? vh : vh * 0.2} // Adjust offset as needed
         >
-
-     
-           
-              <FlatList
-                style={{flex: 1, width: '90%'}}
-                showsVerticalScrollIndicator={false}
-                data={commentsData}
-                keyExtractor={item => item?.id.toString()}
-                ListEmptyComponent={() => <EmptyComponent text={"No Comments"} />}
-                renderItem={({item}) => {
-                  return (
-                    <View key={item.id} style={{width: vw * 85}}>
-                      <View style={styles.commentContainer}>
-                        <View style={styles.avatarContainer}>
-                          <Image
-                            source={
-                              item?.avatar ? {uri: item?.avatar} : images.user
-                            }
-                            style={styles.avatar}
-                          />
-                        </View>
-                        <View style={styles.contentContainer}>
-                          <InterMedium style={styles.userName}>
-                            {item.full_name ||
-                              capitalize(commentsData[0]?.user?.first_name) +
-                                ' ' +
-                                capitalize(commentsData[0]?.user?.last_name)}
-                          </InterMedium>
-                          <InterRegular style={styles.comment}>
-                            {item?.comment}
-                          </InterRegular>
-                        </View>
-                        <TouchableOpacity
-                          style={styles.likeButton}
-                          onPress={() => handleLikePress(item?.id)}>
-                          <Image
-                            source={
-                              item?.is_liked ? images.likeFill : images.like
-                            }
-                            style={styles.likeIcon}
-                            tintColor={colors.blue}
-                          />
-                        </TouchableOpacity>
-                      </View>
-
-                      <View style={styles.postActions}>
-                        <View style={styles.leftActions}>
-                          <Image source={images.like} style={styles.icon} />
-                          <InterRegular style={styles.actionText}>
-                            {item?.total_likes}
-                          </InterRegular>
-                        </View>
-                      </View>
-                      <View style={styles.separator} />
+          <FlatList
+            style={{flex: 1, width: '90%'}}
+            showsVerticalScrollIndicator={false}
+            data={commentsData}
+            keyExtractor={item => item?.id.toString()}
+            ListEmptyComponent={() => <EmptyComponent text={'No Comments'} />}
+            renderItem={({item}) => {
+              return (
+                <View key={item.id} style={{width: vw * 85}}>
+                  <View style={styles.commentContainer}>
+                    <View style={styles.avatarContainer}>
+                      <Image
+                        source={
+                          item?.avatar ? {uri: item?.avatar} : images.user
+                        }
+                        style={styles.avatar}
+                      />
                     </View>
-                  );
-                }}
-              />
-            
+                    <View style={styles.contentContainer}>
+                      <InterMedium style={styles.userName}>
+                        {item.full_name ||
+                          capitalize(commentsData[0]?.user?.first_name) +
+                            ' ' +
+                            capitalize(commentsData[0]?.user?.last_name)}
+                      </InterMedium>
+                      <InterRegular style={styles.comment}>
+                        {item?.comment}
+                      </InterRegular>
+                    </View>
+                    <TouchableOpacity
+                      style={styles.likeButton}
+                      onPress={() => handleLikePress(item?.id)}>
+                      <Image
+                        source={item?.is_liked ? images.likeFill : images.like}
+                        style={styles.likeIcon}
+                        tintColor={colors.blue}
+                      />
+                    </TouchableOpacity>
+                  </View>
 
-   
+                  <View style={styles.postActions}>
+                    <View style={styles.leftActions}>
+                      <Image source={images.like} style={styles.icon} />
+                      <InterRegular style={styles.actionText}>
+                        {item?.total_likes}
+                      </InterRegular>
+                    </View>
+                  </View>
+                  <View style={styles.separator} />
+                </View>
+              );
+            }}
+          />
+
           <View style={styles.inputConatiner}>
             <View style={styles.inputCon}>
               <TextInput
@@ -219,7 +208,6 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
               <Image source={images.send} style={styles.icon} />
             </TouchableOpacity>
           </View>
-    
         </KeyboardAvoidingView>
       </Modal>
     </>

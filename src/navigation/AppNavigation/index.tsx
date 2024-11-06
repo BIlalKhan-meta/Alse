@@ -54,14 +54,14 @@ const AppNavigation = () => {
       screenOptions={{ headerShown: false }}
     >
       <>{token ? <>
-        <Stack.Screen name="Home" component={TabNavigation} />
+        <Stack.Screen name="TabNavigation" component={TabNavigation} />
         <Stack.Screen name="Saved" component={Saved} options={NavigationOptions} />
         <Stack.Screen name="RequestScreen" component={RequestScreen} options={NavigationOptions} />
         <Stack.Screen name="Notifications" component={Notifications} options={NavigationOptions} />
         <Stack.Screen name="Shop" component={Shop} options={NavigationOptions} />
         <Stack.Screen name="ProductView" component={ProductView} options={NavigationOptions} />
         <Stack.Screen name="CreatePost" component={CreatePost} options={NavigationOptions} />
-        <Stack.Screen name="CreatePostEdit" component={CreatePostEdit} options={NavigationOptions} />
+        <Stack.Screen name="CreatePostEdit" component={CreatePostEdit} options={NavigationOptions} />  
         <Stack.Screen name="ContactUs" component={ContactUs} />
         <Stack.Screen name="AboutUs" component={AboutUs} />
         <Stack.Screen name="ChatOngoing" component={ChatOngoing} options={NavigationOptions} />

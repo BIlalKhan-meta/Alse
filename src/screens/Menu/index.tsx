@@ -25,10 +25,6 @@ const Menu: React.FC = () => {
     navigation.navigate('Login');
   };
 
-  console.log('====================================');
-  console.log(user, "Userrrrrrrrrrrrrrrrr");
-  console.log('====================================');
-
   return (
     <ScrollView
       showsVerticalScrollIndicator={false}

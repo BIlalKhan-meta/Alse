@@ -95,28 +95,28 @@ const CheckoutScreen: React.FC = () => {
   });
 
   const initialValues = {
-    first_name: '',
-    last_name: '',
-    email: '',
-    phone: '',
-    shipping_first_name: '',
-    shipping_last_name: '',
-    shipping_email: '',
-    shipping_phone: '',
-    shipping_address: '',
+    first_name: 'asd',
+    last_name: 'asd',
+    email: 'asd@gmail.com',
+    phone: 'asd',
+    shipping_first_name: 'asd',
+    shipping_last_name: 'asd',
+    shipping_email: 'asd@gmail.com',
+    shipping_phone: 'asd',
+    shipping_address: 'asd',
     shipping_country: countries[0].value, // Initialize with default value
     shipping_state: states[0].value, // Initialize with default value
     shipping_city: cities[0].value, // Initialize with default value
-    shipping_zip: '',
-    billing_first_name: '',
-    billing_last_name: '',
-    billing_email: '',
-    billing_phone: '',
-    billing_address: '',
+    shipping_zip: 'asd',
+    billing_first_name: 'asd',
+    billing_last_name: 'asd',
+    billing_email: 'asd@gmail.com',
+    billing_phone: 'asd',
+    billing_address: 'asd',
     billing_country: countries[0].value, // Initialize with default value
     billing_state: states[0].value, // Initialize with default value
     billing_city: cities[0].value, // Initialize with default value
-    billing_zip: '',
+    billing_zip: 'asd',
   };
 
   const handleSubmit = async (values: object) => {

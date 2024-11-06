@@ -1,8 +1,15 @@
-import React, { useState } from 'react';
-import { View, TouchableOpacity, Text, StyleSheet, Dimensions, StyleProp, ViewStyle, Image } from 'react-native';
+import React, {useState} from 'react';
+import {
+  View,
+  TouchableOpacity,
+  Text,
+  StyleSheet,
+  Dimensions,
+  StyleProp,
+  ViewStyle,
+  Image,
+} from 'react-native';
 import styles from './styles';
-
-
 
 import DatePickerInput from '../TextInput/DatePickerTextInput2';
 import DropDownTextInput2 from '../TextInput/DropDownTextInput2';
@@ -11,18 +18,18 @@ import InterRegular from '../Text/InterRegular';
 const windowWidth = Dimensions.get('window').width;
 
 const items = [
-  { label: 'All', value: 'All' },
-  { label: 'Pending', value: 'Pending' },
-  { label: 'Delivered', value: 'Delivered' },
-  { label: 'Rejected', value: 'Rejected' },
-  { label: 'Accepted', value: 'Accepted' },
+  {label: 'All', value: 'All'},
+  {label: 'Pending', value: 'Pending'},
+  {label: 'Delivered', value: 'Delivered'},
+  {label: 'Rejected', value: 'Rejected'},
+  {label: 'Accepted', value: 'Accepted'},
 ];
 
 interface FilterModalProps {
   isVisible: boolean;
   onClose: () => void;
-  fromDate: Date;
-  toDate: Date;
+  fromDate: Date | null;
+  toDate: Date | null;
   onFromDateChange: (date: Date) => void;
   onToDateChange: (date: Date) => void;
   style: StyleProp<ViewStyle>;
@@ -41,17 +48,16 @@ const FilterModal: React.FC<FilterModalProps> = ({
   filterStatus,
   selectedStatus,
   onStatusChange,
-  style
+  style,
 }) => {
-
+  console.log('FROMMMMMMMMMMMMMMMMMMMMM', toDate);
 
   if (isVisible) {
     return (
       <TouchableOpacity
         style={[styles.modalBackground, style]}
         activeOpacity={1}
-        onPress={onClose}
-      >
+        onPress={onClose}>
         <View style={styles.modalContainer}>
           <InterRegular>Sort By:</InterRegular>
           {/* <TouchableOpacity onPress={() => setOpenDate(true)}>
@@ -105,7 +111,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
               <View style={styles.dropdownContainer}>
                 <DropDownTextInput2
                   items={items}
-                  defaultValue='All'
+                  defaultValue="All"
                   value={selectedStatus}
                   setValue={onStatusChange}
                   style={styles.dropDown}

@@ -24,7 +24,7 @@ const styles = StyleSheet.create({
     customerName: {
         marginBottom: vh * 0.5,
         color: colors.darkGray,
-        fontSize: fontSizes.f14
+        fontSize: fontSizes.f11
     },
     footer: {
         flexDirection: 'row',

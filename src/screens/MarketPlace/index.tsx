@@ -25,6 +25,9 @@ import {getAllShop} from '../../api/shop';
 import {useSelector} from 'react-redux';
 import {selectUserProfile} from '../../store/slices/authSlice';
 import Loader from '../../components/Loader';
+import {EmptyComponent} from '../../components/EmptyComponent';
+import InterBoldLabel from '../../components/Text/InterBoldLabel';
+import {Subscribe} from '../../components/Subscribe';
 
 const posts = [
   {
@@ -122,6 +125,7 @@ const Marketplace: React.FC = () => {
   const [shops, setShops] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const isFocused = useIsFocused();
+  const usser = useSelector(selectUserProfile);
 
   const handleSearch = (query: string) => {
     console.log(`Searching for shops with query: ${query}`);
@@ -148,6 +152,10 @@ const Marketplace: React.FC = () => {
     console.log(res.data?.data?.data, '====ressss');
     console.log('====================================');
   };
+
+  if (!user?.has_subscription) {
+    return <Subscribe />;
+  }
 
   if (loading) {
     return <Loader />;

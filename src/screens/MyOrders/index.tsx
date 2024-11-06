@@ -1,85 +1,137 @@
-import React, { useLayoutEffect, useState } from 'react';
-import { View, TouchableOpacity, Image, TouchableWithoutFeedback, ScrollView } from 'react-native';
+import React, {useEffect, useLayoutEffect, useState} from 'react';
+import {
+  View,
+  TouchableOpacity,
+  Image,
+  TouchableWithoutFeedback,
+  FlatList,
+} from 'react-native';
 import styles from './styles';
-import { useNavigation } from '@react-navigation/native';
-import { images } from '../../utils/images';
+import {useNavigation} from '@react-navigation/native';
+import {images} from '../../utils/images';
 import TabsComponent from '../../components/TabsComponent';
-import OrderListComponent from '../../components/OrderListComponent';
 import FilterModal from '../../components/FilterModal';
-import { colors } from '../../utils/theme';
+import {colors} from '../../utils/theme';
+import {getOrders} from '../../api/product';
+import OrderCard from '../../components/CardOrder';
 
 const MyOrders: React.FC = () => {
-    const navigation = useNavigation();
-    const [selectedTab, setSelectedTab] = useState<'All' | 'Pending' | 'Delivered' | 'Cancelled'>('All');
-    const [modalVisible, setModalVisible] = useState(false);
-    const [fromDate, setFromDate] = useState<Date>(new Date());
-    const [toDate, setToDate] = useState<Date>(new Date());
-    const [selectedStatus, setSelectedStatus] = useState<string>('All');
+  const navigation = useNavigation();
+  const [selectedTab, setSelectedTab] = useState<
+    'All' | 'pending' | 'Delivered' | 'Cancelled'
+  >('All');
+  const [modalVisible, setModalVisible] = useState(false);
+  const [fromDate, setFromDate] = useState<Date | null>(null);
+  const [toDate, setToDate] = useState<Date | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<string>('All');
+  const [orders, setOrders] = useState([]);
+  const [filteredOrders, setFilteredOrders] = useState([]);
+  const [loader, setLoader] = useState(false);
 
-    const orders = [
-        { orderId: '12569', customerName: 'Ad Abc', orderDate: 'Sept 27, 2021', amountPaid: '$2', status: 'Pending' },
-        { orderId: '12569', customerName: 'Ad Abc', orderDate: 'Sept 27, 2021', amountPaid: '$2', status: 'Cancelled' },
-        { orderId: '12569', customerName: 'Ad Abc', orderDate: 'Sept 27, 2021', amountPaid: '$2', status: 'Delivered' },
-        { orderId: '12569', customerName: 'Ad Abc', orderDate: 'Sept 27, 2021', amountPaid: '$2', status: 'Delivered' },
-    ];
-
-    // const filteredOrders = (selectedStatus === 'All' ? orders : selectedTab === 'All' ? orders : orders.filter(order => order.status === selectedStatus));
-    const filteredOrders = orders.filter(order => {
-        const tabCondition = selectedTab === 'All' || order.status === selectedTab;
-        const statusCondition = selectedStatus === 'All' || order.status === selectedStatus;
-        return tabCondition && statusCondition;
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerStyle: {
+        backgroundColor: colors.headerColor,
+      },
+      headerRight: () => (
+        <View>
+          <TouchableOpacity onPress={() => setModalVisible(!modalVisible)}>
+            <Image source={images.filter} style={styles.threeDots} />
+          </TouchableOpacity>
+        </View>
+      ),
     });
+  }, [navigation, modalVisible]);
 
-    useLayoutEffect(() => {
-        navigation.setOptions({
-            headerStyle: {
-                backgroundColor: colors.headerColor
-            },
-            headerRight: () => (
-                <View>
-                    <TouchableOpacity onPress={() => setModalVisible(!modalVisible)}>
-                        <Image source={images.filter} style={styles.threeDots} />
-                    </TouchableOpacity>
-                </View>
-            ),
-        });
-    }, [navigation, modalVisible]);
+  const getData = async () => {
+    setLoader(true);
+    await getOrders()
+      .then(res => {
+        if (res?.data) {
+          setOrders(res?.data?.data?.data);
+        }
+      })
+      .finally(() => {
+        setLoader(false);
+      });
+  };
 
-    return (
-        <ScrollView
-            showsVerticalScrollIndicator={false}
-        >
-            <TouchableWithoutFeedback
-                onPress={() => setModalVisible(false)}
-            >
-                <View style={styles.container}>
-                    <FilterModal
-                        isVisible={modalVisible}
-                        onClose={() => setModalVisible(false)}
-                        fromDate={fromDate}
-                        toDate={toDate}
-                        onFromDateChange={setFromDate}
-                        onToDateChange={setToDate}
-                        // filterStatus={true}
-                        selectedStatus={selectedStatus}
-                        onStatusChange={setSelectedStatus}
-                        style={{}}
-                    />
+  useEffect(() => {
+    getData();
+  }, []);
 
-                    <TabsComponent
-                        tabs={['All', 'Pending', 'Delivered', 'Cancelled',]}
-                        selectedTab={selectedTab}
-                        onTabPress={setSelectedTab}
-                    />
+  useEffect(() => {
+    // Filter orders based on the selected tab
+    const filterOrders = () => {
+      let filtered = [...orders];
+      if (selectedTab !== 'All') {
+        filtered = filtered.filter(
+          order => order?.status === selectedTab.toLowerCase(),
+        );
+      }
 
-                    <OrderListComponent
-                        orders={filteredOrders}
-                        title={"My Order Detail"}
-                    />
-                </View>
-            </TouchableWithoutFeedback>
-        </ScrollView>
-    );
+      // If you want to apply additional filters (e.g., by date or status)
+      // if (selectedStatus !== 'All') {
+      //   filtered = filtered.filter(order => order?.status === selectedStatus);
+      // }
+
+      // Apply date filters if any (you can extend this part)
+      if (fromDate && toDate) {
+        filtered = filtered.filter(
+          order =>
+            new Date(order?.date) >= fromDate &&
+            new Date(order?.date) <= toDate,
+        );
+      }
+
+      setFilteredOrders(filtered);
+    };
+
+    filterOrders(); // Run the filtering function whenever the orders or selectedTab changes
+  }, [orders, selectedTab, selectedStatus, fromDate, toDate]);
+
+  console.log('DATEEEEEEEEEEEEEEEEEEEE', toDate);
+
+  return (
+    <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
+      <View style={styles.container}>
+        <FilterModal
+          isVisible={modalVisible}
+          onClose={() => setModalVisible(false)}
+          fromDate={fromDate}
+          toDate={toDate}
+          onFromDateChange={setFromDate}
+          onToDateChange={setToDate}
+          // filterStatus={true}
+          selectedStatus={selectedStatus}
+          onStatusChange={setSelectedStatus}
+        />
+
+        <TabsComponent
+          tabs={['All', 'Pending', 'Delivered', 'Cancelled']}
+          selectedTab={selectedTab}
+          onTabPress={setSelectedTab}
+        />
+
+        {/* <OrderListComponent
+            orders={filteredOrders}
+            title={'My Order Detail'}
+          /> */}
+
+        <FlatList
+          data={filteredOrders}
+          refreshing={loader}
+          onRefresh={getData}
+          renderItem={({item}: any) => (
+            <OrderCard key={item?.order_id} item={item} />
+          )}
+          keyExtractor={item => item?.order_id?.toString()}
+          contentContainerStyle={styles.ordersContainer}
+          showsVerticalScrollIndicator={false}
+        />
+      </View>
+    </TouchableWithoutFeedback>
+  );
 };
 
 export default MyOrders;

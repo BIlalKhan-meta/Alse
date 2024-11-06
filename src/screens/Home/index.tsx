@@ -234,7 +234,7 @@ const Home: React.FC = () => {
         // onLikePress={() => setrRactVisible(true)}
         onDotPress={() => handleDotPress(item.id)}
         modalVisible={activePostId === item.id}
-        onCardPress={() => setActivePostId(null) }
+        onCardPress={() => setActivePostId(null)}
         handleBlockPress={() => {
           // handleDotPress();
           // setDeleteVisible(true);
@@ -263,116 +263,116 @@ const Home: React.FC = () => {
   );
 
   return (
-    <View style={{paddingTop: vh * 10, paddingHorizontal: vh * 2}}>
+    <View style={{paddingHorizontal: vh * 2}}>
       {/* <TouchableWithoutFeedback onPress={() => handleDotPress(null)}> */}
-        <View>
-          <FlatList
-            data={posts}
-            onRefresh={getApi}
-            refreshing={loader}
-            renderItem={renderPost}
-            keyExtractor={item => item.id.toString()}
-            showsVerticalScrollIndicator={false}
-            ListEmptyComponent={renderEmpty}
-            ListHeaderComponent={() => (
-              <TouchableOpacity
-                activeOpacity={0.8}
-                onPress={() => navigation.navigate('CreatePost')}>
-                <View pointerEvents="none">
-                  <CardComponent
-                    onTextInput={() => navigation.navigate('CreatePost')}
-                    onVideoPress={() => navigation.navigate('CreatePost')}
-                    onImagePress={() => navigation.navigate('CreatePost')}
-                  />
-                </View>
-              </TouchableOpacity>
-            )}
-          />
+      <View>
+        <FlatList
+          data={posts}
+          onRefresh={getApi}
+          refreshing={loader}
+          renderItem={renderPost}
+          keyExtractor={item => item.id.toString()}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={renderEmpty}
+          ListHeaderComponent={() => (
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => navigation.navigate('CreatePost')}>
+              <View pointerEvents="none">
+                <CardComponent
+                  onTextInput={() => navigation.navigate('CreatePost')}
+                  onVideoPress={() => navigation.navigate('CreatePost')}
+                  onImagePress={() => navigation.navigate('CreatePost')}
+                />
+              </View>
+            </TouchableOpacity>
+          )}
+        />
 
-          <CommentsModal
-            visible={commentsVisible.visiblity}
-            closeModal={() => {
-              setCommentsVisible({visiblity: false, comments: [], id: null});
-              getApi();
-            }}
-            // icon={CheckedIcon}
-            title="Successfully"
-            message="Password has been updated successfully"
-            buttonText="Apply"
-            onPress={() => navigation.navigate('Home')}
-            comments={commentsVisible?.comments}
-            postId={commentsVisible?.id}
-          />
+        <CommentsModal
+          visible={commentsVisible.visiblity}
+          closeModal={() => {
+            setCommentsVisible({visiblity: false, comments: [], id: null});
+            getApi();
+          }}
+          // icon={CheckedIcon}
+          title="Successfully"
+          message="Password has been updated successfully"
+          buttonText="Apply"
+          onPress={() => navigation.navigate('Home')}
+          comments={commentsVisible?.comments}
+          postId={commentsVisible?.id}
+        />
 
-          <ReactModal
-            visible={reactVisible}
-            closeModal={() => setrRactVisible(false)}
-            reactions={reactions}
-          />
+        <ReactModal
+          visible={reactVisible}
+          closeModal={() => setrRactVisible(false)}
+          reactions={reactions}
+        />
 
-          <GeneralModal
-            visible={deleteVisible.visibility}
-            closeModal={() =>
-              setDeleteVisible({
-                visibility: false,
-                id: null,
-              })
-            }
-            icon={images.qmark}
-            title="Delete Post"
-            message="Are you sure you want to delete this Post?"
-            SecondaryText1="Yes"
-            SecondaryText2="No"
-            onPress={handleDelete}
-            secondaryBtn={true}
-            loading={reportLoader}
-          />
+        <GeneralModal
+          visible={deleteVisible.visibility}
+          closeModal={() =>
+            setDeleteVisible({
+              visibility: false,
+              id: null,
+            })
+          }
+          icon={images.qmark}
+          title="Delete Post"
+          message="Are you sure you want to delete this Post?"
+          SecondaryText1="Yes"
+          SecondaryText2="No"
+          onPress={handleDelete}
+          secondaryBtn={true}
+          loading={reportLoader}
+        />
 
-          <GeneralModal
-            visible={deleteSuccess}
-            closeModal={() => setDeleteSuccess(false)}
-            icon={images.checkedIcon}
-            title="Delete Post"
-            message="Post has been deleted successfully."
-            buttonText="Ok"
-            onPress={() => {
-              setDeleteSuccess(false);
-            }}
-            primaryBtn={true}
-          />
+        <GeneralModal
+          visible={deleteSuccess}
+          closeModal={() => setDeleteSuccess(false)}
+          icon={images.checkedIcon}
+          title="Delete Post"
+          message="Post has been deleted successfully."
+          buttonText="Ok"
+          onPress={() => {
+            setDeleteSuccess(false);
+          }}
+          primaryBtn={true}
+        />
 
-          <GeneralModal
-            visible={reportVisible.visibility}
-            closeModal={() =>
-              setReportVisible({
-                visibility: false,
-                id: null,
-              })
-            }
-            icon={images.qmark}
-            title="Report Post"
-            message="Are you sure you want to report this post?"
-            SecondaryText1="Yes"
-            SecondaryText2="No"
-            onPress={handleReport}
-            secondaryBtn={true}
-            loading={reportLoader}
-          />
+        <GeneralModal
+          visible={reportVisible.visibility}
+          closeModal={() =>
+            setReportVisible({
+              visibility: false,
+              id: null,
+            })
+          }
+          icon={images.qmark}
+          title="Report Post"
+          message="Are you sure you want to report this post?"
+          SecondaryText1="Yes"
+          SecondaryText2="No"
+          onPress={handleReport}
+          secondaryBtn={true}
+          loading={reportLoader}
+        />
 
-          <GeneralModal
-            visible={reportSuccess}
-            closeModal={() => setReportSuccess(false)}
-            icon={images.checkedIcon}
-            title="Report Post"
-            message="Post has been reported successfully!"
-            buttonText="Ok"
-            onPress={() => {
-              setReportSuccess(false);
-              // navigation.navigate("Profile", { account: account })
-            }}
-            primaryBtn={true}
-          />
-        </View>
+        <GeneralModal
+          visible={reportSuccess}
+          closeModal={() => setReportSuccess(false)}
+          icon={images.checkedIcon}
+          title="Report Post"
+          message="Post has been reported successfully!"
+          buttonText="Ok"
+          onPress={() => {
+            setReportSuccess(false);
+            // navigation.navigate("Profile", { account: account })
+          }}
+          primaryBtn={true}
+        />
+      </View>
       {/* </TouchableWithoutFeedback> */}
     </View>
   );

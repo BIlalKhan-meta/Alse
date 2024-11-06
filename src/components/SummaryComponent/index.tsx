@@ -1,6 +1,6 @@
 // Summary.tsx
 import React from 'react';
-import { StyleProp, TextStyle, View, ViewStyle } from 'react-native';
+import {StyleProp, TextStyle, View, ViewStyle} from 'react-native';
 import HorizontalSeparator from '../../components/HorizontalSeparator';
 
 import Card from '../../components/Card';
@@ -11,36 +11,45 @@ import InterRegular from '../Text/InterRegular';
 import CustomButton from '../CustomButton';
 
 interface SummaryProps {
-    subTotal: number;
-    deliveryCharges: number;
-    discount: number;
-    grandTotal: number;
-    style: StyleProp<ViewStyle>;
-    titleStyle: StyleProp<TextStyle>;
+  subTotal: number;
+  deliveryCharges: number;
+
+  style: StyleProp<ViewStyle>;
+  titleStyle: StyleProp<TextStyle>;
 }
 
-const Summary: React.FC<SummaryProps> = ({ subTotal, deliveryCharges, discount, grandTotal, style, titleStyle }) => (
-    <Card style={[styles.summaryContainer, style]}>
-        <InterBoldSmall style={[styles.summary, titleStyle]}>Summary</InterBoldSmall>
-        <View style={styles.summaryTxtContainer}>
-            <InterMedium style={styles.summaryText}>Sub Total:</InterMedium>
-            <InterRegular style={styles.summaryPrice}>${subTotal}</InterRegular>
-        </View>
-        <View style={styles.summaryTxtContainer}>
-            <InterMedium style={styles.summaryText}>Delivery Charges:</InterMedium>
-            <InterRegular style={styles.summaryPrice}>${deliveryCharges}</InterRegular>
-        </View>
-        <View style={styles.summaryTxtContainer}>
+const Summary: React.FC<SummaryProps> = ({
+  subTotal,
+  deliveryCharges,
+  style,
+  titleStyle,
+}) => (
+  <Card style={[styles.summaryContainer, style]}>
+    <InterBoldSmall style={[styles.summary, titleStyle]}>
+      Summary
+    </InterBoldSmall>
+    <View style={styles.summaryTxtContainer}>
+      <InterMedium style={styles.summaryText}>Sub Total:</InterMedium>
+      <InterRegular style={styles.summaryPrice}>${subTotal}</InterRegular>
+    </View>
+    <View style={styles.summaryTxtContainer}>
+      <InterMedium style={styles.summaryText}>Delivery Charges:</InterMedium>
+      <InterRegular style={styles.summaryPrice}>
+        ${deliveryCharges}
+      </InterRegular>
+    </View>
+    {/* <View style={styles.summaryTxtContainer}>
             <InterMedium style={styles.summaryText}>Discount Price:</InterMedium>
             <InterRegular style={styles.summaryPrice}>${discount}</InterRegular>
-        </View>
-        <HorizontalSeparator />
-        <View style={styles.summaryTxtContainer}>
-            <InterMedium style={styles.summaryText}>Total:</InterMedium>
-            <InterRegular style={styles.summaryPrice}>${grandTotal}</InterRegular>
-        </View>
-
-    </Card>
+        </View> */}
+    <HorizontalSeparator />
+    <View style={styles.summaryTxtContainer}>
+      <InterMedium style={styles.summaryText}>Total:</InterMedium>
+      <InterRegular style={styles.summaryPrice}>
+        ${subTotal + deliveryCharges}
+      </InterRegular>
+    </View>
+  </Card>
 );
 
 export default Summary;
