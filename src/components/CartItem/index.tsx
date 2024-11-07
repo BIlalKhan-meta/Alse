@@ -14,10 +14,10 @@ import {Product} from '../../dummyData';
 interface Props {
   item: [];
   showQuantityControls: boolean;
-  handleChange: (value: string, id: number) => void;
-  onDelete: (index: number) => void;
+  handleChange?: (value: string, id: number) => void;
+  onDelete?: (index: number) => void;
   showSeparator: boolean;
-  quantity: boolean;
+  quantity?: boolean;
   showDelete: boolean;
 }
 

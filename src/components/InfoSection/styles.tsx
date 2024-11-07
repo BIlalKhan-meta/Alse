@@ -4,7 +4,7 @@ import { fontSizes } from "../../constant";
 
 const styles = StyleSheet.create({
     container: {
-        padding: 16,
+        // padding: 16,
         backgroundColor: colors.white,
         borderRadius: 8,
         marginVertical: 8,

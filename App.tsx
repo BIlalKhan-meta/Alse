@@ -9,16 +9,13 @@ import {Provider} from 'react-redux';
 import store, {persistor} from './src/store';
 import Toast from 'react-native-toast-message';
 import {PersistGate} from 'redux-persist/integration/react';
-import {
-  BacKgroundNotifListener,
-  NotificationListener,
-} from './src/utils/messaging.utils';
 import InAppBrowser from 'react-native-inappbrowser-reborn';
 import {
   checkNotifications,
   PERMISSIONS,
   request,
 } from 'react-native-permissions';
+import { NotificationListener } from './src/utils/NotificationServices';
 
 const theme = {
   ...DefaultTheme,
@@ -55,26 +52,25 @@ function App(): React.JSX.Element {
   }, []);
 
   function handleNotificationPress(remoteMessage: object) {
-    console.log(remoteMessage);
+    console.log("NTOFIIIIIIIIIIIICATIONNNNNN",remoteMessage);
   }
 
-  function handleNotification(remoteMessage: any) {
-    console.log('Message handled in the !', remoteMessage?.notification);
-    if (remoteMessage?.notification) {
-      InAppBrowser.close();
-      // navigation.navigate("Home");
-      // navigate('DrawerNavigation1');
-      // RNRestart.restart();
-    }
-    // RNRestart.restart();
-  }
+  // function handleNotification(remoteMessage: any) {
+  //   console.log('Message handled in the !', remoteMessage?.notification);
+  //   if (remoteMessage?.notification) {
+  //     InAppBrowser.close();
+  //     // navigation.navigate("Home");
+  //     // navigate('DrawerNavigation1');
+  //     // RNRestart.restart();
+  //   }
+  //   // RNRestart.restart();
+  // }
 
   return (
     <PersistGate loading={null} persistor={persistor}>
       <Provider store={store}>
         <SafeAreaView style={styles.container}>
-          <NotificationListener handleNotification={handleNotificationPress} />
-          <BacKgroundNotifListener handleNotification={handleNotification} />
+          {/* <NotificationListener handleNotification={handleNotificationPress} /> */}
           <NavigationContainer theme={theme}>
             <StatusBar
               backgroundColor={colors.headerColor}

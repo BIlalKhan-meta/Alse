@@ -29,6 +29,7 @@ import {colors} from '../../utils/theme';
 import {checkout, getCart} from '../../api/product';
 import Loader from '../../components/Loader';
 import InAppBrowser from 'react-native-inappbrowser-reborn';
+import {notificationListenerInstance} from '../../utils/NotificationServices';
 
 const CheckoutScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -68,59 +69,61 @@ const CheckoutScreen: React.FC = () => {
     first_name: yup.string().required('First Name is required'),
     last_name: yup.string().required('Last Name is required'),
     email: yup.string().email('Invalid email').required('Email is required'),
-    phone: yup.string().required('Phone Number is required'),
+    phone: yup.string().required('Contact number is required'),
     shipping_first_name: yup.string().required('First Name is required'),
     shipping_last_name: yup.string().required('Last Name is required'),
     shipping_email: yup
       .string()
       .email('Invalid email')
       .required('Email is required'),
-    shipping_phone: yup.string().required('Phone Number is required'),
+    shipping_phone: yup.string().required('Contact number is required'),
     shipping_address: yup.string().required('Shipping Address is required'),
     shipping_country: yup.string().required('Country is required'),
     shipping_state: yup.string().required('State is required'),
     shipping_city: yup.string().required('City is required'),
     shipping_zip: yup.string().required('Zip Code is required'),
 
-    // ...(!isSelected && {
-    //   billing_first_name: yup.string().required('First Name is required'),
-    //   billing_last_name: yup.string().required('Last Name is required'),
-    //   billing_phone: yup.string().required('Phone Number is required'),
-    //   billing_address: yup.string().required('Billing Address is required'),
-    //   billing_country: yup.string().required('Country is required'),
-    //   billing_state: yup.string().required('State is required'),
-    //   billing_city: yup.string().required('City is required'),
-    //   billing_zip: yup.string().required('Zip Code is required'),
-    // }),
+    ...(!isSelected && {
+      billing_first_name: yup.string().required('First Name is required'),
+      billing_last_name: yup.string().required('Last Name is required'),
+      billing_phone: yup.string().required('Phone Number is required'),
+      billing_address: yup.string().required('Billing Address is required'),
+      billing_country: yup.string().required('Country is required'),
+      billing_state: yup.string().required('State is required'),
+      billing_city: yup.string().required('City is required'),
+      billing_zip: yup.string().required('Zip Code is required'),
+    }),
   });
 
   const initialValues = {
     first_name: 'asd',
     last_name: 'asd',
     email: 'asd@gmail.com',
-    phone: 'asd',
+    phone: '12345678901',
     shipping_first_name: 'asd',
     shipping_last_name: 'asd',
     shipping_email: 'asd@gmail.com',
-    shipping_phone: 'asd',
-    shipping_address: 'asd',
+    shipping_phone: '12345678901',
+    shipping_address: 'asdasd',
     shipping_country: countries[0].value, // Initialize with default value
     shipping_state: states[0].value, // Initialize with default value
     shipping_city: cities[0].value, // Initialize with default value
-    shipping_zip: 'asd',
-    billing_first_name: 'asd',
-    billing_last_name: 'asd',
-    billing_email: 'asd@gmail.com',
-    billing_phone: 'asd',
-    billing_address: 'asd',
+    shipping_zip: '12345',
+    billing_first_name: 'asdasd',
+    billing_last_name: 'asdasd',
+    billing_email: 'asd@gamial.com',
+    billing_phone: '123123',
+    billing_address: 'adsasdasd',
     billing_country: countries[0].value, // Initialize with default value
     billing_state: states[0].value, // Initialize with default value
     billing_city: cities[0].value, // Initialize with default value
-    billing_zip: 'asd',
+    billing_zip: '12345',
   };
 
   const handleSubmit = async (values: object) => {
     // navigation.navigate('Payment');
+
+    setLoading(true);
 
     let temp = {
       ...values,
@@ -134,8 +137,8 @@ const CheckoutScreen: React.FC = () => {
         billing_email: values.shipping_email,
         billing_phone: values.shipping_phone,
         billing_address: values.shipping_address,
-        billing_country: values.shipping_country, 
-        billing_state: values.shipping_state, 
+        billing_country: values.shipping_country,
+        billing_state: values.shipping_state,
         billing_city: values.shipping_city,
         billing_zip: values.shipping_zip,
       };
@@ -158,7 +161,10 @@ const CheckoutScreen: React.FC = () => {
           } else Linking.openURL(res?.data?.data?.url);
         }
       })
-      .catch(err => console.log('ERRORRRRRRRRRRRRRRRRR', err));
+      .catch(err => console.log('ERRORRRRRRRRRRRRRRRRR', err))
+      .finally(() => {
+        setLoading(false);
+      });
   };
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -180,6 +186,18 @@ const CheckoutScreen: React.FC = () => {
     // setShopProduct(res2?.data?.data?.data)
     setLoading(false);
   };
+
+  const closePaymentProcess = async () => {
+    await InAppBrowser.isAvailable();
+    const closePrevios = InAppBrowser.close();
+    navigation.navigate('MyOrders');
+  };
+
+  useEffect(() => {
+    // NotificationLstener(closePaymentProcess());
+    notificationListenerInstance.init(closePaymentProcess);
+  }, []);
+
   return (
     <KeyboardAwareScrollView
       contentContainerStyle={styles.container}
@@ -197,6 +215,7 @@ const CheckoutScreen: React.FC = () => {
           touched,
         }) => (
           <>
+            {console.log(values)}
             <Card>
               {loading ? (
                 <Loader />
@@ -300,10 +319,10 @@ const CheckoutScreen: React.FC = () => {
                 <RegularTextInput
                   label="Email Address *"
                   placeholder="Enter Email Address"
-                  onChangeText={handleChange('billing_email')}
-                  onBlur={handleBlur('billing_email')}
-                  value={values.billing_email}
-                  errors={errors.billing_email}
+                  onChangeText={handleChange('shipping_email')}
+                  onBlur={handleBlur('shipping_email')}
+                  value={values.shipping_email}
+                  errors={errors.shipping_email}
                   submitted={submitted}
                   style={styles.inputStyle}
                 />
@@ -501,10 +520,10 @@ const CheckoutScreen: React.FC = () => {
                   <RegularTextInput
                     label="Zip Code *"
                     placeholder="Enter Zip Code"
-                    onChangeText={handleChange('shipping_zip')}
-                    onBlur={handleBlur('shipping_zip')}
-                    value={values.shipping_zip}
-                    errors={errors.shipping_zip}
+                    onChangeText={handleChange('billing_zip')}
+                    onBlur={handleBlur('billing_zip')}
+                    value={values.billing_zip}
+                    errors={errors.billing_zip}
                     submitted={submitted}
                     style={styles.inputStyle}
                   />

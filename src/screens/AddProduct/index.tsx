@@ -118,8 +118,8 @@ const AddProduct: React.FC = () => {
     brand_name: item?.brand_name || '',
     price: item?.price || '',
     quantity: item?.quantity || '',
-    color: item.colors.length != 0 ? item.colors[0].color : '',
-    size: item.sizes.length != 0 ? item.sizes[0].size : '',
+    color: item?.colors.length != 0 ? item?.colors[0].color : '',
+    size: item?.sizes.length != 0 ? item?.sizes[0].size : '',
   };
 
   const handleDropdownChange = (value: string | null) => {

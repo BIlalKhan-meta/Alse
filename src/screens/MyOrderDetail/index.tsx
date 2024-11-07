@@ -1,13 +1,5 @@
-// src/screens/MyOrderDetailScreen.tsx
 import React, {useEffect, useLayoutEffect, useState} from 'react';
-import {
-  View,
-  Text,
-  FlatList,
-  Image,
-  StyleSheet,
-  ScrollView,
-} from 'react-native';
+import {View, FlatList} from 'react-native';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import CartItem from '../../components/CartItem';
 import styles from './styles';
@@ -19,48 +11,40 @@ import HorizontalSeparator from '../../components/HorizontalSeparator';
 import {images} from '../../utils/images';
 import GeneralModal from '../../components/GeneralModal';
 import {products} from '../../dummyData';
-import CustomButton from '../../components/CustomButton';
 import InterMedium from '../../components/Text/InterMedium';
-import InterRegular from '../../components/Text/InterRegular';
-import InterBoldAverage from '../../components/Text/InterBoldAverage';
 import {getOrderDetail} from '../../api/product';
 import Loader from '../../components/Loader';
-// import OrderSummary from '../components/OrderSummary';
-// import ContactInformation from '../components/ContactInformation';
-// import AddressInformation from '../components/AddressInformation';
-// import OrderItem from '../components/OrderItem';
-// import { vw, vh } from '../constants';
+import {dateHelper} from '../../utils';
 
 const contactInfo = [
-  {heading: 'Username', value: 'Tom Albert'},
-  {heading: 'Phone Number', value: '+91 256 8569 5654'},
-  {heading: 'Email', value: 'tomalbert@gmail.com'},
+  {heading: 'Username', label: 'first_name'},
+  {heading: 'Phone Number', label: 'phone'},
+  {heading: 'Email', label: 'email'},
 ];
 
 const shippingAddress = [
-  {heading: 'Customer Name', value: 'Tom Albert'},
-  {heading: 'Phone Number', value: '+91 256 8569 5654'},
-  {heading: 'Address', value: 'Lorem ipsum dolor sit'},
-  {heading: 'Country', value: 'United States'},
-  {heading: 'State', value: 'California'},
-  {heading: 'City', value: 'Xyz'},
-  {heading: 'Zip Code', value: '15687'},
+  {heading: 'Customer Name', label: 'shipping_first_name'},
+  {heading: 'Phone Number', label: 'shipping_phone'},
+  {heading: 'Address', label: 'shipping_address'},
+  {heading: 'Country', label: 'shipping_country'},
+  {heading: 'State', label: 'shipping_state'},
+  {heading: 'City', label: 'shipping_city'},
+  {heading: 'Zip Code', label: 'shipping_zip'},
 ];
 
 const billingAddress = [
-  {heading: 'Customer Name', value: 'Tom Albert'},
-  {heading: 'Phone Number', value: '+91 256 8569 5654'},
-  {heading: 'Address', value: 'Lorem ipsum dolor sit'},
-  {heading: 'Country', value: 'United States'},
-  {heading: 'State', value: 'California'},
-  {heading: 'City', value: 'Xyz'},
-  {heading: 'Zip Code', value: '15687'},
+  {heading: 'Customer Name', label: 'billing_first_name'},
+  {heading: 'Phone Number', label: 'billing_phone'},
+  {heading: 'Address', label: 'billing_address'},
+  {heading: 'Country', label: 'billing_country'},
+  {heading: 'State', label: 'billing_state'},
+  {heading: 'City', label: 'billing_city'},
+  {heading: 'Zip Code', label: 'billing_zip'},
 ];
 
 const MyOrderDetail: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  console.log(route, 'order detail route');
   const id = route?.params?.id;
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [reportVisible, setReportVisible] = useState(false);
@@ -112,10 +96,10 @@ const MyOrderDetail: React.FC = () => {
             <View style={styles.orderInfo}>
               <View>
                 <InterMedium style={styles.orderId}>
-                  Order Id: {data?.order_id}
+                  Order Id: {data?.id}
                 </InterMedium>
                 <InterMedium style={styles.orderDate}>
-                  Order Date: {data?.date}
+                  Order Date: {dateHelper(data?.created_at)}
                 </InterMedium>
                 {/* {status == 'Delivered' && (
               <InterMedium style={styles.orderDate}>
@@ -136,7 +120,6 @@ const MyOrderDetail: React.FC = () => {
             item={item}
             showQuantityControls={false}
             showSeparator={index !== products.length - 1}
-            // showDelete={title === "Store Order Detail" ? false : true}
             showDelete={false}
           />
         )}
@@ -151,14 +134,28 @@ const MyOrderDetail: React.FC = () => {
                 titleStyle={styles.titleStyle}
               />
 
-              <Card>
-                <InfoSection title="Contact Information" data={contactInfo} />
-                <HorizontalSeparator />
-                <InfoSection title="Shipping Address" data={shippingAddress} />
-                <HorizontalSeparator />
+              {data && (
+                <Card>
+                  <InfoSection
+                    title="Contact Information"
+                    data={contactInfo}
+                    order={data}
+                  />
+                  <HorizontalSeparator />
+                  <InfoSection
+                    title="Shipping Address"
+                    data={shippingAddress}
+                    order={data}
+                  />
+                  <HorizontalSeparator />
 
-                <InfoSection title="Billing Address" data={billingAddress} />
-              </Card>
+                  <InfoSection
+                    title="Billing Address"
+                    data={billingAddress}
+                    order={data}
+                  />
+                </Card>
+              )}
 
               {/* {status === 'Cancelled' && (
             <>
