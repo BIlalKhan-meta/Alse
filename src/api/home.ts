@@ -100,3 +100,14 @@ export const userFollowReject = (id: number) => {
   console.log('id ================>', id);
   return axiosInstance.post(`${endpoints.home.rejectFollow}/${id}`);
 };
+
+export const getCountriesList = () => {
+  return axiosInstance.get(endpoints.home.countries);
+};
+
+export const getState = (id: number) => {
+  return axiosInstance.get(`${endpoints.home.state}/${id}`);
+};
+export const getCity = (id: number) => {
+  return axiosInstance.get(`${endpoints.home.city}/${id}`);
+};

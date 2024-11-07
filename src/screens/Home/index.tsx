@@ -35,11 +35,12 @@ import {colors} from '../../utils/theme';
 import dayjs from 'dayjs';
 import Loader from '../../components/Loader';
 import {getMessage, Toast} from '../../utils/helpers';
-import {reportPost} from '../../api/home';
+import {getCountriesList, reportPost} from '../../api/home';
 import {removeSavedItem, saveItem} from '../../api/menu';
 import {useSelector} from 'react-redux';
 import {selectUserProfile} from '../../store/slices/authSlice';
 import {vh} from '../../constant';
+import {getCountries} from '../../store/slices/generalSlice';
 
 const Home: React.FC = () => {
   const navigation = useNavigation();
@@ -94,7 +95,12 @@ const Home: React.FC = () => {
   }, [isFoused]);
 
   const getApi = async () => {
-    const checkData = await dispatch(GetNewsFeed()).then(() => {});
+    const checkData = await dispatch(GetNewsFeed());
+    await getCountriesList().then(res => {
+      if (res?.data) {
+        dispatch(getCountries(res?.data));
+      }
+    });
   };
 
   // if (loading) {

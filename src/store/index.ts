@@ -20,6 +20,7 @@
 import {configureStore, combineReducers} from '@reduxjs/toolkit';
 import authReducer from './slices/authSlice';
 import homeReducer from './slices/homeSlice';
+import generalReducer from './slices/generalSlice';
 import storage from 'redux-persist/lib/storage'; // defaults to localStorage for web
 import {persistReducer, persistStore} from 'redux-persist';
 import {FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER} from 'redux-persist';
@@ -36,6 +37,7 @@ const persistConfig = {
 const rootReducer = combineReducers({
   auth: authReducer,
   home: homeReducer,
+  general: generalReducer,
 });
 
 // Persist the combined reducers

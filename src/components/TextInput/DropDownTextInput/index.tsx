@@ -15,6 +15,9 @@ interface DropdownComponentProps {
   defaultValue?: string;
   onChangeValue: (value: string) => void;
   style?: StyleProp<ViewStyle>;
+  listMode?: 'DEFAULT' | 'FLATLIST' | 'SCROLLVIEW' | 'MODAL';
+  idRequired?: boolean;
+  label?: string;
 }
 
 const DropDownTextInput: React.FC<DropdownComponentProps> = ({
@@ -23,6 +26,9 @@ const DropDownTextInput: React.FC<DropdownComponentProps> = ({
   defaultValue = null,
   onChangeValue,
   style,
+  listMode,
+  idRequired,
+  label,
 }) => {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState<string | null>(defaultValue);
@@ -33,8 +39,9 @@ const DropDownTextInput: React.FC<DropdownComponentProps> = ({
   return (
     <DropDownPicker
       open={open}
+      listMode={listMode}
       value={value}
-      items={dropdownItems}
+      items={items}
       setOpen={setOpen}
       // setValue={(val) => {
       //   setValue(val);
@@ -42,7 +49,13 @@ const DropDownTextInput: React.FC<DropdownComponentProps> = ({
       //     onChangeValue(val);
       //   }
       // }}
-      onSelectItem={e => onChangeValue(e?.value)}
+      onSelectItem={e => {
+        if (idRequired) {
+          onChangeValue(e);
+        } else {
+          onChangeValue(e?.value);
+        }
+      }}
       // zIndex={100}
       setItems={setDropdownItems}
       placeholder={placeholder}

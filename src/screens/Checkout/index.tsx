@@ -30,6 +30,9 @@ import {checkout, getCart} from '../../api/product';
 import Loader from '../../components/Loader';
 import InAppBrowser from 'react-native-inappbrowser-reborn';
 import {notificationListenerInstance} from '../../utils/NotificationServices';
+import {useSelector} from 'react-redux';
+import {countriesList} from '../../store/slices/generalSlice';
+import {getCity, getState} from '../../api/home';
 
 const CheckoutScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -46,20 +49,11 @@ const CheckoutScreen: React.FC = () => {
   const adminCommission = 5;
   const grandTotal = subTotal + adminCommission;
 
-  const countries = [
-    {label: 'Country 1', value: 'country1'},
-    {label: 'Country 2', value: 'country2'},
-  ];
-
-  const states = [
-    {label: 'State 1', value: 'state1'},
-    {label: 'State 2', value: 'state2'},
-  ];
-
-  const cities = [
-    {label: 'City 1', value: 'city1'},
-    {label: 'City 2', value: 'city2'},
-  ];
+  const countries = useSelector(countriesList);
+  const [shippStates, setShipStates] = useState([]);
+  const [billStates, setBillStates] = useState([]);
+  const [shipCities, setShipCities] = useState([]);
+  const [billCities, setBillCities] = useState([]);
 
   const handleDropdownChange = (value: string | null) => {
     console.log('Selected value:', value);
@@ -79,8 +73,8 @@ const CheckoutScreen: React.FC = () => {
     shipping_phone: yup.string().required('Contact number is required'),
     shipping_address: yup.string().required('Shipping Address is required'),
     shipping_country: yup.string().required('Country is required'),
-    shipping_state: yup.string().required('State is required'),
-    shipping_city: yup.string().required('City is required'),
+    shipping_state: yup.string(),
+    shipping_city: yup.string(),
     shipping_zip: yup.string().required('Zip Code is required'),
 
     ...(!isSelected && {
@@ -89,35 +83,35 @@ const CheckoutScreen: React.FC = () => {
       billing_phone: yup.string().required('Phone Number is required'),
       billing_address: yup.string().required('Billing Address is required'),
       billing_country: yup.string().required('Country is required'),
-      billing_state: yup.string().required('State is required'),
-      billing_city: yup.string().required('City is required'),
+      billing_state: yup.string(),
+      billing_city: yup.string(),
       billing_zip: yup.string().required('Zip Code is required'),
     }),
   });
 
   const initialValues = {
-    first_name: 'asd',
-    last_name: 'asd',
-    email: 'asd@gmail.com',
-    phone: '12345678901',
-    shipping_first_name: 'asd',
-    shipping_last_name: 'asd',
-    shipping_email: 'asd@gmail.com',
-    shipping_phone: '12345678901',
-    shipping_address: 'asdasd',
-    shipping_country: countries[0].value, // Initialize with default value
-    shipping_state: states[0].value, // Initialize with default value
-    shipping_city: cities[0].value, // Initialize with default value
-    shipping_zip: '12345',
-    billing_first_name: 'asdasd',
-    billing_last_name: 'asdasd',
-    billing_email: 'asd@gamial.com',
-    billing_phone: '123123',
-    billing_address: 'adsasdasd',
-    billing_country: countries[0].value, // Initialize with default value
-    billing_state: states[0].value, // Initialize with default value
-    billing_city: cities[0].value, // Initialize with default value
-    billing_zip: '12345',
+    first_name: '',
+    last_name: '',
+    email: '',
+    phone: '',
+    shipping_first_name: '',
+    shipping_last_name: '',
+    shipping_email: '',
+    shipping_phone: '',
+    shipping_address: '',
+    shipping_country: '', // Initialize with default value
+    shipping_state: '', // Initialize with default value
+    shipping_city: '', // Initialize with default value
+    shipping_zip: '',
+    billing_first_name: '',
+    billing_last_name: '',
+    billing_email: '',
+    billing_phone: '',
+    billing_address: '',
+    billing_country: '', // Initialize with default value
+    billing_state: '', // Initialize with default value
+    billing_city: '', // Initialize with default value
+    billing_zip: '',
   };
 
   const handleSubmit = async (values: object) => {
@@ -178,6 +172,43 @@ const CheckoutScreen: React.FC = () => {
     getData();
   }, [isFoused]);
 
+  const fetchState = async (id: number, ship: boolean) => {
+    console.log('IDDDDDDDDDDDDDDDDD', id);
+    await getState(id).then(res => {
+      if (res?.data) {
+        let temp = res?.data.map((item, index) => {
+          return {label: item?.name, value: item?.name, id: item?.id};
+        });
+        if (ship) {
+          setShipStates(temp);
+        } else {
+          setBillStates(temp);
+        }
+      } else {
+        setShipStates([]);
+        setBillStates([]);
+      }
+    });
+  };
+
+  const fetchCity = async (id: number, ship: boolean) => {
+    await getCity(id).then(res => {
+      if (res?.data) {
+        let temp = res?.data.map((item, index) => {
+          return {label: item?.name, value: item?.name, id: item?.id};
+        });
+        if (ship) {
+          setShipCities(temp);
+        } else {
+          setBillCities(temp);
+        }
+      } else {
+        setShipCities([]);
+        setBillCities([]);
+      }
+    });
+  };
+
   const getData = async () => {
     setLoading(true);
     const res = await getCart();
@@ -190,7 +221,7 @@ const CheckoutScreen: React.FC = () => {
   const closePaymentProcess = async () => {
     await InAppBrowser.isAvailable();
     const closePrevios = InAppBrowser.close();
-    navigation.navigate('MyOrders');
+    navigation.navigate('Marketplace', {screen: 'MyOrders'});
   };
 
   useEffect(() => {
@@ -212,10 +243,10 @@ const CheckoutScreen: React.FC = () => {
           handleSubmit,
           values,
           errors,
-          touched,
+          setFieldValue,
+          setValues,
         }) => (
           <>
-            {console.log(values)}
             <Card>
               {loading ? (
                 <Loader />
@@ -355,44 +386,93 @@ const CheckoutScreen: React.FC = () => {
 
                 <View style={styles.dropdownContainer}>
                   <DropDownTextInput
-                    items={countries}
+                    key={'countries'}
+                    items={countries?.map((item: any) => {
+                      return {label: item.name, value: item.name, id: item?.id};
+                    })}
+                    listMode="MODAL"
+                    idRequired
                     defaultValue={values.shipping_country}
                     // defaultValue='all'
                     placeholder="Select Country"
-                    onChangeValue={handleDropdownChange}
+                    onChangeValue={e => {
+                      setFieldValue('shipping_country', e?.label);
+                      setFieldValue('shipping_state', '');
+                      setFieldValue('shipping_city', '');
+                      setShipStates([]);
+                      setShipCities([]);
+                      fetchState(e?.id, true);
+                    }}
                     style={styles.dropDown}
                   />
                 </View>
 
-                <InterBoldLabel style={styles.countryLabel}>
-                  State *
-                </InterBoldLabel>
+                {values.shipping_country && shippStates.length != 0 && (
+                  <>
+                    <InterBoldLabel style={styles.countryLabel}>
+                      State *
+                    </InterBoldLabel>
 
-                <View style={[styles.dropdownContainer, {zIndex: 4}]}>
-                  <DropDownTextInput
+                    <View style={[styles.dropdownContainer, {zIndex: 4}]}>
+                      {/* <DropDownTextInput
                     items={states}
                     defaultValue={values.shipping_state}
                     // defaultValue='all'
                     placeholder="Select State"
                     onChangeValue={handleDropdownChange}
                     style={styles.dropDown}
-                  />
-                </View>
+                    /> */}
+                      <DropDownTextInput
+                        label="this is state"
+                        key={'states'}
+                        items={shippStates}
+                        listMode="MODAL"
+                        idRequired
+                        defaultValue={values.shipping_state}
+                        // defaultValue='all'
+                        placeholder="Select State"
+                        onChangeValue={e => {
+                          setFieldValue('shipping_state', e?.label);
+                          fetchCity(e?.id, true);
+                        }}
+                        style={styles.dropDown}
+                      />
+                    </View>
+                  </>
+                )}
 
-                <InterBoldLabel style={styles.countryLabel}>
-                  City *
-                </InterBoldLabel>
+                {values.shipping_state && shipCities.length != 0 && (
+                  <>
+                    <InterBoldLabel style={styles.countryLabel}>
+                      City *
+                    </InterBoldLabel>
 
-                <View style={[styles.dropdownContainer, {zIndex: 3}]}>
-                  <DropDownTextInput
-                    items={cities}
-                    defaultValue={values.shipping_city}
-                    // defaultValue='all'
-                    placeholder="Select City"
-                    onChangeValue={handleDropdownChange}
-                    style={styles.dropDown}
-                  />
-                </View>
+                    <View style={[styles.dropdownContainer, {zIndex: 3}]}>
+                      {/* <DropDownTextInput
+                        key={'city'}
+                        items={cities}
+                        defaultValue={values.shipping_city}
+                        // defaultValue='all'
+                        placeholder="Select City"
+                        onChangeValue={handleDropdownChange}
+                        style={styles.dropDown}
+                      /> */}
+                      <DropDownTextInput
+                        key={'city'}
+                        items={shipCities}
+                        listMode="MODAL"
+                        idRequired
+                        defaultValue={values.shipping_city}
+                        // defaultValue='all'
+                        placeholder="Select City"
+                        onChangeValue={e => {
+                          setFieldValue('shipping_city', e?.label);
+                        }}
+                        style={styles.dropDown}
+                      />
+                    </View>
+                  </>
+                )}
 
                 <RegularTextInput
                   label="Zip Code *"
@@ -475,47 +555,108 @@ const CheckoutScreen: React.FC = () => {
                   </InterBoldLabel>
 
                   <View style={styles.dropdownContainer}>
-                    <DropDownTextInput
+                    {/* <DropDownTextInput
+                      key={'billingCountry'}
                       items={countries}
                       defaultValue={values.billing_country}
                       // defaultValue='all'
                       placeholder="Select Country"
                       onChangeValue={handleDropdownChange}
                       style={styles.dropDown}
-                    />
-                  </View>
-
-                  <InterBoldLabel style={styles.countryLabel}>
-                    State *
-                  </InterBoldLabel>
-
-                  <View style={[styles.dropdownContainer, {zIndex: 4}]}>
+                    /> */}
                     <DropDownTextInput
-                      items={states}
+                      key={'countries'}
+                      items={countries?.map((item: any) => {
+                        return {
+                          label: item.name,
+                          value: item.name,
+                          id: item?.id,
+                        };
+                      })}
+                      listMode="MODAL"
+                      idRequired
+                      defaultValue={values.billing_country}
                       // defaultValue='all'
-
-                      defaultValue={values.billing_state}
-                      placeholder="Select State"
-                      onChangeValue={handleDropdownChange}
+                      placeholder="Select Country"
+                      onChangeValue={e => {
+                        setFieldValue('billing_country', e?.label);
+                        setFieldValue('billing_state', '');
+                        setFieldValue('billing_city', '');
+                        setBillStates([]);
+                        setBillCities([]);
+                        fetchState(e?.id, false);
+                      }}
                       style={styles.dropDown}
                     />
                   </View>
 
-                  <InterBoldLabel style={styles.countryLabel}>
-                    City *
-                  </InterBoldLabel>
+                  {values?.billing_country && billStates.length != 0 && (
+                    <>
+                      <InterBoldLabel style={styles.countryLabel}>
+                        State *
+                      </InterBoldLabel>
 
-                  <View style={[styles.dropdownContainer, {zIndex: 3}]}>
-                    <DropDownTextInput
-                      items={cities}
-                      // defaultValue='all'
+                      <View style={[styles.dropdownContainer, {zIndex: 4}]}>
+                        {/* <DropDownTextInput
+                          key={'billingStates'}
+                          items={states}
+                          // defaultValue='all'
+                          defaultValue={values.billing_state}
+                          placeholder="Select State"
+                          onChangeValue={handleDropdownChange}
+                          style={styles.dropDown}
+                        /> */}
+                        <DropDownTextInput
+                          key={'states'}
+                          items={billStates}
+                          listMode="MODAL"
+                          idRequired
+                          defaultValue={values.billing_state}
+                          // defaultValue='all'
+                          placeholder="Select State"
+                          onChangeValue={e => {
+                            setFieldValue('billing_state', e?.label);
+                            fetchCity(e?.id, false);
+                          }}
+                          style={styles.dropDown}
+                        />
+                      </View>
+                    </>
+                  )}
 
-                      defaultValue={values.billing_city}
-                      placeholder="Select City"
-                      onChangeValue={handleDropdownChange}
-                      style={styles.dropDown}
-                    />
-                  </View>
+                  {values.billing_state && billCities.length != 0 && (
+                    <>
+                      <InterBoldLabel style={styles.countryLabel}>
+                        City *
+                      </InterBoldLabel>
+
+                      <View style={[styles.dropdownContainer, {zIndex: 3}]}>
+                        {/* <DropDownTextInput
+                          items={cities}
+                          key={'billingCity'}
+                          // defaultValue='all'
+
+                          defaultValue={values.billing_city}
+                          placeholder="Select City"
+                          onChangeValue={handleDropdownChange}
+                          style={styles.dropDown}
+                        /> */}
+                        <DropDownTextInput
+                          key={'city'}
+                          items={billCities}
+                          listMode="MODAL"
+                          idRequired
+                          defaultValue={values.billing_city}
+                          // defaultValue='all'
+                          placeholder="Select City"
+                          onChangeValue={e => {
+                            setFieldValue('billing_city', e?.label);
+                          }}
+                          style={styles.dropDown}
+                        />
+                      </View>
+                    </>
+                  )}
 
                   <RegularTextInput
                     label="Zip Code *"
@@ -533,9 +674,10 @@ const CheckoutScreen: React.FC = () => {
               {/* Place Order Button */}
               <CustomButton
                 disable={loading}
+                loading={loading}
                 style={styles.placeOrderButton}
                 onPress={() => {
-                  // navigation.navigate("Payment")
+                  // navigation.navigate('Marketplace', {screen: 'MyOrders'});
                   setSubmitted(true);
                   handleSubmit();
                 }}>

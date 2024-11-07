@@ -193,10 +193,11 @@ const MyShop: React.FC = () => {
 
             <CustomButton
               style={styles.secondaryBtn2}
-              containerStyle={styles.buttonContainerStyle}
+              // containerStyle={styles.buttonContainerStyle}
               txtstyle={{color: colors.themeColor}}
-              // onPress={closeModal}
-            >
+              onPress={() => {
+                navigation.navigate('Marketplace', {screen: 'MyOrders'});
+              }}>
               Orders
             </CustomButton>
           </View>

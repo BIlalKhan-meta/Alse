@@ -25,6 +25,9 @@ const endpoints = {
     unFollow: '/unfollow-user',
     acceptFollow: '/accept-follow-request',
     rejectFollow: '/reject-follow-request',
+    countries: '/countries',
+    state: '/states',
+    city: '/cities',
   },
   profile: {
     editProfile: '/edit-profile',
