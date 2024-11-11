@@ -2,6 +2,7 @@
 import React from 'react';
 import { View, StyleSheet, ViewProps } from 'react-native';
 import { colors } from '../../utils/theme';
+import { vh } from '../../constant';
 
 interface CardProps extends ViewProps {
   children: React.ReactNode;
@@ -19,7 +20,8 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.white,
     borderRadius: 10,
-    padding: 15,
+    padding: vh,
+    // alignItems:'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,

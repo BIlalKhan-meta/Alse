@@ -15,6 +15,7 @@ import {removeSavedItem, saveItem} from '../../api/menu';
 import {addProductToCart} from '../../api/product';
 import {EmptyComponent} from '../EmptyComponent';
 import {vh} from '../../constant';
+import Toast from 'react-native-toast-message';
 
 interface WishlistProps {
   wishlist: [];
@@ -33,13 +34,15 @@ const WishlistScreen: React.FC<WishlistProps> = ({
   onPress,
   handleRemove,
 }) => {
-  const handleAddToCart = async (productId: string) => {
-    // Implement your logic to add the product to cart
-    // console.log(`Product with id ${productId} added to cart`);
+  const handleAddToCart = async (productId: number) => {
     await addProductToCart(productId)
       .then(res => {
         if (res?.data) {
-          console.log('RESSSSSSSSSS ADDD TOOO CARDDDD WISHLISTTTT', res?.data);
+          return Toast.show({
+            type: 'success',
+            text1: 'Cart',
+            text2: 'Product Added to Cart',
+          });
         }
       })
       .catch(err => {
@@ -96,12 +99,12 @@ const WishlistScreen: React.FC<WishlistProps> = ({
               <Text> </Text>
             )}
           </View>
-          {item?.sizes != undefined && item?.sizes?.length !=0 && (
+          {item?.sizes != undefined && item?.sizes?.length != 0 && (
             <InterRegular style={styles.product}>
               Size: {item.sizes[0].size}
             </InterRegular>
           )}
-          {item?.colors != undefined && item?.colors?.length !=0 && (
+          {item?.colors != undefined && item?.colors?.length != 0 && (
             <InterRegular style={styles.product}>
               Color: {item.colors[0].color}
             </InterRegular>
@@ -111,20 +114,15 @@ const WishlistScreen: React.FC<WishlistProps> = ({
     );
   };
 
-  const renderEmpty = () => (
-    <View style={styles.emptyContainer}>
-      <InterRegular style={styles.emptyText}>No Data to Show.</InterRegular>
-    </View>
-  );
-
   return (
     <FlatList
       data={wishlist}
       renderItem={renderItem}
       keyExtractor={item => item?.id?.toString()}
       numColumns={2}
+      style={{width: '100%'}}
       contentContainerStyle={styles.container}
-      ListEmptyComponent={<EmptyComponent text={'No Data Available'} />}
+      ListEmptyComponent={<EmptyComponent text={'No Products Available'} />}
     />
   );
 };
