@@ -15,6 +15,8 @@ import Card from '../Card';
 import RegularTextInput from '../TextInput/RegularTextInput';
 import DropDownPicker from 'react-native-dropdown-picker';
 import {vh, vw} from '../../constant';
+import {useSelector} from 'react-redux';
+import {selectUserProfile} from '../../store/slices/authSlice';
 
 interface CardComponentProps {
   onTextInput: () => void;
@@ -46,10 +48,17 @@ const CardComponent: React.FC<CardComponentProps> = ({
 }) => {
   const [open, setOpen] = useState(false);
 
+  const user = useSelector(selectUserProfile);
+
+  console.log('USERRRRRRRRRRRRRRRRRRRRR', user);
+
   return (
     <Card>
       <View style={styles.card}>
-        <Image source={images.user} style={styles.avatar} />
+        <Image
+          source={user ? {uri: user?.avatar} : images.user}
+          style={styles.avatar}
+        />
 
         <TextInput
           // onPress={() => onTextInput()}

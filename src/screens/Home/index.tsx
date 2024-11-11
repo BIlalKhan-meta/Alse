@@ -36,6 +36,7 @@ import {getCountriesList, reportPost} from '../../api/home';
 import {removeSavedItem, saveItem} from '../../api/menu';
 import {vh} from '../../constant';
 import {getCountries} from '../../store/slices/generalSlice';
+import {timeFormat, timeHelper} from '../../utils';
 
 const Home: React.FC = () => {
   const navigation = useNavigation();
@@ -221,7 +222,7 @@ const Home: React.FC = () => {
         avatar={item?.avatar}
         name={item.name}
         country={item.country ? item.country : ''}
-        time={dayjs(item?.media[0]?.date).format('hh:MM A')}
+        time={timeFormat(item?.date)}
         postText={item?.description}
         postImage={item?.media[0]?.path}
         likes={item.likes}

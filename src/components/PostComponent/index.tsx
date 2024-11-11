@@ -141,7 +141,7 @@ const PostComponent: React.FC<PostProps> = ({
             <InterBold style={styles.name}>{name}</InterBold>
             <View style={styles.userMeta}>
               <InterRegular style={styles.country}>{country}</InterRegular>
-              <InterRegular style={styles.time}> · {time}</InterRegular>
+              <InterRegular style={styles.time}>{time}</InterRegular>
             </View>
           </View>
         </View>

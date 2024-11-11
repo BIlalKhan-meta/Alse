@@ -17,3 +17,7 @@ export const dateHelper = (date: any) => {
 export const timeHelper = (time: any) => {
   return dayjs(time).format('HH:mm');
 };
+
+export const timeFormat = (time: string) => {
+  return dayjs(time).format('hh:mm A');
+};
