@@ -106,8 +106,8 @@ export const getCountriesList = () => {
 };
 
 export const getState = (id: number) => {
-  return axiosInstance.get(`${endpoints.home.state}/${id}`);
+  return axiosInstance.get(`${endpoints.home.countries}/${id}/states`);
 };
 export const getCity = (id: number) => {
-  return axiosInstance.get(`${endpoints.home.city}/${id}`);
+  return axiosInstance.get(`${endpoints.home.state}/${id}/cities`);
 };

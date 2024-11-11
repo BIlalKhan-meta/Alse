@@ -84,6 +84,7 @@ const endpoints = {
     getSavedItems: '/get-saved-items',
     saveItem: '/save-item',
     removeSaved: '/remove-saved-item',
+    aboutUs: '/content?type=aboutUs',
   },
 };
 

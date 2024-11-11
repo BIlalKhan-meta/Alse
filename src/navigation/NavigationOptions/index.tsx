@@ -61,6 +61,7 @@ const titles: {[key: string]: string} = {
   // AddProduct: "Add Product",
   // WishList: "Wishlist",
   ContactUs: 'Contact Us',
+  AboutUs: 'About Us',
   RequestScreen: 'RequestScreen',
   Saved: 'Saved',
   EditShop: 'Edit Shop',
@@ -85,8 +86,10 @@ const backButtonRoutes: {[key: string]: boolean} = {
   CreatePostEdit: true,
   MyShop: true,
   EditShop: true,
-  AddProduct : true,
-  Saved : true,
+  AddProduct: true,
+  Saved: true,
+  BankDetail: true,
+  AboutUs: true,
 };
 
 const getTitle: React.FC<NavigationOptionsProps> = props => {

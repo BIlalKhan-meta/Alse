@@ -54,7 +54,7 @@ const TabNavigation = () => {
                 }}
             />
             <Tab.Screen
-                name="Marketplace"
+                name="MarketPlaceNavigation"
                 component={MarketPlaceNavigation}
                 options={{
                     tabBarIcon: ({ focused }) => (
@@ -101,7 +101,7 @@ const TabNavigation = () => {
                 }}
             /> */}
             <Tab.Screen
-                name="Menu"
+                name="MenuNavigation"
                 component={MenuNavigation}
                 options={{
                     tabBarIcon: ({ focused }) => (

@@ -4,6 +4,9 @@ import endpoints from './endpoints';
 export const getSavedItems = () => {
   return axiosInstance.get(endpoints.menu.getSavedItems);
 };
+export const getAboutUs = () => {
+  return axiosInstance.get(endpoints.menu.aboutUs);
+};
 export const removeSavedItem = (id: number) => {
   return axiosInstance.post(`${endpoints.menu.removeSaved}/${id}`);
 };

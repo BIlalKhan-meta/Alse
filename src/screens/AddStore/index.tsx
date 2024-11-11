@@ -196,7 +196,7 @@ const AddStore: React.FC = () => {
                 onChangeText={handleChange('accountHolderName')}
                 onBlur={handleBlur('accountHolderName')}
                 value={values.accountHolderName}
-                errors={touched.accountHolderName && errors.accountHolderName}
+                errors={errors.accountHolderName}
                 style={styles.inputStyle}
                 submitted={submitted}
               />
@@ -217,7 +217,7 @@ const AddStore: React.FC = () => {
                     handleDropdownChange;
                   }}
                   style={styles.dropDown}
-                  error={touched.accountType && errors.accountType}
+                  error={errors.accountType}
                 />
               </View>
 
@@ -255,7 +255,7 @@ const AddStore: React.FC = () => {
                 onChangeText={handleChange('accountNumber')}
                 onBlur={handleBlur('accountNumber')}
                 value={values.accountNumber}
-                errors={touched.accountNumber && errors.accountNumber}
+                errors={errors.accountNumber}
                 style={styles.inputStyle}
                 submitted={submitted}
               />
@@ -267,9 +267,7 @@ const AddStore: React.FC = () => {
                 onChangeText={handleChange('confirmAccountNumber')}
                 onBlur={handleBlur('confirmAccountNumber')}
                 value={values.confirmAccountNumber}
-                errors={
-                  touched.confirmAccountNumber && errors.confirmAccountNumber
-                }
+                errors={errors.confirmAccountNumber}
                 style={styles.inputStyle}
                 submitted={submitted}
               />
@@ -281,7 +279,7 @@ const AddStore: React.FC = () => {
                 onChangeText={handleChange('routingNumber')}
                 onBlur={handleBlur('routingNumber')}
                 value={values.routingNumber}
-                errors={touched.routingNumber && errors.routingNumber}
+                errors={errors.routingNumber}
                 style={styles.inputStyle}
                 submitted={submitted}
               />
@@ -293,9 +291,7 @@ const AddStore: React.FC = () => {
                 onChangeText={handleChange('confirmRoutingNumber')}
                 onBlur={handleBlur('confirmRoutingNumber')}
                 value={values.confirmRoutingNumber}
-                errors={
-                  touched.confirmRoutingNumber && errors.confirmRoutingNumber
-                }
+                errors={errors.confirmRoutingNumber}
                 style={styles.inputStyle}
                 submitted={submitted}
               />

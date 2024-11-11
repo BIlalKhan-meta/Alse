@@ -74,7 +74,7 @@ const Menu: React.FC = () => {
           <View style={styles.cardContent2}>
             <InterMedium style={styles.cardHeading}>- &nbsp;&nbsp;&nbsp;Marketplace</InterMedium>
             <View style={styles.btnCon}>
-              <TouchableOpacity onPress={() => navigation.navigate('Marketplace')}>
+              <TouchableOpacity onPress={() => navigation.navigate('MarketPlaceNavigation')}>
                 <InterRegular style={styles.cardText}>Shops</InterRegular>
               </TouchableOpacity>
               <TouchableOpacity onPress={() => navigation.navigate('Cart')}>
@@ -83,10 +83,10 @@ const Menu: React.FC = () => {
               <TouchableOpacity onPress={() => navigation.navigate('BankDetail')}>
                 <InterRegular style={styles.cardText}>Manage Bank Details</InterRegular>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => navigation.navigate('Marketplace', { screen: "PaymentLogs" })}>
+              <TouchableOpacity onPress={() => navigation.navigate('MarketPlaceNavigation', { screen: "PaymentLogs" })}>
                 <InterRegular style={styles.cardText}>Payment Logs</InterRegular>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => navigation.navigate('Marketplace', { screen: "MyOrders" })}>
+              <TouchableOpacity onPress={() => navigation.navigate('MarketPlaceNavigation', { screen: "MyOrders" })}>
                 <InterRegular style={styles.cardText}>Order Logs</InterRegular>
               </TouchableOpacity>
 
