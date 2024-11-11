@@ -45,7 +45,7 @@ interface PostProps {
   modalVisible: boolean;
   isLiked?: boolean;
   isSaved?: boolean;
-  onCardPress:() => void
+  onCardPress: () => void;
 }
 
 const PostComponent: React.FC<PostProps> = ({
@@ -71,7 +71,7 @@ const PostComponent: React.FC<PostProps> = ({
   handleReportPost,
   isLiked,
   isSaved,
-  onCardPress
+  onCardPress,
 }) => {
   const navigation = useNavigation();
   const user = useSelector(selectUserProfile);
@@ -82,14 +82,12 @@ const PostComponent: React.FC<PostProps> = ({
   const myAccount = user?.id == id ? true : false;
 
   const goToProfile = () => {
-    // if (myAccount) {
-    //   navigation.navigate('MyProfile', { account });
-
-    // } else if (account) {
-
-    //   navigation.navigate('Profile', { account, id });
-    // }
-    navigation.navigate('Profile', {account, id});
+    if (myAccount) {
+      navigation.navigate('MyProfile', {account});
+    } else if (account) {
+      navigation.navigate('Profile', {account, id});
+    }
+    // navigation.navigate('Profile', {account, id});
   };
 
   const options = myAccount
@@ -128,83 +126,81 @@ const PostComponent: React.FC<PostProps> = ({
 
   return (
     <Pressable onPress={onCardPress}>
-    <Card style={styles.card}>
-      <View style={styles.header}>
-        <View style={styles.userInfo}>
-          <TouchableOpacity disabled={myAccount} onPress={goToProfile}>
-            <Image
-              source={avatar ? {uri: avatar} : images.user}
-              style={styles.avatar}
-            />
-          </TouchableOpacity>
-          <View>
-            <InterBold style={styles.name}>{name}</InterBold>
-            <View style={styles.userMeta}>
-              <InterRegular style={styles.country}>{country}</InterRegular>
-              <InterRegular style={styles.time}>{time}</InterRegular>
+      <Card style={styles.card}>
+        <View style={styles.header}>
+          <View style={styles.userInfo}>
+            <TouchableOpacity disabled={myAccount} onPress={goToProfile}>
+              <Image
+                source={avatar ? {uri: avatar} : images.user}
+                style={styles.avatar}
+              />
+            </TouchableOpacity>
+            <View>
+              <InterBold style={styles.name}>{name}</InterBold>
+              <View style={styles.userMeta}>
+                <InterRegular style={styles.country}>{country}</InterRegular>
+                <InterRegular style={styles.time}>{time}</InterRegular>
+              </View>
             </View>
           </View>
+          <TouchableOpacity style={{padding: vh}} onPress={onDotPress}>
+            <Image source={images.dots} style={styles.threeDots} />
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity style={{padding: vh}} onPress={onDotPress}>
-          <Image source={images.dots} style={styles.threeDots} />
-        </TouchableOpacity>
-      </View>
 
-      {/* <InterLight style={styles.postText}>{postText}</InterLight> */}
-      <View style={styles.postContent}>{renderPostText()}</View>
-      {postImage && (
-        <Image source={{uri: postImage}} style={styles.postImage} />
-      )}
-      <View style={styles.postActions}>
-        <View style={styles.leftActions}>
-          <Image
-            // source={images.like}
-            source={images.likeFill}
-            tintColor={colors.blue}
-            style={styles.icon}
-          />
-          <InterRegular style={styles.actionText}>{likes?.length}</InterRegular>
-          <Image source={images.comment} style={styles.icon} />
-          <InterRegular style={styles.actionText}>
-            {comments?.length}{' '}
-          </InterRegular>
-          <Image source={images.share} style={styles.icon} />
-          <InterRegular style={styles.actionText}>{share}</InterRegular>
+        {/* <InterLight style={styles.postText}>{postText}</InterLight> */}
+        <View style={styles.postContent}>{renderPostText()}</View>
+        {postImage && (
+          <Image source={{uri: postImage}} style={styles.postImage} />
+        )}
+        <View style={styles.postActions}>
+          <View style={styles.leftActions}>
+            <Image
+              // source={images.like}
+              source={images.likeFill}
+              tintColor={colors.blue}
+              style={styles.icon}
+            />
+            <InterRegular style={styles.actionText}>{likes}</InterRegular>
+            <Image source={images.comment} style={styles.icon} />
+            <InterRegular style={styles.actionText}>{comments}</InterRegular>
+            <Image source={images.share} style={styles.icon} />
+            <InterRegular style={styles.actionText}>{share}</InterRegular>
+          </View>
+          <TouchableOpacity onPress={onSavePress}>
+            <Image
+              source={isSaved ? images?.unsave : images.save}
+              style={styles.icon}
+            />
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity onPress={onSavePress}>
-          <Image
-            source={isSaved ? images?.unsave : images.save}
-            style={styles.icon}
-          />
-        </TouchableOpacity>
-      </View>
-      <View style={styles.separator} />
-      <View style={styles.bottomActions}>
-        <TouchableOpacity style={styles.button} onPress={onLikePress}>
-          <Image
-            // source={images.like}
-            source={isLiked ? images.likeFill : images?.like}
-            style={styles.buttonIcon}
-            tintColor={isLiked ? colors.blue : null}
-          />
-          <Text style={styles.buttonText}>Like</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.button} onPress={onCommnetPress}>
-          <Image source={images.comment} style={styles.buttonIcon} />
-          <Text style={styles.buttonText}>Comment</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.button}>
-          <Image source={images.share} style={styles.buttonIcon} />
-          <Text style={styles.buttonText}>Share</Text>
-        </TouchableOpacity>
-      </View>
-      <ReportBlockModal
-        isVisible={modalVisible}
-        options={options}
-        onClose={onDotPress}
-        style={{top: 55}}
-      />
-    </Card>
+        <View style={styles.separator} />
+        <View style={styles.bottomActions}>
+          <TouchableOpacity style={styles.button} onPress={onLikePress}>
+            <Image
+              // source={images.like}
+              source={isLiked ? images.likeFill : images?.like}
+              style={styles.buttonIcon}
+              tintColor={isLiked ? colors.blue : null}
+            />
+            <Text style={styles.buttonText}>Like</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.button} onPress={onCommnetPress}>
+            <Image source={images.comment} style={styles.buttonIcon} />
+            <Text style={styles.buttonText}>Comment</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.button}>
+            <Image source={images.share} style={styles.buttonIcon} />
+            <Text style={styles.buttonText}>Share</Text>
+          </TouchableOpacity>
+        </View>
+        <ReportBlockModal
+          isVisible={modalVisible}
+          options={options}
+          onClose={onDotPress}
+          style={{top: 55}}
+        />
+      </Card>
     </Pressable>
   );
 };

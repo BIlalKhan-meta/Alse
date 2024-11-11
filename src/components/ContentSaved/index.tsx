@@ -11,9 +11,9 @@ import {
 import {images} from '../../utils/images';
 import {vh} from '../../constant';
 import InterRegular from '../Text/InterRegular';
-import InterBoldAverage from '../Text/InterBoldAverage';
 import styles from './styles';
 import InterMedium from '../Text/InterMedium';
+import Row from '../Row';
 
 interface Product {
   id: string;
@@ -35,8 +35,6 @@ interface ContentSavedProps {
 
 const ContentSavedScreen: React.FC<ContentSavedProps> = ({
   item,
-  onAddToCart,
-  onRemoveFromContentSaved,
   viewBtn,
   onItemPress,
   userId,
@@ -51,21 +49,33 @@ const ContentSavedScreen: React.FC<ContentSavedProps> = ({
         style={styles.productImage}
       />
 
-      <View style={styles.productDetails}>
-        <View>
+      <View style={{flex: 1, justifyContent: 'space-between'}}>
+        <Row justify="space-between">
           <InterMedium lines={2} style={styles.blogTitle}>
             {item?.title}
           </InterMedium>
-          <InterRegular lines={3} style={styles.blogDetail}>
-            {item?.content}
-          </InterRegular>
-          {viewBtn && (
-            <TouchableOpacity style={styles.viewBtn}>
-              <InterRegular style={styles.viewText}>{viewBtn}</InterRegular>
+          {userId == item?.user_id && (
+            <TouchableOpacity
+              // onPress={() => onAddToCart(item.id)}
+              style={
+                item?.status ? styles.activeButton : styles.inactiveButton
+              }>
+              <InterRegular style={styles.addButtonText}>
+                {item?.status ? 'Active' : 'Inactive'}
+              </InterRegular>
             </TouchableOpacity>
           )}
-        </View>
-        {userId == item?.user_id && (
+        </Row>
+        <InterRegular lines={3} style={styles.blogDetail}>
+          {item?.content}
+        </InterRegular>
+        {viewBtn && (
+          <TouchableOpacity style={styles.viewBtn}>
+            <InterRegular style={styles.viewText}>{viewBtn}</InterRegular>
+          </TouchableOpacity>
+        )}
+      </View>
+      {/* {userId == item?.user_id && (
           <TouchableOpacity
             // onPress={() => onAddToCart(item.id)}
             style={item?.status ? styles.activeButton : styles.inactiveButton}>
@@ -73,8 +83,7 @@ const ContentSavedScreen: React.FC<ContentSavedProps> = ({
               {item?.status ? 'Active' : 'Inactive'}
             </InterRegular>
           </TouchableOpacity>
-        )}
-      </View>
+        )} */}
     </TouchableOpacity>
   );
 };

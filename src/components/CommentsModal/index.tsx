@@ -51,7 +51,6 @@ interface CommentsModalProps {
   title: string;
   message: string;
   buttonText: string;
-  onPress: () => void;
   comments: Comment[];
   postId: number;
 }

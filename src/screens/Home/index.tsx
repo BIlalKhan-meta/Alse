@@ -99,10 +99,6 @@ const Home: React.FC = () => {
     });
   };
 
-  // if (loading) {
-  //   return <Loader />;
-  // }
-
   const handleDotPress = (postId: number) => {
     setActivePostId(activePostId == null ? postId : null);
   };
@@ -185,11 +181,6 @@ const Home: React.FC = () => {
       });
   };
 
-  // const checkLiked = item => {
-  //   // item?.likes.includes(item => item?.user?.role_id == user?.user_id);
-  //   return false;
-  // };
-
   const handleSave = async (id: number, isSaved: boolean) => {
     dispatch(postSave(id));
     if (isSaved) {
@@ -212,9 +203,6 @@ const Home: React.FC = () => {
   };
 
   const renderPost = ({item}) => {
-    const mediaItem =
-      item?.media && item?.media.length > 0 ? item?.media[0] : null;
-
     return (
       <PostComponent
         id={item?.user_id}
@@ -225,8 +213,8 @@ const Home: React.FC = () => {
         time={timeFormat(item?.date)}
         postText={item?.description}
         postImage={item?.media[0]?.path}
-        likes={item.likes}
-        comments={item.comments}
+        likes={item?.total_likes}
+        comments={item?.total_comments}
         share={item.share}
         account={item.privacy}
         // onCommnetPress={() => setCommentsVisible(true)}
@@ -301,7 +289,6 @@ const Home: React.FC = () => {
           title="Successfully"
           message="Password has been updated successfully"
           buttonText="Apply"
-          onPress={() => navigation.navigate('Home')}
           comments={commentsVisible?.comments}
           postId={commentsVisible?.id}
         />

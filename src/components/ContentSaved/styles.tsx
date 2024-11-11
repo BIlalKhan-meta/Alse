@@ -55,8 +55,8 @@ const styles = StyleSheet.create({
     // flex: 1,
     flexDirection: 'row',
     // justifyContent: 'space-between',
-    width: vw * 45,
-    // backgroundColor: "yellow"
+    width: '100%',
+    backgroundColor: 'yellow',
     // alignItems: 'center',
     // marginLeft: 10, // Adjust spacing between image and text
   },
