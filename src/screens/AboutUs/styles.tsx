@@ -1,24 +1,20 @@
-import { StyleSheet } from 'react-native';
-import { colors } from '../../utils/theme';
-import { fontSizes, vh, vw } from '../../constant';
+import {StyleSheet} from 'react-native';
+import {colors} from '../../utils/theme';
+import {fontSizes, vh, vw} from '../../constant';
 
 const styles = StyleSheet.create({
   scrollview: {
-    backgroundColor: colors.white
+    backgroundColor: colors.white,
   },
   container: {
-    paddingHorizontal: vw * 6,
-    paddingBottom: vh * 4,
-    margin: vh * 2
-    // backgroundColor:colors.red,
+    paddingHorizontal: vw * 4,
+    paddingVertical: vh * 2,
+    margin: vh * 2,
   },
   adddetailsheading: {
-    // marginTop: vh * 1.5,
     color: colors.darkGray,
-    fontSize: fontSizes.f14
-
-  }
-
+    fontSize: fontSizes.f14,
+  },
 });
 
 export default styles;
