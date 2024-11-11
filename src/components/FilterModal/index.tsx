@@ -50,8 +50,6 @@ const FilterModal: React.FC<FilterModalProps> = ({
   onStatusChange,
   style,
 }) => {
-  console.log('FROMMMMMMMMMMMMMMMMMMMMM', toDate);
-
   if (isVisible) {
     return (
       <TouchableOpacity
@@ -60,34 +58,6 @@ const FilterModal: React.FC<FilterModalProps> = ({
         onPress={onClose}>
         <View style={styles.modalContainer}>
           <InterRegular>Sort By:</InterRegular>
-          {/* <TouchableOpacity onPress={() => setOpenDate(true)}>
-            <View style={[styles.textinputbox]}>
-              <QanelasLight style={{}}>{formattedDate}</QanelasLight>
-              <Image source={images.down} style={styles.calendericon} />
-            </View>
-          </TouchableOpacity>
-          <DatePicker
-            modal
-            mode="date"
-            open={openDate}
-            date={date}
-            onConfirm={(date) => {
-              setOpenDate(false);
-              setDate(date);
-              setFormattedDate(formatDate(date));
-            }}
-            onCancel={() => {
-              setOpenDate(false);
-            }}
-          />
-
-
-          <TouchableOpacity onPress={() => setOpenDate(true)}>
-            <View style={[styles.textinputbox]}>
-              <QanelasLight style={{}}>{formattedDate}</QanelasLight>
-              <Image source={images.down} style={styles.calendericon} />
-            </View>
-          </TouchableOpacity> */}
 
           <DatePickerInput
             label="From Date"

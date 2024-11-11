@@ -121,25 +121,38 @@ const Marketplace: React.FC = () => {
   const navigation = useNavigation();
   const user = useSelector(selectUserProfile);
 
-  const [searchResults, setSearchResults] = useState<string[]>([]);
-  const [shops, setShops] = useState<string[]>([]);
+  const [shops, setShops] = useState([]);
   const [loading, setLoading] = useState(false);
   const isFocused = useIsFocused();
-  const usser = useSelector(selectUserProfile);
+  const [filteredData, setFilteredData] = useState([]);
+  const [str, setStr] = useState();
 
   const handleSearch = (query: string) => {
     console.log(`Searching for shops with query: ${query}`);
     // Simulated search results for demonstration
-    setSearchResults([
-      `Shop 1 - ${query}`,
-      `Shop 2 - ${query}`,
-      `Shop 3 - ${query}`,
-    ]);
+    // setSearchResults([
+    //   `Shop 1 - ${query}`,
+    //   `Shop 2 - ${query}`,
+    //   `Shop 3 - ${query}`,
+    // ]);
+    let filtered = shops.filter((item: any) =>
+      item?.shop_name?.includes(query),
+    );
+    setFilteredData(filtered);
   };
 
   useEffect(() => {
     getData();
   }, [isFocused]);
+
+  useEffect(() => {
+    const filterOrders = () => {
+      let filtered = [...shops];
+      setFilteredData(filtered);
+    };
+
+    filterOrders();
+  }, [shops]);
 
   const getData = async () => {
     setLoading(true);
@@ -148,9 +161,6 @@ const Marketplace: React.FC = () => {
     setLoading(false);
 
     setShops(res.data?.data?.data);
-    console.log('====================================');
-    console.log(res.data?.data?.data, '====ressss');
-    console.log('====================================');
   };
 
   if (!user?.has_subscription) {
@@ -162,38 +172,26 @@ const Marketplace: React.FC = () => {
   }
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false}>
-      <View style={styles.container}>
-        {/* <HeaderComponent
-          label={'Shops'}
-          onBackPress={() => navigation.goBack()}
-        /> */}
-
-        <Card>
-          <SearchComponent onSearch={handleSearch} placeholder="Find shop" />
-          <WishlistScreen
-            wishlist={shops}
-            onPress={(shopId, userId) => {
-              console.log('====================================');
-              console.log(user, 'User', 'iddddddddd', userId);
-              console.log('====================================');
-
-              if (user.id == userId) {
-                navigation.navigate('MyShop', {shopId});
-              } else {
-                navigation.navigate('Shop', {shopId});
-              }
-            }}
-          />
-
-          <CustomButton
-            style={styles.button}
-            onPress={() => navigation.navigate('AddStore')}>
-            Create Shop/My Shop
-          </CustomButton>
-        </Card>
-      </View>
-    </ScrollView>
+    <View style={styles.container}>
+      <Card>
+        <SearchComponent onSearch={handleSearch} placeholder="Find shop" />
+        <WishlistScreen
+          wishlist={filteredData}
+          onPress={(shopId, userId) => {
+            if (user.id == userId) {
+              navigation.navigate('MyShop', {shopId});
+            } else {
+              navigation.navigate('Shop', {shopId});
+            }
+          }}
+        />
+        <CustomButton
+          style={styles.button}
+          onPress={() => navigation.navigate('AddStore')}>
+          Create Shop/My Shop
+        </CustomButton>
+      </Card>
+    </View>
   );
 };
 

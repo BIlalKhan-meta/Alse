@@ -133,7 +133,11 @@ const Cart = () => {
             <CustomButton
               style={styles.shoppingButton}
               txtstyle={styles.shoppingTxt}
-              onPress={() => navigation.navigate('Shop')}>
+              onPress={() =>
+                navigation.navigate('MarketPlaceNavigation', {
+                  screen: 'Marketplace',
+                })
+              }>
               Continue Shopping
             </CustomButton>
           </>

@@ -10,6 +10,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     // paddingTop: 50,
   },
+  dropDown: {
+    borderColor: colors.inputcolor,
+    backgroundColor: colors.inputcolor,
+    borderWidth: 1,
+    width: vw * 45,
+  },
   activeContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',

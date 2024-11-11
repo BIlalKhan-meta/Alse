@@ -19,5 +19,5 @@ export const general = createSlice({
 
 export const {getCountries} = general.actions;
 
-export const countriesList = state => state.general.countries;
+export const countriesList = (state) => state.general.countries;
 export default general.reducer;

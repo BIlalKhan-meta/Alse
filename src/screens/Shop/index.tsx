@@ -22,6 +22,16 @@ import SortModal from '../../components/SortModal';
 import {getProductByShop, shopDetail} from '../../api/shop';
 import Loader from '../../components/Loader';
 import {getSavedItems, removeSavedItem, saveItem} from '../../api/menu';
+import DropdownPicker from '../../components/DropdownPicker';
+import DropDownTextInput from '../../components/TextInput/DropDownTextInput';
+import Row from '../../components/Row';
+import {vw} from '../../constant';
+
+const filterItems = [
+  {label: 'Product Name (A-Z)', value: 'name'},
+  {label: 'Price (Low to High)', value: 'LH'},
+  {label: 'Price (High to Low)', value: 'HL'},
+];
 
 const Shop: React.FC = () => {
   const navigation = useNavigation();
@@ -33,6 +43,8 @@ const Shop: React.FC = () => {
   const [shopDetails, setShopDetails] = useState([]);
   const [shopProduct, setShopProduct] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [filter, setFilter] = useState('');
+  const [filteredData, setFilteredData] = useState([]);
 
   // const [modalVisible, setModalVisible] = useState(false);
   const [sortValue, setSortValue] = useState<string>(''); // State for the selected sort value
@@ -46,6 +58,26 @@ const Shop: React.FC = () => {
     setModalVisible(false);
     setReportSuccess(true);
   };
+
+  useEffect(() => {
+    const filterOrders = () => {
+      let filtered = [...shopProduct];
+      if (filter == 'name') {
+        filtered.sort((a: any, b: any) =>
+          a?.shop_name?.localeCompare(b?.shop_name),
+        );
+      }
+      if (filter == 'LH') {
+        filtered.sort((a: any, b: any) => a?.price - b?.price);
+      }
+      if (filter == 'HL') {
+        filtered.sort((a: any, b: any) => b?.price - a?.price);
+      }
+      setFilteredData(filtered);
+    };
+
+    filterOrders();
+  }, [shopProduct, filter]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -85,10 +117,6 @@ const Shop: React.FC = () => {
 
     setShopDetails(res?.data?.data);
     setShopProduct(res2?.data?.data?.data);
-    console.log('====================================');
-    console.log(res?.data?.data, '====ressss');
-    console.log(res2?.data?.data, '====rssss producttttt');
-    console.log('====================================');
     setLoading(false);
   };
 
@@ -154,55 +182,36 @@ const Shop: React.FC = () => {
               />
             </View>
 
-            <View style={styles.sortConatiner}>
-              <InterMedium style={styles.mainheading}>Shop Name</InterMedium>
-              <View>
-                <InterRegular style={styles.heading}>Sort by:</InterRegular>
-                <View>
-                  <TouchableOpacity
-                    onPress={() => setModalVisible(true)}
-                    style={styles.sortInput}>
-                    <Text style={styles.sortText}>
-                      {sortValue || 'Select an option'}
-                    </Text>
-                  </TouchableOpacity>
-                  {/* <Picker
-                                        style={[styles.pickercontainer]}
-                                        dropdownIconColor={colors.inputText}
-                                        enabled={true}
-                                        mode='dialog'
-                                        placeholder={"Product name (a-z)"}
-
-                                    // onValueChange={handleChange('gender')}
-                                    // selectedValue={values.gender}
-                                    // data={genders}
-                                    >
-
-                                        <Picker.Item label={"Product name (a-z)"} value="" />
-
-                                        {productFilter.map((item) => (
-                                            <Picker.Item
-                                                label={item.name.toString()}
-                                                value={item.name.toString()}
-                                                key={item.id.toString()}
-                                            />
-                                        ))}
-
-                                    </Picker> */}
-                </View>
+            <Row
+              align="flex-start"
+              justify="space-between"
+              style={{width: '100%', paddingHorizontal: vw}}>
+              <View style={{width: '50%'}}>
+                <InterMedium lines={2} style={styles.mainheading}>
+                  {shopDetails?.shop_name}
+                </InterMedium>
               </View>
-            </View>
+              {filteredData.length != 0 && (
+                <View style={{width: '50%'}}>
+                  <InterRegular style={styles.heading}>Sort by:</InterRegular>
+                  <DropDownTextInput
+                    items={filterItems}
+                    defaultValue={filter}
+                    placeholder="Select Sort"
+                    onChangeValue={setFilter}
+                    style={styles.dropDown}
+                  />
+                </View>
+              )}
+            </Row>
 
             <WishlistScreen
-              wishlist={shopProduct}
+              wishlist={filteredData}
               heart={true}
               addCart={true}
               product={true}
               handleRemove={handleRemoveFromWishlist}
               onPress={id => {
-                console.log('====================================');
-                console.log(id, 'Id Frommm producttt');
-                console.log('====================================');
                 navigation.navigate('ProductView', {productId: id});
               }}
             />

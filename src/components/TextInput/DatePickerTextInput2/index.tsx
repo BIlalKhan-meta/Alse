@@ -1,12 +1,13 @@
 import React, {useState} from 'react';
-import {View, TouchableOpacity, Text, StyleSheet, Image} from 'react-native';
+import {View, TouchableOpacity, StyleSheet} from 'react-native';
 import DatePicker from 'react-native-date-picker';
-import {images} from '../../../utils/images';
 import InterLight from '../../Text/InterLight';
+import DateTimePicker from 'react-native-modal-datetime-picker';
+import {dateHelper} from '../../../utils';
 
 interface DatePickerInputProps {
   label: string;
-  initialDate: Date;
+  initialDate: Date | null;
   placeholder: string;
   onDateChange: (date: Date) => void;
   style: object;
@@ -20,8 +21,9 @@ const DatePickerInput: React.FC<DatePickerInputProps> = ({
   style,
 }) => {
   const [openDate, setOpenDate] = useState<boolean>(false);
-  const [date, setDate] = useState<Date>(initialDate);
-  const [formattedDate, setFormattedDate] = useState<string>(placeholder);
+  const [formattedDate, setFormattedDate] = useState<string>(
+    initialDate ? dateHelper(initialDate) : placeholder,
+  );
 
   const formatDate = (date: Date) => {
     const day = String(date.getDate()).padStart(2, '0');
@@ -34,18 +36,30 @@ const DatePickerInput: React.FC<DatePickerInputProps> = ({
     <>
       <TouchableOpacity onPress={() => setOpenDate(true)}>
         <View style={[styles.textinputbox, style]}>
-          <InterLight style={{}}>{formattedDate}</InterLight>
-          <Image source={images.down} style={styles.calendericon} />
+          <InterLight>{formattedDate}</InterLight>
         </View>
       </TouchableOpacity>
-      <DatePicker
+      {/* <DatePicker
         modal
         mode="date"
         open={openDate}
-        date={date ? date : new Date()}
+        date={initialDate ? initialDate : new Date()}
         onConfirm={date => {
           setOpenDate(false);
-          setDate(date);
+          setFormattedDate(formatDate(date));
+          onDateChange(date);
+        }}
+        onCancel={() => {
+          setOpenDate(false);
+        }}
+      /> */}
+      <DateTimePicker
+        mode="date"
+        // open={openDate}
+        isVisible={openDate}
+        date={initialDate ? initialDate : new Date()}
+        onConfirm={date => {
+          setOpenDate(false);
           setFormattedDate(formatDate(date));
           onDateChange(date);
         }}

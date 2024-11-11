@@ -1,12 +1,5 @@
 import React, {useEffect, useLayoutEffect, useState} from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-  FlatList,
-  Linking,
-} from 'react-native';
+import {View, Text, FlatList, Linking} from 'react-native';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {Formik} from 'formik';
 import * as yup from 'yup';
@@ -34,6 +27,7 @@ import {useSelector} from 'react-redux';
 import {countriesList} from '../../store/slices/generalSlice';
 import {getCity, getState} from '../../api/home';
 
+
 const CheckoutScreen: React.FC = () => {
   const navigation = useNavigation();
   const isFoused = useIsFocused();
@@ -54,10 +48,6 @@ const CheckoutScreen: React.FC = () => {
   const [billStates, setBillStates] = useState([]);
   const [shipCities, setShipCities] = useState([]);
   const [billCities, setBillCities] = useState([]);
-
-  const handleDropdownChange = (value: string | null) => {
-    console.log('Selected value:', value);
-  };
 
   const validationSchema = yup.object().shape({
     first_name: yup.string().required('First Name is required'),

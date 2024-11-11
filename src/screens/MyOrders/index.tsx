@@ -18,7 +18,7 @@ import OrderCard from '../../components/CardOrder';
 const MyOrders: React.FC = () => {
   const navigation = useNavigation();
   const [selectedTab, setSelectedTab] = useState<
-    'All' | 'pending' | 'Delivered' | 'Cancelled'
+    'All' | 'pending' | 'delivered' | 'cancelled'
   >('All');
   const [modalVisible, setModalVisible] = useState(false);
   const [fromDate, setFromDate] = useState<Date | null>(null);
@@ -90,8 +90,6 @@ const MyOrders: React.FC = () => {
     filterOrders(); // Run the filtering function whenever the orders or selectedTab changes
   }, [orders, selectedTab, selectedStatus, fromDate, toDate]);
 
-  console.log('DATEEEEEEEEEEEEEEEEEEEE', toDate);
-
   return (
     <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
       <View style={styles.container}>
@@ -112,12 +110,6 @@ const MyOrders: React.FC = () => {
           selectedTab={selectedTab}
           onTabPress={setSelectedTab}
         />
-
-        {/* <OrderListComponent
-            orders={filteredOrders}
-            title={'My Order Detail'}
-          /> */}
-
         <FlatList
           data={filteredOrders}
           refreshing={loader}

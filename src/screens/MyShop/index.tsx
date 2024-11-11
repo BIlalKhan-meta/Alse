@@ -29,61 +29,13 @@ import SortModal from '../../components/SortModal';
 import {getProductByShop, shopDetail} from '../../api/shop';
 import CustomButton from '../../components/CustomButton';
 import Loader from '../../components/Loader';
+import DropDownTextInput from '../../components/TextInput/DropDownTextInput';
+import Row from '../../components/Row';
 
-const dummyWishlist = [
-  {
-    id: '1',
-    name: 'Product 1',
-    price: 20,
-    imageUrl: `${images.pro1}`,
-    size: 'L, M, S',
-    colors: 'Green',
-  },
-  {
-    id: '2',
-    name: 'Product 2',
-    price: 30,
-    imageUrl: `${images.pro2}`,
-    size: 'L, M,',
-    colors: 'Green',
-  },
-  {
-    id: '3',
-    name: 'Product 3',
-    price: 25,
-    imageUrl: `${images.pro2}`,
-    size: 'L, M, S',
-    colors: 'Green',
-  },
-  {
-    id: '4',
-    name: 'Product 4',
-    price: 25,
-    imageUrl: `${images.pro1}`,
-    size: 'L, M, S',
-    colors: 'Green',
-  },
-  {
-    id: '5',
-    name: 'Product 5',
-    price: 25,
-    imageUrl: `${images.pro1}`,
-    size: 'L, M, S',
-    colors: 'Green',
-  },
-  {
-    id: '6',
-    name: 'Product 6',
-    price: 25,
-    imageUrl: `${images.pro2}`,
-    size: 'L, M, S',
-    colors: 'Green',
-  },
-];
-
-const productFilter = [
-  {name: 'a', id: 1},
-  {name: 'b', id: 2},
+const filterItems = [
+  {label: 'Product Name (A-Z)', value: 'name'},
+  {label: 'Price (Low to High)', value: 'LH'},
+  {label: 'Price (High to Low)', value: 'HL'},
 ];
 
 const MyShop: React.FC = () => {
@@ -97,6 +49,8 @@ const MyShop: React.FC = () => {
   const [shopProduct, setShopProduct] = useState([]);
   const [loading, setLoading] = useState(false);
   const [modalVisibleSort, setModalVisibleSort] = useState(false);
+  const [filter, setFilter] = useState('');
+  const [filteredData, setFilteredData] = useState([]);
 
   // const [modalVisible, setModalVisible] = useState(false);
   const [sortValue, setSortValue] = useState<string>(''); // State for the selected sort value
@@ -146,6 +100,26 @@ const MyShop: React.FC = () => {
     setLoading(false);
   };
 
+  useEffect(() => {
+    const filterOrders = () => {
+      let filtered = [...shopProduct];
+      if (filter == 'name') {
+        filtered.sort((a: any, b: any) =>
+          a?.shop_name?.localeCompare(b?.shop_name),
+        );
+      }
+      if (filter == 'LH') {
+        filtered.sort((a: any, b: any) => a?.price - b?.price);
+      }
+      if (filter == 'HL') {
+        filtered.sort((a: any, b: any) => b?.price - a?.price);
+      }
+      setFilteredData(filtered);
+    };
+
+    filterOrders();
+  }, [shopProduct, filter]);
+
   if (loading) {
     return <Loader />;
   }
@@ -154,24 +128,29 @@ const MyShop: React.FC = () => {
     <ScrollView showsVerticalScrollIndicator={false}>
       <View style={styles.container}>
         <Card style={styles.contentContainer}>
-          <View style={styles.sortConatiner}>
-            <InterMedium style={styles.mainheading}>Shop Name</InterMedium>
-            <View>
-              <InterRegular style={styles.heading}>Sort by:</InterRegular>
-              <View>
-                <TouchableOpacity
-                  onPress={() => setModalVisibleSort(true)}
-                  style={styles.sortInput}>
-                  <Text style={styles.sortText}>
-                    {sortValue || 'Select an option'}
-                  </Text>
-                </TouchableOpacity>
-              </View>
+          <Row
+            align="flex-start"
+            justify="space-between"
+            style={{width: '100%', paddingHorizontal: vw}}>
+            <View style={{width: '50%'}}>
+              <InterMedium lines={2} style={styles.mainheading}>
+                {shopDetails?.shop_name}
+              </InterMedium>
             </View>
-          </View>
+            <View style={{width: '50%'}}>
+              <InterRegular style={styles.heading}>Sort by:</InterRegular>
+              <DropDownTextInput
+                items={filterItems}
+                defaultValue={filter}
+                placeholder="Select Sort"
+                onChangeValue={setFilter}
+                style={styles.dropDown}
+              />
+            </View>
+          </Row>
 
           <WishlistScreen
-            wishlist={shopProduct}
+            wishlist={filteredData}
             onAddToCart={handleAddToCart}
             onRemoveFromWishlist={handleRemoveFromWishlist}
             // heart={true}
