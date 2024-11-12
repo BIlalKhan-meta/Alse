@@ -154,22 +154,6 @@ const authSlice = createSlice({
   },
   extraReducers: builder => {
     builder
-      .addCase(login.pending, state => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(login.fulfilled, (state, action) => {
-        state.loading = false;
-        // console.log('====================================');
-        // console.log('action.payload =================>', action.payload);
-        // console.log('====================================');
-        state.token = action.payload.data?.access_token;
-        state.user = action.payload?.data?.user;
-      })
-      .addCase(login.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-      })
       .addCase(GetUserProfile.pending, state => {
         state.loading = true;
         state.error = null;
@@ -192,41 +176,6 @@ const authSlice = createSlice({
         state.user = null;
         state.token = null;
       });
-    // .addCase(signup.pending, state => {
-    //   state.loading = true;
-    //   state.error = null;
-    // })
-    // .addCase(signup.fulfilled, (state, {payload}) => {
-    //   state.loading = false;
-    //   state.user = payload.user;
-    //   state.token = payload.token;
-    // })
-    // .addCase(signup.rejected, (state, {payload}) => {
-    //   state.loading = false;
-    //   state.error = payload as string;
-    // })
-    // .addCase(forgotPassword.pending, state => {
-    //   state.loading = true;
-    //   state.error = null;
-    // })
-    // .addCase(forgotPassword.fulfilled, (state, action) => {
-    //   state.loading = false;
-    // })
-    // .addCase(forgotPassword.rejected, (state, action) => {
-    //   state.loading = false;
-    //   state.error = action.payload as string;
-    // })
-    // .addCase(verifyOtp.pending, state => {
-    //   state.loading = true;
-    //   state.error = null;
-    // })
-    // .addCase(verifyOtp.fulfilled, (state, action) => {
-    //   state.loading = false;
-    // })
-    // .addCase(verifyOtp.rejected, (state, action) => {
-    //   state.loading = false;
-    //   state.error = action.payload as string;
-    // });
   },
 });
 export const selectBearerToken = state => state.auth.token;

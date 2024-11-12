@@ -1,25 +1,14 @@
 import React, {useEffect, useState} from 'react';
-import {
-  View,
-  ScrollView,
-  TouchableWithoutFeedback,
-  FlatList,
-  ActivityIndicator,
-  TouchableOpacity,
-} from 'react-native';
+import {View, FlatList, TouchableOpacity} from 'react-native';
 import {images} from '../../utils/images';
 import CardComponent from '../../components/CardComponent';
-import {
-  useFocusEffect,
-  useIsFocused,
-  useNavigation,
-} from '@react-navigation/native';
+import {useIsFocused, useNavigation} from '@react-navigation/native';
 import styles from './styles';
 import PostComponent from '../../components/PostComponent';
 import CommentsModal from '../../components/CommentsModal';
 import ReactModal from '../../components/ReactModal';
 import GeneralModal from '../../components/GeneralModal';
-import {dummyComments, reactions} from '../../dummyData';
+import {reactions} from '../../dummyData';
 import {useAppDispatch, useAppSelector} from '../../hooks/storeHooks';
 import {
   getCommentPost,
@@ -30,7 +19,6 @@ import {
   updateLike,
 } from '../../store/slices/homeSlice';
 import InterRegular from '../../components/Text/InterRegular';
-import dayjs from 'dayjs';
 import {getMessage, Toast} from '../../utils/helpers';
 import {getCountriesList, reportPost} from '../../api/home';
 import {removeSavedItem, saveItem} from '../../api/menu';
@@ -43,7 +31,6 @@ const Home: React.FC = () => {
   const dispatch = useAppDispatch();
   const isFoused = useIsFocused();
 
-  // Select posts and loading state from the Redux store
   const {posts} = useAppSelector(state => state.home);
   const [loader, setLoader] = useState(false);
 

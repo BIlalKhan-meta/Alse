@@ -99,6 +99,7 @@ const RegisterScreen: React.FC = () => {
   const handleSubmit = (values: FormValues) => {
     setLoading(true);
     if (image == null) {
+      setLoading(false);
       return Toast.show({
         type: 'error',
         text1: 'Profile Picture',
@@ -120,8 +121,6 @@ const RegisterScreen: React.FC = () => {
     Object.entries(signupData).forEach(([key, value]) => {
       form.append(key, value);
     });
-
-    console.log('DATAAAAAAAAAAAAAAAAAAAAAAAA', JSON.stringify(form, null, 4));
 
     signup(form)
       .then(res => {
