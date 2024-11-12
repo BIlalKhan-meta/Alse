@@ -1,273 +1,193 @@
-import { useState } from 'react';
-import {
-  View, Text,
-  TouchableOpacity,
-  Image
-} from 'react-native';
+import {useEffect, useState} from 'react';
+import {View, Text, TouchableOpacity, Image} from 'react-native';
 import * as yup from 'yup';
 import styles from './styles';
-import InterBold from '../../../components/Text/InterBold';
 import InterRegular from '../../../components/Text/InterRegular';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import RegularTextInput from '../../../components/TextInput/RegularTextInput';
-import { Formik } from 'formik';
-
-import InterLight from '../../../components/Text/InterLight';
+import {Formik} from 'formik';
 import PhoneNumberInput from '../../../components/TextInput/PhoneNumberInput';
-import { colors } from '../../../utils/theme';
-import DatePicker from 'react-native-date-picker';
-import { Picker } from '@react-native-picker/picker';
 import CheckboxComponent from '../../../components/CheckboxComponent';
 import CustomButton from '../../../components/CustomButton';
-import { images } from '../../../utils/images';
+import {images} from '../../../utils/images';
 import GeneralModal from '../../../components/GeneralModal';
-import { useNavigation } from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 import Card from '../../../components/Card';
-import InterRegularSmallest from '../../../components/Text/InterRegularSmallest';
-import { useAppDispatch } from '../../../hooks/storeHooks';
-import { signup } from '../../../store/slices/authSlice';
 import useImagePicker from '../../../hooks/useImagePicker';
-import BottomModal from '../../../components/BottomModel';
-import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
-import moment from 'moment';
-import { getMessage, Toast } from '../../../utils/helpers';
+import InterBoldLabel from '../../../components/Text/InterBoldLabel';
+import {DialogBox} from '../../../components/DialogBox';
+import DatePickerInput from '../../../components/TextInput/DatePickerTextInput2';
+import Toast from 'react-native-toast-message';
+import {colors} from '../../../utils/theme';
+import {signup} from '../../../api/auth';
+import {dateHelper} from '../../../utils';
+
+interface FormValues {
+  name: string;
+  email: string;
+  password: string;
+  cpassword: string;
+  contactNo: string;
+  countryCode: string;
+  dateOfBirth: string;
+  // age: string,
+}
+
+const initialValues = {
+  name: '',
+  email: '',
+  password: '',
+  cpassword: '',
+  contactNo: '',
+  countryCode: '+1',
+  dateOfBirth: '',
+  // age: '',
+};
+
+const validationSchema = yup.object().shape({
+  name: yup.string().required('Name is required'),
+  email: yup
+    .string()
+    .email('Email or password is wrong !! TRY AGAIN')
+    .required('Email is required'),
+  password: yup
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .required('Password is required'),
+  cpassword: yup
+    .string()
+    .oneOf([yup.ref('password')], 'Passwords must match')
+    .required('Confirm Password is required'),
+  contactNo: yup.string().required('Contact Number is required'),
+  dateOfBirth: yup.string().required('Date of Birth is required'),
+});
 
 const RegisterScreen: React.FC = () => {
-
   const navigation = useNavigation();
-  const dispatch = useAppDispatch();
-  // const { image, captureImage, chooseImageFromLibrary } = useImagePicker();
+  const {imageData, captureImage, chooseImageFromLibrary} = useImagePicker();
 
-  const [submitted, setSubmitted] = useState<boolean>(false)
-  const [securePassword, setSecurePassword] = useState<boolean>(true)
-  const [secureCPassword, setSecureCPassword] = useState<boolean>(true)
-  const [open1, setOpen1] = useState(false);
-  const [value1, setValue1] = useState(null);
+  const [submitted, setSubmitted] = useState<boolean>(false);
+  const [securePassword, setSecurePassword] = useState<boolean>(true);
+  const [secureCPassword, setSecureCPassword] = useState<boolean>(true);
   const [phoneNumber, setPhoneNumber] = useState<string>('');
-  const [openDate, setOpenDate] = useState<boolean>(false)
-  const [date, setDate] = useState<Date>(new Date());
   const [isChecked, setIsChecked] = useState<boolean>(false);
   const [successModel, setSuccessModel] = useState<boolean>(false);
-  const [bottomVisible, setbottomVisible] = useState<boolean>(false);
-  const [image, setImage] = useState(null);
+  const [visible, setVisible] = useState<boolean>(false);
+  const [image, setImage] = useState<object | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const handleCheckboxChange = (value: boolean) => {
     setIsChecked(value);
   };
 
-  // const handleNumberChange = (number: string) => {
-  //   setPhoneNumber(number);
-  // }
+  useEffect(() => {
+    if (imageData) {
+      setImage({
+        uri: imageData?.uri,
+        name: imageData?.fileName,
+        type: imageData?.type,
+      });
+      setVisible(false);
+    }
+  }, [imageData]);
+
   const handleNumberChange = (number: string, setFieldValue: any) => {
     setFieldValue('contactNo', number);
     setPhoneNumber(number);
   };
 
-
-
-  const ages = Array.from({ length: 100 }, (_, index) => ({
-    name: `${index + 1} years`,
-    id: index + 1
-  }));
-
-  interface FormValues {
-    name: string,
-    email: string,
-    password: string,
-    cpassword: string,
-    contactNo: string,
-    countryCode: string;
-    dateOfBirth: string,
-    // age: string,
-
-  }
-
-  const initialValues = {
-    name: '',
-    email: '',
-    password: '',
-    cpassword: '',
-    contactNo: '',
-    countryCode: '+1',
-    dateOfBirth: '',
-    // age: '',
-  };
-
-  const validationSchema: yup.AnySchema<FormValues> = yup.object().shape({
-    name: yup.string().required('Name is required'),
-    email: yup
-      .string()
-      .email('Email or password is wrong !! TRY AGAIN')
-      .required('Email is required'),
-    password: yup
-      .string()
-      .min(6, 'Password must be at least 6 characters')
-      .required('Password is required'),
-    cpassword: yup
-      .string()
-      .oneOf([yup.ref('password'), null], 'Passwords must match')
-      .required('Confirm Password is required'),
-    contactNo: yup.string().required('Contact Number is required'),
-    dateOfBirth: yup
-      .date()
-      .required('Date of Birth is required'),
-    // age: yup
-    //   .string()
-    //   .required('Age is required'),
-  });
-
-
-  const handleSubmit = (values: FormValues, { resetForm }: { resetForm: () => void }) => {
-    // setSuccessModel(true);
-    // Prepare data for signup
-    let code;
-    if (values?.countryCode == '') {
-      code = "+1"
-    } else {
-      code = values?.countryCode
-
+  const handleSubmit = (values: FormValues) => {
+    setLoading(true);
+    if (image == null) {
+      return Toast.show({
+        type: 'error',
+        text1: 'Profile Picture',
+        text2: 'Profile Picture Required',
+      });
     }
     const signupData = {
-      full_name: values.name, // Assuming 'name' is first name
-      last_name: 'test', // If you want to add last name, update the input
-      username: values.name, // Add username input in your form
+      full_name: values.name,
       email: values.email,
       password: values.password,
-      // dialing_code: values?.countryCode,
-      dialing_code: code,
+      dialing_code: values.countryCode,
       phone_number: values.contactNo,
-      gender: 'male', // Adjust based on user input
-      dob: moment(date).format("YYYY-MM-DD"), // Use your existing formatDate function
+      // gender: 'male',
+      dob: dateHelper(values.dateOfBirth),
+      image: image,
     };
-    console.log(values?.countryCode, "Countryyy codee ")
-    console.log(values?.contactNo, "contactNo codee ")
-    if (image) {
-      let imagePath = image.split('/');
 
-      const uploadedImage = {
-        uri: image,
-        name: imagePath[imagePath.length - 1],
-        type: `image/jpeg`,
-      };
-      signupData['image'] = uploadedImage;
-    }
+    const form = new FormData();
+    Object.entries(signupData).forEach(([key, value]) => {
+      form.append(key, value);
+    });
 
-    // Dispatch the signup action
-    dispatch(signup(signupData))
-      .unwrap()
-      .then((res) => {
+    console.log('DATAAAAAAAAAAAAAAAAAAAAAAAA', JSON.stringify(form, null, 4));
+
+    signup(form)
+      .then(res => {
         console.log('response from Signup ====>', res);
-
-        // Optionally navigate or show success message
-        // navigation.navigate("Login");
-        resetForm()
-        setSuccessModel(true)
-        setSubmitted(false)
+        setSuccessModel(true);
       })
-      .catch((error) => {
-        console.error("Signup error:", error);
-        Toast.error(getMessage(error?.message));
-        setSubmitted(false)
+      .catch(error => {
+        console.error('Signup error:', error);
+      })
+      .finally(() => {
+        setSubmitted(false);
+        setLoading(false);
       });
   };
-
-
-  function formatDate(date: any) {
-    if (!date) {
-      // If date is empty or null, return an empty string
-      return '';
-    }
-    else {
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      const year = date.getFullYear();
-
-      return `${month}/${day}/${year}`;
-
-    }
-
-  }
-
-
-  const handleImage = camera => {
-    let options = {
-      mediaType: 'photo', // 'photo' or 'video'
-      maxWidth: 300,
-      maxHeight: 550,
-      quality: 1,
-    };
-    if (camera) {
-      launchCamera(options, response => {
-        if (response.didCancel) {
-          console.log('User cancelled camera picker');
-        } else if (response.errorCode == 'camera_unavailable') {
-          console.log('Camera not available on device');
-        } else if (response.errorCode == 'permission') {
-          console.log('Permission not satisfied');
-        } else {
-          console.log('response ===>', response);
-          setbottomVisible(false);
-          setImage(response?.assets[0]?.uri);
-
-          // Set the captured image URI
-          // Handle further processing if needed (e.g., setting file type)
-        }
-      });
-    } else {
-      launchImageLibrary(options, response => {
-        if (response.didCancel) {
-          console.log('User cancelled image picker');
-        } else if (response.errorCode == 'permission') {
-          console.log('Permission not satisfied');
-        } else {
-          setbottomVisible(false);
-          setImage(response?.assets[0]?.uri);
-          // let imagePath = imageData.split('/');
-
-          // const image = {
-          //   uri: imageData,
-          //   name: imagePath[imagePath.length - 1],
-          //   type: `image/jpeg`,
-          // };
-          // Set the selected image URI
-          // Handle further processing if needed (e.g., setting file type)
-        }
-      });
-    }
-  };
-
 
   return (
-
-
     <Formik
       initialValues={initialValues}
       validationSchema={validationSchema}
       onSubmit={handleSubmit}>
-      {({ handleSubmit, handleChange, handleBlur, values, errors, resetForm, setFieldValue }) => (
+      {({
+        handleSubmit,
+        handleChange,
+        handleBlur,
+        values,
+        errors,
+        setFieldValue,
+      }) => (
         <>
           <KeyboardAwareScrollView
             style={styles.scrollview}
-            showsVerticalScrollIndicator={false}
-          >
+            showsVerticalScrollIndicator={false}>
+            <DialogBox
+              status="upload"
+              heading="Upload Media"
+              onClose={() => setVisible(false)}
+              visible={visible}
+              button={[
+                {
+                  text: 'Open Camera',
+                  onPress: () => captureImage(),
+                },
+                {text: 'Open Gallery', onPress: chooseImageFromLibrary},
+              ]}
+            />
 
             <View style={styles.container}>
               <Card style={styles.cardStyle}>
-
-                <InterBold style={styles.heading}>Create Account</InterBold>
+                <InterBoldLabel style={styles.heading}>
+                  Create Account
+                </InterBoldLabel>
                 <View style={styles.imageContainer}>
-                  <Image source={image ? { uri: image } : images.profile} style={styles.imageStyle} />
+                  <Image
+                    source={imageData ? {uri: imageData?.uri} : images.profile}
+                    style={styles.imageStyle}
+                  />
 
-
-                  <TouchableOpacity style={styles.camera}
-                    onPress={() => setbottomVisible(true)}
-                  >
+                  <TouchableOpacity
+                    style={styles.camera}
+                    onPress={() => setVisible(true)}>
                     <Image source={images.camera} />
                   </TouchableOpacity>
                 </View>
                 <RegularTextInput
                   label="Full Name"
-                  placeholder='Enter full name'
+                  placeholder="Enter full name"
                   placeholderTextColor={colors.inputText}
                   onChangeText={handleChange('name')}
                   onBlur={handleBlur('name')}
@@ -277,11 +197,9 @@ const RegisterScreen: React.FC = () => {
                   labelStyle={styles.label}
                 />
 
-
-
                 <RegularTextInput
                   label="Email Address"
-                  placeholder='Enter Email Address'
+                  placeholder="Enter Email Address"
                   placeholderTextColor={colors.inputText}
                   onChangeText={handleChange('email')}
                   onBlur={handleBlur('email')}
@@ -292,84 +210,29 @@ const RegisterScreen: React.FC = () => {
 
                 <PhoneNumberInput
                   initialNumber={phoneNumber}
-                  // onNumberChange={handleNumberChange}
-                  onNumberChange={(number: string) => handleNumberChange(number, setFieldValue)}
+                  onNumberChange={(number: string) =>
+                    handleNumberChange(number, setFieldValue)
+                  }
                   label="Phone No."
-                  // value={values.contactNo}
                   submitted={submitted}
                   errors={errors.contactNo}
                   onChangeCountry={handleChange('countryCode')}
-
                 />
 
-                <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                  <View>
-                    <InterRegular style={styles.label}>
-                      Date of Birth
-                    </InterRegular>
+                <InterRegular style={styles.label}>Date of Birth</InterRegular>
 
-                    <TouchableOpacity onPress={() => setOpenDate(true)}>
-                      <View style={[styles.textinputbox]}>
-                        <InterLight style={{}}>{'mm/dd/yyyy'}</InterLight>
-                        {/* <Image source={calendericon} style={styles.calendericon}/> */}
-                      </View>
-                    </TouchableOpacity>
-                    <DatePicker
-                      modal
-                      mode="date"
-                      open={openDate}
-                      date={date}
-                      onConfirm={(date) => {
-                        setOpenDate(false)
-                        setDate(date)
-                        setFieldValue('dateOfBirth', date);
-                      }}
-                      onCancel={() => {
-                        setOpenDate(false)
-                      }}
-                    />
-                    {submitted && errors.dateOfBirth && <InterRegularSmallest style={styles.error}>{errors.dateOfBirth}</InterRegularSmallest>}
-                  </View>
-
-
-
-                  {/* <View>
-                    <InterRegular style={styles.label}>
-                      Age
-                    </InterRegular>
-                    <Picker
-                      style={[styles.pickercontainer]}
-                      dropdownIconColor={colors.inputText}
-                      enabled={true}
-                      mode='dialog'
-                      placeholder={"Select Age"}
-                      onValueChange={handleChange('age')}
-                      selectedValue={values.age}
-                    // data={ages}
-                    >
-
-                      <Picker.Item label={"Select Age"} value="" />
-
-                      {ages.map((item) => (
-                        <Picker.Item
-                          label={item.name.toString()}
-                          value={item.name.toString()}
-                          key={item.id.toString()}
-                        />
-                      ))}
-
-                    </Picker>
-                    {submitted && errors.age && <InterRegularSmallest style={styles.error}>{errors.age}</InterRegularSmallest>}
-                  </View> */}
-
-                </View>
-
-
-
+                <DatePickerInput
+                  label="Date of Birth"
+                  error={errors.dateOfBirth}
+                  initialDate={values.dateOfBirth}
+                  placeholder="mm/dd/yyyy"
+                  onDateChange={e => setFieldValue('dateOfBirth', e)}
+                  style={styles.textinputbox}
+                />
 
                 <RegularTextInput
                   label="Password"
-                  placeholder='Enter Password'
+                  placeholder="Enter Password"
                   placeholderTextColor={colors.inputText}
                   onChangeText={handleChange('password')}
                   onBlur={handleBlur('password')}
@@ -377,11 +240,12 @@ const RegisterScreen: React.FC = () => {
                   submitted={submitted}
                   errors={errors.password}
                   secureTextEntry={securePassword}
-                  onPressPassword={() => setSecurePassword(!securePassword)} />
+                  onPressPassword={() => setSecurePassword(!securePassword)}
+                />
 
                 <RegularTextInput
                   label="Confirm Password"
-                  placeholder='Enter Confirm Password'
+                  placeholder="Enter Confirm Password"
                   placeholderTextColor={colors.inputText}
                   onChangeText={handleChange('cpassword')}
                   onBlur={handleBlur('cpassword')}
@@ -389,41 +253,38 @@ const RegisterScreen: React.FC = () => {
                   submitted={submitted}
                   errors={errors.cpassword}
                   secureTextEntry={secureCPassword}
-                  onPressCPassword={() => setSecureCPassword(!secureCPassword)} />
+                  onPressCPassword={() => setSecureCPassword(!secureCPassword)}
+                />
                 <View style={styles.checkboxStyle}>
                   <CheckboxComponent
                     label="Child Account"
                     isChecked={isChecked}
                     onValueChange={handleCheckboxChange}
                   />
-
-
                 </View>
 
                 <TouchableOpacity style={styles.faceBtn}>
                   <View>
-                    <InterRegular style={styles.faceTxt}>Face Recognition is required for child verification</InterRegular>
+                    <InterRegular style={styles.faceTxt}>
+                      Face Recognition is required for child verification
+                    </InterRegular>
                     <Image source={images.face} style={styles.faceImg} />
                   </View>
                 </TouchableOpacity>
 
-
-
-                <CustomButton onPress={() => {
-                  // setSuccessModel(true)
-                  // setSubmitted(true)
-                  // resetForm()
-                  handleSubmit()
-                }}
-                  loading={submitted}
-                >
+                <CustomButton onPress={handleSubmit} loading={loading}>
                   Create Account
                 </CustomButton>
 
                 <View style={styles.loginContainer}>
-                  <InterRegular style={styles.loginTxt}>Already have an account? </InterRegular>
-                  <TouchableOpacity onPress={() => navigation.navigate("Login")}>
-                    <InterRegular style={styles.loginTxt2}>Login Now </InterRegular>
+                  <InterRegular style={styles.loginTxt}>
+                    Already have an account?{' '}
+                  </InterRegular>
+                  <TouchableOpacity
+                    onPress={() => navigation.navigate('Login')}>
+                    <InterRegular style={styles.loginTxt2}>
+                      Login Now{' '}
+                    </InterRegular>
                   </TouchableOpacity>
                 </View>
 
@@ -431,32 +292,29 @@ const RegisterScreen: React.FC = () => {
                   visible={successModel}
                   closeModal={() => setSuccessModel(false)}
                   icon={images.checkedIcon}
-                  title='Account Registered'
-                  message='Your account has been registered successfully'
-                  buttonText='Okay'
+                  title="Account Registered"
+                  message="Your account has been registered successfully"
+                  buttonText="Okay"
                   primaryBtn={true}
                   onPress={() => {
-                    setSuccessModel(false)
-                    navigation.navigate("Login")
-                  }} />
-
+                    setSuccessModel(false);
+                    navigation.navigate('Login');
+                  }}
+                />
               </Card>
 
-              <BottomModal
+              {/* <BottomModal
                 visible={bottomVisible}
                 closeModal={() => setbottomVisible(false)}
-                onPressImage={() => handleImage(true)}
+                onPressImage={() => captureImage()}
                 // onPress={() => captureImage('video')}
-                onPressGallery={() => handleImage()}
-              />
+                onPressGallery={() => chooseImageFromLibrary()}
+              /> */}
             </View>
           </KeyboardAwareScrollView>
         </>
-      )
-
-      }
+      )}
     </Formik>
-
   );
 };
 

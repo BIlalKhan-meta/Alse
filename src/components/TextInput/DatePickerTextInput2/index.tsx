@@ -4,11 +4,15 @@ import DatePicker from 'react-native-date-picker';
 import InterLight from '../../Text/InterLight';
 import DateTimePicker from 'react-native-modal-datetime-picker';
 import {dateHelper} from '../../../utils';
+import InterRegularSmallest from '../../Text/InterRegularSmallest';
+import {colors} from '../../../utils/theme';
+import {vh, vw} from '../../../constant';
 
 interface DatePickerInputProps {
   label: string;
   initialDate: Date | null;
   placeholder: string;
+  error?: string;
   onDateChange: (date: Date) => void;
   style: object;
 }
@@ -19,6 +23,7 @@ const DatePickerInput: React.FC<DatePickerInputProps> = ({
   placeholder,
   onDateChange,
   style,
+  error,
 }) => {
   const [openDate, setOpenDate] = useState<boolean>(false);
   const [formattedDate, setFormattedDate] = useState<string>(
@@ -67,6 +72,12 @@ const DatePickerInput: React.FC<DatePickerInputProps> = ({
           setOpenDate(false);
         }}
       />
+
+      {error && (
+        <InterRegularSmallest style={styles.error}>
+          {error}
+        </InterRegularSmallest>
+      )}
     </>
   );
 };
@@ -76,6 +87,13 @@ export default DatePickerInput;
 const styles = StyleSheet.create({
   textinputbox: {
     // Add your styles here
+  },
+  error: {
+    color: colors.redText,
+    marginTop: vh * 1,
+    width: '100%',
+    marginLeft: vw * 2,
+    alignSelf: 'flex-start',
   },
   calendericon: {
     // Add your styles here

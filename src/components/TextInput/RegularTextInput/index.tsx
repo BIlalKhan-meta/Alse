@@ -169,6 +169,9 @@ const styles = StyleSheet.create({
   error: {
     color: colors.redText,
     marginTop: vh * 1,
+    width: '100%',
+    alignSelf: 'flex-start',
+    marginLeft: vw * 2,
   },
 });
 

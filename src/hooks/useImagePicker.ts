@@ -28,7 +28,7 @@ const useImagePicker = () => {
   };
 
   // Function to capture image using the camera
-  const captureImage = mediaType => {
+  const captureImage = (mediaType?: string) => {
     let options = {
       mediaType: mediaType || 'photo', // 'photo' or 'video'
       maxWidth: 300,

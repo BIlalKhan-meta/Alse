@@ -1,9 +1,9 @@
-import React, { useRef } from 'react';
-import { View, StyleSheet, StyleProp, TextStyle } from 'react-native';
+import React, {useRef} from 'react';
+import {View, StyleSheet, StyleProp, TextStyle} from 'react-native';
 import PhoneInput from 'react-native-phone-number-input';
 import styles from './styles';
 import InterRegular from '../../Text/InterRegular';
-import { colors } from '../../../utils/theme';
+import {colors} from '../../../utils/theme';
 import InterRegularSmallest from '../../Text/InterRegularSmallest';
 
 interface PhoneNumberInputProps {
@@ -16,7 +16,6 @@ interface PhoneNumberInputProps {
   labelStyle?: StyleProp<TextStyle>;
   errors?: string;
   submitted?: boolean;
-
 }
 
 const PhoneNumberInput: React.FC<PhoneNumberInputProps> = ({
@@ -27,7 +26,7 @@ const PhoneNumberInput: React.FC<PhoneNumberInputProps> = ({
   label,
   labelStyle,
   errors,
-  submitted
+  submitted,
 }) => {
   const phoneInput = useRef<PhoneInput>(null);
 
@@ -46,9 +45,7 @@ const PhoneNumberInput: React.FC<PhoneNumberInputProps> = ({
 
   return (
     <View style={styles.container}>
-      <InterRegular style={[styles.label, labelStyle]}>
-        {label}
-      </InterRegular>
+      <InterRegular style={[styles.label, labelStyle]}>{label}</InterRegular>
       <PhoneInput
         ref={phoneInput}
         defaultValue={initialNumber}
@@ -63,13 +60,14 @@ const PhoneNumberInput: React.FC<PhoneNumberInputProps> = ({
             handleCountryChange(val.callingCode[0]);
           }
         }}
-
       />
-      {submitted && errors && <InterRegularSmallest style={styles.error}>{errors}</InterRegularSmallest>}
-
+      {errors && (
+        <InterRegularSmallest style={styles.error}>
+          {errors}
+        </InterRegularSmallest>
+      )}
     </View>
   );
 };
-
 
 export default PhoneNumberInput;

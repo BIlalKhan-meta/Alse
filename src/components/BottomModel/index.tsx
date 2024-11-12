@@ -3,21 +3,14 @@ import {
   ImageSourcePropType,
   Modal,
   StyleProp,
-  StyleSheet,
   Text,
-  TextInput,
-  TextStyle,
   TouchableOpacity,
   View,
   ViewStyle,
 } from 'react-native';
 
 import styles from './styles';
-// import { BlurView } from '@react-native-community/blur';
-
-// import InterBold from '../Text/InterBold';
 import { images } from '../../utils/images';
-import HorizontalSeparator from '../HorizontalSeparator';
 import { colors } from '../../utils/theme';
 import { vh, vw } from '../../constant';
 

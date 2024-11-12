@@ -20,33 +20,7 @@ export const login = (data: {
 };
 
 // Signup API call
-export const signup = (data: {
-  full_name: string;
-  last_name: string;
-  username: string;
-  email: string;
-  password: string;
-  image: any;
-  dialing_code: string;
-  phone_number: string;
-  gender: string;
-  dob: string;
-}) => {
-  console.log(data, 'Data frommmm authhhh ');
-  // Initialize FormData
-  const formData = new FormData();
-  formData.append('full_name', data.first_name);
-  formData.append('last_name', data.last_name);
-  formData.append('username', data.username);
-  formData.append('email', data.email);
-  formData.append('password', data.password);
-  formData.append('image', data.image);
-  formData.append('dialing_code', data.dialing_code);
-  formData.append('phone_number', data.phone_number);
-  formData.append('gender', data.gender);
-  formData.append('dob', data.dob);
-
-  // Make API request with FormData
+export const signup = (formData: any) => {
   return axiosInstance.post(endpoints.auth.signup, formData, {
     formData: true,
   });
