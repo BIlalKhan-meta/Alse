@@ -13,10 +13,11 @@ import RememberMeContainer from '../../../components/RememberMeContainer';
 import Card from '../../../components/Card';
 import SignupLastBottomText from '../../../components/SignupLastBottomText';
 import {useAppDispatch} from '../../../hooks/storeHooks';
-import {login} from '../../../store/slices/authSlice';
-import {getMessage, Toast} from '../../../utils/helpers';
 import {getFcmToken} from '../../../utils/messaging.utils';
 import InterBoldLabel from '../../../components/Text/InterBoldLabel';
+import {login} from '../../../api/auth';
+import Toast from 'react-native-toast-message';
+import {setUser} from '../../../store/slices/authSlice';
 
 interface FormValues {
   email: string;
@@ -54,29 +55,44 @@ const LoginScreen: React.FC = () => {
       .required('Password is required'),
   });
 
-  const handleSubmit = async (
-    values: FormValues,
-    {resetForm}: {resetForm: () => void},
-  ) => {
+  const handleSubmit = async (values: FormValues) => {
     console.log(values, 'Valuessssssss');
     setSubmitted(true);
 
-    try {
-      const apiData = {
-        email: values.email,
-        password: values.password,
-        token: deviceToken,
-      };
+    const apiData = {
+      email: values.email,
+      password: values.password,
+      token: deviceToken,
+    };
 
-      await dispatch(login({...apiData, useFormData: true})).unwrap();
-      resetForm();
-      navigation.navigate('Home');
-      setSubmitted(false);
-    } catch (error) {
-      console.error('Login error:', error);
-      setSubmitted(false);
-      Toast.error(getMessage(error?.message));
-    }
+    //   login(apiData).then((res)=>{
+    //     if(res?.data){
+
+    //       navigation.navigate('Home');
+    //       setSubmitted(false);
+    //     }).catch ((error) {
+    //   console.error('Login error:', error);
+    //   setSubmitted(false);
+    //   Toast.error(getMessage(error?.message));
+    // })
+
+    login(apiData)
+      .then(res => {
+        if (res?.data) {
+          dispatch(setUser(res?.data?.data));
+          // navigation.navigate('TabNavigation');
+        }
+      })
+      .catch(err => {
+        Toast.show({
+          type: 'error',
+          text1: 'Invalid',
+          text2: err?.message,
+        });
+      })
+      .finally(() => {
+        setSubmitted(false);
+      });
   };
 
   return (
@@ -84,15 +100,7 @@ const LoginScreen: React.FC = () => {
       initialValues={initialValues}
       validationSchema={validationSchema}
       onSubmit={handleSubmit}>
-      {({
-        handleSubmit,
-        handleChange,
-        handleBlur,
-        values,
-        errors,
-        resetForm,
-        setFieldValue,
-      }) => (
+      {({handleSubmit, handleChange, handleBlur, values, errors}) => (
         <>
           <KeyboardAwareScrollView
             style={styles.scrollview}
