@@ -1,14 +1,5 @@
-// ProfileScreen.tsx
 import React, {useEffect, useState} from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Image,
-  TouchableOpacity,
-  ScrollView,
-  FlatList,
-} from 'react-native';
+import {View, Text, Image, ScrollView, FlatList} from 'react-native';
 import styles from './styles';
 import {images} from '../../utils/images';
 import Card from '../../components/Card';
@@ -19,19 +10,22 @@ import {useIsFocused, useRoute} from '@react-navigation/native';
 import ReportBlockModal from '../../components/ReportBlockModal';
 import GeneralModal from '../../components/GeneralModal';
 import ReactModal from '../../components/ReactModal';
-import {dummyComments, reactions} from '../../dummyData';
+import {reactions} from '../../dummyData';
 import CommentsModal from '../../components/CommentsModal';
 import {
   blockUser,
   getCommentPost,
   getProfileById,
   likePost,
+  postSave,
+  updateLike,
 } from '../../store/slices/homeSlice';
 import {useAppDispatch} from '../../hooks/storeHooks';
-import dayjs from 'dayjs';
 import Loader from '../../components/Loader';
 import {getMessage, Toast} from '../../utils/helpers';
-import {capitalize} from '../../utils';
+import {capitalize, timeFormat} from '../../utils';
+import {fetchProfileById, reportPost} from '../../api/home';
+import {removeSavedItem, saveItem} from '../../api/menu';
 
 const ProfileScreen: React.FC = ({navigation}) => {
   const dispatch = useAppDispatch();
@@ -43,11 +37,12 @@ const ProfileScreen: React.FC = ({navigation}) => {
       : 'private';
 
   const id = route?.params?.id;
-  // console.log('====================================');
-  // console.log(id, "IDdddd", route?.params?.account, "Acccounttt");
-  // console.log('====================================');
+
   const [modalVisible, setModalVisible] = useState(false);
-  const [reportVisible, setReportVisible] = useState(false);
+  const [reportVisible, setReportVisible] = useState({
+    visibility: false,
+    id: null,
+  });
   const [reportSuccess, setReportSuccess] = useState(false);
   const [blockVisible, setBlockVisible] = useState(false);
   const [blockSuccess, setBlockSuccess] = useState(false);
@@ -57,26 +52,28 @@ const ProfileScreen: React.FC = ({navigation}) => {
     comments: [],
     id: null,
   });
-  const [data, setData] = useState();
+  const [activePostId, setActivePostId] = useState<number | null>(null);
+  const [data, setData] = useState({});
   const [loading, setLoading] = useState(false);
   const [blockUserLoader, setBlockUserLoader] = useState(false);
+  const [reportLoader, setReportLoader] = useState(false);
+
+  const handleDotPress = (postId: number) => {
+    setActivePostId(activePostId == null ? postId : null);
+  };
 
   const getData = () => {
     if (id) {
       setLoading(true);
-      dispatch(getProfileById(id))
-        .unwrap()
+      fetchProfileById(id)
         .then(res => {
-          console.log(
-            'response from User Profile ====================>',
-            res?.data?.data,
-          );
-          setData(res?.data?.data);
-          setLoading(false);
+          if (res?.data) {
+            setData(res?.data?.data);
+          }
         })
-        .catch(err => {
+        .catch(err => console.log('ERRORRRRRR', err))
+        .finally(() => {
           setLoading(false);
-          console.log('Error from get Profile By IUd ==>', err);
         });
     }
   };
@@ -88,6 +85,44 @@ const ProfileScreen: React.FC = ({navigation}) => {
   const handleReportPress = () => {
     setModalVisible(false);
     setReportVisible(true);
+  };
+
+  const handleReport = async () => {
+    console.log(reportVisible.id, 'Reportttt idddddd');
+    setReportLoader(true);
+    const data = {
+      reportable_type: 'AppModelsPost',
+      reportable_id: reportVisible?.id,
+      reason: 'testingg',
+    };
+
+    let formData = new FormData();
+    Object.entries(data).forEach(item => {
+      formData.append(item[0], item[1]);
+    });
+    await reportPost(formData)
+      // .unwrap()
+      .then(res => {
+        setReportVisible({
+          visibility: false,
+          id: null,
+        });
+        setReportLoader(false);
+        getData();
+        setReportSuccess(true);
+        handleDotPress(null);
+      })
+      .catch(err => {
+        setReportLoader(false);
+        setReportVisible({
+          visibility: false,
+          id: null,
+        });
+        handleDotPress(null);
+        Toast.error(getMessage(err?.message));
+
+        console.log('Errorr  errerrerrerrerrerrerrerrerrfrom ', err);
+      });
   };
 
   const handleBlockPress = () => {
@@ -132,16 +167,38 @@ const ProfileScreen: React.FC = ({navigation}) => {
         console.log('error from like post', err);
       });
   };
+  const handleSave = async (id: number, isSaved: boolean) => {
+    const arr = [...data?.posts];
+    let index = arr.findIndex(item => item.id == id);
+    arr[index].is_saved = !arr[index].is_saved;
+    setData({...data, posts: arr});
+    dispatch(postSave(id));
+    if (isSaved) {
+      await removeSavedItem(id)
+        .then(res => console.log('SAVEDDD POSTTTTT REMOOVEEEDDDD', res))
+        .catch(err => console.log('ERRRORRRRRRRRR SAVEDDDDDDDDDDD', err));
+    } else {
+      const data = {
+        item_id: id,
+        item_type: 'post',
+      };
+      const form = new FormData();
+      Object.entries(data).map(([key, value]) => {
+        form.append(key, value);
+      });
+      await saveItem(form)
+        .then(res => console.log('POSTTTT SAVEEEDDDDDDD', res))
+        .catch(err => console.log('SAVEEEEDDDDDD POSTTTTT ERRORRRRRR', err));
+    }
+  };
 
   const handleLikePress = (id: number) => {
-    dispatch(likePost(id))
-      .then(res => {
-        console.log('response from like post ---->', res);
-        getData();
-      })
-      .catch(err => {
-        console.log('error from like post', err);
-      });
+    const arr = [...data?.posts];
+    let index = arr.findIndex(item => item.id == id);
+    arr[index].is_liked = !arr[index].is_liked;
+    setData({...data, posts: arr});
+    dispatch(updateLike(id));
+    dispatch(likePost(id));
   };
 
   const handleClose = () => {
@@ -163,23 +220,38 @@ const ProfileScreen: React.FC = ({navigation}) => {
 
   const renderPost = ({item, index}) => (
     <PostComponent
-      key={index}
-      avatar={item.avatar}
-      name={item.name}
-      account={item.privacy}
-      time={dayjs(item?.media[0]?.date).format('hh:MM A')}
+      key={item?.id}
+      avatar={item?.avatar}
+      name={item?.name}
+      account={item?.privacy}
+      time={timeFormat(item?.date)}
       postText={item?.description}
       postImage={item?.media[0]?.path}
-      likes={item.likes}
-      comments={item.comments}
-      share={item.share}
+      likes={item?.total_likes}
+      comments={item?.total_comments}
+      share={item?.share}
+      onDotPress={() => handleDotPress(item?.id)}
+      modalVisible={activePostId === item.id}
       // onLikePress={() => setrRactVisible(true)}
       // onCommnetPress={() => setCommentsVisible(true)}
-      onCommnetPress={() => handleCommentPress(item?.media[0]?.post_id)}
+      onCommnetPress={() => handleCommentPress(item?.id)}
+      onSavePress={() => handleSave(item?.id, item?.is_saved)}
       isLiked={item?.is_liked}
+      isSaved={item?.is_saved}
       onLikePress={() => handleLikePress(item?.media[0]?.post_id)}
+      handleReportPost={() => {
+        setReportVisible({visibility: true, id: item?.id});
+      }}
+      handleReportPress={() => {
+        navigation.navigate('CreatePostEdit', {
+          title: 'Edit Post',
+          data: item,
+        });
+      }}
     />
   );
+
+  // console.log("DATAAAAAAAAAAAAAAAAAAAAA",data?.posts?.length)
 
   return (
     <ScrollView>
@@ -191,11 +263,11 @@ const ProfileScreen: React.FC = ({navigation}) => {
               capitalize(data?.first_name) + ' ' + capitalize(data?.last_name)
             }
             // description="A Freelance Photographer living best life"
-            stats={`${data?.posts.length} posts   ${data?.followers.length} followers   ${data?.following.length} following`}
+            stats={`${data?.posts?.length} posts   ${data?.followers?.length} followers   ${data?.following?.length} following`}
             avatar={data?.avatar}
             onPress={handleOpen}
             isFollowing={data?.is_following}
-            id={data?.posts[0]?.user_id}
+            id={data?.id}
           />
           {/* <ReportBlockModal
             isVisible={modalVisible}
@@ -214,7 +286,7 @@ const ProfileScreen: React.FC = ({navigation}) => {
           />
         </Card>
 
-        {account == 'public' && (
+        {!data?.is_private ? (
           <>
             <FlatList
               data={data?.posts}
@@ -222,26 +294,8 @@ const ProfileScreen: React.FC = ({navigation}) => {
               renderItem={renderPost}
               ListEmptyComponent={<Text>No Posts Found</Text>}
             />
-
-            {/* {posts.map((post, index) => (
-              <PostComponent
-                key={index}
-                avatar={post.avatar}
-                name={post.name}
-                country={post.country}
-                time={post.time}
-                postText={post.postText}
-                postImage={post.postImage}
-                likes={post.likes}
-                comments={post.comments}
-                share={post.share}
-                onLikePress={() => setrRactVisible(true)}
-                onCommnetPress={() => setCommentsVisible(true)}
-
-              />
-            ))} */}
           </>
-        )}
+        ) : null}
 
         <CommentsModal
           visible={commentsVisible.visiblity}
@@ -263,7 +317,7 @@ const ProfileScreen: React.FC = ({navigation}) => {
           reactions={reactions}
         />
 
-        {account == 'private' && (
+        {data?.is_private ? (
           <Card style={styles.lockContainer}>
             <Image source={images.lock} />
 
@@ -271,21 +325,24 @@ const ProfileScreen: React.FC = ({navigation}) => {
               This Account is Private
             </InterMedium>
           </Card>
-        )}
+        ) : null}
 
         <GeneralModal
-          visible={reportVisible}
-          closeModal={() => setReportVisible(false)}
+          visible={reportVisible.visibility}
+          closeModal={() =>
+            setReportVisible({
+              visibility: false,
+              id: null,
+            })
+          }
           icon={images.qmark}
-          title="Report User"
-          message="Are you sure you want to report this user?"
+          title="Report Post"
+          message="Are you sure you want to report this post?"
           SecondaryText1="Yes"
           SecondaryText2="No"
-          onPress={() => {
-            setReportVisible(false);
-            setReportSuccess(true);
-          }}
+          onPress={handleReport}
           secondaryBtn={true}
+          loading={reportLoader}
         />
 
         <GeneralModal

@@ -110,16 +110,8 @@ const Home: React.FC = () => {
   };
 
   const handleLikePress = (id: number) => {
-    // console.log('POSTSSSSSSSSSSSSSSSSSSSSSSSS', posts[index]);
     dispatch(updateLike(id));
-    dispatch(likePost(id))
-      .then(res => {
-        // console.log('response from like post ---->', res);
-        // getApi();
-      })
-      .catch(err => {
-        console.log('error from like post', err);
-      });
+    dispatch(likePost(id));
   };
 
   const handleDelete = () => {
@@ -214,22 +206,22 @@ const Home: React.FC = () => {
         id={item?.user_id}
         postID={item?.media[0]?.post_id}
         avatar={item?.avatar}
-        name={item.name}
-        country={item.country ? item.country : ''}
+        name={item?.name}
+        country={item?.country ? item?.country : ''}
         time={timeFormat(item?.date)}
         postText={item?.description}
         postImage={item?.media[0]?.path}
         likes={item?.total_likes}
         comments={item?.total_comments}
-        share={item.share}
-        account={item.privacy}
+        share={item?.share}
+        account={item?.privacy}
         // onCommnetPress={() => setCommentsVisible(true)}
         onCommnetPress={() => handleCommentPress(item?.id)}
         onLikePress={() => handleLikePress(item?.id)}
         onSavePress={() => handleSave(item?.id, item?.is_saved)}
         // onLikePress={() => setrRactVisible(true)}
-        onDotPress={() => handleDotPress(item.id)}
-        modalVisible={activePostId === item.id}
+        onDotPress={() => handleDotPress(item?.id)}
+        modalVisible={activePostId === item?.id}
         onCardPress={() => setActivePostId(null)}
         handleBlockPress={() => {
           // handleDotPress();
@@ -240,7 +232,7 @@ const Home: React.FC = () => {
           setReportVisible({visibility: true, id: item?.id});
         }}
         handleReportPress={() => {
-          handleDotPress();
+          // handleDotPress();
           navigation.navigate('CreatePostEdit', {
             title: 'Edit Post',
             data: item,

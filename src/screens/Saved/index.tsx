@@ -40,6 +40,7 @@ import {getMessage} from '../../utils/helpers';
 import Toast from 'react-native-toast-message';
 import Loader from '../../components/Loader';
 import {EmptyComponent} from '../../components/EmptyComponent';
+import {timeFormat} from '../../utils';
 
 const productFilter = [
   {name: 'a', id: 1},
@@ -84,9 +85,9 @@ const Saved: React.FC = () => {
     await getSavedItems()
       .then(res => {
         if (res?.data) {
-          // console.log('RESSSSSSSSSS', res?.data?.data?.data);
+          console.log('RESSSSSSSSSS', res?.data?.data?.data[0]);
           setDisplayPost(
-            res?.data?.data?.data?.filter(item => item.savable_type == type),
+            res?.data?.data?.data?.filter(item => item?.savable_type == type),
           );
         }
       })
@@ -289,47 +290,44 @@ const Saved: React.FC = () => {
       });
   };
 
-  const renderPost = ({item}) => {
-    const mediaItem =
-      item?.savable_item?.media && item?.savable_item?.media.length > 0
-        ? item?.savable_item?.media[0]
-        : null;
-
+  const renderPost = ({item}: any) => {
     return (
       <PostComponent
         id={item?.savable_item?.user_id}
-        // postID={item?.savable_item?.media[0]?.post_id}
+        postID={item?.savable_item?.media[0]?.post_id}
         avatar={item?.savable_item?.avatar}
-        name={item.savable_item?.name}
-        country={item.savable_item?.country ? item.country : ''}
-        time={dayjs(item?.savable_item?.date).format('hh:MM A')}
+        name={item?.savable_item?.name}
+        country={item?.savable_item?.country ? item?.savable_item?.country : ''}
+        time={timeFormat(item?.savable_item?.date)}
         postText={item?.savable_item?.description}
-        postImage={mediaItem?.path}
-        likes={item.savable_item?.likes}
-        comments={item.savable_item?.comments}
-        share={item.savable_item?.share}
-        account={item.savable_item?.privacy}
+        postImage={item?.savable_item?.media[0]?.path}
+        likes={item?.savable_item?.total_likes}
+        comments={item?.savable_item?.total_comments}
+        share={item?.savable_item?.share}
+        account={item?.savable_item?.privacy}
         // onCommnetPress={() => setCommentsVisible(true)}
-        onCommnetPress={() => handleCommentPress(mediaItem?.post_id)}
-        onLikePress={() => handleLikePress(mediaItem?.post_id)}
-        onSavePress={() => handleSave(item?.id)}
-        // // onLikePress={() => setrRactVisible(true)}
-        onDotPress={() => handleDotPress(item.id)}
-        modalVisible={activePostId === item.id}
+        onCommnetPress={() => handleCommentPress(item?.savable_item?.id)}
+        onLikePress={() => handleLikePress(item?.savable_item?.id)}
+        onSavePress={() =>
+          handleSave(item?.savable_item?.id, item?.savable_item?.is_saved)
+        }
+        // onLikePress={() => setrRactVisible(true)}
+        onDotPress={() => handleDotPress(item?.savable_item?.id)}
+        modalVisible={activePostId === item?.savable_item?.id}
+        onCardPress={() => setActivePostId(null)}
         handleBlockPress={() => {
           // handleDotPress();
           // setDeleteVisible(true);
-          setDeleteVisible({visibility: true, id: mediaItem?.post_id});
+          setDeleteVisible({visibility: true, id: item?.savable_item?.id});
         }}
-        onCardPress={() => setActivePostId(null) }
         handleReportPost={() => {
-          setReportVisible({visibility: true, id: mediaItem?.post_id});
+          setReportVisible({visibility: true, id: item?.savable_item?.id});
         }}
         handleReportPress={() => {
-          handleDotPress();
+          // handleDotPress();
           navigation.navigate('CreatePostEdit', {
             title: 'Edit Post',
-            data: item,
+            data: item?.savable_item,
           });
         }}
         isLiked={item?.savable_item?.is_liked}

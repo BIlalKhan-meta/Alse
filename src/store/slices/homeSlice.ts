@@ -239,6 +239,6 @@ const homeSlice = createSlice({
   },
 });
 
-export const {updateLike,postSave} = homeSlice.actions;
+export const {updateLike, postSave} = homeSlice.actions;
 
 export default homeSlice.reducer;

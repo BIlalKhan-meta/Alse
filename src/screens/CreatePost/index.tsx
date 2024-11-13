@@ -9,19 +9,10 @@ import {
   ScrollView,
   Button,
 } from 'react-native';
-import {images} from '../../utils/images';
 import CardComponent from '../../components/CardComponent';
-import {colors} from '../../utils/theme';
-import {fontSizes, vh, vw} from '../../constant';
-import Card from '../../components/Card';
-import PostComponent from '../../components/PostComponent';
-import InterBold from '../../components/Text/InterBold';
-import CommentsModal from '../../components/CommentsModal';
 import {useNavigation, useRoute} from '@react-navigation/native';
-import HeaderComponent from '../../components/HeaderComponent';
 import styles from './styles';
 import BottomModal from '../../components/BottomModel';
-import ImagePickerComponent from '../../components/ImagePickerComponent';
 import useImagePicker from '../../hooks/useImagePicker';
 import InterMedium from '../../components/Text/InterMedium';
 import {getMessage, Toast} from '../../utils/helpers';
@@ -62,18 +53,14 @@ const CreatePost: React.FC = () => {
     });
   }, [navigation, isLoading, comment, privacy, imageData]);
 
+  console.log('IMAGEEEEEEEEEEEEEEEE', imageData);
+
   const handlePost = async () => {
     // try {
     if (!comment || comment.trim() === '') {
       Toast.error('Please enter content');
       return;
     }
-
-    // if (image == null) {
-    //   Toast.error('Please Upload image');
-    //   return;
-    // }
-    // setIsLoading(true);
 
     const body = new FormData();
     body.append('description', comment);

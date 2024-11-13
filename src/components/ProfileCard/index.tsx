@@ -1,5 +1,5 @@
 // ProfileCard.tsx
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {View, StyleSheet, Image, TouchableOpacity} from 'react-native';
 import {images} from '../../utils/images';
 import {vw} from '../../constant';
@@ -10,9 +10,10 @@ import styles from './styles';
 import {useNavigation} from '@react-navigation/native';
 import {useAppDispatch} from '../../hooks/storeHooks';
 import {followUser} from '../../store/slices/homeSlice';
-import {getMessage, Toast} from '../../utils/helpers';
 import {useSelector} from 'react-redux';
 import {selectUserProfile} from '../../store/slices/authSlice';
+import {userFollow, userUnFollow} from '../../api/home';
+import Toast from 'react-native-toast-message';
 
 interface ProfileCardProps {
   name: string;
@@ -34,27 +35,52 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
   id,
 }) => {
   const navigation = useNavigation();
-  const dispatch = useAppDispatch();
   const user = useSelector(selectUserProfile);
 
   const [followLoader, setFollowLoader] = useState(false);
-  const [checkFollow, setCheckFollow] = useState(isFollowing);
-  console.log(user, 'iddddddddddddddddddddd');
+  const [follow, setFollow] = useState(isFollowing);
+
+  useEffect(() => {
+    setFollow(isFollowing);
+  }, [isFollowing]);
 
   const handleFollow = () => {
-    dispatch(followUser(id))
-      .then(res => {
-        setFollowLoader(false);
-        console.log('res from block User ====>', res);
-      })
-      .catch(err => {
-        setFollowLoader(false);
-
-        console.log('error from block User ====>', err);
-        Toast.error(getMessage(err));
-      });
+    setFollowLoader(true);
+    if (follow) {
+      userUnFollow(id)
+        .then(res => {
+          if (res?.data) {
+            setFollow(!follow);
+            Toast.show({
+              type: 'success',
+              text1: 'UnFollowd',
+              text2: res?.data?.message,
+            });
+          }
+        })
+        .finally(() => {
+          setFollowLoader(false);
+        });
+    } else {
+      userFollow(id)
+        .then(res => {
+          if (res?.data) {
+            setFollow(!follow);
+            Toast.show({
+              type: 'success',
+              text1: 'Unfollowed',
+              text2: res?.data?.message,
+            });
+          }
+        })
+        .catch(err => {
+          console.log('error from block User ====>', err);
+        })
+        .finally(() => {
+          setFollowLoader(false);
+        });
+    }
   };
-
 
   return (
     <View style={styles.container}>
@@ -87,10 +113,9 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
         {user?.id !== id && (
           <CustomButton
             style={styles.followButton}
-            disable={checkFollow ? true : false}
             onPress={handleFollow}
             loading={followLoader}>
-            {checkFollow ? 'Following' : 'Follow'}
+            {follow ? 'Following' : 'Follow'}
           </CustomButton>
         )}
       </View>
