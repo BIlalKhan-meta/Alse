@@ -25,6 +25,8 @@ import {removeSavedItem, saveItem} from '../../api/menu';
 import {vh} from '../../constant';
 import {getCountries} from '../../store/slices/generalSlice';
 import {timeFormat, timeHelper} from '../../utils';
+import InAppBrowser from 'react-native-inappbrowser-reborn';
+import { notificationListenerInstance } from '../../utils/NotificationServices';
 
 const Home: React.FC = () => {
   const navigation = useNavigation();
@@ -53,6 +55,18 @@ const Home: React.FC = () => {
     id: null,
   });
   const [reportSuccess, setReportSuccess] = useState(false);
+
+  const closePaymentProcess = async () => {
+    await InAppBrowser.isAvailable();
+    const closePrevios = InAppBrowser.close();
+    // navigation.navigate('Marketplace', {screen: 'MyOrders'});
+  };
+
+  useEffect(() => {
+    // NotificationLstener(closePaymentProcess());
+    notificationListenerInstance.init(closePaymentProcess);
+  }, []);
+
 
   const handleCommentPress = id => {
     dispatch(getCommentPost(id))

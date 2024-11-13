@@ -17,11 +17,11 @@ interface GeneralModalProps {
   buttonText: string;
   onPress: () => void;
   primaryBtn: boolean;
-  secondaryBtn: boolean;
-  SecondaryText1: string;
-  SecondaryText2: string;
-  redImage: boolean;
-  loading: boolean;
+  secondaryBtn?: boolean;
+  SecondaryText1?: string;
+  SecondaryText2?: string;
+  redImage?: boolean;
+  loading?: boolean;
 
 }
 

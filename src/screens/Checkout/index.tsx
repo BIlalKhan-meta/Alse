@@ -27,7 +27,6 @@ import {useSelector} from 'react-redux';
 import {countriesList} from '../../store/slices/generalSlice';
 import {getCity, getState} from '../../api/home';
 
-
 const CheckoutScreen: React.FC = () => {
   const navigation = useNavigation();
   const isFoused = useIsFocused();
@@ -166,7 +165,7 @@ const CheckoutScreen: React.FC = () => {
     console.log('IDDDDDDDDDDDDDDDDD', id);
     await getState(id).then(res => {
       if (res?.data) {
-        let temp = res?.data.map((item, index) => {
+        let temp = res?.data?.data?.map((item, index) => {
           return {label: item?.name, value: item?.name, id: item?.id};
         });
         if (ship) {
@@ -184,7 +183,7 @@ const CheckoutScreen: React.FC = () => {
   const fetchCity = async (id: number, ship: boolean) => {
     await getCity(id).then(res => {
       if (res?.data) {
-        let temp = res?.data.map((item, index) => {
+        let temp = res?.data?.data.map((item, index) => {
           return {label: item?.name, value: item?.name, id: item?.id};
         });
         if (ship) {
@@ -208,16 +207,6 @@ const CheckoutScreen: React.FC = () => {
     setLoading(false);
   };
 
-  const closePaymentProcess = async () => {
-    await InAppBrowser.isAvailable();
-    const closePrevios = InAppBrowser.close();
-    navigation.navigate('Marketplace', {screen: 'MyOrders'});
-  };
-
-  useEffect(() => {
-    // NotificationLstener(closePaymentProcess());
-    notificationListenerInstance.init(closePaymentProcess);
-  }, []);
 
   return (
     <KeyboardAwareScrollView
