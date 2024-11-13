@@ -12,10 +12,12 @@ import {images} from '../../utils/images';
 import TabsComponent from '../../components/TabsComponent';
 import FilterModal from '../../components/FilterModal';
 import {colors} from '../../utils/theme';
-import {getOrders} from '../../api/product';
+import {getMyOrders, getOrders} from '../../api/product';
 import OrderCard from '../../components/CardOrder';
 
-const MyOrders: React.FC = () => {
+const MyOrders: React.FC = (props) => {
+  console.log("props =====>",props?.route?.params?.MyOrder);
+  
   const navigation = useNavigation();
   const [selectedTab, setSelectedTab] = useState<
     'All' | 'pending' | 'delivered' | 'cancelled'
@@ -45,11 +47,16 @@ const MyOrders: React.FC = () => {
 
   const getData = async () => {
     setLoader(true);
-    await getOrders()
+    const callback = props?.route?.params?.MyOrder ? getMyOrders :  getOrders
+    await callback()
       .then(res => {
+        console.log('res from ', res?.data?.data?.data);
+        
         if (res?.data) {
           setOrders(res?.data?.data?.data);
         }
+      }).catch(err =>{
+        setLoader(false);
       })
       .finally(() => {
         setLoader(false);
@@ -114,9 +121,12 @@ const MyOrders: React.FC = () => {
           data={filteredOrders}
           refreshing={loader}
           onRefresh={getData}
-          renderItem={({item}: any) => (
+          renderItem={({item}: any) => {
+            console.log("Item ====>" ,item?.order_id);
+            
+            return(
             <OrderCard key={item?.order_id} item={item} />
-          )}
+          )}}
           keyExtractor={item => item?.order_id?.toString()}
           contentContainerStyle={styles.ordersContainer}
           showsVerticalScrollIndicator={false}

@@ -90,6 +90,7 @@ const backButtonRoutes: {[key: string]: boolean} = {
   Saved: true,
   BankDetail: true,
   AboutUs: true,
+  MyOrders: true
 };
 
 const getTitle: React.FC<NavigationOptionsProps> = props => {

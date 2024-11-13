@@ -175,7 +175,7 @@ const MyShop: React.FC = () => {
               // containerStyle={styles.buttonContainerStyle}
               txtstyle={{color: colors.themeColor}}
               onPress={() => {
-                navigation.navigate('Marketplace', {screen: 'MyOrders'});
+                navigation.navigate('MyOrders', {MyOrder: true});
               }}>
               Orders
             </CustomButton>

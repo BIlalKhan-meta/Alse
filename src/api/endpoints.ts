@@ -56,6 +56,7 @@ const endpoints = {
     deleteProductImage: '/product',
     ordersList: '/get-orders',
     orderDetail: '/get-order-detail',
+    shopOrders:'/get-shop-orders'
   },
   education: {
     getArticles: '/articles',

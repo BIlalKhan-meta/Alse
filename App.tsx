@@ -72,10 +72,10 @@ function App(): React.JSX.Element {
         <SafeAreaView style={styles.container}>
           {/* <NotificationListener handleNotification={handleNotificationPress} /> */}
           <NavigationContainer theme={theme}>
-            <StatusBar
+            {/* <StatusBar
               backgroundColor={colors.headerColor}
               barStyle={'dark-content'}
-            />
+            /> */}
             <AppNavigation />
           </NavigationContainer>
 

@@ -63,6 +63,8 @@ const MyOrderDetail: React.FC = () => {
     setLoader(true);
     await getOrderDetail(id)
       .then(res => {
+        console.log("res ===>",res?.data);
+        
         if (res?.data) {
           setData(res?.data?.data);
         }

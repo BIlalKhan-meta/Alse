@@ -50,7 +50,7 @@ const CardComponent: React.FC<CardComponentProps> = ({
 
   const user = useSelector(selectUserProfile);
 
-  console.log('USERRRRRRRRRRRRRRRRRRRRR', user);
+  // console.log('USERRRRRRRRRRRRRRRRRRRRR', user);
 
   return (
     <Card>

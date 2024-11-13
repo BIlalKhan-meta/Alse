@@ -46,7 +46,9 @@ export const getCart = () => {
 export const getOrders = () => {
   return axiosInstance.get(`${endpoints.products.ordersList}`);
 };
-
+export const getMyOrders = () => {
+  return axiosInstance.get(`${endpoints.products.shopOrders}`);
+};
 export const getOrderDetail = (id: number) => {
   return axiosInstance.get(`${endpoints.products.orderDetail}/${id}`);
 };

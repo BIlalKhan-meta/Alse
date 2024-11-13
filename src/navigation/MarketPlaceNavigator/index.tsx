@@ -22,7 +22,6 @@ const MarketPlaceNavigation = () => {
 
 
             <Stack.Screen name="Cart" component={Cart} options={NavigationOptions} />
-            <Stack.Screen name="MyOrders" component={MyOrders} options={NavigationOptions} />
             <Stack.Screen name="PaymentLogs" component={PaymentLogs} options={NavigationOptions} />
             {/*
        */}
