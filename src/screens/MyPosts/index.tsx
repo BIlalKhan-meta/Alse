@@ -59,6 +59,10 @@ const MyPosts: React.FC = () => {
     visibility: false,
     id: null,
   });
+  const [reportVisible, setReportVisible] = useState({
+    visibility: false,
+    id: null,
+  });
   const [deleteSuccess, setDeleteSuccess] = useState(false);
   const [loader, setLoader] = useState(false);
   const {posts} = useAppSelector(state => state.home);
@@ -227,16 +231,15 @@ const MyPosts: React.FC = () => {
           // setDeleteVisible(true);
           setDeleteVisible({visibility: true, id: item?.id});
         }}
-        // handleReportPost={() => {
-        //   setReportVisible({visibility: true, id: item?.id});
-        // }}
-        // handleReportPress={() => {
-        //   handleDotPress();
-        //   navigation.navigate('CreatePostEdit', {
-        //     title: 'Edit Post',
-        //     data: item,
-        //   });
-        // }}
+        handleReportPost={() => {
+          setReportVisible({visibility: true, id: item?.id});
+        }}
+        handleReportPress={() => {
+          navigation.navigate('CreatePostEdit', {
+            title: 'Edit Post',
+            data: item,
+          });
+        }}
         isLiked={item?.is_liked}
         isSaved={item?.is_saved}
       />
