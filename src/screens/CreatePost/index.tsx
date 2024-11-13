@@ -53,8 +53,6 @@ const CreatePost: React.FC = () => {
     });
   }, [navigation, isLoading, comment, privacy, imageData]);
 
-  console.log('IMAGEEEEEEEEEEEEEEEE', imageData);
-
   const handlePost = async () => {
     // try {
     if (!comment || comment.trim() === '') {
@@ -66,7 +64,7 @@ const CreatePost: React.FC = () => {
     body.append('description', comment);
     body.append('privacy', privacy);
     if (imageData) {
-      await body.append('file[0]', {
+      body.append('file[0]', {
         name: imageData?.fileName,
         uri: imageData?.uri,
         type: imageData?.type,

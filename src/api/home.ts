@@ -111,3 +111,9 @@ export const getState = (id: number) => {
 export const getCity = (id: number) => {
   return axiosInstance.get(`${endpoints.home.state}/${id}/cities`);
 };
+export const getNotifications = () => {
+  return axiosInstance.get(`${endpoints.home.notifications}`);
+};
+export const markRead = (id: string) => {
+  return axiosInstance.get(`${endpoints.home.markRead}/${id}`);
+};

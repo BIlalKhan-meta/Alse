@@ -28,6 +28,8 @@ const endpoints = {
     countries: '/countries',
     state: '/states',
     city: '/cities',
+    notifications: '/notifications',
+    markRead: '/mark-as-read',
   },
   profile: {
     editProfile: '/edit-profile',
@@ -56,7 +58,7 @@ const endpoints = {
     deleteProductImage: '/product',
     ordersList: '/get-orders',
     orderDetail: '/get-order-detail',
-    shopOrders:'/get-shop-orders'
+    shopOrders: '/get-shop-orders',
   },
   education: {
     getArticles: '/articles',
