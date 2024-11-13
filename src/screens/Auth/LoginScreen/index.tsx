@@ -40,6 +40,8 @@ const LoginScreen: React.FC = () => {
 
   const getToken = async () => {
     const token = await getFcmToken();
+    console.log("Token ========<",token);
+    
     setDeviceToken(token);
   };
 

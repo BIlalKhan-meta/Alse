@@ -38,6 +38,9 @@ const styles = StyleSheet.create({
     color: colors.inputText,
     textAlign: 'center',
   },
+  inputContainer:{
+width:'80%',
+  },
   buttonContainerStyle: {
     marginTop: vh * 1.4,
   },

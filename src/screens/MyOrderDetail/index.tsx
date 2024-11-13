@@ -15,6 +15,7 @@ import InterMedium from '../../components/Text/InterMedium';
 import {getOrderDetail} from '../../api/product';
 import Loader from '../../components/Loader';
 import {dateHelper} from '../../utils';
+import CustomButton from '../../components/CustomButton';
 
 const contactInfo = [
   {heading: 'Username', label: 'first_name'},
@@ -45,6 +46,8 @@ const billingAddress = [
 const MyOrderDetail: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute();
+  console.log('route?.paramsroute?.params ===>',route?.params?.StoreOrder);
+  
   const id = route?.params?.id;
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [reportVisible, setReportVisible] = useState(false);
@@ -173,7 +176,7 @@ const MyOrderDetail: React.FC = () => {
             </>
           )} */}
 
-              {/* {status === 'Pending' && title === 'Store Order Detail' && (
+              {(
             <View style={styles.btnConatiner}>
               <CustomButton
                 style={styles.acceptBtn}
@@ -185,21 +188,28 @@ const MyOrderDetail: React.FC = () => {
 
               <CustomButton
                 style={styles.rejectBtn}
+                txtstyle={styles.btntxtstyle}
                 onPress={() => {
                   setReportVisible(true);
                 }}>
                 Rejected
               </CustomButton>
             </View>
-          )} */}
+          )}
 
-              <GeneralModal
+              
+            </View>
+          );
+        }}
+      />
+      <GeneralModal
                 visible={orderSuccess}
                 closeModal={() => setOrderSuccess(false)}
                 icon={images.doubleCheck}
                 title={'Accept Order'}
                 message="Order has been Accepted"
                 buttonText="Ok"
+                primaryBtn={true}
                 onPress={() => {
                   setOrderSuccess(false);
                 }}
@@ -211,15 +221,23 @@ const MyOrderDetail: React.FC = () => {
                 icon={images.qmark}
                 title="Reject Order"
                 message="Are you sure you want to reject this Order?"
-                buttonText="Yes"
-                buttonText2="No"
+               
+                SecondaryText1={'Accept'}
+                SecondaryText2="Reject"
+                secondaryBtn={true}
                 onPress={() => {
-                  setReportVisible(false);
-                  setReportInput(true);
+                  setReportVisible(false)
+
+                  setReportInput(true)
+
+                  console.log("Rejected")
+                  
                 }}
+
                 smallButtons={true}
               />
-
+{/* {console.log("reportInputsad=as==>",reportInput)
+} */}
               <GeneralModal
                 visible={reportInput}
                 closeModal={() => setReportInput(false)}
@@ -232,6 +250,7 @@ const MyOrderDetail: React.FC = () => {
                   setReportInput(false);
                   setReportSuccess(true);
                 }}
+                primaryBtn={true}
               />
 
               <GeneralModal
@@ -240,15 +259,12 @@ const MyOrderDetail: React.FC = () => {
                 icon={images.doubleCheck}
                 title="Reject Order"
                 message="Order has been rejected successfully."
+                secondaryBtn={true}
                 buttonText="Ok"
                 onPress={() => {
                   setReportSuccess(false);
                 }}
               />
-            </View>
-          );
-        }}
-      />
     </View>
   );
 };

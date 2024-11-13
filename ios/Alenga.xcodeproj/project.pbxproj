@@ -32,6 +32,7 @@
 		00E356EE1AD99517003FC87E /* AlengaTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AlengaTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		00E356F11AD99517003FC87E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		00E356F21AD99517003FC87E /* AlengaTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AlengaTests.m; sourceTree = "<group>"; };
+		045931042CE4A5F000219CCA /* Alenga.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = Alenga.entitlements; path = Alenga/Alenga.entitlements; sourceTree = "<group>"; };
 		04635C3F2CD4C90B00DFA3A5 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		0B6315E31D7E47545A761BE2 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = Alenga/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* Alenga.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Alenga.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -91,6 +92,7 @@
 		13B07FAE1A68108700A75B9A /* Alenga */ = {
 			isa = PBXGroup;
 			children = (
+				045931042CE4A5F000219CCA /* Alenga.entitlements */,
 				13B07FAF1A68108700A75B9A /* AppDelegate.h */,
 				13B07FB01A68108700A75B9A /* AppDelegate.mm */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
@@ -489,6 +491,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = Alenga/Alenga.entitlements;
 				CURRENT_PROJECT_VERSION = 8;
 				DEVELOPMENT_TEAM = 3YP4TQ9R94;
 				ENABLE_BITCODE = NO;
@@ -523,6 +526,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = Alenga/Alenga.entitlements;
 				CURRENT_PROJECT_VERSION = 8;
 				DEVELOPMENT_TEAM = 3YP4TQ9R94;
 				INFOPLIST_FILE = Alenga/Info.plist;

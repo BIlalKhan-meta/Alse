@@ -15,7 +15,7 @@ import {
   PERMISSIONS,
   request,
 } from 'react-native-permissions';
-import { NotificationListener } from './src/utils/NotificationServices';
+import { NotificationListener, requestUserPermission } from './src/utils/NotificationServices';
 
 const theme = {
   ...DefaultTheme,
@@ -49,6 +49,7 @@ function App(): React.JSX.Element {
     if (Platform.OS === 'android') {
       checkNotificationPermission();
     }
+    requestUserPermission()
   }, []);
 
   function handleNotificationPress(remoteMessage: object) {

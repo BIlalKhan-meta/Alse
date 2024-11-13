@@ -65,12 +65,17 @@ const styles = StyleSheet.create({
   },
   acceptBtn: {
     width: vw * 40,
-    backgroundColor: colors.lightGreen,
-    borderColor: colors.lightgreen,
+    // backgroundColor: colors.white,
+    // borderColor: colors.white,
   },
   rejectBtn: {
     width: vw * 40,
+    backgroundColor: colors.white,
+    borderColor: colors.black,
   },
+  btntxtstyle:{
+    color: colors.black
+  }
 });
 
 export default styles;

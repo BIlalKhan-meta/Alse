@@ -22,14 +22,12 @@ interface OrderCardProps {
   item: TOrder;
 }
 
-const OrderCard: React.FC<OrderCardProps> = ({item}) => {
+const OrderCard: React.FC<OrderCardProps> = ({item, onPress}) => {
   const navigation = useNavigation();
   return (
     <Card style={styles.card}>
       <TouchableOpacity
-        onPress={() =>
-          navigation.navigate('MyOrderDetail', {id: item?.order_id})
-        }>
+        onPress={onPress}>
         <View style={styles.header}>
           <InterMedium style={styles.orderId}>
             Order ID: {item?.order_id}

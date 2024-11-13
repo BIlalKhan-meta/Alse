@@ -7,6 +7,8 @@ import CustomButton from '../CustomButton';
 import styles from './styles';
 import { images } from '../../utils/images';
 import { colors } from '../../utils/theme';
+import RegularTextInput from '../TextInput/RegularTextInput';
+import { fontSizes, vh, vw } from '../../constant';
 
 interface GeneralModalProps {
   visible: boolean;
@@ -61,12 +63,33 @@ const GeneralModal: React.FC<GeneralModalProps> = ({ visible, closeModal, icon, 
 
           <InterBoldSmall style={styles.title}>{title}</InterBoldSmall>
           <InterLightAverage style={styles.message}>{message}</InterLightAverage>
-
+          <View style={styles.inputContainer}>
+          <RegularTextInput
+                  placeholder="Enter Rejection Reason"
+                  placeholderTextColor={colors.inputText}
+                  style={{ 
+                    color: colors.inputText,
+                    fontSize: fontSizes.f11,
+                    height: vh * 6,
+                    marginTop: vh * 2,
+                    width: vw * 85,
+                    fontWeight: '300',
+                    borderColor: 'rgba(48, 86, 112, 0.05)',
+                    borderWidth: 1,
+                    borderRadius: 5,
+                    paddingHorizontal: 10,
+                    // backgroundColor:'rgba(48, 86, 112, 0.05)',
+                    backgroundColor: colors.inputcolor,
+                  }}
+              
+                />
+                </View>
           {primaryBtn && (
             <CustomButton onPress={onPress} containerStyle={styles.buttonContainerStyle}>
               {buttonText}
             </CustomButton>
           )}
+ 
 
           {secondaryBtn && (
             <View style={styles.secondaryBtnCon}>

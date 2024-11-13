@@ -125,7 +125,8 @@ const MyOrders: React.FC = (props) => {
             console.log("Item ====>" ,item?.order_id);
             
             return(
-            <OrderCard key={item?.order_id} item={item} />
+            <OrderCard key={item?.order_id} item={item}  onPress={() => navigation.navigate('MyOrderDetail', {id: item?.order_id, StoreOrder: props?.route?.params?.MyOrder})
+            }/>
           )}}
           keyExtractor={item => item?.order_id?.toString()}
           contentContainerStyle={styles.ordersContainer}
