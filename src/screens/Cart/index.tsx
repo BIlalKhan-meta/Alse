@@ -12,6 +12,9 @@ import {colors} from '../../utils/theme';
 import {getCart, removeCartItem, updateCartItem} from '../../api/product';
 import Loader from '../../components/Loader';
 import {EmptyComponent} from '../../components/EmptyComponent';
+import {useSelector} from 'react-redux';
+import {selectUserProfile} from '../../store/slices/authSlice';
+import {Subscribe} from '../../components/Subscribe';
 
 const deliveryCharges = 15;
 const discount = 10;
@@ -22,7 +25,7 @@ const Cart = () => {
   const [loading, setLoading] = useState(false);
   const [cartData, setCartData] = useState<any>();
 
-  // console.log('CARTTTTTTTTTTTTTTTTTTTTTT', cartData?.carts?.data[0].quantity);
+  const user = useSelector(selectUserProfile);
 
   const handleChange = async (label: string, id: number) => {
     // Implement increment logic here
@@ -47,7 +50,9 @@ const Cart = () => {
   };
 
   useEffect(() => {
-    getData();
+    if (user?.has_subscription) {
+      getData();
+    }
   }, [isFoused]);
 
   const getData = async () => {
@@ -58,9 +63,6 @@ const Cart = () => {
     setCartData(res?.data?.data);
     // setShopProduct(res2?.data?.data?.data)
     setLoading(false);
-    console.log('====================================');
-    console.log(res?.data?.data?.carts?.data, '====ressss');
-    console.log('====================================');
   };
 
   const handleDelete = async (index: number) => {
@@ -85,6 +87,10 @@ const Cart = () => {
       },
     });
   }, [navigation]);
+
+  if (!user?.has_subscription) {
+    return <Subscribe />;
+  }
 
   if (loading) {
     return <Loader />;

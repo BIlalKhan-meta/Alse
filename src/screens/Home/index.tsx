@@ -24,14 +24,17 @@ import {getCountriesList, reportPost} from '../../api/home';
 import {removeSavedItem, saveItem} from '../../api/menu';
 import {vh} from '../../constant';
 import {getCountries} from '../../store/slices/generalSlice';
-import {timeFormat, timeHelper} from '../../utils';
+import {timeFormat} from '../../utils';
 import InAppBrowser from 'react-native-inappbrowser-reborn';
-import { notificationListenerInstance } from '../../utils/NotificationServices';
+import {notificationListenerInstance} from '../../utils/NotificationServices';
+import {useSelector} from 'react-redux';
+import {selectUserProfile} from '../../store/slices/authSlice';
 
 const Home: React.FC = () => {
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const isFoused = useIsFocused();
+  const user = useSelector(selectUserProfile);
 
   const {posts} = useAppSelector(state => state.home);
   const [loader, setLoader] = useState(false);
@@ -67,7 +70,6 @@ const Home: React.FC = () => {
     notificationListenerInstance.init(closePaymentProcess);
   }, []);
 
-
   const handleCommentPress = id => {
     dispatch(getCommentPost(id))
       .then(res => {
@@ -88,6 +90,9 @@ const Home: React.FC = () => {
   };
 
   useEffect(() => {
+    if (!user?.has_subscription && !user?.is_child) {
+      navigation.navigate('SubscriptionPlan');
+    }
     getApi();
   }, [isFoused]);
 
