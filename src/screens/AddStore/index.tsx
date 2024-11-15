@@ -1,4 +1,4 @@
-import React, {useLayoutEffect, useState} from 'react';
+import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {View, Text, TouchableOpacity, ScrollView, Image} from 'react-native';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {Formik} from 'formik';
@@ -14,11 +14,40 @@ import GeneralModal from '../../components/GeneralModal';
 import {colors} from '../../utils/theme';
 import CustomButton from '../../components/CustomButton';
 import InterRegular from '../../components/Text/InterRegular';
-import InterBoldLabel from '../../components/Text/InterBoldLabel';
 import Card from '../../components/Card';
 import InterBoldSmall from '../../components/Text/InterBoldSmall';
-import InterRegularSmallest from '../../components/Text/InterRegularSmallest';
 import {createShop} from '../../api/shop';
+import {getBank} from '../../api/menu';
+
+const initialValues = {
+  shopName: '',
+  // shopImage: '',
+  accountHolderName: '',
+  // accountType: '',
+  // bankName: '',
+  routingNumber: '',
+  confirmRoutingNumber: '',
+  accountNumber: '',
+  confirmAccountNumber: '',
+};
+
+const validationSchema = yup.object().shape({
+  shopName: yup.string().required('Shop Name is required'),
+  // shopImage: yup.string().required('Shop Image is required'),
+  accountHolderName: yup.string().required('Account Holder Name is required'),
+  // accountType: yup.string().required('Account Type is required'),
+  // bankName: yup.string().required('Bank Name is required'),
+  routingNumber: yup.string().required('Routing Number is required'),
+  confirmRoutingNumber: yup
+    .string()
+    .oneOf([yup.ref('routingNumber'), null], 'Routing Numbers must match')
+    .required('Confirm Routing Number is required'),
+  accountNumber: yup.string().required('Account Number is required'),
+  confirmAccountNumber: yup
+    .string()
+    .oneOf([yup.ref('accountNumber'), null], 'Account Numbers must match')
+    .required('Confirm Account Number is required'),
+});
 
 const AddStore: React.FC = () => {
   const navigation = useNavigation();
@@ -51,36 +80,6 @@ const AddStore: React.FC = () => {
     {label: 'Bank 1', value: 'bank1'},
     {label: 'Bank 2', value: 'bank2'},
   ];
-
-  const initialValues = {
-    shopName: '',
-    // shopImage: '',
-    accountHolderName: '',
-    // accountType: '',
-    // bankName: '',
-    routingNumber: '',
-    confirmRoutingNumber: '',
-    accountNumber: '',
-    confirmAccountNumber: '',
-  };
-
-  const validationSchema = yup.object().shape({
-    shopName: yup.string().required('Shop Name is required'),
-    // shopImage: yup.string().required('Shop Image is required'),
-    accountHolderName: yup.string().required('Account Holder Name is required'),
-    // accountType: yup.string().required('Account Type is required'),
-    // bankName: yup.string().required('Bank Name is required'),
-    routingNumber: yup.string().required('Routing Number is required'),
-    confirmRoutingNumber: yup
-      .string()
-      .oneOf([yup.ref('routingNumber'), null], 'Routing Numbers must match')
-      .required('Confirm Routing Number is required'),
-    accountNumber: yup.string().required('Account Number is required'),
-    confirmAccountNumber: yup
-      .string()
-      .oneOf([yup.ref('accountNumber'), null], 'Account Numbers must match')
-      .required('Confirm Account Number is required'),
-  });
 
   const handleDropdownChange = (value: string | null) => {
     console.log('Selected value:', value);
@@ -139,6 +138,18 @@ const AddStore: React.FC = () => {
         console.log('error from Updated Profile =========>', err);
       });
   };
+
+  const getData = async () => {
+    await getBank().then(res => {
+      if (res?.data) {
+        console.log('DATAAAAAAAAAAAAAAAA', res?.data?.data);
+      }
+    });
+  };
+
+  useEffect(() => {
+    getData(); 
+  }, []);
 
   return (
     <KeyboardAwareScrollView

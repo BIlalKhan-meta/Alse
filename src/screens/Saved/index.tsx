@@ -484,46 +484,14 @@ const Saved: React.FC = () => {
 
         {active == 2 && (
           <Card style={styles.contentContainer}>
-            <View
-              style={{flexDirection: 'row', justifyContent: 'space-between'}}>
-              <View>
-                {/* <InterRegular style={styles.heading}>Sort by:</InterRegular> */}
-                <View>
-                  {/* <Picker
-                    style={[styles.pickercontainer]}
-                    dropdownIconColor={colors.inputText}
-                    enabled={true}
-                    mode="dialog"
-                    placeholder={'Product name (a-z)'}
-                    // onValueChange={handleChange('gender')}
-                    // selectedValue={values.gender}
-                    // data={genders}
-                  >
-                    <Picker.Item label={'Product name (a-z)'} value="" />
-
-                    {productFilter.map(item => (
-                      <Picker.Item
-                        label={item.name.toString()}
-                        value={item.name.toString()}
-                        key={item.id.toString()}
-                      />
-                    ))}
-                  </Picker> */}
-                </View>
-              </View>
-
-              {/* <TouchableOpacity>
-                <Image source={images.filter} />
-              </TouchableOpacity> */}
-            </View>
-
             <WishlistScreen
               wishlist={displayPost.map(item => {
                 return item?.savable_item;
               })}
               handleRemove={handleRemoveFromWishlist}
               heart={true}
-              addCart={true}
+              // addCart={true}
+              vendor={true}
               product={true}
             />
           </Card>

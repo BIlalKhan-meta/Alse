@@ -60,7 +60,7 @@ const endpoints = {
     orderDetail: '/get-order-detail',
     shopOrders: '/get-shop-orders',
     paymentLogs: '/get-payment-logs',
-    similar : '/product'
+    similar: '/product',
   },
   education: {
     getArticles: '/articles',
@@ -91,6 +91,7 @@ const endpoints = {
     removeSaved: '/remove-saved-item',
     aboutUs: '/content?type=aboutUs',
     contactUs: '/contact-us',
+    banks: '/banks',
   },
 };
 

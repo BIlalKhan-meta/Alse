@@ -99,7 +99,8 @@ const Blogs: React.FC = () => {
         <ContentSavedScreen
           item={item}
           userId={user?.id}
-          viewBtn="View Full Article"
+          viewBtn={active == 1 ? 'View Full Article' : 'View Full Blog'}
+          type={active == 1 ? 'article' : 'blog'}
           onItemPress={() =>
             navigation.navigate('ViewBlog', {
               id: item?.id,
@@ -126,7 +127,6 @@ const Blogs: React.FC = () => {
       )}
     </Card>
   );
-
 
   if (!user?.has_subscription) {
     return (

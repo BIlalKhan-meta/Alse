@@ -47,7 +47,7 @@ const styles = StyleSheet.create({
   button: {
     backgroundColor: colors.themeColor,
     height: vh * 6,
-    width: vw * 45,
+    // width: vw * 45,
     fontWeight: '300',
     borderColor: colors.themeColor,
     borderWidth: 1,

@@ -2,14 +2,11 @@
 import React, {useEffect, useState} from 'react';
 import {View, StyleSheet, Image, TouchableOpacity} from 'react-native';
 import {images} from '../../utils/images';
-import {vw} from '../../constant';
 import InterBold from '../../components/Text/InterBold';
 import InterMedium from '../../components/Text/InterMedium';
 import CustomButton from '../CustomButton';
 import styles from './styles';
 import {useNavigation} from '@react-navigation/native';
-import {useAppDispatch} from '../../hooks/storeHooks';
-import {followUser} from '../../store/slices/homeSlice';
 import {useSelector} from 'react-redux';
 import {selectUserProfile} from '../../store/slices/authSlice';
 import {userFollow, userUnFollow} from '../../api/home';

@@ -6,6 +6,11 @@ const styles = StyleSheet.create({
   container: {
     // padding: 10,
   },
+  icon: {
+    width: 20,
+    height: 20,
+    marginRight: 5,
+  },
   productContainer: {
     // flex: 1,
     flexDirection: 'row',
@@ -75,7 +80,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.themeColor,
     marginLeft: vw * 2,
-    width: '80%',
+    width: '45%',
     alignItems: 'center',
   },
   viewText: {
