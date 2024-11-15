@@ -132,7 +132,7 @@ const LoginScreen: React.FC = () => {
                   submitted={submitted}
                   errors={errors.password}
                   secureTextEntry={securePassword}
-                  onPressPassword={() => setSecurePassword(!securePassword)}
+                  onPressCurrentPassword={() => setSecurePassword(!securePassword)}
                 />
 
                 <RememberMeContainer

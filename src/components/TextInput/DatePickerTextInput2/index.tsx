@@ -15,6 +15,7 @@ interface DatePickerInputProps {
   error?: string;
   onDateChange: (date: Date) => void;
   style: object;
+  maxDate?: boolean;
 }
 
 const DatePickerInput: React.FC<DatePickerInputProps> = ({
@@ -24,6 +25,7 @@ const DatePickerInput: React.FC<DatePickerInputProps> = ({
   onDateChange,
   style,
   error,
+  maxDate,
 }) => {
   const [openDate, setOpenDate] = useState<boolean>(false);
   const [formattedDate, setFormattedDate] = useState<string>(
@@ -71,6 +73,7 @@ const DatePickerInput: React.FC<DatePickerInputProps> = ({
         onCancel={() => {
           setOpenDate(false);
         }}
+        {...(maxDate ? {maximumDate: new Date()} : {})}
       />
 
       {error && (

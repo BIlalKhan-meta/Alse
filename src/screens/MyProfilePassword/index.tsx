@@ -1,100 +1,65 @@
-import React, { useLayoutEffect, useState } from 'react';
-import { View, TouchableOpacity, Image } from 'react-native';
-import { Formik } from 'formik';
+import React, {useState} from 'react';
+import {Formik} from 'formik';
 import * as yup from 'yup';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import GeneralModal from '../../components/GeneralModal';
 import RegularTextInput from '../../components/TextInput/RegularTextInput';
-import HeaderComponent from '../../components/HeaderComponent';
-import { useNavigation } from '@react-navigation/native';
-import { images } from '../../utils/images';
+import {useNavigation} from '@react-navigation/native';
+import {images} from '../../utils/images';
 import styles from './styles';
-// import ProfileModal from '../../components/ProfileModal';
-import { colors } from '../../utils/theme';
+import {colors} from '../../utils/theme';
 import CustomButton from '../../components/CustomButton';
 import Card from '../../components/Card';
-import { changePassword } from '../../api/profile';
+import {changePassword} from '../../api/profile';
+
+interface FormValues {
+  currentPassword: string;
+  password: string;
+  cpassword: string;
+}
+
+const initialValues: FormValues = {
+  currentPassword: '',
+  password: '',
+  cpassword: '',
+};
+
+const validationSchema: yup.AnySchema<FormValues> = yup.object().shape({
+  currentPassword: yup
+    .string()
+    .min(6, 'Password must be at least 6 characters')
+    .required('Current Password is required'),
+  password: yup
+    .string()
+    .min(6, 'Password must be at least 6 characters')
+    .required('Password is required'),
+  cpassword: yup
+    .string()
+    .oneOf([yup.ref('password'), null], 'Passwords must match')
+    .required('Confirm Password is required'),
+});
 
 const MyProfilePassword: React.FC = () => {
   const navigation = useNavigation();
 
-  const [changePasswordModal, setChangePasswordModal] = useState<boolean>(false);
-  const [securePassword, setSecurePassword] = useState<boolean>(true)
-  const [secureNewPassword, setSecureNewPassword] = useState<boolean>(true)
-  const [secureconfirmPassword, setSecureconfirmPassword] = useState<boolean>(true)
-  const [imageModal, setImageModal] = useState<boolean>(false);
+  const [changePasswordModal, setChangePasswordModal] =
+    useState<boolean>(false);
+  const [securePassword, setSecurePassword] = useState<boolean>(true);
+  const [secureNewPassword, setSecureNewPassword] = useState<boolean>(true);
+  const [secureconfirmPassword, setSecureconfirmPassword] =
+    useState<boolean>(true);
   const [submitted, setSubmitted] = useState<boolean>(false);
-
-
-  // useLayoutEffect(() => {
-  //   navigation.setOptions({
-  //     headerRight: () => (
-  //       <View style={{}}>
-
-  //         <TouchableOpacity onPress={() => {
-  //           setImageModal(true)
-
-  //         }}>
-  //           <Image
-  //             source={images.setting}
-  //             style={styles.threeDots}
-  //           />
-
-
-  //         </TouchableOpacity>
-
-
-  //       </View>
-  //     ),
-  //   });
-  // }, [navigation]);
-  interface FormValues {
-    currentPassword: string;
-    password: string;
-    cpassword: string;
-  }
-
-  const initialValues: FormValues = {
-    currentPassword: '',
-    password: '',
-    cpassword: '',
-  };
-
-  const validationSchema: yup.AnySchema<FormValues> = yup.object().shape({
-    currentPassword: yup
-      .string()
-      .min(6, 'Password must be at least 6 characters')
-      .required('Current Password is required'),
-    password: yup
-      .string()
-      .min(6, 'Password must be at least 6 characters')
-      .required('Password is required'),
-    cpassword: yup
-      .string()
-      .oneOf([yup.ref('password'), null], 'Passwords must match')
-      .required('Confirm Password is required'),
-  });
-
-  // const handleSubmit = (values: FormValues, { resetForm }: { resetForm: () => void }) => {
-  //   console.log('PASSWORD CHANGED SUCCESSFULLY');
-  //   setChangePasswordModal(true);
-  //   // Additional actions after successful password change
-  //   // resetForm(); // Uncomment if you want to reset form fields after submission
-  // };
 
   const handleSubmit = async (
     values: object,
-    { resetForm }: { resetForm: () => void },
+    {resetForm}: {resetForm: () => void},
   ) => {
-
-    console.log(values, "Valuessss====>>>")
+    console.log(values, 'Valuessss====>>>');
     const data = {
       old_password: values?.currentPassword,
       new_password: values?.password,
       confirm_password: values?.cpassword,
-
     };
-
 
     let formData = new FormData();
 
@@ -109,7 +74,6 @@ const MyProfilePassword: React.FC = () => {
       // .unwrap()
       .then(res => {
         setSubmitted(false);
-
         console.log('response form updated Profile==========>', res);
         setChangePasswordModal(true);
       })
@@ -126,13 +90,11 @@ const MyProfilePassword: React.FC = () => {
   };
 
   return (
-
     <Formik
       initialValues={initialValues}
       validationSchema={validationSchema}
-      onSubmit={handleSubmit}
-    >
-      {({ handleSubmit, handleChange, handleBlur, values, errors }) => (
+      onSubmit={handleSubmit}>
+      {({handleSubmit, handleChange, handleBlur, values, errors}) => (
         <>
           <KeyboardAwareScrollView style={styles.scrollview}>
             <Card style={styles.container}>
@@ -142,29 +104,28 @@ const MyProfilePassword: React.FC = () => {
                 onChangeText={handleChange('currentPassword')}
                 onBlur={handleBlur('currentPassword')}
                 value={values.currentPassword}
-
                 errors={errors.currentPassword}
-                secureTextEntry={securePassword} // Toggle as needed
+                secureTextEntry={securePassword}
                 submitted={submitted}
-
-                onPressCurrentPassword={() => { setSecurePassword(!securePassword) }}
+                onPressCurrentPassword={() => {
+                  setSecurePassword(!securePassword);
+                }}
                 eyeColor={colors.black}
-
               />
+
               <RegularTextInput
                 label="New Password *"
                 placeholder="New Password"
                 onChangeText={handleChange('password')}
                 onBlur={handleBlur('password')}
                 value={values.password}
-
                 errors={errors.password}
-                secureTextEntry={secureNewPassword} // Toggle as needed
-                onPressPassword={() => { setSecureNewPassword(!secureNewPassword) }}
+                secureTextEntry={secureNewPassword}
+                onPressCurrentPassword={() => {
+                  setSecureNewPassword(!secureNewPassword);
+                }}
                 eyeColor={colors.black}
                 submitted={submitted}
-
-
               />
               <RegularTextInput
                 label="Confirm Password *"
@@ -172,22 +133,19 @@ const MyProfilePassword: React.FC = () => {
                 onChangeText={handleChange('cpassword')}
                 onBlur={handleBlur('cpassword')}
                 value={values.cpassword}
-
                 errors={errors.cpassword}
                 secureTextEntry={secureconfirmPassword} // Toggle as needed
-                onPressCPassword={() => { setSecureconfirmPassword(!secureconfirmPassword) }}
+                onPressCurrentPassword={() => {
+                  setSecureconfirmPassword(!secureconfirmPassword);
+                }}
                 eyeColor={colors.black}
                 submitted={submitted}
-
               />
 
-
-
-
-
-              <CustomButton onPress={handleSubmit} style={styles.btnStyle}
-                loading={submitted}
-              >
+              <CustomButton
+                onPress={handleSubmit}
+                style={styles.btnStyle}
+                loading={submitted}>
                 Update
               </CustomButton>
             </Card>
@@ -200,10 +158,10 @@ const MyProfilePassword: React.FC = () => {
             message="Your password has been updated successfully"
             buttonText="Ok"
             onPress={() => {
-              setChangePasswordModal(false)
+              setChangePasswordModal(false);
               // setProfileDetails(true)
               // navigation.navigate("MyProfile")
-              navigation.navigate("Home")
+              navigation.navigate('Home');
             }}
             primaryBtn={true}
           />
@@ -219,14 +177,9 @@ const MyProfilePassword: React.FC = () => {
               setImageModal(false)
 
             }} /> */}
-
         </>
       )}
     </Formik>
-
-
-
-
   );
 };
 

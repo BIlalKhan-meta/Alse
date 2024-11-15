@@ -87,7 +87,21 @@ const RegularTextInput: React.FC<RegularTextInputProps> = props => {
           </TouchableOpacity>
         )}
 
-        {props.label === 'Current Password' && (
+        {props.secureTextEntry == true && (
+          <TouchableOpacity
+            onPress={props?.onPressCurrentPassword}
+            style={styles.eyeicon}>
+            <Image
+              source={
+                props?.secureTextEntry
+                  ? images.EyeIcon
+                  : images.VisibilityOffIcon
+              }
+              tintColor={colors.black}
+            />
+          </TouchableOpacity>
+        )}
+        {props.secureTextEntry == false && (
           <TouchableOpacity
             onPress={props?.onPressCurrentPassword}
             style={styles.eyeicon}>

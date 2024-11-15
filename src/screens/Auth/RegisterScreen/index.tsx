@@ -112,7 +112,6 @@ const RegisterScreen: React.FC = () => {
       password: values.password,
       dialing_code: values.countryCode,
       phone_number: values.contactNo,
-      // gender: 'male',
       dob: dateHelper(values.dateOfBirth),
       image: image,
     };
@@ -128,7 +127,11 @@ const RegisterScreen: React.FC = () => {
         setSuccessModel(true);
       })
       .catch(error => {
-        console.error('Signup error:', error);
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: error?.message,
+        });
       })
       .finally(() => {
         setSubmitted(false);
@@ -227,6 +230,7 @@ const RegisterScreen: React.FC = () => {
                   placeholder="mm/dd/yyyy"
                   onDateChange={e => setFieldValue('dateOfBirth', e)}
                   style={styles.textinputbox}
+                  maxDate
                 />
 
                 <RegularTextInput

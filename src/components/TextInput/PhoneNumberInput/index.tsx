@@ -51,7 +51,7 @@ const PhoneNumberInput: React.FC<PhoneNumberInputProps> = ({
         defaultValue={initialNumber}
         defaultCode={initialCountryCode}
         layout="first"
-        onChangeFormattedText={handleChange}
+        onChangeText={handleChange}
         containerStyle={styles.phoneContainer}
         textContainerStyle={styles.textInput}
         // onChangeCountry={val => handleCountryChange(val?.callingCode[0])}
