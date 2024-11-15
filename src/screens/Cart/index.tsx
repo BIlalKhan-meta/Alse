@@ -28,9 +28,6 @@ const Cart = () => {
   const user = useSelector(selectUserProfile);
 
   const handleChange = async (label: string, id: number) => {
-    // Implement increment logic here
-    // console.log('Increment item at index:', index);
-
     let index = cartData?.carts?.data?.findIndex(item => item.id == id);
 
     let arr = [...cartData?.carts?.data];

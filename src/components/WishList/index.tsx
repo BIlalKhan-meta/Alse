@@ -19,9 +19,10 @@ import Toast from 'react-native-toast-message';
 
 interface WishlistProps {
   wishlist: [];
-  heart: boolean;
-  addCart: boolean;
-  product: boolean;
+  heart?: boolean;
+  addCart?: boolean;
+  product?: boolean;
+  vendor?: boolean;
   onPress: () => void;
   handleRemove: () => void;
 }
@@ -33,8 +34,10 @@ const WishlistScreen: React.FC<WishlistProps> = ({
   product,
   onPress,
   handleRemove,
+  vendor,
 }) => {
   const handleAddToCart = async (productId: number) => {
+    console.log('PRODUCCCCCCCCCCCCCC', productId);
     await addProductToCart(productId)
       .then(res => {
         if (res?.data) {
@@ -97,6 +100,13 @@ const WishlistScreen: React.FC<WishlistProps> = ({
               </InterBoldAverage>
             ) : (
               <Text> </Text>
+            )}
+          </View>
+          <View>
+            {product && vendor && (
+              <InterRegular style={styles.productName}>
+                {item?.shop?.shop_name}
+              </InterRegular>
             )}
           </View>
           {item?.sizes != undefined && item?.sizes?.length != 0 && (
