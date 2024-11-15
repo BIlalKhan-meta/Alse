@@ -7,11 +7,10 @@ import Card from '../../components/Card';
 import {images} from '../../utils/images';
 import InterMedium from '../../components/Text/InterMedium';
 import HorizontalSeparator from '../../components/HorizontalSeparator';
-import {useEffect, useLayoutEffect, useState} from 'react';
+import {useEffect, useState} from 'react';
 import {getNotifications, markRead} from '../../api/home';
 import {EmptyComponent} from '../../components/EmptyComponent';
 import {timeFormat} from '../../utils';
-import Loader from '../../components/Loader';
 
 const Notifications: React.FC = () => {
   const [data, setData] = useState([]);
