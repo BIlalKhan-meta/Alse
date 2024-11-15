@@ -59,6 +59,8 @@ const endpoints = {
     ordersList: '/get-orders',
     orderDetail: '/get-order-detail',
     shopOrders: '/get-shop-orders',
+    paymentLogs: '/get-payment-logs',
+    similar : '/product'
   },
   education: {
     getArticles: '/articles',
@@ -88,6 +90,7 @@ const endpoints = {
     saveItem: '/save-item',
     removeSaved: '/remove-saved-item',
     aboutUs: '/content?type=aboutUs',
+    contactUs: '/contact-us',
   },
 };
 

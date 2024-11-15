@@ -16,3 +16,9 @@ export const saveItem = (formData: FormData) => {
     formData: true,
   });
 };
+
+export const contactUs = (formData: FormData) => {
+  return axiosInstance.post(`${endpoints.menu.contactUs}`, formData, {
+    formData: true,
+  });
+};

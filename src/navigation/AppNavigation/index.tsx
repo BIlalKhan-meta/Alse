@@ -39,6 +39,7 @@ import EditBlog from '../../screens/EditBlog';
 import {EditShop} from '../../screens/EditShop';
 import MyOrders from '../../screens/MyOrders';
 import SubscriptionPlan from '../../screens/SubscriptionPlan';
+import PaymentLogs from '../../screens/PaymentLogs';
 
 const AppNavigation = () => {
   const Stack = createNativeStackNavigator();

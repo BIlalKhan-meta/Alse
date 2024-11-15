@@ -19,7 +19,6 @@ const MenuNavigation = () => {
             initialRouteName="Menu"
             screenOptions={{ headerShown: false }}>
             <Stack.Screen name="Menu" component={Menu} options={NavigationOptions} />
-
         </Stack.Navigator>
 
     )

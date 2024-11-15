@@ -13,9 +13,11 @@ export const getCategories = () => {
   return axiosInstance.get(`${endpoints.products.category}`);
 };
 
-export const addProductToCart = (id: number) => {
+export const addProductToCart = (id: number, formData: FormData) => {
   // console.log('addcartttt ', `${endpoints.products.cart}/${id}`);
-  return axiosInstance.post(`${endpoints.products.cart}/${id}`);
+  return axiosInstance.post(`${endpoints.products.cart}/${id}`, formData, {
+    formData: true,
+  });
 };
 export const removeCartItem = (id: number) => {
   return axiosInstance.post(`${endpoints.products.removeCartItem}/${id}`);
@@ -51,4 +53,10 @@ export const getMyOrders = () => {
 };
 export const getOrderDetail = (id: number) => {
   return axiosInstance.get(`${endpoints.products.orderDetail}/${id}`);
+};
+export const getPaymentLogs = () => {
+  return axiosInstance.get(`${endpoints.products.paymentLogs}`);
+};
+export const getSimilarProducts = (id: number) => {
+  return axiosInstance.get(`${endpoints.products.similar}/${id}/similar`);
 };

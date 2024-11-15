@@ -128,11 +128,11 @@ const AddProduct: React.FC = () => {
 
   const handleSubmit = async (values: typeof initialValues) => {
     setSubmitted(true);
-    if (media.length == 0) {
+    if (media.length < 3) {
       return Toast.show({
         type: 'error',
         text1: 'Upload Media',
-        text2: 'Media is required',
+        text2: 'Minimum 3 Images Required',
       });
     }
     let statusState;
@@ -377,7 +377,6 @@ const AddProduct: React.FC = () => {
                     value={values.color}
                     errors={errors.color}
                     style={styles.inputStyle2}
-                    keyboardType="numeric"
                     submitted={submitted}
                   />
                 </View>

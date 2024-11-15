@@ -1,64 +1,60 @@
 import React, {useState} from 'react';
-import {
-  Image,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  View,
-} from 'react-native';
-import {images} from '../../utils/images';
-import {colors} from '../../utils/theme';
+import {View} from 'react-native';
 import styles from './styles';
-// import TabsComponent from '../TabsComponent';
-import InterBold from '../Text/InterBold';
 import InterRegular from '../Text/InterRegular';
 import CustomButton from '../CustomButton';
 import QunatityControls from '../QuantityControls';
-import Selection from '../Selection';
 import {useNavigation} from '@react-navigation/native';
 import {addProductToCart, productDetail} from '../../api/product';
 import {getMessage, Toast} from '../../utils/helpers';
 import {useSelector} from 'react-redux';
 import {selectUserProfile} from '../../store/slices/authSlice';
-import InterBoldAverage from '../Text/InterBoldAverage';
-import InterBoldSmall from '../Text/InterBoldSmall';
 import InterMedium from '../Text/InterMedium';
-import InterBoldLabel from '../Text/InterBoldLabel';
-
-const colorsType = ['Red', 'Blue', 'Green'];
-const sizes = ['S', 'M', 'L'];
 
 const StoreOrderComponent: React.FC = props => {
   const navigation = useNavigation();
   const productItem = props?.productItem;
-  // console.log('====================================');
-  // console.log(productItem, 'Frommm propssssss ');
-  // console.log('====================================');
-  const [selectedColor, setSelectedColor] = useState<string | null>('Red');
-  const [selectedSize, setSelectedSize] = useState<string | null>('L');
   const user = useSelector(selectUserProfile);
+  const [value, setValue] = useState(1);
+  const [loader, setLoader] = useState(false);
 
-  const handleIncrement = (index: number) => {
-    // Implement increment logic here
-    console.log('Increment item at index:', index);
-    index + 1;
-  };
-
-  const handleDecrement = (index: number) => {
-    // Implement decrement logic here
-    console.log('Decrement item at index:', index);
-    index - 1;
+  const handleChange = (status: string) => {
+    if (status == 'decrement' && value == 1) {
+      return;
+    }
+    if (status == 'increment') {
+      setValue(value + 1);
+    } else {
+      setValue(value - 1);
+    }
   };
 
   const handleAddToCart = async () => {
+    setLoader(true);
+    const temp = {
+      color: productItem?.colors[0].color,
+      size: productItem?.sizes[0].size,
+      quantity: value,
+    };
+
+    const form = new FormData();
+    Object.entries(temp).forEach(([key, value]) => {
+      form.append(key, value);
+    });
+
+    console.log(JSON.stringify(form, null, 4));
+
     try {
-      const res = await addProductToCart(productItem?.id);
-      console.log('response from addtocartttt ====>', res?.data?.message);
-      Toast.success(getMessage(res?.data?.message));
+      await addProductToCart(productItem?.id, form).then(res => {
+        if (res?.data) {
+          Toast.success(getMessage(res?.data?.message));
+        }
+      });
     } catch (error) {
       Toast.error(getMessage(error?.message));
       console.log('Fromm add tocartt erro', error);
+    } finally {
+      setLoader(false);
     }
   };
 
@@ -93,14 +89,17 @@ const StoreOrderComponent: React.FC = props => {
 
       {user?.id != productItem.shop.user_id ? (
         <View style={styles.btnContainer}>
-          <CustomButton style={styles.checkoutButton} onPress={handleAddToCart}>
+          <CustomButton
+            style={styles.checkoutButton}
+            loading={loader}
+            onPress={handleAddToCart}>
             Add to Cart
           </CustomButton>
 
           <QunatityControls
-            quantity={1}
-            onIncrement={() => handleIncrement(1)}
-            onDecrement={() => handleDecrement(1)}
+            quantity={value}
+            onIncrement={() => handleChange('increment')}
+            onDecrement={() => handleChange('decrement')}
           />
         </View>
       ) : (

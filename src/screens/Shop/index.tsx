@@ -46,14 +46,6 @@ const Shop: React.FC = () => {
   const [filter, setFilter] = useState('');
   const [filteredData, setFilteredData] = useState([]);
 
-  // const [modalVisible, setModalVisible] = useState(false);
-  const [sortValue, setSortValue] = useState<string>(''); // State for the selected sort value
-
-  const handleSelectSort = (value: string) => {
-    setSortValue(value);
-    // Implement sorting logic here based on the selected value
-  };
-
   const handleReportPress = () => {
     setModalVisible(false);
     setReportSuccess(true);
@@ -216,11 +208,6 @@ const Shop: React.FC = () => {
               }}
             />
           </Card>
-          <SortModal
-            visible={modalVisible}
-            onClose={() => setModalVisible(false)}
-            onSelect={handleSelectSort}
-          />
           <GeneralModal
             visible={ReportSuccess}
             closeModal={() => setReportSuccess(false)}
