@@ -1,30 +1,23 @@
-// EditBankDetailScreen.tsx
-import React, {useLayoutEffect, useState} from 'react';
-import {View, Text, TouchableOpacity, ScrollView} from 'react-native';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
-import {Formik} from 'formik';
-import * as yup from 'yup';
-
-import styles from './styles'; // Ensure you have your styles defined
-import RegularTextInput from '../../components/TextInput/RegularTextInput';
-import DropdownPicker from '../../components/DropdownPicker';
-import DropDownTextInput from '../../components/TextInput/DropDownTextInput';
-import GeneralModal from '../../components/GeneralModal';
-import {images} from '../../utils/images';
-import {colors} from '../../utils/theme';
-import CustomButton from '../../components/CustomButton';
-import InterRegular from '../../components/Text/InterRegular';
 import {useNavigation} from '@react-navigation/native';
+import {Formik} from 'formik';
+import React, {useLayoutEffect, useState} from 'react';
+import {View} from 'react-native';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import * as yup from 'yup';
+import {colors} from '../../utils/theme';
+import InterRegular from '../../components/Text/InterRegular';
+import DropDownTextInput from '../../components/TextInput/DropDownTextInput';
+import RegularTextInput from '../../components/TextInput/RegularTextInput';
+import CustomButton from '../../components/CustomButton';
+import GeneralModal from '../../components/GeneralModal';
 import Card from '../../components/Card';
+import styles from './styles';
+import {images} from '../../utils/images';
+import {createBank, updateBank} from '../../api/menu';
 
 const accountTypes = [
   {label: 'Savings', value: 'savings'},
   {label: 'Checking', value: 'checking'},
-];
-
-const banks = [
-  {label: 'Bank 1', value: 'bank1'},
-  {label: 'Bank 2', value: 'bank2'},
 ];
 
 const validationSchema = yup.object().shape({
@@ -34,35 +27,67 @@ const validationSchema = yup.object().shape({
   routingNumber: yup.string().required('Routing Number is required'),
   confirmRoutingNumber: yup
     .string()
-    .oneOf([yup.ref('routingNumber'), null], 'Routing Numbers must match')
+    .oneOf([yup.ref('routingNumber')], 'Routing Numbers must match')
     .required('Confirm Routing Number is required'),
   accountNumber: yup.string().required('Account Number is required'),
   confirmAccountNumber: yup
     .string()
-    .oneOf([yup.ref('accountNumber'), null], 'Account Numbers must match')
+    .oneOf([yup.ref('accountNumber')], 'Account Numbers must match')
     .required('Confirm Account Number is required'),
 });
 
-const initialValues = {
-  accountHolderName: '',
-  accountType: accountTypes[0].value,
-  bankName: banks[0].value,
-  routingNumber: '',
-  confirmRoutingNumber: '',
-  accountNumber: '',
-  confirmAccountNumber: '',
-};
-
-const BankDetailUpdate: React.FC = () => {
+export const UpdateBank = ({data, setData}) => {
   const navigation = useNavigation();
   const [detailUpdate, setDetailUpdate] = useState<boolean>(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (values: any) => {
-    console.log('Form submitted:', values);
+  const initialValues = {
+    accountHolderName: data?.account_name || '',
+    accountType: data?.account_type || accountTypes[0].value,
+    bankName: data?.bank_name || '',
+    routingNumber: data?.routing_number || '',
+    confirmRoutingNumber: data?.routing_number || '',
+    accountNumber: data?.account_number || '',
+    confirmAccountNumber: data?.account_number || '',
+  };
+
+  const handleSubmit = async (values: any) => {
+    setLoading(true);
+    const temp = {
+      account_name: values?.accountHolderName,
+      account_type: values?.accountType,
+      bank_name: values?.bankName,
+      routing_number: values?.routingNumber,
+      account_number: values?.accountNumber,
+    };
+    const form = new FormData();
+    Object.entries(temp).forEach(([key, value]) => {
+      form.append(key, value);
+    });
+    if (data) {
+      await updateBank(form).then(res => {
+        if (res?.data) {
+          console.log('UPDATEEEEEEEDDDDDDDDDDDDDDDDD');
+          setDetailUpdate(true);
+          setLoading(false);
+          setData(temp);
+        }
+      });
+    } else {
+      await createBank(form).then(res => {
+        if (res?.data) {
+          console.log('CREATEEEDDDDDDDDDDDDDDDDDD');
+          setDetailUpdate(true);
+          setLoading(false);
+          setData(temp);
+        }
+      });
+    }
   };
   const handleDropdownChange = (value: string | null) => {
     console.log('Selected value:', value);
   };
+
   useLayoutEffect(() => {
     navigation.setOptions({
       headerStyle: {
@@ -70,6 +95,7 @@ const BankDetailUpdate: React.FC = () => {
       },
     });
   }, [navigation]);
+
   return (
     <KeyboardAwareScrollView showsVerticalScrollIndicator={false}>
       <Formik
@@ -94,7 +120,7 @@ const BankDetailUpdate: React.FC = () => {
                   onChangeText={handleChange('accountHolderName')}
                   onBlur={handleBlur('accountHolderName')}
                   value={values.accountHolderName}
-                  error={touched.accountHolderName && errors.accountHolderName}
+                  error={errors.accountHolderName}
                   style={styles.inputStyle}
                 />
 
@@ -106,13 +132,25 @@ const BankDetailUpdate: React.FC = () => {
                   <DropDownTextInput
                     items={accountTypes}
                     // defaultValue='all'
+                    defaultValue={values?.accountType}
                     placeholder="Select"
-                    onChangeValue={handleDropdownChange}
+                    onChangeValue={handleChange('accountType')}
                     style={styles.dropDown}
                   />
                 </View>
 
-                <InterRegular style={styles.countryLabel}>
+                <RegularTextInput
+                  label="Bank Name *"
+                  placeholder="Enter Name"
+                  placeholderTextColor={colors.inputText}
+                  onChangeText={handleChange('bankName')}
+                  onBlur={handleBlur('bankName')}
+                  value={values.bankName}
+                  error={errors.bankName}
+                  style={styles.inputStyle}
+                />
+
+                {/* <InterRegular style={styles.countryLabel}>
                   Bank Name
                 </InterRegular>
 
@@ -124,7 +162,7 @@ const BankDetailUpdate: React.FC = () => {
                     onChangeValue={handleDropdownChange}
                     style={styles.dropDown}
                   />
-                </View>
+                </View> */}
 
                 <RegularTextInput
                   label="Routing Number *"
@@ -133,8 +171,9 @@ const BankDetailUpdate: React.FC = () => {
                   onChangeText={handleChange('routingNumber')}
                   onBlur={handleBlur('routingNumber')}
                   value={values.routingNumber}
-                  error={touched.routingNumber && errors.routingNumber}
+                  error={errors.routingNumber}
                   style={styles.inputStyle}
+                  keyboardType="numeric"
                 />
 
                 <RegularTextInput
@@ -144,10 +183,9 @@ const BankDetailUpdate: React.FC = () => {
                   onChangeText={handleChange('confirmRoutingNumber')}
                   onBlur={handleBlur('confirmRoutingNumber')}
                   value={values.confirmRoutingNumber}
-                  error={
-                    touched.confirmRoutingNumber && errors.confirmRoutingNumber
-                  }
+                  error={errors.confirmRoutingNumber}
                   style={styles.inputStyle}
+                  keyboardType="numeric"
                 />
 
                 <RegularTextInput
@@ -157,8 +195,9 @@ const BankDetailUpdate: React.FC = () => {
                   onChangeText={handleChange('accountNumber')}
                   onBlur={handleBlur('accountNumber')}
                   value={values.accountNumber}
-                  error={touched.accountNumber && errors.accountNumber}
+                  error={errors.accountNumber}
                   style={styles.inputStyle}
+                  keyboardType="numeric"
                 />
 
                 <RegularTextInput
@@ -168,31 +207,30 @@ const BankDetailUpdate: React.FC = () => {
                   onChangeText={handleChange('confirmAccountNumber')}
                   onBlur={handleBlur('confirmAccountNumber')}
                   value={values.confirmAccountNumber}
-                  error={
-                    touched.confirmAccountNumber && errors.confirmAccountNumber
-                  }
+                  error={errors.confirmAccountNumber}
                   style={styles.inputStyle}
+                  keyboardType="numeric"
                 />
 
                 <CustomButton
                   style={styles.updateButton}
-                  onPress={() => {
-                    handleSubmit;
-                    setDetailUpdate(true);
-                  }}>
-                  UPDATE
+                  loading={loading}
+                  onPress={handleSubmit}>
+                  {data ? 'UPDATE' : 'ADD'}
                 </CustomButton>
               </Card>
               <GeneralModal
                 visible={detailUpdate}
                 closeModal={() => setDetailUpdate(false)}
                 icon={images.checkedIcon}
-                title="Bank Detail Update"
-                message="Bank Detail Has Been Updated Successfully"
+                title={data ? 'Bank Detail Updated' : 'Bank Detail Created'}
+                message={`Bank Detail Has Been ${
+                  data ? 'Update' : 'Created'
+                } Successfully`}
                 buttonText="OK"
                 onPress={() => {
                   setDetailUpdate(false);
-                  navigation.navigate('BankDetail');
+                  // navigation.navigate('BankDetail');
                 }}
                 primaryBtn={true}
               />
@@ -203,5 +241,3 @@ const BankDetailUpdate: React.FC = () => {
     </KeyboardAwareScrollView>
   );
 };
-
-export default BankDetailUpdate;

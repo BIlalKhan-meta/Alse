@@ -1,84 +1,51 @@
-import { Text, View, Image, TouchableOpacity } from 'react-native';
-import styles from './styles';
-import { useNavigation } from '@react-navigation/native';
-import CustomButton from '../../components/CustomButton';
-import InterMedium from '../../components/Text/InterMedium';
-import { useLayoutEffect } from 'react';
-import { colors } from '../../utils/theme';
-import Card from '../../components/Card';
-
+import {useEffect, useState} from 'react';
+import {getBank} from '../../api/menu';
+import Loader from '../../components/Loader';
+import {ViewBank} from './viewBank';
+import {UpdateBank} from './updateBank';
 
 const BankDetail: React.FC = () => {
-    const navigation = useNavigation()
+  const [data, setData] = useState();
+  const [visible, setVisible] = useState(true);
+  const [loading, setLoading] = useState(false);
 
-    useLayoutEffect(() => {
-        navigation.setOptions({
-            headerStyle: {
-                backgroundColor: colors.headerColor
-            },
+  const getData = async () => {
+    setLoading(true);
+    await getBank()
+      .then(res => {
+        if (res?.data?.data) {
+          console.log('RESSSSSSSSSSSSSS', res?.data?.data);
+          setData(res?.data?.data);
+        }
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  };
 
-        });
-    }, [navigation]);
+  useEffect(() => {
+    if (data && !visible) {
+      setVisible(true);
+    }
+  }, [data]);
 
+  useEffect(() => {
+    getData();
+  }, []);
 
+  if (loading) {
+    return <Loader />;
+  }
 
-
-    return (
-
-
-        <View style={styles.container}>
-
-
-            <Card style={styles.contentContainer}>
-
-
-
-
-
-                <View style={styles.txtConatiner}>
-                    <InterMedium style={styles.txt}>Account Holder Name</InterMedium>
-                    <InterMedium style={styles.phoneTxt}>Ad Abc</InterMedium>
-                </View>
-
-                <View style={styles.txtConatiner}>
-                    <InterMedium style={styles.txt}>Account Type</InterMedium>
-                    <InterMedium style={styles.phoneTxt}>Saving</InterMedium>
-                </View>
-
-
-                <View style={styles.txtConatiner}>
-                    <InterMedium style={styles.txt}>Bank Name</InterMedium>
-                    <InterMedium style={styles.phoneTxt}>Bank A</InterMedium>
-                </View>
-
-                <View style={styles.txtConatiner}>
-                    <InterMedium style={styles.txt}>Routing Number</InterMedium>
-                    <InterMedium style={styles.phoneTxt}>123-456-7890</InterMedium>
-                </View>
-
-
-                <View style={styles.txtConatiner}>
-                    <InterMedium style={styles.txt}>Account Number</InterMedium>
-                    <InterMedium style={styles.phoneTxt}>123-456-7890</InterMedium>
-                </View>
-
-
-
-
-                <CustomButton style={styles.btnConatiner}
-                    onPress={() => navigation.navigate("BankDetailUpdate")}
-                >
-                    Edit Details
-                </CustomButton>
-
-
-            </Card>
-
-
-
-        </View>
-
-    );
+  return (
+    <>
+      {data && visible ? (
+        <ViewBank data={data} setVisible={setVisible} />
+      ) : (
+        <UpdateBank data={data} setData={setData} />
+      )}
+    </>
+  );
 };
 
 export default BankDetail;

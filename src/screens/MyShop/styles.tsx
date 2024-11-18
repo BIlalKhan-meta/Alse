@@ -102,15 +102,16 @@ const styles = StyleSheet.create({
   },
   btnConatiner: {
     flexDirection: 'row',
-    width: vw * 80,
-    justifyContent: 'space-between',
+    // width: vw * 80,
+    width: '100%',
+    justifyContent: 'space-evenly',
     alignSelf: 'center',
   },
   secondaryBtn1: {
-    width: vw * 35,
+    minWidth: '45%',
   },
   secondaryBtn2: {
-    width: vw * 35,
+    minWidth: '45%',
     backgroundColor: colors.white,
   },
 });

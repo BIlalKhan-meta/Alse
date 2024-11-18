@@ -11,14 +11,8 @@ import {
 } from 'react-native';
 import TextInputWrapper from '../TextInputWrapper';
 import {StyleSheet} from 'react-native';
-import InterBoldLabel from '../../Text/InterBoldLabel';
 import {fontSizes, vh, vw} from '../../../constant';
 import {colors} from '../../../utils/theme';
-import fonts from '../../../assets/fonts';
-// import VisibilityOffIcon from '../../../assets/icons/visibilityofficon.png';
-// import EyeIcon from '../../../assets/icons/eyeicon.png';
-import InterRegularSmall from '../../Text/InterRegularSmall';
-import InterRegularSmaller from '../../Text/InterRegularSmaller';
 import InterRegularSmallest from '../../Text/InterRegularSmallest';
 import InterRegular from '../../Text/InterRegular';
 import {images} from '../../../utils/images';
@@ -137,7 +131,7 @@ const RegularTextInput: React.FC<RegularTextInputProps> = props => {
 };
 
 const styles = StyleSheet.create({
-  container: {marginTop: vh * 4},
+  container: {marginTop: vh * 3},
   label: {
     marginLeft: vw * 2,
     color: colors.black,

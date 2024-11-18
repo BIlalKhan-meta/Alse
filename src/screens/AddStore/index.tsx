@@ -18,35 +18,41 @@ import Card from '../../components/Card';
 import InterBoldSmall from '../../components/Text/InterBoldSmall';
 import {createShop} from '../../api/shop';
 import {getBank} from '../../api/menu';
+import {DialogBox} from '../../components/DialogBox';
+import {vh} from '../../constant';
+import Toast from 'react-native-toast-message';
+import Loader from '../../components/Loader';
 
 const initialValues = {
-  shopName: '',
+  name: 'My New Shop',
+  delivery_fees: '100',
   // shopImage: '',
-  accountHolderName: '',
+  // accountHolderName: '',
   // accountType: '',
   // bankName: '',
-  routingNumber: '',
-  confirmRoutingNumber: '',
-  accountNumber: '',
-  confirmAccountNumber: '',
+  // routingNumber: '',
+  // confirmRoutingNumber: '',
+  // accountNumber: '',
+  // confirmAccountNumber: '',
 };
 
 const validationSchema = yup.object().shape({
-  shopName: yup.string().required('Shop Name is required'),
+  name: yup.string().required('Shop Name is required'),
+  delivery_fees: yup.string().required('Delivery Fees is required'),
   // shopImage: yup.string().required('Shop Image is required'),
-  accountHolderName: yup.string().required('Account Holder Name is required'),
+  // accountHolderName: yup.string().required('Account Holder Name is required'),
   // accountType: yup.string().required('Account Type is required'),
   // bankName: yup.string().required('Bank Name is required'),
-  routingNumber: yup.string().required('Routing Number is required'),
-  confirmRoutingNumber: yup
-    .string()
-    .oneOf([yup.ref('routingNumber'), null], 'Routing Numbers must match')
-    .required('Confirm Routing Number is required'),
-  accountNumber: yup.string().required('Account Number is required'),
-  confirmAccountNumber: yup
-    .string()
-    .oneOf([yup.ref('accountNumber'), null], 'Account Numbers must match')
-    .required('Confirm Account Number is required'),
+  // routingNumber: yup.string().required('Routing Number is required'),
+  // confirmRoutingNumber: yup
+  //   .string()
+  //   .oneOf([yup.ref('routingNumber'), null], 'Routing Numbers must match')
+  //   .required('Confirm Routing Number is required'),
+  // accountNumber: yup.string().required('Account Number is required'),
+  // confirmAccountNumber: yup
+  //   .string()
+  //   .oneOf([yup.ref('accountNumber'), null], 'Account Numbers must match')
+  //   .required('Confirm Account Number is required'),
 });
 
 const AddStore: React.FC = () => {
@@ -55,12 +61,14 @@ const AddStore: React.FC = () => {
 
   const title = route?.params?.title || 'Create Shop';
 
-  const {imageData, image, captureImage, chooseImageFromLibrary} =
-    useImagePicker();
+  const {imageData, captureImage, chooseImageFromLibrary} = useImagePicker();
   const [shopSuccess, setShopSuccess] = useState(false);
+  const [visible, setVisible] = useState(false);
   const [submitted, setSubmitted] = useState<boolean>(false);
-  const [accountType, setAccountType] = useState<string | null>(null); // State for selected account type
-  const [bankName, setBankName] = useState<string | null>(null); // State for selected bank name
+  const [loading, setLoading] = useState<boolean>(false);
+  const [bankLoader, setBankLoader] = useState(false);
+  // const [accountType, setAccountType] = useState<string | null>(null); // State for selected account type
+  // const [bankName, setBankName] = useState<string | null>(null); // State for selected bank name
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -71,39 +79,46 @@ const AddStore: React.FC = () => {
     });
   }, [navigation]);
 
-  const accountTypes = [
-    {label: 'Savings', value: 'savings'},
-    {label: 'Checking', value: 'checking'},
-  ];
+  useEffect(() => {
+    if (imageData) {
+      setVisible(false);
+    }
+  }, [imageData]);
 
-  const banks = [
-    {label: 'Bank 1', value: 'bank1'},
-    {label: 'Bank 2', value: 'bank2'},
-  ];
+  // const accountTypes = [
+  //   {label: 'Savings', value: 'savings'},
+  //   {label: 'Checking', value: 'checking'},
+  // ];
 
-  const handleDropdownChange = (value: string | null) => {
-    console.log('Selected value:', value);
-  };
+  // const banks = [
+  //   {label: 'Bank 1', value: 'bank1'},
+  //   {label: 'Bank 2', value: 'bank2'},
+  // ];
 
-  const handleSubmit = async (
-    values: object,
-    {resetForm}: {resetForm: () => void},
-  ) => {
-    console.log('SUBMITTED valuessssssss', values);
-    console.log('accountType valuessssssss', accountType, bankName);
-    console.log('accountType valuessssssss', imageData);
+  // const handleDropdownChange = (value: string | null) => {
+  //   console.log('Selected value:', value);
+  // };
 
+  const handleShop = async (values: object) => {
+    if (!imageData) {
+      return Toast.show({
+        type: 'error',
+        text1: 'Banner',
+        text2: 'Banner Required',
+      });
+    }
+    setLoading(true);
     setSubmitted(true);
     const data = {
-      name: values?.shopName,
-      delivery_fees: '40',
-      'bank_details[account_name]': values?.accountHolderName,
-      'bank_details[account_type]': accountType,
-      'bank_details[bank_name]': bankName,
-      'bank_details[routing_number]': values.routingNumber,
-      'bank_details[account_number]': values.accountNumber,
+      name: values?.name,
+      delivery_fees: values?.delivery_fees,
+      // 'bank_details[account_name]': values?.accountHolderName,
+      // 'bank_details[account_type]': accountType,
+      // 'bank_details[bank_name]': bankName,
+      // 'bank_details[routing_number]': values.routingNumber,
+      // 'bank_details[account_number]': values.accountNumber,
     };
-    if (imageData.type !== '') {
+    if (imageData) {
       // let imagePath = image.split('/');
 
       const uploadedImage = {
@@ -111,10 +126,6 @@ const AddStore: React.FC = () => {
         name: imageData?.fileName,
         type: imageData?.type,
       };
-
-      console.log('uploadedImage= ==>', uploadedImage);
-      // console.log('uploadedCover= ==>', uploadedCover);
-
       data['shop_banner'] = uploadedImage;
     }
 
@@ -126,63 +137,82 @@ const AddStore: React.FC = () => {
     console.log('formData===>', formData);
 
     await createShop(formData)
-      // .unwrap()
       .then(res => {
-        setSubmitted(false);
-
-        console.log('response form updated createshoppppp==========>', res);
-        setShopSuccess(true);
+        if (res?.data) {
+          setSubmitted(false);
+          setShopSuccess(true);
+        }
       })
       .catch(err => {
         setSubmitted(false);
-        console.log('error from Updated Profile =========>', err);
+      })
+      .finally(() => {
+        setLoading(false);
       });
   };
 
   const getData = async () => {
+    setBankLoader(true);
     await getBank().then(res => {
-      if (res?.data) {
-        console.log('DATAAAAAAAAAAAAAAAA', res?.data?.data);
+      if (!res?.data?.data) {
+        setBankLoader(false);
+        navigation.navigate('BankDetail');
       }
     });
   };
 
   useEffect(() => {
-    getData(); 
+    getData();
   }, []);
+
+  if (bankLoader) {
+    return <Loader />;
+  }
 
   return (
     <KeyboardAwareScrollView
       contentContainerStyle={styles.container}
       showsVerticalScrollIndicator={false}
       enableOnAndroid={true}>
+      <DialogBox
+        status="upload"
+        heading="Upload Media"
+        onClose={() => setVisible(false)}
+        visible={visible}
+        button={[
+          {text: 'Open Camera', onPress: () => captureImage('photo')},
+          {text: 'Open Gallery', onPress: chooseImageFromLibrary},
+        ]}
+      />
       <Formik
         initialValues={initialValues}
         validationSchema={validationSchema}
-        onSubmit={(values, {resetForm}) => {
-          handleSubmit(values, resetForm);
-        }}>
-        {({
-          handleChange,
-          handleBlur,
-          handleSubmit,
-          resetForm,
-          values,
-          errors,
-          touched,
-        }) => (
+        onSubmit={handleShop}>
+        {({handleSubmit, handleChange, handleBlur, values, errors}) => (
           <>
             <Card style={styles.contentContainer}>
               <RegularTextInput
                 label="Shop Name *"
                 placeholder="Enter Shop Name"
                 placeholderTextColor={colors.inputText}
-                onChangeText={handleChange('shopName')}
-                onBlur={handleBlur('shopName')}
-                value={values.shopName}
+                onChangeText={handleChange('name')}
+                onBlur={handleBlur('name')}
+                value={values.name}
                 submitted={submitted}
-                errors={errors.shopName}
+                errors={errors.name}
                 style={styles.inputStyle}
+              />
+              <RegularTextInput
+                label="Delivery Fees *"
+                placeholder="Enter Delivery Fees"
+                placeholderTextColor={colors.inputText}
+                onChangeText={handleChange('delivery_fees')}
+                onBlur={handleBlur('delivery_fees')}
+                value={values.delivery_fees}
+                submitted={submitted}
+                errors={errors.delivery_fees}
+                style={styles.inputStyle}
+                keyboardType="numeric"
               />
 
               <InterRegular style={styles.dropdownLabel}>
@@ -191,12 +221,25 @@ const AddStore: React.FC = () => {
 
               <TouchableOpacity
                 style={styles.uploadBtn}
-                onPress={() => captureImage('photo')}>
+                onPress={() => setVisible(true)}>
                 <InterRegular style={styles.uploadTxt}>Upload</InterRegular>
                 <Image source={images.upload} style={styles.uploadImg} />
               </TouchableOpacity>
 
-              <InterBoldSmall style={styles.heading}>
+              <View>
+                {imageData && (
+                  <Image
+                    source={{uri: imageData?.uri}}
+                    style={{
+                      width: '100%',
+                      height: vh * 15,
+                      resizeMode: 'cover',
+                    }}
+                  />
+                )}
+              </View>
+
+              {/* <InterBoldSmall style={styles.heading}>
                 Bank Information
               </InterBoldSmall>
 
@@ -232,10 +275,6 @@ const AddStore: React.FC = () => {
                 />
               </View>
 
-              {/* {errors.accountType && <InterRegularSmallest style={styles.error}>
-                                {errors.accountType}
-                            </InterRegularSmallest>} */}
-
               <InterRegular style={styles.countryLabel}>
                 Bank Name *
               </InterRegular>
@@ -254,10 +293,6 @@ const AddStore: React.FC = () => {
                   style={styles.dropDown}
                 />
               </View>
-
-              {/* {errors.bankName && <InterRegularSmallest style={styles.error}>
-                                {errors.bankName}
-                            </InterRegularSmallest>} */}
 
               <RegularTextInput
                 label="Account Number *"
@@ -312,10 +347,14 @@ const AddStore: React.FC = () => {
                 onPress={() => {
                   setSubmitted(true);
                   handleSubmit();
-                }}
-                // loading={submitted}
-              >
+                }}>
                 {title == 'Edit Shop' ? 'UPDATE' : 'CREATE'}
+              </CustomButton> */}
+              <CustomButton
+                style={styles.submitButton}
+                loading={loading}
+                onPress={handleSubmit}>
+                CREATE SHOP
               </CustomButton>
             </Card>
 
@@ -332,7 +371,7 @@ const AddStore: React.FC = () => {
               primaryBtn={true}
               onPress={() => {
                 setShopSuccess(false);
-                navigation.navigate('Shop');
+                navigation.goBack();
               }}
             />
           </>

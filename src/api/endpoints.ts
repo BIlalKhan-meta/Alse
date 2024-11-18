@@ -92,6 +92,8 @@ const endpoints = {
     aboutUs: '/content?type=aboutUs',
     contactUs: '/contact-us',
     banks: '/banks',
+    updateBank: '/bank/update',
+    createBank: '/bank/create',
   },
 };
 

@@ -19,6 +19,16 @@ export const saveItem = (formData: FormData) => {
     formData: true,
   });
 };
+export const updateBank = (formData: FormData) => {
+  return axiosInstance.post(`${endpoints.menu.updateBank}`, formData, {
+    formData: true,
+  });
+};
+export const createBank = (formData: FormData) => {
+  return axiosInstance.post(`${endpoints.menu.createBank}`, formData, {
+    formData: true,
+  });
+};
 
 export const contactUs = (formData: FormData) => {
   return axiosInstance.post(`${endpoints.menu.contactUs}`, formData, {
