@@ -40,8 +40,8 @@ const LoginScreen: React.FC = () => {
 
   const getToken = async () => {
     const token = await getFcmToken();
-    console.log("Token ========<",token);
-    
+    console.log('Token ========<', token);
+
     setDeviceToken(token);
   };
 
@@ -132,7 +132,9 @@ const LoginScreen: React.FC = () => {
                   submitted={submitted}
                   errors={errors.password}
                   secureTextEntry={securePassword}
-                  onPressCurrentPassword={() => setSecurePassword(!securePassword)}
+                  onPressCurrentPassword={() =>
+                    setSecurePassword(!securePassword)
+                  }
                 />
 
                 <RememberMeContainer

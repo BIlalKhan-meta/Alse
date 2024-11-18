@@ -172,19 +172,19 @@ const MyPosts: React.FC = () => {
 
   const handleSave = async (id: number, isSaved: boolean) => {
     dispatch(postSave(id));
+    const data = {
+      item_id: id,
+      item_type: 'post',
+    };
+    const form = new FormData();
+    Object.entries(data).map(([key, value]) => {
+      form.append(key, value);
+    });
     if (isSaved) {
-      await removeSavedItem(id)
+      await removeSavedItem(form)
         .then(res => console.log('SAVEDDD POSTTTTT REMOOVEEEDDDD', res))
         .catch(err => console.log('ERRRORRRRRRRRR SAVEDDDDDDDDDDD', err));
     } else {
-      const data = {
-        item_id: id,
-        item_type: 'post',
-      };
-      const form = new FormData();
-      Object.entries(data).map(([key, value]) => {
-        form.append(key, value);
-      });
       await saveItem(form)
         .then(res => console.log('POSTTTT SAVEEEDDDDDDD', res))
         .catch(err => console.log('SAVEEEEDDDDDD POSTTTTT ERRORRRRRR', err));

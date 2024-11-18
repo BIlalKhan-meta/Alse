@@ -4,11 +4,11 @@ import {fontSizes, vh, vw} from '../../constant';
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    // flex: 1,
     backgroundColor: colors.headerColor,
     paddingHorizontal: 15,
     paddingTop: vh * 1,
-    marginTop: Platform.OS == 'ios' ? vh * 4 : 0,
+    marginTop: Platform.OS == 'ios' ? vh * 4 : vh,
   },
   itemCard: {
     marginBottom: vh * 2,

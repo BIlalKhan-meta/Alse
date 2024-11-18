@@ -37,6 +37,7 @@ import {
   userFollowAccept,
 } from '../../api/home';
 import Row from '../../components/Row';
+import {FollowingCard} from '../../components/FollowingCard';
 
 const RequestScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -92,7 +93,7 @@ const RequestScreen: React.FC = () => {
 
   useEffect(() => {
     getApi();
-  }, []);
+  }, [active]);
 
   const getApi = async () => {
     setLoading(true);
@@ -144,28 +145,16 @@ const RequestScreen: React.FC = () => {
     item: {id: string; avatar: string; name: string; type: string};
   }) => (
     <>
-      <Row justify="space-between" style={{marginVertical: 0}}>
-        <Row style={{marginVertical: 0}}>
-          <Image
-            source={item?.avatar ? {uri: item?.avatar} : images.user}
-            style={styles.userAvatar}
-          />
-          <InterRegular style={styles.userName}>{item?.name}</InterRegular>
-        </Row>
-        <CustomButton
-          onPress={() =>
-            handleActionButton(
-              active == 1 ? 'Follow Back' : active == 2 ? 'Remove' : 'Unfollow',
-              item?.user_id,
-            )
-          }
-          style={styles.secondaryBtn1}
-          containerStyle={styles.buttonContainerStyle}
-          txtstyle={styles.btnTxt}
-          loading={followLoader}>
-          {active == 1 ? 'Follow Back' : active == 2 ? 'Remove' : 'Unfollow'}
-        </CustomButton>
-      </Row>
+      <FollowingCard
+        item={item}
+        text={active == 1 ? 'Follow Back' : active == 2 ? 'Remove' : 'Unfollow'}
+        onPress={() =>
+          handleActionButton(
+            active == 1 ? 'Follow Back' : active == 2 ? 'Remove' : 'Unfollow',
+            item?.user_id,
+          )
+        }
+      />
       <HorizontalSeparator />
     </>
   );
@@ -215,6 +204,7 @@ const RequestScreen: React.FC = () => {
 
           {/* Render user list based on active tab using FlatList */}
           <FlatList
+            showsVerticalScrollIndicator={false}
             data={data}
             renderItem={renderUserItem}
             ListEmptyComponent={renderEmpty}

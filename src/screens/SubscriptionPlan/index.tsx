@@ -113,11 +113,10 @@ const SubscriptionPlan: React.FC = () => {
 
   const renderItem = ({item}) => (
     <View style={styles.planDetails}>
-      <View>
-        <Text style={styles.planTitle}>{item.name}</Text>
-        <Text style={styles.planDescription}> {item.description}</Text>
-        <Text style={styles.price}>Price: {item.price}</Text>
-      </View>
+      <Text style={styles.planTitle}>{item.name}</Text>
+      <Text style={styles.planDescription}> {item.description}</Text>
+      <Text style={styles.price}>Price: {item.price}</Text>
+
       <CustomButton style={styles.button} onPress={() => onChoosePlan(item.id)}>
         Choose Plan
       </CustomButton>

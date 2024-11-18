@@ -10,6 +10,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     paddingTop: Platform.OS == 'ios' ? vh * 8 : vh * 1,
   },
+
+  itemCard: {
+    marginBottom: vh * 2,
+    width: vw * 94,
+    alignSelf: 'center',
+    padding: 0,
+  },
   emptyContainer: {
     flexGrow: 1,
     height: '100%',

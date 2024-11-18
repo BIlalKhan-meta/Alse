@@ -52,19 +52,19 @@ const ContentSavedScreen: React.FC<ContentSavedProps> = ({
   }, [item]);
 
   const handleSave = async (id: number, isSaved: boolean) => {
+    const data = {
+      item_id: id,
+      item_type: type,
+    };
+    const form = new FormData();
+    Object.entries(data).map(([key, value]) => {
+      form.append(key, value);
+    });
     if (isSaved) {
-      await removeSavedItem(id)
+      await removeSavedItem(form)
         .then(res => console.log('SAVEDDD ITEMMMMMMMMMM REMOOVEEEDDDD', res))
         .catch(err => console.log('ERRRORRRRRRRRR SAVEDDDDDDDDDDD', err));
     } else {
-      const data = {
-        item_id: id,
-        item_type: type,
-      };
-      const form = new FormData();
-      Object.entries(data).map(([key, value]) => {
-        form.append(key, value);
-      });
       await saveItem(form)
         .then(res => console.log('POSTTTT SAVEEEDDDDDDD', res))
         .catch(err => console.log('SAVEEEEDDDDDD POSTTTTT ERRORRRRRR', err));
@@ -114,7 +114,7 @@ const ContentSavedScreen: React.FC<ContentSavedProps> = ({
             <TouchableOpacity
               onPress={() => handleSave(item?.id, item?.is_saved)}>
               <Image
-                source={saved ? images.unsave : images.save}
+                source={item?.is_saved ? images.unsave : images.save}
                 style={styles.icon}
               />
             </TouchableOpacity>

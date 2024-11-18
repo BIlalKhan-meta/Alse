@@ -10,8 +10,10 @@ export const getAboutUs = () => {
 export const getBank = () => {
   return axiosInstance.get(endpoints.menu.banks);
 };
-export const removeSavedItem = (id: number) => {
-  return axiosInstance.post(`${endpoints.menu.removeSaved}/${id}`);
+export const removeSavedItem = (formData: FormData) => {
+  return axiosInstance.post(`${endpoints.menu.removeSaved}`, formData, {
+    formData: true,
+  });
 };
 
 export const saveItem = (formData: FormData) => {

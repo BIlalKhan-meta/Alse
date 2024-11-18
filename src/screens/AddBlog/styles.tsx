@@ -31,7 +31,7 @@ const styles = StyleSheet.create({
   },
   dropDownContainer: {
     zIndex: 98,
-    backgroundColor: colors.inputcolor,
+    // backgroundColor: colors.inputcolor,
   },
   dropDown: {
     // marginBottom: 16,

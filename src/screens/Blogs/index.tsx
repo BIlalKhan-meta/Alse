@@ -69,6 +69,8 @@ const Blogs: React.FC = () => {
     }
     return (
       <FlatList
+        onRefresh={fetchData}
+        refreshing={loading}
         data={data}
         renderItem={renderItem}
         keyExtractor={item => item.id.toString()}
@@ -144,6 +146,10 @@ const Blogs: React.FC = () => {
       </View>
     );
   }
+
+  // if (display.length == 0) {
+  //   return <EmptyComponent text={'No Data Available'} />;
+  // }
 
   return (
     <View style={styles.container}>

@@ -80,6 +80,10 @@ const MyBlogs: React.FC = () => {
     });
   }, [navigation]);
 
+  // if (display.length == 0) {
+  //   return <EmptyComponent text={'No Data Available'} />;
+  // }
+
   return (
     <View style={styles.container}>
       {loading ? (
@@ -92,10 +96,10 @@ const MyBlogs: React.FC = () => {
           renderItem={({item}) => (
             <Card style={styles.itemCard}>
               <MediaCard
-                type={item?.type}
+                type={'video'}
                 source={item?.source}
                 title={item?.title}
-                // description={item.description}
+                description={item.content}
                 category={item.category}
                 onBookmarkPress={() => {}}
                 onItemPress={() =>
@@ -114,6 +118,7 @@ const MyBlogs: React.FC = () => {
       ) : (
         <FlatList
           data={display}
+          showsVerticalScrollIndicator={false}
           renderItem={({item}) => (
             <Card style={styles.itemCard}>
               <ContentSavedScreen

@@ -26,18 +26,13 @@ const statuses = [
   {label: 'Inactive', value: 'inactive'},
 ];
 
-const statuses1 = [
-  {label: 'Information Technology', value: 'it'},
-  {label: 'Artificial Intelligance', value: 'ai'},
-];
-
 const validationSchema = yup.object().shape({
   title: yup.string().required('Title is required'),
   content: yup.string().required('Description is required'),
 });
 
 const videoSchema = yup.object().shape({
-  category: yup.string().required('Category is required'),
+  // category: yup.string().required('Category is required'),
   status: yup.string().required('Status is required'),
 });
 
@@ -205,7 +200,7 @@ const AddBlog = () => {
 
             {(title == 'Add Videos' || title == 'Update Video') && (
               <>
-                <InterRegular style={styles.dropdownLabel}>
+                {/* <InterRegular style={styles.dropdownLabel}>
                   Category *
                 </InterRegular>
                 <View style={styles.dropDownContainer}>
@@ -216,8 +211,9 @@ const AddBlog = () => {
                     placeholder="Select Category"
                     onChangeValue={e => setValues({...values, category: e})}
                     style={[styles.dropDown]}
+                    error={errors.category}
                   />
-                </View>
+                </View> */}
 
                 <InterRegular style={styles.dropdownLabel}>
                   Status *
@@ -230,6 +226,7 @@ const AddBlog = () => {
                     placeholder="Select Status"
                     onChangeValue={e => setValues({...values, status: e})}
                     style={styles.dropDown}
+                    error={errors.status}
                   />
                 </View>
               </>

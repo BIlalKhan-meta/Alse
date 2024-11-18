@@ -41,6 +41,7 @@ import Toast from 'react-native-toast-message';
 import Loader from '../../components/Loader';
 import {EmptyComponent} from '../../components/EmptyComponent';
 import {timeFormat} from '../../utils';
+import MediaCard from '../../components/MediaCard';
 
 const productFilter = [
   {name: 'a', id: 1},
@@ -208,17 +209,21 @@ const Saved: React.FC = () => {
   };
 
   const handleSave = async (id: number, isSaved: boolean) => {
-    await removeSavedItem(id)
-      .then(res => {
-        if (res?.data) {
-          // fetchData();
-          let index = displayPost.findIndex(item => item.id == id);
-          const arr = [...displayPost];
-          arr.splice(index, 1);
-          setDisplayPost(arr);
-        }
-      })
-      .catch(err => console.log('ERRRORRRRRRRRR SAVEDDDDDDDDDDD', err));
+    let index = displayPost.findIndex(item => item?.savable_item?.id == id);
+    const arr = [...displayPost];
+    arr.splice(index, 1);
+    setDisplayPost(arr);
+    const data = {
+      item_id: id,
+      item_type: 'post',
+    };
+    const form = new FormData();
+    Object.entries(data).map(([key, value]) => {
+      form.append(key, value);
+    });
+    await removeSavedItem(form).catch(err =>
+      console.log('ERRRORRRRRRRRR SAVEDDDDDDDDDDD', err),
+    );
   };
 
   const handleDotPress = (postId: number) => {
@@ -509,19 +514,47 @@ const Saved: React.FC = () => {
                 <EmptyComponent text={'No Saved Content'} />
               )}
               renderItem={({item}) => (
-                <ContentSavedScreen
-                  item={item}
-                  title="Blog Title"
-                  viewBtn="View Full Blog"
-                  style={styles.itemStyle}
-                  onItemPress={() =>
-                    navigation.navigate('ViewBlog', {
-                      item,
-                      title: 'View Blog Title',
-                    })
-                  }
-                />
-                // </View>
+                <Card style={styles.itemCard}>
+                  {item?.savable_type == 'App\\Models\\Blog' ||
+                  item?.savable_type == 'App\\Models\\Article' ? (
+                    <ContentSavedScreen
+                      item={item?.savable_item}
+                      userId={item?.savable_item?.user_id}
+                      viewBtn={
+                        item?.savable_type == 'App\\Models\\Article'
+                          ? 'View Full Article'
+                          : 'View Full Blog'
+                      }
+                      type={
+                        item?.savable_type == 'App\\Models\\Article'
+                          ? 'article'
+                          : 'blog'
+                      }
+                      onItemPress={() =>
+                        navigation.navigate('ViewBlog', {
+                          id: item?.savable_item?.id,
+                          title: item?.savable_item?.title,
+                        })
+                      }
+                    />
+                  ) : (
+                    <MediaCard
+                      type={'video'}
+                      source={item?.video}
+                      title={item?.title}
+                      description={item?.content}
+                      category={item?.category?.title}
+                      onBookmarkPress={() => {}}
+                      onItemPress={() =>
+                        navigation.navigate('ViewBlog', {
+                          id: item?.id,
+                          title: item?.title,
+                          type: 'video',
+                        })
+                      }
+                    />
+                  )}
+                </Card>
               )}
               keyExtractor={item => item?.id?.toString()}
             />

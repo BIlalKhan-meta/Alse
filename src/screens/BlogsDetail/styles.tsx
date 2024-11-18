@@ -74,12 +74,12 @@ const styles = StyleSheet.create({
   },
   checkoutButton: {
     alignSelf: 'center',
-    width: vw * 40,
+    minWidth: '45%',
     marginRight: vw * 2,
   },
   shoppingButton: {
     backgroundColor: colors.white,
-    width: vw * 40,
+    minWidth: '45%',
     alignSelf: 'center',
     alignItems: 'center',
   },
@@ -93,6 +93,8 @@ const styles = StyleSheet.create({
   btnContainer: {
     flexDirection: 'row',
     alignSelf: 'center',
+    width: '100%',
+    justifyContent: 'space-evenly',
     marginBottom: vh * 2,
   },
   postButton: {
