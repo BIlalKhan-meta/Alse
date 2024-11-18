@@ -57,10 +57,10 @@ width:'80%',
     justifyContent: "space-between"
   },
   secondaryBtn1: {
-    width: vw * 35
+    minWidth: vw * 38
   },
   secondaryBtn2: {
-    width: vw * 35,
+    minWidth: vw * 38,
     backgroundColor: colors.white
   },
 });

@@ -31,7 +31,7 @@ class NotificationListener {
 
   init(handleNotification) {
     if (this.hasBeenCalled) {
-      console.warn("NotificationListener can only be called once.");
+      console.log("NotificationListener can only be called once.");
       return;
     }
     this.hasBeenCalled = true;

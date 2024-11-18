@@ -64,12 +64,12 @@ const styles = StyleSheet.create({
     // backgroundColor: "yellow"
   },
   acceptBtn: {
-    width: vw * 40,
+    minWidth: vw * 38,
     // backgroundColor: colors.white,
     // borderColor: colors.white,
   },
   rejectBtn: {
-    width: vw * 40,
+    minWidth: vw * 38,
     backgroundColor: colors.white,
     borderColor: colors.black,
   },

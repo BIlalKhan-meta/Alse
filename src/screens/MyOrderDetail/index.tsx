@@ -12,10 +12,11 @@ import {images} from '../../utils/images';
 import GeneralModal from '../../components/GeneralModal';
 import {products} from '../../dummyData';
 import InterMedium from '../../components/Text/InterMedium';
-import {getOrderDetail} from '../../api/product';
+import {getOrderDetail, AcceptOrder, RejectOrder, DeliverOrder} from '../../api/product';
 import Loader from '../../components/Loader';
 import {dateHelper} from '../../utils';
 import CustomButton from '../../components/CustomButton';
+import Toast from 'react-native-toast-message';
 
 const contactInfo = [
   {heading: 'Username', label: 'first_name'},
@@ -55,12 +56,14 @@ const MyOrderDetail: React.FC = () => {
   const [ReportSuccess, setReportSuccess] = useState(false);
   const [data, setData] = useState();
   const [loader, setLoader] = useState(false);
-
+  const [rejectionReason, setRejectionReason]=useState('')
+  const [cancelLoader, setCancelLoader]= useState(false)
   useLayoutEffect(() => {
     navigation.setOptions({
       title: 'Order Detail',
     });
   }, [navigation]);
+console.log("rejectionReasonrejectionReadsfsdson ===>",rejectionReason);
 
   const getData = async () => {
     setLoader(true);
@@ -79,16 +82,77 @@ const MyOrderDetail: React.FC = () => {
         setLoader(false);
       });
   };
+  const OrderAccept = () =>{
+      AcceptOrder(id).then(res =>{
+        console.log("Response from Accept Order =====>",res);
+    setOrderSuccess(true);
+        
+      }).catch(err =>{
+        console.log("Accept Order Error ===>", err);
+        
+      })
+  
+    
 
+  }
+
+  const Deliver = () =>{
+    DeliverOrder(id).then(res =>{
+      console.log("Response from Accept Order =====>",res?.data?.message);
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: res?.data?.message,
+      });
+      navigation.goBack()
+  // setOrderSuccess(true);
+      
+    }).catch(err =>{
+      console.log("Accept Order Error ===>", err);
+      
+    })
+  }
+  const cancelOrder = () =>{
+    const data ={
+      reason:rejectionReason
+    }
+    if(rejectionReason){
+    setCancelLoader(true)
+
+RejectOrder(data, id).then(res =>{
+// setOrderSuccess(true);
+setReportInput(false);
+setReportSuccess(true);
+    setCancelLoader(false)
+               
+  
+}).catch(err =>{
+  console.log("Reject Order Error ===>", err);
+  setCancelLoader(false)
+  
+})
+}else{
+  Toast.show({
+    type: 'error',
+    text1: 'Upload Media',
+    text2: 'Please Enter Rejection Reason',
+  });
+}
+
+
+
+}
+
+ 
   useEffect(() => {
     if (id) {
       getData();
     }
   }, [id]);
 
-  if (loader) {
-    return <Loader />;
-  }
+  // if (loader) {
+  //   return <Loader />;
+  // }
 
   return (
     <View style={styles.container}>
@@ -176,13 +240,14 @@ const MyOrderDetail: React.FC = () => {
             </>
           )} */}
 
-              {(
+              {route?.params?.StoreOrder && (
             <View style={styles.btnConatiner}>
+               
+               {data?.status == 'pending' && <>
+              
               <CustomButton
                 style={styles.acceptBtn}
-                onPress={() => {
-                  setOrderSuccess(true);
-                }}>
+                onPress={OrderAccept}>
                 Accept
               </CustomButton>
 
@@ -194,6 +259,17 @@ const MyOrderDetail: React.FC = () => {
                 }}>
                 Rejected
               </CustomButton>
+              </>}
+            {data?.status == 'accepted' &&(
+              <View style={{width:'100%'}}>
+              <CustomButton
+          style={styles.acceptBtn}
+          
+                onPress={Deliver}>
+                Mark As Delivered
+              </CustomButton>
+              </View>)}
+               
             </View>
           )}
 
@@ -212,6 +288,7 @@ const MyOrderDetail: React.FC = () => {
                 primaryBtn={true}
                 onPress={() => {
                   setOrderSuccess(false);
+                  navigation.goBack()
                 }}
               />
 
@@ -222,22 +299,17 @@ const MyOrderDetail: React.FC = () => {
                 title="Reject Order"
                 message="Are you sure you want to reject this Order?"
                
-                SecondaryText1={'Accept'}
-                SecondaryText2="Reject"
+                SecondaryText1={'Yes'}
+                SecondaryText2="No"
                 secondaryBtn={true}
                 onPress={() => {
                   setReportVisible(false)
-
-                  setReportInput(true)
-
-                  console.log("Rejected")
-                  
-                }}
-
+                  setReportInput(true) 
+                  }
+                
+                }
                 smallButtons={true}
               />
-{/* {console.log("reportInputsad=as==>",reportInput)
-} */}
               <GeneralModal
                 visible={reportInput}
                 closeModal={() => setReportInput(false)}
@@ -246,10 +318,10 @@ const MyOrderDetail: React.FC = () => {
                 // message='Post has been delete successfully.'
                 buttonText="Ok"
                 inputVisible={true}
-                onPress={() => {
-                  setReportInput(false);
-                  setReportSuccess(true);
-                }}
+                onPress={cancelOrder}
+                loading={cancelLoader}
+                setRejectionReason={setRejectionReason}
+                rejectionReason={rejectionReason}
                 primaryBtn={true}
               />
 
@@ -259,10 +331,11 @@ const MyOrderDetail: React.FC = () => {
                 icon={images.doubleCheck}
                 title="Reject Order"
                 message="Order has been rejected successfully."
-                secondaryBtn={true}
                 buttonText="Ok"
+                primaryBtn={true}
                 onPress={() => {
                   setReportSuccess(false);
+                  navigation.goBack()
                 }}
               />
     </View>

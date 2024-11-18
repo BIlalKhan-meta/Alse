@@ -15,6 +15,9 @@ const styles = StyleSheet.create({
     //   alignItems: 'center',
     marginBottom: 20,
   },
+  smallbtn: {
+    minWidth: vw * 38,
+  },
   icon: {
     width: 30,
     height: 30,

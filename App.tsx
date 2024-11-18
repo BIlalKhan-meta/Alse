@@ -15,7 +15,7 @@ import {
   PERMISSIONS,
   request,
 } from 'react-native-permissions';
-import { NotificationListener, requestUserPermission } from './src/utils/NotificationServices';
+import {  requestUserPermission } from './src/utils/NotificationServices';
 
 const theme = {
   ...DefaultTheme,
@@ -71,12 +71,8 @@ function App(): React.JSX.Element {
     <PersistGate loading={null} persistor={persistor}>
       <Provider store={store}>
         <SafeAreaView style={styles.container}>
-          {/* <NotificationListener handleNotification={handleNotificationPress} /> */}
+
           <NavigationContainer theme={theme}>
-            {/* <StatusBar
-              backgroundColor={colors.headerColor}
-              barStyle={'dark-content'}
-            /> */}
             <AppNavigation />
           </NavigationContainer>
 

@@ -30,6 +30,7 @@ interface GeneralModalProps {
   SecondaryText2?: string;
   redImage?: boolean;
   loading?: boolean;
+  rejectionReason?:string
 }
 
 const GeneralModal: React.FC<GeneralModalProps> = ({
@@ -46,6 +47,8 @@ const GeneralModal: React.FC<GeneralModalProps> = ({
   SecondaryText2,
   redImage,
   loading,
+  setRejectionReason,
+  rejectionReason
 }) => {
   return (
     <Modal
@@ -75,33 +78,36 @@ const GeneralModal: React.FC<GeneralModalProps> = ({
           )}
 
           <InterBoldSmall style={styles.title}>{title}</InterBoldSmall>
-          <InterLightAverage style={styles.message}>
-            {message}
-          </InterLightAverage>
+          <InterLightAverage style={styles.message}>{message}</InterLightAverage>
+          {setRejectionReason && <RegularTextInput
+                  placeholder="Enter Rejection Reason"
+                  placeholderTextColor={colors.inputText}
+                  value={rejectionReason}
+                  onChangeText={val => setRejectionReason(val)}
+                  style={{ 
+                    color: colors.inputText,
+                    fontSize: fontSizes.f11,
+                    height: vh * 6,
+                    width: vw * 80,
+                    fontWeight: '300',
+                    borderColor: 'rgba(48, 86, 112, 0.05)',
+                    borderWidth: 1,
+                    borderRadius: 5,
+                    paddingHorizontal: 10,
+                    // backgroundColor:'rgba(48, 86, 112, 0.05)',
+                    backgroundColor: colors.inputcolor,
+                  }}
+              
+                />}
           <View style={styles.inputContainer}>
-            <RegularTextInput
-              placeholder="Enter Rejection Reason"
-              placeholderTextColor={colors.inputText}
-              style={{
-                color: colors.inputText,
-                fontSize: fontSizes.f11,
-                height: vh * 6,
-                marginTop: vh * 2,
-                width: vw * 85,
-                fontWeight: '300',
-                borderColor: 'rgba(48, 86, 112, 0.05)',
-                borderWidth: 1,
-                borderRadius: 5,
-                paddingHorizontal: 10,
-                // backgroundColor:'rgba(48, 86, 112, 0.05)',
-                backgroundColor: colors.inputcolor,
-              }}
-            />
-          </View>
+    
+                </View>
           {primaryBtn && (
             <CustomButton
               onPress={onPress}
-              containerStyle={styles.buttonContainerStyle}>
+              containerStyle={styles.buttonContainerStyle}
+              loading={loading}
+              >
               {buttonText}
             </CustomButton>
           )}

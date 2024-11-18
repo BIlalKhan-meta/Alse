@@ -11,6 +11,7 @@ import {useSelector} from 'react-redux';
 import {selectUserProfile} from '../../store/slices/authSlice';
 import {userFollow, userUnFollow} from '../../api/home';
 import Toast from 'react-native-toast-message';
+import { vw } from '../../constant';
 
 interface ProfileCardProps {
   name: string;
@@ -79,6 +80,11 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
     }
   };
 
+  const handleMessage = () =>{
+    console.log("Messageads");
+    
+  }
+
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -108,12 +114,36 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
         {/* Follow Button */}
 
         {user?.id !== id && (
+          <View style={{flexDirection:'row', alignItems:'center'}}>
+            {follow ? <View style={{flexDirection:'row', justifyContent:'space-between',width:'100%'}}>
+              <CustomButton
+            style={styles.smallbtn}
+            onPress={handleFollow}
+            loading={followLoader}>
+            {'Following' }
+          </CustomButton>
           <CustomButton
+            style={styles.smallbtn}
+            onPress={handleMessage}
+            loading={followLoader}>
+            { 'Message' }
+          </CustomButton>
+            </View>: 
+               <CustomButton
+               style={styles.followButton}
+               onPress={handleFollow}
+               loading={followLoader}>
+               {'Follow'}
+             </CustomButton>
+
+            }
+          {/* <CustomButton
             style={styles.followButton}
             onPress={handleFollow}
             loading={followLoader}>
             {follow ? 'Following' : 'Follow'}
-          </CustomButton>
+          </CustomButton> */}
+          </View>
         )}
       </View>
     </View>

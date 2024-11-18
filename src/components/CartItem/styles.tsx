@@ -72,7 +72,7 @@ const styles = StyleSheet.create({
 
     },
     quantityButtonText: {
-        fontSize: fontSizes.f16,
+        fontSize: fontSizes.f12,
         color: colors.white,
         fontWeight: "bold",
         alignSelf: "center"

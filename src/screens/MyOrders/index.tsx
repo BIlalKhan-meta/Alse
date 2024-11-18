@@ -7,7 +7,7 @@ import {
   FlatList,
 } from 'react-native';
 import styles from './styles';
-import {useNavigation} from '@react-navigation/native';
+import {useIsFocused, useNavigation} from '@react-navigation/native';
 import {images} from '../../utils/images';
 import TabsComponent from '../../components/TabsComponent';
 import FilterModal from '../../components/FilterModal';
@@ -62,10 +62,10 @@ const MyOrders: React.FC = (props) => {
         setLoader(false);
       });
   };
-
+const isFocused =useIsFocused()
   useEffect(() => {
     getData();
-  }, []);
+  }, [isFocused]);
 
   useEffect(() => {
     // Filter orders based on the selected tab

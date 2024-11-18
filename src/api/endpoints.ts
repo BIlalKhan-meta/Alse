@@ -61,6 +61,7 @@ const endpoints = {
     shopOrders: '/get-shop-orders',
     paymentLogs: '/get-payment-logs',
     similar: '/product',
+    acceptOrder:'get-order-detail/'
   },
   education: {
     getArticles: '/articles',

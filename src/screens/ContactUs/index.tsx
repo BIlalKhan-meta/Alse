@@ -47,6 +47,7 @@ const ContactUs: React.FC = ({navigation}) => {
   };
 
   const handleSubmit = async (values: FormValues) => {
+    setSubmitted(true)
     const form = new FormData();
     Object.entries(values).forEach(([key, value]) => {
       form.append(key, value);
@@ -54,9 +55,14 @@ const ContactUs: React.FC = ({navigation}) => {
 
     await contactUs(form).then(res => {
       if (res?.data) {
+    setSubmitted(false)
+
         setMessageSubmittedModal(true);
       }
-    });
+    }).catch(err =>{
+    setSubmitted(false)
+
+    })
   };
 
   return (
@@ -131,8 +137,9 @@ const ContactUs: React.FC = ({navigation}) => {
 
                   <CustomButton
                     style={{alignSelf: 'center'}}
+                    loading={submitted}
                     onPress={() => {
-                      setSubmitted(true);
+                 
                       handleSubmit();
                     }}>
                     Submit

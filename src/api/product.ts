@@ -5,6 +5,17 @@ export const productDetail = (id: number) => {
   return axiosInstance.get(`${endpoints.products.productDetail}/${id}`);
 };
 
+export const DeliverOrder = (id: number) =>{
+  return axiosInstance.post(`${endpoints.products.acceptOrder}${id}/delivered`)
+}
+export const AcceptOrder = (id: number) =>{
+  return axiosInstance.post(`${endpoints.products.acceptOrder}${id}/accepted`)
+}
+export const RejectOrder = (data, id) =>{
+  return axiosInstance.post(`${endpoints.products.acceptOrder}${id}/cancelled`, data)
+}
+// /get-order-detail/13/accepted
+
 export const productRating = (id: number) => {
   return axiosInstance.get(`${endpoints.products.productDetail}/${id}/reviews`);
 };
