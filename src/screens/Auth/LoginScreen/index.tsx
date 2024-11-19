@@ -18,16 +18,25 @@ import InterBoldLabel from '../../../components/Text/InterBoldLabel';
 import {login} from '../../../api/auth';
 import Toast from 'react-native-toast-message';
 import {setUser} from '../../../store/slices/authSlice';
+import EncryptedStorage from 'react-native-encrypted-storage';
 
 interface FormValues {
   email: string;
   password: string;
 }
+async function storeUserSession(email: string, password: string) {
+  await EncryptedStorage.setItem(
+    'user_session',
+    JSON.stringify({
+      email,
+      password,
+    }),
+  );
+}
 
-const initialValues = {
-  email: __DEV__ ? 'tony@mailinator.com' : '',
-  password: __DEV__ ? '12345678' : '',
-};
+async function removeUserSession() {
+  await EncryptedStorage.removeItem('user_session');
+}
 
 const LoginScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -37,6 +46,23 @@ const LoginScreen: React.FC = () => {
   const [securePassword, setSecurePassword] = useState<boolean>(true);
   const [isSelected, setIsSelected] = useState<boolean>(false);
   const [deviceToken, setDeviceToken] = useState<string | undefined>('');
+  const [initialValues, setInitialValues] = useState({email: '', password: ''});
+
+  const retrieveUserSession = async () => {
+    try {
+      const session = await EncryptedStorage.getItem('user_session');
+      if (session != undefined) {
+        const parsedSession = JSON.parse(session);
+        setIsSelected(true);
+        setInitialValues({
+          email: parsedSession.email || '',
+          password: parsedSession.password || '',
+        });
+      }
+    } catch (err) {
+      console.log('Session Error', err);
+    }
+  };
 
   const getToken = async () => {
     const token = await getFcmToken();
@@ -46,6 +72,7 @@ const LoginScreen: React.FC = () => {
   };
 
   useEffect(() => {
+    retrieveUserSession();
     getToken();
   }, []);
 
@@ -81,9 +108,12 @@ const LoginScreen: React.FC = () => {
     login(apiData)
       .then(res => {
         if (res?.data) {
-          if (res?.data?.status) {
-            dispatch(setUser(res?.data?.data));
+          if (isSelected) {
+            storeUserSession(values?.email, values?.password);
+          } else {
+            removeUserSession();
           }
+          dispatch(setUser(res?.data?.data));
           // navigation.navigate('TabNavigation');
         }
       })
