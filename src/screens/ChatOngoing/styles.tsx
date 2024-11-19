@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
         // paddingHorizontal: 10,
         // marginRight: 5,
         // backgroundColor: "yellow",
-        alignSelf: "center"
+        
     },
     timeText: {
         fontSize: 12,
@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
         marginRight: vw * 4
     },
     inputContainer: {
-        // flexDirection: 'row',
+        flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
         // backgroundColor: colors.white,
@@ -102,23 +102,23 @@ const styles = StyleSheet.create({
         borderWidth: 0,
         borderTopWidth: 0,
         // height: vh * 7,
-        // width: vw * 80,
-        // paddingBottom: vh * 1,
-        alignSelf: "center",
-        // top: 0
-    },
-    inputBox: {
+        width: vw * 100,
+        paddingBottom: vh * 1,
+        color: colors.black,
+      },
+      inputBox: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
         backgroundColor: colors.chatInput,
         borderRadius: vh * 0.9,
-        borderColor: colors.chatInput,
+        borderColor: colors.inputBorder,
         // padding: vh * 2,
-        height: vh * 8,
+        height: vh * 5.5,
         width: vw * 90,
-        marginBottom: vh * 1
-    },
+        color: colors.black,
+        marginBottom: vh,
+      },
     messageTxt: {
         fontSize: fontSizes.f13,
         color: colors.darkGray,
@@ -129,11 +129,9 @@ const styles = StyleSheet.create({
     },
     inputToolbarContainer: {
         flexDirection: 'row',
-        padding: 8,
-        justifyContent: "space-between",
-        // backgroundColor: "green",
-        alignItems: "center"
-    },
+        justifyContent: 'space-between',
+        // backgroundColor: "green"
+      },
     leftButton: {
         // paddingHorizontal: 10,   
         // backgroundColor: "yellow",
@@ -155,7 +153,7 @@ const styles = StyleSheet.create({
     },
     cardStyle: {
         flex: 1,
-        margin: vh * 2
+        // margin: vh * 2
     }
 });
 

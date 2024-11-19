@@ -33,7 +33,7 @@ const styles = StyleSheet.create({
         height: vh * 5,
     },
     iconContainer: {
-        backgroundColor: colors.headerGrey,
+        backgroundColor: colors.headerrGrey,
         height: vw * 10,
         width: vw * 10,
         borderRadius: vw * 5,

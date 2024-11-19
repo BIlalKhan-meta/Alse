@@ -139,11 +139,12 @@ const styles = StyleSheet.create({
         backgroundColor: colors.inputcolor,
         flexDirection: "row",
         alignItems: "center",
-        width: vw * 50,
+        width: '100%',
         alignSelf: "center",
         borderRadius: vw * 2,
-        paddingHorizontal: vw * 4
-
+        paddingHorizontal: vw * 4,
+height: vh * 5,
+marginBottom: vh * 1.5
     },
     searchIcon: {
         width: vw * 4,

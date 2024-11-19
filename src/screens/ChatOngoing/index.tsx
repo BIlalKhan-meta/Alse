@@ -34,7 +34,7 @@ const ChatOngoing: React.FC = () => {
             },
             headerRight: () => (
                 <View style={styles.header}>
-                    <TouchableOpacity onPress={() => {
+                    {/* <TouchableOpacity onPress={() => {
                         // setModalVisible(true)
                     }}>
                         <Image
@@ -42,11 +42,11 @@ const ChatOngoing: React.FC = () => {
                             style={styles.threeDots}
 
                         />
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
 
 
 
-                    <TouchableOpacity onPress={() => {
+                    {/* <TouchableOpacity onPress={() => {
                         // setModalVisible(true)
                     }}>
                         <Image
@@ -54,9 +54,9 @@ const ChatOngoing: React.FC = () => {
                             style={styles.threeDots}
 
                         />
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
 
-                    <TouchableOpacity onPress={() => {
+                    {/* <TouchableOpacity onPress={() => {
                         // setModalVisible(true)
                     }}
                         style={styles.savedConatiner}
@@ -66,7 +66,7 @@ const ChatOngoing: React.FC = () => {
                             style={styles.saveicon}
 
                         />
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
                 </View>
             ),
         });

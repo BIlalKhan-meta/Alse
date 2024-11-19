@@ -1,6 +1,6 @@
-import React, { useLayoutEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, TextInput, TouchableWithoutFeedback } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { images } from '../../utils/images';
 import { colors } from '../../utils/theme';
 import styles from './styles';
@@ -10,7 +10,10 @@ import InterRegular from '../../components/Text/InterRegular';
 import Card from '../../components/Card';
 import GeneralModal from '../../components/GeneralModal';
 import ReportBlockModal from '../../components/ReportBlockModal';
-// import NewGroupModal from '../../components/GroupModel';
+import NewGroupModal from '../../components/GroupModel';
+import {createChat, userFollow, userUnFollow, getConversations, createGroup} from '../../api/home';
+import { general } from '../../store/slices/generalSlice';
+import moment from 'moment';
 
 interface ChatItem {
     id: number;
@@ -74,7 +77,7 @@ const usersData: User[] = [
 
 
 const ChatScreen: React.FC = () => {
-    const navigation = useNavigation();
+    
     const [searchText, setSearchText] = useState('');
     const [modalVisible, setModalVisible] = useState(false);
     const [reportVisible, setReportVisible] = useState(false);
@@ -84,9 +87,45 @@ const ChatScreen: React.FC = () => {
     const [blockSuccess, setBlockSuccess] = useState(false);
     const [linkVisible, setLinkVisible] = useState(false);
     const [activeChatId, setActiveChatId] = useState<number | null>(null);
+    const [data, setData] = useState([])
+    const [grpLoader, setGrpLoader] = useState(false);
+
+    const IsFocused = useIsFocused()
+    const navigation = useNavigation();
+    
+    const getData = () =>{
+        getConversations().then(res =>{
+
+            setData(res?.data?.data)
+        }).catch(Err =>{
+            console.log("Error from get Conversation ", Err)
+
+        })
+    }
+    const handleGroupCreationbtn = formData => {
+        setGrpLoader(true);
+        createGroup(formData)
+          .then(res => {
+            setGrpLoader(false);
+            console.log('Response from CreateGroup ==========>', res);
+            closeModal();
+            getData();
+          })
+          .catch(err => {
+            setGrpLoader(false);
+            console.log('Error from Create Group====>', err);
+          });
+      };
+    useEffect(() =>{
+        getData()
+    }, [IsFocused])
+
+
 
     const openModal = (id: number) => {
-        setActiveChatId(activeChatId === id ? null : id);
+console.log("id ===>")
+
+        // setModalVisible(true);
 
     };
 
@@ -108,15 +147,15 @@ const ChatScreen: React.FC = () => {
             headerStyle: {
                 backgroundColor: colors.headerColor
             },
-            headerRight: () => (
-                <TouchableOpacity style={styles.newGroupButton}
-                    onPress={openModal}
-                >
+            // headerRight: () => (
+            //     <TouchableOpacity style={styles.newGroupButton}
+            //         onPress={openModal}
+            //     >
 
-                    <Text style={styles.newGroupButtonText}>
-                        New Group</Text>
-                </TouchableOpacity>
-            ),
+            //         <Text style={styles.newGroupButtonText}>
+            //             New Group</Text>
+            //     </TouchableOpacity>
+            // ),
         });
     }, [navigation]);
 
@@ -151,30 +190,16 @@ const ChatScreen: React.FC = () => {
 
     const renderItem = ({ item }: { item: ChatItem }) => (
         <TouchableOpacity style={styles.chatContainer}
-            onPress={() => navigation.navigate("ChatOngoing")}
+            onPress={() => navigation.navigate("ChatOngoing", {id: item?.id})}
         >
             <View style={styles.chatItem}>
-                <Image source={item.avatar} style={styles.avatar} />
+                <Image source={item?.image ? {uri: item?.image}: images.profile} style={styles.avatar} />
                 <View style={styles.chatInfo}>
                     <InterMedium style={styles.name}>{item.name}</InterMedium>
-                    <Text style={styles.lastMessage}>{item.lastMessageTime}</Text>
+                    {/* <Text style={styles.lastMessage}>{moment(item?.)}</Text> */}
                 </View>
-                {/* <View style={styles.chatActions}>
-
-                    <TouchableOpacity
-                        onPress={() => openModal(item.id)}
-                    >
-                        <Image source={images.dots} style={styles.dotStyle} />
-                    </TouchableOpacity>
-
-                    <ReportBlockModal
-                        isVisible={activeChatId === item.id}
-                        options={item.group ? options : options2}
-                    // onClose={() => setActiveChatId(null)}
-                    />
-                </View> */}
             </View>
-            <InterRegular style={styles.lastMessage}>{item.lastMessage}</InterRegular>
+            <InterRegular style={styles.lastMessage}>{item.last_message}</InterRegular>
         </TouchableOpacity>
     );
 
@@ -204,20 +229,20 @@ const ChatScreen: React.FC = () => {
                         {/* <NewGroupModal visible={modalVisible} closeModal={closeModal} users={usersData} /> */}
 
                         <View style={styles.dropdownContainer}>
-                            <DropDownTextInput
+                            {/* <DropDownTextInput
                                 items={items}
                                 defaultValue='all'
                                 // placeholder="Select a fruit"
                                 onChangeValue={handleDropdownChange}
                                 style={styles.dropDown}
-                            />
+                            /> */}
                         </View>
                     </View>
                     <FlatList
                         showsVerticalScrollIndicator={false}
-                        data={chatData}
+                        data={data}
                         renderItem={renderItem}
-                        keyExtractor={(item) => item.id}
+                        keyExtractor={(item) => item?.id}
                         contentContainerStyle={styles.chatList}
                     />
                 </Card>
@@ -241,7 +266,13 @@ const ChatScreen: React.FC = () => {
                     secondaryBtn={true}
                 />
 
-
+<NewGroupModal
+          visible={modalVisible}
+          closeModal={closeModal}
+          users={[]}
+          handleGroupCreationbtn={handleGroupCreationbtn}
+          loader={grpLoader}
+        />
 
                 <GeneralModal
                     visible={ReportSuccess}

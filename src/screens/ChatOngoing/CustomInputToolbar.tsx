@@ -8,23 +8,27 @@ import { colors } from '../../utils/theme';
 const CustomInputToolbar: React.FC<InputToolbarProps> = (props) => {
     return (
         <View style={styles.inputToolbarContainer}>
-            <TouchableOpacity style={styles.leftButton}>
-                <Image source={images.media} style={styles.mediaBtn} />
-            </TouchableOpacity>
-            <InputToolbar
-                {...props}
-                // containerStyle={styles.inputToolbar}
-                containerStyle={styles.inputContainer}
-                primaryStyle={styles.inputBox}
-                renderComposer={(props) => (
-                    <Composer {...props} textInputStyle={styles.composer} placeholder="Write a comment" />
-                )}
+        {/* <TouchableOpacity style={styles.leftButton}>
+                  <Image source={images.media} style={styles.mediaBtn} />
+              </TouchableOpacity> */}
+        <InputToolbar
+          {...props}
+          // containerStyle={styles.inputToolbar}
+          containerStyle={styles.inputContainer}
+          primaryStyle={styles.inputBox}
+          renderComposer={props => (
+            <Composer
+              {...props}
+              placeholderTextColor={colors.black}
+              textInputStyle={styles.composer}
+              placeholder="Write a comment"
             />
-            {/* <TouchableOpacity style={styles.rightButton}>
-                <Image source={images.likeFill} tintColor={colors.blue} style={styles.likeBtn} />
-
-            </TouchableOpacity> */}
-        </View>
+          )}
+        />
+        {/* <TouchableOpacity style={styles.rightButton}>
+                  <Image source={images.likeFill} tintColor={colors.blue} style={styles.likeBtn} />
+              </TouchableOpacity> */}
+      </View>
     );
 };
 

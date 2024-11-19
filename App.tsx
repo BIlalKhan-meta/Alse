@@ -70,14 +70,14 @@ function App(): React.JSX.Element {
   return (
     <PersistGate loading={null} persistor={persistor}>
       <Provider store={store}>
-        <SafeAreaView style={styles.container}>
+        {/* <SafeAreaView style={styles.container}> */}
 
           <NavigationContainer theme={theme}>
             <AppNavigation />
           </NavigationContainer>
 
           <Toast />
-        </SafeAreaView>
+        {/* </SafeAreaView> */}
       </Provider>
     </PersistGate>
   );

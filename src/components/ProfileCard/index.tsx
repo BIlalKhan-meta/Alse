@@ -9,7 +9,7 @@ import styles from './styles';
 import {useNavigation} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
 import {selectUserProfile} from '../../store/slices/authSlice';
-import {userFollow, userUnFollow} from '../../api/home';
+import {createChat, userFollow, userUnFollow} from '../../api/home';
 import Toast from 'react-native-toast-message';
 import {vw} from '../../constant';
 
@@ -36,6 +36,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
   is_private,
   id,
 }) => {
+
   const navigation = useNavigation();
   const user = useSelector(selectUserProfile);
 
@@ -129,9 +130,22 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
     }
   };
 
-  const handleMessage = () => {
-    console.log('Messageads');
-  };
+  const handleMessage = () =>{
+    console.log("Messageads");
+    const data ={
+      user_id : id
+    }
+    const form = new FormData()
+    form.append('user_id', data?.user_id)
+    console.log("formformformformform ====>", form)
+    createChat(data).then(res =>{
+      console.log("Respose from Create Chat",res)
+    }).catch(err =>{
+      console.log("Error from Create Chat -----", err)
+    })
+    
+    
+  }
 
   return (
     <View style={styles.container}>
