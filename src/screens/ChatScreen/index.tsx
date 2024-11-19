@@ -30,6 +30,7 @@ import {
 import {general} from '../../store/slices/generalSlice';
 import moment from 'moment';
 import Loader from '../../components/Loader';
+import {EmptyComponent} from '../../components/EmptyComponent';
 interface ChatItem {
   id: number;
   name: string;
@@ -219,7 +220,9 @@ const ChatScreen: React.FC = () => {
   const renderItem = ({item}: {item: ChatItem}) => (
     <TouchableOpacity
       style={styles.chatContainer}
-      onPress={() => navigation.navigate('ChatOngoing', {id: item?.id})}>
+      onPress={() =>
+        navigation.navigate('ChatOngoing', {id: item?.id, name: item?.name})
+      }>
       <View style={styles.chatItem}>
         <Image
           source={item?.image ? {uri: item?.image} : images.profile}
@@ -267,6 +270,7 @@ const ChatScreen: React.FC = () => {
             renderItem={renderItem}
             keyExtractor={item => item?.id}
             contentContainerStyle={styles.chatList}
+            ListEmptyComponent={() => <EmptyComponent text={'No chat found'} />}
           />
         </Card>
 

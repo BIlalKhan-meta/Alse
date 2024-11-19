@@ -42,7 +42,7 @@ const ChatOngoing: React.FC = props => {
   const [messages, setMessages] = useState<IMessage[]>([]);
   const [loader, setLoader] = useState(false);
   const user = useSelector(selectUserProfile);
-  console.log('useruseruseruseruseruseruseruseruseruseruseruser =>', user);
+
   useEffect(() => {
     connectSocket();
     return () => {
@@ -137,6 +137,7 @@ const ChatOngoing: React.FC = props => {
       headerStyle: {
         backgroundColor: colors.headerColor,
       },
+      title: props?.route?.params?.name,
       headerRight: () => (
         <View style={styles.header}>
           {/* <TouchableOpacity onPress={() => {

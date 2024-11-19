@@ -43,6 +43,7 @@ const SubscriptionPlan: React.FC = () => {
   const TriggerFunc = async () => {
     setLoading(true);
     await dispatch(GetUserProfile());
+    navigation.goBack()
     setLoading(false);
   };
   useEffect(() => {
