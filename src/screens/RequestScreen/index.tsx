@@ -33,8 +33,10 @@ import {
   getFollowersList,
   getFollowingList,
   getRequestFollow,
+  removeFollower,
   userFollow,
   userFollowAccept,
+  userUnFollow,
 } from '../../api/home';
 import Row from '../../components/Row';
 import {FollowingCard} from '../../components/FollowingCard';
@@ -123,19 +125,44 @@ const RequestScreen: React.FC = () => {
 
   console.log('DATAAAAAAAAAAAAA', data);
 
-  const handleActionButton = async (status: string, id: number) => {
+  const handleActionButton = async (
+    status: string,
+    id: number,
+    following_id?: number,
+  ) => {
+    let index = data.findIndex(item => item?.id == id);
+    let arr = [...data];
+    arr.splice(index, 1);
+    setData(arr);
+
+    console.log('DATAAAAAAAAAAAAAAAAA', data);
+
     if (status == 'Follow Back') {
-      await userFollowAccept(id).then(async res => {
+      await userFollowAccept(data[index].user_id).then(async res => {
         if (res?.data) {
-          // let arr = [...data]
-          // let index = data.findIndex((item)=>item?.user_id==id);
-          // arr[index].
-          await userFollow(id);
+          console.log('USERRRR ACCEPTEDDDDDDDDDDDD ');
+          await userFollow(data[index].user_id)
+            .then(res => {
+              if (res?.data) {
+                console.log('USERRRRRRRRRRRRR FOLOWWWWWWWWWWEDDDD');
+              }
+            })
+            .catch(err => console.log('ERORRRRRRRRRRRRRRRR', err));
         }
       });
-    } else if (status == 'Remove') {
+    } else if (status == 'Following') {
+      console.log('INDEXXXXXXXXXXXX', index);
+      await userUnFollow(data[index].following_id).then(res => {
+        if (res?.data) {
+          console.log('USERRRR UNFOLOWWWWWEDDDDDDDDDD========');
+        }
+      });
     } else {
-      await unFollowUser(id);
+      await removeFollower(data[index]?.user_id).then(res => {
+        if (res?.data) {
+          console.log('USERRRR REMOVEDDDDDDDDDDDDDDDDDDDDDDD========');
+        }
+      });
     }
   };
 
@@ -151,7 +178,8 @@ const RequestScreen: React.FC = () => {
         onPress={() =>
           handleActionButton(
             active == 1 ? 'Follow Back' : active == 2 ? 'Remove' : 'Unfollow',
-            item?.user_id,
+            item?.id,
+            item?.following_id,
           )
         }
       />

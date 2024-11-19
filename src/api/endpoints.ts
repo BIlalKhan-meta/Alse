@@ -22,6 +22,7 @@ const endpoints = {
     followers: '/get-followers',
     following: '/get-following',
     follow: '/follow-user',
+    removeFollower: '/remove-follower',
     unFollow: '/unfollow-user',
     acceptFollow: '/accept-follow-request',
     rejectFollow: '/reject-follow-request',
@@ -61,7 +62,7 @@ const endpoints = {
     shopOrders: '/get-shop-orders',
     paymentLogs: '/get-payment-logs',
     similar: '/product',
-    acceptOrder:'get-order-detail/'
+    acceptOrder: 'get-order-detail/',
   },
   education: {
     getArticles: '/articles',
@@ -79,6 +80,7 @@ const endpoints = {
     createVideo: '/video/create',
     updateArticleStatus: '/article/update-status',
     updateBlogStatus: '/blog/update-status',
+    updateVideoStatus: '/video/update-status',
     updateBlog: '/blog/update',
     updateArticle: '/article/update',
     updateVideo: '/video/update',

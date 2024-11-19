@@ -64,6 +64,9 @@ export const updateArticleStatus = (id: number) => {
 export const updateBlogStatus = (id: number) => {
   return axiosInstance.post(`${endpoints.education.updateBlogStatus}/${id}`);
 };
+export const updateVideoStatus = (id: number) => {
+  return axiosInstance.post(`${endpoints.education.updateVideoStatus}/${id}`);
+};
 export const updateBlog = (formData: FormData, id: number) => {
   return axiosInstance.post(
     `${endpoints.education.updateBlog}/${id}`,

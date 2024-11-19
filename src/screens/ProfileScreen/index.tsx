@@ -78,7 +78,6 @@ const ProfileScreen: React.FC = ({navigation}) => {
     }
   };
 
-
   useEffect(() => {
     getData();
   }, [isFocused, id]);
@@ -252,8 +251,6 @@ const ProfileScreen: React.FC = ({navigation}) => {
     />
   );
 
-  // console.log("DATAAAAAAAAAAAAAAAAAAAAA",data?.posts?.length)
-
   return (
     <ScrollView>
       <View style={styles.container}>
@@ -268,6 +265,8 @@ const ProfileScreen: React.FC = ({navigation}) => {
             avatar={data?.avatar}
             onPress={handleOpen}
             isFollowing={data?.is_following}
+            isRequested={data?.is_follow_requested}
+            private={data?.is_private}
             id={data?.id}
           />
           {/* <ReportBlockModal
@@ -287,7 +286,7 @@ const ProfileScreen: React.FC = ({navigation}) => {
           />
         </Card>
 
-        {!data?.is_private ? (
+        {!data?.is_private && data?.is_Following ? (
           <>
             <FlatList
               data={data?.posts}

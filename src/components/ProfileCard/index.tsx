@@ -11,7 +11,7 @@ import {useSelector} from 'react-redux';
 import {selectUserProfile} from '../../store/slices/authSlice';
 import {userFollow, userUnFollow} from '../../api/home';
 import Toast from 'react-native-toast-message';
-import { vw } from '../../constant';
+import {vw} from '../../constant';
 
 interface ProfileCardProps {
   name: string;
@@ -19,6 +19,8 @@ interface ProfileCardProps {
   stats: string;
   avatar: string;
   isFollowing: boolean;
+  is_private: boolean;
+  isRequested: boolean;
   onPress: () => void;
   id: number;
 }
@@ -30,40 +32,82 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
   avatar,
   onPress,
   isFollowing,
+  isRequested,
+  is_private,
   id,
 }) => {
   const navigation = useNavigation();
   const user = useSelector(selectUserProfile);
 
   const [followLoader, setFollowLoader] = useState(false);
-  const [follow, setFollow] = useState(isFollowing);
-
-  useEffect(() => {
-    setFollow(isFollowing);
-  }, [isFollowing]);
+  const [follow, setFollow] = useState(
+    isFollowing ? 'following' : isRequested ? 'requested' : 'notFollowing',
+  );
 
   const handleFollow = () => {
     setFollowLoader(true);
-    if (follow) {
+
+    if (follow === 'notFollowing') {
+      if (!is_private) {
+        // Request follow for private profile
+        userFollow(id)
+          .then(res => {
+            if (res?.data) {
+              console.log('REQUESTINGGGGGGGGGGGGGGGGGGGGGGGG================');
+              setFollow('requested');
+              Toast.show({
+                type: 'success',
+                text1: 'Follow Request Sent',
+                text2: res?.data?.message,
+              });
+            }
+          })
+          .catch(err => {
+            Toast.show({
+              type: 'error',
+              text1: 'Error',
+              text2: 'Failed to send follow request.',
+            });
+            console.log('Error sending follow request:', err);
+          })
+          .finally(() => {
+            setFollowLoader(false);
+          });
+      } else {
+        // Follow public profile directly
+        userFollow(id)
+          .then(res => {
+            if (res?.data) {
+              console.log('FOLLOWINGGGGGGGGGGGGGGGGGG=================');
+              setFollow('following');
+              Toast.show({
+                type: 'success',
+                text1: 'Followed',
+                text2: res?.data?.message,
+              });
+            }
+          })
+          .catch(err => {
+            Toast.show({
+              type: 'error',
+              text1: 'Error',
+              text2: 'Failed to follow user.',
+            });
+            console.log('Error following user:', err);
+          })
+          .finally(() => {
+            setFollowLoader(false);
+          });
+      }
+    } else if (follow === 'following' || follow === 'requested') {
+      // Unfollow or cancel follow request
       userUnFollow(id)
         .then(res => {
           if (res?.data) {
-            setFollow(!follow);
-            Toast.show({
-              type: 'success',
-              text1: 'UnFollowd',
-              text2: res?.data?.message,
-            });
-          }
-        })
-        .finally(() => {
-          setFollowLoader(false);
-        });
-    } else {
-      userFollow(id)
-        .then(res => {
-          if (res?.data) {
-            setFollow(!follow);
+            console.log(
+              'UNFOLOWWWWWWWWWWWWWWWWWWWWWWWWWWWINGGGGG===================',
+            );
+            setFollow('notFollowing');
             Toast.show({
               type: 'success',
               text1: 'Unfollowed',
@@ -72,7 +116,12 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
           }
         })
         .catch(err => {
-          console.log('error from block User ====>', err);
+          Toast.show({
+            type: 'error',
+            text1: 'Error',
+            text2: 'Failed to unfollow user.',
+          });
+          console.log('Error unfollowing user:', err);
         })
         .finally(() => {
           setFollowLoader(false);
@@ -80,10 +129,9 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
     }
   };
 
-  const handleMessage = () =>{
-    console.log("Messageads");
-    
-  }
+  const handleMessage = () => {
+    console.log('Messageads');
+  };
 
   return (
     <View style={styles.container}>
@@ -114,30 +162,43 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
         {/* Follow Button */}
 
         {user?.id !== id && (
-          <View style={{flexDirection:'row', alignItems:'center'}}>
-            {follow ? <View style={{flexDirection:'row', justifyContent:'space-between',width:'100%'}}>
+          <View style={{flexDirection: 'row', alignItems: 'center'}}>
+            {follow === 'following' ? (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  width: '100%',
+                }}>
+                <CustomButton
+                  style={styles.smallbtn}
+                  onPress={handleFollow}
+                  loading={followLoader}>
+                  {'Following'}
+                </CustomButton>
+                <CustomButton
+                  style={styles.smallbtn}
+                  onPress={handleMessage}
+                  loading={followLoader}>
+                  {'Message'}
+                </CustomButton>
+              </View>
+            ) : follow === 'requested' ? (
               <CustomButton
-            style={styles.smallbtn}
-            onPress={handleFollow}
-            loading={followLoader}>
-            {'Following' }
-          </CustomButton>
-          <CustomButton
-            style={styles.smallbtn}
-            onPress={handleMessage}
-            loading={followLoader}>
-            { 'Message' }
-          </CustomButton>
-            </View>: 
-               <CustomButton
-               style={styles.followButton}
-               onPress={handleFollow}
-               loading={followLoader}>
-               {'Follow'}
-             </CustomButton>
-
-            }
-          {/* <CustomButton
+                style={styles.followButton}
+                onPress={handleFollow}
+                loading={followLoader}>
+                {'Request Sent'}
+              </CustomButton>
+            ) : (
+              <CustomButton
+                style={styles.followButton}
+                onPress={handleFollow}
+                loading={followLoader}>
+                {'Follow'}
+              </CustomButton>
+            )}
+            {/* <CustomButton
             style={styles.followButton}
             onPress={handleFollow}
             loading={followLoader}>

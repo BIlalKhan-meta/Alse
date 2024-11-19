@@ -101,6 +101,10 @@ export const userFollowReject = (id: number) => {
   return axiosInstance.post(`${endpoints.home.rejectFollow}/${id}`);
 };
 
+export const removeFollower = (id: number) => {
+  return axiosInstance.post(`${endpoints.home.removeFollower}/${id}`);
+};
+
 export const getCountriesList = () => {
   return axiosInstance.get(endpoints.home.countries);
 };
