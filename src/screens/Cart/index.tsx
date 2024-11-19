@@ -17,7 +17,6 @@ import {selectUserProfile} from '../../store/slices/authSlice';
 import {Subscribe} from '../../components/Subscribe';
 
 const deliveryCharges = 15;
-const discount = 10;
 
 const Cart = () => {
   const navigation = useNavigation();
@@ -30,21 +29,38 @@ const Cart = () => {
   const handleChange = async (label: string, id: number) => {
     let index = cartData?.carts?.data?.findIndex(item => item.id == id);
 
+    if (index === -1) return;
+
     let arr = [...cartData?.carts?.data];
-    if (arr[index].quantity == 1 && label == 'decrement') {
+    let updatedAmount = Number(cartData?.total_amount);
+
+    if (arr[index].quantity === 1 && label === 'decrement') {
       return;
     }
-    if (label == 'increment') {
-      arr[index].quantity = arr[index].quantity + 1;
-    } else {
-      arr[index].quantity = arr[index].quantity - 1;
+
+    if (label === 'increment') {
+      arr[index].quantity += 1;
+      updatedAmount += Number(arr[index].product_price);
+    } else if (label === 'decrement') {
+      arr[index].quantity -= 1;
+      updatedAmount -= Number(arr[index].product_price);
     }
 
-    setCartData({...cartData, data: arr});
+    setCartData({
+      ...cartData,
+      carts: {
+        ...cartData.carts,
+        data: arr,
+      },
+      total_amount: updatedAmount,
+    });
+
     const form = new FormData();
     form.append('quantity', arr[index].quantity);
     await updateCartItem(form, id);
   };
+
+  console.log('AMOUNTTTTTTTTTTTT', cartData?.total_amount);
 
   useEffect(() => {
     if (user?.has_subscription) {
@@ -122,9 +138,6 @@ const Cart = () => {
             <Summary
               subTotal={cartData?.total_amount}
               deliveryCharges={deliveryCharges}
-              discount={discount}
-              // grandTotal={grandTotal}
-              grandTotal={cartData?.total_amount + deliveryCharges - discount}
             />
 
             <CustomButton
