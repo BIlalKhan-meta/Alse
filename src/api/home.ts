@@ -91,17 +91,26 @@ export const userUnFollow = (id: number) => {
   return axiosInstance.post(`${endpoints.home.unFollow}/${id}`);
 };
 
-export const createChat = (data) =>{
-  return axiosInstance.post(`${endpoints.chat.create}`, data)
-}
-export const getConversations = () =>{
-  return axiosInstance.get(`${endpoints.chat.fetchConversation}`)
-}
-export const createGroup = (formData) =>{
-  return axiosInstance.post(endpoints.chat.createGroup, formData,  {
+export const createChat = data => {
+  return axiosInstance.post(`${endpoints.chat.create}`, data);
+};
+export const getConversations = () => {
+  return axiosInstance.get(`${endpoints.chat.fetchConversation}`);
+};
+
+export const getChat = id => {
+  return axiosInstance.get(`${endpoints.chat.fetchChat}/${id}`);
+};
+export const createMessage = formData => {
+  return axiosInstance.post(`${endpoints.chat.send}`, formData, {
     formData: true,
   });
-}
+};
+export const createGroup = formData => {
+  return axiosInstance.post(endpoints.chat.createGroup, formData, {
+    formData: true,
+  });
+};
 // export const signup = (formData: any) => {
 //   return axiosInstance.post(endpoints.auth.signup, formData, {
 //     formData: true,

@@ -1,23 +1,23 @@
-import { Platform } from "react-native";
+import {Platform} from 'react-native';
 
 export const colors = {
   inputcolor: '#F8FAFE',
-  chatInput: "#F6F6F6",
-  lightColor: "#F9F9F9",
-  inputText: "#333333",
+  chatInput: '#F6F6F6',
+  lightColor: '#F9F9F9',
+  inputText: '#333333',
   white: '#fff',
   black: '#000',
-  themeColor: "#0C959B",
+  themeColor: '#0C959B',
   redText: '#FF0000',
-  redStatus: "#C90505",
-  redShadeLight: "#FFF3F3",
-  lightGrey: "#666666",
-  blue: "#169BD5",
+  redStatus: '#C90505',
+  redShadeLight: '#FFF3F3',
+  lightGrey: '#666666',
+  blue: '#169BD5',
   borderColor: '#D9D9D9',
-  headerColor: "#EDFAFA",
+  headerColor: '#EDFAFA',
   darkGray: '#666666',
-  camBg: "#E7F7FE"
-
+  camBg: '#E7F7FE',
+  inputBorder: '#E3E3E3',
 };
 
 export const appShadow: Record<string, any> = {

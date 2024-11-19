@@ -87,9 +87,11 @@ const endpoints = {
   },
   chat: {
     chatList: '/get-chat-list',
-    create:'/create-chat',
-    fetchConversation:'/get-chat-list',
-    createGroup:'/create-group'
+    create: '/create-chat',
+    fetchConversation: '/get-chat-list',
+    createGroup: '/create-group',
+    fetchChat: '/get-chat',
+    send: '/send-message',
   },
   menu: {
     getSavedItems: '/get-saved-items',
