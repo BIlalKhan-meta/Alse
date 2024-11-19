@@ -26,6 +26,7 @@ import {notificationListenerInstance} from '../../utils/NotificationServices';
 import {useSelector} from 'react-redux';
 import {countriesList} from '../../store/slices/generalSlice';
 import {getCity, getState} from '../../api/home';
+import eventEmitter, {EVENT_TYPES} from '../../utils/EventEmitter';
 
 const CheckoutScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -102,6 +103,16 @@ const CheckoutScreen: React.FC = () => {
     billing_city: '', // Initialize with default value
     billing_zip: '',
   };
+  const TriggerFunc = () => {
+    navigation.navigate('Home');
+  };
+  useEffect(() => {
+    eventEmitter.on(EVENT_TYPES.CHECKOUT_TRIGGER, TriggerFunc);
+
+    return () => {
+      eventEmitter.off(EVENT_TYPES.CHECKOUT_TRIGGER, TriggerFunc);
+    };
+  }, []);
 
   const handleSubmit = async (values: object) => {
     // navigation.navigate('Payment');
@@ -206,7 +217,6 @@ const CheckoutScreen: React.FC = () => {
     // setShopProduct(res2?.data?.data?.data)
     setLoading(false);
   };
-
 
   return (
     <KeyboardAwareScrollView
