@@ -19,6 +19,7 @@ export const commentLike = (id: number, commentId: number) => {
 };
 
 export const getPostComment = (id: number) => {
+  
   return axiosInstance.get(`/post/${id}/comments`);
 };
 

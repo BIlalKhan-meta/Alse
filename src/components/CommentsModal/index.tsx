@@ -64,14 +64,17 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
   const [commentsData, setCommentsData] = useState(comments);
   const [likes, setLikes] = useState<object[]>();
 
+  console.log("IDDDDDDDD",postId);
+  
+
   useEffect(() => {
     if (comments) {
       setCommentsData(comments);
-      setLikes(
-        comments.map(item => {
-          return {id: item?.id, total_likes: item?.total_likes};
-        }),
-      );
+      // setLikes(
+      //   comments.map(item => {
+      //     return {id: item?.id, total_likes: item?.total_likes};
+      //   }),
+      // );
     }
   }, [comments]);
 
@@ -159,7 +162,7 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
                     </View>
                     <View style={styles.contentContainer}>
                       <InterMedium style={styles.userName}>
-                        {item.full_name ||
+                        {item?.full_name ||
                           capitalize(commentsData[0]?.user?.first_name) +
                             ' ' +
                             capitalize(commentsData[0]?.user?.last_name)}

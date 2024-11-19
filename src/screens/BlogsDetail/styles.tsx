@@ -26,7 +26,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.Inter.Medium,
   },
   contentContainer: {
-    marginTop: Platform.OS == 'ios' ? vh * 8 : 2,
+    // marginTop: Platform.OS == 'ios' ? vh * 8 : 2,
     marginBottom: vh * 4,
     padding: vh * 2,
     backgroundColor: colors.white,

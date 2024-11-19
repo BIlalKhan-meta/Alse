@@ -29,7 +29,9 @@ class NotificationListener {
     this.hasBeenCalled = false;
   }
 
+  
   init(handleNotification) {
+    console.log("CHECKKKKKKKK");
     if (this.hasBeenCalled) {
       console.log("NotificationListener can only be called once.");
       return;
@@ -44,7 +46,8 @@ class NotificationListener {
     });
 
     messaging().setBackgroundMessageHandler(async remoteMessage => {
- 
+      console.log('BACKKKKKKKKK CALEDLDDDDDDDDDDDD, REMOTEEEEEE ',remoteMessage);
+      
       createNotificationChannel();
       if (handleNotification) {
         handleNotification(remoteMessage);

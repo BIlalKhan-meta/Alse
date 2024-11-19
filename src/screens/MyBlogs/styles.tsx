@@ -8,7 +8,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.headerColor,
     paddingHorizontal: 15,
     paddingTop: vh * 1,
-    marginTop: Platform.OS == 'ios' ? vh * 4 : vh,
+    marginTop:  vh,
   },
   itemCard: {
     marginBottom: vh * 2,

@@ -7,7 +7,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.headerColor,
     paddingHorizontal: 15,
-    paddingTop: Platform.OS == 'ios' ? vh * 10 : 10,
+    paddingTop: vh,
     paddingBottom: 50,
   },
   activeContainer: {

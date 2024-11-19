@@ -7,8 +7,8 @@ const styles = StyleSheet.create({
     // padding: 10,
   },
   icon: {
-    width: 20,
-    height: 20,
+    width: vh*2.2,
+    height: vh*2.2,
     marginRight: 5,
   },
   productContainer: {
@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.themeColor,
     marginLeft: vw * 2,
-    width: '45%',
+    width: '50%',
     alignItems: 'center',
   },
   viewText: {

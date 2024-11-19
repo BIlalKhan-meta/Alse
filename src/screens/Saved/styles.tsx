@@ -8,7 +8,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.headerColor,
     paddingHorizontal: 15,
-    paddingTop: Platform.OS == 'ios' ? vh * 8 : vh * 1,
+    paddingTop: vh * 1,
   },
 
   itemCard: {

@@ -31,6 +31,7 @@ interface ContentSavedProps {
   onAddToCart: (productId: string) => void;
   onRemoveFromContentSaved: (productId: string) => void;
   onItemPress: () => void;
+  onSavePress?: () => void;
   style: ViewStyle;
   userId: number;
 }
@@ -42,8 +43,10 @@ const ContentSavedScreen: React.FC<ContentSavedProps> = ({
   userId,
   type,
   style,
+  onSavePress
 }) => {
-  const [saved, setSaved] = useState(item?.is_saved);
+  const [saved, setSaved] = useState(item?.is_saved)
+  
 
   useEffect(() => {
     if (item) {
@@ -52,6 +55,10 @@ const ContentSavedScreen: React.FC<ContentSavedProps> = ({
   }, [item]);
 
   const handleSave = async (id: number, isSaved: boolean) => {
+    if(onSavePress){
+      onSavePress()
+    }
+    setSaved(!saved)
     const data = {
       item_id: id,
       item_type: type,
@@ -114,7 +121,7 @@ const ContentSavedScreen: React.FC<ContentSavedProps> = ({
             <TouchableOpacity
               onPress={() => handleSave(item?.id, item?.is_saved)}>
               <Image
-                source={item?.is_saved ? images.unsave : images.save}
+                source={saved ? images.unsave : images.save}
                 style={styles.icon}
               />
             </TouchableOpacity>

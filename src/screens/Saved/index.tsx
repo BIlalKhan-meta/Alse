@@ -1,5 +1,5 @@
 // Home.tsx
-import React, {useEffect, useLayoutEffect, useState} from 'react';
+import React, {act, useEffect, useLayoutEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -87,9 +87,19 @@ const Saved: React.FC = () => {
       .then(res => {
         if (res?.data) {
           console.log('RESSSSSSSSSS', res?.data?.data?.data[0]);
-          setDisplayPost(
-            res?.data?.data?.data?.filter(item => item?.savable_type == type),
-          );
+          if(active==1){
+            setDisplayPost(
+              res?.data?.data?.data?.filter(item => item?.savable_type == `App\\Models\\Post`),
+            );
+          }else if(active==2){
+            setDisplayPost(
+              res?.data?.data?.data?.filter(item => item?.savable_type == `App\\Models\\Product`),
+            );
+          }else{
+            setDisplayPost(
+              res?.data?.data?.data?.filter(item => (item?.savable_type != `App\\Models\\Product` && item?.savable_type != `App\\Models\\Product`)),
+            );
+          }
         }
       })
       .catch(err => {
@@ -99,6 +109,7 @@ const Saved: React.FC = () => {
         setLoading(false);
       });
   };
+  
 
   useEffect(() => {
     fetchData();
@@ -295,6 +306,13 @@ const Saved: React.FC = () => {
       });
   };
 
+  const handelSave = (id : number)=>{
+    let arr =[...displayPost];
+    let index= arr.findIndex((item)=>item.id===id)
+    arr.splice(index,1);
+    setDisplayPost(arr)
+  }
+
   const renderPost = ({item}: any) => {
     return (
       <PostComponent
@@ -352,16 +370,6 @@ const Saved: React.FC = () => {
   return (
     <ScrollView showsVerticalScrollIndicator={false}>
       <View style={styles.container}>
-        {/* Header */}
-        {/* <HeaderComponent
-                    label={'Saved'}
-                    onBackPress={() => navigation.goBack()}
-                    chatVisible={true}
-                    searchVisible={true}
-                    onChatPress={() => navigation.navigate("ChatScreen")}
-
-                /> */}
-
         <Card style={styles.activeContainer}>
           <TouchableOpacity
             style={active == 1 ? styles.activeBtn : styles.InactiveBtn}
@@ -505,9 +513,7 @@ const Saved: React.FC = () => {
         {active == 3 && (
           <Card style={styles.contentContainer}>
             <FlatList
-              data={displayPost.map(item => {
-                return item?.savable_item;
-              })}
+              data={displayPost}
               onRefresh={fetchData}
               refreshing={loading}
               ListEmptyComponent={() => (
@@ -515,11 +521,27 @@ const Saved: React.FC = () => {
               )}
               renderItem={({item}) => (
                 <Card style={styles.itemCard}>
-                  {item?.savable_type == 'App\\Models\\Blog' ||
-                  item?.savable_type == 'App\\Models\\Article' ? (
+                  {item?.savable_type == 'App\\Models\\Video' ? (
+                    <MediaCard
+                      type={'video'}
+                      source={item?.video}
+                      title={item?.title}
+                      description={item?.content}
+                      category={item?.category?.title}
+                      onBookmarkPress={() => {}}
+                      onItemPress={() =>
+                        navigation.navigate('ViewBlog', {
+                          id: item?.id,
+                          title: item?.title,
+                          type: 'video',
+                        })
+                      }
+                    />
+                  ) : (
                     <ContentSavedScreen
+                    onSavePress={()=>handelSave(item?.id)}
                       item={item?.savable_item}
-                      userId={item?.savable_item?.user_id}
+                      userId={item?.savable_item?.id}
                       viewBtn={
                         item?.savable_type == 'App\\Models\\Article'
                           ? 'View Full Article'
@@ -534,22 +556,6 @@ const Saved: React.FC = () => {
                         navigation.navigate('ViewBlog', {
                           id: item?.savable_item?.id,
                           title: item?.savable_item?.title,
-                        })
-                      }
-                    />
-                  ) : (
-                    <MediaCard
-                      type={'video'}
-                      source={item?.video}
-                      title={item?.title}
-                      description={item?.content}
-                      category={item?.category?.title}
-                      onBookmarkPress={() => {}}
-                      onItemPress={() =>
-                        navigation.navigate('ViewBlog', {
-                          id: item?.id,
-                          title: item?.title,
-                          type: 'video',
                         })
                       }
                     />

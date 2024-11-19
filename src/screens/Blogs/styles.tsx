@@ -14,7 +14,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     // justifyContent: "space-around",
     alignItems: 'center',
-    marginTop: Platform.OS == 'ios' ? vh * 8 : 0,
+    marginTop:  0,
   },
   activeBtn: {
     backgroundColor: colors.themeColor,
