@@ -29,7 +29,6 @@ export const postComment = (formData: FormData, id: number) => {
 };
 
 export const createPost = (formData: FormData) => {
-  console.log(formData, 'Formmmm Dataaaa Createee possttt');
   return axiosInstance.post(endpoints.home.createPost, formData, {
     formData: true, // This triggers the form-data handling in the interceptor
   });

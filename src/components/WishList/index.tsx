@@ -36,9 +36,26 @@ const WishlistScreen: React.FC<WishlistProps> = ({
   handleRemove,
   vendor,
 }) => {
-  const handleAddToCart = async (productId: number) => {
+  const handleAddToCart = async (
+    productId: number,
+    size: string,
+    color: string,
+  ) => {
     console.log('PRODUCCCCCCCCCCCCCC', productId);
-    await addProductToCart(productId)
+
+    const data = {
+      size: size,
+      colors: color,
+    };
+
+    const form = new FormData();
+    Object.entries(data).forEach(([key, value]) => {
+      form.append(key, value);
+    });
+
+    console.log(JSON.stringify(form, null, 4));
+
+    await addProductToCart(productId, form)
       .then(res => {
         if (res?.data) {
           return Toast.show({
@@ -49,7 +66,11 @@ const WishlistScreen: React.FC<WishlistProps> = ({
         }
       })
       .catch(err => {
-        console.log('ERRRRRORRR ADDD TOOO CARDDDD WISHLISTTTT', err);
+        return Toast.show({
+          type: 'error',
+          text1: 'Invalid',
+          text2: err?.message,
+        });
       });
   };
 
@@ -84,7 +105,13 @@ const WishlistScreen: React.FC<WishlistProps> = ({
         )}
         {addCart && (
           <TouchableOpacity
-            onPress={() => handleAddToCart(item.id)}
+            onPress={() =>
+              handleAddToCart(
+                item.id,
+                item?.sizes[0].size,
+                item?.colors[0].color,
+              )
+            }
             style={styles.addButton}>
             <Text style={styles.addButtonText}>+</Text>
           </TouchableOpacity>

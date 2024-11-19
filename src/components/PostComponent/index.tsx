@@ -1,5 +1,5 @@
 // PostComponent.tsx
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -21,6 +21,7 @@ import {useNavigation} from '@react-navigation/native';
 import ReportBlockModal from '../ReportBlockModal';
 import {useSelector} from 'react-redux';
 import {selectUserProfile} from '../../store/slices/authSlice';
+import {createPost} from '../../api/home';
 
 interface PostProps {
   id?: number;
@@ -78,6 +79,20 @@ const PostComponent: React.FC<PostProps> = ({
 
   const [showFullText, setShowFullText] = useState(false);
   const maxTextLength = 100;
+  const [numberLikes, setNumberLikes] = useState(likes);
+
+  useEffect(() => {
+    setNumberLikes(likes);
+  }, [likes]);
+
+  const handleLike = () => {
+    if (isLiked) {
+      setNumberLikes(numberLikes - 1);
+    } else {
+      setNumberLikes(numberLikes + 1);
+    }
+    onLikePress();
+  };
 
   const myAccount = user?.id == id ? true : false;
 
@@ -124,6 +139,30 @@ const PostComponent: React.FC<PostProps> = ({
     }
   };
 
+  const sharePost = async () => {
+    const data = {
+      description: postText,
+      privacy: account,
+      ...(postImage
+        ? {'file[0]': {uri: postImage, name: 'postImage', type: 'image/jpeg'}}
+        : {}),
+    };
+
+    const form = new FormData();
+    Object.entries(data).forEach(([key, value]) => {
+      form.append(key, value);
+    });
+
+    console.log('FOMRRRRRRRRRR', JSON.stringify(form, null, 4));
+    await createPost(form)
+      .then(res => {
+        if (res?.data) {
+          console.log('POSTTTTTT SHAREDDDDDDDDDDDDDDDD');
+        }
+      })
+      .catch(err => console.log('ERORRRRRRR', err));
+  };
+
   return (
     <Pressable onPress={onCardPress}>
       <Card style={styles.card}>
@@ -161,22 +200,24 @@ const PostComponent: React.FC<PostProps> = ({
               tintColor={colors.blue}
               style={styles.icon}
             />
-            <InterRegular style={styles.actionText}>{likes}</InterRegular>
+            <InterRegular style={styles.actionText}>{numberLikes}</InterRegular>
             <Image source={images.comment} style={styles.icon} />
             <InterRegular style={styles.actionText}>{comments}</InterRegular>
             <Image source={images.share} style={styles.icon} />
             <InterRegular style={styles.actionText}>{share}</InterRegular>
           </View>
-          <TouchableOpacity onPress={onSavePress}>
-            <Image
-              source={isSaved ? images?.unsave : images.save}
-              style={styles.icon}
-            />
-          </TouchableOpacity>
+          {id != user?.id && (
+            <TouchableOpacity onPress={onSavePress}>
+              <Image
+                source={isSaved ? images?.unsave : images.save}
+                style={styles.icon}
+              />
+            </TouchableOpacity>
+          )}
         </View>
         <View style={styles.separator} />
         <View style={styles.bottomActions}>
-          <TouchableOpacity style={styles.button} onPress={onLikePress}>
+          <TouchableOpacity style={styles.button} onPress={handleLike}>
             <Image
               // source={images.like}
               source={isLiked ? images.likeFill : images?.like}
@@ -189,7 +230,10 @@ const PostComponent: React.FC<PostProps> = ({
             <Image source={images.comment} style={styles.buttonIcon} />
             <Text style={styles.buttonText}>Comment</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.button}>
+          <TouchableOpacity
+            disabled={id == user?.id}
+            onPress={sharePost}
+            style={styles.button}>
             <Image source={images.share} style={styles.buttonIcon} />
             <Text style={styles.buttonText}>Share</Text>
           </TouchableOpacity>

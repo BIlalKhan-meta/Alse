@@ -38,10 +38,6 @@ const Summary: React.FC<SummaryProps> = ({
         ${deliveryCharges}
       </InterRegular>
     </View>
-    {/* <View style={styles.summaryTxtContainer}>
-            <InterMedium style={styles.summaryText}>Discount Price:</InterMedium>
-            <InterRegular style={styles.summaryPrice}>${discount}</InterRegular>
-        </View> */}
     <HorizontalSeparator />
     <View style={styles.summaryTxtContainer}>
       <InterMedium style={styles.summaryText}>Total:</InterMedium>
