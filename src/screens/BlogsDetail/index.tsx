@@ -27,6 +27,7 @@ import {
   getVideo,
   updateArticleStatus,
   updateBlogStatus,
+  updateVideoStatus,
 } from '../../api/education';
 import {EmptyComponent} from '../../components/EmptyComponent';
 import {useSelector} from 'react-redux';
@@ -86,7 +87,7 @@ const ViewBlog: React.FC = () => {
       fetchData();
       // fetchSimilar();
     }
-  }, [id,isFocused]);
+  }, [id, isFocused]);
 
   const statusUpdate = async () => {
     if (type == 'blog') {
@@ -95,8 +96,14 @@ const ViewBlog: React.FC = () => {
           fetchData();
         }
       });
-    } else {
+    } else if (type == 'article') {
       await updateArticleStatus(id).then(res => {
+        if (res?.data) {
+          fetchData();
+        }
+      });
+    } else {
+      await updateVideoStatus(id).then(res => {
         if (res?.data) {
           fetchData();
         }
@@ -134,28 +141,6 @@ const ViewBlog: React.FC = () => {
           <InterBoldSmall style={styles.header_title}>{title}</InterBoldSmall>
         );
       },
-      // headerTitleStyle: {
-      //   color: colors.black,
-      // },
-      // headerRight: () => (
-      //   <>
-      //     <TouchableOpacity
-      //       style={styles.postButton}
-      //       onPress={() => {
-      //         if (title == 'My Blogs') {
-      //           navigation.navigate('AddBlog', {title: 'Update Blog'});
-      //         } else if (title == 'Blog Title') {
-      //           navigation.navigate('AddBlog', {title: 'Update Blog'});
-      //         } else if (title == 'Video') {
-      //           navigation.navigate('AddBlog', {title: 'Update Video'});
-      //         } else {
-      //           navigation.navigate('AddBlog', {title: 'Update Article'});
-      //         }
-      //       }}>
-      //       <Image source={images.edit} />
-      //     </TouchableOpacity>
-      //   </>
-      // ),
     });
   }, [navigation]);
 
@@ -174,7 +159,7 @@ const ViewBlog: React.FC = () => {
           {type == 'video' ? (
             <Video
               source={{
-                uri: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+                uri: item?.video,
               }}
               style={styles.media}
               controls={true}
@@ -231,11 +216,12 @@ const ViewBlog: React.FC = () => {
                   });
                 }
               }}>
-              {title == 'My Blogs'
-                ? 'Edit Blog'
-                : title == 'Video'
-                ? 'Video'
-                : 'Edit Article'}
+              Edit{' '}
+              {type == 'blog'
+                ? 'Blog'
+                : type == 'article'
+                ? 'Article'
+                : 'Video'}
             </CustomButton>
 
             <CustomButton
@@ -243,11 +229,11 @@ const ViewBlog: React.FC = () => {
               txtstyle={styles.shoppingTxt}
               onPress={statusUpdate}>
               {item?.status ? 'Inactive ' : 'Active '}
-              {title == 'My Blogs'
+              {type == 'blog'
                 ? 'Blog'
-                : title == 'Video'
-                ? 'Video'
-                : 'Article'}
+                : type == 'article'
+                ? 'Article'
+                : 'Video'}
             </CustomButton>
           </View>
         )}

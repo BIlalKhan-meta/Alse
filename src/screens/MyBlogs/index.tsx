@@ -37,7 +37,7 @@ const MyBlogs: React.FC = () => {
       }
 
       if (res?.data) {
-        setDisplay(res.data.data.data);
+        setDisplay(res?.data?.data?.data);
       }
     } catch (err) {
       console.error('GET ARTTTTTTICLESSSS ERRORRR', err);
@@ -93,14 +93,19 @@ const MyBlogs: React.FC = () => {
       ) : title == 'My Videos' ? (
         <FlatList
           data={display}
+          refreshing={loading}
+          onRefresh={fetchData}
+          showsVerticalScrollIndicator={false}
           renderItem={({item}) => (
             <Card style={styles.itemCard}>
               <MediaCard
+                user_id={item?.user_id}
                 type={'video'}
-                source={item?.source}
+                source={item?.video}
                 title={item?.title}
-                description={item.content}
-                category={item.category}
+                control={false}
+                description={item?.content}
+                category={item?.category}
                 onBookmarkPress={() => {}}
                 onItemPress={() =>
                   navigation.navigate('ViewBlog', {

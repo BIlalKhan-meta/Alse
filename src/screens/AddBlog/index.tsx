@@ -20,10 +20,11 @@ import Row from '../../components/Row';
 import {vh} from '../../constant';
 import InterLightSmall from '../../components/Text/InterLightSmall';
 import {createArticle, createBlog, createVideo} from '../../api/education';
+import {getCategories} from '../../api/product';
 
 const statuses = [
-  {label: 'Active', value: 'active'},
-  {label: 'Inactive', value: 'inactive'},
+  {label: 'Active', value: '1'},
+  {label: 'Inactive', value: '0'},
 ];
 
 const validationSchema = yup.object().shape({
@@ -32,7 +33,7 @@ const validationSchema = yup.object().shape({
 });
 
 const videoSchema = yup.object().shape({
-  // category: yup.string().required('Category is required'),
+  category_id: yup.string().required('Category is required'),
   status: yup.string().required('Status is required'),
 });
 
@@ -47,13 +48,26 @@ const AddBlog = () => {
   const {image, imageData, captureImage, chooseImageFromLibrary} =
     useImagePicker();
   const [loading, setLoading] = useState(false);
+  const [categories, setCategories] = useState([]);
 
   const initialValues = {
     title: editItem?.title || '',
     content: editItem?.content || '',
-    category: editItem?.category || '',
+    category_id: editItem?.category_id || '',
     status: editItem?.status || '',
   };
+
+  const getData = async () => {
+    await getCategories().then(res => {
+      if (res?.data) {
+        setCategories(res?.data?.data);
+      }
+    });
+  };
+
+  useEffect(() => {
+    getData();
+  }, []);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -147,6 +161,8 @@ const AddBlog = () => {
     setMedia(arr);
   };
 
+  console.log('CATEGGGGGGGGGGGGGGGG', categories);
+
   return (
     <KeyboardAwareScrollView
       contentContainerStyle={styles.container}
@@ -200,20 +216,21 @@ const AddBlog = () => {
 
             {(title == 'Add Videos' || title == 'Update Video') && (
               <>
-                {/* <InterRegular style={styles.dropdownLabel}>
+                <InterRegular style={styles.dropdownLabel}>
                   Category *
                 </InterRegular>
                 <View style={styles.dropDownContainer}>
                   <DropDownTextInput
-                    items={statuses1}
-                    defaultValue={values.category}
-                    // defaultValue="it"
+                    items={categories.map(item => {
+                      return {label: item?.title, value: item?.id};
+                    })}
+                    defaultValue={values.category_id}
                     placeholder="Select Category"
-                    onChangeValue={e => setValues({...values, category: e})}
+                    onChangeValue={e => setValues({...values, category_id: e})}
                     style={[styles.dropDown]}
-                    error={errors.category}
+                    error={errors.category_id}
                   />
-                </View> */}
+                </View>
 
                 <InterRegular style={styles.dropdownLabel}>
                   Status *
