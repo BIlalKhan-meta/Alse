@@ -81,7 +81,9 @@ const LoginScreen: React.FC = () => {
     login(apiData)
       .then(res => {
         if (res?.data) {
-          dispatch(setUser(res?.data?.data));
+          if (res?.data?.status) {
+            dispatch(setUser(res?.data?.data));
+          }
           // navigation.navigate('TabNavigation');
         }
       })

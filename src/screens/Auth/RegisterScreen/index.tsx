@@ -74,21 +74,38 @@ const RegisterScreen: React.FC = () => {
   const [successModel, setSuccessModel] = useState<boolean>(false);
   const [visible, setVisible] = useState<boolean>(false);
   const [image, setImage] = useState<object | null>(null);
+  const [childImage, setChildImage] = useState<object | null>(null);
   const [loading, setLoading] = useState(false);
+  const [childState, setChildState] = useState(false);
 
   const handleCheckboxChange = (value: boolean) => {
     setIsChecked(value);
   };
 
+  const handleImageCapture = (state: boolean) => {
+    setChildState(state);
+    if (state == true) {
+      captureImage('photo');
+    } else {
+      setVisible(true);
+    }
+  };
+
   useEffect(() => {
-    if (imageData) {
+    if (childState) {
+      setChildImage({
+        uri: imageData?.uri,
+        name: imageData?.fileName,
+        type: imageData?.type,
+      });
+    } else {
       setImage({
         uri: imageData?.uri,
         name: imageData?.fileName,
         type: imageData?.type,
       });
-      setVisible(false);
     }
+    setVisible(false);
   }, [imageData]);
 
   const handleNumberChange = (number: string, setFieldValue: any) => {
@@ -106,6 +123,15 @@ const RegisterScreen: React.FC = () => {
         text2: 'Profile Picture Required',
       });
     }
+
+    if (isChecked && !childImage) {
+      setLoading(false);
+      return Toast.show({
+        type: 'error',
+        text1: 'Child Recognition',
+        text2: 'Child Recognition is Required',
+      });
+    }
     const signupData = {
       full_name: values.name,
       email: values.email,
@@ -114,6 +140,7 @@ const RegisterScreen: React.FC = () => {
       phone_number: values.contactNo,
       dob: dateHelper(values.dateOfBirth),
       image: image,
+      ...(isChecked ? {is_child: 1, child_image: childImage} : {}),
     };
 
     const form = new FormData();
@@ -183,7 +210,7 @@ const RegisterScreen: React.FC = () => {
 
                   <TouchableOpacity
                     style={styles.camera}
-                    onPress={() => setVisible(true)}>
+                    onPress={() => handleImageCapture(false)}>
                     <Image source={images.camera} />
                   </TouchableOpacity>
                 </View>
@@ -271,7 +298,11 @@ const RegisterScreen: React.FC = () => {
                     <InterRegular style={styles.faceTxt}>
                       Face Recognition is required for child verification
                     </InterRegular>
-                    <Image source={images.face} style={styles.faceImg} />
+                    <TouchableOpacity
+                      disabled={!isChecked}
+                      onPress={() => handleImageCapture(true)}>
+                      <Image source={images.face} style={styles.faceImg} />
+                    </TouchableOpacity>
                   </View>
                 </TouchableOpacity>
 
