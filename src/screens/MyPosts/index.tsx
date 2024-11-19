@@ -59,15 +59,12 @@ const MyPosts: React.FC = () => {
     visibility: false,
     id: null,
   });
-  const [reportVisible, setReportVisible] = useState({
-    visibility: false,
-    id: null,
-  });
   const [deleteSuccess, setDeleteSuccess] = useState(false);
   const [loader, setLoader] = useState(false);
   const {posts} = useAppSelector(state => state.home);
   const [data, setData] = useState([]);
   const [reportLoader, setReportLoader] = useState(false);
+  const [reload, setReload] = useState();
 
   const handleDotPress = (postId: number) => {
     setActivePostId(activePostId === postId ? null : postId);
@@ -101,6 +98,12 @@ const MyPosts: React.FC = () => {
   };
 
   const handleDelete = () => {
+    let arr = [...data];
+    let index = data.findIndex(item => item?.id == deleteVisible?.id);
+    if (index != -1) {
+      arr.splice(index, 1);
+      setData(arr);
+    }
     setReportLoader(true);
     dispatch(PostDelete(deleteVisible?.id))
       .unwrap()
@@ -140,35 +143,10 @@ const MyPosts: React.FC = () => {
             }}>
             <Image source={images.bellIcon} style={styles.threeDots} />
           </TouchableOpacity>
-          {/* 
-                    <TouchableOpacity onPress={() => {
-                        // setModalVisible(true)
-                    }}>
-                        <Image
-                            source={images.searchIcon}
-                            style={styles.threeDots}
-
-                        />
-                    </TouchableOpacity> */}
         </View>
       ),
     });
   }, [navigation]);
-
-  //   const getData = () => {
-  //     setLoader(true);
-  //     let id = user?.id;
-  //     dispatch(getMyPost(id))
-  //       .unwrap()
-  //       .then(res => {
-  //         console.log(res?.data?.data?.data, 'Ressss frommm Screeennnn???');
-  //         setData(res?.data?.data?.data);
-  //         setLoader(false);
-  //       })
-  //       .catch(err => {
-  //         setLoader(false);
-  //       });
-  //   };
 
   const handleSave = async (id: number, isSaved: boolean) => {
     dispatch(postSave(id));
@@ -191,17 +169,17 @@ const MyPosts: React.FC = () => {
     }
   };
 
-  // console.log("POSTSSSSSSSSSSSSSSSSSS",posts[0].total_likes)
-
   useEffect(() => {
     // getData();
+    setLoader(true);
     let filtered = posts.filter((item: any) => item?.user_id == user?.id);
     setData(filtered);
-  }, [isFocused, posts]);
+    setLoader(false);
+  }, [isFocused, posts, reload]);
 
-  if (loader) {
-    return <Loader />;
-  }
+  // if (loader) {
+  //   return <Loader />;
+  // }
 
   const renderPost = ({item}) => {
     return (
@@ -231,15 +209,15 @@ const MyPosts: React.FC = () => {
           // setDeleteVisible(true);
           setDeleteVisible({visibility: true, id: item?.id});
         }}
-        handleReportPost={() => {
-          setReportVisible({visibility: true, id: item?.id});
-        }}
-        handleReportPress={() => {
-          navigation.navigate('CreatePostEdit', {
-            title: 'Edit Post',
-            data: item,
-          });
-        }}
+        // handleReportPost={() => {
+        //   setReportVisible({visibility: true, id: item?.id});
+        // }}
+        // handleReportPress={() => {
+        //   navigation.navigate('CreatePostEdit', {
+        //     title: 'Edit Post',
+        //     data: item,
+        //   });
+        // }}
         isLiked={item?.is_liked}
         isSaved={item?.is_saved}
       />
@@ -258,6 +236,8 @@ const MyPosts: React.FC = () => {
       <View>
         <FlatList
           data={data}
+          onRefresh={() => setReload(!reload)}
+          refreshing={loader}
           renderItem={renderPost}
           keyExtractor={item => item.id.toString()}
           showsVerticalScrollIndicator={false}
