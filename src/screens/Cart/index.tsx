@@ -101,7 +101,7 @@ const Cart = () => {
     });
   }, [navigation]);
 
-  if (!user?.has_subscription) {
+  if (!user?.has_subscription && !user.is_child) {
     return <Subscribe />;
   }
 

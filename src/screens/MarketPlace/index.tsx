@@ -165,7 +165,7 @@ const Marketplace: React.FC = () => {
     setShops(res.data?.data?.data);
   };
 
-  if (!user?.has_subscription) {
+  if (!user?.has_subscription && !user.is_child) {
     return <Subscribe />;
   }
 

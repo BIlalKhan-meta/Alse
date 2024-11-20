@@ -16,6 +16,7 @@ import Loader from '../../components/Loader';
 import {useSelector} from 'react-redux';
 import {selectUserProfile} from '../../store/slices/authSlice';
 import InterBoldLabel from '../../components/Text/InterBoldLabel';
+import {Subscribe} from '../../components/Subscribe';
 
 const Blogs: React.FC = () => {
   const navigation = useNavigation();
@@ -113,21 +114,8 @@ const Blogs: React.FC = () => {
     </Card>
   );
 
-  if (!user?.has_subscription) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          justifyContent: 'center',
-          alignItems: 'center',
-          backgroundColor: colors.headerColor,
-        }}>
-        <InterBoldLabel>Subscription Required</InterBoldLabel>
-        <CustomButton onPress={() => navigation.navigate('SubscriptionPlan')}>
-          Subscribe
-        </CustomButton>
-      </View>
-    );
+  if (!user?.has_subscription && !user.is_child) {
+    return <Subscribe />;
   }
 
   // if (display.length == 0) {

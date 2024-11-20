@@ -82,14 +82,14 @@ const Menu: React.FC = () => {
                   Chats and Groups
                 </InterRegular>
               </TouchableOpacity>
-              <TouchableOpacity
+              {/* <TouchableOpacity
                 onPress={() => navigation.navigate('SavedChat')}>
                 <InterRegular style={styles.cardText}>Recordings</InterRegular>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => navigation.navigate('SavedScripts')}>
                 <InterRegular style={styles.cardText}>Scripts</InterRegular>
-              </TouchableOpacity>
+              </TouchableOpacity> */}
             </View>
           </View>
         </Card>
@@ -181,21 +181,21 @@ const Menu: React.FC = () => {
           </TouchableOpacity>
         </Card>
 
-        <Card style={styles.cardContainer}>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('SubscriptionPlan')}>
-            <View style={styles.cardContent5}>
-              <View style={[styles.notifiCon, {width: vw * 9}]}>
-                <Image source={images.plan} style={styles.imageStyle} />
-              </View>
-              {!user.is_child && (
+        {!user.is_child && (
+          <Card style={styles.cardContainer}>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('SubscriptionPlan')}>
+              <View style={styles.cardContent5}>
+                <View style={[styles.notifiCon, {width: vw * 9}]}>
+                  <Image source={images.plan} style={styles.imageStyle} />
+                </View>
                 <InterMedium style={styles.cardHeading}>
                   Subscription Plan
                 </InterMedium>
-              )}
-            </View>
-          </TouchableOpacity>
-        </Card>
+              </View>
+            </TouchableOpacity>
+          </Card>
+        )}
 
         <Card style={styles.cardContainer}>
           <TouchableOpacity onPress={() => navigation.navigate('Blogs')}>
