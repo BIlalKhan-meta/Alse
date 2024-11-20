@@ -49,6 +49,8 @@ const ViewBlog: React.FC = () => {
   const user = useSelector(selectUserProfile);
   const isFocused = useIsFocused();
 
+  console.log('BLOGGGGGGGGGGGGGGGGGG IDDDDDDDDDDDDDD', id);
+
   const fetchData = async () => {
     setLoading(true);
     try {

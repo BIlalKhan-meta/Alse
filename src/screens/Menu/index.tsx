@@ -141,12 +141,15 @@ const Menu: React.FC = () => {
                   View Content
                 </InterRegular>
               </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => navigation.navigate('SubscriptionLogs')}>
-                <InterRegular style={styles.cardText}>
-                  Subscription Logs
-                </InterRegular>
-              </TouchableOpacity>
+              {!user.is_child && (
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('SubscriptionLogs')}>
+                  <InterRegular style={styles.cardText}>
+                    Subscription Logs
+                  </InterRegular>
+                </TouchableOpacity>
+              )}
+
               {/* <TouchableOpacity onPress={() => navigation.navigate('Games')}>
                 <InterRegular style={styles.cardText}>Games</InterRegular>
               </TouchableOpacity> */}
@@ -185,9 +188,11 @@ const Menu: React.FC = () => {
               <View style={[styles.notifiCon, {width: vw * 9}]}>
                 <Image source={images.plan} style={styles.imageStyle} />
               </View>
-              <InterMedium style={styles.cardHeading}>
-                Subscription Plan
-              </InterMedium>
+              {!user.is_child && (
+                <InterMedium style={styles.cardHeading}>
+                  Subscription Plan
+                </InterMedium>
+              )}
             </View>
           </TouchableOpacity>
         </Card>

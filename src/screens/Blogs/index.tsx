@@ -25,8 +25,6 @@ const Blogs: React.FC = () => {
 
   const user = useSelector(selectUserProfile);
 
-  console.log('USEEEERRRRRRRRRRRRR', user?.has_subscription);
-
   useLayoutEffect(() => {
     navigation.setOptions({
       headerStyle: {backgroundColor: colors.headerColor},
@@ -75,22 +73,6 @@ const Blogs: React.FC = () => {
         renderItem={renderItem}
         keyExtractor={item => item.id.toString()}
         contentContainerStyle={{paddingTop: vh * 2}}
-        ListFooterComponent={() => (
-          <CustomButton
-            style={styles.btn}
-            onPress={() =>
-              navigation.navigate('MyBlogs', {
-                title:
-                  active == 1
-                    ? 'My Articles'
-                    : active == 2
-                    ? 'My Blogs'
-                    : 'My Videos',
-              })
-            }>
-            {title}
-          </CustomButton>
-        )}
       />
     );
   };
@@ -107,6 +89,7 @@ const Blogs: React.FC = () => {
             navigation.navigate('ViewBlog', {
               id: item?.id,
               title: item?.title,
+              type: active == 1 ? 'article' : 'blog',
             })
           }
         />
@@ -167,28 +150,45 @@ const Blogs: React.FC = () => {
         ))}
       </View>
 
-      {loading ? (
-        <Loader />
-      ) : active === 1 ? (
-        renderFlatList(
-          display,
-          ({item}) => renderItem(item, 'article'),
-          'My Articles',
-        )
-      ) : active === 2 ? (
-        renderFlatList(
-          display,
-          ({item}) => renderItem(item, 'blog'),
-          'My Blogs',
-        )
-      ) : (
-        active === 3 &&
-        renderFlatList(
-          display,
-          ({item}) => renderItem(item, 'media'),
-          'My Videos',
-        )
-      )}
+      <View>
+        {loading ? (
+          <Loader style={{marginVertical: vh * 4}} />
+        ) : active === 1 ? (
+          renderFlatList(
+            display,
+            ({item}) => renderItem(item, 'article'),
+            'My Articles',
+          )
+        ) : active === 2 ? (
+          renderFlatList(
+            display,
+            ({item}) => renderItem(item, 'blog'),
+            'My Blogs',
+          )
+        ) : (
+          active === 3 &&
+          renderFlatList(
+            display,
+            ({item}) => renderItem(item, 'media'),
+            'My Videos',
+          )
+        )}
+      </View>
+
+      <CustomButton
+        style={styles.btn}
+        onPress={() =>
+          navigation.navigate('MyBlogs', {
+            title:
+              active == 1
+                ? 'My Articles'
+                : active == 2
+                ? 'My Blogs'
+                : 'My Videos',
+          })
+        }>
+        {active == 1 ? 'My Articles' : active == 2 ? 'My Blogs' : 'My Videos'}
+      </CustomButton>
     </View>
   );
 };
