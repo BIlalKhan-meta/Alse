@@ -91,6 +91,8 @@ const RegisterScreen: React.FC = () => {
     }
   };
 
+  console.log('IMGEEEEEEEEEEEEEEEE', image);
+
   useEffect(() => {
     if (childState) {
       setChildImage({
@@ -112,10 +114,9 @@ const RegisterScreen: React.FC = () => {
     setFieldValue('contactNo', number);
     setPhoneNumber(number);
   };
-
   const handleSubmit = (values: FormValues) => {
     setLoading(true);
-    if (image == null) {
+    if (!image?.uri) {
       setLoading(false);
       return Toast.show({
         type: 'error',
@@ -204,7 +205,7 @@ const RegisterScreen: React.FC = () => {
                 </InterBoldLabel>
                 <View style={styles.imageContainer}>
                   <Image
-                    source={imageData ? {uri: imageData?.uri} : images.profile}
+                    source={image ? {uri: image?.uri} : images.profile}
                     style={styles.imageStyle}
                   />
 
@@ -270,7 +271,9 @@ const RegisterScreen: React.FC = () => {
                   submitted={submitted}
                   errors={errors.password}
                   secureTextEntry={securePassword}
-                  onPressPassword={() => setSecurePassword(!securePassword)}
+                  onPressCurrentPassword={() =>
+                    setSecurePassword(!securePassword)
+                  }
                 />
 
                 <RegularTextInput
@@ -283,7 +286,9 @@ const RegisterScreen: React.FC = () => {
                   submitted={submitted}
                   errors={errors.cpassword}
                   secureTextEntry={secureCPassword}
-                  onPressCPassword={() => setSecureCPassword(!secureCPassword)}
+                  onPressCurrentPassword={() =>
+                    setSecureCPassword(!secureCPassword)
+                  }
                 />
                 <View style={styles.checkboxStyle}>
                   <CheckboxComponent
