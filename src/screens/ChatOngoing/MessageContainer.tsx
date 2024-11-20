@@ -1,45 +1,56 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
-import { Bubble, MessageText, SystemMessage, BubbleProps, MessageTextProps, SystemMessageProps } from 'react-native-gifted-chat';
+import {
+  Bubble,
+  MessageText,
+  SystemMessage,
+  BubbleProps,
+  MessageTextProps,
+  SystemMessageProps,
+} from 'react-native-gifted-chat';
 import styles from './styles';
+import {colors} from '../../utils/theme';
+import {vh} from '../../constant';
 
-export const renderBubble: React.FC<BubbleProps> = (props) => (
-    <Bubble
-        {...props}
-        // renderTime={() => null}
-        wrapperStyle={{
-            left: styles.rightAlignMessageContainer,
-            right: [styles.messagesContainer, styles.leftAlignMessageContainer],
-        }}
-        tickStyle={{}}
-    />
+export const renderBubble: React.FC<BubbleProps> = props => (
+  <Bubble
+    {...props}
+    // renderTime={() => null}
+    wrapperStyle={{
+      left: styles.rightAlignMessageContainer,
+      right: [styles.messagesContainer, styles.leftAlignMessageContainer],
+    }}
+    tickStyle={{}}
+  />
 );
 
-export const renderSystemMessage: React.FC<SystemMessageProps> = (props) => (
-    <SystemMessage
-        {...props}
-        containerStyle={{ width: '70%', alignSelf: 'center' }}
-        textStyle={styles.erroMsg}
-    />
+export const renderSystemMessage: React.FC<SystemMessageProps> = props => (
+  <SystemMessage
+    {...props}
+    containerStyle={{width: '70%', alignSelf: 'center'}}
+    textStyle={styles.erroMsg}
+  />
 );
 
-export const renderMessageText: React.FC<MessageTextProps> = (props) => (
-    <MessageText
-        {...props}
-        // containerStyle={{
-        //   left: { backgroundColor: 'yellow' },
-        //   right: { backgroundColor: 'purple' },
-        // }}
-        textStyle={{
-            left: styles.messageTxt,
-            right: styles.messageTxtSelf,
-        }}
-        linkStyle={{
-            left: styles.messageTxt,
-            right: styles.messageTxtSelf,
-        }}
+export const renderMessageText: React.FC<MessageTextProps> = props => (
+  <MessageText
+    {...props}
+    containerStyle={{
+      left: {backgroundColor: colors.headerColor},
+      right: {
+        padding: 0,
+      },
+    }}
+    textStyle={{
+      left: styles.messageTxt,
+      right: styles.messageTxtSelf,
+    }}
+    linkStyle={{
+      left: styles.messageTxt,
+      right: styles.messageTxtSelf,
+    }}
     // customTextStyle={{ fontSize: fontSize.f16 }}
-    />
+  />
 );
 
 // Uncomment and type this if needed

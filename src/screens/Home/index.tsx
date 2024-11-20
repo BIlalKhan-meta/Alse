@@ -28,8 +28,8 @@ import {timeFormat} from '../../utils';
 import InAppBrowser from 'react-native-inappbrowser-reborn';
 import {notificationListenerInstance} from '../../utils/NotificationServices';
 import {useSelector} from 'react-redux';
-import {selectUserProfile} from '../../store/slices/authSlice';
-
+import {GetUserProfile, selectUserProfile} from '../../store/slices/authSlice';
+import eventEmitter, {EVENT_TYPES} from '../../utils/EventEmitter';
 const Home: React.FC = () => {
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
@@ -59,9 +59,13 @@ const Home: React.FC = () => {
   });
   const [reportSuccess, setReportSuccess] = useState(false);
 
-  const closePaymentProcess = async () => {
+  const closePaymentProcess = async remoteMessage => {
+    console.log('remoteMesssaadssage ==>', remoteMessage);
     await InAppBrowser.isAvailable();
     const closePrevios = InAppBrowser.close();
+    if (remoteMessage?.notification?.title === 'Payment Successful') {
+      eventEmitter.emit(EVENT_TYPES.CHECKOUT_TRIGGER, remoteMessage);
+    }
     // navigation.navigate('Marketplace', {screen: 'MyOrders'});
   };
 
@@ -98,6 +102,7 @@ const Home: React.FC = () => {
 
   const getApi = async () => {
     const checkData = await dispatch(GetNewsFeed());
+    await dispatch(GetUserProfile());
     await getCountriesList().then(res => {
       if (res?.data) {
         dispatch(getCountries(res?.data?.data));

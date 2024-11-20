@@ -79,6 +79,7 @@ const backButtonRoutes: {[key: string]: boolean} = {
   SubscriptionLogs: true,
   ViewBlog: true,
   MyBlogs: true,
+  Blogs: true,
   AddBlog: true,
   EditBlog: true,
   SavedChatDetail: true,
@@ -94,6 +95,7 @@ const backButtonRoutes: {[key: string]: boolean} = {
   Notifications: true,
   PaymentLogs: true,
   ContactUs: true,
+  RequestScreen: true,
 };
 
 const getTitle: React.FC<NavigationOptionsProps> = props => {

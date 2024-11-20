@@ -16,7 +16,7 @@ const styles = StyleSheet.create({
   },
   cardStyle: {
     // marginVertical: vh,
-    marginTop: Platform.OS == 'ios' ? vh * 8 : 0,
+    // marginTop: 0,
   },
   section: {
     marginBottom: vh * 2,

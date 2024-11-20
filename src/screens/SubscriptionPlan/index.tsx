@@ -1,4 +1,4 @@
-import React, {useCallback, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {View, Text, Dimensions, ScrollView, Linking} from 'react-native';
 import Carousel from 'react-native-snap-carousel';
 import styles from './styles';
@@ -12,6 +12,8 @@ import InAppBrowser from 'react-native-inappbrowser-reborn';
 import {GetUserProfile} from '../../store/slices/authSlice';
 import Loader from '../../components/Loader';
 import Toast from 'react-native-toast-message';
+import eventEmitter, {EVENT_TYPES} from '../../utils/EventEmitter';
+import {useAppDispatch} from '../../hooks/storeHooks';
 
 const {width: viewportWidth} = Dimensions.get('window');
 
@@ -19,7 +21,7 @@ const SubscriptionPlan: React.FC = () => {
   const navigation = useNavigation();
   const [subscriptionPlans, setSubscriptionPlans] = useState([]);
   const [loading, setLoading] = useState(false);
-
+  const dispatch = useAppDispatch();
   const getApi = async () => {
     setLoading(true);
     await GetSubscriptions()
@@ -38,6 +40,19 @@ const SubscriptionPlan: React.FC = () => {
       getApi();
     }, []),
   );
+  const TriggerFunc = async () => {
+    setLoading(true);
+    await dispatch(GetUserProfile());
+    navigation.goBack()
+    setLoading(false);
+  };
+  useEffect(() => {
+    eventEmitter.on(EVENT_TYPES.CHECKOUT_TRIGGER, TriggerFunc);
+
+    return () => {
+      eventEmitter.off(EVENT_TYPES.CHECKOUT_TRIGGER, TriggerFunc);
+    };
+  }, []);
 
   if (loading) {
     return <Loader />;

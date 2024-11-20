@@ -68,6 +68,8 @@ const ProfileScreen: React.FC = ({navigation}) => {
       fetchProfileById(id)
         .then(res => {
           if (res?.data) {
+            console.log('res?.data?.data ====>', res?.data?.data);
+
             setData(res?.data?.data);
           }
         })
@@ -286,7 +288,7 @@ const ProfileScreen: React.FC = ({navigation}) => {
           />
         </Card>
 
-        {!data?.is_private && data?.is_Following ? (
+        {!data?.is_private && data?.is_following ? (
           <>
             <FlatList
               data={data?.posts}
@@ -316,8 +318,11 @@ const ProfileScreen: React.FC = ({navigation}) => {
           closeModal={() => setrRactVisible(false)}
           reactions={reactions}
         />
-
-        {data?.is_private ? (
+        {console.log(
+          'data?.is_privatedata?.isdasadadas_private ===>',
+          data?.is_private,
+        )}
+        {data?.is_private && !data?.is_following ? (
           <Card style={styles.lockContainer}>
             <Image source={images.lock} />
 

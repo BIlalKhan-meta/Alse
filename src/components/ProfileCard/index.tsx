@@ -36,11 +36,12 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
   is_private,
   id,
 }) => {
-
   const navigation = useNavigation();
   const user = useSelector(selectUserProfile);
 
   const [followLoader, setFollowLoader] = useState(false);
+  const [messageLoader, setMessageLoader] = useState(false);
+
   const [follow, setFollow] = useState(
     isFollowing ? 'following' : isRequested ? 'requested' : 'notFollowing',
   );
@@ -130,22 +131,32 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
     }
   };
 
-  const handleMessage = () =>{
-    console.log("Messageads");
-    const data ={
-      user_id : id
-    }
-    const form = new FormData()
-    form.append('user_id', data?.user_id)
-    console.log("formformformformform ====>", form)
-    createChat(data).then(res =>{
-      console.log("Respose from Create Chat",res)
-    }).catch(err =>{
-      console.log("Error from Create Chat -----", err)
-    })
-    
-    
-  }
+  const handleMessage = () => {
+    console.log('Messageads');
+    setMessageLoader(true);
+    const data = {
+      user_id: id,
+    };
+    const form = new FormData();
+    form.append('user_id', data?.user_id);
+    console.log('formformformformform ====>', form);
+    createChat(data)
+      .then(res => {
+        setMessageLoader(false);
+        console.log('res?.data?.data?.full_name=', res?.data?.data);
+
+        navigation.navigate('ChatOngoing', {
+          id: res?.data?.data?.id,
+          name: name,
+        });
+        // console.log('Respose from Create Chat', res?.data?.data);
+      })
+      .catch(err => {
+        setMessageLoader(false);
+
+        console.log('Error from Create Chat -----', err);
+      });
+  };
 
   return (
     <View style={styles.container}>
@@ -193,7 +204,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
                 <CustomButton
                   style={styles.smallbtn}
                   onPress={handleMessage}
-                  loading={followLoader}>
+                  loading={messageLoader}>
                   {'Message'}
                 </CustomButton>
               </View>

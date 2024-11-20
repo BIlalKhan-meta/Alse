@@ -93,6 +93,8 @@ const LoginScreen: React.FC = () => {
       password: values.password,
       token: deviceToken,
     };
+    console.log("TOKEENNNNNNNN",apiData);
+    
 
     //   login(apiData).then((res)=>{
     //     if(res?.data){
@@ -113,6 +115,8 @@ const LoginScreen: React.FC = () => {
           } else {
             removeUserSession();
           }
+          console.log('resssssssssssssss',res?.data);
+          
           dispatch(setUser(res?.data?.data));
           // navigation.navigate('TabNavigation');
         }
