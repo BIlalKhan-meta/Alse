@@ -40,11 +40,11 @@ const HomeNavigation = () => {
         component={MyProfile}
         options={NavigationOptions}
       />
-      <Stack.Screen
+      {/* <Stack.Screen
         name="SubscriptionPlan"
         component={SubscriptionPlan}
         options={NavigationOptions}
-      />
+      /> */}
       {/* <Stack.Screen name="MenuManagement" component={MenuManagement} /> */}
       {/*
         <Stack.Screen name="RatingsandReviews" component={RatingsandReviews} options={NavigationOptions}/> */}

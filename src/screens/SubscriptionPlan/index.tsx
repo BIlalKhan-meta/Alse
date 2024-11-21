@@ -21,6 +21,7 @@ const SubscriptionPlan: React.FC = () => {
   const navigation = useNavigation();
   const [subscriptionPlans, setSubscriptionPlans] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [resLoading, setResLoading] = useState(false);
   const dispatch = useAppDispatch();
   const getApi = async () => {
     setLoading(true);
@@ -43,7 +44,7 @@ const SubscriptionPlan: React.FC = () => {
   const TriggerFunc = async () => {
     setLoading(true);
     await dispatch(GetUserProfile());
-    navigation.goBack()
+    navigation.goBack();
     setLoading(false);
   };
   useEffect(() => {
@@ -86,6 +87,7 @@ const SubscriptionPlan: React.FC = () => {
   };
 
   const onChoosePlan = async (id: number) => {
+    setResLoading(true);
     const apiData = {
       plan_id: id,
     };
@@ -112,6 +114,9 @@ const SubscriptionPlan: React.FC = () => {
       })
       .catch(err => {
         console.log('ERRORRRRRRRRRRRRR', err);
+      })
+      .finally(() => {
+        setResLoading(false);
       });
   };
 
@@ -132,7 +137,10 @@ const SubscriptionPlan: React.FC = () => {
       <Text style={styles.planDescription}> {item.description}</Text>
       <Text style={styles.price}>Price: {item.price}</Text>
 
-      <CustomButton style={styles.button} onPress={() => onChoosePlan(item.id)}>
+      <CustomButton
+        loading={resLoading}
+        style={styles.button}
+        onPress={() => onChoosePlan(item.id)}>
         Choose Plan
       </CustomButton>
     </View>
