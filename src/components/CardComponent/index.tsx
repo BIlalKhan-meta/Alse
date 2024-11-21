@@ -32,7 +32,8 @@ interface CardComponentProps {
   privacy?: string;
   setPrivacy?: () => void;
   handleOnChangeText: () => void;
-  image?: object | string;
+  removeMedia: () => void;
+  image?: object | null;
   // dots: boolean;
 }
 const CardComponent: React.FC<CardComponentProps> = ({
@@ -45,6 +46,7 @@ const CardComponent: React.FC<CardComponentProps> = ({
   setPrivacy,
   privacy,
   image,
+  removeMedia,
 }) => {
   const [open, setOpen] = useState(false);
 
@@ -119,7 +121,7 @@ const CardComponent: React.FC<CardComponentProps> = ({
         {image && (
           <View style={styles.media_box}>
             <TouchableOpacity
-              onPress={() => removeMedia(index)}
+              onPress={() => removeMedia()}
               style={styles.cross_box}>
               <Image source={images.cross} style={styles.cross_icon} />
             </TouchableOpacity>

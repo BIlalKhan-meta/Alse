@@ -1,23 +1,14 @@
 // Home.tsx
 import React, {useEffect, useLayoutEffect, useState} from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Image,
-  TouchableOpacity,
-  ScrollView,
-  Button,
-} from 'react-native';
+import {View, ScrollView} from 'react-native';
 import CardComponent from '../../components/CardComponent';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import styles from './styles';
-import BottomModal from '../../components/BottomModel';
 import useImagePicker from '../../hooks/useImagePicker';
-import InterMedium from '../../components/Text/InterMedium';
 import {getMessage, Toast} from '../../utils/helpers';
 import {useAppDispatch} from '../../hooks/storeHooks';
 import {postCreate} from '../../store/slices/homeSlice';
+import CustomButton from '../../components/CustomButton';
 
 const ListOptions = [
   {label: 'Public', value: '2'},
@@ -41,14 +32,28 @@ const CreatePost: React.FC = () => {
 
   const {image, imageData, captureImage, chooseImageFromLibrary} =
     useImagePicker();
+  const [media, setMedia] = useState<object | null>(null);
+
+  useEffect(() => {
+    if (imageData) {
+      setMedia({
+        uri: imageData?.uri,
+        name: imageData?.fileName,
+        type: imageData?.type,
+      });
+    }
+  }, [imageData]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
       title: title,
       headerRight: () => (
-        <TouchableOpacity style={styles.postButton} onPress={handlePost}>
-          <InterMedium style={styles.postTxt}>{'Post'}</InterMedium>
-        </TouchableOpacity>
+        <CustomButton
+          onPress={handlePost}
+          loading={isLoading}
+          style={styles.postButton}>
+          Post
+        </CustomButton>
       ),
     });
   }, [navigation, isLoading, comment, privacy, imageData]);
@@ -63,14 +68,10 @@ const CreatePost: React.FC = () => {
     const body = new FormData();
     body.append('description', comment);
     body.append('privacy', privacy);
-    if (imageData) {
-      body.append('file[0]', {
-        name: imageData?.fileName,
-        uri: imageData?.uri,
-        type: imageData?.type,
-      });
+    if (media) {
+      body.append('file[0]', media);
     }
-    console.log('body ==========>', body);
+    console.log('body ==========>', media);
 
     setIsLoading(true);
 
@@ -102,15 +103,16 @@ const CreatePost: React.FC = () => {
           ListOptions={ListOptions}
           privacy={privacy}
           setPrivacy={setPrivacy}
-          image={imageData}
+          removeMedia={() => setMedia(null)}
+          image={media}
         />
-        <BottomModal
+        {/* <BottomModal
           visible={bottomVisible}
           closeModal={() => setbottomVisible(false)}
           // onPressCamera={() => captureImage('photo')}
           onPressImage={() => captureImage('photo')}
           onPress={() => captureImage('video')}
-        />
+        /> */}
       </View>
     </ScrollView>
   );

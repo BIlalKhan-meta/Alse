@@ -55,7 +55,7 @@ const styles = StyleSheet.create({
         marginHorizontal: 10,
     },
     postButton: {
-        width: vw * 20,
+        minWidth: vw * 20,
         height: vh * 5,
         margin: 0,
         backgroundColor: colors.themeColor,

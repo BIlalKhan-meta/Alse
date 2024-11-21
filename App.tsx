@@ -15,7 +15,8 @@ import {
   PERMISSIONS,
   request,
 } from 'react-native-permissions';
-import {  requestUserPermission } from './src/utils/NotificationServices';
+import {requestUserPermission} from './src/utils/NotificationServices';
+import MainNavigation from './src/navigation/MainNavigation';
 
 const theme = {
   ...DefaultTheme,
@@ -49,11 +50,11 @@ function App(): React.JSX.Element {
     if (Platform.OS === 'android') {
       checkNotificationPermission();
     }
-    requestUserPermission()
+    requestUserPermission();
   }, []);
 
   function handleNotificationPress(remoteMessage: object) {
-    console.log("NTOFIIIIIIIIIIIICATIONNNNNN",remoteMessage);
+    console.log('NTOFIIIIIIIIIIIICATIONNNNNN', remoteMessage);
   }
 
   // function handleNotification(remoteMessage: any) {
@@ -72,11 +73,11 @@ function App(): React.JSX.Element {
       <Provider store={store}>
         {/* <SafeAreaView style={styles.container}> */}
 
-          <NavigationContainer theme={theme}>
-            <AppNavigation />
-          </NavigationContainer>
+        <NavigationContainer theme={theme}>
+          <MainNavigation />
+        </NavigationContainer>
 
-          <Toast />
+        <Toast />
         {/* </SafeAreaView> */}
       </Provider>
     </PersistGate>

@@ -22,6 +22,7 @@ import ReportBlockModal from '../ReportBlockModal';
 import {useSelector} from 'react-redux';
 import {selectUserProfile} from '../../store/slices/authSlice';
 import {createPost} from '../../api/home';
+import Video from 'react-native-video';
 
 interface PostProps {
   id?: number;
@@ -32,6 +33,7 @@ interface PostProps {
   time: string;
   postText: string;
   postImage: string;
+  mediaType: string;
   likes: number;
   comments: number;
   share: number;
@@ -58,6 +60,7 @@ const PostComponent: React.FC<PostProps> = ({
   time,
   postText,
   postImage,
+  mediaType,
   likes,
   comments,
   share,
@@ -80,6 +83,7 @@ const PostComponent: React.FC<PostProps> = ({
   const [showFullText, setShowFullText] = useState(false);
   const maxTextLength = 100;
   const [numberLikes, setNumberLikes] = useState(likes);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     setNumberLikes(likes);
@@ -140,6 +144,7 @@ const PostComponent: React.FC<PostProps> = ({
   };
 
   const sharePost = async () => {
+    setLoading(true);
     const data = {
       description: postText,
       privacy: account,
@@ -160,7 +165,10 @@ const PostComponent: React.FC<PostProps> = ({
           console.log('POSTTTTTT SHAREDDDDDDDDDDDDDDDD');
         }
       })
-      .catch(err => console.log('ERORRRRRRR', err));
+      .catch(err => console.log('ERORRRRRRR', err))
+      .finally(() => {
+        setLoading(false);
+      });
   };
 
   return (
@@ -189,9 +197,31 @@ const PostComponent: React.FC<PostProps> = ({
 
         {/* <InterLight style={styles.postText}>{postText}</InterLight> */}
         <View style={styles.postContent}>{renderPostText()}</View>
-        {postImage && (
+        {/* {postImage && (
           <Image source={{uri: postImage}} style={styles.postImage} />
-        )}
+        )} */}
+
+        {postImage ? (
+          mediaType == 'jpg' ? (
+            <Image source={{uri: postImage}} style={styles.postImage} />
+          ) : (
+            <Video
+              source={{uri: postImage}}
+              paused={false}
+              style={styles.postImage}
+              controls={true}
+              resizeMode="cover"
+            />
+          )
+        ) : null}
+
+        {/* <Video
+          source={{uri: source}}
+          paused={false}
+          style={styles.media}
+          controls={control ? control : true}
+          resizeMode="cover"
+        /> */}
         <View style={styles.postActions}>
           <View style={styles.leftActions}>
             <Image
@@ -207,7 +237,7 @@ const PostComponent: React.FC<PostProps> = ({
             <InterRegular style={styles.actionText}>{share}</InterRegular>
           </View>
           {id != user?.id && (
-            <TouchableOpacity onPress={onSavePress}>
+            <TouchableOpacity disabled={loading} onPress={onSavePress}>
               <Image
                 source={isSaved ? images?.unsave : images.save}
                 style={styles.icon}
@@ -217,7 +247,10 @@ const PostComponent: React.FC<PostProps> = ({
         </View>
         <View style={styles.separator} />
         <View style={styles.bottomActions}>
-          <TouchableOpacity style={styles.button} onPress={handleLike}>
+          <TouchableOpacity
+            style={styles.button}
+            disabled={loading}
+            onPress={handleLike}>
             <Image
               // source={images.like}
               source={isLiked ? images.likeFill : images?.like}
@@ -226,12 +259,15 @@ const PostComponent: React.FC<PostProps> = ({
             />
             <Text style={styles.buttonText}>Like</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.button} onPress={onCommnetPress}>
+          <TouchableOpacity
+            disabled={loading}
+            style={styles.button}
+            onPress={onCommnetPress}>
             <Image source={images.comment} style={styles.buttonIcon} />
             <Text style={styles.buttonText}>Comment</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            disabled={id == user?.id}
+            disabled={id == user?.id || loading}
             onPress={sharePost}
             style={styles.button}>
             <Image source={images.share} style={styles.buttonIcon} />
