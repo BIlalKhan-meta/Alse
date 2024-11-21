@@ -1,5 +1,5 @@
 // MediaCard.tsx
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {View, Text, Image, TouchableOpacity, StyleSheet} from 'react-native';
 import Video from 'react-native-video';
 import styles from './styles';
@@ -8,31 +8,68 @@ import InterRegular from '../Text/InterRegular';
 import InterMedium from '../Text/InterMedium';
 import {useSelector} from 'react-redux';
 import {GetUserProfile, selectUserProfile} from '../../store/slices/authSlice';
+import {removeSavedItem, saveItem} from '../../api/menu';
 
 interface MediaCardProps {
   type: 'image' | 'video';
   source: string;
   title: string;
+  item: any;
   description: string;
   user_id?: boolean;
   control?: boolean;
   category: string;
-  onBookmarkPress: () => void;
   onItemPress: () => void;
+  onSavePress?: () => void;
 }
 
 const MediaCard: React.FC<MediaCardProps> = ({
   type,
+  item,
   source,
   title,
   description,
   category,
   control,
-  onBookmarkPress,
   onItemPress,
   user_id,
+  onSavePress,
 }) => {
   const user = useSelector(selectUserProfile);
+  const [saved, setSaved] = useState(item?.is_saved);
+
+  useEffect(() => {
+    if (item) {
+      setSaved(item?.is_saved);
+    }
+  }, [item]);
+
+  const handleSave = async (id: number, isSaved: boolean) => {
+    console.log('IDDDDDDDDDDDD', id);
+    if (onSavePress) {
+      onSavePress();
+    }
+    setSaved(!saved);
+    const data = {
+      item_id: id,
+      item_type: type,
+    };
+    const form = new FormData();
+    Object.entries(data).map(([key, value]) => {
+      form.append(key, value);
+    });
+    if (isSaved) {
+      await removeSavedItem(form)
+        .then(res => console.log('SAVEDDD ITEMMMMMMMMMM REMOOVEEEDDDD', res))
+        .catch(err => console.log('ERRRORRRRRRRRR SAVEDDDDDDDDDDD', err));
+    } else {
+      await saveItem(form)
+        .then(res => console.log('POSTTTT SAVEEEDDDDDDD', res))
+        .catch(err => console.log('SAVEEEEDDDDDD POSTTTTT ERRORRRRRR', err));
+    }
+    setSaved(!saved);
+  };
+
   return (
     <TouchableOpacity style={styles.cardContainer} onPress={onItemPress}>
       {type === 'video' ? (
@@ -50,14 +87,17 @@ const MediaCard: React.FC<MediaCardProps> = ({
         <View style={styles.textContainer}>
           <InterMedium style={styles.title}>{title}</InterMedium>
           <InterRegular style={styles.description}>{description}</InterRegular>
-          <InterRegular style={styles.category}>{category?.title}</InterRegular>
+          <InterRegular style={styles.category}>{category}</InterRegular>
         </View>
 
         {user_id != user?.id && (
           <TouchableOpacity
-            onPress={onBookmarkPress}
+            onPress={() => handleSave(item?.id, item?.is_saved)}
             style={styles.bookmarkContainer}>
-            <Image source={images.save} style={styles.bookmarkIcon} />
+            <Image
+              source={saved ? images.unsave : images.save}
+              style={styles.bookmarkIcon}
+            />
           </TouchableOpacity>
         )}
       </View>

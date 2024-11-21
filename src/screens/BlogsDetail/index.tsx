@@ -192,8 +192,10 @@ const ViewBlog: React.FC = () => {
         <Text style={styles.blogTitle}>{item?.title}</Text>
         <Text style={styles.blogContent}>{item?.content && item?.content}</Text>
 
-        {title == 'Video' && (
-          <InterRegular style={styles.category}>{item.category}</InterRegular>
+        {type == 'video' && (
+          <InterRegular style={styles.category}>
+            {item?.category?.title}
+          </InterRegular>
         )}
 
         {item?.user_id == user?.id && (

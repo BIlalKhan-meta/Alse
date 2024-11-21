@@ -75,29 +75,33 @@ const Saved: React.FC = () => {
 
   const [activePostId, setActivePostId] = useState<number | null>(null);
 
+  console.log('DISSPLAYYYYYYYYYYYYYY', displayPost);
+
   const fetchData = async () => {
     setLoading(true);
-    let type =
-      active == 1
-        ? `App\\Models\\Post`
-        : active == 2
-        ? `App\\Models\\Product`
-        : `App\\Models\\Blog`;
     await getSavedItems()
       .then(res => {
         if (res?.data) {
           console.log('RESSSSSSSSSS', res?.data?.data?.data[0]);
-          if(active==1){
+          if (active == 1) {
             setDisplayPost(
-              res?.data?.data?.data?.filter(item => item?.savable_type == `App\\Models\\Post`),
+              res?.data?.data?.data?.filter(
+                item => item?.savable_type == `App\\Models\\Post`,
+              ),
             );
-          }else if(active==2){
+          } else if (active == 2) {
             setDisplayPost(
-              res?.data?.data?.data?.filter(item => item?.savable_type == `App\\Models\\Product`),
+              res?.data?.data?.data?.filter(
+                item => item?.savable_type == `App\\Models\\Product`,
+              ),
             );
-          }else{
+          } else {
             setDisplayPost(
-              res?.data?.data?.data?.filter(item => (item?.savable_type != `App\\Models\\Product` && item?.savable_type != `App\\Models\\Product`)),
+              res?.data?.data?.data?.filter(
+                item =>
+                  item?.savable_type != `App\\Models\\Product` &&
+                  item?.savable_type != `App\\Models\\Post`,
+              ),
             );
           }
         }
@@ -109,7 +113,6 @@ const Saved: React.FC = () => {
         setLoading(false);
       });
   };
-  
 
   useEffect(() => {
     fetchData();
@@ -306,63 +309,58 @@ const Saved: React.FC = () => {
       });
   };
 
-  const handelSave = (id : number)=>{
-    let arr =[...displayPost];
-    let index= arr.findIndex((item)=>item.id===id)
-    arr.splice(index,1);
-    setDisplayPost(arr)
-  }
+  const handelSave = (id: number) => {
+    let arr = [...displayPost];
+    let index = arr.findIndex(item => item.id === id);
+    arr.splice(index, 1);
+    setDisplayPost(arr);
+  };
 
   const renderPost = ({item}: any) => {
+
     return (
       <PostComponent
-        id={item?.savable_item?.user_id}
-        postID={item?.savable_item?.media[0]?.post_id}
-        avatar={item?.savable_item?.avatar}
-        name={item?.savable_item?.name}
-        country={item?.savable_item?.country ? item?.savable_item?.country : ''}
-        time={timeFormat(item?.savable_item?.date)}
-        postText={item?.savable_item?.description}
-        postImage={item?.savable_item?.media[0]?.path}
-        likes={item?.savable_item?.total_likes}
-        comments={item?.savable_item?.total_comments}
-        share={item?.savable_item?.share}
-        account={item?.savable_item?.privacy}
+        id={item?.user_id}
+        // postID={item?.media[0]?.post_id}
+        avatar={item?.avatar}
+        name={item?.fullname}
+        country={item?.country ? item?.country : ''}
+        time={timeFormat(item?.date)}
+        postText={item?.description}
+        postImage={item?.media?.[0]?.path}
+        mediaType={item?.media?.[0]?.type}
+        likes={item?.total_likes}
+        comments={item?.total_comments}
+        share={item?.share}
+        account={item?.privacy}
         // onCommnetPress={() => setCommentsVisible(true)}
-        onCommnetPress={() => handleCommentPress(item?.savable_item?.id)}
-        onLikePress={() => handleLikePress(item?.savable_item?.id)}
-        onSavePress={() =>
-          handleSave(item?.savable_item?.id, item?.savable_item?.is_saved)
-        }
+        onCommnetPress={() => handleCommentPress(item?.id)}
+        onLikePress={() => handleLikePress(item?.id)}
+        onSavePress={() => handleSave(item?.id, item?.is_saved)}
         // onLikePress={() => setrRactVisible(true)}
-        onDotPress={() => handleDotPress(item?.savable_item?.id)}
-        modalVisible={activePostId === item?.savable_item?.id}
+        onDotPress={() => handleDotPress(item?.id)}
+        modalVisible={activePostId === item?.id}
         onCardPress={() => setActivePostId(null)}
         handleBlockPress={() => {
           // handleDotPress();
           // setDeleteVisible(true);
-          setDeleteVisible({visibility: true, id: item?.savable_item?.id});
+          setDeleteVisible({visibility: true, id: item?.id});
         }}
         handleReportPost={() => {
-          setReportVisible({visibility: true, id: item?.savable_item?.id});
+          setReportVisible({visibility: true, id: item?.id});
         }}
         handleReportPress={() => {
           // handleDotPress();
           navigation.navigate('CreatePostEdit', {
             title: 'Edit Post',
-            data: item?.savable_item,
+            data: item,
           });
         }}
-        isLiked={item?.savable_item?.is_liked}
-        isSaved={item?.savable_item?.is_saved}
+        isLiked={item?.is_liked}
+        isSaved={item?.is_saved}
       />
     );
   };
-  const renderEmpty = () => (
-    <View style={styles.emptyContainer}>
-      <InterRegular style={styles.emptyText}>No Posts to Show.</InterRegular>
-    </View>
-  );
 
   if (loading) {
     return <Loader />;
@@ -401,13 +399,17 @@ const Saved: React.FC = () => {
         {active == 1 && (
           <View>
             <FlatList
-              data={displayPost}
+              data={displayPost.map(item => {
+                return item?.savable_item;
+              })}
               onRefresh={fetchData}
               refreshing={loading}
               renderItem={renderPost}
               //   keyExtractor={item => item?.id.toString()}
               showsVerticalScrollIndicator={false}
-              // ListEmptyComponent={renderEmpty}
+              ListEmptyComponent={() => (
+                <EmptyComponent text={'No Posts Saved'} />
+              )}
             />
 
             <CommentsModal
@@ -506,6 +508,11 @@ const Saved: React.FC = () => {
               // addCart={true}
               vendor={true}
               product={true}
+              onPress={id => {
+                navigation.navigate('ProductView', {
+                  productId: id,
+                });
+              }}
             />
           </Card>
         )}
@@ -523,23 +530,23 @@ const Saved: React.FC = () => {
                 <Card style={styles.itemCard}>
                   {item?.savable_type == 'App\\Models\\Video' ? (
                     <MediaCard
+                      item={item}
                       type={'video'}
-                      source={item?.video}
-                      title={item?.title}
-                      description={item?.content}
-                      category={item?.category?.title}
-                      onBookmarkPress={() => {}}
+                      source={item?.savable_item?.video}
+                      title={item?.savable_item?.title}
+                      description={item?.savable_item?.content}
+                      category={item?.savable_item?.category?.title}
                       onItemPress={() =>
                         navigation.navigate('ViewBlog', {
-                          id: item?.id,
-                          title: item?.title,
+                          id: item?.savable_item?.id,
+                          title: item?.savable_item?.title,
                           type: 'video',
                         })
                       }
                     />
                   ) : (
                     <ContentSavedScreen
-                    onSavePress={()=>handelSave(item?.id)}
+                      onSavePress={() => handelSave(item?.id)}
                       item={item?.savable_item}
                       userId={item?.savable_item?.id}
                       viewBtn={

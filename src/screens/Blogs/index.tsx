@@ -96,12 +96,12 @@ const Blogs: React.FC = () => {
         />
       ) : (
         <MediaCard
+          item={item}
           type={'video'}
           source={item?.video}
           title={item?.title}
           description={item?.content}
           category={item?.category?.title}
-          onBookmarkPress={() => {}}
           onItemPress={() =>
             navigation.navigate('ViewBlog', {
               id: item?.id,

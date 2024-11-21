@@ -43,10 +43,9 @@ const ContentSavedScreen: React.FC<ContentSavedProps> = ({
   userId,
   type,
   style,
-  onSavePress
+  onSavePress,
 }) => {
-  const [saved, setSaved] = useState(item?.is_saved)
-  
+  const [saved, setSaved] = useState(item?.is_saved);
 
   useEffect(() => {
     if (item) {
@@ -55,10 +54,10 @@ const ContentSavedScreen: React.FC<ContentSavedProps> = ({
   }, [item]);
 
   const handleSave = async (id: number, isSaved: boolean) => {
-    if(onSavePress){
-      onSavePress()
+    if (onSavePress) {
+      onSavePress();
     }
-    setSaved(!saved)
+    setSaved(!saved);
     const data = {
       item_id: id,
       item_type: type,
