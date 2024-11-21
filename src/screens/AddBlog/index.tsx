@@ -137,7 +137,11 @@ const AddBlog = () => {
           }
         })
         .catch(err => {
-          console.log('ADDDDD Article ERRRORRRRR', err);
+          Toast.show({
+            type: 'error',
+            text1: 'Error',
+            text2: err?.message,
+          });
         })
         .finally(() => {
           setLoading(false);

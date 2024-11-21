@@ -84,6 +84,8 @@ const MyBlogs: React.FC = () => {
   //   return <EmptyComponent text={'No Data Available'} />;
   // }
 
+  console.log('DISSPLAYYYYYYYYYYYYYYYYYY', display);
+
   return (
     <View style={styles.container}>
       {loading ? (
@@ -99,14 +101,12 @@ const MyBlogs: React.FC = () => {
           renderItem={({item}) => (
             <Card style={styles.itemCard}>
               <MediaCard
-                user_id={item?.user_id}
+                item={item}
                 type={'video'}
                 source={item?.video}
                 title={item?.title}
-                control={false}
                 description={item?.content}
-                category={item?.category}
-                onBookmarkPress={() => {}}
+                category={item?.category?.title}
                 onItemPress={() =>
                   navigation.navigate('ViewBlog', {
                     id: item?.id,
@@ -117,7 +117,7 @@ const MyBlogs: React.FC = () => {
               />
             </Card>
           )}
-          keyExtractor={item => item.id}
+          keyExtractor={item => item?.id?.toString()}
           contentContainerStyle={styles.container}
         />
       ) : (

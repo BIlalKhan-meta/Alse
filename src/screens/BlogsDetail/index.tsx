@@ -27,6 +27,7 @@ import {
   getVideo,
   updateArticleStatus,
   updateBlogStatus,
+  updateVideo,
   updateVideoStatus,
 } from '../../api/education';
 import {EmptyComponent} from '../../components/EmptyComponent';
@@ -45,11 +46,11 @@ const ViewBlog: React.FC = () => {
   const [item, setItem] = useState(null);
   const [similar, setSimilar] = useState([]);
 
+  const [status, setStatus] = useState();
+
   const {id, title, type} = route?.params;
   const user = useSelector(selectUserProfile);
   const isFocused = useIsFocused();
-
-  console.log('BLOGGGGGGGGGGGGGGGGGG IDDDDDDDDDDDDDD', id);
 
   const fetchData = async () => {
     setLoading(true);
@@ -65,6 +66,9 @@ const ViewBlog: React.FC = () => {
       console.log('RESSSSSSSSSSSSSSSS');
       if (res?.data) {
         setItem(res?.data.data);
+        if (type == 'video') {
+          setStatus(res?.data?.data?.status);
+        }
       }
     } catch (err) {
       console.error('GET ARTTTTTTICLESSSS ERRORRR', err);
@@ -105,11 +109,28 @@ const ViewBlog: React.FC = () => {
         }
       });
     } else {
-      await updateVideoStatus(id).then(res => {
-        if (res?.data) {
-          fetchData();
-        }
+      setStatus(!status);
+      const temp = {
+        title: item?.title,
+        category_id: item?.category_id,
+        content: item?.content,
+        privacy: item?.privacy,
+        status: item?.status ? 0 : 1,
+      };
+      const form = new FormData();
+      Object.entries(temp).forEach(([key, value]) => {
+        form.append(key, value);
       });
+      console.log(JSON.stringify(form, null, 4));
+      await updateVideo(form, id)
+        .then(res => {
+          if (res?.data) {
+            fetchData();
+          }
+        })
+        .catch(err => {
+          console.log('ERROORRRRRR', err?.message);
+        });
     }
   };
 

@@ -20,9 +20,9 @@ const useImagePicker = () => {
       } else if (response.errorCode == 'permission') {
         console.log('Permission not satisfied');
       } else {
-        setImage(response.assets[0].uri); // Set the selected image URI
+        setImage(response.assets?.[0].uri); // Set the selected image URI
         // Handle further processing if needed (e.g., setting file type)
-        setImageData(response?.assets[0]);
+        setImageData(response?.assets?.[0]);
       }
     });
   };
@@ -44,9 +44,9 @@ const useImagePicker = () => {
       } else if (response.errorCode == 'permission') {
         console.log('Permission not satisfied');
       } else {
-        setImage(response.assets[0].uri); // Set the captured image URI
+        setImage(response.assets?.[0].uri); // Set the captured image URI
         // Handle further processing if needed (e.g., setting file type)
-        setImageData(response?.assets[0]);
+        setImageData(response?.assets?.[0]);
       }
     });
   };

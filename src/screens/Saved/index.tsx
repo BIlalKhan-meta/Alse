@@ -317,7 +317,6 @@ const Saved: React.FC = () => {
   };
 
   const renderPost = ({item}: any) => {
-
     return (
       <PostComponent
         id={item?.user_id}
@@ -563,6 +562,10 @@ const Saved: React.FC = () => {
                         navigation.navigate('ViewBlog', {
                           id: item?.savable_item?.id,
                           title: item?.savable_item?.title,
+                          type:
+                            item?.savable_type == 'App\\Models\\Article'
+                              ? 'article'
+                              : 'blog',
                         })
                       }
                     />
