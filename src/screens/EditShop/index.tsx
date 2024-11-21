@@ -94,7 +94,7 @@ export const EditShop = () => {
           placeholder="Enter Shop Name"
           // placeholderTextColor={colors.darkText}
           onChangeText={setName}
-          value={name || display?.shop_name}
+          value={name}
           style={styles.inputStyle}
         />
         <RegularTextInput
@@ -102,7 +102,7 @@ export const EditShop = () => {
           placeholder="Enter Shop Name"
           // placeholderTextColor={colors.darkText}
           onChangeText={setFees}
-          value={fees || display?.delivery_fees}
+          value={fees}
           style={styles.inputStyle}
         />
 

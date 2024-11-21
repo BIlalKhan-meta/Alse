@@ -147,12 +147,12 @@ const MyProfile: React.FC = () => {
 
             <View style={styles.headingConatiner}>
               <InterMedium style={styles.txt}>Birth Date</InterMedium>
-              <InterMedium style={styles.txt}>Gender</InterMedium>
+              {/* <InterMedium style={styles.txt}>Gender</InterMedium> */}
             </View>
 
             <View style={styles.txtConatiner}>
               <InterMedium style={styles.phoneTxt}>{user?.dob}</InterMedium>
-              <InterMedium style={styles.phoneTxt}>{user?.gender}</InterMedium>
+              {/* <InterMedium style={styles.phoneTxt}>{user?.gender}</InterMedium> */}
             </View>
           </View>
 

@@ -24,16 +24,13 @@ import {
   createBlog,
   updateArticle,
   updateBlog,
+  updateVideo,
 } from '../../api/education';
+import {getCategories} from '../../api/product';
 
 const statuses = [
-  {label: 'Active', value: 'active'},
-  {label: 'Inactive', value: 'inactive'},
-];
-
-const statuses1 = [
-  {label: 'Information Technology', value: 'it'},
-  {label: 'Artificial Intelligance', value: 'ai'},
+  {label: 'Active', value: '1'},
+  {label: 'Inactive', value: '0'},
 ];
 
 const validationSchema = yup.object().shape({
@@ -63,15 +60,22 @@ const EditBlog = () => {
   const [media, setMedia] = useState<object[]>([]);
   const {imageData, captureImage, chooseImageFromLibrary} = useImagePicker();
   const [loading, setLoading] = useState(false);
-
-  const initialValues = {
+  const [categories, setCategories] = useState([]);
+  const [initialValues, setInitialvalues] = useState({
     title: editItem?.title || '',
     content: editItem?.content || '',
-    category: editItem?.category || '',
-    status: editItem?.status || '',
-  };
+    ...(title == 'Update Video'
+      ? {status: editItem?.status || '', category: editItem?.category_id || ''}
+      : {}),
+  });
 
-  console.log('EDITTTTTTTTTTTTTTTT', editItem);
+  // const initialValues = {
+  //   title: editItem?.title || '',
+  //   content: editItem?.content || '',
+  //   ...(title == 'Update Video'
+  //     ? {status: editItem?.status || '', category: editItem?.category || ''}
+  //     : {}),
+  // };
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -82,7 +86,27 @@ const EditBlog = () => {
     });
   }, [navigation]);
 
-  console.log(imageData);
+  const getData = async () => {
+    await getCategories().then(res => {
+      if (res?.data) {
+        // if (editItem?.category_id) {
+        //   let value = res?.data?.data?.filter(
+        //     item => item.id == editItem?.category_id,
+        //   );
+        //   console.log('valueeeeeeeeeeee', value);
+        //   setInitialvalues({...initialValues, category: value[0].id});
+        // }
+        // console.log('RESSSSSSSSSSSSSSS', res?.data?.data);
+        setCategories(res?.data?.data);
+      }
+    });
+  };
+
+  useEffect(() => {
+    if (title == 'Update Video') {
+      getData();
+    }
+  }, []);
 
   const handleForm = async (data: any) => {
     if (imageData == undefined && editItem?.image == undefined) {
@@ -105,7 +129,7 @@ const EditBlog = () => {
       privacy: selected,
       ...(title == 'Update Blog' && imageData ? {blog_image: image} : {}),
       ...(title == 'Update Article' && imageData ? {article_image: image} : {}),
-      ...(title == 'Add Videos' && imageData ? {video_file: image} : {}),
+      ...(title == 'Update Video' && imageData ? {video_file: image} : {}),
     };
 
     const form = new FormData();
@@ -113,34 +137,44 @@ const EditBlog = () => {
       form.append(key, value);
     });
     console.log('DATAAAAAAA', JSON.stringify(form, null, 4));
-    if (title == 'Update Blog') {
-      await updateBlog(form, editItem?.id)
-        .then(res => {
-          if (res?.data) {
-            navigation.goBack();
-          }
-        })
-        .catch(err => {
-          console.log('ADDDDD BLOGGGG ERRRORRRRR', err);
-        })
-        .finally(() => {
-          setLoading(false);
-          navigation.goBack();
-        });
-    } else if (title == 'Update Article') {
-      await updateArticle(form, editItem?.id)
-        .then(res => {
-          if (res?.data) {
-            navigation.goBack();
-          }
-        })
-        .catch(err => {
-          console.log('ADDDDD Article ERRRORRRRR', err);
-        })
-        .finally(() => {
-          setLoading(false);
-        });
-    }
+    // if (title == 'Update Blog') {
+    //   await updateBlog(form, editItem?.id)
+    //     .then(res => {
+    //       if (res?.data) {
+    //         navigation.goBack();
+    //       }
+    //     })
+    //     .catch(err => {
+    //       console.log('ADDDDD BLOGGGG ERRRORRRRR', err);
+    //     })
+    //     .finally(() => {
+    //       setLoading(false);
+    //       navigation.goBack();
+    //     });
+    // } else if (title == 'Update Article') {
+    //   await updateArticle(form, editItem?.id)
+    //     .then(res => {
+    //       if (res?.data) {
+    //         navigation.goBack();
+    //       }
+    //     })
+    //     .catch(err => {
+    //       console.log('ADDDDD Article ERRRORRRRR', err);
+    //     })
+    //     .finally(() => {
+    //       setLoading(false);
+    //     });
+    // } else {
+    //   await updateVideo(form, editItem?.id)
+    //     .then(res => {
+    //       if (res?.data) {
+    //         navigation.goBack();
+    //       }
+    //     })
+    //     .catch(err => {
+    //       console.log('ERROORRRRRR', err?.message);
+    //     });
+    // }
     setLoading(false);
   };
 
@@ -153,12 +187,6 @@ const EditBlog = () => {
       setVisible(false);
     }
   }, [imageData]);
-
-  const handleDelete = (index: number) => {
-    let arr = [...media];
-    arr.splice(index, 1);
-    setMedia(arr);
-  };
 
   return (
     <KeyboardAwareScrollView
@@ -178,7 +206,7 @@ const EditBlog = () => {
         initialValues={initialValues}
         enableReinitialize
         validationSchema={
-          title != 'Add Videos'
+          title != 'Update Video'
             ? validationSchema
             : validationSchema.concat(videoSchema)
         }
@@ -194,7 +222,7 @@ const EditBlog = () => {
           <Card style={styles.cardStyle}>
             <RegularTextInput
               label={
-                title == ('Add Blog' || 'Update Blog')
+                title == 'Add Blog' || title == 'Update Blog'
                   ? 'Blog Title *'
                   : title == 'Add Videos'
                   ? 'Title *'
@@ -214,12 +242,15 @@ const EditBlog = () => {
                 </InterRegular>
                 <View style={styles.dropDownContainer}>
                   <DropDownTextInput
-                    items={statuses1}
+                    items={categories.map(item => {
+                      return {label: item?.title, value: item?.id};
+                    })}
                     defaultValue={values.category}
                     // defaultValue="it"
                     placeholder="Select Category"
                     onChangeValue={e => setValues({...values, category: e})}
                     style={[styles.dropDown]}
+                    error={errors.category}
                   />
                 </View>
 
@@ -234,13 +265,14 @@ const EditBlog = () => {
                     placeholder="Select Status"
                     onChangeValue={e => setValues({...values, status: e})}
                     style={styles.dropDown}
+                    error={errors.status}
                   />
                 </View>
               </>
             )}
 
             <InterRegular style={styles.imgTxt}>
-              {title == 'Add Videos' ? 'Upload Video*' : 'Images *'}
+              {title == 'Update Video' ? 'Upload Video*' : 'Images *'}
             </InterRegular>
 
             <TouchableOpacity

@@ -225,21 +225,30 @@ const ViewBlog: React.FC = () => {
               style={styles.checkoutButton}
               txtstyle={styles.buttonTxt}
               onPress={() => {
-                if (title == 'My Blogs') {
-                  navigation.navigate('EditBlog', {title: 'Update Blog', item});
-                } else if (title == 'Blog Title') {
-                  navigation.navigate('EditBlog', {title: 'Update Blog', item});
-                } else if (title == 'Video') {
-                  navigation.navigate('EditBlog', {
-                    title: 'Update Video',
-                    item,
-                  });
-                } else {
-                  navigation.navigate('EditBlog', {
-                    title: 'Update Article',
-                    item,
-                  });
-                }
+                // if (title == 'My Blogs') {
+                //   navigation.navigate('EditBlog', {title: 'Update Blog', item});
+                // } else if (title == 'Blog Title') {
+                //   navigation.navigate('EditBlog', {title: 'Update Blog', item});
+                // } else if (title == 'Video') {
+                //   navigation.navigate('EditBlog', {
+                //     title: 'Update Video',
+                //     item,
+                //   });
+                // } else {
+                //   navigation.navigate('EditBlog', {
+                //     title: 'Update Article',
+                //     item,
+                //   });
+                // }
+                navigation.navigate('EditBlog', {
+                  title:
+                    type == 'article'
+                      ? 'Update Article'
+                      : type == 'blog'
+                      ? 'Update Blog'
+                      : 'Update Video',
+                  item: item,
+                });
               }}>
               Edit{' '}
               {type == 'blog'

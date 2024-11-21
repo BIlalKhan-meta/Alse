@@ -10,7 +10,7 @@ import {vh, vw} from '../../../constant';
 
 interface DatePickerInputProps {
   label: string;
-  initialDate: Date | null;
+  initialDate: Date | null | string;
   placeholder: string;
   error?: string;
   onDateChange: (date: Date) => void;

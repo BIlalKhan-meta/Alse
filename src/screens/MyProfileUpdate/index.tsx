@@ -20,10 +20,13 @@ import useImagePicker from '../../hooks/useImagePicker';
 import {useSelector} from 'react-redux';
 import {selectUserProfile} from '../../store/slices/authSlice';
 import moment from 'moment';
-import {vw} from '../../constant';
+import {vh, vw} from '../../constant';
 import {useAppDispatch} from '../../hooks/storeHooks';
 import {editProfile} from '../../api/profile';
 import {DialogBox} from '../../components/DialogBox';
+import DatePickerInput from '../../components/TextInput/DatePickerTextInput2';
+import {dateHelper} from '../../utils';
+import dayjs from 'dayjs';
 
 interface FormValues {
   username: string;
@@ -56,7 +59,7 @@ const MyProfileUpdate: React.FC = () => {
   const initialValues = {
     username: user?.full_name,
     contactNo: user?.phone_number,
-    birthdate: user?.dob,
+    birthdate: dateHelper(user?.dob),
     countryCode: '+1',
   };
 
@@ -127,6 +130,7 @@ const MyProfileUpdate: React.FC = () => {
       .then(res => {
         setSubmitted(false);
         setProfileUpdateModal(true);
+        navigation.goBack();
       })
       .catch(err => {
         setSubmitted(false);
@@ -261,7 +265,7 @@ const MyProfileUpdate: React.FC = () => {
                         Date of Birth *
                       </InterRegular>
 
-                      <TouchableOpacity onPress={() => setOpenDate(true)}>
+                      {/* <TouchableOpacity onPress={() => setOpenDate(true)}>
                         <View style={[styles.textinputbox]}>
                           <InterLight>
                             {values.birthdate
@@ -290,7 +294,29 @@ const MyProfileUpdate: React.FC = () => {
                         onCancel={() => {
                           setOpenDate(false);
                         }}
-                      />
+                      /> */}
+                      <View style={[styles.textinputbox]}>
+                        <DatePickerInput
+                          label="Date of Birth"
+                          error={errors.birthdate}
+                          initialDate={dayjs(
+                            values.birthdate,
+                            'MM//DD//YYYY',
+                          ).toDate()}
+                          placeholder="mm/dd/yyyy"
+                          onDateChange={e => setFieldValue('birthdate', e)}
+                          style={{
+                            width: vw * 80,
+                            height: vh * 6,
+                            justifyContent: 'center',
+                          }}
+                          maxDate
+                        />
+                        <Image
+                          source={images.calendericon}
+                          style={styles.calendericon}
+                        />
+                      </View>
                     </View>
 
                     <CustomButton
