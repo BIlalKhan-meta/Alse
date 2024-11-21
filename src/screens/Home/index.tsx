@@ -209,13 +209,14 @@ const Home: React.FC = () => {
     return (
       <PostComponent
         id={item?.user_id}
-        postID={item?.media[0]?.post_id}
+        // postID={item?.media[0]?.post_id}
         avatar={item?.avatar}
-        name={item?.name}
+        name={item?.fullname}
         country={item?.country ? item?.country : ''}
         time={timeFormat(item?.date)}
         postText={item?.description}
         postImage={item?.media[0]?.path}
+        mediaType={item?.media[0]?.type}
         likes={item?.total_likes}
         comments={item?.total_comments}
         share={item?.share}

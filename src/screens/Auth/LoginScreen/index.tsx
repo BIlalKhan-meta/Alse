@@ -46,7 +46,10 @@ const LoginScreen: React.FC = () => {
   const [securePassword, setSecurePassword] = useState<boolean>(true);
   const [isSelected, setIsSelected] = useState<boolean>(false);
   const [deviceToken, setDeviceToken] = useState<string | undefined>('');
-  const [initialValues, setInitialValues] = useState({email: '', password: ''});
+  const [initialValues, setInitialValues] = useState({
+    email: 'person1@yopmail.com',
+    password: 'password',
+  });
 
   const retrieveUserSession = async () => {
     try {
@@ -93,8 +96,7 @@ const LoginScreen: React.FC = () => {
       password: values.password,
       token: deviceToken,
     };
-    console.log("TOKEENNNNNNNN",apiData);
-    
+    console.log('TOKEENNNNNNNN', apiData);
 
     //   login(apiData).then((res)=>{
     //     if(res?.data){
@@ -109,16 +111,22 @@ const LoginScreen: React.FC = () => {
 
     login(apiData)
       .then(res => {
-        if (res?.data) {
+        if (res?.data?.status) {
           if (isSelected) {
             storeUserSession(values?.email, values?.password);
           } else {
             removeUserSession();
           }
-          console.log('resssssssssssssss',res?.data);
-          
+          console.log('resssssssssssssss', res?.data);
+
           dispatch(setUser(res?.data?.data));
           // navigation.navigate('TabNavigation');
+        } else {
+          Toast.show({
+            type: 'error',
+            text1: 'Invalid',
+            text2: res?.data?.message,
+          });
         }
       })
       .catch(err => {

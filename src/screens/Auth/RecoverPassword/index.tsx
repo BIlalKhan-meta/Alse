@@ -116,7 +116,9 @@ const RecoverPassword: React.FC = () => {
                     submitted={submitted}
                     errors={errors.password}
                     secureTextEntry={securePassword}
-                    onPressPassword={() => setSecurePassword(!securePassword)}
+                    onPressCurrentPassword={() =>
+                      setSecurePassword(!securePassword)
+                    }
                   />
 
                   <RegularTextInput
@@ -129,7 +131,7 @@ const RecoverPassword: React.FC = () => {
                     submitted={submitted}
                     errors={errors.cpassword}
                     secureTextEntry={secureCPassword}
-                    onPressCPassword={() =>
+                    onPressCurrentPassword={() =>
                       setSecureCPassword(!secureCPassword)
                     }
                   />

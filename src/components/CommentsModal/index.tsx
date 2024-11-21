@@ -64,8 +64,7 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
   const [commentsData, setCommentsData] = useState(comments);
   const [likes, setLikes] = useState<object[]>();
 
-  console.log("IDDDDDDDD",postId);
-  
+  console.log('IDDDDDDDD', postId);
 
   useEffect(() => {
     if (comments) {
@@ -155,17 +154,19 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
                     <View style={styles.avatarContainer}>
                       <Image
                         source={
-                          item?.avatar ? {uri: item?.avatar} : images.user
+                          item?.user?.avatar
+                            ? {uri: item?.user?.avatar}
+                            : images.user
                         }
                         style={styles.avatar}
                       />
                     </View>
                     <View style={styles.contentContainer}>
                       <InterMedium style={styles.userName}>
-                        {item?.full_name ||
-                          capitalize(commentsData[0]?.user?.first_name) +
+                        {item?.user?.full_name ||
+                          capitalize(item?.user?.first_name) +
                             ' ' +
-                            capitalize(commentsData[0]?.user?.last_name)}
+                            capitalize(item?.user?.last_name)}
                       </InterMedium>
                       <InterRegular style={styles.comment}>
                         {item?.comment}

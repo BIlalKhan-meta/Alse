@@ -72,7 +72,7 @@ const Notifications: React.FC = () => {
           <View style={styles.innercontainer}>
             <InterMedium
               style={!item.read ? styles.readNoti : styles.notification}>
-              {item?.data?.content}
+              {item?.data?.message}
             </InterMedium>
             <View style={styles.unreadContainer}>
               <InterMedium style={styles.time}>{item?.date}</InterMedium>
