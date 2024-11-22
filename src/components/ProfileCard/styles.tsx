@@ -1,6 +1,6 @@
-import { StyleSheet } from "react-native";
-import { fontSizes, vh, vw } from "../../constant";
-import { colors } from "../../utils/theme";
+import {StyleSheet} from 'react-native';
+import {fontSizes, vh, vw} from '../../constant';
+import {colors} from '../../utils/theme';
 
 const styles = StyleSheet.create({
   container: {
@@ -49,21 +49,25 @@ const styles = StyleSheet.create({
     marginBottom: vh & 2,
   },
   followButton: {
-    width: vw * 80
+    width: vw * 80,
   },
   followButtonText: {
     color: '#fff',
     fontSize: 16,
   },
   threeDots: {
-    width: 4,
-    height: 20,
+    width: vh,
+    height: vh * 2.5,
+    // padding: vh,
+    alignItems: 'center',
+    justifyContent: 'center',
+    // backgroundColor: 'red',
   },
   imageStyle: {
-    width: "100%",
-    height: "100%"
-  }
+    width: '100%',
+    height: '100%',
+    resizeMode: 'contain',
+  },
 });
-
 
 export default styles;

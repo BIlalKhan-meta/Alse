@@ -259,7 +259,7 @@ const CheckoutScreen: React.FC = () => {
                 <View style={styles.section}>
                   <Summary
                     subTotal={cartData?.total_amount}
-                    deliveryCharges={15}
+                    deliveryCharges={cartData?.total_delivery_Fees}
                     style={{marginHorizontal: 2}}
                   />
                 </View>

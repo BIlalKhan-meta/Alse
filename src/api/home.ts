@@ -46,7 +46,6 @@ export const deletePost = (id: number) => {
 };
 
 export const reportPost = (formData: FormData) => {
-  console.log(formData, 'formData');
   return axiosInstance.post(`${endpoints.home.reportPost}`, formData, {
     formData: true,
   });

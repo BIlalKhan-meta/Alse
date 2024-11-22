@@ -137,7 +137,7 @@ const Cart = () => {
           <>
             <Summary
               subTotal={cartData?.total_amount}
-              deliveryCharges={deliveryCharges}
+              deliveryCharges={cartData?.total_delivery_Fees}
             />
 
             <CustomButton

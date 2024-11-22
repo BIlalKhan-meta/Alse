@@ -42,7 +42,7 @@ const Summary: React.FC<SummaryProps> = ({
     <View style={styles.summaryTxtContainer}>
       <InterMedium style={styles.summaryText}>Total:</InterMedium>
       <InterRegular style={styles.summaryPrice}>
-        ${subTotal + deliveryCharges}
+        ${Number(subTotal) + Number(deliveryCharges)}
       </InterRegular>
     </View>
   </Card>
