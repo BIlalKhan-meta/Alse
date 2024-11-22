@@ -45,6 +45,7 @@ interface PostProps {
   handleReportPress: () => void;
   handleBlockPress: () => void;
   handleReportPost: () => void;
+  onLikesModal: () => void;
   modalVisible: boolean;
   isLiked?: boolean;
   isSaved?: boolean;
@@ -76,7 +77,8 @@ const PostComponent: React.FC<PostProps> = ({
   isLiked,
   isSaved,
   onCardPress,
-  sharePost
+  onLikesModal,
+  sharePost,
 }) => {
   const navigation = useNavigation();
   const user = useSelector(selectUserProfile);
@@ -145,7 +147,6 @@ const PostComponent: React.FC<PostProps> = ({
   };
 
   const postShare = async () => {
-
     const data = {
       description: postText,
       privacy: account,
@@ -158,9 +159,7 @@ const PostComponent: React.FC<PostProps> = ({
     Object.entries(data).forEach(([key, value]) => {
       form.append(key, value);
     });
-    sharePost(form)
-
-  
+    sharePost(form);
   };
 
   return (
@@ -216,13 +215,19 @@ const PostComponent: React.FC<PostProps> = ({
         /> */}
         <View style={styles.postActions}>
           <View style={styles.leftActions}>
-            <Image
-              // source={images.like}
-              source={images.likeFill}
-              tintColor={colors.blue}
-              style={styles.icon}
-            />
-            <InterRegular style={styles.actionText}>{numberLikes}</InterRegular>
+            <TouchableOpacity
+              onPress={onLikesModal}
+              style={{flexDirection: 'row'}}>
+              <Image
+                // source={images.like}
+                source={images.likeFill}
+                tintColor={colors.blue}
+                style={styles.icon}
+              />
+              <InterRegular style={styles.actionText}>
+                {numberLikes}
+              </InterRegular>
+            </TouchableOpacity>
             <Image source={images.comment} style={styles.icon} />
             <InterRegular style={styles.actionText}>{comments}</InterRegular>
             <Image source={images.share} style={styles.icon} />

@@ -15,7 +15,6 @@ import {EmptyComponent} from '../../components/EmptyComponent';
 import Loader from '../../components/Loader';
 import {useSelector} from 'react-redux';
 import {selectUserProfile} from '../../store/slices/authSlice';
-import InterBoldLabel from '../../components/Text/InterBoldLabel';
 import {Subscribe} from '../../components/Subscribe';
 
 const Blogs: React.FC = () => {
@@ -63,9 +62,6 @@ const Blogs: React.FC = () => {
   }, [active]);
 
   const renderFlatList = (data, renderItem, title) => {
-    if (data.length == 0) {
-      return <EmptyComponent text={`No Data Available`} />;
-    }
     return (
       <FlatList
         onRefresh={fetchData}
@@ -73,7 +69,33 @@ const Blogs: React.FC = () => {
         data={data}
         renderItem={renderItem}
         keyExtractor={item => item.id.toString()}
-        contentContainerStyle={{paddingTop: vh * 2, paddingBottom: vh * 4}}
+        contentContainerStyle={{
+          paddingTop: vh * 2,
+          paddingBottom: vh * 4,
+        }}
+        ListFooterComponent={() => {
+          return (
+            <CustomButton
+              style={styles.btn}
+              onPress={() =>
+                navigation.navigate('MyBlogs', {
+                  title:
+                    active == 1
+                      ? 'My Articles'
+                      : active == 2
+                      ? 'My Blogs'
+                      : 'My Videos',
+                })
+              }>
+              {active == 1
+                ? 'My Articles'
+                : active == 2
+                ? 'My Blogs'
+                : 'My Videos'}
+            </CustomButton>
+          );
+        }}
+        ListEmptyComponent={<EmptyComponent text={'No Data Available'} />}
       />
     );
   };
@@ -118,10 +140,6 @@ const Blogs: React.FC = () => {
     return <Subscribe />;
   }
 
-  // if (display.length == 0) {
-  //   return <EmptyComponent text={'No Data Available'} />;
-  // }
-
   return (
     <View style={styles.container}>
       <View style={styles.activeContainer}>
@@ -162,21 +180,6 @@ const Blogs: React.FC = () => {
           )
         )}
       </View>
-
-      <CustomButton
-        style={styles.btn}
-        onPress={() =>
-          navigation.navigate('MyBlogs', {
-            title:
-              active == 1
-                ? 'My Articles'
-                : active == 2
-                ? 'My Blogs'
-                : 'My Videos',
-          })
-        }>
-        {active == 1 ? 'My Articles' : active == 2 ? 'My Blogs' : 'My Videos'}
-      </CustomButton>
     </View>
   );
 };

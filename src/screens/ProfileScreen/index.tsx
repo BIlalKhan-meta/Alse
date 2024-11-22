@@ -27,6 +27,7 @@ import {capitalize, timeFormat} from '../../utils';
 import {fetchProfileById, reportPost} from '../../api/home';
 import {removeSavedItem, saveItem} from '../../api/menu';
 import {EmptyComponent} from '../../components/EmptyComponent';
+import LikesModal from '../../components/LikesModal';
 
 const ProfileScreen: React.FC = ({navigation}) => {
   const dispatch = useAppDispatch();
@@ -58,6 +59,11 @@ const ProfileScreen: React.FC = ({navigation}) => {
   const [loading, setLoading] = useState(false);
   const [blockUserLoader, setBlockUserLoader] = useState(false);
   const [reportLoader, setReportLoader] = useState(false);
+  const [likesVisible, setLikesVisible] = useState({
+    visiblity: false,
+    likes: [],
+    id: null,
+  });
 
   const handleDotPress = (postId: number) => {
     setActivePostId(activePostId == null ? postId : null);
@@ -242,9 +248,12 @@ const ProfileScreen: React.FC = ({navigation}) => {
       // onCommnetPress={() => setCommentsVisible(true)}
       onCommnetPress={() => handleCommentPress(item?.id)}
       onSavePress={() => handleSave(item?.id, item?.is_saved)}
+      onLikesModal={() =>
+        setLikesVisible({visiblity: true, likes: item?.likes, id: item?.id})
+      }
       isLiked={item?.is_liked}
       isSaved={item?.is_saved}
-      onLikePress={() => handleLikePress(item?.media[0]?.post_id)}
+      onLikePress={() => handleLikePress(item?.id)}
       handleReportPost={() => {
         setReportVisible({visibility: true, id: item?.id});
       }}
@@ -348,6 +357,14 @@ const ProfileScreen: React.FC = ({navigation}) => {
           onPress={handleReport}
           secondaryBtn={true}
           loading={reportLoader}
+        />
+
+        <LikesModal
+          visible={likesVisible.visiblity}
+          likes={likesVisible.likes}
+          closeModal={() => {
+            setLikesVisible({visiblity: false, likes: [], id: null});
+          }}
         />
 
         <GeneralModal

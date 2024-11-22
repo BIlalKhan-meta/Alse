@@ -42,6 +42,7 @@ import Loader from '../../components/Loader';
 import {EmptyComponent} from '../../components/EmptyComponent';
 import {timeFormat} from '../../utils';
 import MediaCard from '../../components/MediaCard';
+import LikesModal from '../../components/LikesModal';
 
 const productFilter = [
   {name: 'a', id: 1},
@@ -66,6 +67,11 @@ const Saved: React.FC = () => {
   });
   const [reportVisible, setReportVisible] = useState({
     visibility: false,
+    id: null,
+  });
+  const [likesVisible, setLikesVisible] = useState({
+    visiblity: false,
+    likes: [],
     id: null,
   });
 
@@ -335,6 +341,9 @@ const Saved: React.FC = () => {
         // onCommnetPress={() => setCommentsVisible(true)}
         onCommnetPress={() => handleCommentPress(item?.id)}
         onLikePress={() => handleLikePress(item?.id)}
+        onLikesModal={() =>
+          setLikesVisible({visiblity: true, likes: item?.likes, id: item?.id})
+        }
         onSavePress={() => handleSave(item?.id, item?.is_saved)}
         // onLikePress={() => setrRactVisible(true)}
         onDotPress={() => handleDotPress(item?.id)}
@@ -430,6 +439,13 @@ const Saved: React.FC = () => {
               visible={reactVisible}
               closeModal={() => setrRactVisible(false)}
               reactions={reactions}
+            />
+            <LikesModal
+              visible={likesVisible.visiblity}
+              likes={likesVisible.likes}
+              closeModal={() => {
+                setLikesVisible({visiblity: false, likes: [], id: null});
+              }}
             />
             <GeneralModal
               visible={deleteVisible.visibility}

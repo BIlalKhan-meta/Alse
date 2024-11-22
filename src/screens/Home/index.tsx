@@ -30,10 +30,9 @@ import {notificationListenerInstance} from '../../utils/NotificationServices';
 import {useSelector} from 'react-redux';
 import {GetUserProfile, selectUserProfile} from '../../store/slices/authSlice';
 import eventEmitter, {EVENT_TYPES} from '../../utils/EventEmitter';
+import LikesModal from '../../components/LikesModal';
 const Home: React.FC = () => {
-
   const flatListRef = useRef(null);
-console.log(flatListRef.current.scrollToOffset,"flatListRef")
 
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
@@ -46,6 +45,11 @@ console.log(flatListRef.current.scrollToOffset,"flatListRef")
   const [commentsVisible, setCommentsVisible] = useState({
     visiblity: false,
     comments: [],
+    id: null,
+  });
+  const [likesVisible, setLikesVisible] = useState({
+    visiblity: false,
+    likes: [],
     id: null,
   });
   const [reactVisible, setrRactVisible] = useState(false);
@@ -113,29 +117,27 @@ console.log(flatListRef.current.scrollToOffset,"flatListRef")
       }
     });
   };
-  
+
   const scrollToTop = () => {
     if (flatListRef.current) {
-      flatListRef.current.scrollToOffset({ animated: true, offset: 0 });
+      flatListRef.current.scrollToOffset({animated: true, offset: 0});
     }
   };
 
-  const sharePost  = async(form) =>{
-   
+  const sharePost = async form => {
     await createPost(form)
-    .then(res => {
-      if (res?.data) {
-        
-        getApi()
-        scrollToTop()
-        console.log('POSTTTTTT SHAREDDDDDDDDDDDDDDDD');
-      }
-    })
-    .catch(err => console.log('ERORRRRRRR', err))
-    .finally(() => {
-      // setLoading(false);
-    });
-  }
+      .then(res => {
+        if (res?.data) {
+          getApi();
+          scrollToTop();
+          console.log('POSTTTTTT SHAREDDDDDDDDDDDDDDDD');
+        }
+      })
+      .catch(err => console.log('ERORRRRRRR', err))
+      .finally(() => {
+        // setLoading(false);
+      });
+  };
 
   const handleDotPress = (postId: number) => {
     setActivePostId(activePostId == null ? postId : null);
@@ -250,6 +252,9 @@ console.log(flatListRef.current.scrollToOffset,"flatListRef")
         account={item?.privacy}
         // onCommnetPress={() => setCommentsVisible(true)}
         onCommnetPress={() => handleCommentPress(item?.id)}
+        onLikesModal={() =>
+          setLikesVisible({visiblity: true, likes: item?.likes, id: item?.id})
+        }
         onLikePress={() => handleLikePress(item?.id)}
         onSavePress={() => handleSave(item?.id, item?.is_saved)}
         // onLikePress={() => setrRactVisible(true)}
@@ -324,6 +329,15 @@ console.log(flatListRef.current.scrollToOffset,"flatListRef")
           buttonText="Apply"
           comments={commentsVisible?.comments}
           postId={commentsVisible?.id}
+        />
+
+        <LikesModal
+          visible={likesVisible.visiblity}
+          likes={likesVisible.likes}
+          closeModal={() => {
+            setLikesVisible({visiblity: false, likes: [], id: null});
+            getApi();
+          }}
         />
 
         <ReactModal

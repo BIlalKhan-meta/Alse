@@ -41,6 +41,7 @@ import Loader from '../../components/Loader';
 import {getMessage, Toast} from '../../utils/helpers';
 import {timeFormat, timeHelper} from '../../utils';
 import {removeSavedItem, saveItem} from '../../api/menu';
+import LikesModal from '../../components/LikesModal';
 
 const MyPosts: React.FC = () => {
   const navigation = useNavigation();
@@ -65,6 +66,11 @@ const MyPosts: React.FC = () => {
   const [data, setData] = useState([]);
   const [reportLoader, setReportLoader] = useState(false);
   const [reload, setReload] = useState();
+  const [likesVisible, setLikesVisible] = useState({
+    visiblity: false,
+    likes: [],
+    id: null,
+  });
 
   const handleDotPress = (postId: number) => {
     setActivePostId(activePostId === postId ? null : postId);
@@ -199,6 +205,9 @@ const MyPosts: React.FC = () => {
         // onCommnetPress={() => setCommentsVisible(true)}
         onCommnetPress={() => handleCommentPress(item?.id)}
         onLikePress={() => handleLikePress(item?.id)}
+        onLikesModal={() =>
+          setLikesVisible({visiblity: true, likes: item?.likes, id: item?.id})
+        }
         onSavePress={() => handleSave(item?.id, item?.is_saved)}
         // onLikePress={() => setrRactVisible(true)}
         onDotPress={() => handleDotPress(item.id)}
@@ -274,6 +283,13 @@ const MyPosts: React.FC = () => {
           visible={reactVisible}
           closeModal={() => setrRactVisible(false)}
           reactions={reactions}
+        />
+        <LikesModal
+          visible={likesVisible.visiblity}
+          likes={likesVisible.likes}
+          closeModal={() => {
+            setLikesVisible({visiblity: false, likes: [], id: null});
+          }}
         />
 
         <GeneralModal
