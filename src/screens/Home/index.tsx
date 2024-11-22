@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {View, FlatList, TouchableOpacity} from 'react-native';
 import {images} from '../../utils/images';
 import CardComponent from '../../components/CardComponent';
@@ -20,7 +20,7 @@ import {
 } from '../../store/slices/homeSlice';
 import InterRegular from '../../components/Text/InterRegular';
 import {getMessage, Toast} from '../../utils/helpers';
-import {getCountriesList, reportPost} from '../../api/home';
+import {createPost, getCountriesList, reportPost} from '../../api/home';
 import {removeSavedItem, saveItem} from '../../api/menu';
 import {vh} from '../../constant';
 import {getCountries} from '../../store/slices/generalSlice';
@@ -31,6 +31,10 @@ import {useSelector} from 'react-redux';
 import {GetUserProfile, selectUserProfile} from '../../store/slices/authSlice';
 import eventEmitter, {EVENT_TYPES} from '../../utils/EventEmitter';
 const Home: React.FC = () => {
+
+  const flatListRef = useRef(null);
+console.log(flatListRef.current.scrollToOffset,"flatListRef")
+
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const isFoused = useIsFocused();
@@ -109,6 +113,29 @@ const Home: React.FC = () => {
       }
     });
   };
+  
+  const scrollToTop = () => {
+    if (flatListRef.current) {
+      flatListRef.current.scrollToOffset({ animated: true, offset: 0 });
+    }
+  };
+
+  const sharePost  = async(form) =>{
+   
+    await createPost(form)
+    .then(res => {
+      if (res?.data) {
+        
+        getApi()
+        scrollToTop()
+        console.log('POSTTTTTT SHAREDDDDDDDDDDDDDDDD');
+      }
+    })
+    .catch(err => console.log('ERORRRRRRR', err))
+    .finally(() => {
+      // setLoading(false);
+    });
+  }
 
   const handleDotPress = (postId: number) => {
     setActivePostId(activePostId == null ? postId : null);
@@ -229,6 +256,7 @@ const Home: React.FC = () => {
         onDotPress={() => handleDotPress(item?.id)}
         modalVisible={activePostId === item?.id}
         onCardPress={() => setActivePostId(null)}
+        sharePost={sharePost}
         handleBlockPress={() => {
           // handleDotPress();
           // setDeleteVisible(true);
@@ -261,6 +289,7 @@ const Home: React.FC = () => {
       {/* <TouchableWithoutFeedback onPress={() => handleDotPress(null)}> */}
       <View>
         <FlatList
+          ref={flatListRef}
           data={posts}
           onRefresh={getApi}
           refreshing={loader}

@@ -76,6 +76,7 @@ const PostComponent: React.FC<PostProps> = ({
   isLiked,
   isSaved,
   onCardPress,
+  sharePost
 }) => {
   const navigation = useNavigation();
   const user = useSelector(selectUserProfile);
@@ -143,8 +144,8 @@ const PostComponent: React.FC<PostProps> = ({
     }
   };
 
-  const sharePost = async () => {
-    setLoading(true);
+  const postShare = async () => {
+
     const data = {
       description: postText,
       privacy: account,
@@ -157,18 +158,9 @@ const PostComponent: React.FC<PostProps> = ({
     Object.entries(data).forEach(([key, value]) => {
       form.append(key, value);
     });
+    sharePost(form)
 
-    console.log('FOMRRRRRRRRRR', JSON.stringify(form, null, 4));
-    await createPost(form)
-      .then(res => {
-        if (res?.data) {
-          console.log('POSTTTTTT SHAREDDDDDDDDDDDDDDDD');
-        }
-      })
-      .catch(err => console.log('ERORRRRRRR', err))
-      .finally(() => {
-        setLoading(false);
-      });
+  
   };
 
   return (
@@ -268,7 +260,7 @@ const PostComponent: React.FC<PostProps> = ({
           </TouchableOpacity>
           <TouchableOpacity
             disabled={id == user?.id || loading}
-            onPress={sharePost}
+            onPress={postShare}
             style={styles.button}>
             <Image source={images.share} style={styles.buttonIcon} />
             <Text style={styles.buttonText}>Share</Text>
