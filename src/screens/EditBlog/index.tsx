@@ -29,8 +29,8 @@ import {
 import {getCategories} from '../../api/product';
 
 const statuses = [
-  {label: 'Active', value: '1'},
-  {label: 'Inactive', value: '0'},
+  {label: 'Active', value: 1},
+  {label: 'Inactive', value: 0},
 ];
 
 const validationSchema = yup.object().shape({
@@ -39,16 +39,9 @@ const validationSchema = yup.object().shape({
 });
 
 const videoSchema = yup.object().shape({
-  category: yup.string().required('Category is required'),
+  category_id: yup.string().required('Category is required'),
   status: yup.string().required('Status is required'),
 });
-
-// const initialValues = {
-//   title: '',
-//   content: '',
-//   category: '',
-//   status: '',
-// };
 
 const EditBlog = () => {
   const navigation = useNavigation();
@@ -65,17 +58,9 @@ const EditBlog = () => {
     title: editItem?.title || '',
     content: editItem?.content || '',
     ...(title == 'Update Video'
-      ? {status: editItem?.status || '', category: editItem?.category_id || ''}
+      ? {status: editItem?.status || '', category_id: editItem?.category_id || ''}
       : {}),
   });
-
-  // const initialValues = {
-  //   title: editItem?.title || '',
-  //   content: editItem?.content || '',
-  //   ...(title == 'Update Video'
-  //     ? {status: editItem?.status || '', category: editItem?.category || ''}
-  //     : {}),
-  // };
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -89,14 +74,6 @@ const EditBlog = () => {
   const getData = async () => {
     await getCategories().then(res => {
       if (res?.data) {
-        // if (editItem?.category_id) {
-        //   let value = res?.data?.data?.filter(
-        //     item => item.id == editItem?.category_id,
-        //   );
-        //   console.log('valueeeeeeeeeeee', value);
-        //   setInitialvalues({...initialValues, category: value[0].id});
-        // }
-        // console.log('RESSSSSSSSSSSSSSS', res?.data?.data);
         setCategories(res?.data?.data);
       }
     });
@@ -112,7 +89,7 @@ const EditBlog = () => {
     if (imageData == undefined && editItem?.image == undefined) {
       return Toast.show({
         text1: 'Upload Media',
-        text2: 'Minimum 1 Media is Required',
+        text2: `${title == 'Update Video' ? 'Video' : 'Image'} is Required`,
         type: 'error',
       });
     }
@@ -137,44 +114,44 @@ const EditBlog = () => {
       form.append(key, value);
     });
     console.log('DATAAAAAAA', JSON.stringify(form, null, 4));
-    // if (title == 'Update Blog') {
-    //   await updateBlog(form, editItem?.id)
-    //     .then(res => {
-    //       if (res?.data) {
-    //         navigation.goBack();
-    //       }
-    //     })
-    //     .catch(err => {
-    //       console.log('ADDDDD BLOGGGG ERRRORRRRR', err);
-    //     })
-    //     .finally(() => {
-    //       setLoading(false);
-    //       navigation.goBack();
-    //     });
-    // } else if (title == 'Update Article') {
-    //   await updateArticle(form, editItem?.id)
-    //     .then(res => {
-    //       if (res?.data) {
-    //         navigation.goBack();
-    //       }
-    //     })
-    //     .catch(err => {
-    //       console.log('ADDDDD Article ERRRORRRRR', err);
-    //     })
-    //     .finally(() => {
-    //       setLoading(false);
-    //     });
-    // } else {
-    //   await updateVideo(form, editItem?.id)
-    //     .then(res => {
-    //       if (res?.data) {
-    //         navigation.goBack();
-    //       }
-    //     })
-    //     .catch(err => {
-    //       console.log('ERROORRRRRR', err?.message);
-    //     });
-    // }
+    if (title == 'Update Blog') {
+      await updateBlog(form, editItem?.id)
+        .then(res => {
+          if (res?.data) {
+            navigation.goBack();
+          }
+        })
+        .catch(err => {
+          console.log('ADDDDD BLOGGGG ERRRORRRRR', err);
+        })
+        .finally(() => {
+          setLoading(false);
+          navigation.goBack();
+        });
+    } else if (title == 'Update Article') {
+      await updateArticle(form, editItem?.id)
+        .then(res => {
+          if (res?.data) {
+            navigation.goBack();
+          }
+        })
+        .catch(err => {
+          console.log('ADDDDD Article ERRRORRRRR', err);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    } else {
+      await updateVideo(form, editItem?.id)
+        .then(res => {
+          if (res?.data) {
+            navigation.goBack();
+          }
+        })
+        .catch(err => {
+          console.log('ERROORRRRRR', err?.message);
+        });
+    }
     setLoading(false);
   };
 
@@ -198,7 +175,11 @@ const EditBlog = () => {
         onClose={() => setVisible(false)}
         visible={visible}
         button={[
-          {text: 'Open Camera', onPress: () => captureImage('photo')},
+          {
+            text: 'Open Camera',
+            onPress: () =>
+              captureImage(title == 'Update Video' ? 'video' : 'photo'),
+          },
           {text: 'Open Gallery', onPress: chooseImageFromLibrary},
         ]}
       />
@@ -245,12 +226,12 @@ const EditBlog = () => {
                     items={categories.map(item => {
                       return {label: item?.title, value: item?.id};
                     })}
-                    defaultValue={values.category}
+                    defaultValue={values.category_id}
                     // defaultValue="it"
                     placeholder="Select Category"
-                    onChangeValue={e => setValues({...values, category: e})}
+                    onChangeValue={e => setValues({...values, category_id: e})}
                     style={[styles.dropDown]}
-                    error={errors.category}
+                    error={errors.category_id}
                   />
                 </View>
 

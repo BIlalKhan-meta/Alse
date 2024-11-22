@@ -73,7 +73,7 @@ const Blogs: React.FC = () => {
         data={data}
         renderItem={renderItem}
         keyExtractor={item => item.id.toString()}
-        contentContainerStyle={{paddingTop: vh * 2}}
+        contentContainerStyle={{paddingTop: vh * 2, paddingBottom: vh * 4}}
       />
     );
   };

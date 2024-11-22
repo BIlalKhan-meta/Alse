@@ -213,7 +213,7 @@ const CheckoutScreen: React.FC = () => {
     setLoading(true);
     const res = await getCart();
 
-    setCartData(res?.data?.data?.carts?.data);
+    setCartData(res?.data?.data);
     // setShopProduct(res2?.data?.data?.data)
     setLoading(false);
   };
@@ -236,36 +236,36 @@ const CheckoutScreen: React.FC = () => {
           setValues,
         }) => (
           <>
-            <Card>
-              {loading ? (
-                <Loader />
-              ) : (
-                <FlatList
-                  data={cartData}
-                  refreshing={loading}
-                  onRefresh={getData}
-                  renderItem={({item, index}) => (
-                    <CartItem
-                      item={item}
-                      showQuantityControls={false}
-                      showSeparator={index !== products.length - 1}
-                      quantity={true}
-                    />
-                  )}
-                  keyExtractor={item => item.id.toString()}
-                />
-              )}
-            </Card>
+            {loading ? (
+              <Loader />
+            ) : (
+              <>
+                <Card>
+                  <FlatList
+                    data={cartData?.carts?.data}
+                    refreshing={loading}
+                    onRefresh={getData}
+                    renderItem={({item, index}) => (
+                      <CartItem
+                        item={item}
+                        showQuantityControls={false}
+                        showSeparator={index !== products.length - 1}
+                        quantity={true}
+                      />
+                    )}
+                    keyExtractor={item => item?.id.toString()}
+                  />
+                </Card>
+                <View style={styles.section}>
+                  <Summary
+                    subTotal={cartData?.total_amount}
+                    deliveryCharges={15}
+                    style={{marginHorizontal: 2}}
+                  />
+                </View>
+              </>
+            )}
             {/* Product Details and other sections as needed */}
-            <View style={styles.section}>
-              <Summary
-                subTotal={subTotal}
-                deliveryCharges={15}
-                discount={10}
-                grandTotal={grandTotal}
-                style={{marginHorizontal: 2}}
-              />
-            </View>
             <Card>
               <Text style={styles.sectionTitle}>Contact Information</Text>
               <RegularTextInput

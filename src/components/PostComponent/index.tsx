@@ -202,7 +202,7 @@ const PostComponent: React.FC<PostProps> = ({
         )} */}
 
         {postImage ? (
-          mediaType == 'jpg' ? (
+          mediaType == 'image' ? (
             <Image source={{uri: postImage}} style={styles.postImage} />
           ) : (
             <Video

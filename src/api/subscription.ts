@@ -7,7 +7,6 @@ export const GetSubscriptions = () => {
 };
 
 export const GetSubscriptionsLogs = () => {
-  console.log(axiosInstance.get(`${endpoints.subscription.getSubscription}`));
   return axiosInstance.get(`${endpoints.subscription.getSubscriptionLogs}`);
 };
 

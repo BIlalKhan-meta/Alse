@@ -26,6 +26,7 @@ import {getMessage, Toast} from '../../utils/helpers';
 import {capitalize, timeFormat} from '../../utils';
 import {fetchProfileById, reportPost} from '../../api/home';
 import {removeSavedItem, saveItem} from '../../api/menu';
+import {EmptyComponent} from '../../components/EmptyComponent';
 
 const ProfileScreen: React.FC = ({navigation}) => {
   const dispatch = useAppDispatch();
@@ -288,13 +289,13 @@ const ProfileScreen: React.FC = ({navigation}) => {
           />
         </Card>
 
-        {!data?.is_private && data?.is_following ? (
+        {!data?.is_private || data?.is_following ? (
           <>
             <FlatList
               data={data?.posts}
               keyExtractor={item => item.id.toString()}
               renderItem={renderPost}
-              ListEmptyComponent={<Text>No Posts Found</Text>}
+              ListEmptyComponent={<EmptyComponent text={'No Posts Found'} />}
             />
           </>
         ) : null}
@@ -318,10 +319,6 @@ const ProfileScreen: React.FC = ({navigation}) => {
           closeModal={() => setrRactVisible(false)}
           reactions={reactions}
         />
-        {console.log(
-          'data?.is_privatedata?.isdasadadas_private ===>',
-          data?.is_private,
-        )}
         {data?.is_private && !data?.is_following ? (
           <Card style={styles.lockContainer}>
             <Image source={images.lock} />

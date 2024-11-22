@@ -38,10 +38,10 @@ import {EmptyComponent} from '../EmptyComponent';
 
 interface Comment {
   id: number;
-  userAvatar: string;
-  userName: string;
-  userImage: string;
+  user: {};
   comment: string;
+  is_liked: boolean;
+  total_likes: number;
 }
 
 interface CommentsModalProps {
@@ -62,18 +62,10 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
   const {visible, closeModal, comments, postId} = props;
   const [newComment, setNewComment] = useState('');
   const [commentsData, setCommentsData] = useState(comments);
-  const [likes, setLikes] = useState<object[]>();
-
-  console.log('IDDDDDDDD', postId);
 
   useEffect(() => {
     if (comments) {
       setCommentsData(comments);
-      // setLikes(
-      //   comments.map(item => {
-      //     return {id: item?.id, total_likes: item?.total_likes};
-      //   }),
-      // );
     }
   }, [comments]);
 
@@ -87,9 +79,11 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
     console.log(JSON.stringify(form, null, 4));
 
     const comment: Comment = {
-      id: Date.now(), // Temporary ID until the backend responds
-      avatar: user?.avatar, // Replace with actual user avatar
-      full_name: user?.first_name, // Replace with actual user name
+      id: Date.now(),
+      user: {
+        avatar: user?.avatar,
+        full_name: user?.full_name || user?.first_name + ' ' + user?.last_name,
+      },
       comment: newComment.trim(),
       is_liked: false,
       total_likes: 0,
@@ -114,7 +108,6 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
     setCommentsData(arr);
     dispatch(likeComment({id: postId, commentId: id}))
       .then(res => {
-        // console.log('DATAAAAAAAAAAAAAAAAA', commentsData[0]?.is_liked);
         console.log('response from like post ---->', res);
       })
       .catch(err => {
@@ -136,11 +129,12 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
           reducedTransparencyFallbackColor="white"
         />
         <TouchableOpacity style={styles.blurcontainer} onPress={closeModal} />
-        <KeyboardAvoidingView
+        {/* <KeyboardAvoidingView
           style={styles.container}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? vh : vh * 0.2} // Adjust offset as needed
-        >
+          // behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          // keyboardVerticalOffset={Platform.OS === 'ios' ? vh : vh * 0.2} // Adjust offset as needed
+        > */}
+        <View style={styles.container}>
           <FlatList
             style={{flex: 1, width: '90%'}}
             showsVerticalScrollIndicator={false}
@@ -211,7 +205,8 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
               <Image source={images.send} style={styles.icon} />
             </TouchableOpacity>
           </View>
-        </KeyboardAvoidingView>
+        </View>
+        {/* </KeyboardAvoidingView> */}
       </Modal>
     </>
   );

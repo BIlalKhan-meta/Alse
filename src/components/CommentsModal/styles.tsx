@@ -6,7 +6,7 @@ const styles = StyleSheet.create({
   container: {
     marginTop: 'auto',
     width: vw * 100,
-    height: vh * 72,
+    height: vh * 50,
     backgroundColor: 'white',
     borderTopLeftRadius: vw * 7,
     borderTopRightRadius: vw * 7,
@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
     height: vh * 6,
     paddingHorizontal: vw * 2,
     borderRadius: 5,
-    bottom:20
+    bottom: 0,
   },
   inputCon: {
     width: '80%',

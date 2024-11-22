@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
   },
   btn: {
     alignSelf: 'center',
-    marginBottom: vh * 2,
+    marginBottom: vh * 12,
   },
 });
 

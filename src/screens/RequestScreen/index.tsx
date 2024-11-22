@@ -125,17 +125,11 @@ const RequestScreen: React.FC = () => {
 
   console.log('DATAAAAAAAAAAAAA', data);
 
-  const handleActionButton = async (
-    status: string,
-    id: number,
-    following_id?: number,
-  ) => {
+  const handleActionButton = async (status: string, id: number) => {
     let index = data.findIndex(item => item?.id == id);
     let arr = [...data];
     arr.splice(index, 1);
     setData(arr);
-
-    console.log('DATAAAAAAAAAAAAAAAAA', data);
 
     if (status == 'Follow Back') {
       await userFollowAccept(data[index].user_id).then(async res => {
@@ -150,13 +144,17 @@ const RequestScreen: React.FC = () => {
             .catch(err => console.log('ERORRRRRRRRRRRRRRRR', err));
         }
       });
-    } else if (status == 'Following') {
+    } else if (status == 'Unfollow') {
       console.log('INDEXXXXXXXXXXXX', index);
-      await userUnFollow(data[index].following_id).then(res => {
-        if (res?.data) {
-          console.log('USERRRR UNFOLOWWWWWEDDDDDDDDDD========');
-        }
-      });
+      await userUnFollow(data[index].following_id)
+        .then(res => {
+          if (res?.data) {
+            console.log('USERRRR UNFOLOWWWWWEDDDDDDDDDD========');
+          }
+        })
+        .catch(err => {
+          console.log('ERORRRRRRR', err?.message);
+        });
     } else {
       await removeFollower(data[index]?.user_id).then(res => {
         if (res?.data) {

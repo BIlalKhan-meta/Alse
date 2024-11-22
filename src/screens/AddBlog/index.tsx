@@ -45,8 +45,7 @@ const AddBlog = () => {
   const [selected, setSelected] = useState('children');
   const [visible, setVisible] = useState(false);
   const [media, setMedia] = useState<object[]>([]);
-  const {image, imageData, captureImage, chooseImageFromLibrary} =
-    useImagePicker();
+  const {imageData, captureImage, chooseImageFromLibrary} = useImagePicker();
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState([]);
 
@@ -82,7 +81,7 @@ const AddBlog = () => {
     if (media.length == 0) {
       return Toast.show({
         text1: 'Upload Images',
-        text2: 'Minimum 1 Image is Required',
+        text2: `${title == 'Add Videos' ? 'Video' : 'Image'} is Required`,
         type: 'error',
       });
     }

@@ -41,14 +41,14 @@ const CartItem: React.FC<Props> = ({
           <InterMedium style={styles.productName}>
             {item?.product_name}
           </InterMedium>
-          {/* <View style={styles.colorContainer}>
-                    <InterRegular style={styles.productColor}>Color</InterRegular>
-                    <InterRegular style={styles.colorValue}>{item.color}</InterRegular>
-                    </View>
-                    <View style={styles.colorContainer}>
-                    <InterRegular style={styles.productColor}>Size</InterRegular>
-                    <InterRegular style={styles.colorValue}>{item.size}</InterRegular>
-                    </View> */}
+          <View style={styles.colorContainer}>
+            <InterRegular style={styles.productColor}>Color : </InterRegular>
+            <InterRegular style={styles.colorValue}>{item?.color}</InterRegular>
+          </View>
+          <View style={styles.colorContainer}>
+            <InterRegular style={styles.productColor}>Size : </InterRegular>
+            <InterRegular style={styles.colorValue}>{item?.size}</InterRegular>
+          </View>
           {showQuantityControls && (
             <View style={styles.quantityContainer}>
               <TouchableOpacity

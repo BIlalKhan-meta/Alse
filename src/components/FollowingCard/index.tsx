@@ -1,21 +1,31 @@
 import React from 'react';
 import Row from '../Row';
-import {Image, StyleSheet} from 'react-native';
+import {Image, StyleSheet, TouchableOpacity} from 'react-native';
 import InterRegular from '../Text/InterRegular';
 import CustomButton from '../CustomButton';
 import {fontSizes, vh, vw} from '../../constant';
 import {colors} from '../../utils/theme';
+import {useNavigation} from '@react-navigation/native';
+import {images} from '../../utils/images';
 
 export const FollowingCard = ({onPress, text, item}) => {
+  const navigation = useNavigation();
   return (
     <Row justify="space-between" style={{marginVertical: 0, flex: 1}}>
-      <Row style={{marginVertical: 0}}>
-        <Image
-          source={item?.avatar ? {uri: item?.avatar} : images.user}
-          style={styles.userAvatar}
-        />
-        <InterRegular style={styles.userName}>{item?.name}</InterRegular>
-      </Row>
+      <TouchableOpacity
+        onPress={() =>
+          navigation.navigate('Profile', {
+            id: item?.user_id ? item?.user_id : item?.following_id,
+          })
+        }>
+        <Row style={{marginVertical: 0}}>
+          <Image
+            source={item?.avatar ? {uri: item?.avatar} : images.user}
+            style={styles.userAvatar}
+          />
+          <InterRegular style={styles.userName}>{item?.name}</InterRegular>
+        </Row>
+      </TouchableOpacity>
       <CustomButton
         onPress={onPress}
         style={styles.secondaryBtn1}
