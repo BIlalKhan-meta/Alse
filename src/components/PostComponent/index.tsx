@@ -50,9 +50,11 @@ interface PostProps {
   isLiked?: boolean;
   isSaved?: boolean;
   onCardPress: () => void;
+  shareLoader: boolean
 }
 
 const PostComponent: React.FC<PostProps> = ({
+  shareLoader,
   postID,
   id,
   avatar,
@@ -264,7 +266,7 @@ const PostComponent: React.FC<PostProps> = ({
             <Text style={styles.buttonText}>Comment</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            disabled={id == user?.id || loading}
+            disabled={id == user?.id || shareLoader}
             onPress={postShare}
             style={styles.button}>
             <Image source={images.share} style={styles.buttonIcon} />

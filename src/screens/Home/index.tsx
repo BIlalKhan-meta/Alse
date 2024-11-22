@@ -31,6 +31,7 @@ import {useSelector} from 'react-redux';
 import {GetUserProfile, selectUserProfile} from '../../store/slices/authSlice';
 import eventEmitter, {EVENT_TYPES} from '../../utils/EventEmitter';
 import LikesModal from '../../components/LikesModal';
+import { date } from 'yup';
 const Home: React.FC = () => {
   const flatListRef = useRef(null);
 
@@ -66,6 +67,8 @@ const Home: React.FC = () => {
     id: null,
   });
   const [reportSuccess, setReportSuccess] = useState(false);
+
+  const [shareLoader, setShareLoader] = useState(false)
 
   const closePaymentProcess = async remoteMessage => {
     console.log('remoteMesssaadssage ==>', remoteMessage);
@@ -109,7 +112,7 @@ const Home: React.FC = () => {
   }, [isFoused]);
 
   const getApi = async () => {
-    const checkData = await dispatch(GetNewsFeed());
+    const checkData = await dispatch(GetNewsFeed())
     await dispatch(GetUserProfile());
     await getCountriesList().then(res => {
       if (res?.data) {
@@ -125,16 +128,23 @@ const Home: React.FC = () => {
   };
 
   const sharePost = async form => {
+    setShareLoader(true)
     await createPost(form)
       .then(res => {
         if (res?.data) {
+    setShareLoader(false)
+
           getApi();
           scrollToTop();
           console.log('POSTTTTTT SHAREDDDDDDDDDDDDDDDD');
         }
       })
-      .catch(err => console.log('ERORRRRRRR', err))
+      .catch(err => {console.log('ERORRRRRRR', err)
+      setShareLoader(false)
+   } 
+    )
       .finally(() => {
+        setShareLoader(false)
         // setLoading(false);
       });
   };
@@ -144,8 +154,22 @@ const Home: React.FC = () => {
   };
 
   const handleLikePress = (id: number) => {
-    dispatch(updateLike(id));
+    const tempData = {
+      id: Math.random(),
+      user:{
+        id: user?.id,
+        avatar: user?.avatar ? user?.avatar: images.profile,
+        full_name:user?.full_name ? user?.full_name : '',
+      }
+    }
+    const data = {
+      postid : id,
+      tempData
+    }
+    dispatch(updateLike(data));
     dispatch(likePost(id));
+
+   
   };
 
   const handleDelete = () => {
@@ -234,6 +258,11 @@ const Home: React.FC = () => {
     }
   };
 
+  // const handleLike = (data) =>{
+
+   
+  // }
+
   const renderPost = ({item}) => {
     return (
       <PostComponent
@@ -246,10 +275,11 @@ const Home: React.FC = () => {
         postText={item?.description}
         postImage={item?.media[0]?.path}
         mediaType={item?.media[0]?.type}
-        likes={item?.total_likes}
+        likes={item?.likes?.length}
         comments={item?.total_comments}
         share={item?.share}
         account={item?.privacy}
+        shareLoader={shareLoader}
         // onCommnetPress={() => setCommentsVisible(true)}
         onCommnetPress={() => handleCommentPress(item?.id)}
         onLikesModal={() =>

@@ -28,6 +28,8 @@ import {createPost, fetchProfileById, reportPost} from '../../api/home';
 import {removeSavedItem, saveItem} from '../../api/menu';
 import {EmptyComponent} from '../../components/EmptyComponent';
 import LikesModal from '../../components/LikesModal';
+import { selectUserProfile } from '../../store/slices/authSlice';
+import { useSelector } from 'react-redux';
 
 const ProfileScreen: React.FC = ({navigation}) => {
   const dispatch = useAppDispatch();
@@ -45,6 +47,8 @@ const ProfileScreen: React.FC = ({navigation}) => {
     visibility: false,
     id: null,
   });
+  const [shareLoader, setShareLoader] = useState(false)
+
   const [reportSuccess, setReportSuccess] = useState(false);
   const [blockVisible, setBlockVisible] = useState(false);
   const [blockSuccess, setBlockSuccess] = useState(false);
@@ -97,7 +101,7 @@ const ProfileScreen: React.FC = ({navigation}) => {
   };
 
   const sharePost  = async(form) =>{
-   
+    setShareLoader(true)
     await createPost(form)
     .then(res => {
       if (res?.data) {
@@ -108,6 +112,8 @@ const ProfileScreen: React.FC = ({navigation}) => {
     })
     .catch(err => console.log('ERORRRRRRR', err))
     .finally(() => {
+    setShareLoader(false)
+
       // setLoading(false);
     });
   }
@@ -219,11 +225,30 @@ const ProfileScreen: React.FC = ({navigation}) => {
         .catch(err => console.log('SAVEEEEDDDDDD POSTTTTT ERRORRRRRR', err));
     }
   };
+  const user = useSelector(selectUserProfile);
 
   const handleLikePress = (id: number) => {
     const arr = [...data?.posts];
     let index = arr.findIndex(item => item.id == id);
     arr[index].is_liked = !arr[index].is_liked;
+    
+
+    const tempData = {
+      id: Math.random(),
+      user:{
+        id: user?.id,
+        avatar: user?.avatar ? user?.avatar: images.profile,
+        full_name:user?.full_name ? user?.full_name : '',
+      }
+    }
+    const find =  arr[index]?.likes.findIndex(val => val?.user?.id == user?.id)
+
+    if(find > -1){
+      arr[index]?.likes.splice(find, 1)
+    }else{
+
+      arr[index]?.likes.push(tempData)
+    }
     setData({...data, posts: arr});
     dispatch(updateLike(id));
     dispatch(likePost(id));
@@ -267,6 +292,7 @@ const ProfileScreen: React.FC = ({navigation}) => {
       onLikesModal={() =>
         setLikesVisible({visiblity: true, likes: item?.likes, id: item?.id})
       }
+      shareLoader={shareLoader}
       isLiked={item?.is_liked}
       isSaved={item?.is_saved}
       onLikePress={() => handleLikePress(item?.id)}

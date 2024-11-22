@@ -35,6 +35,7 @@ import {EmptyComponent} from '../../components/EmptyComponent';
 import SearchComponent from '../../components/SearchComponent';
 import { dateHelper } from '../../utils';
 import dayjs from 'dayjs';
+import { vh, vw } from '../../constant';
 interface ChatItem {
   id: number;
   name: string;
@@ -256,11 +257,14 @@ const ChatScreen: React.FC = () => {
         />
         <View style={styles.chatInfo}>
           <InterMedium style={styles.name}>{item.name}</InterMedium>
-      <InterRegular style={styles.lastMessage}>{moment(item?.last_message?.created_at).local().fromNow()}</InterRegular>
+      <InterRegular style={[styles.lastMessage]}>{moment(item?.last_message?.created_at).local().fromNow()}</InterRegular>
 
         </View>
       </View>
-      <InterRegular style={styles.lastMessage}>
+      <InterRegular style={[styles.lastMessage,{
+            marginTop: vh,
+            marginLeft: vw * 17
+       }]}>
         {item.last_message?.message ? item.last_message?.message : ''}
       </InterRegular>
     </TouchableOpacity>

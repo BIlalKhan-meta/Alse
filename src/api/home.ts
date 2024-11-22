@@ -1,9 +1,9 @@
 import axiosInstance from '.';
 import endpoints from './endpoints';
 
-export const newsFeed = () => {
-  console.log(axiosInstance.get(`${endpoints.home.feedPost}`));
-  return axiosInstance.get(`${endpoints.home.feedPost}`);
+export const newsFeed = (data) => {
+console.log("datadatadatadatadatadatadata================>",data)
+  return axiosInstance.get(`${endpoints.home.feedPost}`,{params: data});
 };
 
 export const fetchProfileById = (id: number) => {

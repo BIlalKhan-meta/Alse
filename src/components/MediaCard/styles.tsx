@@ -7,11 +7,11 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         borderRadius: 10,
         padding: 10,
-        marginBottom: 10,
+        // marginBottom: 10,
     },
     media: {
         width: '100%',
-        height: 200,
+        height: vh * 20,
         borderRadius: 10,
     },
     textContainer: {

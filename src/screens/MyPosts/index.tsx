@@ -77,12 +77,31 @@ const MyPosts: React.FC = () => {
   };
 
   const handleLikePress = (id: number) => {
-    // console.log('POSTSSSSSSSSSSSSSSSSSSSSSSSS', posts[index]);
-    dispatch(updateLike(id));
-    dispatch(likePost(id)).catch(err => {
-      console.log('error from like post', err);
-    });
+    const tempData = {
+      id: Math.random(),
+      user:{
+        id: user?.id,
+        avatar: user?.avatar ? user?.avatar: images.profile,
+        full_name:user?.full_name ? user?.full_name : '',
+      }
+    }
+    const data = {
+      postid : id,
+      tempData
+    }
+    dispatch(updateLike(data));
+    dispatch(likePost(id));
+
+   
   };
+  // const handleLikePress = (id: number) => {
+    
+  //   // console.log('POSTSSSSSSSSSSSSSSSSSSSSSSSS', posts[index]);
+  //   dispatch(updateLike(id));
+  //   dispatch(likePost(id)).catch(err => {
+  //     console.log('error from like post', err);
+  //   });
+  // };
 
   const handleCommentPress = id => {
     dispatch(getCommentPost(id))

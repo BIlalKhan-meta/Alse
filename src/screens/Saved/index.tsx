@@ -43,6 +43,8 @@ import {EmptyComponent} from '../../components/EmptyComponent';
 import {timeFormat} from '../../utils';
 import MediaCard from '../../components/MediaCard';
 import LikesModal from '../../components/LikesModal';
+import { useSelector } from 'react-redux';
+import { selectUserProfile } from '../../store/slices/authSlice';
 
 const productFilter = [
   {name: 'a', id: 1},
@@ -78,6 +80,7 @@ const Saved: React.FC = () => {
   const [reportSuccess, setReportSuccess] = useState(false);
   const [deleteSuccess, setDeleteSuccess] = useState(false);
   const [reportLoader, setReportLoader] = useState(false);
+  const [shareLoader, setShareLoader] = useState(false)
 
   const [activePostId, setActivePostId] = useState<number | null>(null);
 
@@ -213,20 +216,52 @@ const Saved: React.FC = () => {
   };
 
   console.log('POSTSSSSSSSSSSSSSSSS', displayPost);
+  const user = useSelector(selectUserProfile);
 
+  // const handleLikePress = (id: number) => {
+  //   console.log('POSTSSSSSSSSSSSSSSSSSSSSSSSS', id);
+  //   // dispatch(updateLike(id));
+
+  //   dispatch(likePost(id))
+  //     .then(res => {
+  //       console.log('response from like post ---->', res);
+  //       // getApi();
+  //     })
+  //     .catch(err => {
+  //       console.log('error from like post', err);
+  //     });
+  // };
   const handleLikePress = (id: number) => {
-    console.log('POSTSSSSSSSSSSSSSSSSSSSSSSSS', id);
-    // dispatch(updateLike(id));
+    console.log('id -',id);
+    let temp = [...displayPost];
+    let index = temp.findIndex(item => item?.savable_item?.id == id);
+    const postFound = displayPost[index].savable_item
 
-    dispatch(likePost(id))
-      .then(res => {
-        console.log('response from like post ---->', res);
-        // getApi();
-      })
-      .catch(err => {
-        console.log('error from like post', err);
-      });
+    const tempData = {
+      id: Math.random(),
+      user:{
+        id: user?.id,
+        avatar: user?.avatar ? user?.avatar: images.profile,
+        full_name:user?.full_name ? user?.full_name : '',
+      }
+    }
+    const clone =  JSON.parse(JSON.stringify(postFound?.likes))
+    const find =  clone.findIndex(val => val?.user?.id == user?.id)
+  
+    if(find > -1){
+      clone.splice(find, 1)
+    }else{
+
+    clone.push(tempData)
+    }
+    postFound.is_liked = !postFound?.is_liked
+    postFound.likes =  clone
+ 
+   setDisplayPost(temp)
+     dispatch(likePost(id));
+
   };
+
 
   const handleSave = async (id: number, isSaved: boolean) => {
     let index = displayPost.findIndex(item => item?.savable_item?.id == id);
@@ -316,7 +351,7 @@ const Saved: React.FC = () => {
   };
 
   const sharePost  = async(form) =>{
-   
+    setShareLoader(true)
     await createPost(form)
     .then(res => {
       if (res?.data) {
@@ -331,6 +366,7 @@ Toast.show({
     })
     .catch(err => console.log('ERORRRRRRR', err))
     .finally(() => {
+      setShareLoader(false)
       // setLoading(false);
     });
   }
@@ -347,6 +383,7 @@ Toast.show({
       <PostComponent
         id={item?.user_id}
         // postID={item?.media[0]?.post_id}
+      shareLoader={shareLoader}
         avatar={item?.avatar}
         name={item?.fullname}
         country={item?.country ? item?.country : ''}

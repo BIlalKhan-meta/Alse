@@ -37,11 +37,10 @@ const initialState: HomeState = {
 export const GetNewsFeed = createAsyncThunk(
   'user/NewsFeed',
   async (_, {rejectWithValue}) => {
-    console.log('comii frommm newsFeedd sliceee');
 
     try {
-      const response = await newsFeed();
-      console.log(response.data, 'Responseee frommm newsFeedd sliceee');
+      const response = await newsFeed({per_page: 100});
+
       return response.data;
     } catch (error: any) {
       console.log(error, 'errrorrr && type');
@@ -208,10 +207,23 @@ const homeSlice = createSlice({
   initialState,
   reducers: {
     updateLike: (state, action) => {
-      let index = state.posts.findIndex(item => item?.id == action?.payload);
-      console.log('STATEEEEEEEEEEEEEEEEEEEEE', state.posts[index]);
+      let index = state.posts.findIndex(item => item?.id == action?.payload?.postid);
       if (index != -1) {
         state.posts[index].is_liked = !state.posts[index].is_liked;
+ const postFound = state.posts[index]
+
+
+
+ const clone =  JSON.parse(JSON.stringify(postFound?.likes))
+const find =  clone.findIndex(val => val?.user?.id == action?.payload?.tempData?.user?.id)
+console.log("findfindfindfind ====findfindfind>",find)
+if(find > -1){
+  clone.splice(find, 1)
+}else{
+clone.push(action?.payload?.tempData)
+}
+ state.posts[index].likes = clone
+ 
       }
     },
     postSave: (state, action) => {

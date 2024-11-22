@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   ScrollView,
   FlatList,
+  Platform,
 } from 'react-native';
 import styles from './styles';
 import {
@@ -177,7 +178,11 @@ const ViewBlog: React.FC = () => {
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <Card style={styles.contentContainer}>
+      <Card
+        style={[
+          styles.contentContainer,
+          type === 'video' && Platform.OS === 'ios' && {marginTop: vh * 10},
+        ]}>
         <View>
           {type == 'video' ? (
             <Video

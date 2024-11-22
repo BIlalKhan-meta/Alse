@@ -27,6 +27,7 @@ const styles = StyleSheet.create({
     width: vh * 12,
     height: vh * 12,
     borderRadius: vh * 12,
+    backgroundColor: colors.inputBorder
   },
   imageContainer: {
     width: vw * 25,

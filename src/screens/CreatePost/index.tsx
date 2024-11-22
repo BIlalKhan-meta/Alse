@@ -71,7 +71,7 @@ const CreatePost: React.FC = () => {
     if (media) {
       body.append('file[0]', media);
     }
-    console.log('body ==========>', body);
+console.log("bodybody ====>",body)
 
     setIsLoading(true);
 

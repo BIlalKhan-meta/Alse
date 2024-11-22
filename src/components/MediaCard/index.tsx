@@ -77,8 +77,8 @@ const MediaCard: React.FC<MediaCardProps> = ({
           source={{uri: source}}
           paused={false}
           style={styles.media}
-          controls={control ? control : true}
-          resizeMode="cover"
+          controls={control ? control : false}
+          resizeMode="contain"
         />
       ) : (
         <Image source={{uri: source}} style={styles.media} />
