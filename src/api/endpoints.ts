@@ -31,6 +31,7 @@ const endpoints = {
     city: '/cities',
     notifications: '/notifications',
     markRead: '/mark-as-read',
+    markAllRead: '/mark-all-as-read',
   },
   profile: {
     editProfile: '/edit-profile',

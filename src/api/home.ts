@@ -19,7 +19,6 @@ export const commentLike = (id: number, commentId: number) => {
 };
 
 export const getPostComment = (id: number) => {
-  
   return axiosInstance.get(`/post/${id}/comments`);
 };
 
@@ -145,4 +144,7 @@ export const getNotifications = () => {
 };
 export const markRead = (id: string) => {
   return axiosInstance.get(`${endpoints.home.markRead}/${id}`);
+};
+export const markAllRead = () => {
+  return axiosInstance.post(`${endpoints.home.markAllRead}`);
 };

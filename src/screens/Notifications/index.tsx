@@ -7,31 +7,32 @@ import Card from '../../components/Card';
 import {images} from '../../utils/images';
 import InterMedium from '../../components/Text/InterMedium';
 import HorizontalSeparator from '../../components/HorizontalSeparator';
-import {useEffect, useState} from 'react';
-import {getNotifications, markRead} from '../../api/home';
+import {useEffect, useLayoutEffect, useState} from 'react';
+import {getNotifications, markAllRead, markRead} from '../../api/home';
 import {EmptyComponent} from '../../components/EmptyComponent';
-import {timeFormat} from '../../utils';
+import {dateHelper, timeFormat} from '../../utils';
 
-const Notifications: React.FC = () => {
+const Notifications: React.FC = ({navigation}) => {
   const [data, setData] = useState([]);
   const isFocused = useIsFocused();
   const [loader, setLoader] = useState(false);
 
-  //   useLayoutEffect(() => {
-  //     navigation.setOptions({
-  //       headerRight: () => (
-  //         <TouchableOpacity
-  //           style={[
-  //             styles.readBtn,
-  //             {borderColor: colors.themeColor, marginBottom: 10},
-  //           ]}>
-  //           <InterBold style={[styles.readTxt, {color: colors.themeColor}]}>
-  //             Mark As All Read
-  //           </InterBold>
-  //         </TouchableOpacity>
-  //       ),
-  //     });
-  //   }, [navigation]);
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <TouchableOpacity
+          onPress={markAllAsRead}
+          style={[
+            styles.readBtn,
+            {borderColor: colors.themeColor, marginBottom: 10},
+          ]}>
+          <InterBold style={[styles.readTxt, {color: colors.themeColor}]}>
+            Mark All As Read
+          </InterBold>
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation]);
 
   const markAsRead = async (id: string) => {
     setLoader(true);
@@ -40,6 +41,18 @@ const Notifications: React.FC = () => {
         getData();
       }
     });
+  };
+  const markAllAsRead = async () => {
+    setLoader(true);
+    await markAllRead()
+      .then(res => {
+        if (res?.data) {
+          getData();
+        }
+      })
+      .catch(err => {
+        console.log('ERRORRRRR', err?.message);
+      });
   };
 
   const getData = async () => {
@@ -75,19 +88,21 @@ const Notifications: React.FC = () => {
               {item?.data?.message}
             </InterMedium>
             <View style={styles.unreadContainer}>
-              <InterMedium style={styles.time}>{item?.date}</InterMedium>
-              {item?.read_at && (
-                <InterMedium style={styles.time}>
-                  {timeFormat(item?.read_at)}
-                </InterMedium>
-              )}
-              {!item?.read_at ? (
-                <TouchableOpacity
-                  onPress={() => markAsRead(item?.id)}
-                  style={styles.readBtn}>
-                  <InterBold style={styles.readTxt}>Mark As Read</InterBold>
-                </TouchableOpacity>
-              ) : null}
+              <InterMedium style={styles.time}>
+                {dateHelper(item?.created_at)}
+              </InterMedium>
+
+              <InterMedium style={styles.time}>
+                {timeFormat(item?.created_at)}
+              </InterMedium>
+
+              <TouchableOpacity
+                onPress={() => markAsRead(item?.id)}
+                style={styles.readBtn}>
+                <InterBold style={styles.readTxt}>{`Mark As ${
+                  item?.read_at ? 'Unread' : 'Read'
+                }`}</InterBold>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
