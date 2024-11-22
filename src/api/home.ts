@@ -92,8 +92,8 @@ export const userUnFollow = (id: number) => {
 export const createChat = data => {
   return axiosInstance.post(`${endpoints.chat.create}`, data);
 };
-export const getConversations = () => {
-  return axiosInstance.get(`${endpoints.chat.fetchConversation}`);
+export const getConversations = (search) => {
+  return axiosInstance.get(`${endpoints.chat.fetchConversation}`, {params: search});
 };
 
 export const getChat = id => {

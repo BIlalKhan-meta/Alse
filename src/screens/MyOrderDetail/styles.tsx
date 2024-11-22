@@ -55,6 +55,7 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.f13,
     color: colors.darkGray,
     marginTop: vh * 0.5,
+    marginBottom: vh * 5
   },
   btnConatiner: {
     flexDirection: 'row',

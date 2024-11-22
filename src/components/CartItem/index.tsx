@@ -29,7 +29,10 @@ const CartItem: React.FC<Props> = ({
   showSeparator,
   quantity,
   showDelete,
+  status
 }) => {
+  console.log("statusdass====>",status);
+  
   return (
     <>
       <View style={styles.productContainer}>

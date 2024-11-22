@@ -24,7 +24,7 @@ import {useAppDispatch} from '../../hooks/storeHooks';
 import Loader from '../../components/Loader';
 import {getMessage, Toast} from '../../utils/helpers';
 import {capitalize, timeFormat} from '../../utils';
-import {fetchProfileById, reportPost} from '../../api/home';
+import {createPost, fetchProfileById, reportPost} from '../../api/home';
 import {removeSavedItem, saveItem} from '../../api/menu';
 import {EmptyComponent} from '../../components/EmptyComponent';
 import LikesModal from '../../components/LikesModal';
@@ -95,6 +95,22 @@ const ProfileScreen: React.FC = ({navigation}) => {
     setModalVisible(false);
     setReportVisible({...reportVisible, visibility: true});
   };
+
+  const sharePost  = async(form) =>{
+   
+    await createPost(form)
+    .then(res => {
+      if (res?.data) {
+        
+ navigation.goBack()
+        console.log('POSTTTTTT SHAREDDDDDDDDDDDDDDDD');
+      }
+    })
+    .catch(err => console.log('ERORRRRRRR', err))
+    .finally(() => {
+      // setLoading(false);
+    });
+  }
 
   const handleReport = async () => {
     setReportLoader(true);
@@ -257,6 +273,7 @@ const ProfileScreen: React.FC = ({navigation}) => {
       handleReportPost={() => {
         setReportVisible({visibility: true, id: item?.id});
       }}
+      sharePost={sharePost}
       handleReportPress={() => {
         navigation.navigate('CreatePostEdit', {
           title: 'Edit Post',

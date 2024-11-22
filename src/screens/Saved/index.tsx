@@ -34,7 +34,7 @@ import {
   updateLike,
 } from '../../store/slices/homeSlice';
 import {useAppDispatch} from '../../hooks/storeHooks';
-import {reportPost, savePost} from '../../api/home';
+import {createPost, reportPost, savePost} from '../../api/home';
 import GeneralModal from '../../components/GeneralModal';
 import {getMessage} from '../../utils/helpers';
 import Toast from 'react-native-toast-message';
@@ -315,6 +315,26 @@ const Saved: React.FC = () => {
       });
   };
 
+  const sharePost  = async(form) =>{
+   
+    await createPost(form)
+    .then(res => {
+      if (res?.data) {
+        
+//  navigation.goBack()
+Toast.show({
+  type: 'success',
+  text1: 'Post shared successfully',
+});
+        console.log('POSTTTTTT SHAREDDDDDDDDDDDDDDDD');
+      }
+    })
+    .catch(err => console.log('ERORRRRRRR', err))
+    .finally(() => {
+      // setLoading(false);
+    });
+  }
+
   const handelSave = (id: number) => {
     let arr = [...displayPost];
     let index = arr.findIndex(item => item.id === id);
@@ -338,6 +358,7 @@ const Saved: React.FC = () => {
         comments={item?.total_comments}
         share={item?.share}
         account={item?.privacy}
+        sharePost={sharePost}
         // onCommnetPress={() => setCommentsVisible(true)}
         onCommnetPress={() => handleCommentPress(item?.id)}
         onLikePress={() => handleLikePress(item?.id)}

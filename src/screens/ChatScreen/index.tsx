@@ -20,6 +20,7 @@ import Card from '../../components/Card';
 import GeneralModal from '../../components/GeneralModal';
 import ReportBlockModal from '../../components/ReportBlockModal';
 import NewGroupModal from '../../components/GroupModel';
+import _ from 'lodash';
 import {
   createChat,
   userFollow,
@@ -31,6 +32,9 @@ import {general} from '../../store/slices/generalSlice';
 import moment from 'moment';
 import Loader from '../../components/Loader';
 import {EmptyComponent} from '../../components/EmptyComponent';
+import SearchComponent from '../../components/SearchComponent';
+import { dateHelper } from '../../utils';
+import dayjs from 'dayjs';
 interface ChatItem {
   id: number;
   name: string;
@@ -124,6 +128,28 @@ const ChatScreen: React.FC = () => {
         console.log('Error from get Conversation ', Err);
       });
   };
+
+  const handleSearchTxt = _.debounce(val => {
+    console.log('val ==>', val);
+    const searchData = {
+      search: val,
+    };
+    console.log("searchData ===>",searchData)
+    // setLoader(true)
+    getConversations(searchData)
+    .then(res => {
+      setData(res?.data?.data);
+      setLoader(false);
+    })
+    .catch(Err => {
+      setLoader(false);
+
+      console.log('Error from get Conversation ', Err);
+    });
+  
+  });
+
+
   const handleGroupCreationbtn = formData => {
     setGrpLoader(true);
     createGroup(formData)
@@ -230,7 +256,8 @@ const ChatScreen: React.FC = () => {
         />
         <View style={styles.chatInfo}>
           <InterMedium style={styles.name}>{item.name}</InterMedium>
-          {/* <Text style={styles.lastMessage}>{moment(item?.)}</Text> */}
+      <InterRegular style={styles.lastMessage}>{moment(item?.last_message?.created_at).local().fromNow()}</InterRegular>
+
         </View>
       </View>
       <InterRegular style={styles.lastMessage}>
@@ -244,13 +271,15 @@ const ChatScreen: React.FC = () => {
       <View style={styles.container}>
         <Card style={styles.cardStyle}>
           <View style={styles.searchContainer}>
-            <View style={styles.inputContainer}>
+            {/* <View style={styles.inputContainer}>
               <Image source={images.search} style={styles.searchIcon} />
               <TextInput
                 placeholder="Search here"
                 placeholderTextColor={colors.darkText}
+                onChangeText={handleSearchTxt}
               />
-            </View>
+            </View> */}
+            <SearchComponent onSearch={handleSearchTxt} placeholder="Search here" />
 
             {/* <NewGroupModal visible={modalVisible} closeModal={closeModal} users={usersData} /> */}
 

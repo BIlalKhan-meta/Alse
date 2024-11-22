@@ -17,6 +17,8 @@ import Loader from '../../components/Loader';
 import {dateHelper} from '../../utils';
 import CustomButton from '../../components/CustomButton';
 import Toast from 'react-native-toast-message';
+import InterBoldAverage from '../../components/Text/InterBoldAverage';
+import InterRegular from '../../components/Text/InterRegular';
 
 const contactInfo = [
   {heading: 'Username', label: 'first_name'},
@@ -138,9 +140,6 @@ setReportSuccess(true);
     text2: 'Please Enter Rejection Reason',
   });
 }
-
-
-
 }
 
  
@@ -190,6 +189,7 @@ setReportSuccess(true);
             showQuantityControls={false}
             showSeparator={index !== products.length - 1}
             showDelete={false}
+            status={data?.status}
           />
         )}
         keyExtractor={item => item.id.toString()}
@@ -226,19 +226,17 @@ setReportSuccess(true);
                 </Card>
               )}
 
-              {/* {status === 'Cancelled' && (
+              {data?.status === 'cancelled' && (
             <>
               <InterBoldAverage style={styles.rejectHeading}>
                 Cancellation Reason
               </InterBoldAverage>
+              {console.log("Dat =======>",data?.reason)}
               <InterRegular style={styles.rejectValue}>
-                It is a long established fact that a reader will be distracted
-                by the readable content of a page when looking at its layout.
-                The point of using Lorem Ipsum is that it has a more-or-less
-                normal distribution.
+                {data?.reason}
               </InterRegular>
             </>
-          )} */}
+          )}
 
               {route?.params?.StoreOrder && (
             <View style={styles.btnConatiner}>

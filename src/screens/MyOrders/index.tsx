@@ -14,6 +14,8 @@ import FilterModal from '../../components/FilterModal';
 import {colors} from '../../utils/theme';
 import {getMyOrders, getOrders} from '../../api/product';
 import OrderCard from '../../components/CardOrder';
+import { EmptyComponent } from '../../components/EmptyComponent';
+import { vw } from '../../constant';
 
 const MyOrders: React.FC = (props) => {
   console.log("props =====>",props?.route?.params?.MyOrder);
@@ -111,19 +113,19 @@ const isFocused =useIsFocused()
           selectedStatus={selectedStatus}
           onStatusChange={setSelectedStatus}
         />
-
         <TabsComponent
-          tabs={['All', 'Pending', 'Delivered', 'Cancelled']}
+          tabs={['All', 'Pending', 'Delivered','Accepted', 'Cancelled']}
           selectedTab={selectedTab}
           onTabPress={setSelectedTab}
+          activeTabStyle={{
+            paddingHorizontal: vw * 3,
+          }}
         />
         <FlatList
           data={filteredOrders}
           refreshing={loader}
           onRefresh={getData}
           renderItem={({item}: any) => {
-            console.log("Item ====>" ,item?.order_id);
-            
             return(
             <OrderCard key={item?.order_id} item={item}  onPress={() => navigation.navigate('MyOrderDetail', {id: item?.order_id, StoreOrder: props?.route?.params?.MyOrder})
             }/>
@@ -131,6 +133,7 @@ const isFocused =useIsFocused()
           keyExtractor={item => item?.order_id?.toString()}
           contentContainerStyle={styles.ordersContainer}
           showsVerticalScrollIndicator={false}
+          ListEmptyComponent={() => <EmptyComponent text="No orders found"/>}
         />
       </View>
     </TouchableWithoutFeedback>

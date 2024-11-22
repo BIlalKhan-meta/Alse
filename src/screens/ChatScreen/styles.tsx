@@ -110,7 +110,6 @@ const styles = StyleSheet.create({
   lastMessage: {
     fontSize: 14,
     color: colors.gray,
-    alignSelf: 'center',
   },
   dotStyle: {
     width: vw * 1.5,
