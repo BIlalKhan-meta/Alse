@@ -87,16 +87,15 @@ const ProfileScreen: React.FC = ({navigation}) => {
 
   const handleReportPress = () => {
     setModalVisible(false);
-    setReportVisible(true);
+    setReportVisible({...reportVisible, visibility: true});
   };
 
   const handleReport = async () => {
-    console.log(reportVisible.id, 'Reportttt idddddd');
     setReportLoader(true);
     const data = {
-      reportable_type: 'AppModelsPost',
-      reportable_id: reportVisible?.id,
-      reason: 'testingg',
+      reportable_type: `App\Models\Profile`,
+      reportable_id: id,
+      reason: `${id} Profile Report`,
     };
 
     let formData = new FormData();
@@ -106,14 +105,18 @@ const ProfileScreen: React.FC = ({navigation}) => {
     await reportPost(formData)
       // .unwrap()
       .then(res => {
-        setReportVisible({
-          visibility: false,
-          id: null,
-        });
-        setReportLoader(false);
-        getData();
-        setReportSuccess(true);
-        handleDotPress(null);
+        if (res?.data) {
+          console.log('RESSSSSSSSSSSSSSSS', res?.data);
+          setReportVisible({
+            visibility: false,
+            id: null,
+          });
+          setReportLoader(false);
+          // getData();
+          setReportSuccess(true);
+          handleDotPress(null);
+          navigation.goBack();
+        }
       })
       .catch(err => {
         setReportLoader(false);

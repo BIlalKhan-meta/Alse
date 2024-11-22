@@ -26,6 +26,8 @@ import DropdownPicker from '../../components/DropdownPicker';
 import DropDownTextInput from '../../components/TextInput/DropDownTextInput';
 import Row from '../../components/Row';
 import {vw} from '../../constant';
+import {reportPost} from '../../api/home';
+import {getMessage, Toast} from '../../utils/helpers';
 
 const filterItems = [
   {label: 'Product Name (A-Z)', value: 'name'},
@@ -45,10 +47,15 @@ const Shop: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState('');
   const [filteredData, setFilteredData] = useState([]);
+  const [reportVisible, setReportVisible] = useState({
+    visibility: false,
+    id: null,
+  });
+  const [reportLoader, setReportLoader] = useState(false);
 
   const handleReportPress = () => {
     setModalVisible(false);
-    setReportSuccess(true);
+    setReportVisible({...reportVisible, visibility: true});
   };
 
   useEffect(() => {
@@ -115,6 +122,46 @@ const Shop: React.FC = () => {
   if (loading) {
     return <Loader />;
   }
+
+  const handleReport = async () => {
+    setReportLoader(true);
+    const data = {
+      reportable_type: `App\Models\Store`,
+      reportable_id: shopId,
+      reason: `${shopId} Store Report`,
+    };
+
+    let formData = new FormData();
+    Object.entries(data).forEach(item => {
+      formData.append(item[0], item[1]);
+    });
+    await reportPost(formData)
+      // .unwrap()
+      .then(res => {
+        if (res?.data) {
+          console.log('RESSSSSSSSSSSSSSSS', res?.data);
+          setReportVisible({
+            visibility: false,
+            id: null,
+          });
+          setReportLoader(false);
+          setReportSuccess(true);
+          navigation.goBack();
+          // handleDotPress(null);
+        }
+      })
+      .catch(err => {
+        setReportLoader(false);
+        setReportVisible({
+          visibility: false,
+          id: null,
+        });
+        // handleDotPress(null);
+        Toast.error(getMessage(err?.message));
+
+        console.log('Errorr  errerrerrerrerrerrerrerrerrfrom ', err);
+      });
+  };
 
   const handleRemoveFromWishlist = async (
     productId: number,
@@ -208,6 +255,23 @@ const Shop: React.FC = () => {
               }}
             />
           </Card>
+          <GeneralModal
+            visible={reportVisible.visibility}
+            closeModal={() =>
+              setReportVisible({
+                visibility: false,
+                id: null,
+              })
+            }
+            icon={images.qmark}
+            title="Report Post"
+            message="Are you sure you want to report this post?"
+            SecondaryText1="Yes"
+            SecondaryText2="No"
+            onPress={handleReport}
+            secondaryBtn={true}
+            loading={reportLoader}
+          />
           <GeneralModal
             visible={ReportSuccess}
             closeModal={() => setReportSuccess(false)}
