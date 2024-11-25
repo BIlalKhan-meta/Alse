@@ -79,23 +79,21 @@ const MyPosts: React.FC = () => {
   const handleLikePress = (id: number) => {
     const tempData = {
       id: Math.random(),
-      user:{
+      user: {
         id: user?.id,
-        avatar: user?.avatar ? user?.avatar: images.profile,
-        full_name:user?.full_name ? user?.full_name : '',
-      }
-    }
+        avatar: user?.avatar ? user?.avatar : images.profile,
+        full_name: user?.full_name ? user?.full_name : '',
+      },
+    };
     const data = {
-      postid : id,
-      tempData
-    }
+      postid: id,
+      tempData,
+    };
     dispatch(updateLike(data));
     dispatch(likePost(id));
-
-   
   };
   // const handleLikePress = (id: number) => {
-    
+
   //   // console.log('POSTSSSSSSSSSSSSSSSSSSSSSSSS', posts[index]);
   //   dispatch(updateLike(id));
   //   dispatch(likePost(id)).catch(err => {
@@ -194,6 +192,13 @@ const MyPosts: React.FC = () => {
     }
   };
 
+  // console.log(
+  //   'DATAAAAAAAAAAAAAAAAAAAAAA',
+  //   data[0].media,
+  //   '====================',
+  //   posts.filter((item: any) => item?.user_id == user?.id)[0],
+  // );
+
   useEffect(() => {
     // getData();
     setLoader(true);
@@ -217,6 +222,7 @@ const MyPosts: React.FC = () => {
         time={timeFormat(item?.date)}
         postText={item?.description}
         postImage={item?.media[0]?.path}
+        mediaType={item?.media[0]?.type}
         likes={item?.total_likes}
         comments={item?.total_comments}
         share={item.share}
@@ -240,12 +246,12 @@ const MyPosts: React.FC = () => {
         // handleReportPost={() => {
         //   setReportVisible({visibility: true, id: item?.id});
         // }}
-        // handleReportPress={() => {
-        //   navigation.navigate('CreatePostEdit', {
-        //     title: 'Edit Post',
-        //     data: item,
-        //   });
-        // }}
+        handleReportPress={() => {
+          navigation.navigate('CreatePostEdit', {
+            title: 'Edit Post',
+            data: item,
+          });
+        }}
         isLiked={item?.is_liked}
         isSaved={item?.is_saved}
       />

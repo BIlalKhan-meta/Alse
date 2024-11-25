@@ -1,5 +1,5 @@
 // Home.tsx
-import React, {useLayoutEffect, useState} from 'react';
+import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -9,22 +9,13 @@ import {
   ScrollView,
   Button,
 } from 'react-native';
-import {images} from '../../utils/images';
 import CardComponent from '../../components/CardComponent';
-import {colors} from '../../utils/theme';
-import {fontSizes, vh, vw} from '../../constant';
-import Card from '../../components/Card';
-import PostComponent from '../../components/PostComponent';
-import InterBold from '../../components/Text/InterBold';
-import CommentsModal from '../../components/CommentsModal';
 import {useNavigation, useRoute} from '@react-navigation/native';
-import HeaderComponent from '../../components/HeaderComponent';
 import styles from './styles';
 import BottomModal from '../../components/BottomModel';
-import ImagePickerComponent from '../../components/ImagePickerComponent';
 import useImagePicker from '../../hooks/useImagePicker';
 import InterMedium from '../../components/Text/InterMedium';
-import {postEdit} from '../../store/slices/homeSlice';
+import {postEdit, updatePost} from '../../store/slices/homeSlice';
 import {useAppDispatch} from '../../hooks/storeHooks';
 import {getMessage, Toast} from '../../utils/helpers';
 import Loader from '../../components/Loader';
@@ -42,14 +33,14 @@ const CreatePostEdit: React.FC = () => {
   const data = route?.params?.data || 'Create Post';
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [bottomVisible, setbottomVisible] = useState<boolean>(true);
-  const [selectedMedia, setSelectedMedia] = useState<string | null>(null);
+  const [media, setMedia] = useState<string | null>(
+    route?.params?.data?.media[0]?.path,
+  );
   const [privacy, setPrivacy] = useState(`${route?.params?.data?.privacy}`);
   const [comment, setComment] = useState<string>(
     route?.params?.data?.description || '',
   );
-  const [mediaType, setMediaType] = useState<'photo' | 'video'>('photo');
-  const {image, imageData, captureImage, chooseImageFromLibrary} =
-    useImagePicker();
+  const {imageData, captureImage, chooseImageFromLibrary} = useImagePicker();
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -66,6 +57,14 @@ const CreatePostEdit: React.FC = () => {
       ),
     });
   }, [navigation, , isLoading, comment, privacy, imageData]);
+
+  useEffect(() => {
+    if (imageData) {
+      setMedia(imageData);
+    }
+  }, [imageData]);
+
+  console.log('ITEMMMMMMMMMMMMMMMM', data);
 
   const handlePost = async () => {
     // try {
@@ -94,7 +93,17 @@ const CreatePostEdit: React.FC = () => {
 
     setIsLoading(true);
 
-    const id = route?.params?.data?.media[0]?.post_id;
+    dispatch(
+      updatePost({
+        ...data,
+        description: comment,
+        privacy: privacy,
+        media: [{path: imageData?.uri, type: imageData?.type?.split('/')[0]}],
+      }),
+    );
+    // navigation.goBack();
+
+    const id = data?.id;
     dispatch(postEdit({formData: body, id}))
       .unwrap()
       .then(res => {
@@ -119,28 +128,30 @@ const CreatePostEdit: React.FC = () => {
     <ScrollView showsVerticalScrollIndicator={false}>
       <View style={styles.container}>
         <CardComponent
-          onImagePress={() => setbottomVisible(true)}
-          onVideoPress={() => setbottomVisible(true)}
-          onCameraPress={() => setbottomVisible(true)}
+          onImagePress={chooseImageFromLibrary}
+          onVideoPress={() => captureImage('video')}
+          onCameraPress={() => captureImage('photo')}
           value={comment}
           handleOnChangeText={setComment}
           ListOptions={ListOptions}
           privacy={privacy}
+          image={media}
+          removeMedia={() => setMedia(null)}
           setPrivacy={setPrivacy}
         />
-        <BottomModal
+        {/* <BottomModal
           visible={bottomVisible}
           closeModal={() => setbottomVisible(false)}
           onPressImage={() => captureImage('photo')}
           onPressGallery={() => chooseImageFromLibrary()}
           onPress={() => captureImage('video')}
-        />
-        {(image || route?.params?.data?.media[0]?.path) && (
+        /> */}
+        {/* {(image || route?.params?.data?.media[0]?.path) && (
           <Image
             source={{uri: image ? image : route?.params?.data?.media[0]?.path}}
             style={styles.imageStyle}
           />
-        )}
+        )} */}
       </View>
     </ScrollView>
   );

@@ -117,6 +117,7 @@ const MyProfilePassword: React.FC = () => {
                 label="New Password *"
                 placeholder="New Password"
                 onChangeText={handleChange('password')}
+                placeholderTextColor={colors.inputText}
                 onBlur={handleBlur('password')}
                 value={values.password}
                 errors={errors.password}
@@ -130,6 +131,7 @@ const MyProfilePassword: React.FC = () => {
               <RegularTextInput
                 label="Confirm Password *"
                 placeholder="Confirm Password"
+                placeholderTextColor={colors.inputText}
                 onChangeText={handleChange('cpassword')}
                 onBlur={handleBlur('cpassword')}
                 value={values.cpassword}

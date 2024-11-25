@@ -130,7 +130,7 @@ const ProductView: React.FC = () => {
                   Description
                 </Text>
               </TouchableOpacity>
-              <TouchableOpacity
+              {/* <TouchableOpacity
                 style={[styles.tab, activeTab === 2 && styles.activeTab]}
                 onPress={() => setActiveTab(2)}>
                 <Text
@@ -139,7 +139,7 @@ const ProductView: React.FC = () => {
                   }>
                   Rating
                 </Text>
-              </TouchableOpacity>
+              </TouchableOpacity> */}
               <TouchableOpacity
                 style={[styles.tab, activeTab === 3 && styles.activeTab]}
                 onPress={() => setActiveTab(3)}>

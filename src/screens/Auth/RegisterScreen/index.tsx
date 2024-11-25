@@ -331,8 +331,12 @@ const RegisterScreen: React.FC = () => {
                   visible={successModel}
                   closeModal={() => setSuccessModel(false)}
                   icon={images.checkedIcon}
-                  title="Account Registered"
-                  message="Your account has been registered successfully"
+                  title={!isChecked ? 'Account Registered' : ''}
+                  message={
+                    !isChecked
+                      ? 'Your account has been registered successfully'
+                      : 'You will be notified via email whether you are approved or disapproved'
+                  }
                   buttonText="Okay"
                   primaryBtn={true}
                   onPress={() => {

@@ -58,7 +58,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   dropDown: {
-    marginBottom: 16,
+    // marginBottom: 16,
     borderWidth: 0,
     backgroundColor: colors.inputcolor,
     // opacity: 4

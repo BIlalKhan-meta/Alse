@@ -128,11 +128,18 @@ const AddBlog = () => {
           setLoading(false);
         });
     } else {
+      console.log(JSON.stringify(form, null, 4));
       await createVideo(form)
         .then(res => {
-          if (res?.data) {
+          if (res?.data?.status) {
             console.log('VIDEOOOOOOOOOOO', res?.data);
             navigation.goBack();
+          } else {
+            Toast.show({
+              type: 'error',
+              text1: 'Error',
+              text2: res?.data?.message,
+            });
           }
         })
         .catch(err => {

@@ -137,7 +137,7 @@ const MyShop: React.FC = () => {
                 {shopDetails?.shop_name}
               </InterMedium>
             </View>
-            <View style={{width: '50%'}}>
+            <View style={{width: '50%', zIndex: 100}}>
               <InterRegular style={styles.heading}>Sort by:</InterRegular>
               <DropDownTextInput
                 items={filterItems}

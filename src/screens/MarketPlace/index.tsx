@@ -30,9 +30,7 @@ const Marketplace: React.FC = () => {
   };
 
   useEffect(() => {
-    if (user?.has_subscription) {
-      getData();
-    }
+    getData();
   }, [isFocused]);
 
   useEffect(() => {

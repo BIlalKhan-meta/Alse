@@ -48,7 +48,7 @@ const DropDownTextInput: React.FC<DropdownComponentProps> = ({
     setValue(defaultValue);
   }, [defaultValue]);
   return (
-    <View>
+    <View style={{zIndex: 100, marginBottom: vh}}>
       <DropDownPicker
         open={open}
         listMode={listMode}

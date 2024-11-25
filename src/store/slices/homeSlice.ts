@@ -37,7 +37,6 @@ const initialState: HomeState = {
 export const GetNewsFeed = createAsyncThunk(
   'user/NewsFeed',
   async (_, {rejectWithValue}) => {
-
     try {
       const response = await newsFeed({per_page: 100});
 
@@ -207,23 +206,35 @@ const homeSlice = createSlice({
   initialState,
   reducers: {
     updateLike: (state, action) => {
-      let index = state.posts.findIndex(item => item?.id == action?.payload?.postid);
+      let index = state.posts.findIndex(
+        item => item?.id == action?.payload?.postid,
+      );
       if (index != -1) {
         state.posts[index].is_liked = !state.posts[index].is_liked;
- const postFound = state.posts[index]
+        const postFound = state.posts[index];
 
+        const clone = JSON.parse(JSON.stringify(postFound?.likes));
+        const find = clone.findIndex(
+          val => val?.user?.id == action?.payload?.tempData?.user?.id,
+        );
+        console.log('findfindfindfind ====findfindfind>', find);
+        if (find > -1) {
+          clone.splice(find, 1);
+        } else {
+          clone.push(action?.payload?.tempData);
+        }
+        state.posts[index].likes = clone;
+      }
+    },
+    updatePost: (state, action) => {
+      console.log('ACTIONNNNNN', action?.payload);
+      let index = state.posts.findIndex(
+        item => item?.id == action?.payload?.id,
+      );
 
-
- const clone =  JSON.parse(JSON.stringify(postFound?.likes))
-const find =  clone.findIndex(val => val?.user?.id == action?.payload?.tempData?.user?.id)
-console.log("findfindfindfind ====findfindfind>",find)
-if(find > -1){
-  clone.splice(find, 1)
-}else{
-clone.push(action?.payload?.tempData)
-}
- state.posts[index].likes = clone
- 
+      // console.log('INDEXXXXXXXX', state.posts[index]);
+      if (index != -1) {
+        state.posts[index] = action?.payload;
       }
     },
     postSave: (state, action) => {
@@ -251,6 +262,6 @@ clone.push(action?.payload?.tempData)
   },
 });
 
-export const {updateLike, postSave} = homeSlice.actions;
+export const {updateLike, postSave, updatePost} = homeSlice.actions;
 
 export default homeSlice.reducer;

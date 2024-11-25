@@ -50,7 +50,7 @@ interface PostProps {
   isLiked?: boolean;
   isSaved?: boolean;
   onCardPress: () => void;
-  shareLoader: boolean
+  shareLoader: boolean;
 }
 
 const PostComponent: React.FC<PostProps> = ({
@@ -265,13 +265,15 @@ const PostComponent: React.FC<PostProps> = ({
             <Image source={images.comment} style={styles.buttonIcon} />
             <Text style={styles.buttonText}>Comment</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            disabled={id == user?.id || shareLoader}
-            onPress={postShare}
-            style={styles.button}>
-            <Image source={images.share} style={styles.buttonIcon} />
-            <Text style={styles.buttonText}>Share</Text>
-          </TouchableOpacity>
+          {id != user?.id && (
+            <TouchableOpacity
+              disabled={id == user?.id || shareLoader}
+              onPress={postShare}
+              style={styles.button}>
+              <Image source={images.share} style={styles.buttonIcon} />
+              <Text style={styles.buttonText}>Share</Text>
+            </TouchableOpacity>
+          )}
         </View>
         <ReportBlockModal
           isVisible={modalVisible}
