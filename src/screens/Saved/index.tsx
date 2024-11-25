@@ -603,7 +603,7 @@ Toast.show({
                 <Card style={styles.itemCard}>
                   {item?.savable_type == 'App\\Models\\Video' ? (
                     <MediaCard
-                      item={item}
+                      item={item?.savable_item}
                       type={'video'}
                       source={item?.savable_item?.video}
                       title={item?.savable_item?.title}
