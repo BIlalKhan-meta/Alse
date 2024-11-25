@@ -98,7 +98,7 @@ const CreatePostEdit: React.FC = () => {
         ...data,
         description: comment,
         privacy: privacy,
-        media: [{path: imageData?.uri, type: imageData?.type?.split('/')[0]}],
+        ...( imageData ? {media: [{path: imageData?.uri, type: imageData?.type?.split('/')[0]}]} : {}),
       }),
     );
     // navigation.goBack();
