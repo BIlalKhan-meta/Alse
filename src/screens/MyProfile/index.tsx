@@ -161,6 +161,9 @@ const MyProfile: React.FC = () => {
             onPress={() => navigation.navigate('MyProfileUpdate')}>
             EDIT PROFILE
           </CustomButton>
+          <CustomButton style={styles.btnConatiner} onPress={() => {}}>
+            DELETE ACCOUNT
+          </CustomButton>
         </Card>
       </View>
 
