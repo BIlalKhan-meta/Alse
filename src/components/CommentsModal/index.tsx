@@ -129,12 +129,12 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
           reducedTransparencyFallbackColor="white"
         />
         <TouchableOpacity style={styles.blurcontainer} onPress={closeModal} />
-        {/* <KeyboardAvoidingView
+        <KeyboardAvoidingView
           style={styles.container}
-          // behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          // keyboardVerticalOffset={Platform.OS === 'ios' ? vh : vh * 0.2} // Adjust offset as needed
-        > */}
-        <View style={styles.container}>
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? vh : vh * 0.2} // Adjust offset as needed
+        >
+        {/* <View style={styles.container}> */}
           <FlatList
             style={{flex: 1, width: '90%'}}
             showsVerticalScrollIndicator={false}
@@ -205,8 +205,8 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
               <Image source={images.send} style={styles.icon} />
             </TouchableOpacity>
           </View>
-        </View>
-        {/* </KeyboardAvoidingView> */}
+        {/* </View> */}
+        </KeyboardAvoidingView>
       </Modal>
     </>
   );

@@ -47,8 +47,8 @@ const LoginScreen: React.FC = () => {
   const [isSelected, setIsSelected] = useState<boolean>(false);
   const [deviceToken, setDeviceToken] = useState<string | undefined>('');
   const [initialValues, setInitialValues] = useState({
-    email: 'person1@yopmail.com',
-    password: 'password',
+    email: '',
+    password: '',
   });
 
   const retrieveUserSession = async () => {
