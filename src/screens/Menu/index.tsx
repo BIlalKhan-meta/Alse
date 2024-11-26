@@ -180,7 +180,7 @@ const Menu: React.FC = () => {
             </View>
           </TouchableOpacity>
         </Card>
-
+{/* 
         {!user.is_child && (
           <Card style={styles.cardContainer}>
             <TouchableOpacity
@@ -195,7 +195,7 @@ const Menu: React.FC = () => {
               </View>
             </TouchableOpacity>
           </Card>
-        )}
+        )} */}
 
         <Card style={styles.cardContainer}>
           <TouchableOpacity onPress={() => navigation.navigate('Blogs')}>

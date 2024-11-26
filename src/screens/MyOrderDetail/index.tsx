@@ -183,7 +183,9 @@ setReportSuccess(true);
           );
         }}
         data={data?.order_details}
-        renderItem={({item, index}) => (
+        renderItem={({item, index}) => {
+          console.log("Item from renderItem ========>",item)
+          return (
           <CartItem
             item={item}
             showQuantityControls={false}
@@ -191,7 +193,7 @@ setReportSuccess(true);
             showDelete={false}
             status={data?.status}
           />
-        )}
+        )}}
         keyExtractor={item => item.id.toString()}
         ListFooterComponent={() => {
           return (

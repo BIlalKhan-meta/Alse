@@ -17,6 +17,8 @@ import {colors} from '../../utils/theme';
 import {GetSubscriptionsLogs} from '../../api/subscription';
 import moment from 'moment';
 import Loader from '../../components/Loader';
+import CustomButton from '../../components/CustomButton';
+import { vw } from '../../constant';
 
 const SubscriptionLogs: React.FC = () => {
   const navigation = useNavigation();
@@ -56,6 +58,8 @@ const SubscriptionLogs: React.FC = () => {
       <InterRegular style={styles.emptyText}>
         No Subscription to Show.
       </InterRegular>
+      <CustomButton style={{width: vw * 80, alignSelf:'center'}}  
+           onPress={() => navigation.navigate('SubscriptionPlan')}>Subscribe Now</CustomButton>
     </View>
   );
 
@@ -138,8 +142,8 @@ const SubscriptionLogs: React.FC = () => {
               </View>
             </Card>
           ) : (
-            renderEmpty()
-          )}
+          renderEmpty()
+           )} 
         </>
       ) : (
         <FlatList
