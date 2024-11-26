@@ -18,7 +18,7 @@ import {GetSubscriptionsLogs} from '../../api/subscription';
 import moment from 'moment';
 import Loader from '../../components/Loader';
 import CustomButton from '../../components/CustomButton';
-import { vw } from '../../constant';
+import {vw} from '../../constant';
 
 const SubscriptionLogs: React.FC = () => {
   const navigation = useNavigation();
@@ -53,13 +53,18 @@ const SubscriptionLogs: React.FC = () => {
     }, []),
   );
 
-  const renderEmpty = () => (
+  const renderEmpty = show => (
     <View style={styles.emptyContainer}>
       <InterRegular style={styles.emptyText}>
         No Subscription to Show.
       </InterRegular>
-      <CustomButton style={{width: vw * 80, alignSelf:'center'}}  
-           onPress={() => navigation.navigate('SubscriptionPlan')}>Subscribe Now</CustomButton>
+      {show && (
+        <CustomButton
+          style={{width: vw * 80, alignSelf: 'center'}}
+          onPress={() => navigation.navigate('SubscriptionPlan')}>
+          Subscribe Now
+        </CustomButton>
+      )}
     </View>
   );
 
@@ -142,8 +147,8 @@ const SubscriptionLogs: React.FC = () => {
               </View>
             </Card>
           ) : (
-          renderEmpty()
-           )} 
+            renderEmpty(true)
+          )}
         </>
       ) : (
         <FlatList
@@ -184,7 +189,7 @@ const SubscriptionLogs: React.FC = () => {
           keyExtractor={item => item?.id?.toString()}
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
-          ListEmptyComponent={renderEmpty}
+          ListEmptyComponent={() => renderEmpty(false)}
         />
       )}
     </View>
