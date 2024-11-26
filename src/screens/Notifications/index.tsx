@@ -22,10 +22,7 @@ const Notifications: React.FC = ({navigation}) => {
       headerRight: () => (
         <TouchableOpacity
           onPress={markAllAsRead}
-          style={[
-            styles.readBtn,
-            {borderColor: colors.themeColor, marginBottom: 10},
-          ]}>
+          style={[styles.readBtn, {borderColor: colors.themeColor}]}>
           <InterBold style={[styles.readTxt, {color: colors.themeColor}]}>
             Mark All As Read
           </InterBold>
