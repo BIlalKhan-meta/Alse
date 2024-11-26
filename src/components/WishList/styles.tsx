@@ -21,8 +21,8 @@ const styles = StyleSheet.create({
   },
   productImage: {
     width: '100%',
-    height: 150,
-    borderRadius: 10,
+    height: vh * 15,
+    borderRadius: vh * 2,
   },
   heartIconContainer: {
     position: 'absolute',
@@ -32,11 +32,11 @@ const styles = StyleSheet.create({
   },
   addButton: {
     position: 'absolute',
-    bottom: vh * 7,
-    right: 5,
+    bottom: vh * 9,
+    right: vw,
     backgroundColor: colors.themeColor,
-    width: 30,
-    height: 30,
+    width: vh * 3.5,
+    height: vh * 3.5,
     borderRadius: 15,
     justifyContent: 'center',
     alignItems: 'center',
