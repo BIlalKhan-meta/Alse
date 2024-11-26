@@ -84,7 +84,6 @@ const MyBlogs: React.FC = () => {
   //   return <EmptyComponent text={'No Data Available'} />;
   // }
 
-  console.log('DISSPLAYYYYYYYYYYYYYYYYYY', display);
 
   return (
     <View style={styles.container}>

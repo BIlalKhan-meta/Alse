@@ -48,7 +48,7 @@ const EditBlog = () => {
   const route = useRoute();
   const title = route?.params?.title || '';
   const editItem = route?.params?.item || {};
-  const [selected, setSelected] = useState('children');
+  const [selected, setSelected] = useState(editItem?.privacy);
   const [visible, setVisible] = useState(false);
   const [media, setMedia] = useState<object[]>([]);
   const {imageData, captureImage, chooseImageFromLibrary} = useImagePicker();
@@ -58,7 +58,10 @@ const EditBlog = () => {
     title: editItem?.title || '',
     content: editItem?.content || '',
     ...(title == 'Update Video'
-      ? {status: editItem?.status || '', category_id: editItem?.category_id || ''}
+      ? {
+          status: editItem?.status || '',
+          category_id: editItem?.category_id || '',
+        }
       : {}),
   });
 
