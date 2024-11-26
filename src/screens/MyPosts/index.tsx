@@ -217,7 +217,7 @@ const MyPosts: React.FC = () => {
         id={item?.user_id}
         postID={item?.media[0]?.post_id}
         avatar={item?.avatar}
-        name={item.name}
+        name={item?.fullname}
         country={item.country ? item.country : ''}
         time={timeFormat(item?.date)}
         postText={item?.description}

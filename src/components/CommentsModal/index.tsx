@@ -35,6 +35,7 @@ import {capitalize} from '../../utils';
 import {postComment} from '../../api/home';
 import {vh, vw} from '../../constant';
 import {EmptyComponent} from '../EmptyComponent';
+import {useNavigation} from '@react-navigation/native';
 
 interface Comment {
   id: number;
@@ -62,6 +63,7 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
   const {visible, closeModal, comments, postId} = props;
   const [newComment, setNewComment] = useState('');
   const [commentsData, setCommentsData] = useState(comments);
+  const navigation = useNavigation();
 
   useEffect(() => {
     if (comments) {
@@ -115,6 +117,11 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
       });
   };
 
+  const handleAccount = (privacy: number, id: number) => {
+    closeModal();
+    navigation.navigate('Profile', {privacy, id});
+  };
+
   return (
     <>
       <Modal
@@ -134,7 +141,7 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           keyboardVerticalOffset={Platform.OS === 'ios' ? vh : vh * 0.2} // Adjust offset as needed
         >
-        {/* <View style={styles.container}> */}
+          {/* <View style={styles.container}> */}
           <FlatList
             style={{flex: 1, width: '90%'}}
             showsVerticalScrollIndicator={false}
@@ -145,7 +152,11 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
               return (
                 <View key={item.id} style={{width: vw * 85}}>
                   <View style={styles.commentContainer}>
-                    <View style={styles.avatarContainer}>
+                    <TouchableOpacity
+                      onPress={() =>
+                        handleAccount(item?.user?.is_private, item?.user?.id)
+                      }
+                      style={styles.avatarContainer}>
                       <Image
                         source={
                           item?.user?.avatar
@@ -154,7 +165,7 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
                         }
                         style={styles.avatar}
                       />
-                    </View>
+                    </TouchableOpacity>
                     <View style={styles.contentContainer}>
                       <InterMedium style={styles.userName}>
                         {item?.user?.full_name ||
@@ -205,7 +216,7 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
               <Image source={images.send} style={styles.icon} />
             </TouchableOpacity>
           </View>
-        {/* </View> */}
+          {/* </View> */}
         </KeyboardAvoidingView>
       </Modal>
     </>

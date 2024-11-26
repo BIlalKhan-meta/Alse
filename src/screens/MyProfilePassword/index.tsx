@@ -11,6 +11,7 @@ import {colors} from '../../utils/theme';
 import CustomButton from '../../components/CustomButton';
 import Card from '../../components/Card';
 import {changePassword} from '../../api/profile';
+import Toast from 'react-native-toast-message';
 
 interface FormValues {
   currentPassword: string;
@@ -73,15 +74,29 @@ const MyProfilePassword: React.FC = () => {
     await changePassword(formData)
       // .unwrap()
       .then(res => {
-        setSubmitted(false);
-        console.log('response form updated Profile==========>', res);
-        setChangePasswordModal(true);
+        if (res?.data?.status) {
+          setSubmitted(false);
+          console.log('response form updated Profile==========>', res);
+          setChangePasswordModal(true);
+        } else {
+          Toast.show({
+            type: 'error',
+            text1: 'Error',
+            text2: res?.data?.message,
+          });
+        }
       })
       .catch(err => {
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: err?.message,
+        });
+        // console.log('error from Updated Profile =========>', err);
+      })
+      .finally(() => {
         setSubmitted(false);
-        console.log('error from Updated Profile =========>', err);
       });
-    resetForm();
     try {
     } catch (err) {
       console.log('error  ======>', err);

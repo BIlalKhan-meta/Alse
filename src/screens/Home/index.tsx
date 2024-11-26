@@ -31,7 +31,7 @@ import {useSelector} from 'react-redux';
 import {GetUserProfile, selectUserProfile} from '../../store/slices/authSlice';
 import eventEmitter, {EVENT_TYPES} from '../../utils/EventEmitter';
 import LikesModal from '../../components/LikesModal';
-import { date } from 'yup';
+import {date} from 'yup';
 const Home: React.FC = () => {
   const flatListRef = useRef(null);
 
@@ -68,7 +68,7 @@ const Home: React.FC = () => {
   });
   const [reportSuccess, setReportSuccess] = useState(false);
 
-  const [shareLoader, setShareLoader] = useState(false)
+  const [shareLoader, setShareLoader] = useState(false);
 
   const closePaymentProcess = async remoteMessage => {
     console.log('remoteMesssaadssage ==>', remoteMessage);
@@ -104,6 +104,8 @@ const Home: React.FC = () => {
       });
   };
 
+  console.log('COOMMENTTSSSSSSSSSSSSSSSSS', commentsVisible?.comments);
+
   useEffect(() => {
     if (!user?.has_subscription && !user?.is_child) {
       navigation.navigate('SubscriptionPlan');
@@ -112,7 +114,7 @@ const Home: React.FC = () => {
   }, [isFoused]);
 
   const getApi = async () => {
-    const checkData = await dispatch(GetNewsFeed())
+    const checkData = await dispatch(GetNewsFeed());
     await dispatch(GetUserProfile());
     await getCountriesList().then(res => {
       if (res?.data) {
@@ -128,23 +130,23 @@ const Home: React.FC = () => {
   };
 
   const sharePost = async form => {
-    setShareLoader(true)
+    setShareLoader(true);
     await createPost(form)
       .then(res => {
         if (res?.data) {
-    setShareLoader(false)
+          setShareLoader(false);
 
           getApi();
           scrollToTop();
           console.log('POSTTTTTT SHAREDDDDDDDDDDDDDDDD');
         }
       })
-      .catch(err => {console.log('ERORRRRRRR', err)
-      setShareLoader(false)
-   } 
-    )
+      .catch(err => {
+        console.log('ERORRRRRRR', err);
+        setShareLoader(false);
+      })
       .finally(() => {
-        setShareLoader(false)
+        setShareLoader(false);
         // setLoading(false);
       });
   };
@@ -156,20 +158,18 @@ const Home: React.FC = () => {
   const handleLikePress = (id: number) => {
     const tempData = {
       id: Math.random(),
-      user:{
+      user: {
         id: user?.id,
-        avatar: user?.avatar ? user?.avatar: images.profile,
-        full_name:user?.full_name ? user?.full_name : '',
-      }
-    }
+        avatar: user?.avatar ? user?.avatar : images.profile,
+        full_name: user?.full_name ? user?.full_name : '',
+      },
+    };
     const data = {
-      postid : id,
-      tempData
-    }
+      postid: id,
+      tempData,
+    };
     dispatch(updateLike(data));
     dispatch(likePost(id));
-
-   
   };
 
   const handleDelete = () => {
@@ -203,7 +203,7 @@ const Home: React.FC = () => {
     console.log(reportVisible.id, 'Reportttt idddddd');
     setReportLoader(true);
     const data = {
-      reportable_type: 'AppModelsPost',
+      reportable_type: `App\Models\Post`,
       reportable_id: reportVisible?.id,
       reason: 'testingg',
     };
@@ -260,7 +260,6 @@ const Home: React.FC = () => {
 
   // const handleLike = (data) =>{
 
-   
   // }
 
   const renderPost = ({item}) => {

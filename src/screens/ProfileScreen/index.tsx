@@ -28,8 +28,8 @@ import {createPost, fetchProfileById, reportPost} from '../../api/home';
 import {removeSavedItem, saveItem} from '../../api/menu';
 import {EmptyComponent} from '../../components/EmptyComponent';
 import LikesModal from '../../components/LikesModal';
-import { selectUserProfile } from '../../store/slices/authSlice';
-import { useSelector } from 'react-redux';
+import {selectUserProfile} from '../../store/slices/authSlice';
+import {useSelector} from 'react-redux';
 
 const ProfileScreen: React.FC = ({navigation}) => {
   const dispatch = useAppDispatch();
@@ -47,7 +47,7 @@ const ProfileScreen: React.FC = ({navigation}) => {
     visibility: false,
     id: null,
   });
-  const [shareLoader, setShareLoader] = useState(false)
+  const [shareLoader, setShareLoader] = useState(false);
 
   const [reportSuccess, setReportSuccess] = useState(false);
   const [blockVisible, setBlockVisible] = useState(false);
@@ -100,23 +100,22 @@ const ProfileScreen: React.FC = ({navigation}) => {
     setReportVisible({...reportVisible, visibility: true});
   };
 
-  const sharePost  = async(form) =>{
-    setShareLoader(true)
+  const sharePost = async form => {
+    setShareLoader(true);
     await createPost(form)
-    .then(res => {
-      if (res?.data) {
-        
- navigation.goBack()
-        console.log('POSTTTTTT SHAREDDDDDDDDDDDDDDDD');
-      }
-    })
-    .catch(err => console.log('ERORRRRRRR', err))
-    .finally(() => {
-    setShareLoader(false)
+      .then(res => {
+        if (res?.data) {
+          navigation.goBack();
+          console.log('POSTTTTTT SHAREDDDDDDDDDDDDDDDD');
+        }
+      })
+      .catch(err => console.log('ERORRRRRRR', err))
+      .finally(() => {
+        setShareLoader(false);
 
-      // setLoading(false);
-    });
-  }
+        // setLoading(false);
+      });
+  };
 
   const handleReport = async () => {
     setReportLoader(true);
@@ -231,23 +230,21 @@ const ProfileScreen: React.FC = ({navigation}) => {
     const arr = [...data?.posts];
     let index = arr.findIndex(item => item.id == id);
     arr[index].is_liked = !arr[index].is_liked;
-    
 
     const tempData = {
       id: Math.random(),
-      user:{
+      user: {
         id: user?.id,
-        avatar: user?.avatar ? user?.avatar: images.profile,
-        full_name:user?.full_name ? user?.full_name : '',
-      }
-    }
-    const find =  arr[index]?.likes.findIndex(val => val?.user?.id == user?.id)
+        avatar: user?.avatar ? user?.avatar : images.profile,
+        full_name: user?.full_name ? user?.full_name : '',
+      },
+    };
+    const find = arr[index]?.likes.findIndex(val => val?.user?.id == user?.id);
 
-    if(find > -1){
-      arr[index]?.likes.splice(find, 1)
-    }else{
-
-      arr[index]?.likes.push(tempData)
+    if (find > -1) {
+      arr[index]?.likes.splice(find, 1);
+    } else {
+      arr[index]?.likes.push(tempData);
     }
     setData({...data, posts: arr});
     dispatch(updateLike(id));
@@ -266,10 +263,6 @@ const ProfileScreen: React.FC = ({navigation}) => {
     {text: 'Report', onPress: () => handleReportPress()},
     {text: 'Block', onPress: () => handleBlockPress()},
   ];
-
-  if (loading) {
-    return <Loader />;
-  }
 
   const renderPost = ({item, index}) => (
     <PostComponent
@@ -308,6 +301,10 @@ const ProfileScreen: React.FC = ({navigation}) => {
       }}
     />
   );
+
+  if (loading) {
+    return <Loader />;
+  }
 
   return (
     <ScrollView>

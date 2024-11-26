@@ -37,6 +37,7 @@ const endpoints = {
     editProfile: '/edit-profile',
     getProfile: '/profile',
     changePassword: '/change-password',
+    deleteAccount : '/delete-my-account'
   },
   subscription: {
     getSubscription: '/get-subscription-plans',

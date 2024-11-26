@@ -48,19 +48,14 @@ const MyProfileUpdate: React.FC = () => {
 
   const {imageData, captureImage, chooseImageFromLibrary} = useImagePicker();
 
-  const [profileDetails, setProfileDetails] = useState<boolean>(true);
   const [submitted, setSubmitted] = useState<boolean>(false);
   const [profileUpdateModal, setProfileUpdateModal] = useState<boolean>(false);
-  const [openDate, setOpenDate] = useState<boolean>(false);
-  const [date, setDate] = useState<Date>(
-    user?.dob ? new Date(user.dob) : new Date(),
-  );
 
   const initialValues = {
     username: user?.full_name,
     contactNo: user?.phone_number,
     birthdate: dateHelper(user?.dob),
-    countryCode: '+1',
+    countryCode: user?.dialing_code,
   };
 
   const [bannerImage, setBannerImage] = useState({
@@ -90,9 +85,9 @@ const MyProfileUpdate: React.FC = () => {
     setSubmitted(true);
     const data = {
       full_name: values?.username,
-      dialing_code: values?.countryCode,
-      phone_number: values?.contactNo,
-      dob: values?.birthdate,
+      // dialing_code: values?.countryCode,
+      // phone_number: values?.contactNo,
+      // dob: dayjs(values?.birthdate).format('YYYY-MM-DD'),
     };
     if (profileImage.type !== '') {
       // let imagePath = image.split('/');
@@ -128,14 +123,17 @@ const MyProfileUpdate: React.FC = () => {
 
     await editProfile(formData)
       .then(res => {
-        setSubmitted(false);
-        setProfileUpdateModal(true);
-        navigation.goBack();
+        if (res?.data) {
+          setSubmitted(false);
+          setProfileUpdateModal(true);
+          // navigation.goBack();
+        }
       })
       .catch(err => {
         setSubmitted(false);
+        console.log('ERORRRRRR', err);
       });
-    resetForm();
+    // resetForm();
   };
 
   const handleImageCapture = (isBanner: boolean) => {
@@ -166,6 +164,7 @@ const MyProfileUpdate: React.FC = () => {
     <View>
       <Formik
         initialValues={initialValues}
+        enableReinitialize
         validationSchema={validationSchema}
         onSubmit={handleSubmit}>
         {({
@@ -250,51 +249,21 @@ const MyProfileUpdate: React.FC = () => {
                       errors={errors.username}
                       labelStyle={styles.txt}
                     />
-                    <PhoneNumberInput
+                    {/* <PhoneNumberInput
                       initialNumber={values.contactNo}
                       onNumberChange={handleChange('contactNo')}
                       label="Phone Number *"
+                      // initialCountryCode={values.countryCode}
                       submitted={submitted}
                       errors={errors.contactNo}
                       labelStyle={styles.txt}
                       onChangeCountry={handleChange('countryCode')}
-                    />
-
+                    /> */}
+                    {/* 
                     <View>
                       <InterRegular style={styles.label}>
                         Date of Birth *
                       </InterRegular>
-
-                      {/* <TouchableOpacity onPress={() => setOpenDate(true)}>
-                        <View style={[styles.textinputbox]}>
-                          <InterLight>
-                            {values.birthdate
-                              ? moment(values.birthdate).format('MM/DD/YYYY')
-                              : 'mm/dd/yyyy'}
-                          </InterLight>
-                          <Image
-                            source={images.calendericon}
-                            style={styles.calendericon}
-                          />
-                        </View>
-                      </TouchableOpacity>
-                      <DatePicker
-                        modal
-                        mode="date"
-                        open={openDate}
-                        date={date}
-                        onConfirm={date => {
-                          setOpenDate(false);
-                          setDate(date);
-                          setFieldValue(
-                            'birthdate',
-                            moment(date).format('YYYY-MM-DD'),
-                          );
-                        }}
-                        onCancel={() => {
-                          setOpenDate(false);
-                        }}
-                      /> */}
                       <View style={[styles.textinputbox]}>
                         <DatePickerInput
                           label="Date of Birth"
@@ -317,7 +286,7 @@ const MyProfileUpdate: React.FC = () => {
                           style={styles.calendericon}
                         />
                       </View>
-                    </View>
+                    </View> */}
 
                     <CustomButton
                       style={{alignSelf: 'center'}}
@@ -340,8 +309,7 @@ const MyProfileUpdate: React.FC = () => {
               primaryBtn={true}
               onPress={() => {
                 setProfileUpdateModal(false);
-                setProfileDetails(true);
-                navigation.navigate('Home');
+                navigation.navigate('MyProfile');
               }}
             />
           </>

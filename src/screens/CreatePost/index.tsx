@@ -56,7 +56,7 @@ const CreatePost: React.FC = () => {
         </CustomButton>
       ),
     });
-  }, [navigation, isLoading, comment, privacy, imageData,media]);
+  }, [navigation, isLoading, comment, privacy, imageData, media]);
 
   const handlePost = async () => {
     // try {
@@ -67,11 +67,11 @@ const CreatePost: React.FC = () => {
 
     const body = new FormData();
     body.append('description', comment);
-    body.append('privacy', privacy);
+    body.append('privacy', Number(privacy));
     if (media) {
       body.append('file[0]', media);
     }
-console.log("bodybody ====>",body)
+    console.log('bodybody ====>', body);
 
     setIsLoading(true);
 

@@ -58,8 +58,8 @@ const validationSchema = yup.object().shape({
     .string()
     .oneOf([yup.ref('password')], 'Passwords must match')
     .required('Confirm Password is required'),
-  contactNo: yup.string().required('Contact Number is required'),
-  dateOfBirth: yup.string().required('Date of Birth is required'),
+  // contactNo: yup.string().required('Contact Number is required'),
+  // dateOfBirth: yup.string().required('Date of Birth is required'),
 });
 
 const RegisterScreen: React.FC = () => {
@@ -137,9 +137,9 @@ const RegisterScreen: React.FC = () => {
       full_name: values.name,
       email: values.email,
       password: values.password,
-      dialing_code: values.countryCode,
-      phone_number: values.contactNo,
-      dob: dateHelper(values.dateOfBirth),
+      // dialing_code: values.countryCode,
+      // phone_number: values.contactNo,
+      // dob: dateHelper(values.dateOfBirth),
       image: image,
       ...(isChecked ? {is_child: 1, child_image: childImage} : {}),
     };
@@ -238,7 +238,7 @@ const RegisterScreen: React.FC = () => {
                   errors={errors.email}
                 />
 
-                <PhoneNumberInput
+                {/* <PhoneNumberInput
                   initialNumber={phoneNumber}
                   onNumberChange={(number: string) =>
                     handleNumberChange(number, setFieldValue)
@@ -259,21 +259,22 @@ const RegisterScreen: React.FC = () => {
                   onDateChange={e => setFieldValue('dateOfBirth', e)}
                   style={styles.textinputbox}
                   maxDate
-                />
+                /> */}
 
                 <RegularTextInput
                   label="Password"
                   placeholder="Enter Password"
-                  placeholderTextColor={colors.inputText}
+                  // placeholderTextColor={colors.inputText}
                   onChangeText={handleChange('password')}
                   onBlur={handleBlur('password')}
                   value={values.password}
                   submitted={submitted}
                   errors={errors.password}
-                  secureTextEntry={securePassword}
+                  secureTextEntry={!securePassword}
                   onPressCurrentPassword={() =>
                     setSecurePassword(!securePassword)
                   }
+                  eyeColor={colors.black}
                 />
 
                 <RegularTextInput

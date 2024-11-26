@@ -21,3 +21,6 @@ export const changePassword = (formData: FormData) => {
     formData: true,
   });
 };
+export const deleteAccount = () => {
+  return axiosInstance.post(endpoints.profile.deleteAccount);
+};

@@ -20,10 +20,16 @@ const styles = StyleSheet.create({
     padding: 0,
     paddingBottom: vh * 2,
   },
+  btn_row: {
+    width: '100%',
+  },
 
   banner: {
     // width: vw * 90,
     height: vh * 20,
+  },
+  btn_text: {
+    fontSize: vh * 2,
   },
 
   imagecontainer: {
@@ -69,10 +75,11 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   btnConatiner: {
-    alignSelf: 'center',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    // alignSelf: 'center',
+    // flexDirection: 'row',
+    // alignItems: 'center',
+    // justifyContent: 'center',
+    minWidth: vw * 35,
     marginTop: vh,
     marginHorizontal: vw * 4,
   },

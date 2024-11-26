@@ -2,11 +2,6 @@ import {Text, View, Image, TouchableOpacity} from 'react-native';
 import styles from './styles';
 
 import {useEffect, useLayoutEffect, useState} from 'react';
-import * as yup from 'yup';
-import {Formik} from 'formik';
-import RegularTextInput from '../../components/TextInput/RegularTextInput';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
-import GeneralModal from '../../components/GeneralModal';
 // import CheckedIcon from '../../assets/icons/CheckedIcon.png'
 import {colors} from '../../utils/theme';
 // import ProfileModal from '../../components/ProfileModal';
@@ -18,11 +13,17 @@ import InterRegular from '../../components/Text/InterRegular';
 import Card from '../../components/Card';
 import ReportBlockModal from '../../components/ReportBlockModal';
 import {useSelector} from 'react-redux';
-import {GetUserProfile, selectUserProfile} from '../../store/slices/authSlice';
+import {
+  GetUserProfile,
+  logout,
+  selectUserProfile,
+} from '../../store/slices/authSlice';
 import {vw} from '../../constant';
 import {useAppDispatch} from '../../hooks/storeHooks';
 import Loader from '../../components/Loader';
-import {editProfile} from '../../api/profile';
+import {deleteAccount, editProfile} from '../../api/profile';
+import Row from '../../components/Row';
+import GeneralModal from '../../components/GeneralModal';
 
 const MyProfile: React.FC = () => {
   const navigation = useNavigation();
@@ -31,6 +32,8 @@ const MyProfile: React.FC = () => {
   const isFocused = useIsFocused();
 
   const [loading, setLoading] = useState<boolean>(false);
+  const [modal, setModal] = useState<boolean>(false);
+  const [deleteLoading, setDeleteLoading] = useState<boolean>(false);
   const [modalVisible, setModalVisible] = useState<boolean>(false);
 
   const options = [
@@ -62,6 +65,19 @@ const MyProfile: React.FC = () => {
       })
       .finally(() => {
         setLoading(false);
+      });
+  };
+
+  const handleDelete = async () => {
+    setDeleteLoading(true);
+    await deleteAccount()
+      .then(res => {
+        if (res?.data) {
+          dispatch(logout());
+        }
+      })
+      .finally(() => {
+        setDeleteLoading(false);
       });
   };
 
@@ -132,7 +148,7 @@ const MyProfile: React.FC = () => {
             </InterRegular>
           </View>
 
-          <View style={styles.contentContainer}>
+          {/* <View style={styles.contentContainer}>
             <View style={styles.headingConatiner}>
               <InterMedium style={styles.txt}>Phone Number</InterMedium>
               <InterMedium style={styles.txt}>Age</InterMedium>
@@ -147,23 +163,41 @@ const MyProfile: React.FC = () => {
 
             <View style={styles.headingConatiner}>
               <InterMedium style={styles.txt}>Birth Date</InterMedium>
-              {/* <InterMedium style={styles.txt}>Gender</InterMedium> */}
             </View>
 
             <View style={styles.txtConatiner}>
               <InterMedium style={styles.phoneTxt}>{user?.dob}</InterMedium>
-              {/* <InterMedium style={styles.phoneTxt}>{user?.gender}</InterMedium> */}
             </View>
-          </View>
+          </View> */}
 
-          <CustomButton
-            style={styles.btnConatiner}
-            onPress={() => navigation.navigate('MyProfileUpdate')}>
-            EDIT PROFILE
-          </CustomButton>
-          <CustomButton style={styles.btnConatiner} onPress={() => {}}>
-            DELETE ACCOUNT
-          </CustomButton>
+          <GeneralModal
+            visible={modal}
+            closeModal={() => setModal(false)}
+            icon={images.qmark}
+            title="Delete Account"
+            message="Are you sure you want to delete your account?"
+            SecondaryText1="Yes"
+            SecondaryText2="No"
+            onPress={handleDelete}
+            secondaryBtn={true}
+            loading={deleteLoading}
+          />
+
+          <Row style={styles.btn_row} justify="space-around">
+            <CustomButton
+              style={styles.btnConatiner}
+              txtstyle={styles.btn_text}
+              onPress={() => navigation.navigate('MyProfileUpdate')}>
+              EDIT PROFILE
+            </CustomButton>
+            <CustomButton
+              loading={deleteLoading}
+              txtstyle={styles.btn_text}
+              style={styles.btnConatiner}
+              onPress={() => setModal(true)}>
+              DELETE ACCOUNT
+            </CustomButton>
+          </Row>
         </Card>
       </View>
 

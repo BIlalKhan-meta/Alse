@@ -81,7 +81,7 @@ const CreatePostEdit: React.FC = () => {
 
     const body = new FormData();
     body.append('description', comment);
-    body.append('privacy', privacy);
+    body.append('privacy', Number(privacy));
     if (imageData) {
       await body.append('file[0]', {
         name: imageData?.fileName,
@@ -98,7 +98,13 @@ const CreatePostEdit: React.FC = () => {
         ...data,
         description: comment,
         privacy: privacy,
-        ...( imageData ? {media: [{path: imageData?.uri, type: imageData?.type?.split('/')[0]}]} : {}),
+        ...(imageData
+          ? {
+              media: [
+                {path: imageData?.uri, type: imageData?.type?.split('/')[0]},
+              ],
+            }
+          : {}),
       }),
     );
     // navigation.goBack();

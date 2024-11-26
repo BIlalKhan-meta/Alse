@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState} from 'react';
 import {
   TextInput,
   TextInputProps,
@@ -45,12 +45,19 @@ const RegularTextInput: React.FC<RegularTextInputProps> = props => {
             {props?.label}
           </InterRegular>
         )}
-        <TextInputWrapper
+        {/* <TextInputWrapper
           style={[textInputStyle, props.style]}
+          secureTextEntry={props.secureTextEntry}
+          {...props}
+          maxLength={props.maxLength}
+        /> */}
+        <TextInput
+          style={[textInputStyle, props.style]}
+          // secureTextEntry
           {...props}
           maxLength={props.maxLength}
         />
-        {(props.label === 'Password' || props.label === 'New Password') && (
+        {/* {(props.label === 'Password' || props.label === 'New Password') && (
           <TouchableOpacity
             onPress={props?.onPressPassword}
             style={styles.eyeicon}>
@@ -79,34 +86,20 @@ const RegularTextInput: React.FC<RegularTextInputProps> = props => {
               tintColor={colors.black}
             />
           </TouchableOpacity>
-        )}
+        )} */}
 
-        {props.secureTextEntry == true && (
-          <TouchableOpacity
-            onPress={props?.onPressCurrentPassword}
-            style={styles.eyeicon}>
-            <Image
-              source={
-                props?.secureTextEntry
-                  ? images.EyeIcon
-                  : images.VisibilityOffIcon
-              }
-              tintColor={colors.black}
-            />
-          </TouchableOpacity>
-        )}
         {props.secureTextEntry == false && (
           <TouchableOpacity
             onPress={props?.onPressCurrentPassword}
             style={styles.eyeicon}>
-            <Image
-              source={
-                props?.secureTextEntry
-                  ? images.EyeIcon
-                  : images.VisibilityOffIcon
-              }
-              tintColor={colors.black}
-            />
+            <Image source={images.EyeIcon} tintColor={colors.black} />
+          </TouchableOpacity>
+        )}
+        {props.secureTextEntry == true && (
+          <TouchableOpacity
+            onPress={props?.onPressCurrentPassword}
+            style={styles.eyeicon}>
+            <Image source={images.VisibilityOffIcon} tintColor={colors.black} />
           </TouchableOpacity>
         )}
 
