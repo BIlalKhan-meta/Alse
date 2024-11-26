@@ -126,7 +126,7 @@ const Shop: React.FC = () => {
   const handleReport = async () => {
     setReportLoader(true);
     const data = {
-      reportable_type: `App\Models\Store`,
+      reportable_type: `App\Models\Shop`,
       reportable_id: shopId,
       reason: `${shopId} Store Report`,
     };
