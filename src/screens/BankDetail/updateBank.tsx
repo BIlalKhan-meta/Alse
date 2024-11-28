@@ -84,9 +84,6 @@ export const UpdateBank = ({data, setData}) => {
       });
     }
   };
-  const handleDropdownChange = (value: string | null) => {
-    console.log('Selected value:', value);
-  };
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -111,6 +108,7 @@ export const UpdateBank = ({data, setData}) => {
           touched,
         }) => (
           <>
+            {console.log('Testttttttttttt', errors)}
             <View style={styles.container}>
               <Card style={styles.contentContainer}>
                 <RegularTextInput
@@ -120,7 +118,7 @@ export const UpdateBank = ({data, setData}) => {
                   onChangeText={handleChange('accountHolderName')}
                   onBlur={handleBlur('accountHolderName')}
                   value={values.accountHolderName}
-                  error={errors.accountHolderName}
+                  errors={errors.accountHolderName}
                   style={styles.inputStyle}
                 />
 
@@ -146,7 +144,7 @@ export const UpdateBank = ({data, setData}) => {
                   onChangeText={handleChange('bankName')}
                   onBlur={handleBlur('bankName')}
                   value={values.bankName}
-                  error={errors.bankName}
+                  errors={errors.bankName}
                   style={styles.inputStyle}
                 />
 
@@ -171,7 +169,7 @@ export const UpdateBank = ({data, setData}) => {
                   onChangeText={handleChange('routingNumber')}
                   onBlur={handleBlur('routingNumber')}
                   value={values.routingNumber}
-                  error={errors.routingNumber}
+                  errors={errors.routingNumber}
                   style={styles.inputStyle}
                   keyboardType="numeric"
                 />
@@ -183,7 +181,7 @@ export const UpdateBank = ({data, setData}) => {
                   onChangeText={handleChange('confirmRoutingNumber')}
                   onBlur={handleBlur('confirmRoutingNumber')}
                   value={values.confirmRoutingNumber}
-                  error={errors.confirmRoutingNumber}
+                  errors={errors.confirmRoutingNumber}
                   style={styles.inputStyle}
                   keyboardType="numeric"
                 />
@@ -195,7 +193,7 @@ export const UpdateBank = ({data, setData}) => {
                   onChangeText={handleChange('accountNumber')}
                   onBlur={handleBlur('accountNumber')}
                   value={values.accountNumber}
-                  error={errors.accountNumber}
+                  errors={errors.accountNumber}
                   style={styles.inputStyle}
                   keyboardType="numeric"
                 />
@@ -207,7 +205,7 @@ export const UpdateBank = ({data, setData}) => {
                   onChangeText={handleChange('confirmAccountNumber')}
                   onBlur={handleBlur('confirmAccountNumber')}
                   value={values.confirmAccountNumber}
-                  error={errors.confirmAccountNumber}
+                  errors={errors.confirmAccountNumber}
                   style={styles.inputStyle}
                   keyboardType="numeric"
                 />
