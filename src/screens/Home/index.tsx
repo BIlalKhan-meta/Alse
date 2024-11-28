@@ -203,7 +203,7 @@ const Home: React.FC = () => {
     console.log(reportVisible.id, 'Reportttt idddddd');
     setReportLoader(true);
     const data = {
-      reportable_type: `App\Models\Post`,
+      reportable_type: `Post`,
       reportable_id: reportVisible?.id,
       reason: 'testingg',
     };
@@ -301,6 +301,7 @@ const Home: React.FC = () => {
         }}
         handleReportPress={() => {
           // handleDotPress();
+          setActivePostId(null);
           navigation.navigate('CreatePostEdit', {
             title: 'Edit Post',
             data: item,
