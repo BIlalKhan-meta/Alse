@@ -47,6 +47,7 @@ const ProfileScreen: React.FC = ({navigation}) => {
     visibility: false,
     id: null,
   });
+  const [reportUser, setReportUser] = useState(false);
   const [shareLoader, setShareLoader] = useState(false);
 
   const [reportSuccess, setReportSuccess] = useState(false);
@@ -97,7 +98,7 @@ const ProfileScreen: React.FC = ({navigation}) => {
 
   const handleReportPress = () => {
     setModalVisible(false);
-    setReportVisible({...reportVisible, visibility: true});
+    setReportUser(true);
   };
 
   const sharePost = async form => {
@@ -117,18 +118,20 @@ const ProfileScreen: React.FC = ({navigation}) => {
       });
   };
 
-  const handleReport = async () => {
+  const handleReport = async (status: string) => {
     setReportLoader(true);
     const data = {
-      reportable_type: `App\Models\Profile`,
-      reportable_id: id,
-      reason: `${id} Profile Report`,
+      reportable_type: status == 'User' ? `User` : `Post`,
+      reportable_id: status == 'User' ? id : reportVisible.id,
+      reason: `Report`,
     };
 
     let formData = new FormData();
     Object.entries(data).forEach(item => {
       formData.append(item[0], item[1]);
     });
+
+    console.log(JSON.stringify(formData, null, 4));
     await reportPost(formData)
       // .unwrap()
       .then(res => {
@@ -394,7 +397,19 @@ const ProfileScreen: React.FC = ({navigation}) => {
           message="Are you sure you want to report this post?"
           SecondaryText1="Yes"
           SecondaryText2="No"
-          onPress={handleReport}
+          onPress={() => handleReport('Post')}
+          secondaryBtn={true}
+          loading={reportLoader}
+        />
+        <GeneralModal
+          visible={reportUser}
+          closeModal={() => setReportUser(!reportUser)}
+          icon={images.qmark}
+          title="Report User"
+          message="Are you sure you want to report this user?"
+          SecondaryText1="Yes"
+          SecondaryText2="No"
+          onPress={() => handleReport('User')}
           secondaryBtn={true}
           loading={reportLoader}
         />

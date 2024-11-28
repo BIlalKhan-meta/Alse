@@ -126,7 +126,7 @@ const Shop: React.FC = () => {
   const handleReport = async () => {
     setReportLoader(true);
     const data = {
-      reportable_type: `App\Models\Shop`,
+      reportable_type: `Shop`,
       reportable_id: shopId,
       reason: `${shopId} Store Report`,
     };
@@ -188,7 +188,17 @@ const Shop: React.FC = () => {
           console.log('ERRRRRRORRRRR SAVEDDDDDDDDDDDD', err);
         });
 
-      await removeSavedItem(saved_item[0].id);
+      const data = {
+        item_id: saved_item[0].savable_id,
+        item_type: 'product',
+      };
+      const form = new FormData();
+      Object.entries(data).map(([key, value]) => {
+        form.append(key, value);
+      });
+
+      // console.log('SAVEDDDDDDDDD IDDDDDDDDDDDDDD', saved_item);
+      await removeSavedItem(form).catch(err => console.log('ERRORRRRR', err));
     } else {
       const data = {
         item_id: productId,

@@ -247,6 +247,7 @@ const MyPosts: React.FC = () => {
         //   setReportVisible({visibility: true, id: item?.id});
         // }}
         handleReportPress={() => {
+          setActivePostId(null);
           navigation.navigate('CreatePostEdit', {
             title: 'Edit Post',
             data: item,
