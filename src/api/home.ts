@@ -39,6 +39,9 @@ export const editPost = (formData: FormData, id: number) => {
     formData: true,
   });
 };
+export const removeImage  = (postID,id) =>{
+  return axiosInstance.post(endpoints.home.mediaDelete + `/${postID}/media/${id}/delete`);
+}
 
 export const deletePost = (id: number) => {
   console.log(id, 'idddddddddd');

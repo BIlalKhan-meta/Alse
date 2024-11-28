@@ -34,6 +34,8 @@ import LikesModal from '../../components/LikesModal';
 import {date} from 'yup';
 const Home: React.FC = () => {
   const flatListRef = useRef(null);
+  const [focusedIndex, setFocusedIndex] = useState(0);
+  const [loadingState, setLoadingState] = useState({});
 
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
@@ -66,6 +68,12 @@ const Home: React.FC = () => {
     visibility: false,
     id: null,
   });
+  const [pause, setPause] = useState(false);
+  const [currendId, setCurrentID] = useState(0);
+  const handleVideoPause = id => {
+    setPause(!pause);
+    setCurrentID(id);
+  };
   const [reportSuccess, setReportSuccess] = useState(false);
 
   const [shareLoader, setShareLoader] = useState(false);
@@ -262,9 +270,35 @@ const Home: React.FC = () => {
 
   // }
 
-  const renderPost = ({item}) => {
+  const handleLoadStart = index => {
+    setLoadingState(prevState => ({...prevState, [index]: true}));
+  };
+
+  const handleReadyForDisplay = (index, res) => {
+console.log("resresresres ===========>",res)
+    setLoadingState(prevState => ({...prevState, [index]: false}));
+  };
+
+  const handleError = (error, index) => {
+    console.error('Video error:', error);
+    setLoadingState(prevState => ({...prevState, [index]: false}));
+  };
+
+  const onViewableItemsChanged = ({viewableItems}) => {
+    // Play only the currently focused video
+    const focusedIndex = viewableItems[0]?.index;
+    setFocusedIndex(focusedIndex);
+  };
+
+  const renderPost = ({item, index}) => {
+    const isFocused = focusedIndex === index;
     return (
       <PostComponent
+        onLoadStart={() => handleLoadStart(index)}
+        onReadyForDisplay={(res) => handleReadyForDisplay(index, res)}
+        onError={error => handleError(error, index)}
+        isFocused={isFocused}
+        isLoading={loadingState[index]}
         id={item?.user_id}
         // postID={item?.media[0]?.post_id}
         avatar={item?.avatar}
@@ -291,6 +325,8 @@ const Home: React.FC = () => {
         modalVisible={activePostId === item?.id}
         onCardPress={() => setActivePostId(null)}
         sharePost={sharePost}
+        isPaused={pause && currendId == item?.id}
+        handleVideoPause={() => handleVideoPause(item?.id)}
         handleBlockPress={() => {
           // handleDotPress();
           // setDeleteVisible(true);
@@ -325,10 +361,13 @@ const Home: React.FC = () => {
       <View>
         <FlatList
           ref={flatListRef}
+          onViewableItemsChanged={onViewableItemsChanged}
+          viewabilityConfig={{itemVisiblePercentThreshold: 50}}
           data={posts}
           onRefresh={getApi}
           refreshing={loader}
           renderItem={renderPost}
+          contentContainerStyle={{paddingBottom: vh * 10}}
           keyExtractor={item => item.id.toString()}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={renderEmpty}

@@ -12,6 +12,7 @@ const endpoints = {
     profileById: '/get-user',
     createPost: '/post/create',
     updatePost: '/post/update',
+    mediaDelete:'/post',
     deletePost: '/post/delete',
     reportPost: '/report/create',
     myPost: '/get-user',

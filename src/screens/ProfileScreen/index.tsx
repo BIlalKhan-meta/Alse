@@ -69,6 +69,12 @@ const ProfileScreen: React.FC = ({navigation}) => {
     likes: [],
     id: null,
   });
+  const [pause, setPause] = useState(false)
+  const [currendId , setCurrentID] = useState(0)
+  const handleVideoPause = (id) =>{
+    setPause(!pause)
+    setCurrentID(id)
+  }
 
   const handleDotPress = (postId: number) => {
     setActivePostId(activePostId == null ? postId : null);
@@ -268,6 +274,8 @@ const ProfileScreen: React.FC = ({navigation}) => {
   ];
 
   const renderPost = ({item, index}) => (
+    <>
+    {console.log("item =====>", item)}
     <PostComponent
       key={item?.id}
       avatar={item?.avatar}
@@ -281,6 +289,8 @@ const ProfileScreen: React.FC = ({navigation}) => {
       share={item?.share}
       onDotPress={() => handleDotPress(item?.id)}
       modalVisible={activePostId === item.id}
+      isPaused={pause && currendId == item?.id}
+      handleVideoPause={() => handleVideoPause(item?.id)}
       // onLikePress={() => setrRactVisible(true)}
       // onCommnetPress={() => setCommentsVisible(true)}
       onCommnetPress={() => handleCommentPress(item?.id)}
@@ -303,6 +313,7 @@ const ProfileScreen: React.FC = ({navigation}) => {
         });
       }}
     />
+    </>
   );
 
   if (loading) {

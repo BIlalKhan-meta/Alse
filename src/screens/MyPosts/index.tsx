@@ -42,13 +42,19 @@ import {getMessage, Toast} from '../../utils/helpers';
 import {timeFormat, timeHelper} from '../../utils';
 import {removeSavedItem, saveItem} from '../../api/menu';
 import LikesModal from '../../components/LikesModal';
+import { fetchMyPost } from '../../api/home';
 
 const MyPosts: React.FC = () => {
   const navigation = useNavigation();
   const isFocused = useIsFocused();
   const dispatch = useAppDispatch();
   const user = useSelector(selectUserProfile);
-
+  const [pause, setPause] = useState(false)
+  const [currendId , setCurrentID] = useState(0)
+  const handleVideoPause = (id) =>{
+    setPause(!pause)
+    setCurrentID(id)
+  }
   const [commentsVisible, setCommentsVisible] = useState({
     visiblity: false,
     comments: [],
@@ -77,6 +83,9 @@ const MyPosts: React.FC = () => {
   };
 
   const handleLikePress = (id: number) => {
+    const arr = [...data];
+    let index = arr.findIndex(item => item.id == id);
+    arr[index].is_liked = !arr[index].is_liked;
     const tempData = {
       id: Math.random(),
       user: {
@@ -85,12 +94,16 @@ const MyPosts: React.FC = () => {
         full_name: user?.full_name ? user?.full_name : '',
       },
     };
-    const data = {
-      postid: id,
-      tempData,
-    };
-    dispatch(updateLike(data));
-    dispatch(likePost(id));
+    const find = arr[index]?.likes.findIndex(val => val?.user?.id == user?.id);
+    if (find > -1) {
+      arr[index]?.likes.splice(find, 1);
+    } else {
+      arr[index]?.likes.push(tempData);
+    }
+    setData(arr);
+
+    // dispatch(updateLike(data));
+    // dispatch(likePost(id));
   };
   // const handleLikePress = (id: number) => {
 
@@ -136,7 +149,7 @@ const MyPosts: React.FC = () => {
           id: null,
         });
         setReportLoader(false);
-        // getData();
+        getData();
         setDeleteSuccess(true);
         handleDotPress(null);
       })
@@ -198,20 +211,33 @@ const MyPosts: React.FC = () => {
   //   '====================',
   //   posts.filter((item: any) => item?.user_id == user?.id)[0],
   // );
+  const getData = () =>{
+    setLoader(true);
+    fetchMyPost(user?.id).then(res =>{
+      console.log("res ======>",)
+      setData(res?.data?.data?.data);
+    }).catch(err =>{
+      console.log("Error form  Fetch data -->",err)
+    }).finally(() =>{
+      setLoader(false);
+    })
+  }
 
   useEffect(() => {
-    // getData();
-    setLoader(true);
-    let filtered = posts.filter((item: any) => item?.user_id == user?.id);
-    setData(filtered);
-    setLoader(false);
-  }, [isFocused, posts, reload]);
+    getData();
+   
+    // let filtered = posts.filter((item: any) => item?.user_id == user?.id);
+    
+
+  }, [isFocused]);
 
   // if (loader) {
   //   return <Loader />;
   // }
 
   const renderPost = ({item}) => {
+    console.log("Item from render Post ====>", item?.media);
+    
     return (
       <PostComponent
         id={item?.user_id}
@@ -221,8 +247,11 @@ const MyPosts: React.FC = () => {
         country={item.country ? item.country : ''}
         time={timeFormat(item?.date)}
         postText={item?.description}
+        isPaused={pause && currendId == item?.id}
+        handleVideoPause={() => handleVideoPause(item?.id)}
         postImage={item?.media[0]?.path}
         mediaType={item?.media[0]?.type}
+        mediaId ={item?.media[0]?.id}
         likes={item?.total_likes}
         comments={item?.total_comments}
         share={item.share}

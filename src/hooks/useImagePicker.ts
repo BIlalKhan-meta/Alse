@@ -51,7 +51,7 @@ const useImagePicker = () => {
     });
   };
 
-  return {image, imageData, captureImage, chooseImageFromLibrary};
+  return {image, imageData, captureImage, chooseImageFromLibrary, setImageData, setImage};
 };
 
 export default useImagePicker;

@@ -19,6 +19,7 @@ import {postEdit, updatePost} from '../../store/slices/homeSlice';
 import {useAppDispatch} from '../../hooks/storeHooks';
 import {getMessage, Toast} from '../../utils/helpers';
 import Loader from '../../components/Loader';
+import { removeImage } from '../../api/home';
 
 const ListOptions = [
   {label: 'Public', value: '2'},
@@ -64,7 +65,7 @@ const CreatePostEdit: React.FC = () => {
     }
   }, [imageData]);
 
-  console.log('ITEMMMMMMMMMMMMMMMM', data);
+  console.log('ITEMMMMMMMMMMdasMMdsdssadadsadMMMM', data?.id);
 
   const handlePost = async () => {
     // try {
@@ -129,6 +130,17 @@ const CreatePostEdit: React.FC = () => {
   if (isLoading) {
     return <Loader />;
   }
+  const handleRemoveMedia = () =>{
+    // 
+    removeImage(data?.id,route?.params?.data?.media[0]?.id).then(res =>{
+      console.log("Image Removed",res)
+      setMedia(null)
+    }).catch(Err =>{
+      setMedia(null)
+
+      console.log("Error from Image Removed", Err)
+    })
+  }
 
   return (
     <ScrollView showsVerticalScrollIndicator={false}>
@@ -142,7 +154,7 @@ const CreatePostEdit: React.FC = () => {
           ListOptions={ListOptions}
           privacy={privacy}
           image={media}
-          removeMedia={() => setMedia(null)}
+          removeMedia={() => handleRemoveMedia()}
           setPrivacy={setPrivacy}
         />
         {/* <BottomModal

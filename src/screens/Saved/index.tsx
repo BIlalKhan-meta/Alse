@@ -83,7 +83,12 @@ const Saved: React.FC = () => {
   const [shareLoader, setShareLoader] = useState(false);
 
   const [activePostId, setActivePostId] = useState<number | null>(null);
-
+  const [pause, setPause] = useState(false)
+  const [currendId , setCurrentID] = useState(0)
+  const handleVideoPause = (id) =>{
+    setPause(!pause)
+    setCurrentID(id)
+  }
   console.log('DISSPLAYYYYYYYYYYYYYY', displayPost);
 
   const fetchData = async () => {
@@ -384,6 +389,8 @@ const Saved: React.FC = () => {
       <PostComponent
         id={item?.user_id}
         // postID={item?.media[0]?.post_id}
+        isPaused={pause && currendId == item?.id}
+        handleVideoPause={() => handleVideoPause(item?.id)}
         shareLoader={shareLoader}
         avatar={item?.avatar}
         name={item?.fullname}

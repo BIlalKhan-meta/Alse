@@ -25,6 +25,7 @@ interface FormValues {
   password: string;
 }
 async function storeUserSession(email: string, password: string) {
+  console.log("email ===>",email,"Password= ===>", password)
   await EncryptedStorage.setItem(
     'user_session',
     JSON.stringify({
@@ -51,11 +52,13 @@ const LoginScreen: React.FC = () => {
     password: '',
   });
 
+
   const retrieveUserSession = async () => {
     try {
       const session = await EncryptedStorage.getItem('user_session');
       if (session != undefined) {
         const parsedSession = JSON.parse(session);
+        console.log("parsedSession.email ===>",parsedSession?.password)
         setIsSelected(true);
         setInitialValues({
           email: parsedSession.email || '',
@@ -96,7 +99,7 @@ const LoginScreen: React.FC = () => {
       password: values.password,
       token: deviceToken,
     };
-    console.log('TOKEENNNNNNNN', apiData);
+
 
     //   login(apiData).then((res)=>{
     //     if(res?.data){
@@ -145,9 +148,12 @@ const LoginScreen: React.FC = () => {
     <Formik
       initialValues={initialValues}
       validationSchema={validationSchema}
+      enableReinitialize
       onSubmit={handleSubmit}>
       {({handleSubmit, handleChange, handleBlur, values, errors}) => (
+        
         <>
+
           <KeyboardAwareScrollView
             style={styles.scrollview}
             showsVerticalScrollIndicator={false}>
