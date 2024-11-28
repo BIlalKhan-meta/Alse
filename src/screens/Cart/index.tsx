@@ -63,9 +63,7 @@ const Cart = () => {
   console.log('AMOUNTTTTTTTTTTTT', cartData?.total_amount);
 
   useEffect(() => {
-    if (user?.has_subscription) {
-      getData();
-    }
+    getData();
   }, [isFoused]);
 
   const getData = async () => {

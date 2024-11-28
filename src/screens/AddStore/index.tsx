@@ -24,8 +24,8 @@ import Toast from 'react-native-toast-message';
 import Loader from '../../components/Loader';
 
 const initialValues = {
-  name: 'My New Shop',
-  delivery_fees: '100',
+  name: '',
+  delivery_fees: '',
   // shopImage: '',
   // accountHolderName: '',
   // accountType: '',
@@ -138,12 +138,14 @@ const AddStore: React.FC = () => {
 
     await createShop(formData)
       .then(res => {
-        if (res?.data) {
-          setSubmitted(false);
+        if (res?.status) {
+          console.log('TESTTTTTTTTTTTTTT');
+          // setSubmitted(false);
           setShopSuccess(true);
         }
       })
       .catch(err => {
+        console.log('ERORRRRRRRRRRRRRRR', err);
         setSubmitted(false);
       })
       .finally(() => {
@@ -154,8 +156,8 @@ const AddStore: React.FC = () => {
   const getData = async () => {
     setBankLoader(true);
     await getBank().then(res => {
+      setBankLoader(false);
       if (!res?.data?.data) {
-        setBankLoader(false);
         navigation.navigate('BankDetail');
       }
     });
