@@ -141,14 +141,14 @@ const Menu: React.FC = () => {
                   View Content
                 </InterRegular>
               </TouchableOpacity>
-              {!user.is_child && (
+              {/* {!user.is_child && (
                 <TouchableOpacity
                   onPress={() => navigation.navigate('SubscriptionLogs')}>
                   <InterRegular style={styles.cardText}>
                     Subscription Logs
                   </InterRegular>
                 </TouchableOpacity>
-              )}
+              )} */}
 
               {/* <TouchableOpacity onPress={() => navigation.navigate('Games')}>
                 <InterRegular style={styles.cardText}>Games</InterRegular>
