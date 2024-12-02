@@ -119,7 +119,9 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
 
   const handleAccount = (privacy: number, id: number) => {
     closeModal();
-    navigation.navigate('Profile', {privacy, id});
+    if (user.id != id) {
+      navigation.navigate('Profile', {privacy, id});
+    }
   };
 
   return (
@@ -153,6 +155,7 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
                 <View key={item.id} style={{width: vw * 85}}>
                   <View style={styles.commentContainer}>
                     <TouchableOpacity
+                      disabled={user.id == item?.user?.id}
                       onPress={() =>
                         handleAccount(item?.user?.is_private, item?.user?.id)
                       }
@@ -167,12 +170,18 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
                       />
                     </TouchableOpacity>
                     <View style={styles.contentContainer}>
-                      <InterMedium style={styles.userName}>
-                        {item?.user?.full_name ||
-                          capitalize(item?.user?.first_name) +
-                            ' ' +
-                            capitalize(item?.user?.last_name)}
-                      </InterMedium>
+                      <TouchableOpacity
+                        disabled={user.id == item?.user?.id}
+                        onPress={() =>
+                          handleAccount(item?.user?.is_private, item?.user?.id)
+                        }>
+                        <InterMedium style={styles.userName}>
+                          {item?.user?.full_name ||
+                            capitalize(item?.user?.first_name) +
+                              ' ' +
+                              capitalize(item?.user?.last_name)}
+                        </InterMedium>
+                      </TouchableOpacity>
                       <InterRegular style={styles.comment}>
                         {item?.comment}
                       </InterRegular>
