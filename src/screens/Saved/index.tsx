@@ -1,5 +1,5 @@
 // Home.tsx
-import React, {act, useEffect, useLayoutEffect, useState} from 'react';
+import React, {act, useEffect, useLayoutEffect, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -81,6 +81,7 @@ const Saved: React.FC = () => {
   const [deleteSuccess, setDeleteSuccess] = useState(false);
   const [reportLoader, setReportLoader] = useState(false);
   const [shareLoader, setShareLoader] = useState(false);
+  const [focusedIndex, setFocusedIndex] = useState(0);
 
   const [activePostId, setActivePostId] = useState<number | null>(null);
   const [pause, setPause] = useState(false)
@@ -384,10 +385,28 @@ const Saved: React.FC = () => {
     setDisplayPost(arr);
   };
 
-  const renderPost = ({item}: any) => {
+  const onViewableItemsChanged = ({viewableItems}) => {
+    // Play only the currently focused video
+    console.log('ITEMSSSSSSSSS', viewableItems);
+    const focusedIndex = viewableItems[0]?.index;
+    setFocusedIndex(focusedIndex);
+  };
+
+  const viewabilityConfig = useRef({
+    waitForInteraction: true,
+    // At least one of the viewAreaCoveragePercentThreshold or itemVisiblePercentThreshold is required.
+    // viewAreaCoveragePercentThreshold: 95,
+    itemVisiblePercentThreshold: 75,
+  });
+
+
+  const renderPost = ({item,index}: any) => {
+
+    const isFocused = focusedIndex === index;
     return (
       <PostComponent
         id={item?.user_id}
+        isFocused={isFocused}
         // postID={item?.media[0]?.post_id}
         isPaused={pause && currendId == item?.id}
         handleVideoPause={() => handleVideoPause(item?.id)}
@@ -439,6 +458,9 @@ const Saved: React.FC = () => {
   if (loading) {
     return <Loader />;
   }
+
+ 
+
   return (
     <ScrollView showsVerticalScrollIndicator={false}>
       <View style={styles.container}>
@@ -479,6 +501,8 @@ const Saved: React.FC = () => {
               onRefresh={fetchData}
               refreshing={loading}
               renderItem={renderPost}
+              viewabilityConfig={viewabilityConfig.current}
+              onViewableItemsChanged={onViewableItemsChanged}
               //   keyExtractor={item => item?.id.toString()}
               showsVerticalScrollIndicator={false}
               ListEmptyComponent={() => (

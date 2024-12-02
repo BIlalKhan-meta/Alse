@@ -2,7 +2,7 @@ import axiosInstance from '.';
 import endpoints from './endpoints';
 
 export const newsFeed = (data) => {
-console.log("datadatadatadatadatadatadata================>",data)
+// console.log("datadatadatadatadatadatadata================>",data)
   return axiosInstance.get(`${endpoints.home.feedPost}`,{params: data});
 };
 
@@ -44,7 +44,7 @@ export const removeImage  = (postID,id) =>{
 }
 
 export const deletePost = (id: number) => {
-  console.log(id, 'idddddddddd');
+  // console.log(id, 'idddddddddd');
   return axiosInstance.post(`${endpoints.home.deletePost}/${id}`);
 };
 

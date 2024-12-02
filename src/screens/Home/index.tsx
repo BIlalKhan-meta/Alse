@@ -2,7 +2,7 @@ import React, {useEffect, useRef, useState} from 'react';
 import {View, FlatList, TouchableOpacity} from 'react-native';
 import {images} from '../../utils/images';
 import CardComponent from '../../components/CardComponent';
-import {useIsFocused, useNavigation} from '@react-navigation/native';
+import {useFocusEffect, useIsFocused, useNavigation} from '@react-navigation/native';
 import styles from './styles';
 import PostComponent from '../../components/PostComponent';
 import CommentsModal from '../../components/CommentsModal';
@@ -111,8 +111,6 @@ const Home: React.FC = () => {
         console.log('error from like post', err);
       });
   };
-
-  console.log('COOMMENTTSSSSSSSSSSSSSSSSS', commentsVisible?.comments);
 
   useEffect(() => {
     if (!user?.has_subscription && !user?.is_child) {
@@ -266,26 +264,11 @@ const Home: React.FC = () => {
     }
   };
 
-  // const handleLike = (data) =>{
-
-  // }
-
-  const handleLoadStart = index => {
-    setLoadingState(prevState => ({...prevState, [index]: true}));
-  };
-
-  const handleReadyForDisplay = (index, res) => {
-console.log("resresresres ===========>",res)
-    setLoadingState(prevState => ({...prevState, [index]: false}));
-  };
-
-  const handleError = (error, index) => {
-    console.error('Video error:', error);
-    setLoadingState(prevState => ({...prevState, [index]: false}));
-  };
 
   const onViewableItemsChanged = ({viewableItems}) => {
     // Play only the currently focused video
+   
+
     const focusedIndex = viewableItems[0]?.index;
     setFocusedIndex(focusedIndex);
   };
@@ -294,11 +277,7 @@ console.log("resresresres ===========>",res)
     const isFocused = focusedIndex === index;
     return (
       <PostComponent
-        onLoadStart={() => handleLoadStart(index)}
-        onReadyForDisplay={(res) => handleReadyForDisplay(index, res)}
-        onError={error => handleError(error, index)}
         isFocused={isFocused}
-        isLoading={loadingState[index]}
         id={item?.user_id}
         // postID={item?.media[0]?.post_id}
         avatar={item?.avatar}
@@ -353,6 +332,21 @@ console.log("resresresres ===========>",res)
     <View style={styles.emptyContainer}>
       <InterRegular style={styles.emptyText}>No Posts to Show.</InterRegular>
     </View>
+  );
+
+  useFocusEffect(
+    React.useCallback(() => {
+      // This will run when the screen is focused
+      setFocusedIndex(0)
+      scrollToTop()
+      return () => {
+        // This will run when the screen is unfocused
+        // Pause the video here (if necessary)
+        // Example: setting the video to pause
+        setFocusedIndex(null)
+        setPause(true)
+      };
+    }, [])
   );
 
   return (

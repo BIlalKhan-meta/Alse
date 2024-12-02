@@ -126,7 +126,7 @@ export const LogoutUser = createAsyncThunk(
 export const GetUserProfile = createAsyncThunk(
   'user/profile',
   async (_, {rejectWithValue}) => {
-    console.log('comii frommm newsFeedd sliceee');
+    // console.log('comii frommm newsFeedd sliceee');
 
     try {
       const response = await getProfile();
@@ -160,12 +160,12 @@ const authSlice = createSlice({
       })
       .addCase(GetUserProfile.fulfilled, (state, action) => {
         state.loading = false;
-        console.log('====================================');
-        console.log(
-          'action.payload Profileeee =================>',
-          action.payload,
-        );
-        console.log('====================================');
+        // console.log('====================================');
+        // console.log(
+        //   'action.payload Profileeee =================>',
+        //   action.payload,
+        // );
+        // console.log('====================================');
         state.user = action.payload?.data;
       })
       .addCase(GetUserProfile.rejected, (state, action) => {

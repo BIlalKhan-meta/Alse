@@ -40,6 +40,7 @@ import {EditShop} from '../../screens/EditShop';
 import MyOrders from '../../screens/MyOrders';
 import SubscriptionPlan from '../../screens/SubscriptionPlan';
 import PaymentLogs from '../../screens/PaymentLogs';
+import ProfileScreen from '../../screens/ProfileScreen';
 
 const AppNavigation = () => {
   const Stack = createNativeStackNavigator();
@@ -72,6 +73,7 @@ const AppNavigation = () => {
           component={ProductView}
           options={NavigationOptions}
         />
+          <Stack.Screen name="Profile" component={ProfileScreen} />
         <Stack.Screen
           name="MyOrders"
           component={MyOrders}

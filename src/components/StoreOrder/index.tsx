@@ -42,7 +42,7 @@ const StoreOrderComponent: React.FC = props => {
       form.append(key, value);
     });
 
-    console.log(JSON.stringify(form, null, 4));
+    // console.log(JSON.stringify(form, null, 4));
 
     try {
       await addProductToCart(productItem?.id, form).then(res => {

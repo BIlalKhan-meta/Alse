@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Share,
   Pressable,
+  ActivityIndicator,
 } from 'react-native';
 import {images} from '../../utils/images';
 import Card from '../Card';
@@ -51,9 +52,12 @@ interface PostProps {
   isSaved?: boolean;
   onCardPress: () => void;
   shareLoader: boolean;
+  mediaId: boolean;
+  isFocused: boolean;
 }
 
 const PostComponent: React.FC<PostProps> = ({
+  isFocused,
   shareLoader,
   postID,
   id,
@@ -81,6 +85,9 @@ const PostComponent: React.FC<PostProps> = ({
   onCardPress,
   onLikesModal,
   sharePost,
+  mediaId,
+  isPaused,
+  handleVideoPause,
 }) => {
   const navigation = useNavigation();
   const user = useSelector(selectUserProfile);
@@ -89,7 +96,8 @@ const PostComponent: React.FC<PostProps> = ({
   const maxTextLength = 100;
   const [numberLikes, setNumberLikes] = useState(likes);
   const [loading, setLoading] = useState(false);
-
+  const [videoLoad, setVideoLoad] = useState(true);
+// console.log("isFocusedisFocused ====>",isFocused)
   useEffect(() => {
     setNumberLikes(likes);
   }, [likes]);
@@ -194,17 +202,40 @@ const PostComponent: React.FC<PostProps> = ({
           <Image source={{uri: postImage}} style={styles.postImage} />
         )} */}
 
+
         {postImage ? (
-          mediaType == 'image' ? (
+          mediaType === 'image' ? (
             <Image source={{uri: postImage}} style={styles.postImage} />
+          ) : isFocused ? (
+            <View>
+              {videoLoad ? (
+                <ActivityIndicator
+                  size="large"
+                  color="black"
+                  style={{position:'absolute',right : '45%',top : vh*11,zIndex : 100}}
+                />
+              ) : null}
+              <TouchableOpacity activeOpacity={0.9} style={{zIndex : 99}} onPress={handleVideoPause}>
+                <Video
+                  onReadyForDisplay={() => setVideoLoad(false)}
+                  source={{uri: postImage}}
+                  style={styles.postImage}
+                  resizeMode="cover"
+                  repeat={true}
+                  fullScreen
+                  paused={isPaused}
+                  onBuffer={res => {
+                    if (res?.isBuffering) {
+                      setVideoLoad(true);
+                    }
+                  }}
+                  // thumbnail={{uri: user?.avatar}}
+                  ignoreSilentSwitch={'ignore'}
+                />
+              </TouchableOpacity>
+            </View>
           ) : (
-            <Video
-              source={{uri: postImage}}
-              paused={false}
-              style={styles.postImage}
-              controls={true}
-              resizeMode="cover"
-            />
+            <View style={[styles.postImage, {backgroundColor: 'black'}]}></View>
           )
         ) : null}
 
@@ -330,7 +361,7 @@ const styles = StyleSheet.create({
 
   postImage: {
     width: '100%',
-    height: 200,
+    height: vh * 25,
     borderRadius: 10,
     marginBottom: 10,
   },

@@ -54,7 +54,7 @@ function App(): React.JSX.Element {
   }, []);
 
   function handleNotificationPress(remoteMessage: object) {
-    console.log('NTOFIIIIIIIIIIIICATIONNNNNN', remoteMessage);
+    // console.log('NTOFIIIIIIIIIIIICATIONNNNNN', remoteMessage);
   }
 
   // function handleNotification(remoteMessage: any) {

@@ -1,5 +1,5 @@
 // Home.tsx
-import React, {useEffect, useLayoutEffect, useState} from 'react';
+import React, {useEffect, useLayoutEffect, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -42,19 +42,19 @@ import {getMessage, Toast} from '../../utils/helpers';
 import {timeFormat, timeHelper} from '../../utils';
 import {removeSavedItem, saveItem} from '../../api/menu';
 import LikesModal from '../../components/LikesModal';
-import { fetchMyPost } from '../../api/home';
+import {fetchMyPost} from '../../api/home';
 
 const MyPosts: React.FC = () => {
   const navigation = useNavigation();
   const isFocused = useIsFocused();
   const dispatch = useAppDispatch();
   const user = useSelector(selectUserProfile);
-  const [pause, setPause] = useState(false)
-  const [currendId , setCurrentID] = useState(0)
-  const handleVideoPause = (id) =>{
-    setPause(!pause)
-    setCurrentID(id)
-  }
+  const [pause, setPause] = useState(false);
+  const [currendId, setCurrentID] = useState(0);
+  const handleVideoPause = id => {
+    setPause(!pause);
+    setCurrentID(id);
+  };
   const [commentsVisible, setCommentsVisible] = useState({
     visiblity: false,
     comments: [],
@@ -77,6 +77,7 @@ const MyPosts: React.FC = () => {
     likes: [],
     id: null,
   });
+  const [focusedIndex, setFocusedIndex] = useState(0);
 
   const handleDotPress = (postId: number) => {
     setActivePostId(activePostId === postId ? null : postId);
@@ -211,35 +212,43 @@ const MyPosts: React.FC = () => {
   //   '====================',
   //   posts.filter((item: any) => item?.user_id == user?.id)[0],
   // );
-  const getData = () =>{
+  const getData = () => {
     setLoader(true);
-    fetchMyPost(user?.id).then(res =>{
-      console.log("res ======>",)
-      setData(res?.data?.data?.data);
-    }).catch(err =>{
-      console.log("Error form  Fetch data -->",err)
-    }).finally(() =>{
-      setLoader(false);
-    })
-  }
+    fetchMyPost(user?.id)
+      .then(res => {
+        console.log('res ======>');
+        setData(res?.data?.data?.data);
+      })
+      .catch(err => {
+        console.log('Error form  Fetch data -->', err);
+      })
+      .finally(() => {
+        setLoader(false);
+      });
+  };
 
   useEffect(() => {
     getData();
-   
-    // let filtered = posts.filter((item: any) => item?.user_id == user?.id);
-    
 
+    // let filtered = posts.filter((item: any) => item?.user_id == user?.id);
   }, [isFocused]);
 
   // if (loader) {
   //   return <Loader />;
   // }
 
-  const renderPost = ({item}) => {
-    console.log("Item from render Post ====>", item?.media);
-    
+  const onViewableItemsChanged = ({viewableItems}) => {
+    // Play only the currently focused video
+    const focusedIndex = viewableItems[0]?.index;
+    setFocusedIndex(focusedIndex);
+  };
+
+  const renderPost = ({item, index}) => {
+    console.log('Item from render Post ====>', item?.media);
+    const isFocused = focusedIndex === index;
     return (
       <PostComponent
+        isFocused={isFocused}
         id={item?.user_id}
         postID={item?.media[0]?.post_id}
         avatar={item?.avatar}
@@ -251,7 +260,7 @@ const MyPosts: React.FC = () => {
         handleVideoPause={() => handleVideoPause(item?.id)}
         postImage={item?.media[0]?.path}
         mediaType={item?.media[0]?.type}
-        mediaId ={item?.media[0]?.id}
+        mediaId={item?.media[0]?.id}
         likes={item?.total_likes}
         comments={item?.total_comments}
         share={item.share}
@@ -294,6 +303,14 @@ const MyPosts: React.FC = () => {
     </View>
   );
 
+
+  const viewabilityConfig = useRef({
+    waitForInteraction: true,
+    // At least one of the viewAreaCoveragePercentThreshold or itemVisiblePercentThreshold is required.
+    // viewAreaCoveragePercentThreshold: 95,
+    itemVisiblePercentThreshold: 75,
+  });
+
   return (
     <View style={{paddingHorizontal: vh * 2}}>
       {/* <TouchableWithoutFeedback onPress={() => handleDotPress(null)}> */}
@@ -301,6 +318,8 @@ const MyPosts: React.FC = () => {
         <FlatList
           data={data}
           onRefresh={() => setReload(!reload)}
+          onViewableItemsChanged={onViewableItemsChanged}
+          viewabilityConfig={viewabilityConfig.current}
           refreshing={loader}
           renderItem={renderPost}
           keyExtractor={item => item.id.toString()}
