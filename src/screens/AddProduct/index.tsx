@@ -127,6 +127,7 @@ const AddProduct: React.FC = () => {
   };
 
   const handleSubmit = async (values: typeof initialValues) => {
+    setLoading(true);
     setSubmitted(true);
     if (media.length < 3) {
       return Toast.show({
@@ -174,12 +175,22 @@ const AddProduct: React.FC = () => {
 
     if (title == 'Edit Product') {
       await updateProduct(form, shopId, item?.id)
-        .then(res => navigation.goBack())
-        .catch(err => console.log('ERRRRRRRRRRRRRRRRRRR', err));
+        .then(res => {
+          if (res?.data) {
+            navigation.goBack();
+          }
+        })
+        .catch(err => console.log('ERRRRRRRRRRRRRRRRRRR', err))
+        .finally(() => setLoading(false));
     } else {
       await createProduct(form, shopId)
-        .then(res => navigation.goBack())
-        .catch(err => console.log('ERRRRRRRRRRRRRRRRRRR', err));
+        .then(res => {
+          if (res?.data) {
+            navigation.goBack();
+          }
+        })
+        .catch(err => console.log('ERRRRRRRRRRRRRRRRRRR', err))
+        .finally(() => setLoading(false));
     }
   };
 

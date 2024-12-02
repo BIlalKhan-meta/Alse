@@ -211,7 +211,7 @@ const PostComponent: React.FC<PostProps> = ({
               {videoLoad ? (
                 <ActivityIndicator
                   size="large"
-                  color="black"
+                  color="white"
                   style={{position:'absolute',right : '45%',top : vh*11,zIndex : 100}}
                 />
               ) : null}
@@ -235,7 +235,7 @@ const PostComponent: React.FC<PostProps> = ({
               </TouchableOpacity>
             </View>
           ) : (
-            <View style={[styles.postImage, {backgroundColor: 'black'}]}></View>
+            <View style={[styles.postImage, {backgroundColor: 'transparent'}]}></View>
           )
         ) : null}
 
