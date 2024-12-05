@@ -177,7 +177,8 @@ const AddProduct: React.FC = () => {
       await updateProduct(form, shopId, item?.id)
         .then(res => {
           if (res?.data) {
-            navigation.goBack();
+            // console.log("RESSSSSS",res?.data)
+            navigation.navigate("ProductView",{productId: item?.id});
           }
         })
         .catch(err => console.log('ERRRRRRRRRRRRRRRRRRR', err))

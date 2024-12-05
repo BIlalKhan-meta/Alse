@@ -3,7 +3,7 @@ import {View, Text, Image, TouchableOpacity, ScrollView} from 'react-native';
 import {images} from '../../utils/images';
 import Card from '../../components/Card';
 
-import {useRoute} from '@react-navigation/native';
+import {useIsFocused, useRoute} from '@react-navigation/native';
 
 import GeneralModal from '../../components/GeneralModal';
 import styles from './styles';
@@ -27,12 +27,13 @@ const ProductView: React.FC = () => {
   const [ReportSuccess, setReportSuccess] = useState(false);
   const [productDetails, setProductDetails] = useState([]);
   const [loading, setLoading] = useState(false);
+  const isFocused = useIsFocused();
 
   useEffect(() => {
     if (productId) {
       getData();
     }
-  }, [productId]);
+  }, [productId, isFocused]);
 
   const getData = async () => {
     setLoading(true);

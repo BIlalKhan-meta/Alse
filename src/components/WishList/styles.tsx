@@ -18,6 +18,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: '#fff',
     position: 'relative',
+    zIndex : -99
   },
   productImage: {
     width: '100%',
