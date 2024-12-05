@@ -65,6 +65,17 @@ const EditBlog = () => {
       : {}),
   });
 
+  console.log('EDITTTTT', editItem?.id);
+
+  useEffect(() => {
+    const item = editItem?.video || editItem?.image;
+    if (item) {
+      const fileType = item.split('.').pop();
+      const fileName = item.split('/').pop();
+      setMedia([...media, {uri: item, name: fileName, type: fileType}]);
+    }
+  }, [editItem]);
+
   useLayoutEffect(() => {
     navigation.setOptions({
       headerStyle: {
@@ -89,7 +100,7 @@ const EditBlog = () => {
   }, []);
 
   const handleForm = async (data: any) => {
-    if (imageData == undefined && editItem?.image == undefined) {
+    if (media.length == 0) {
       return Toast.show({
         text1: 'Upload Media',
         text2: `${title == 'Update Video' ? 'Video' : 'Image'} is Required`,
@@ -97,19 +108,15 @@ const EditBlog = () => {
       });
     }
 
-    const image = {
-      uri: imageData?.uri,
-      name: imageData?.fileName,
-      type: imageData?.type,
-    };
-
     setLoading(true);
     const temp = {
       ...data,
       privacy: selected,
-      ...(title == 'Update Blog' && imageData ? {blog_image: image} : {}),
-      ...(title == 'Update Article' && imageData ? {article_image: image} : {}),
-      ...(title == 'Update Video' && imageData ? {video_file: image} : {}),
+      ...(title == 'Update Blog' && imageData ? {blog_image: media[0]} : {}),
+      ...(title == 'Update Article' && imageData
+        ? {article_image: media[0]}
+        : {}),
+      ...(title == 'Update Video' && imageData ? {video_file: media[0]} : {}),
     };
 
     const form = new FormData();
@@ -126,6 +133,11 @@ const EditBlog = () => {
         })
         .catch(err => {
           console.log('ADDDDD BLOGGGG ERRRORRRRR', err);
+          Toast.show({
+            type: 'error',
+            text1: 'Error',
+            text2: err?.message,
+          });
         })
         .finally(() => {
           setLoading(false);
@@ -140,6 +152,11 @@ const EditBlog = () => {
         })
         .catch(err => {
           console.log('ADDDDD Article ERRRORRRRR', err);
+          Toast.show({
+            type: 'error',
+            text1: 'Error',
+            text2: err?.message,
+          });
         })
         .finally(() => {
           setLoading(false);
@@ -153,9 +170,18 @@ const EditBlog = () => {
         })
         .catch(err => {
           console.log('ERROORRRRRR', err?.message);
+          Toast.show({
+            type: 'error',
+            text1: 'Error',
+            text2: err?.message,
+          });
         });
     }
     setLoading(false);
+  };
+
+  const handleDelete = () => {
+    setMedia([]);
   };
 
   useEffect(() => {
@@ -268,10 +294,10 @@ const EditBlog = () => {
             </TouchableOpacity>
 
             <View>
-              {(imageData || editItem?.image) && (
+              {media.length != 0 && (
                 <Row justify="space-between" style={styles.row_style}>
                   <InterLightSmall>Media</InterLightSmall>
-                  {/* <TouchableOpacity onPress={() => handleDelete(index)}>
+                  <TouchableOpacity onPress={handleDelete}>
                     <Image
                       source={images.bin}
                       style={{
@@ -280,7 +306,7 @@ const EditBlog = () => {
                         resizeMode: 'contain',
                       }}
                     />
-                  </TouchableOpacity> */}
+                  </TouchableOpacity>
                 </Row>
               )}
             </View>

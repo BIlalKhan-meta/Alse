@@ -112,7 +112,6 @@ const AddBlog = () => {
         })
         .finally(() => {
           setLoading(false);
-          navigation.goBack();
         });
     } else if (title == 'Add Article') {
       await createArticle(form)
