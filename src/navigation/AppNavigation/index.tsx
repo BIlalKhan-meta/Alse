@@ -41,6 +41,7 @@ import MyOrders from '../../screens/MyOrders';
 import SubscriptionPlan from '../../screens/SubscriptionPlan';
 import PaymentLogs from '../../screens/PaymentLogs';
 import ProfileScreen from '../../screens/ProfileScreen';
+import PrivacyPolicy from '../../screens/PrivacyPolicy';
 
 const AppNavigation = () => {
   const Stack = createNativeStackNavigator();
@@ -100,6 +101,7 @@ const AppNavigation = () => {
           component={AboutUs}
           options={NavigationOptions}
         />
+       
         <Stack.Screen
           name="ChatOngoing"
           component={ChatOngoing}

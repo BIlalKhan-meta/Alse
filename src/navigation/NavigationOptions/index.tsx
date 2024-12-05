@@ -1,21 +1,7 @@
 import React from 'react';
-import {Image, Settings, Text, TouchableOpacity, View} from 'react-native';
-// import backbuttonwhite from '../../assets/icons/backbuttonwhite.png';
-// import TermsandConditions from '../../screens/TermsandConditions';
-// import Notifications from '../../screens/Notifications';
-// import NotificationsIcon from '../../assets/icons/notificationsicon.png'
-// import BagIcon from '../../assets/icons/bagicon.png'
+import {Image,TouchableOpacity, View} from 'react-native';
 import styles from './styles';
 import {images} from '../../utils/images';
-import SavedChatDetail from '../../screens/SavedChatDetail';
-import SavedScripts from '../../screens/SavedScripts';
-import Home from '../../screens/Home';
-import Menu from '../../screens/Menu';
-import Notifications from '../../screens/Notifications';
-import ContactUs from '../../screens/ContactUs';
-import Saved from '../../screens/Saved';
-import CreatePostEdit from '../../screens/CreatePostEdit';
-import MyShop from '../../screens/MyShop';
 
 interface RouteParams {
   screenName?: string;
@@ -62,6 +48,8 @@ const titles: {[key: string]: string} = {
   // WishList: "Wishlist",
   ContactUs: 'Contact Us',
   AboutUs: 'About Us',
+  PrivacyPolicy: 'Privacy Policy',
+  TermsConditions: 'Terms & Conditions',
   RequestScreen: 'RequestScreen',
   Saved: 'Saved',
   EditShop: 'Edit Shop',
@@ -91,6 +79,8 @@ const backButtonRoutes: {[key: string]: boolean} = {
   Saved: true,
   BankDetail: true,
   AboutUs: true,
+  TermsConditions: true,
+  PrivacyPolicy: true,
   MyOrders: true,
   Notifications: true,
   PaymentLogs: true,

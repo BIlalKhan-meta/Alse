@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
   },
   checkboxStyle: {
     alignSelf: 'flex-start',
-    marginLeft: vw * 8,
+    marginLeft: vw * 2,
     marginTop: vh * 2,
   },
   loginContainer: {

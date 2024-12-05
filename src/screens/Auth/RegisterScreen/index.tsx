@@ -21,6 +21,9 @@ import Toast from 'react-native-toast-message';
 import {colors} from '../../../utils/theme';
 import {signup} from '../../../api/auth';
 import {dateHelper} from '../../../utils';
+import Checkbox from 'expo-checkbox';
+import Row from '../../../components/Row';
+import {vh, vw} from '../../../constant';
 
 interface FormValues {
   name: string;
@@ -71,6 +74,7 @@ const RegisterScreen: React.FC = () => {
   const [secureCPassword, setSecureCPassword] = useState<boolean>(true);
   const [phoneNumber, setPhoneNumber] = useState<string>('');
   const [isChecked, setIsChecked] = useState<boolean>(false);
+  const [agreed, setAgreed] = useState<boolean>(false);
   const [successModel, setSuccessModel] = useState<boolean>(false);
   const [visible, setVisible] = useState<boolean>(false);
   const [image, setImage] = useState<object | null>(null);
@@ -90,8 +94,6 @@ const RegisterScreen: React.FC = () => {
       setVisible(true);
     }
   };
-
-  console.log('IMGEEEEEEEEEEEEEEEE', image);
 
   useEffect(() => {
     if (childState) {
@@ -312,7 +314,60 @@ const RegisterScreen: React.FC = () => {
                   </View>
                 </TouchableOpacity>
 
-                <CustomButton onPress={handleSubmit} loading={loading}>
+                <Row
+                  style={{
+                    alignSelf: 'flex-start',
+                    marginLeft: vw * 2,
+                    width: vw * 90,
+                    flexWrap: 'wrap',
+                  }}>
+                  <Checkbox
+                    value={agreed}
+                    onValueChange={() => setAgreed(!agreed)}
+                    // style={styles.checkbox}
+                  />
+                  <InterRegular style={[styles.faceTxt, {marginLeft: vw * 2}]}>
+                    By Signing up, You Agree to the given
+                  </InterRegular>
+                  <TouchableOpacity
+                    onPress={() => navigation.navigate('TermsConditions')}>
+                    <InterRegular
+                      style={[
+                        styles.faceTxt,
+                        {
+                          color: colors.blue,
+                          textDecorationLine: 'underline',
+                          marginLeft  :vw*6
+                        },
+                      ]}>
+                      {' '}
+                      Terms & Conditions
+                    </InterRegular>
+                  </TouchableOpacity>
+                  <InterRegular style={[styles.faceTxt, {marginLeft: vw }]}>
+                    &
+                  </InterRegular>
+                  <TouchableOpacity
+                    onPress={() => navigation.navigate('PrivacyPolicy')}>
+                    <InterRegular
+                      style={[
+                        styles.faceTxt,
+                        {
+                          color: colors.blue,
+                          textDecorationLine: 'underline',
+                         
+                        },
+                      ]}>
+                      {' '}
+                      Privacy Policy
+                    </InterRegular>
+                  </TouchableOpacity>
+                </Row>
+
+                <CustomButton
+                  onPress={handleSubmit}
+                  disable={!agreed}
+                  loading={loading}>
                   Create Account
                 </CustomButton>
 
