@@ -118,6 +118,7 @@ const MyProfilePassword: React.FC = () => {
                 placeholder="Current Password"
                 onChangeText={handleChange('currentPassword')}
                 onBlur={handleBlur('currentPassword')}
+                placeholderTextColor={colors.inputText}
                 value={values.currentPassword}
                 errors={errors.currentPassword}
                 secureTextEntry={securePassword}
