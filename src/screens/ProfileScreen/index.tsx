@@ -353,31 +353,28 @@ const ProfileScreen: React.FC = ({navigation}) => {
   return (
     <View style={styles.container}>
       {data?.is_private && !data?.is_following ? (
-        <View style={{height: vh * 48}}>
-          <Card style={{height: '100%'}}>
-            <ProfileCard
-              name={
-                data?.full_name ||
-                capitalize(data?.first_name) + ' ' + capitalize(data?.last_name)
-              }
-              // description="A Freelance Photographer living best life"
-              stats={`${data?.posts?.length} posts   ${data?.followers?.length} followers   ${data?.following?.length} following`}
-              avatar={data?.avatar}
-              onPress={handleOpen}
-              isFollowing={data?.is_following}
-              isRequested={data?.is_follow_requested}
-              private={data?.is_private}
-              id={data?.id}
-            />
-
-            <ReportBlockModal
-              isVisible={modalVisible}
-              options={options}
-              onClose={() => setModalVisible(false)}
-              style={{top: 55}}
-            />
-          </Card>
-        </View>
+        <Card>
+          <ProfileCard
+            name={
+              data?.full_name ||
+              capitalize(data?.first_name) + ' ' + capitalize(data?.last_name)
+            }
+            // description="A Freelance Photographer living best life"
+            stats={`${data?.posts?.length} posts   ${data?.followers?.length} followers   ${data?.following?.length} following`}
+            avatar={data?.avatar}
+            onPress={handleOpen}
+            isFollowing={data?.is_following}
+            isRequested={data?.is_follow_requested}
+            private={data?.is_private}
+            id={data?.id}
+          />
+          <ReportBlockModal
+            isVisible={modalVisible}
+            options={options}
+            onClose={() => setModalVisible(false)}
+            style={{top: 55}}
+          />
+        </Card>
       ) : null}
 
       {!data?.is_private || data?.is_following ? (
@@ -387,33 +384,31 @@ const ProfileScreen: React.FC = ({navigation}) => {
             showsVerticalScrollIndicator={false}
             ListHeaderComponent={() => {
               return (
-                <View style={{height: vh * 48}}>
-                  <Card style={{height: '100%'}}>
-                    <ProfileCard
-                      name={
-                        data?.full_name ||
-                        capitalize(data?.first_name) +
-                          ' ' +
-                          capitalize(data?.last_name)
-                      }
-                      // description="A Freelance Photographer living best life"
-                      stats={`${data?.posts?.length} posts   ${data?.followers?.length} followers   ${data?.following?.length} following`}
-                      avatar={data?.avatar}
-                      onPress={handleOpen}
-                      isFollowing={data?.is_following}
-                      isRequested={data?.is_follow_requested}
-                      private={data?.is_private}
-                      id={data?.id}
-                    />
+                <Card>
+                  <ProfileCard
+                    name={
+                      data?.full_name ||
+                      capitalize(data?.first_name) +
+                        ' ' +
+                        capitalize(data?.last_name)
+                    }
+                    // description="A Freelance Photographer living best life"
+                    stats={`${data?.posts?.length} posts   ${data?.followers?.length} followers   ${data?.following?.length} following`}
+                    avatar={data?.avatar}
+                    onPress={handleOpen}
+                    isFollowing={data?.is_following}
+                    isRequested={data?.is_follow_requested}
+                    private={data?.is_private}
+                    id={data?.id}
+                  />
 
-                    <ReportBlockModal
-                      isVisible={modalVisible}
-                      options={options}
-                      onClose={() => setModalVisible(false)}
-                      style={{top: 55}}
-                    />
-                  </Card>
-                </View>
+                  <ReportBlockModal
+                    isVisible={modalVisible}
+                    options={options}
+                    onClose={() => setModalVisible(false)}
+                    style={{top: 55}}
+                  />
+                </Card>
               );
             }}
             data={data?.posts}
