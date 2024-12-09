@@ -80,6 +80,13 @@ const AddProduct: React.FC = () => {
   }, [item]);
 
   const handleDelete = async (index: number) => {
+    if (media.length <= 3) {
+      return Toast.show({
+        type: 'error',
+        text1: 'Minimum 3 Images Required',
+        text2: 'Add New to Delete previous',
+      });
+    }
     const arr = [...media];
     let newId;
     if (arr[index]?.id) {
@@ -178,7 +185,7 @@ const AddProduct: React.FC = () => {
         .then(res => {
           if (res?.data) {
             // console.log("RESSSSSS",res?.data)
-            navigation.navigate("ProductView",{productId: item?.id});
+            navigation.navigate('ProductView', {productId: item?.id});
           }
         })
         .catch(err => console.log('ERRRRRRRRRRRRRRRRRRR', err))
@@ -368,6 +375,7 @@ const AddProduct: React.FC = () => {
               <CategoryDropdownComponent
                 categories={categories}
                 placeholder="Select Category"
+                defaultValue={item ? item.category.id : categoryId}
                 onChangeCategory={id => {
                   console.log('Selected Category ID:', id);
                   setCategoryId(id);
