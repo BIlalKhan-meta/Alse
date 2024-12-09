@@ -234,7 +234,7 @@ const Shop: React.FC = () => {
             <Row
               align="flex-start"
               justify="space-between"
-              style={{width: '100%', paddingHorizontal: vw,zIndex : 100}}>
+              style={{width: '100%', paddingHorizontal: vw, zIndex: 100}}>
               <View style={{width: '50%'}}>
                 <InterMedium lines={2} style={styles.mainheading}>
                   {shopDetails?.shop_name}
@@ -274,8 +274,8 @@ const Shop: React.FC = () => {
               })
             }
             icon={images.qmark}
-            title="Report Post"
-            message="Are you sure you want to report this post?"
+            title="Report Shop"
+            message="Are you sure you want to report this shop?"
             SecondaryText1="Yes"
             SecondaryText2="No"
             onPress={handleReport}
