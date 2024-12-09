@@ -353,7 +353,7 @@ const ProfileScreen: React.FC = ({navigation}) => {
   return (
     <View style={styles.container}>
       {data?.is_private && !data?.is_following ? (
-        <Card>
+        <Card style={{height: vh * 50}}>
           <ProfileCard
             name={
               data?.full_name ||
