@@ -31,12 +31,10 @@ import {useSelector} from 'react-redux';
 import {GetUserProfile, selectUserProfile} from '../../store/slices/authSlice';
 import eventEmitter, {EVENT_TYPES} from '../../utils/EventEmitter';
 import LikesModal from '../../components/LikesModal';
-import {date} from 'yup';
+
 const Home: React.FC = () => {
   const flatListRef = useRef(null);
   const [focusedIndex, setFocusedIndex] = useState(0);
-  const [loadingState, setLoadingState] = useState({});
-
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const isFoused = useIsFocused();

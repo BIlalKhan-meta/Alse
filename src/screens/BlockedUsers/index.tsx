@@ -19,6 +19,7 @@ import {getUserBlockList, unBlockUser} from '../../store/slices/homeSlice';
 import {useAppDispatch} from '../../hooks/storeHooks';
 import {getMessage, Toast} from '../../utils/helpers';
 import {FollowingCard} from '../../components/FollowingCard';
+import {EmptyComponent} from '../../components/EmptyComponent';
 
 const BlockedUsers: React.FC = () => {
   const navigation = useNavigation();
@@ -91,14 +92,6 @@ const BlockedUsers: React.FC = () => {
     </>
   );
 
-  const renderEmpty = () => (
-    <View style={styles.emptyContainer}>
-      <InterRegular style={styles.emptyText}>
-        No Blocked Users to Show.
-      </InterRegular>
-    </View>
-  );
-
   return (
     <ScrollView showsVerticalScrollIndicator={false}>
       <View style={styles.container}>
@@ -108,7 +101,9 @@ const BlockedUsers: React.FC = () => {
             renderItem={renderUserItem}
             keyExtractor={item => item.id}
             contentContainerStyle={styles.contentContainer}
-            ListEmptyComponent={renderEmpty}
+            ListEmptyComponent={
+              <EmptyComponent text={'No Blocked Users Found'} />
+            }
           />
         </Card>
 

@@ -6,6 +6,7 @@ import {selectBearerToken} from '../../store/slices/authSlice';
 import {useSelector} from 'react-redux';
 import SubscriptionPlan from '../../screens/SubscriptionPlan';
 import NavigationOptions from '../NavigationOptions';
+import SearchUsers from '../../screens/SearchUsers';
 
 const Stack = createNativeStackNavigator();
 const MainNavigation = () => {
@@ -19,6 +20,11 @@ const MainNavigation = () => {
           <Stack.Screen
             name="SubscriptionPlan"
             component={SubscriptionPlan}
+            options={NavigationOptions}
+          />
+          <Stack.Screen
+            name="SearchUsers"
+            component={SearchUsers}
             options={NavigationOptions}
           />
         </>

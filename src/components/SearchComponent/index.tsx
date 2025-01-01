@@ -3,7 +3,7 @@ import React, {useState} from 'react';
 import {View, TextInput, StyleSheet, Image} from 'react-native';
 import {images} from '../../utils/images';
 import {colors} from '../../utils/theme';
-import { vh } from '../../constant';
+import {vh} from '../../constant';
 // import { Ionicons } from '@expo/vector-icons'; // Assuming you're using Expo for icons
 
 interface SearchComponentProps {
@@ -49,6 +49,9 @@ const styles = StyleSheet.create({
   },
   icon: {
     marginRight: 10,
+    width: vh * 3,
+    height: vh * 3,
+    resizeMode: 'contain',
   },
   input: {
     flex: 1,

@@ -1,9 +1,9 @@
 import axiosInstance from '.';
 import endpoints from './endpoints';
 
-export const newsFeed = (data) => {
-// console.log("datadatadatadatadatadatadata================>",data)
-  return axiosInstance.get(`${endpoints.home.feedPost}`,{params: data});
+export const newsFeed = data => {
+  // console.log("datadatadatadatadatadatadata================>",data)
+  return axiosInstance.get(`${endpoints.home.feedPost}`, {params: data});
 };
 
 export const fetchProfileById = (id: number) => {
@@ -39,9 +39,11 @@ export const editPost = (formData: FormData, id: number) => {
     formData: true,
   });
 };
-export const removeImage  = (postID,id) =>{
-  return axiosInstance.post(endpoints.home.mediaDelete + `/${postID}/media/${id}/delete`);
-}
+export const removeImage = (postID, id) => {
+  return axiosInstance.post(
+    endpoints.home.mediaDelete + `/${postID}/media/${id}/delete`,
+  );
+};
 
 export const deletePost = (id: number) => {
   // console.log(id, 'idddddddddd');
@@ -71,6 +73,12 @@ export const userUnblock = (id: number) => {
   return axiosInstance.post(`${endpoints.home.unBlock}/${id}`);
 };
 
+export const getAllUsers = (page: number, text: string) => {
+  return axiosInstance.get(
+    `${endpoints.home.allUsers}?page=${page}&search=${text}`,
+  );
+};
+
 export const getRequestFollow = () => {
   return axiosInstance.get(endpoints.home.followRequest);
 };
@@ -95,8 +103,10 @@ export const userUnFollow = (id: number) => {
 export const createChat = data => {
   return axiosInstance.post(`${endpoints.chat.create}`, data);
 };
-export const getConversations = (search) => {
-  return axiosInstance.get(`${endpoints.chat.fetchConversation}`, {params: search});
+export const getConversations = search => {
+  return axiosInstance.get(`${endpoints.chat.fetchConversation}`, {
+    params: search,
+  });
 };
 
 export const getChat = id => {

@@ -1,7 +1,6 @@
 import {Platform, StyleSheet} from 'react-native';
 import {fontSizes, vh, vw} from '../../constant';
 import {colors} from '../../utils/theme';
-import fonts from '../../assets/fonts';
 
 const styles = StyleSheet.create({
   header: {
@@ -21,7 +20,6 @@ const styles = StyleSheet.create({
     width: vw * 80,
   },
   headericonStyle: {
-    // marginLeft: vw * 2,
     width: vw * 5,
     height: vh * 3,
   },
@@ -32,33 +30,29 @@ const styles = StyleSheet.create({
     height: vh * 5,
   },
   iconContainer: {
-    backgroundColor: colors.headerrGrey,
     height: vw * 10,
     width: vw * 10,
-    borderRadius: vw * 5,
+    borderRadius: vw * 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
   notificationandshopcontainer: {
     marginLeft: 'auto',
     flexDirection: 'row',
-    // marginRight:vw*1,
-    // backgroundColor:'green',
   },
   notificationcontainer: {
     width: vw * 10,
     height: vh * 5,
     borderRadius: vw * 10,
     backgroundColor: colors.white,
-    borderColor: colors.gray,
-    // alignSelf: 'center',
     marginHorizontal: vw * 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   notificationicon: {
-    // alignSelf: 'center',
-    // marginTop: vh * 1,
-    width: '100%',
-    height: '100%',
+    width: vh * 3,
+    height: vh * 3,
+    resizeMode: 'contain',
   },
   shopcontainer: {},
 });

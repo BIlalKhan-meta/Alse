@@ -84,12 +84,12 @@ const Saved: React.FC = () => {
   const [focusedIndex, setFocusedIndex] = useState(0);
 
   const [activePostId, setActivePostId] = useState<number | null>(null);
-  const [pause, setPause] = useState(false)
-  const [currendId , setCurrentID] = useState(0)
-  const handleVideoPause = (id) =>{
-    setPause(!pause)
-    setCurrentID(id)
-  }
+  const [pause, setPause] = useState(false);
+  const [currendId, setCurrentID] = useState(0);
+  const handleVideoPause = id => {
+    setPause(!pause);
+    setCurrentID(id);
+  };
   console.log('DISSPLAYYYYYYYYYYYYYY', displayPost);
 
   const fetchData = async () => {
@@ -192,16 +192,6 @@ const Saved: React.FC = () => {
             }}>
             <Image source={images.bellIcon} style={styles.threeDots} />
           </TouchableOpacity>
-          {/* 
-                    <TouchableOpacity onPress={() => {
-                        // setModalVisible(true)
-                    }}>
-                        <Image
-                            source={images.searchIcon}
-                            style={styles.threeDots}
-
-                        />
-                    </TouchableOpacity> */}
         </View>
       ),
     });
@@ -399,9 +389,7 @@ const Saved: React.FC = () => {
     itemVisiblePercentThreshold: 75,
   });
 
-
-  const renderPost = ({item,index}: any) => {
-
+  const renderPost = ({item, index}: any) => {
     const isFocused = focusedIndex === index;
     return (
       <PostComponent
@@ -458,8 +446,6 @@ const Saved: React.FC = () => {
   if (loading) {
     return <Loader />;
   }
-
- 
 
   return (
     <ScrollView showsVerticalScrollIndicator={false}>

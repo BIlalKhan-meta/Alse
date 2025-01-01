@@ -1,5 +1,5 @@
 import React from 'react';
-import {Image,TouchableOpacity, View} from 'react-native';
+import {Image, TouchableOpacity, View} from 'react-native';
 import styles from './styles';
 import {images} from '../../utils/images';
 
@@ -53,6 +53,7 @@ const titles: {[key: string]: string} = {
   RequestScreen: 'RequestScreen',
   Saved: 'Saved',
   EditShop: 'Edit Shop',
+  SearchUsers: 'Search User',
 };
 const backButtonRoutes: {[key: string]: boolean} = {
   ChatOngoing: true,
@@ -86,6 +87,7 @@ const backButtonRoutes: {[key: string]: boolean} = {
   PaymentLogs: true,
   ContactUs: true,
   RequestScreen: true,
+  SearchUsers: true,
 };
 
 const getTitle: React.FC<NavigationOptionsProps> = props => {
@@ -103,6 +105,13 @@ export const getHeaderRight: React.FC<NavigationOptionsProps> = props => {
   if (props.route.name === 'Home') {
     return (
       <View style={styles.notificationandshopcontainer}>
+        <TouchableOpacity
+          style={[styles.iconContainer, {marginRight: 4}]}
+          onPress={() => props.navigation.navigate('SearchUsers')}>
+          <View style={styles.notificationcontainer}>
+            <Image source={images.search} style={styles.notificationicon} />
+          </View>
+        </TouchableOpacity>
         <TouchableOpacity
           style={[styles.iconContainer, {marginRight: 4}]}
           onPress={() => props.navigation.navigate('Notifications')}>

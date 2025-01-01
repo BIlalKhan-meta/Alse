@@ -33,9 +33,9 @@ import moment from 'moment';
 import Loader from '../../components/Loader';
 import {EmptyComponent} from '../../components/EmptyComponent';
 import SearchComponent from '../../components/SearchComponent';
-import { dateHelper } from '../../utils';
+import {dateHelper} from '../../utils';
 import dayjs from 'dayjs';
-import { vh, vw } from '../../constant';
+import {vh, vw} from '../../constant';
 interface ChatItem {
   id: number;
   name: string;
@@ -135,21 +135,19 @@ const ChatScreen: React.FC = () => {
     const searchData = {
       search: val,
     };
-    console.log("searchData ===>",searchData)
+    console.log('searchData ===>', searchData);
     // setLoader(true)
     getConversations(searchData)
-    .then(res => {
-      setData(res?.data?.data);
-      setLoader(false);
-    })
-    .catch(Err => {
-      setLoader(false);
+      .then(res => {
+        setData(res?.data?.data);
+        setLoader(false);
+      })
+      .catch(Err => {
+        setLoader(false);
 
-      console.log('Error from get Conversation ', Err);
-    });
-  
+        console.log('Error from get Conversation ', Err);
+      });
   });
-
 
   const handleGroupCreationbtn = formData => {
     setGrpLoader(true);
@@ -257,14 +255,19 @@ const ChatScreen: React.FC = () => {
         />
         <View style={styles.chatInfo}>
           <InterMedium style={styles.name}>{item.name}</InterMedium>
-      <InterRegular style={[styles.lastMessage]}>{moment(item?.last_message?.created_at).local().fromNow()}</InterRegular>
-
+          <InterRegular style={[styles.lastMessage]}>
+            {moment(item?.last_message?.created_at).local().fromNow()}
+          </InterRegular>
         </View>
       </View>
-      <InterRegular style={[styles.lastMessage,{
+      <InterRegular
+        style={[
+          styles.lastMessage,
+          {
             marginTop: vh,
-            marginLeft: vw * 17
-       }]}>
+            marginLeft: vw * 17,
+          },
+        ]}>
         {item.last_message?.message ? item.last_message?.message : ''}
       </InterRegular>
     </TouchableOpacity>
@@ -275,27 +278,12 @@ const ChatScreen: React.FC = () => {
       <View style={styles.container}>
         <Card style={styles.cardStyle}>
           <View style={styles.searchContainer}>
-            {/* <View style={styles.inputContainer}>
-              <Image source={images.search} style={styles.searchIcon} />
-              <TextInput
-                placeholder="Search here"
-                placeholderTextColor={colors.darkText}
-                onChangeText={handleSearchTxt}
-              />
-            </View> */}
-            <SearchComponent onSearch={handleSearchTxt} placeholder="Search here" />
+            <SearchComponent
+              onSearch={handleSearchTxt}
+              placeholder="Search here"
+            />
 
-            {/* <NewGroupModal visible={modalVisible} closeModal={closeModal} users={usersData} /> */}
-
-            <View style={styles.dropdownContainer}>
-              {/* <DropDownTextInput
-                                items={items}
-                                defaultValue='all'
-                                // placeholder="Select a fruit"
-                                onChangeValue={handleDropdownChange}
-                                style={styles.dropDown}
-                            /> */}
-            </View>
+            <View style={styles.dropdownContainer}></View>
           </View>
           <FlatList
             showsVerticalScrollIndicator={false}
