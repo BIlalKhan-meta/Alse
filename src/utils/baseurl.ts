@@ -1,2 +1,2 @@
 export const BASE_URL =
-  'https://custom-dev.onlinetestingserver.com/alenga-backend/api';
+  'https://alse.site/admin/backend/api';
