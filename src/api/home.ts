@@ -76,6 +76,7 @@ export const userUnblock = (id: number) => {
 export const getAllUsers = (page: number, text: string) => {
   return axiosInstance.get(
     `${endpoints.home.allUsers}?page=${page}&search=${text}`,
+    // `${endpoints.home.allUsers}?page=${page}`,
   );
 };
 

@@ -33,7 +33,7 @@ const endpoints = {
     notifications: '/notifications',
     markRead: '/mark-as-read',
     markAllRead: '/mark-all-as-read',
-    allUsers: '/get-users',
+    allUsers: '/search-users',
   },
   profile: {
     editProfile: '/edit-profile',
