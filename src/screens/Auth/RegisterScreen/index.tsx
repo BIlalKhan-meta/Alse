@@ -272,7 +272,7 @@ const RegisterScreen: React.FC = () => {
                   value={values.password}
                   submitted={submitted}
                   errors={errors.password}
-                  secureTextEntry={!securePassword}
+                  secureTextEntry={securePassword}
                   onPressCurrentPassword={() =>
                     setSecurePassword(!securePassword)
                   }
