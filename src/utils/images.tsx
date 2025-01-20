@@ -6,7 +6,7 @@ export const images = {
   checkedIcon: require('../assets/Icons/checkedIcon.png'),
   linearCircle: require('../assets/Icons/linearCircle.png'),
   linearCircle2: require('../assets/Icons/linearCircle2.png'),
-  bell_icon: require('../assets/Icons/bell_icon.png'),
+  bellicon: require('../assets/Icons/bellicon.png'),
   callIcon: require('../assets/Icons/callIcon.png'),
   videoIcon: require('../assets/Icons/videoIcon.png'),
   searchIcon: require('../assets/Icons/searchIcon.png'),

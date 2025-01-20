@@ -178,7 +178,7 @@ const MyPosts: React.FC = () => {
             onPress={() => {
               navigation.navigate('Notifications');
             }}>
-            <Image source={images.bell_icon} style={styles.threeDots} />
+            <Image source={images.bellicon} style={styles.threeDots} />
           </TouchableOpacity>
         </View>
       ),

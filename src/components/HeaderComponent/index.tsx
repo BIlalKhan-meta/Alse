@@ -39,7 +39,7 @@ const HeaderComponent: React.FC<HeaderComponentProps> = ({ label, onBackPress, n
           onPress={onNofiPress}
         >
           <Image
-            source={images.bell_icon}
+            source={images.bellicon}
             style={styles.icon}
           />
         </TouchableOpacity>}
