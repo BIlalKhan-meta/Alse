@@ -24,6 +24,7 @@ import {useSelector} from 'react-redux';
 import {selectUserProfile} from '../../store/slices/authSlice';
 import {createPost} from '../../api/home';
 import Video from 'react-native-video';
+import { getTimeOffset } from '../../utils/index';
 
 interface PostProps {
   id?: number;
@@ -97,7 +98,7 @@ const PostComponent: React.FC<PostProps> = ({
   const [numberLikes, setNumberLikes] = useState(likes);
   const [loading, setLoading] = useState(false);
   const [videoLoad, setVideoLoad] = useState(true);
-// console.log("isFocusedisFocused ====>",isFocused)
+  // console.log("isFocusedisFocused ====>",isFocused)
   useEffect(() => {
     setNumberLikes(likes);
   }, [likes]);
@@ -112,6 +113,8 @@ const PostComponent: React.FC<PostProps> = ({
   };
 
   const myAccount = user?.id == id ? true : false;
+
+  console.log('OFESTSSSSSSSSSSS', getTimeOffset());
 
   const goToProfile = () => {
     if (myAccount) {
@@ -202,7 +205,6 @@ const PostComponent: React.FC<PostProps> = ({
           <Image source={{uri: postImage}} style={styles.postImage} />
         )} */}
 
-
         {postImage ? (
           mediaType === 'image' ? (
             <Image source={{uri: postImage}} style={styles.postImage} />
@@ -212,10 +214,18 @@ const PostComponent: React.FC<PostProps> = ({
                 <ActivityIndicator
                   size="large"
                   color="white"
-                  style={{position:'absolute',right : '45%',top : vh*11,zIndex : 100}}
+                  style={{
+                    position: 'absolute',
+                    right: '45%',
+                    top: vh * 11,
+                    zIndex: 100,
+                  }}
                 />
               ) : null}
-              <TouchableOpacity activeOpacity={0.9} style={{zIndex : 99}} onPress={handleVideoPause}>
+              <TouchableOpacity
+                activeOpacity={0.9}
+                style={{zIndex: 99}}
+                onPress={handleVideoPause}>
                 <Video
                   onReadyForDisplay={() => setVideoLoad(false)}
                   source={{uri: postImage}}
@@ -235,7 +245,11 @@ const PostComponent: React.FC<PostProps> = ({
               </TouchableOpacity>
             </View>
           ) : (
-            <View style={[styles.postImage, {backgroundColor: 'transparent'}]}></View>
+            <View
+              style={[
+                styles.postImage,
+                {backgroundColor: 'transparent'},
+              ]}></View>
           )
         ) : null}
 

@@ -402,7 +402,7 @@ const Saved: React.FC = () => {
         avatar={item?.avatar}
         name={item?.fullname}
         country={item?.country ? item?.country : ''}
-        time={timeFormat(item?.date)}
+        time={timeFormat(item?.date, true)}
         postText={item?.description}
         postImage={item?.media?.[0]?.path}
         mediaType={item?.media?.[0]?.type}

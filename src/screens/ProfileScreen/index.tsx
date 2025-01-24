@@ -295,7 +295,7 @@ const ProfileScreen: React.FC = ({navigation}) => {
           avatar={item?.avatar}
           name={item?.name}
           account={item?.privacy}
-          time={timeFormat(item?.date)}
+          time={timeFormat(item?.date,true)}
           postText={item?.description}
           postImage={item?.media[0]?.path}
           mediaType={item?.media[0]?.type}
@@ -353,7 +353,7 @@ const ProfileScreen: React.FC = ({navigation}) => {
   return (
     <View style={styles.container}>
       {data?.is_private && !data?.is_following ? (
-        <Card style={{height: vh * 50}}>
+        <Card style={{height: vh * 55}}>
           <ProfileCard
             name={
               data?.full_name ||

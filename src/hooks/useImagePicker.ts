@@ -11,7 +11,7 @@ const useImagePicker = () => {
       mediaType: 'photo', // 'photo' or 'video'
       maxWidth: 300,
       maxHeight: 550,
-      quality: 1,
+      quality: 0.2,
     };
 
     launchImageLibrary(options, response => {
@@ -33,7 +33,7 @@ const useImagePicker = () => {
       mediaType: mediaType || 'photo', // 'photo' or 'video'
       maxWidth: 300,
       maxHeight: 550,
-      quality: 1,
+      quality: 0.2,
     };
 
     launchCamera(options, response => {

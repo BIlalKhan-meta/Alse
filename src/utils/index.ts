@@ -18,6 +18,25 @@ export const timeHelper = (time: any) => {
   return dayjs(time).format('HH:mm');
 };
 
-export const timeFormat = (time: string) => {
+export const getTimeOffset = () => {
+  const now = new Date();
+  const offsetMinutes = now.getTimezoneOffset();
+  const offsetHours = -offsetMinutes / 60;
+
+  return offsetHours;
+};
+
+export const timeFormat = (time: string, offest?: boolean) => {
+  if (offest) {
+    const date = new Date(time);
+    const offsetHours = getTimeOffset();
+
+    // Adjust the date by adding the offset in milliseconds
+    const adjustedDate = new Date(
+      date.getTime() + offsetHours * 60 * 60 * 1000,
+    );
+
+    return dayjs(adjustedDate.toISOString()).format('hh:mm A');
+  }
   return dayjs(time).format('hh:mm A');
 };

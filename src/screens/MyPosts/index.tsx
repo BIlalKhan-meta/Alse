@@ -173,14 +173,13 @@ const MyPosts: React.FC = () => {
         backgroundColor: colors.headerColor,
       },
       headerRight: () => (
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => {
-              navigation.navigate('Notifications');
-            }}>
-            <Image source={images.bellicon} style={styles.threeDots} />
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          style={[styles.iconContainer, {marginRight: 4}]}
+          onPress={() => navigation.navigate('Notifications')}>
+          <View style={styles.notificationcontainer}>
+            <Image source={images.bellicon} style={styles.notificationicon} />
+          </View>
+        </TouchableOpacity>
       ),
     });
   }, [navigation]);
@@ -254,7 +253,7 @@ const MyPosts: React.FC = () => {
         avatar={item?.avatar}
         name={item?.fullname}
         country={item.country ? item.country : ''}
-        time={timeFormat(item?.date)}
+        time={timeFormat(item?.date, true)}
         postText={item?.description}
         isPaused={pause && currendId == item?.id}
         handleVideoPause={() => handleVideoPause(item?.id)}
@@ -302,7 +301,6 @@ const MyPosts: React.FC = () => {
       <InterRegular style={styles.emptyText}>No Posts to Show.</InterRegular>
     </View>
   );
-
 
   const viewabilityConfig = useRef({
     waitForInteraction: true,
