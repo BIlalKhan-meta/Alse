@@ -18,6 +18,7 @@ export const colors = {
   darkGray: '#666666',
   camBg: '#E7F7FE',
   inputBorder: '#E3E3E3',
+  green: '#0C959B'
 };
 
 export const appShadow: Record<string, any> = {

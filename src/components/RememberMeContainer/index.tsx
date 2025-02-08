@@ -41,7 +41,7 @@ const styles = StyleSheet.create({
     remembermecontainer:{flexDirection:'row', alignItems:'center'},
     remembermetext:{marginLeft:vw*2,color:colors.inputText},
     forgottextcontainer:{marginLeft:'auto', },
-    forgottext:{color:colors.redText,borderBottomWidth:1,borderBottomColor:colors.redText}
+    forgottext:{color:colors.lightGrey,borderBottomWidth:1,borderBottomColor:colors.redText}
 });
 
 export default RememberMeContainer;

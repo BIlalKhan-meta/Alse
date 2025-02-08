@@ -1,132 +1,132 @@
 import {StyleSheet} from 'react-native';
-import {fontSizes, vh, vw} from '../../../constant';
 import {colors} from '../../../utils/theme';
+import {fontSizes, vh, vw} from '../../../constant';
 import fonts from '../../../assets/fonts';
 
 const styles = StyleSheet.create({
-  scrollview: {
-    flex: 1,
+  safeAreaView: {
     backgroundColor: colors.white,
+    height: vh * 100
   },
   container: {
-    backgroundColor: colors.headerColor,
     alignItems: 'center',
-    paddingBottom: vh * 5,
     paddingTop: vh * 2,
+    paddingHorizontal: vw * 5,
+    // flex: 1,
+  },
+  googleButton: {
+    borderWidth: 0,
+    marginTop: vh * 2,
+    backgroundColor: "#0C959B1A",
+    width: "100%",
+    paddingLeft: 20,
+    paddingTop: 5,
+    borderRadius: 20,
+  },
+  lineContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: vh * 2,
+  },
+  lineText: {
+    color: '#61677D',
+    fontSize: fontSizes.f11,
+    lineHeight: 22,
+    textAlign: 'center',
+  },
+  line: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#E0E5EC'
+  },
+  googleLogin: {
+    
+  },
+  input: {
+    backgroundColor: "#0C959B1A",
+    // fontFamily: fonts.Inter.Bold,
+    color: colors.black,
+    fontSize: fontSizes.f11,
+    height: vh * 6,
+    width: vw * 85,
+    fontWeight: '300',
+    borderColor: '#0C959B',
+    borderWidth: 1,
+    borderRadius: 5,
+    paddingHorizontal: 10,
+  },
+  subHeading : {
+    color: '#61677D',
+    fontSize: fontSizes.f11,
+    lineHeight: 22,
+    textAlign: 'center',
+    marginTop: vh * 1,
+    marginBottom: vh * 2,
   },
   cardStyle: {
     alignItems: 'center',
+    flex: 1,
     paddingTop: vh * 2,
   },
   heading: {
-    color: colors.black,
+    color: colors.green,
     fontSize: fontSizes.f20,
-    // fontWeight: '600',
+    // fontWeight: "600"
   },
-  imageStyle: {
-    width: vh * 12,
-    height: vh * 12,
-    borderRadius: vh * 12,
-    backgroundColor: colors.inputBorder
+  bottomStyle: {
+    paddingTop: vh * 5
   },
   imageContainer: {
-    width: vw * 25,
-    height: vh * 12,
-    paddingTop: vh * 4,
-    // marginTop:vh*4,
-    // backgroundColor:"yellow"
-  },
-  camera: {
-    backgroundColor: colors.white,
-    width: vh * 3.5,
-    height: vh * 3.5,
-    borderRadius: vh * 3.5,
-    borderWidth: 1.5,
-    borderColor: colors.themeColor,
     alignItems: 'center',
-    justifyContent: 'center',
-    position: 'absolute',
-    top: vh * 12,
-    left: vw * 17,
+    marginBottom: 20,
   },
-  label: {
-    // fontSize:fontSizes.f14,
-    alignSelf: 'flex-start',
-    // marginLeft:vw*8,
-    marginTop: vh * 2,
-    color: colors.black,
-    fontSize: fontSizes.f14,
+  loginImage: {
+    width: 90,
+    height: 90,
   },
-  textinputbox: {
+  loginBtn: {
+    marginTop: vh * 5,
+    width: vw * 85,
+    borderRadius: 15,
+  },
+  bottomText: {
+    color: colors.darkGray,
+    fontFamily: fonts.Poppins.Regular,
     fontSize: fontSizes.f11,
-    height: vh * 6,
+    alignContent: 'flex-start'
+  },
+  signUpText: {
+    color: colors.green,
+    fontSize: fontSizes.f11,
+  },
+  bottomContainer: {
+    paddingHorizontal: vw * 8,
+    width: '100%',
     marginTop: vh * 2,
-    width: vw * 84,
-    fontWeight: '300',
-    borderColor: colors.inputcolor,
-    borderWidth: 1,
-    borderRadius: 5,
-    paddingHorizontal: 10,
-    backgroundColor: colors.inputcolor,
-    // backgroundColor:colors.green,
-    color: colors.inputText,
+  },
+  bottomTextContainer: {
+    backgroundColor: 'white',
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'flex-start',
+    gap: 10
+  },
+  forgotPasswordContainer: {
+    alignItems: 'center',
+    marginTop: vh * 2
+  },
+  forgotPasswordText: {
+    color: colors.darkGray,
+    fontSize: fontSizes.f11,
+  },
+  checkboxcontainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    alignSelf: 'center',
-    // marginRight: 10
-  },
-  pickercontainer: {
-    fontFamily: fonts.Inter.Bold,
-    color: colors.inputText,
-    fontSize: fontSizes.f11,
-    height: vh * 6,
-    marginTop: vh * 2,
-    width: vw * 42,
-    fontWeight: '300',
-    borderColor: colors.inputcolor,
-    borderWidth: 1,
-    borderRadius: 5,
-    paddingHorizontal: 10,
-    backgroundColor: colors.inputcolor,
-  },
-  checkboxStyle: {
-    alignSelf: 'flex-start',
-    marginLeft: vw * 2,
-    marginTop: vh * 2,
-  },
-  loginContainer: {
-    flexDirection: 'row',
-    marginTop: vh * 2,
-  },
-  loginTxt: {
-    fontSize: fontSizes.f12,
-    color: colors.inputText,
-  },
-  loginTxt2: {
-    fontSize: fontSizes.f12,
-    color: colors.themeColor,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.themeColor,
-  },
-  faceBtn: {
-    alignSelf: 'center',
-    alignItems: 'center',
-    marginTop: vh * 2,
-  },
-  faceImg: {
-    width: vw * 10,
-    height: vh * 5,
-    alignSelf: 'center',
-    marginTop: vh,
-  },
-  faceTxt: {
-    fontSize: fontSizes.f12,
-    color: colors.inputText,
-  },
-  error: {
-    color: colors.redText,
-    marginTop: vh * 1,
-  },
+    gap: 10,
+    paddingHorizontal: vw * 4,
+    marginTop: vh * 2
+  }
 });
 
 export default styles;

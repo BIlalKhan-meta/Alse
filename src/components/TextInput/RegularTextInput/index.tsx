@@ -45,73 +45,23 @@ const RegularTextInput: React.FC<RegularTextInputProps> = props => {
             {props?.label}
           </InterRegular>
         )}
-        {/* <TextInputWrapper
-          style={[textInputStyle, props.style]}
-          secureTextEntry={props.secureTextEntry}
-          {...props}
-          maxLength={props.maxLength}
-        /> */}
-        <TextInput
-          style={[textInputStyle, props.style]}
-          // secureTextEntry
-          {...props}
-          maxLength={props.maxLength}
-        />
-        {/* {(props.label === 'Password' || props.label === 'New Password') && (
-          <TouchableOpacity
-            onPress={props?.onPressPassword}
-            style={styles.eyeicon}>
-            <Image
-              source={
-                props?.secureTextEntry
-                  ? images.VisibilityOffIcon
-                  : images.EyeIcon
-              }
-              tintColor={colors.black}
-            />
-          </TouchableOpacity>
-        )}
-
-        {(props.label === 'Confirm Password' ||
-          props.label === 'Confirm New Password') && (
-          <TouchableOpacity
-            onPress={props?.onPressCPassword}
-            style={styles.eyeicon}>
-            <Image
-              source={
-                props?.secureTextEntry
-                  ? images.VisibilityOffIcon
-                  : images.EyeIcon
-              }
-              tintColor={colors.black}
-            />
-          </TouchableOpacity>
-        )} */}
-
-        {props.secureTextEntry == false && (
-          <TouchableOpacity
-            onPress={props?.onPressCurrentPassword}
-            style={styles.eyeicon}>
-            <Image source={images.EyeIcon} tintColor={colors.black} />
-          </TouchableOpacity>
-        )}
-        {props.secureTextEntry == true && (
-          <TouchableOpacity
-            onPress={props?.onPressCurrentPassword}
-            style={styles.eyeicon}>
-            <Image source={images.VisibilityOffIcon} tintColor={colors.black} />
-          </TouchableOpacity>
-        )}
-
-        {/* {props.label=== 'New Password' && 
-        <TouchableOpacity onPress={props?.onPressPassword} style={styles.eyeicon}>
-        <Image source={props?.secureTextEntry ? EyeIcon : VisibilityOffIcon} />
-        </TouchableOpacity>} */}
-
-        {/* {props.label=== 'Confirm New Password' && 
-        <TouchableOpacity onPress={props?.onPressCPassword} style={styles.eyeicon}>
-        <Image source={props?.secureTextEntry ? EyeIcon : VisibilityOffIcon}/>
-        </TouchableOpacity>} */}
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={[textInputStyle, props.style]}
+            {...props}
+            maxLength={props.maxLength}
+          />
+          {props.secureTextEntry !== undefined && (
+            <TouchableOpacity
+              onPress={props?.onPressCurrentPassword}
+              style={styles.eyeicon}>
+              <Image 
+                source={props.secureTextEntry ? images.VisibilityOffIcon : images.EyeIcon} 
+                tintColor={colors.black}
+              />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       {props?.errors && (
@@ -125,13 +75,17 @@ const RegularTextInput: React.FC<RegularTextInputProps> = props => {
 
 const styles = StyleSheet.create({
   container: {marginTop: vh * 3},
+  inputContainer: {
+    position: 'relative',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   label: {
     marginLeft: vw * 2,
     color: colors.black,
     fontSize: fontSizes.f14,
   },
   textinput: {
-    // fontFamily: fonts.Inter.Bold,
     color: colors.inputText,
     fontSize: fontSizes.f11,
     height: vh * 6,
@@ -142,7 +96,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 5,
     paddingHorizontal: 10,
-    // backgroundColor:'rgba(48, 86, 112, 0.05)',
     backgroundColor: colors.inputcolor,
   },
   textinputMultiline: {
@@ -156,16 +109,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 5,
     paddingHorizontal: 10,
-    // backgroundColor:'rgba(48, 86, 112, 0.05)',
     backgroundColor: colors.inputcolor,
     textAlignVertical: 'top',
   },
   eyeicon: {
     position: 'absolute',
-    marginTop: vh * 7,
-    marginLeft: vw * 77,
+    right: vw * 2,
     height: vh * 4,
     width: vw * 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'center',
   },
   error: {
     color: colors.redText,

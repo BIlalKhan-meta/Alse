@@ -11,6 +11,7 @@
     "test": "jest"
   },
   "dependencies": {
+    "@klarna/react-native-vector-drawable": "^0.5.1",
     "@react-native-async-storage/async-storage": "^2.0.0",
     "@react-native-community/blur": "^4.4.0",
     "@react-native-community/datetimepicker": "^8.2.0",
@@ -56,6 +57,7 @@
     "react-native-swiper": "^1.6.0",
     "react-native-tab-view": "^3.5.2",
     "react-native-toast-message": "^2.2.1",
+    "react-native-vector-image": "^0.4.5",
     "react-native-video": "^6.8.2",
     "react-native-video-player": "^0.14.0",
     "react-native-webview": "^13.12.5",

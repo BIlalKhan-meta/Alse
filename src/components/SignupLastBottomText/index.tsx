@@ -1,4 +1,4 @@
-import { StyleProp, Text, TextStyle, TouchableOpacity, View } from 'react-native';
+import { StyleProp, Text, TextStyle, TouchableOpacity, View, ViewStyle } from 'react-native';
 import { StyleSheet } from 'react-native';
 import { colors } from '../../utils/theme';
 import { fontSizes, vh, vw } from '../../constant';
@@ -10,12 +10,13 @@ interface SignupLastBottomTextProps {
   firstText: string;
   secondText: string;
   onPress: () => void;
+  style?: StyleProp<ViewStyle>;
 }
 
 const SignupLastBottomText: React.FC<SignupLastBottomTextProps> = (props) => {
   return (
     <>
-      <View style={styles.textcontainer}>
+      <View style={[styles.textcontainer, props.style]}>
         <InterRegular style={styles.firsttext}>{props?.firstText}</InterRegular>
         <TouchableOpacity onPress={props?.onPress}>
           <InterRegular style={styles.secondtext}>{props?.secondText}</InterRegular>
@@ -27,9 +28,7 @@ const SignupLastBottomText: React.FC<SignupLastBottomTextProps> = (props) => {
 
 const styles = StyleSheet.create({
   textcontainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: vh * 3
+    marginTop: vh * 3,
   },
   firsttext: {
     marginRight: vw * 1.3,

@@ -1,420 +1,238 @@
-import {useEffect, useState} from 'react';
-import {View, Text, TouchableOpacity, Image} from 'react-native';
+import { useEffect, useState } from 'react';
+import { View, Text, TouchableOpacity, Image, SafeAreaView } from 'react-native';
 import * as yup from 'yup';
 import styles from './styles';
-import InterRegular from '../../../components/Text/InterRegular';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import RegularTextInput from '../../../components/TextInput/RegularTextInput';
-import {Formik} from 'formik';
-import PhoneNumberInput from '../../../components/TextInput/PhoneNumberInput';
-import CheckboxComponent from '../../../components/CheckboxComponent';
+import { Formik } from 'formik';
+import { colors } from '../../../utils/theme';
 import CustomButton from '../../../components/CustomButton';
-import {images} from '../../../utils/images';
-import GeneralModal from '../../../components/GeneralModal';
-import {useNavigation} from '@react-navigation/native';
-import Card from '../../../components/Card';
-import useImagePicker from '../../../hooks/useImagePicker';
+import { useNavigation } from '@react-navigation/native';
+import { useAppDispatch } from '../../../hooks/storeHooks';
+import { getFcmToken } from '../../../utils/messaging.utils';
 import InterBoldLabel from '../../../components/Text/InterBoldLabel';
-import {DialogBox} from '../../../components/DialogBox';
-import DatePickerInput from '../../../components/TextInput/DatePickerTextInput2';
+import PoppinsLabel from '../../../components/Text/Poppins';
+import { signup } from '../../../api/auth';
 import Toast from 'react-native-toast-message';
-import {colors} from '../../../utils/theme';
-import {signup} from '../../../api/auth';
-import {dateHelper} from '../../../utils';
+import { setUser } from '../../../store/slices/authSlice';
+import EncryptedStorage from 'react-native-encrypted-storage';
+import InterLight from '../../../components/Text/InterLight';
 import Checkbox from 'expo-checkbox';
-import Row from '../../../components/Row';
-import {vh, vw} from '../../../constant';
 
 interface FormValues {
   name: string;
-  email: string;
+  identifier: string;
   password: string;
-  cpassword: string;
-  contactNo: string;
-  countryCode: string;
-  dateOfBirth: string;
-  // age: string,
+  agree: boolean;
 }
 
-const initialValues = {
-  name: '',
-  email: '',
-  password: '',
-  cpassword: '',
-  contactNo: '',
-  countryCode: '+1',
-  dateOfBirth: '',
-  // age: '',
-};
-
-const validationSchema = yup.object().shape({
-  name: yup.string().required('Name is required'),
-  email: yup
-    .string()
-    .email('Email or password is wrong !! TRY AGAIN')
-    .required('Email is required'),
-  password: yup
-    .string()
-    .min(8, 'Password must be at least 8 characters')
-    .required('Password is required'),
-  cpassword: yup
-    .string()
-    .oneOf([yup.ref('password')], 'Passwords must match')
-    .required('Confirm Password is required'),
-  // contactNo: yup.string().required('Contact Number is required'),
-  // dateOfBirth: yup.string().required('Date of Birth is required'),
-});
-
-const RegisterScreen: React.FC = () => {
-  const navigation = useNavigation();
-  const {imageData, captureImage, chooseImageFromLibrary} = useImagePicker();
+const SignupScreen: React.FC = () => {
+  const navigation = useNavigation<any>();
+  const dispatch = useAppDispatch();
 
   const [submitted, setSubmitted] = useState<boolean>(false);
   const [securePassword, setSecurePassword] = useState<boolean>(true);
-  const [secureCPassword, setSecureCPassword] = useState<boolean>(true);
-  const [phoneNumber, setPhoneNumber] = useState<string>('');
-  const [isChecked, setIsChecked] = useState<boolean>(false);
-  const [agreed, setAgreed] = useState<boolean>(false);
-  const [successModel, setSuccessModel] = useState<boolean>(false);
-  const [visible, setVisible] = useState<boolean>(false);
-  const [image, setImage] = useState<object | null>(null);
-  const [childImage, setChildImage] = useState<object | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [childState, setChildState] = useState(false);
+  const [isSelected, setIsSelected] = useState<boolean>(false);
+  const [initialValues, setInitialValues] = useState<FormValues>({
+    name: '',
+    identifier: '',
+    password: '',
+    agree: false
+  });
 
-  const handleCheckboxChange = (value: boolean) => {
-    setIsChecked(value);
-  };
 
-  const handleImageCapture = (state: boolean) => {
-    setChildState(state);
-    if (state == true) {
-      captureImage('photo');
-    } else {
-      setVisible(true);
-    }
-  };
+  const validationSchema = yup.object().shape({
+    // Either email or phone number is required
+    identifier: yup.string().required('Email/Phone Number is required'),
+    password: yup
+      .string()
+      .min(6, 'Password must be at least 6 characters')
+      .required('Password is required'),
+    name: yup.string().required('Name is required'),
+    agree: yup.boolean().oneOf([true], 'You must agree to the terms and conditions and Privacy Policy'),
+  });
 
-  useEffect(() => {
-    if (childState) {
-      setChildImage({
-        uri: imageData?.uri,
-        name: imageData?.fileName,
-        type: imageData?.type,
-      });
-    } else {
-      setImage({
-        uri: imageData?.uri,
-        name: imageData?.fileName,
-        type: imageData?.type,
-      });
-    }
-    setVisible(false);
-  }, [imageData]);
+  const handleSubmit = async (values: FormValues) => {
+    try {
+      if (submitted) return;
 
-  const handleNumberChange = (number: string, setFieldValue: any) => {
-    setFieldValue('contactNo', number);
-    setPhoneNumber(number);
-  };
-  const handleSubmit = (values: FormValues) => {
-    setLoading(true);
-    if (!image?.uri) {
-      setLoading(false);
-      return Toast.show({
-        type: 'error',
-        text1: 'Profile Picture',
-        text2: 'Profile Picture Required',
-      });
-    }
+      setSubmitted(true);
 
-    if (isChecked && !childImage) {
-      setLoading(false);
-      return Toast.show({
-        type: 'error',
-        text1: 'Child Recognition',
-        text2: 'Child Recognition is Required',
-      });
-    }
-    const signupData = {
-      full_name: values.name,
-      email: values.email,
-      password: values.password,
-      // dialing_code: values.countryCode,
-      // phone_number: values.contactNo,
-      // dob: dateHelper(values.dateOfBirth),
-      image: image,
-      ...(isChecked ? {is_child: 1, child_image: childImage} : {}),
-    };
+      const apiData = {
+        full_name: values.name,
+        identifier: values.identifier,
+        password: values.password,
+        agree: values.agree,
+      };
 
-    const form = new FormData();
-    Object.entries(signupData).forEach(([key, value]) => {
-      form.append(key, value);
-    });
-
-    signup(form)
-      .then(res => {
-        console.log('response from Signup ====>', res);
-        setSuccessModel(true);
-      })
-      .catch(error => {
+      if (!values.agree) {
         Toast.show({
           type: 'error',
-          text1: 'Error',
-          text2: error?.message,
+          text1: 'Terms & Conditions',
+          text2: 'Please agree to the terms and conditions and Privacy Policy',
         });
-      })
-      .finally(() => {
         setSubmitted(false);
-        setLoading(false);
+        return;
+      }
+
+      // Basic email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      // Basic phone validation (assumes minimum 7 digits)
+      const phoneRegex = /^\d{7,}$/;
+
+      if (!emailRegex.test(values.identifier) && !phoneRegex.test(values.identifier)) {
+        Toast.show({
+          type: 'error',
+          text1: 'Invalid Input',
+          text2: 'Please enter a valid email or phone number',
+        });
+        setSubmitted(false);
+        return;
+      }
+
+      const res = await signup(apiData);
+
+      if (res?.data?.status) {
+        Toast.show({
+          type: 'success',
+          text1: 'Success',
+          text2: 'Your account has been created successfully',
+        });
+        navigation.navigate('Login');
+      } else {
+        // Handle known error responses
+        Toast.show({
+          type: 'error',
+          text1: 'Signup Failed',
+          text2: res?.data?.message || 'Something went wrong. Please try again.',
+        });
+      }
+    } catch (error: any) {
+
+      console.log('error ===>', error, error?.response?.data);
+      // Handle unexpected errors
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: error?.message || 'An unexpected error occurred. Please try again.',
       });
+    } finally {
+      setSubmitted(false);
+    }
   };
 
   return (
-    <Formik
-      initialValues={initialValues}
-      validationSchema={validationSchema}
-      onSubmit={handleSubmit}>
-      {({
-        handleSubmit,
-        handleChange,
-        handleBlur,
-        values,
-        errors,
-        setFieldValue,
-      }) => (
-        <>
-          <KeyboardAwareScrollView
-            style={styles.scrollview}
-            showsVerticalScrollIndicator={false}>
-            <DialogBox
-              status="upload"
-              heading="Upload Media"
-              onClose={() => setVisible(false)}
-              visible={visible}
-              button={[
-                {
-                  text: 'Open Camera',
-                  onPress: () => captureImage(),
-                },
-                {text: 'Open Gallery', onPress: chooseImageFromLibrary},
-              ]}
-            />
+    <SafeAreaView style={ styles.safeAreaView }>
+      <Formik
+        initialValues={ initialValues }
+        validationSchema={ validationSchema }
+        enableReinitialize
+        onSubmit={ handleSubmit }>
+        { ({ handleSubmit, handleChange, handleBlur, values, errors, setFieldValue }) => (
 
-            <View style={styles.container}>
-              <Card style={styles.cardStyle}>
-                <InterBoldLabel style={styles.heading}>
-                  Create Account
-                </InterBoldLabel>
-                <View style={styles.imageContainer}>
+          <>
+            <KeyboardAwareScrollView
+              showsVerticalScrollIndicator={ false }>
+              <View style={ styles.container }>
+                <View style={ styles.imageContainer }>
                   <Image
-                    source={image ? {uri: image?.uri} : images.profile}
-                    style={styles.imageStyle}
-                  />
-
-                  <TouchableOpacity
-                    style={styles.camera}
-                    onPress={() => handleImageCapture(false)}>
-                    <Image source={images.camera} />
-                  </TouchableOpacity>
-                </View>
-                <RegularTextInput
-                  label="Full Name"
-                  placeholder="Enter full name"
-                  placeholderTextColor={colors.inputText}
-                  onChangeText={handleChange('name')}
-                  onBlur={handleBlur('name')}
-                  value={values.name}
-                  submitted={submitted}
-                  errors={errors.name}
-                  labelStyle={styles.label}
-                />
-
-                <RegularTextInput
-                  label="Email Address"
-                  placeholder="Enter Email Address"
-                  placeholderTextColor={colors.inputText}
-                  onChangeText={handleChange('email')}
-                  onBlur={handleBlur('email')}
-                  value={values.email}
-                  submitted={submitted}
-                  errors={errors.email}
-                />
-
-                {/* <PhoneNumberInput
-                  initialNumber={phoneNumber}
-                  onNumberChange={(number: string) =>
-                    handleNumberChange(number, setFieldValue)
-                  }
-                  label="Phone No."
-                  submitted={submitted}
-                  errors={errors.contactNo}
-                  onChangeCountry={handleChange('countryCode')}
-                />
-
-                <InterRegular style={styles.label}>Date of Birth</InterRegular>
-
-                <DatePickerInput
-                  label="Date of Birth"
-                  error={errors.dateOfBirth}
-                  initialDate={values.dateOfBirth}
-                  placeholder="mm/dd/yyyy"
-                  onDateChange={e => setFieldValue('dateOfBirth', e)}
-                  style={styles.textinputbox}
-                  maxDate
-                /> */}
-
-                <RegularTextInput
-                  label="Password"
-                  placeholder="Enter Password"
-                  // placeholderTextColor={colors.inputText}
-                  onChangeText={handleChange('password')}
-                  onBlur={handleBlur('password')}
-                  value={values.password}
-                  submitted={submitted}
-                  errors={errors.password}
-                  secureTextEntry={securePassword}
-                  onPressCurrentPassword={() =>
-                    setSecurePassword(!securePassword)
-                  }
-                  eyeColor={colors.black}
-                />
-
-                <RegularTextInput
-                  label="Confirm Password"
-                  placeholder="Enter Confirm Password"
-                  placeholderTextColor={colors.inputText}
-                  onChangeText={handleChange('cpassword')}
-                  onBlur={handleBlur('cpassword')}
-                  value={values.cpassword}
-                  submitted={submitted}
-                  errors={errors.cpassword}
-                  secureTextEntry={secureCPassword}
-                  onPressCurrentPassword={() =>
-                    setSecureCPassword(!secureCPassword)
-                  }
-                />
-                <View style={styles.checkboxStyle}>
-                  <CheckboxComponent
-                    label="Child Account"
-                    isChecked={isChecked}
-                    onValueChange={handleCheckboxChange}
+                    source={ require('./images/Wave.png') }
+                    style={ styles.loginImage }
                   />
                 </View>
 
-                <TouchableOpacity style={styles.faceBtn}>
-                  <View>
-                    <InterRegular style={styles.faceTxt}>
-                      Face Recognition is required for child verification
-                    </InterRegular>
-                    <TouchableOpacity
-                      disabled={!isChecked}
-                      onPress={() => handleImageCapture(true)}>
-                      <Image source={images.face} style={styles.faceImg} />
-                    </TouchableOpacity>
-                  </View>
-                </TouchableOpacity>
-
-                <Row
-                  style={{
-                    alignSelf: 'flex-start',
-                    marginLeft: vw * 2,
-                    width: vw * 90,
-                    flexWrap: 'wrap',
-                  }}>
-                  <Checkbox
-                    value={agreed}
-                    onValueChange={() => setAgreed(!agreed)}
-                    // style={styles.checkbox}
-                  />
-                  <InterRegular style={[styles.faceTxt, {marginLeft: vw * 2}]}>
-                    By Signing up, You Agree to the given
-                  </InterRegular>
-                  <TouchableOpacity
-                    onPress={() => navigation.navigate('TermsConditions')}>
-                    <InterRegular
-                      style={[
-                        styles.faceTxt,
-                        {
-                          color: colors.blue,
-                          textDecorationLine: 'underline',
-                          marginLeft  :vw*6
-                        },
-                      ]}>
-                      {' '}
-                      Terms & Conditions
-                    </InterRegular>
-                  </TouchableOpacity>
-                  <InterRegular style={[styles.faceTxt, {marginLeft: vw }]}>
-                    &
-                  </InterRegular>
-                  <TouchableOpacity
-                    onPress={() => navigation.navigate('PrivacyPolicy')}>
-                    <InterRegular
-                      style={[
-                        styles.faceTxt,
-                        {
-                          color: colors.blue,
-                          textDecorationLine: 'underline',
-                         
-                        },
-                      ]}>
-                      {' '}
-                      Privacy Policy
-                    </InterRegular>
-                  </TouchableOpacity>
-                </Row>
-
-                <CustomButton
-                  onPress={handleSubmit}
-                  disable={!agreed}
-                  loading={loading}>
-                  Create Account
+                <InterBoldLabel style={ styles.heading }>Sign Up</InterBoldLabel>
+                <PoppinsLabel style={ styles.subHeading }>It was popularised in the 1960s with the release of Letraset sheetscontaining Lorem Ipsum.</PoppinsLabel>
+                <CustomButton onPress={ () => { } } style={ styles.googleButton }>
+                  <Image source={ require('../LoginScreen/images/googleLogin.png') } style={ styles.googleLogin } />
                 </CustomButton>
 
-                <View style={styles.loginContainer}>
-                  <InterRegular style={styles.loginTxt}>
-                    Already have an account?{' '}
-                  </InterRegular>
-                  <TouchableOpacity
-                    onPress={() => navigation.navigate('Login')}>
-                    <InterRegular style={styles.loginTxt2}>
-                      Login Now{' '}
-                    </InterRegular>
-                  </TouchableOpacity>
+                <View style={ styles.lineContainer }>
+                  <View style={ styles.line } />
+                  <View>
+                    <Text style={ styles.lineText }>Or</Text>
+                  </View>
+                  <View style={ styles.line } />
                 </View>
 
-                <GeneralModal
-                  visible={successModel}
-                  closeModal={() => setSuccessModel(false)}
-                  icon={images.checkedIcon}
-                  title={!isChecked ? 'Account Registered' : ''}
-                  message={
-                    !isChecked
-                      ? 'Your account has been registered successfully'
-                      : 'You will be notified via email whether you are approved or disapproved'
-                  }
-                  buttonText="Okay"
-                  primaryBtn={true}
-                  onPress={() => {
-                    setSuccessModel(false);
-                    navigation.navigate('Login');
-                  }}
-                />
-              </Card>
 
-              {/* <BottomModal
-                visible={bottomVisible}
-                closeModal={() => setbottomVisible(false)}
-                onPressImage={() => captureImage()}
-                // onPress={() => captureImage('video')}
-                onPressGallery={() => chooseImageFromLibrary()}
-              /> */}
-            </View>
-          </KeyboardAwareScrollView>
-        </>
-      )}
-    </Formik>
+                <RegularTextInput
+                  placeholder='Name'
+                  placeholderTextColor={ colors.darkGray }
+                  onChangeText={ handleChange('name') }
+                  onBlur={ handleBlur('name') }
+                  value={ values.name }
+                  submitted={ submitted }
+                  errors={ errors.name }
+                  style={ styles.input }
+                />
+
+                <RegularTextInput
+                  placeholder='Email/Phone Number'
+                  placeholderTextColor={ colors.darkGray }
+                  onChangeText={ handleChange('identifier') }
+                  onBlur={ handleBlur('identifier') }
+                  value={ values.identifier }
+                  submitted={ submitted }
+                  errors={ errors.identifier }
+                  style={ styles.input }
+                />
+
+                <RegularTextInput
+                  placeholder="Enter Password"
+                  placeholderTextColor={ colors.darkGray }
+                  onChangeText={ handleChange('password') }
+                  onBlur={ handleBlur('password') }
+                  value={ values.password }
+                  submitted={ submitted }
+                  errors={ errors.password }
+                  secureTextEntry={ securePassword }
+                  onPressCurrentPassword={ () =>
+                    setSecurePassword(!securePassword)
+                  }
+                  style={ styles.input }
+                />
+
+                <View style={ styles.checkboxcontainer }>
+                  <Checkbox
+                    value={ values.agree }
+                    onValueChange={ (value: boolean) => {
+                      setFieldValue('agree', value);
+                    } }
+                  />
+                  <Text>I agree to the terms and conditions and Privacy Policy</Text>
+                </View>
+
+                {/* <RememberMeContainer
+                  isSelected={ isSelected }
+                  setIsSelected={ setIsSelected }
+                  onPress={ () => navigation.navigate('ForgotPassword') }
+                /> */}
+
+                <CustomButton
+                  // onPress={() => {
+                  //   setSubmitted(true)
+                  //   resetForm()
+                  //   handleSubmit()
+                  // }}
+                  style={ styles.loginBtn }
+                  onPress={ handleSubmit }
+                  loading={ submitted }>
+                  Create Account
+                </CustomButton>
+              </View>
+              <View style={ styles.bottomContainer }>
+                <TouchableOpacity style={ styles.bottomTextContainer } onPress={ () => navigation.navigate('Login' as never) }>
+                  <Text>Do you have an account?</Text>
+                  <Text style={ styles.signUpText }>Sign in</Text>
+                </TouchableOpacity>
+              </View>
+            </KeyboardAwareScrollView>
+          </>
+        ) }
+      </Formik>
+    </SafeAreaView>
   );
 };
 
-export default RegisterScreen;
+export default SignupScreen;

@@ -1,35 +1,37 @@
-import {useEffect, useState} from 'react';
-import {View, Text, TouchableOpacity, Image} from 'react-native';
+import { useEffect, useState } from 'react';
+import { View, Text, TouchableOpacity, Image, SafeAreaView } from 'react-native';
 import * as yup from 'yup';
 import styles from './styles';
 import InterBold from '../../../components/Text/InterBold';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import RegularTextInput from '../../../components/TextInput/RegularTextInput';
-import {Formik} from 'formik';
-import {colors} from '../../../utils/theme';
+import { Formik } from 'formik';
+import { colors } from '../../../utils/theme';
 import CustomButton from '../../../components/CustomButton';
-import {useNavigation} from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import RememberMeContainer from '../../../components/RememberMeContainer';
 import Card from '../../../components/Card';
 import SignupLastBottomText from '../../../components/SignupLastBottomText';
-import {useAppDispatch} from '../../../hooks/storeHooks';
-import {getFcmToken} from '../../../utils/messaging.utils';
+import { useAppDispatch } from '../../../hooks/storeHooks';
+import { getFcmToken } from '../../../utils/messaging.utils';
 import InterBoldLabel from '../../../components/Text/InterBoldLabel';
-import {login} from '../../../api/auth';
+import PoppinsLabel from '../../../components/Text/Poppins';
+import { login } from '../../../api/auth';
 import Toast from 'react-native-toast-message';
-import {setUser} from '../../../store/slices/authSlice';
+import { setUser } from '../../../store/slices/authSlice';
 import EncryptedStorage from 'react-native-encrypted-storage';
+import Icon from '@react-native-vector-icons/ionicons';
 
 interface FormValues {
-  email: string;
+  identifier: string;
   password: string;
 }
-async function storeUserSession(email: string, password: string) {
-  console.log("email ===>",email,"Password= ===>", password)
+async function storeUserSession(identifier: string, password: string) {
+  console.log("email ===>", identifier, "Password= ===>", password)
   await EncryptedStorage.setItem(
     'user_session',
     JSON.stringify({
-      email,
+      identifier,
       password,
     }),
   );
@@ -48,7 +50,7 @@ const LoginScreen: React.FC = () => {
   const [isSelected, setIsSelected] = useState<boolean>(false);
   const [deviceToken, setDeviceToken] = useState<string | undefined>('');
   const [initialValues, setInitialValues] = useState({
-    email: '',
+    identifier: '',
     password: '',
   });
 
@@ -58,10 +60,10 @@ const LoginScreen: React.FC = () => {
       const session = await EncryptedStorage.getItem('user_session');
       if (session != undefined) {
         const parsedSession = JSON.parse(session);
-        console.log("parsedSession.email ===>",parsedSession?.password)
+        console.log("parsedSession.email ===>", parsedSession?.password)
         setIsSelected(true);
         setInitialValues({
-          email: parsedSession.email || '',
+          identifier: parsedSession.identifier || '',
           password: parsedSession.password || '',
         });
       }
@@ -83,7 +85,8 @@ const LoginScreen: React.FC = () => {
   }, []);
 
   const validationSchema: yup.AnySchema<FormValues> = yup.object().shape({
-    email: yup.string().email('Invalid Email').required('Email is required'),
+    // Either email or phone number
+    identifier: yup.string().required('Email or Phone Number is required'),
     password: yup
       .string()
       .min(6, 'Password must be at least 6 characters')
@@ -91,11 +94,13 @@ const LoginScreen: React.FC = () => {
   });
 
   const handleSubmit = async (values: FormValues) => {
+    if (submitted) return;
+
     console.log(values, 'Valuessssssss');
     setSubmitted(true);
 
     const apiData = {
-      email: values.email,
+      identifier: values.identifier,
       password: values.password,
       token: deviceToken,
     };
@@ -116,7 +121,7 @@ const LoginScreen: React.FC = () => {
       .then(res => {
         if (res?.data?.status) {
           if (isSelected) {
-            storeUserSession(values?.email, values?.password);
+            storeUserSession(values?.identifier, values?.password);
           } else {
             removeUserSession();
           }
@@ -133,6 +138,8 @@ const LoginScreen: React.FC = () => {
         }
       })
       .catch(err => {
+        console.log("err ===>", err, typeof err, err.message)
+
         Toast.show({
           type: 'error',
           text1: 'Invalid',
@@ -145,52 +152,69 @@ const LoginScreen: React.FC = () => {
   };
 
   return (
-    <Formik
-      initialValues={initialValues}
-      validationSchema={validationSchema}
-      enableReinitialize
-      onSubmit={handleSubmit}>
-      {({handleSubmit, handleChange, handleBlur, values, errors}) => (
-        
-        <>
+    <SafeAreaView style={ styles.safeAreaView }>
+      <Formik
+        initialValues={ initialValues }
+        validationSchema={ validationSchema }
+        enableReinitialize
+        onSubmit={ handleSubmit }>
+        { ({ handleSubmit, handleChange, handleBlur, values, errors }) => (
 
-          <KeyboardAwareScrollView
-            style={styles.scrollview}
-            showsVerticalScrollIndicator={false}>
-            <View style={styles.container}>
-              <Card style={styles.cardStyle}>
-                <InterBoldLabel style={styles.heading}>Login</InterBoldLabel>
+          <>
+            <KeyboardAwareScrollView
+              showsVerticalScrollIndicator={ false }>
+              <View style={ styles.container }>
+                <View style={ styles.imageContainer }>
+                  <Image
+                    source={ require('./images/loginHands.png') }
+                    style={ styles.loginImage }
+                  />
+                </View>
+
+                <InterBoldLabel style={ styles.heading }>Sign In</InterBoldLabel>
+                <PoppinsLabel style={ styles.subHeading }>It was popularised in the 1960s with the release of Letraset sheetscontaining Lorem Ipsum.</PoppinsLabel>
+                <CustomButton onPress={ () => { } } style={ styles.googleButton }>
+                  <Image source={ require('./images/googleLogin.png') } style={ styles.googleLogin } />
+                </CustomButton>
+
+                <View style={ styles.lineContainer }>
+                  <View style={ styles.line } />
+                  <View>
+                    <Text style={ styles.lineText }>Or</Text>
+                  </View>
+                  <View style={ styles.line } />
+                </View>
 
                 <RegularTextInput
-                  label="Email Address"
-                  placeholder="Enter Email Address"
-                  placeholderTextColor={colors.inputText}
-                  onChangeText={handleChange('email')}
-                  onBlur={handleBlur('email')}
-                  value={values.email}
-                  submitted={submitted}
-                  errors={errors.email}
+                  placeholder='Email/Phone Number'
+                  placeholderTextColor={ colors.darkGray }
+                  onChangeText={ handleChange('identifier') }
+                  onBlur={ handleBlur('identifier') }
+                  value={ values.identifier }
+                  submitted={ submitted }
+                  errors={ errors.identifier }
+                  style={ styles.input }
                 />
 
                 <RegularTextInput
-                  label="Password"
                   placeholder="Enter Password"
-                  placeholderTextColor={colors.inputText}
-                  onChangeText={handleChange('password')}
-                  onBlur={handleBlur('password')}
-                  value={values.password}
-                  submitted={submitted}
-                  errors={errors.password}
-                  secureTextEntry={securePassword}
-                  onPressCurrentPassword={() =>
+                  placeholderTextColor={ colors.darkGray }
+                  onChangeText={ handleChange('password') }
+                  onBlur={ handleBlur('password') }
+                  value={ values.password }
+                  submitted={ submitted }
+                  errors={ errors.password }
+                  secureTextEntry={ securePassword }
+                  onPressCurrentPassword={ () =>
                     setSecurePassword(!securePassword)
                   }
+                  style={ styles.input }
                 />
 
                 <RememberMeContainer
-                  isSelected={isSelected}
-                  setIsSelected={setIsSelected}
-                  onPress={() => navigation.navigate('ForgotPassword')}
+                  isSelected={ isSelected }
+                  setIsSelected={ setIsSelected }
+                  onPress={ () => navigation.navigate('ForgotPassword') }
                 />
 
                 <CustomButton
@@ -199,24 +223,23 @@ const LoginScreen: React.FC = () => {
                   //   resetForm()
                   //   handleSubmit()
                   // }}
-                  onPress={handleSubmit}
-                  loading={submitted}>
-                  Login
+                  style={ styles.loginBtn }
+                  onPress={ handleSubmit }
+                  loading={ submitted }>
+                  Log in
                 </CustomButton>
-
-                <View style={styles.bottomStyle}>
-                  <SignupLastBottomText
-                    firstText={'Dont have an account?'}
-                    secondText={'Sign Up'}
-                    onPress={() => navigation.navigate('RegisterScreen')}
-                  />
-                </View>
-              </Card>
-            </View>
-          </KeyboardAwareScrollView>
-        </>
-      )}
-    </Formik>
+              </View>
+              <View style={ styles.bottomContainer }>
+                <TouchableOpacity style={ styles.bottomTextContainer } onPress={ () => navigation.navigate('RegisterScreen') }>
+                  <Text>Don't have an account?</Text>
+                  <Text style={ styles.signUpText }>Sign Up</Text>
+                </TouchableOpacity>
+              </View>
+            </KeyboardAwareScrollView>
+          </>
+        ) }
+      </Formik>
+    </SafeAreaView>
   );
 };
 

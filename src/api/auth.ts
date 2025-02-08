@@ -3,13 +3,13 @@ import axiosInstance from '.';
 import endpoints from './endpoints';
 
 export const login = (data: {
-  email: string;
+  identifier: string;
   password: string;
   token: string;
 }) => {
   // Initialize FormData
   const formData = new FormData();
-  formData.append('email', data.email);
+  formData.append('identifier', data.identifier);
   formData.append('password', data.password);
   formData.append('device_id', data.token);
   formData.append('device_type', Platform.OS == 'ios' ? 'ios' : 'android');
