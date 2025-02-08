@@ -16,12 +16,11 @@ import { useAppDispatch } from '../../../hooks/storeHooks';
 import { getFcmToken } from '../../../utils/messaging.utils';
 import InterBoldLabel from '../../../components/Text/InterBoldLabel';
 import PoppinsLabel from '../../../components/Text/Poppins';
-import { login } from '../../../api/auth';
+import { googleLogin, login } from '../../../api/auth';
 import Toast from 'react-native-toast-message';
 import { setUser } from '../../../store/slices/authSlice';
 import EncryptedStorage from 'react-native-encrypted-storage';
-import Icon from '@react-native-vector-icons/ionicons';
-
+import GoogleLogin from '../../../components/GoogleAuth/Login';
 interface FormValues {
   identifier: string;
   password: string;
@@ -105,18 +104,6 @@ const LoginScreen: React.FC = () => {
       token: deviceToken,
     };
 
-
-    //   login(apiData).then((res)=>{
-    //     if(res?.data){
-
-    //       navigation.navigate('Home');
-    //       setSubmitted(false);
-    //     }).catch ((error) {
-    //   console.error('Login error:', error);
-    //   setSubmitted(false);
-    //   Toast.error(getMessage(error?.message));
-    // })
-
     login(apiData)
       .then(res => {
         if (res?.data?.status) {
@@ -151,6 +138,35 @@ const LoginScreen: React.FC = () => {
       });
   };
 
+  const onGoogleLoginSuccess = (user: any) => {
+    if (submitted) return;
+
+    setSubmitted(true);
+    
+    console.log(user, 'User');
+    const apiData = {
+      token: user,
+    };
+
+    googleLogin(apiData)
+      .then(res => {
+        console.log(res.data, 'Res');
+        dispatch(setUser(res?.data?.data));
+      })
+      .catch(err => {
+        console.log(err, 'Err');
+
+        Toast.show({
+          type: 'error',
+          text1: 'Invalid',
+          text2: err?.message,
+        });
+      })
+      .finally(() => {
+        setSubmitted(false);
+      });
+  }
+
   return (
     <SafeAreaView style={ styles.safeAreaView }>
       <Formik
@@ -173,9 +189,7 @@ const LoginScreen: React.FC = () => {
 
                 <InterBoldLabel style={ styles.heading }>Sign In</InterBoldLabel>
                 <PoppinsLabel style={ styles.subHeading }>It was popularised in the 1960s with the release of Letraset sheetscontaining Lorem Ipsum.</PoppinsLabel>
-                <CustomButton onPress={ () => { } } style={ styles.googleButton }>
-                  <Image source={ require('./images/googleLogin.png') } style={ styles.googleLogin } />
-                </CustomButton>
+                <GoogleLogin onSuccess={ onGoogleLoginSuccess } loading={ submitted } />
 
                 <View style={ styles.lineContainer }>
                   <View style={ styles.line } />

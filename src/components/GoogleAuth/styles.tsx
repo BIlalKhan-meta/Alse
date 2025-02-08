@@ -1,0 +1,19 @@
+import { StyleSheet } from "react-native";
+import { vh } from "../../constant";
+
+const styles = StyleSheet.create({
+
+    googleButton: {
+        borderWidth: 0,
+        marginTop: vh * 2,
+        backgroundColor: "#0C959B1A",
+        width: "100%",
+        paddingLeft: 20,
+        paddingTop: 5,
+        borderRadius: 20,
+    },
+    googleLogin: {
+    }
+})
+
+export default styles;

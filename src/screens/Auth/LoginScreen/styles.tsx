@@ -14,15 +14,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: vw * 5,
     // flex: 1,
   },
-  googleButton: {
-    borderWidth: 0,
-    marginTop: vh * 2,
-    backgroundColor: "#0C959B1A",
-    width: "100%",
-    paddingLeft: 20,
-    paddingTop: 5,
-    borderRadius: 20,
-  },
   lineContainer: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -2,9 +2,20 @@ import {Platform} from 'react-native';
 import axiosInstance from '.';
 import endpoints from './endpoints';
 
+export const googleLogin = (data: {
+  token: string;
+}) => {
+  const formData = new FormData();
+  formData.append('token', data.token);
+  return axiosInstance.post(endpoints.auth.login, formData, {
+    formData: true,
+  });
+};
+
+
 export const login = (data: {
   identifier: string;
-  password: string;
+  password?: string;
   token: string;
 }) => {
   // Initialize FormData

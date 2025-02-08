@@ -12,12 +12,13 @@ import { useAppDispatch } from '../../../hooks/storeHooks';
 import { getFcmToken } from '../../../utils/messaging.utils';
 import InterBoldLabel from '../../../components/Text/InterBoldLabel';
 import PoppinsLabel from '../../../components/Text/Poppins';
-import { signup } from '../../../api/auth';
+import { googleLogin, signup } from '../../../api/auth';
 import Toast from 'react-native-toast-message';
 import { setUser } from '../../../store/slices/authSlice';
 import EncryptedStorage from 'react-native-encrypted-storage';
 import InterLight from '../../../components/Text/InterLight';
 import Checkbox from 'expo-checkbox';
+import GoogleLogin from '../../../components/GoogleAuth/Login';
 
 interface FormValues {
   name: string;
@@ -121,6 +122,35 @@ const SignupScreen: React.FC = () => {
     }
   };
 
+  const onGoogleLoginSuccess = (user: any) => {
+    if (submitted) return;
+
+    setSubmitted(true);
+    
+    console.log(user, 'User');
+    const apiData = {
+      token: user,
+    };
+
+    googleLogin(apiData)
+      .then(res => {
+        console.log(res.data, 'Res');
+        dispatch(setUser(res?.data?.data));
+      })
+      .catch(err => {
+        console.log(err, 'Err');
+
+        Toast.show({
+          type: 'error',
+          text1: 'Invalid',
+          text2: err?.message,
+        });
+      })
+      .finally(() => {
+        setSubmitted(false);
+      });
+  }
+
   return (
     <SafeAreaView style={ styles.safeAreaView }>
       <Formik
@@ -143,9 +173,7 @@ const SignupScreen: React.FC = () => {
 
                 <InterBoldLabel style={ styles.heading }>Sign Up</InterBoldLabel>
                 <PoppinsLabel style={ styles.subHeading }>It was popularised in the 1960s with the release of Letraset sheetscontaining Lorem Ipsum.</PoppinsLabel>
-                <CustomButton onPress={ () => { } } style={ styles.googleButton }>
-                  <Image source={ require('../LoginScreen/images/googleLogin.png') } style={ styles.googleLogin } />
-                </CustomButton>
+                <GoogleLogin onSuccess={ onGoogleLoginSuccess } loading={ submitted } />
 
                 <View style={ styles.lineContainer }>
                   <View style={ styles.line } />
@@ -202,12 +230,6 @@ const SignupScreen: React.FC = () => {
                   />
                   <Text>I agree to the terms and conditions and Privacy Policy</Text>
                 </View>
-
-                {/* <RememberMeContainer
-                  isSelected={ isSelected }
-                  setIsSelected={ setIsSelected }
-                  onPress={ () => navigation.navigate('ForgotPassword') }
-                /> */}
 
                 <CustomButton
                   // onPress={() => {
