@@ -1,8 +1,7 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, Image, SafeAreaView } from 'react-native';
 import * as yup from 'yup';
 import styles from './styles';
-import InterBold from '../../../components/Text/InterBold';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import RegularTextInput from '../../../components/TextInput/RegularTextInput';
 import { Formik } from 'formik';
@@ -10,8 +9,6 @@ import { colors } from '../../../utils/theme';
 import CustomButton from '../../../components/CustomButton';
 import { useNavigation } from '@react-navigation/native';
 import RememberMeContainer from '../../../components/RememberMeContainer';
-import Card from '../../../components/Card';
-import SignupLastBottomText from '../../../components/SignupLastBottomText';
 import { useAppDispatch } from '../../../hooks/storeHooks';
 import { getFcmToken } from '../../../utils/messaging.utils';
 import InterBoldLabel from '../../../components/Text/InterBoldLabel';
@@ -104,7 +101,7 @@ const LoginScreen: React.FC = () => {
       token: deviceToken,
     };
 
-    login(apiData)
+    login({...apiData, token: deviceToken || ''})
       .then(res => {
         if (res?.data?.status) {
           if (isSelected) {

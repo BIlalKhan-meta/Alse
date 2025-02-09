@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, Image, SafeAreaView } from 'react-native';
 import * as yup from 'yup';
 import styles from './styles';
@@ -9,14 +9,11 @@ import { colors } from '../../../utils/theme';
 import CustomButton from '../../../components/CustomButton';
 import { useNavigation } from '@react-navigation/native';
 import { useAppDispatch } from '../../../hooks/storeHooks';
-import { getFcmToken } from '../../../utils/messaging.utils';
 import InterBoldLabel from '../../../components/Text/InterBoldLabel';
 import PoppinsLabel from '../../../components/Text/Poppins';
 import { googleLogin, signup } from '../../../api/auth';
 import Toast from 'react-native-toast-message';
 import { setUser } from '../../../store/slices/authSlice';
-import EncryptedStorage from 'react-native-encrypted-storage';
-import InterLight from '../../../components/Text/InterLight';
 import Checkbox from 'expo-checkbox';
 import GoogleLogin from '../../../components/GoogleAuth/Login';
 
@@ -33,8 +30,7 @@ const SignupScreen: React.FC = () => {
 
   const [submitted, setSubmitted] = useState<boolean>(false);
   const [securePassword, setSecurePassword] = useState<boolean>(true);
-  const [isSelected, setIsSelected] = useState<boolean>(false);
-  const [initialValues, setInitialValues] = useState<FormValues>({
+  const [initialValues] = useState<FormValues>({
     name: '',
     identifier: '',
     password: '',

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, Image, SafeAreaView } from 'react-native';
 import * as yup from 'yup';
 import styles from './styles';
@@ -11,13 +11,15 @@ import { useNavigation } from '@react-navigation/native';
 import InterBoldLabel from '../../../components/Text/InterBoldLabel';
 import PoppinsLabel from '../../../components/Text/Poppins';
 import StepIndicator from '../../../components/StepIndicator';
+import { forgotPassword } from '../../../api/auth';
+import Toast from 'react-native-toast-message';
 
 interface FormValues {
   identifier: string;
 }
 
 const ForgetPassword: React.FC = () => {
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation();
   const [submitted, setSubmitted] = useState<boolean>(false);
   const [initialValues, setInitialValues] = useState<FormValues>({
     identifier: '',
@@ -30,13 +32,32 @@ const ForgetPassword: React.FC = () => {
   });
 
   const handleSubmit = async (values: FormValues) => {
-    console.log(values, 'Valuessssssss');
-    setSubmitted(true);
+    try {
+      console.log(values, 'Valuessssssss');
+      Toast.show({
+        type: "info",
+        text1: "Loading..."
+      });
 
-    const apiData = {
-      identifier: values.identifier,
-    };
+      setSubmitted(true);
 
+      const apiData = {
+        identifier: values.identifier,
+      };
+
+      const res = await forgotPassword(apiData);
+
+      console.log("FORGOT DATA", res?.data);
+
+      navigation.navigate('Verification', { identifier })
+    } catch (error) {
+      console.log("FORGOT ERROR", error, error?.response?.data);
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: error?.response?.data?.message
+      });
+    }
   };
 
   return (

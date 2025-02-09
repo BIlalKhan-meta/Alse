@@ -1498,6 +1498,8 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
+  - RNSVG (15.11.1):
+    - React-Core
   - SocketRocket (0.7.0)
   - Yoga (0.0.0)
 
@@ -1581,6 +1583,7 @@ DEPENDENCIES:
   - RNInAppBrowser (from `../node_modules/react-native-inappbrowser-reborn`)
   - RNPermissions (from `../node_modules/react-native-permissions`)
   - RNScreens (from `../node_modules/react-native-screens`)
+  - RNSVG (from `../node_modules/react-native-svg`)
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
 
 SPEC REPOS:
@@ -1751,6 +1754,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-permissions"
   RNScreens:
     :path: "../node_modules/react-native-screens"
+  RNSVG:
+    :path: "../node_modules/react-native-svg"
   Yoga:
     :path: "../node_modules/react-native/ReactCommon/yoga"
 
@@ -1844,9 +1849,10 @@ SPEC CHECKSUMS:
   RNInAppBrowser: 6d3eb68d471b9834335c664704719b8be1bfdb20
   RNPermissions: 37f94c76ff0be69437232360bdc017a74468189d
   RNScreens: 6584fce529be4800e3d12c8069376df9e12bafaf
+  RNSVG: 63ef964b8397204ff70b78de6c93858320816671
   SocketRocket: abac6f5de4d4d62d24e11868d7a2f427e0ef940d
   Yoga: 348f8b538c3ed4423eb58a8e5730feec50bce372
 
-PODFILE CHECKSUM: 24121c1b4c4467e08039155e574f6cfa899e3afb
+PODFILE CHECKSUM: 64f48b5c4ace2214a2e69b8a7b4071eda260f471
 
 COCOAPODS: 1.16.2

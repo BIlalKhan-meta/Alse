@@ -47,6 +47,7 @@ target 'Alenga' do
   pod 'FirebaseCoreInternal', :modular_headers => true
   pod 'GoogleUtilities', :modular_headers => true
   pod 'FirebaseCore', :modular_headers => true
+  pod 'RNSVG', :path => '../node_modules/react-native-svg'
   config = use_native_modules!
 
   use_react_native!(

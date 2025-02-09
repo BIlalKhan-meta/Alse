@@ -37,11 +37,11 @@ export const signup = (formData: any) => {
   });
 };
 
-export const forgotPassword = (data: {email: string}) => {
+export const forgotPassword = (data: {identifier: string}) => {
   console.log(data, 'ForgetData frommmm authhhh ');
 
   const formData = new FormData();
-  formData.append('email', data.email);
+  formData.append('identifier', data.identifier);
 
   return axiosInstance.post(endpoints.auth.forgotPassword, formData, {
     formData: true,
