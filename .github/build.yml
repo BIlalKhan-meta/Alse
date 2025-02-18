@@ -1,6 +1,9 @@
 name: "Build Android app"
 
-on: workflow_dispatch
+on: 
+  push:
+    branches:
+      - "development"
 
 jobs:
   build:
