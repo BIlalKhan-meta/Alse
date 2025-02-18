@@ -13,6 +13,18 @@ const styles = StyleSheet.create({
         borderRadius: 20,
     },
     googleLogin: {
+    },
+    googleButtonLoading: {
+        borderWidth: 0,
+        marginTop: vh * 2,
+        backgroundColor: "#0C959B1A",
+        width: "100%",
+        paddingLeft: 20,
+        paddingTop: 5,
+        borderRadius: 20,
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center'
     }
 })
 

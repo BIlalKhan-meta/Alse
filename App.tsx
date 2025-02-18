@@ -17,6 +17,10 @@ import {
 } from 'react-native-permissions';
 import {requestUserPermission} from './src/utils/NotificationServices';
 import MainNavigation from './src/navigation/MainNavigation';
+import {
+  configureReanimatedLogger,
+  ReanimatedLogLevel,
+} from 'react-native-reanimated';
 
 const theme = {
   ...DefaultTheme,
@@ -27,6 +31,12 @@ const theme = {
 };
 
 function App(): React.JSX.Element {
+  
+  configureReanimatedLogger({
+    level: ReanimatedLogLevel.warn,
+    strict: false,
+  });
+
   const checkNotificationPermission = async () => {
     try {
       const res = await checkNotifications();

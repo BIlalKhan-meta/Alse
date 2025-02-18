@@ -31,6 +31,7 @@ import {useSelector} from 'react-redux';
 import {GetUserProfile, selectUserProfile} from '../../store/slices/authSlice';
 import eventEmitter, {EVENT_TYPES} from '../../utils/EventEmitter';
 import LikesModal from '../../components/LikesModal';
+import Stories from '../../components/Stories';
 
 const Home: React.FC = () => {
   const flatListRef = useRef(null);
@@ -349,6 +350,7 @@ const Home: React.FC = () => {
 
   return (
     <View style={{paddingHorizontal: vh * 2}}>
+      <Stories />
       {/* <TouchableWithoutFeedback onPress={() => handleDotPress(null)}> */}
       <View>
         <FlatList

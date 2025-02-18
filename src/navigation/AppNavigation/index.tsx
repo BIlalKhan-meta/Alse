@@ -42,6 +42,7 @@ import SubscriptionPlan from '../../screens/SubscriptionPlan';
 import PaymentLogs from '../../screens/PaymentLogs';
 import ProfileScreen from '../../screens/ProfileScreen';
 import PrivacyPolicy from '../../screens/PrivacyPolicy';
+import AddStory from '../../screens/AddStory';
 
 const AppNavigation = () => {
   const Stack = createNativeStackNavigator();
@@ -49,6 +50,7 @@ const AppNavigation = () => {
     <Stack.Navigator screenOptions={{headerShown: false}}>
       <>
         <Stack.Screen name="TabNavigation" component={TabNavigation} />
+        <Stack.Screen name="AddStory" component={AddStory} />
         <Stack.Screen
           name="Saved"
           component={Saved}

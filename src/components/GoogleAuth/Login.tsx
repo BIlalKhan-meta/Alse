@@ -23,7 +23,7 @@ export default function GoogleLogin({ onSuccess, loading }: { onSuccess: (user: 
     }
 
     return (
-        <CustomButton onPress={ () => { handleGoogleLogin() } } style={ styles.googleButton }>
+        <CustomButton onPress={ () => { handleGoogleLogin() } } style={ loading ? styles.googleButtonLoading : styles.googleButton }>
             { loading ? (
                 <ActivityIndicator size={ 'large' } color={ colors.white } />
             ) : (

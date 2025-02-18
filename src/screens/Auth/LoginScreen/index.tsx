@@ -42,6 +42,7 @@ const LoginScreen: React.FC = () => {
   const dispatch = useAppDispatch();
 
   const [submitted, setSubmitted] = useState<boolean>(false);
+  const [googleSubmitted, setGoogleSubmitted] = useState<boolean>(false);
   const [securePassword, setSecurePassword] = useState<boolean>(true);
   const [isSelected, setIsSelected] = useState<boolean>(false);
   const [deviceToken, setDeviceToken] = useState<string | undefined>('');
@@ -136,9 +137,9 @@ const LoginScreen: React.FC = () => {
   };
 
   const onGoogleLoginSuccess = (user: any) => {
-    if (submitted) return;
+    if (googleSubmitted) return;
 
-    setSubmitted(true);
+    setGoogleSubmitted(true);
     
     console.log(user, 'User');
     const apiData = {
@@ -160,7 +161,7 @@ const LoginScreen: React.FC = () => {
         });
       })
       .finally(() => {
-        setSubmitted(false);
+        setGoogleSubmitted(false);
       });
   }
 
@@ -186,7 +187,7 @@ const LoginScreen: React.FC = () => {
 
                 <InterBoldLabel style={ styles.heading }>Sign In</InterBoldLabel>
                 <PoppinsLabel style={ styles.subHeading }>It was popularised in the 1960s with the release of Letraset sheetscontaining Lorem Ipsum.</PoppinsLabel>
-                <GoogleLogin onSuccess={ onGoogleLoginSuccess } loading={ submitted } />
+                <GoogleLogin onSuccess={ onGoogleLoginSuccess } loading={ googleSubmitted } />
 
                 <View style={ styles.lineContainer }>
                   <View style={ styles.line } />

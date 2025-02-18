@@ -107,6 +107,11 @@ const endpoints = {
     updateBank: '/bank/update',
     createBank: '/bank/create',
   },
+
+  stories: {
+    getStories: '/stories',
+    addStories: '/stories'
+  }
 };
 
 export default endpoints;
