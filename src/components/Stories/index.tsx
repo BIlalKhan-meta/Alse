@@ -6,7 +6,6 @@ import AddStoryIcon from './AddStoryIcon';
 import { AddStory, GetStories } from '../../api/stories';
 import { useNavigation } from '@react-navigation/native';
 
-import ContextMenu from 'react-native-context-menu-view';
 import Toast from 'react-native-toast-message';
 
 const Stories = () => {
@@ -96,7 +95,7 @@ const Stories = () => {
                 stories: [],
                 renderAvatar: () => {
                     return (
-                        <ContextMenu
+                        <View
                             actions={ addStoryActions }
                             dropdownMenuMode
                             onPress={ (e) => {
@@ -105,7 +104,7 @@ const Stories = () => {
                         >
                             <AddStoryIcon />
                             <Text>Add Story</Text>
-                        </ContextMenu>
+                        </View>
                     )
                 }
             }
