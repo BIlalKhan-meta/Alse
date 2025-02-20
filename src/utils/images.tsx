@@ -27,6 +27,7 @@ export const images = {
   ratingstaricon: require('../assets/Icons/ratingstaricon.png'),
   home: require('../assets/Icons/Home.png'),
   menu: require('../assets/Icons/menu.png'),
+  liveStream: require('../assets/Icons/live.png'),
   game: require('../assets/Icons/game.png'),
   market: require('../assets/Icons/market.png'),
   backicon: require('../assets/Icons/backicon.png'),

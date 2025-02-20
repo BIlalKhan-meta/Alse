@@ -1,4 +1,46 @@
 PODS:
+  - AgoraInfra_iOS (1.2.13)
+  - AgoraIrisRTC_iOS (4.5.0-build.2)
+  - AgoraRtcEngine_iOS (4.5.0):
+    - AgoraRtcEngine_iOS/AIAEC (= 4.5.0)
+    - AgoraRtcEngine_iOS/AIAECLL (= 4.5.0)
+    - AgoraRtcEngine_iOS/AINS (= 4.5.0)
+    - AgoraRtcEngine_iOS/AINSLL (= 4.5.0)
+    - AgoraRtcEngine_iOS/AudioBeauty (= 4.5.0)
+    - AgoraRtcEngine_iOS/ClearVision (= 4.5.0)
+    - AgoraRtcEngine_iOS/ContentInspect (= 4.5.0)
+    - AgoraRtcEngine_iOS/FaceCapture (= 4.5.0)
+    - AgoraRtcEngine_iOS/FaceDetection (= 4.5.0)
+    - AgoraRtcEngine_iOS/LipSync (= 4.5.0)
+    - AgoraRtcEngine_iOS/ReplayKit (= 4.5.0)
+    - AgoraRtcEngine_iOS/RtcBasic (= 4.5.0)
+    - AgoraRtcEngine_iOS/SpatialAudio (= 4.5.0)
+    - AgoraRtcEngine_iOS/VideoAv1CodecDec (= 4.5.0)
+    - AgoraRtcEngine_iOS/VideoAv1CodecEnc (= 4.5.0)
+    - AgoraRtcEngine_iOS/VideoCodecDec (= 4.5.0)
+    - AgoraRtcEngine_iOS/VideoCodecEnc (= 4.5.0)
+    - AgoraRtcEngine_iOS/VirtualBackground (= 4.5.0)
+    - AgoraRtcEngine_iOS/VQA (= 4.5.0)
+  - AgoraRtcEngine_iOS/AIAEC (4.5.0)
+  - AgoraRtcEngine_iOS/AIAECLL (4.5.0)
+  - AgoraRtcEngine_iOS/AINS (4.5.0)
+  - AgoraRtcEngine_iOS/AINSLL (4.5.0)
+  - AgoraRtcEngine_iOS/AudioBeauty (4.5.0)
+  - AgoraRtcEngine_iOS/ClearVision (4.5.0)
+  - AgoraRtcEngine_iOS/ContentInspect (4.5.0)
+  - AgoraRtcEngine_iOS/FaceCapture (4.5.0)
+  - AgoraRtcEngine_iOS/FaceDetection (4.5.0)
+  - AgoraRtcEngine_iOS/LipSync (4.5.0)
+  - AgoraRtcEngine_iOS/ReplayKit (4.5.0)
+  - AgoraRtcEngine_iOS/RtcBasic (4.5.0):
+    - AgoraInfra_iOS (= 1.2.13)
+  - AgoraRtcEngine_iOS/SpatialAudio (4.5.0)
+  - AgoraRtcEngine_iOS/VideoAv1CodecDec (4.5.0)
+  - AgoraRtcEngine_iOS/VideoAv1CodecEnc (4.5.0)
+  - AgoraRtcEngine_iOS/VideoCodecDec (4.5.0)
+  - AgoraRtcEngine_iOS/VideoCodecEnc (4.5.0)
+  - AgoraRtcEngine_iOS/VirtualBackground (4.5.0)
+  - AgoraRtcEngine_iOS/VQA (4.5.0)
   - AppAuth (1.7.6):
     - AppAuth/Core (= 1.7.6)
     - AppAuth/ExternalUserAgent (= 1.7.6)
@@ -8,49 +50,49 @@ PODS:
   - boost (1.83.0)
   - DoubleConversion (1.1.6)
   - FBLazyVector (0.74.1)
-  - Firebase (11.7.0):
-    - Firebase/Core (= 11.7.0)
-  - Firebase/Core (11.7.0):
+  - Firebase (11.8.0):
+    - Firebase/Core (= 11.8.0)
+  - Firebase/Core (11.8.0):
     - Firebase/CoreOnly
-    - FirebaseAnalytics (~> 11.7.0)
-  - Firebase/CoreOnly (11.7.0):
-    - FirebaseCore (~> 11.7.0)
-  - Firebase/Messaging (11.7.0):
+    - FirebaseAnalytics (~> 11.8.0)
+  - Firebase/CoreOnly (11.8.0):
+    - FirebaseCore (~> 11.8.0)
+  - Firebase/Messaging (11.8.0):
     - Firebase/CoreOnly
-    - FirebaseMessaging (~> 11.7.0)
-  - FirebaseAnalytics (11.7.0):
-    - FirebaseAnalytics/AdIdSupport (= 11.7.0)
-    - FirebaseCore (~> 11.7.0)
+    - FirebaseMessaging (~> 11.8.0)
+  - FirebaseAnalytics (11.8.0):
+    - FirebaseAnalytics/AdIdSupport (= 11.8.0)
+    - FirebaseCore (~> 11.8.0)
     - FirebaseInstallations (~> 11.0)
     - GoogleUtilities/AppDelegateSwizzler (~> 8.0)
     - GoogleUtilities/MethodSwizzler (~> 8.0)
     - GoogleUtilities/Network (~> 8.0)
     - "GoogleUtilities/NSData+zlib (~> 8.0)"
     - nanopb (~> 3.30910.0)
-  - FirebaseAnalytics/AdIdSupport (11.7.0):
-    - FirebaseCore (~> 11.7.0)
+  - FirebaseAnalytics/AdIdSupport (11.8.0):
+    - FirebaseCore (~> 11.8.0)
     - FirebaseInstallations (~> 11.0)
-    - GoogleAppMeasurement (= 11.7.0)
+    - GoogleAppMeasurement (= 11.8.0)
     - GoogleUtilities/AppDelegateSwizzler (~> 8.0)
     - GoogleUtilities/MethodSwizzler (~> 8.0)
     - GoogleUtilities/Network (~> 8.0)
     - "GoogleUtilities/NSData+zlib (~> 8.0)"
     - nanopb (~> 3.30910.0)
-  - FirebaseCore (11.7.0):
-    - FirebaseCoreInternal (~> 11.7.0)
+  - FirebaseCore (11.8.1):
+    - FirebaseCoreInternal (~> 11.8.0)
     - GoogleUtilities/Environment (~> 8.0)
     - GoogleUtilities/Logger (~> 8.0)
-  - FirebaseCoreExtension (11.7.0):
-    - FirebaseCore (~> 11.7.0)
-  - FirebaseCoreInternal (11.7.0):
+  - FirebaseCoreExtension (11.8.0):
+    - FirebaseCore (~> 11.8.0)
+  - FirebaseCoreInternal (11.8.0):
     - "GoogleUtilities/NSData+zlib (~> 8.0)"
-  - FirebaseInstallations (11.7.0):
-    - FirebaseCore (~> 11.7.0)
+  - FirebaseInstallations (11.8.0):
+    - FirebaseCore (~> 11.8.0)
     - GoogleUtilities/Environment (~> 8.0)
     - GoogleUtilities/UserDefaults (~> 8.0)
     - PromisesObjC (~> 2.4)
-  - FirebaseMessaging (11.7.0):
-    - FirebaseCore (~> 11.7.0)
+  - FirebaseMessaging (11.8.0):
+    - FirebaseCore (~> 11.8.0)
     - FirebaseInstallations (~> 11.0)
     - GoogleDataTransport (~> 10.0)
     - GoogleUtilities/AppDelegateSwizzler (~> 8.0)
@@ -60,21 +102,21 @@ PODS:
     - nanopb (~> 3.30910.0)
   - fmt (9.1.0)
   - glog (0.3.5)
-  - GoogleAppMeasurement (11.7.0):
-    - GoogleAppMeasurement/AdIdSupport (= 11.7.0)
+  - GoogleAppMeasurement (11.8.0):
+    - GoogleAppMeasurement/AdIdSupport (= 11.8.0)
     - GoogleUtilities/AppDelegateSwizzler (~> 8.0)
     - GoogleUtilities/MethodSwizzler (~> 8.0)
     - GoogleUtilities/Network (~> 8.0)
     - "GoogleUtilities/NSData+zlib (~> 8.0)"
     - nanopb (~> 3.30910.0)
-  - GoogleAppMeasurement/AdIdSupport (11.7.0):
-    - GoogleAppMeasurement/WithoutAdIdSupport (= 11.7.0)
+  - GoogleAppMeasurement/AdIdSupport (11.8.0):
+    - GoogleAppMeasurement/WithoutAdIdSupport (= 11.8.0)
     - GoogleUtilities/AppDelegateSwizzler (~> 8.0)
     - GoogleUtilities/MethodSwizzler (~> 8.0)
     - GoogleUtilities/Network (~> 8.0)
     - "GoogleUtilities/NSData+zlib (~> 8.0)"
     - nanopb (~> 3.30910.0)
-  - GoogleAppMeasurement/WithoutAdIdSupport (11.7.0):
+  - GoogleAppMeasurement/WithoutAdIdSupport (11.8.0):
     - GoogleUtilities/AppDelegateSwizzler (~> 8.0)
     - GoogleUtilities/MethodSwizzler (~> 8.0)
     - GoogleUtilities/Network (~> 8.0)
@@ -1068,7 +1110,9 @@ PODS:
   - React-Mapbuffer (0.74.1):
     - glog
     - React-debug
-  - react-native-blur (4.4.0):
+  - react-native-agora (4.5.1):
+    - AgoraIrisRTC_iOS (= 4.5.0-build.2)
+    - AgoraRtcEngine_iOS (= 4.5.0)
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1089,9 +1133,28 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-context-menu-view (1.17.0):
-    - React
-  - react-native-date-picker (5.0.4):
+  - react-native-blur (4.4.1):
+    - DoubleConversion
+    - glog
+    - hermes-engine
+    - RCT-Folly (= 2024.01.01.00)
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Codegen
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-rendererdebug
+    - React-utils
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - Yoga
+  - react-native-date-picker (5.0.10):
     - React-Core
   - react-native-encrypted-storage (4.0.3):
     - React-Core
@@ -1116,7 +1179,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-pager-view (6.3.4):
+  - react-native-pager-view (6.7.0):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1137,9 +1200,9 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-safe-area-context (4.10.9):
+  - react-native-safe-area-context (4.14.1):
     - React-Core
-  - react-native-video (6.10.0):
+  - react-native-video (6.10.1):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1153,7 +1216,7 @@ PODS:
     - React-featureflags
     - React-graphics
     - React-ImageManager
-    - react-native-video/Video (= 6.10.0)
+    - react-native-video/Video (= 6.10.1)
     - React-NativeModulesApple
     - React-RCTFabric
     - React-rendererdebug
@@ -1161,7 +1224,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-video/Video (6.10.0):
+  - react-native-video/Video (6.10.1):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1182,7 +1245,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-webview (13.12.5):
+  - react-native-webview (13.13.2):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1434,23 +1497,23 @@ PODS:
     - React-utils (= 0.74.1)
   - RNBootSplash (5.5.3):
     - React-Core
-  - RNCAsyncStorage (2.0.0):
+  - RNCAsyncStorage (2.1.1):
     - React-Core
-  - RNCPicker (2.7.7):
+  - RNCPicker (2.11.0):
     - React-Core
   - RNCPushNotificationIOS (1.11.0):
     - React-Core
-  - RNDateTimePicker (8.2.0):
+  - RNDateTimePicker (8.3.0):
     - React-Core
-  - RNFBApp (21.7.2):
-    - Firebase/CoreOnly (= 11.7.0)
+  - RNFBApp (21.10.1):
+    - Firebase/CoreOnly (= 11.8.0)
     - React-Core
-  - RNFBMessaging (21.3.0):
-    - Firebase/Messaging (<= 11.7.0)
-    - FirebaseCoreExtension (<= 11.7.0)
+  - RNFBMessaging (21.10.1):
+    - Firebase/Messaging (= 11.8.0)
+    - FirebaseCoreExtension
     - React-Core
     - RNFBApp
-  - RNGestureHandler (2.23.0):
+  - RNGestureHandler (2.23.1):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1471,7 +1534,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - RNGoogleSignin (13.1.0):
+  - RNGoogleSignin (13.2.0):
     - GoogleSignIn (~> 7.1)
     - React-Core
   - RNInAppBrowser (3.7.0):
@@ -1565,7 +1628,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - RNScreens (3.34.0):
+  - RNScreens (3.35.0):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1656,8 +1719,8 @@ DEPENDENCIES:
   - React-jsitracing (from `../node_modules/react-native/ReactCommon/hermes/executor/`)
   - React-logger (from `../node_modules/react-native/ReactCommon/logger`)
   - React-Mapbuffer (from `../node_modules/react-native/ReactCommon`)
+  - react-native-agora (from `../node_modules/react-native-agora`)
   - "react-native-blur (from `../node_modules/@react-native-community/blur`)"
-  - react-native-context-menu-view (from `../node_modules/react-native-context-menu-view`)
   - react-native-date-picker (from `../node_modules/react-native-date-picker`)
   - react-native-encrypted-storage (from `../node_modules/react-native-encrypted-storage`)
   - react-native-image-picker (from `../node_modules/react-native-image-picker`)
@@ -1708,6 +1771,9 @@ DEPENDENCIES:
 
 SPEC REPOS:
   trunk:
+    - AgoraInfra_iOS
+    - AgoraIrisRTC_iOS
+    - AgoraRtcEngine_iOS
     - AppAuth
     - Firebase
     - FirebaseAnalytics
@@ -1788,10 +1854,10 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/logger"
   React-Mapbuffer:
     :path: "../node_modules/react-native/ReactCommon"
+  react-native-agora:
+    :path: "../node_modules/react-native-agora"
   react-native-blur:
     :path: "../node_modules/@react-native-community/blur"
-  react-native-context-menu-view:
-    :path: "../node_modules/react-native-context-menu-view"
   react-native-date-picker:
     :path: "../node_modules/react-native-date-picker"
   react-native-encrypted-storage:
@@ -1888,20 +1954,23 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/yoga"
 
 SPEC CHECKSUMS:
+  AgoraInfra_iOS: 65e11a2183ab7836258768868d06058c22701b13
+  AgoraIrisRTC_iOS: 67278818a420cf54184a197f7b47afb23704d7e2
+  AgoraRtcEngine_iOS: 38b5e0a49bbad5616f284e6a4f9e4f5bb3fb3b2e
   AppAuth: d4f13a8fe0baf391b2108511793e4b479691fb73
   boost: d3f49c53809116a5d38da093a8aa78bf551aed09
   DoubleConversion: 76ab83afb40bddeeee456813d9c04f67f78771b5
   FBLazyVector: 898d14d17bf19e2435cafd9ea2a1033efe445709
-  Firebase: a64bf6a8546e6eab54f1c715cd6151f39d2329f4
-  FirebaseAnalytics: bc9e565af9044ba8d6c6e4157e4edca8e5fdf7ec
-  FirebaseCore: 3227e35f4197a924206fbcdc0349325baf4f5de4
-  FirebaseCoreExtension: 206c1b399f0d103055207c16f299b28e3dbd1949
-  FirebaseCoreInternal: d6c17dafc8dc33614733a8b52df78fcb4394c881
-  FirebaseInstallations: 9347e719c3d52d8d7b9074b2c32407dd027305e9
-  FirebaseMessaging: 00ece041b71ddb52a2862ffdee73fb6e9824bd0c
+  Firebase: d80354ed7f6df5f9aca55e9eb47cc4b634735eaf
+  FirebaseAnalytics: 4fd42def128146e24e480e89f310e3d8534ea42b
+  FirebaseCore: 99fe0c4b44a39f37d99e6404e02009d2db5d718d
+  FirebaseCoreExtension: 3d3f2017a00d06e09ab4ebe065391b0bb642565e
+  FirebaseCoreInternal: df24ce5af28864660ecbd13596fc8dd3a8c34629
+  FirebaseInstallations: 6c963bd2a86aca0481eef4f48f5a4df783ae5917
+  FirebaseMessaging: 487b634ccdf6f7b7ff180fdcb2a9935490f764e8
   fmt: 4c2741a687cc09f0634a2e2c72a838b99f1ff120
   glog: c5d68082e772fa1c511173d6b30a9de2c05a69a2
-  GoogleAppMeasurement: 0471a5b5bff51f3a91b1e76df22c952d04c63967
+  GoogleAppMeasurement: fc0817122bd4d4189164f85374e06773b9561896
   GoogleDataTransport: aae35b7ea0c09004c3797d53c8c41f66f219d6a7
   GoogleSignIn: d4281ab6cf21542b1cfaff85c191f230b399d2db
   GoogleUtilities: 26a3abef001b6533cf678d3eb38fd3f614b7872d
@@ -1934,15 +2003,15 @@ SPEC CHECKSUMS:
   React-jsitracing: dd0e541a34027b3ab668ad94cf268482ad6f82fb
   React-logger: 6070f362a1657bb53335eb1fc903d3f49fd79842
   React-Mapbuffer: 2c95cbabc3d75a17747452381e998c35208ea3ee
-  react-native-blur: b10d69de6c5340fbe1dc1afec60948e9a32f893f
-  react-native-context-menu-view: f72a7edd2a54cdb14e57a48ce8ac50d3b1602a9d
-  react-native-date-picker: bc863d7cbabfdba7c4d7c3587aae95c75aa2dc2c
+  react-native-agora: e94df59f1f8e3e4988a36f15d79b6f530ce2ffe2
+  react-native-blur: 207ec2bf853b9a3b7751e3a29f7f497e69010b44
+  react-native-date-picker: c7605040f9fd11702eb818323b31ad7f15e1f7be
   react-native-encrypted-storage: 569d114e329b1c2c2d9f8c84bcdbe4478dda2258
   react-native-image-picker: f1006d8935a3bc0baf8157faaa7857c76a77c8bb
-  react-native-pager-view: 2e13088bcc86e6271e0b5ce1676cb8b716b6643e
-  react-native-safe-area-context: 6a3861f1430525c1de5afb90334c809b5aaab487
-  react-native-video: 75004856bbf8bce264fd15087027215179044781
-  react-native-webview: ad8dc2d03264427555e6841b214e4f5d2255f6b6
+  react-native-pager-view: 176db81d66a35119ec1b512a59bc94a47f73a68f
+  react-native-safe-area-context: 758e894ca5a9bd1868d2a9cfbca7326a2b6bf9dc
+  react-native-video: 15d7ce4a7a2bf39eab66502997a1fbf56d1daa63
+  react-native-webview: 311760d736aea5712c17f8de313f00b11e33375e
   React-nativeconfig: b0073a590774e8b35192fead188a36d1dca23dec
   React-NativeModulesApple: 61b07ab32af3ea4910ba553932c0a779e853c082
   React-perflogger: 3d31e0d1e8ad891e43a09ac70b7b17a79773003a
@@ -1967,18 +2036,18 @@ SPEC CHECKSUMS:
   React-utils: 67574b07bff4429fd6c4d43a7fad8254d814ee20
   ReactCommon: 64c64f4ae1f2debe3fab1800e00cb8466a4477b7
   RNBootSplash: 2fc215ec70ab24408745e9452fa3e6595fb9ce76
-  RNCAsyncStorage: 40367e8d25522dca9c3513c7b9815a184669bd97
-  RNCPicker: ba7ceb25a6e7c1d98aec9fa5a0d842934c7b316e
+  RNCAsyncStorage: af7b591318005069c3795076addc83a4dd5c0a2e
+  RNCPicker: 124b4fb5859ba1a3fd53a91e16d1e7a0fc016e59
   RNCPushNotificationIOS: 6c4ca3388c7434e4a662b92e4dfeeee858e6f440
-  RNDateTimePicker: 818460dc31b0dc5ec58289003e27dd8d022fb79c
-  RNFBApp: 6baf2f471f69a21a8266dc6016b9442d9bba244d
-  RNFBMessaging: 7d475cc030273c92934138ac991fcde3b72b03b9
-  RNGestureHandler: 56251647dac50972545bd86306f017b4e7f4aee2
-  RNGoogleSignin: ba93c1137f8d5cebdd39b04f493fd212ddf5ecd6
+  RNDateTimePicker: 29264364ea7b8cc0fb355b3843cf276a4ff78966
+  RNFBApp: 54ee335a7d8a72071f53c3786435cc537c2ecc40
+  RNFBMessaging: 10e835be65989d7fe64c0e92a1afeff5b6398021
+  RNGestureHandler: 1790021f6c6d0607da86720c6b402aca8f1003cb
+  RNGoogleSignin: b8760528f2a7cbe157ecfdcc13bdb7d2745c9389
   RNInAppBrowser: 6d3eb68d471b9834335c664704719b8be1bfdb20
   RNPermissions: 37f94c76ff0be69437232360bdc017a74468189d
   RNReanimated: 54c8f1cc0be7504cc3eaf213655ad13c4ba53fc2
-  RNScreens: 6584fce529be4800e3d12c8069376df9e12bafaf
+  RNScreens: 8a3ba045e7e8b5dd1b9a7764496430e17d00dfed
   RNSVG: 63ef964b8397204ff70b78de6c93858320816671
   RNVectorIcons: 6c795cacc9276decc31d8e1a139b9cc6fc0479ca
   SocketRocket: abac6f5de4d4d62d24e11868d7a2f427e0ef940d

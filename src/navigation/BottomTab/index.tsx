@@ -13,6 +13,7 @@ import InterBold from '../../components/Text/InterBold';
 import NavigationOptions from "../NavigationOptions";
 import MarketPlaceNavigation from '../MarketPlaceNavigator';
 import MenuNavigation from '../MenuNavigation';
+import LiveStreamScreen from '../../screens/GoLive';
 
 
 const TabNavigation = () => {
@@ -77,6 +78,31 @@ const TabNavigation = () => {
                     ...NavigationOptions
                 }}
             />
+            <Tab.Screen
+                name="LiveStreamNavigation"
+                component={LiveStreamScreen}
+                options={{
+                    tabBarIcon: ({ focused }) => (
+                        <View style={styles.tabButton}>
+                            <Image
+                                source={images.liveStream}
+                                style={[
+                                    styles.icon,
+                                    { tintColor: focused ? colors.themeColor : colors.lightGrey }
+                                ]}
+                            />
+                            <InterBold style={[
+                                styles.tabButtonText,
+                                { color: focused ? colors.themeColor : colors.lightGrey }
+                            ]}>
+                                Go Live
+                            </InterBold>
+                        </View>
+                    ),
+                    ...NavigationOptions
+                }}
+            />
+
             {/* <Tab.Screen
                 name="Game"
                 component={Game}
