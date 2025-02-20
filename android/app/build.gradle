@@ -1,6 +1,8 @@
 apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
+apply plugin: "kotlin-android"
+apply plugin: "kotlin-kapt"
 apply plugin: 'com.google.gms.google-services'
 
 /**
@@ -116,11 +118,19 @@ android {
 dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:2.0.0"
     implementation platform('com.google.firebase:firebase-bom:26.8.0')
     implementation 'com.google.firebase:firebase-analytics'
-    implementation "com.google.android.gms:play-services-measurement:22.1.2"
+    implementation "com.google.android.gms:play-services-measurement-api:22.2.0"
+    implementation "com.google.android.gms:play-services-measurement-impl:22.2.0"
 
-      implementation project(':react-native-push-notification')
+    implementation project(':react-native-push-notification')
+
+    configurations.all {
+        resolutionStrategy {
+            force "com.google.protobuf:protobuf-javalite:3.24.0"
+        }
+    }
 
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")

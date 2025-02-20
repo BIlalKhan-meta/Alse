@@ -1,6 +1,6 @@
-import React, {useCallback, useEffect, useState} from 'react';
+⁠import React, {useCallback, useEffect, useState} from 'react';
 import {View, Text, Dimensions, ScrollView, Linking} from 'react-native';
-import Carousel from 'react-native-snap-carousel';
+import Carousel from 'react-native-reanimated-carousel';
 import styles from './styles';
 import CustomButton from '../../components/CustomButton';
 import Card from '../../components/Card';
@@ -151,12 +151,13 @@ const SubscriptionPlan: React.FC = () => {
       <Card>
         <View style={styles.carasouelContainer}>
           <Carousel
+            loop
+            width={viewportWidth}
+            height={vh * 50}
+            autoPlay={false} // Change to true if needed
             data={subscriptionPlans}
             renderItem={renderItem}
-            sliderWidth={viewportWidth}
-            // itemWidth={viewportWidth * 0.6}
-            itemWidth={vw * 70}
-            layout={'default'}
+            scrollAnimationDuration={1000}
           />
         </View>
         <CustomButton
