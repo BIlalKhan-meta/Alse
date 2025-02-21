@@ -83,7 +83,7 @@ const BottomModal: React.FC<BottomModalProps> = props => {
             />
 
             <TouchableOpacity style={styles.button} onPress={onPressImage}>
-              <Image source={images.camera} style={styles.buttonIcon2} />
+              <Image source={images.camera} resizeMode='contain' style={styles.buttonIcon2} />
               <Text style={styles.buttonText}>Camera</Text>
             </TouchableOpacity>
             {onPress && (

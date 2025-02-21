@@ -112,7 +112,11 @@ const CardComponent: React.FC<CardComponentProps> = ({
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.button} onPress={onCameraPress}>
-          <Image source={images.camera} style={styles.buttonIcon2} />
+          <Image
+            source={images.camera}
+            resizeMode="contain"
+            style={styles.buttonIcon2}
+          />
           <Text style={styles.buttonText}> Camera</Text>
         </TouchableOpacity>
       </View>

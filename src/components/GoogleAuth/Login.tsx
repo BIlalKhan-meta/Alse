@@ -1,4 +1,4 @@
-import { ActivityIndicator, Image, StyleSheet } from 'react-native';
+import { ActivityIndicator, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import CustomButton from '../CustomButton';
 import styles from './styles';
 import { signInWithGoogle } from './GoogleService';
@@ -23,12 +23,12 @@ export default function GoogleLogin({ onSuccess, loading }: { onSuccess: (user: 
     }
 
     return (
-        <CustomButton onPress={ () => { handleGoogleLogin() } } style={ loading ? styles.googleButtonLoading : styles.googleButton }>
+        <TouchableOpacity onPress={ () => { handleGoogleLogin() } } style={ loading ? styles.googleButtonLoading : styles.googleButton }>
             { loading ? (
                 <ActivityIndicator size={ 'large' } color={ colors.white } />
             ) : (
                 <Image source={ require('./images/googleLogin.png') } style={ styles.googleLogin } />
             ) }
-        </CustomButton>
+        </TouchableOpacity>
     )
 }

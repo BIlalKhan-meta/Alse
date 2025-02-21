@@ -9,8 +9,10 @@ const styles = StyleSheet.create({
         backgroundColor: "#0C959B1A",
         width: "100%",
         paddingLeft: 20,
-        paddingTop: 5,
+        paddingVertical: 16,
         borderRadius: 20,
+        justifyContent: 'center',
+        alignItems: 'center'
     },
     googleLogin: {
     },
