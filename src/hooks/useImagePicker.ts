@@ -6,9 +6,9 @@ const useImagePicker = () => {
   const [imageData, setImageData] = useState(null);
 
   // Function to handle image selection from gallery
-  const chooseImageFromLibrary = () => {
+  const chooseImageFromLibrary = (mediaType?: string) => {
     let options = {
-      mediaType: 'photo', // 'photo' or 'video'
+      mediaType: mediaType ? mediaType : 'photo', // 'photo' or 'video'
       maxWidth: 300,
       maxHeight: 550,
       quality: 0.2,

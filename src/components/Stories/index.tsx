@@ -8,72 +8,66 @@ import { useNavigation } from '@react-navigation/native';
 import * as DropdownMenu from 'zeego/dropdown-menu'
 
 import Toast from 'react-native-toast-message';
+import useImagePicker from '../../hooks/useImagePicker';
+import { isAxiosError } from 'axios';
+import Loader from '../Loader';
 
 const Stories = () => {
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [stories, setStories] = useState<InstagramStoriesProps['stories']>([]);
+    const {imageData, captureImage, chooseImageFromLibrary} = useImagePicker();
+    const [isUploading, setIsUploading] = useState<boolean>(false);
 
     useEffect(() => {
-        // getStories()
+        getStories()
     }, []);
 
-    // Helper functions
-    const getFileExtension = (uri: string) => {
-        return uri.split('.').pop()?.toLowerCase();
-    };
-
-    const getMimeType = (uri: string) => {
-        const ext = getFileExtension(uri);
-        return ext === 'mp4' ? 'video/mp4' : 'image/jpeg';
-    };
-
-    const openImagePicker = () => {
-        const options = {
-            mediaType: 'mixed',
-            includeBase64: false,
-            maxHeight: 2000,
-            maxWidth: 2000,
-            selectionLimit: 1,
-        };
-
-        launchImageLibrary(options, async ({ didCancel, errorMessage, assets }) => {
-            if (didCancel) {
-                console.log('User cancelled image picker');
-            } else if (errorMessage) {
-                console.log('Image picker error: ', errorMessage);
-            } else {
-                Toast.show({
-                    type: 'info',
-                    text1: 'Uploading story',
-                });
-
-                const file = {
-                    uri: assets?.[0]?.uri,
-                    name: assets?.[0]?.fileName || `story_${Date.now()}${getFileExtension(assets?.[0]?.uri)}`, 
-                    type: assets?.[0]?.type || getMimeType(assets?.[0]?.uri),
-                  };
-                  
-                try {
-                    console.log(await AddStory( file ))
-                } catch (err) {
-                    console.log("ERROR IN STORY:::", err);
-                }
-
-                Toast.show({
-                    type: 'success',
-                    text1: "Story uploaded successfully!"
-                });
-
-            }
+    const uploadFile = async (file: any) => {
+        setIsUploading(true);
+        Toast.show({
+            type: 'info',
+            text1: 'Uploading Image'
         });
-    };
 
+        const formData = new FormData();
+
+        formData.append('file', file);
+
+        try {
+
+        await AddStory(formData);
+
+        Toast.show({
+            type: 'success',
+            text1: 'Successfully uploaded story!'
+        })
+
+        await getStories();
+        }catch(err) {
+            if (isAxiosError(err)) {
+                Toast.show({
+                    type: 'error',
+                    text1: err.response?.data.message
+                })
+            }
+        }
+        finally{
+            setIsUploading(false);
+        }
+    }
+
+    useEffect(() => {
+        if (imageData) {
+            uploadFile({ uri: imageData?.uri, name: imageData?.fileName, type: imageData?.type })
+        }
+    }, [imageData]);
 
     const onPressNewStory = (event: "upload" | "camera") => {
         if (event === "upload") {
-            return openImagePicker();
+            return chooseImageFromLibrary('mixed');
         }
-
+        
+        return captureImage('mixed');
     }
 
     const resetStories = () => {
@@ -83,41 +77,58 @@ const Stories = () => {
                 name: "Add Story",
                 avatarSource: { uri: "" },
                 stories: [],
-                // renderAvatar: () => {
-                //     return (
-                //         // <DropdownMenu.Root>
-                //         //     <DropdownMenu.Trigger>
-                //         //         <AddStoryIcon />
-                //         //         <Text>Add Story</Text>
-                //         //     </DropdownMenu.Trigger>
-                //         //     <DropdownMenu.Content>
-                //         //         <DropdownMenu.Item key="upload" onSelect={()=> onPressNewStory("upload")}>
-                //         //             <DropdownMenu.ItemTitle>Upload from gallery</DropdownMenu.ItemTitle>
-                //         //         </DropdownMenu.Item>
-                //         //         <DropdownMenu.Item key="camera">
-                //         //             <DropdownMenu.ItemTitle>Open Camera</DropdownMenu.ItemTitle>
-                //         //         </DropdownMenu.Item>
-                //         //     </DropdownMenu.Content>
-                //         // </DropdownMenu.Root>
-                //     )
-                // }
+                renderAvatar: () => {
+                    if (isUploading) {
+                        return <Loader />
+                    }
+
+                    return (
+                        <DropdownMenu.Root>
+                            <DropdownMenu.Trigger>
+                                <AddStoryIcon />
+                                <Text>Add Story</Text>
+                            </DropdownMenu.Trigger>
+                            <DropdownMenu.Content>
+                                <DropdownMenu.Item key="upload" onSelect={()=> onPressNewStory("upload")}>
+                                    <DropdownMenu.ItemTitle>Upload from gallery</DropdownMenu.ItemTitle>
+                                </DropdownMenu.Item>
+                                <DropdownMenu.Item key="camera" onSelect={() => onPressNewStory("camera")}>
+                                    <DropdownMenu.ItemTitle>Open Camera</DropdownMenu.ItemTitle>
+                                </DropdownMenu.Item>
+                            </DropdownMenu.Content>
+                        </DropdownMenu.Root>
+                    )
+                }
             }
         ])
     }
 
     const formatStories = (stories: any[]): InstagramStoriesProps['stories'] => {
-        return stories.map(story => ({
-          id: String(story.user.id),
-          name: story.user.full_name || "Unknown User",
-          avatarSource: { 
-            uri: `https://randomuser.me/api/portraits/men/${story.user.id}.jpg` 
-          },
-          stories: [{
+        // First group stories by user ID
+        const groupedStories = stories.reduce((acc, story) => {
+          const userId = String(story.user.id);
+          if (!acc[userId]) {
+            acc[userId] = {
+              id: userId,
+              name: story.user.full_name || "Unknown User",
+              avatarSource: { 
+                uri: `https://randomuser.me/api/portraits/men/${story.user.id}.jpg` 
+              },
+              stories: []
+            };
+          }
+          acc[userId].stories.push({
             id: String(story.id),
             source: { uri: story.media_url },
-          }]
-        }));
+            // Add other story properties here if needed
+          });
+          return acc;
+        }, {});
+      
+        // Convert the grouped object to array
+        return Object.values(groupedStories);
       };
+      
       
 
     const getStories = async () => {
@@ -150,6 +161,7 @@ const Stories = () => {
             <InstagramStories
                 stories={ stories }
                 avatarBorderColors={['#FF7A51', '#FFDB5C']}
+                saveProgress
                 avatarListContainerStyle={{
                     marginHorizontal: 5,
                     marginVertical: 5,
