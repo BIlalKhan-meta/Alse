@@ -13,6 +13,8 @@ import {
   ClientRoleType,
   IRtcEngine,
   RtcSurfaceView,
+  AudienceLatencyLevelType,
+  RtcConnection,
 } from 'react-native-agora';
 import {colors} from '../../utils/theme';
 
@@ -52,33 +54,40 @@ const LiveStreamScreen = () => {
       }
     };
 
+    const eventHandler = {
+      onJoinChannelSuccess: () => {
+        console.log('Joined Channel Successfully');
+        setJoined(true);
+      },
+      onLeaveChannel: () => {
+        console.log('Left Channel');
+        setJoined(false);
+      },
+      onUserJoined: (_connection: RtcConnection, uid: number) => {
+        console.log('Remote user ' + uid + ' joined');
+        setRemoteUid(uid);
+      },
+      onUserOffline: (_connection: RtcConnection, uid: number) => {
+        console.log('Remote user ' + uid + ' left the channel');
+        setRemoteUid(uid);
+      },
+    }
+
     const initializeAgora = async () => {
       try {
         console.log('Initializing Agora...');
         const agoraEngine = createAgoraRtcEngine();
-        agoraEngine.initialize({appId});
+        agoraEngine.initialize({ appId });
 
-        agoraEngine.registerEventHandler({
-          onJoinChannelSuccess: () => {
-            console.log('Joined Channel Successfully');
-            setJoined(true);
-          },
-          onLeaveChannel: () => {
-            console.log('Left Channel');
-            setJoined(false);
-          },
-          onUserJoined: uid => {
-            console.log('User joined:', uid);
-            setRemoteUid(uid);
-          },
-          onUserOffline: uid => {
-            console.log('User went offline:', uid);
-            setRemoteUid(0);
-          },
-        });
+        agoraEngine.registerEventHandler(eventHandler);
 
         agoraEngine.enableVideo();
-        agoraEngine.enableLocalVideo(true); // ✅ Ensures local video is enabled
+
+        if (isHost) {
+          agoraEngine.startPreview();
+        }
+
+
         agoraEngine.setChannelProfile(
           ChannelProfileType.ChannelProfileLiveBroadcasting,
         );
@@ -89,7 +98,7 @@ const LiveStreamScreen = () => {
             : ClientRoleType.ClientRoleAudience,
         );
 
-        agoraEngine.setDefaultAudioRouteToSpeakerphone(true); // ✅ Ensure audio output is set correctly
+        agoraEngine.setDefaultAudioRouteToSpeakerphone(true);
 
         engine.current = agoraEngine;
       } catch (e) {
@@ -103,6 +112,7 @@ const LiveStreamScreen = () => {
     return () => {
       console.log('Releasing Agora Engine');
       engine.current?.leaveChannel();
+      engine.current?.unregisterEventHandler(eventHandler);
       engine.current?.release();
     };
   }, [isHost]);
@@ -113,10 +123,40 @@ const LiveStreamScreen = () => {
 
       if (isHost) {
         console.log('Starting video preview...');
-        await engine.current?.startPreview(); // ✅ Ensure the preview starts before joining
-      }
+      engine.current?.joinChannel(token, channelName, 0, {
+        // Set channel profile to live broadcast
+        channelProfile: ChannelProfileType.ChannelProfileLiveBroadcasting,
+        // Set user role to broadcaster
+        clientRoleType: ClientRoleType.ClientRoleBroadcaster,
+        // Publish audio collected by the microphone
+        publishMicrophoneTrack: true,
+        // Publish video collected by the camera
+        publishCameraTrack: true,
+        // Automatically subscribe to all audio streams
+        autoSubscribeAudio: true,
+        // Automatically subscribe to all video streams
+        autoSubscribeVideo: true,
+      });
 
-      engine.current?.joinChannel(token, channelName, null, 0); // Pass 0 to let Agora assign UID
+      }
+      else {
+        engine.current?.joinChannel(token, channelName, 0, {
+          // Set channel profile to live broadcast
+          channelProfile: ChannelProfileType.ChannelProfileLiveBroadcasting,
+          // Set user role to audience
+          clientRoleType: ClientRoleType.ClientRoleAudience,
+          // Do not publish audio collected by the microphone
+          publishMicrophoneTrack: false,
+          // Do not publish video collected by the camera
+          publishCameraTrack: false,
+          // Automatically subscribe to all audio streams
+          autoSubscribeAudio: true,
+          // Automatically subscribe to all video streams
+          autoSubscribeVideo: true,
+          // Change the delay level of the audience to achieve ultra-fast live broadcast
+          audienceLatencyLevel: AudienceLatencyLevelType.AudienceLatencyLevelUltraLowLatency,
+      });
+      }
     } catch (e) {
       console.log('Error joining channel:', e);
     }
@@ -144,9 +184,9 @@ const LiveStreamScreen = () => {
 
   return (
     <View style={styles.container}>
-      {joined && isHost && (
-        <RtcSurfaceView canvas={{uid: 0}} style={styles.videoFill} />
-      )}
+      { joined && isHost && (
+          <RtcSurfaceView canvas={ { uid: 0 } } style={ styles.videoFill } />
+      ) }
 
       {remoteUid !== 0 && (
         <RtcSurfaceView canvas={{uid: remoteUid}} style={styles.videoFill} />

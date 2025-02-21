@@ -5,16 +5,17 @@ import { launchImageLibrary } from 'react-native-image-picker';
 import AddStoryIcon from './AddStoryIcon';
 import { AddStory, GetStories } from '../../api/stories';
 import { useNavigation } from '@react-navigation/native';
+import * as DropdownMenu from 'zeego/dropdown-menu'
 
 import Toast from 'react-native-toast-message';
 
 const Stories = () => {
+    const [isLoading, setIsLoading] = useState<boolean>(true);
     const [stories, setStories] = useState<InstagramStoriesProps['stories']>([]);
 
     useEffect(() => {
-        getStories()
+        // getStories()
     }, []);
-
 
     // Helper functions
     const getFileExtension = (uri: string) => {
@@ -53,7 +54,7 @@ const Stories = () => {
                   };
                   
                 try {
-                    await AddStory({ file: file })
+                    console.log(await AddStory( file ))
                 } catch (err) {
                     console.log("ERROR IN STORY:::", err);
                 }
@@ -67,20 +68,9 @@ const Stories = () => {
         });
     };
 
-    const addStoryActions = [
-        {
-            title: "Open camera",
-            event: "OPEN_CAMERA",
-        },
-        {
-            title: "Upload a Photo/video",
-            event: "UPLOAD"
-        }
-    ]
 
-
-    const onPressNewStory = (event: { title: string, event: string }) => {
-        if (event.event === addStoryActions[1].event) {
+    const onPressNewStory = (event: "upload" | "camera") => {
+        if (event === "upload") {
             return openImagePicker();
         }
 
@@ -93,20 +83,24 @@ const Stories = () => {
                 name: "Add Story",
                 avatarSource: { uri: "" },
                 stories: [],
-                renderAvatar: () => {
-                    return (
-                        <View
-                            actions={ addStoryActions }
-                            dropdownMenuMode
-                            onPress={ (e) => {
-                                onPressNewStory(addStoryActions[e.nativeEvent.index])
-                            } }
-                        >
-                            <AddStoryIcon />
-                            <Text>Add Story</Text>
-                        </View>
-                    )
-                }
+                // renderAvatar: () => {
+                //     return (
+                //         // <DropdownMenu.Root>
+                //         //     <DropdownMenu.Trigger>
+                //         //         <AddStoryIcon />
+                //         //         <Text>Add Story</Text>
+                //         //     </DropdownMenu.Trigger>
+                //         //     <DropdownMenu.Content>
+                //         //         <DropdownMenu.Item key="upload" onSelect={()=> onPressNewStory("upload")}>
+                //         //             <DropdownMenu.ItemTitle>Upload from gallery</DropdownMenu.ItemTitle>
+                //         //         </DropdownMenu.Item>
+                //         //         <DropdownMenu.Item key="camera">
+                //         //             <DropdownMenu.ItemTitle>Open Camera</DropdownMenu.ItemTitle>
+                //         //         </DropdownMenu.Item>
+                //         //     </DropdownMenu.Content>
+                //         // </DropdownMenu.Root>
+                //     )
+                // }
             }
         ])
     }
@@ -124,29 +118,6 @@ const Stories = () => {
           }]
         }));
       };
-
-    // const groupStoriesByUser = (stories: any[]) => {
-    //     return stories.reduce((grouped, story) => {
-    //         const userId = story.user_id;
-
-    //         if (!grouped[userId]) {
-    //             grouped[userId] = {
-    //                 user: { ...story.user, id: userId },
-    //                 stories: []
-    //             };
-    //         }
-
-    //         grouped[userId].stories.push({
-    //             id: story.id,
-    //             source: { uri: story.media_url },
-    //             media_type: story.media_type,
-    //             expires_at: story.expires_at,
-    //             created_at: story.created_at
-    //         });
-
-    //         return grouped;
-    //     }, {});
-    // };
       
 
     const getStories = async () => {
@@ -156,19 +127,12 @@ const Stories = () => {
             const { data } = await GetStories();
 
             if (data?.data?.stories) {
-                console.log("STORIES", data.data.stories);
-
                 const { stories } = data.data;
 
-                // const groupedByUsers = groupStoriesByUser(stories);
-
-                // console.log(groupedByUsers);
-
-                let formattedStories = formatStories(stories);
-
-                console.log(formattedStories[0].stories)
-
+                const formattedStories = formatStories(stories);
                 setStories(prevStories => [...prevStories, ...formattedStories]);
+
+                setIsLoading(false);
             }
         }
         catch (err) {
@@ -176,67 +140,8 @@ const Stories = () => {
         }
 
     }
-    const navigation = useNavigation();
 
-    const storiesData: InstagramStoriesProps['stories'] = [
-        {
-            id: "0",
-            name: "Add Story",
-            avatarSource: { uri: "" },
-            stories: [],
-            renderAvatar: () => {
-                return (
-                    <ContextMenu
-                        actions={ [{ title: "Title 1" }, { title: "Title 2" }] }
-                        dropdownMenuMode
-                        onPress={ (e) => {
-                            console.warn(
-                                `Pressed ${ e.nativeEvent.name } at index ${ e.nativeEvent.index }`
-                            );
-                        } }
-                    >
-                        <AddStoryIcon />
-                        <Text>Add Story</Text>
-                    </ContextMenu>
-                )
-            }
-        },
-        {
-            id: "1",
-            name: "Samera",
-            avatarSource: { uri: "https://randomuser.me/api/portraits/men/1.jpg" },
-            stories: [
-                {
-                    id: "101",
-                    source: { uri: "https://i.pinimg.com/236x/ec/95/3b/ec953ba650751238064420db52b660f8.jpg" }, // Story media URL
-                },
-            ]
-        },
-        {
-            id: "2",
-            name: "Samera",
-            avatarSource: { uri: "https://randomuser.me/api/portraits/men/1.jpg" },
-            stories: [
-                {
-                    id: "102",
-                    source: { uri: "https://i.pinimg.com/236x/ec/95/3b/ec953ba650751238064420db52b660f8.jpg" }, // Story media URL
-                },
-            ],
-        },
-        {
-            id: "3",
-            name: "Samera",
-            avatarSource: { uri: "https://randomuser.me/api/portraits/men/1.jpg" },
-            stories: [
-                {
-                    id: "103",
-                    source: { uri: "https://i.pinimg.com/236x/ec/95/3b/ec953ba650751238064420db52b660f8.jpg" }, // Story media URL
-                },
-            ],
-        },
-    ];
-
-    if (!stories || !stories.length) {
+    if (!stories || !stories.length || isLoading) {
         return;
     }
 
