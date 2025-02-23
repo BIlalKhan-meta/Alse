@@ -20,7 +20,7 @@ import {
 } from 'react-native-agora';
 import { colors } from '../../utils/theme';
 import { hri } from 'human-readable-ids';
-// import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
+import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
 import { EndLiveStream, GetLiveStreamToken, StartLiveStream } from '../../api/liveStream';
 import Loader from '../../components/Loader';
 import { useRoute } from '@react-navigation/native';
@@ -310,12 +310,12 @@ const LiveStreamScreen = () => {
 
   return (
     <SafeAreaView style={ styles.container }>
-      {/* <TouchableOpacity
+      <TouchableOpacity
         style={ styles.reverseCameraButton }
         onPress={ handleSwitchCamera }
       >
         <FontAwesome6 name="camera-rotate" size={ 24 } color="#fff" iconStyle='solid' />
-      </TouchableOpacity> */}
+      </TouchableOpacity>
       { joined && isHost && (
         <RtcSurfaceView canvas={ { uid: 0 } } style={ styles.videoFill } />
       ) }
