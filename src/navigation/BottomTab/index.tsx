@@ -81,6 +81,7 @@ const TabNavigation = () => {
             <Tab.Screen
                 name="LiveStreamNavigation"
                 component={LiveStreamScreen}
+                initialParams={ { isHost: true, channel: '' } }
                 options={{
                     tabBarIcon: ({ focused }) => (
                         <View style={styles.tabButton}>

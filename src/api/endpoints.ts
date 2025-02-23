@@ -111,6 +111,12 @@ const endpoints = {
   stories: {
     getStories: '/stories',
     addStories: '/stories'
+  },
+  liveStream: {
+    getLiveStreams: '/live-stream',
+    createLiveStreams: '/live-stream/start',
+    endLiveStreams: '/live-stream/end',
+    getToken: '/live-stream/getToken'
   }
 };
 

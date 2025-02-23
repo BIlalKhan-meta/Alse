@@ -1,119 +1,113 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, Image, SafeAreaView } from 'react-native';
+import {useState} from 'react';
+import {View} from 'react-native';
+
 import * as yup from 'yup';
 import styles from './styles';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import RegularTextInput from '../../../components/TextInput/RegularTextInput';
-import { Formik } from 'formik';
-import { colors } from '../../../utils/theme';
-import CustomButton from '../../../components/CustomButton';
-import { useNavigation } from '@react-navigation/native';
-import InterBoldLabel from '../../../components/Text/InterBoldLabel';
-import PoppinsLabel from '../../../components/Text/Poppins';
-import StepIndicator from '../../../components/StepIndicator';
-import { forgotPassword } from '../../../api/auth';
-import Toast from 'react-native-toast-message';
+import {Formik} from 'formik';
 
+import BackToLogin from '../../../components/BackToLogin';
+import InterBoldAverage from '../../../components/Text/InterBoldAverage';
+import InterRegularMedium from '../../../components/Text/InterRegularMedium';
+import CustomButton from '../../../components/CustomButton';
+import InterBold from '../../../components/Text/InterBold';
+import InterRegular from '../../../components/Text/InterRegular';
+import {colors} from '../../../utils/theme';
+import Card from '../../../components/Card';
+import {useAppDispatch} from '../../../hooks/storeHooks';
+import {getMessage, Toast} from '../../../utils/helpers';
+import {forgotPassword} from '../../../api/auth';
+import InterBoldLabel from '../../../components/Text/InterBoldLabel';
 interface FormValues {
-  identifier: string;
+  email: string;
 }
 
-const ForgetPassword: React.FC = () => {
-  const navigation = useNavigation();
+const initialValues = {
+  email: '',
+};
+
+const ForgetPassword: React.FC = ({navigation}) => {
   const [submitted, setSubmitted] = useState<boolean>(false);
-  const [initialValues, setInitialValues] = useState<FormValues>({
-    identifier: '',
+
+  const validationSchema: yup.AnySchema<FormValues> = yup.object().shape({
+    email: yup
+      .string()
+      .email('Email is wrong !! TRY AGAIN')
+      .required('Email is required'),
   });
 
-
-  const validationSchema = yup.object().shape({
-    // Email or Phone number
-    identifier: yup.string().required('Email or Phone number is required'),
-  });
-
-  const handleSubmit = async (values: FormValues) => {
-    try {
-      console.log(values, 'Valuessssssss');
-      Toast.show({
-        type: "info",
-        text1: "Loading..."
+  const handleSubmit = (values: FormValues) => {
+    const apiData = {
+      email: values?.email,
+    };
+    forgotPassword(apiData)
+      .then(res => {
+        if (res?.data) {
+          navigation.navigate('Verification', {email: values?.email});
+          setSubmitted(false);
+        }
+      })
+      .catch(error => {
+        Toast.success(getMessage(error?.message));
+        setSubmitted(false);
       });
-
-      setSubmitted(true);
-
-      const apiData = {
-        identifier: values.identifier,
-      };
-
-      const res = await forgotPassword(apiData);
-
-      console.log("FORGOT DATA", res?.data);
-
-      navigation.navigate('Verification', { identifier })
-    } catch (error) {
-      console.log("FORGOT ERROR", error, error?.response?.data);
-      Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: error?.response?.data?.message
-      });
-    }
   };
 
   return (
-    <SafeAreaView style={ styles.safeAreaView }>
-      {/* Show the Back Button */}
-      <TouchableOpacity onPress={ () => navigation.goBack() }>
-        <Image source={ require('./images/arrow_back.png') } style={ styles.backButton } />
-      </TouchableOpacity>
-
-      <StepIndicator totalSteps={ 3 } currentStep={ 0 } />
-
+    <>
       <Formik
-        initialValues={ initialValues }
-        validationSchema={ validationSchema }
-        enableReinitialize
-        onSubmit={ handleSubmit }>
-        { ({ handleSubmit, handleChange, handleBlur, values, errors, setFieldValue }) => (
-
+        initialValues={initialValues}
+        validationSchema={validationSchema}
+        onSubmit={handleSubmit}>
+        {({
+          handleSubmit,
+          handleChange,
+          handleBlur,
+          values,
+          errors,
+          resetForm,
+        }) => (
           <>
-            <KeyboardAwareScrollView
-              showsVerticalScrollIndicator={ false }>
-              <View style={ styles.container }>
-                <View style={ styles.imageContainer }>
-                  <Image
-                    source={ require('./images/Letter.png') }
-                    style={ styles.loginImage }
+            <KeyboardAwareScrollView style={styles.scrollview}>
+              <View style={styles.container}>
+                <Card style={styles.cardStyle}>
+                  <InterBoldLabel style={styles.heading}>
+                    Forgot Password
+                  </InterBoldLabel>
+                  <InterRegular style={styles.adddetailsheading}>
+                    Enter your email address to receive a verification code
+                  </InterRegular>
+
+                  <RegularTextInput
+                    label="Email Address"
+                    placeholder="Enter Email Address"
+                    placeholderTextColor={colors.inputText}
+                    onChangeText={handleChange('email')}
+                    onBlur={handleBlur('email')}
+                    value={values.email}
+                    submitted={submitted}
+                    errors={errors.email}
                   />
-                </View>
 
-                <InterBoldLabel style={ styles.heading }>Forget Password</InterBoldLabel>
-                <PoppinsLabel style={ styles.subHeading }>It was popularised in the 1960s with the release of Letraset sheetscontaining Lorem Ipsum.</PoppinsLabel>
+                  <CustomButton
+                    style={styles.continuebutton}
+                    onPress={() => {
+                      setSubmitted(true);
+                      handleSubmit();
+                    }}
+                    loading={submitted}>
+                    Continue
+                  </CustomButton>
 
-                <RegularTextInput
-                  placeholder='Email/Phone Number'
-                  placeholderTextColor={ colors.darkGray }
-                  onChangeText={ handleChange('identifier') }
-                  onBlur={ handleBlur('identifier') }
-                  value={ values.identifier }
-                  submitted={ submitted }
-                  errors={ errors.identifier }
-                  style={ styles.input }
-                />
-
-
-                <CustomButton
-                  style={ styles.loginBtn }
-                  onPress={ handleSubmit }
-                  loading={ submitted }>
-                  Continue
-                </CustomButton>
+                  <BackToLogin onPress={() => navigation.navigate('Login')} />
+                </Card>
               </View>
             </KeyboardAwareScrollView>
           </>
-        ) }
+        )}
       </Formik>
-    </SafeAreaView>
+    </>
   );
 };
 

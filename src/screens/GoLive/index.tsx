@@ -1,4 +1,4 @@
-import React, {useEffect, useState, useRef} from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   PermissionsAndroid,
   Platform,
   TouchableOpacity,
+  SafeAreaView
 } from 'react-native';
 import {
   createAgoraRtcEngine,
@@ -15,21 +16,43 @@ import {
   RtcSurfaceView,
   AudienceLatencyLevelType,
   RtcConnection,
+  IRtcEngineEventHandler,
 } from 'react-native-agora';
-import {colors} from '../../utils/theme';
+import { colors } from '../../utils/theme';
+import { hri } from 'human-readable-ids';
+// import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
+import { EndLiveStream, GetLiveStreamToken, StartLiveStream } from '../../api/liveStream';
+import Loader from '../../components/Loader';
+import { useRoute } from '@react-navigation/native';
+import CustomButton from '../../components/CustomButton';
 
-const appId = '26fd612e45fb4446b31b70dc15736026'; // Replace with your Agora App ID
-const channelName = 'testChannel';
-const token = ''; // Replace with a valid token if needed
+const appId = '26fd612e45fb4446b31b70dc15736026';
 
 const LiveStreamScreen = () => {
   const [joined, setJoined] = useState(false);
-  const [isHost, setIsHost] = useState(true);
+
+  const route = useRoute();
+
+  const { isHost, channel } = route.params;
+
+  const TEMP_TOKEN = '007eJxTYJAp3cUbVzR5p+jpc9EHD975l+gUyrbS8qGJ5qx26Ve2t5oVGIzM0lLMDI1STUzTkkxMTMySjA2TzA1Skg1NzY3NDIzMCpx2pzcEMjI8t+5hYIRCEJ+fwSezLNU5IzEvLzUnJLW4hIEBAK6GI0E=';
+  const TEMP_CHANNEL = 'LiveChannelTest'
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [channelName, setChannelName] = useState(hri.random());
+  const [token, setToken] = useState('');
+  const [liveStarted, setLiveStarted] = useState(false);
   const [remoteUid, setRemoteUid] = useState<number>(0);
   const engine = useRef<IRtcEngine | null>(null);
 
   useEffect(() => {
+    setIsLoading(true);
+
     const requestCameraAndAudioPermission = async () => {
+      if (!isHost) {
+        return;
+      }
+
       if (Platform.OS === 'android') {
         try {
           const granted = await PermissionsAndroid.requestMultiple([
@@ -39,9 +62,9 @@ const LiveStreamScreen = () => {
 
           if (
             granted[PermissionsAndroid.PERMISSIONS.CAMERA] !==
-              PermissionsAndroid.RESULTS.GRANTED ||
+            PermissionsAndroid.RESULTS.GRANTED ||
             granted[PermissionsAndroid.PERMISSIONS.RECORD_AUDIO] !==
-              PermissionsAndroid.RESULTS.GRANTED
+            PermissionsAndroid.RESULTS.GRANTED
           ) {
             console.warn('Camera or Microphone permission denied');
             return;
@@ -54,7 +77,7 @@ const LiveStreamScreen = () => {
       }
     };
 
-    const eventHandler = {
+    const eventHandler: IRtcEngineEventHandler = {
       onJoinChannelSuccess: () => {
         console.log('Joined Channel Successfully');
         setJoined(true);
@@ -71,6 +94,9 @@ const LiveStreamScreen = () => {
         console.log('Remote user ' + uid + ' left the channel');
         setRemoteUid(uid);
       },
+      onConnectionStateChanged(connection, state, reason) {
+        console.log("CONNECTION", connection, state, reason);
+      },
     }
 
     const initializeAgora = async () => {
@@ -86,7 +112,6 @@ const LiveStreamScreen = () => {
         if (isHost) {
           agoraEngine.startPreview();
         }
-
 
         agoraEngine.setChannelProfile(
           ChannelProfileType.ChannelProfileLiveBroadcasting,
@@ -109,38 +134,66 @@ const LiveStreamScreen = () => {
     requestCameraAndAudioPermission();
     initializeAgora();
 
+    if (!isHost) {
+      setupRemoteChannel()
+        .then(() => {
+          setIsLoading(false);
+        })
+    }
+    else {
+      joinChannel();
+      setIsLoading(false);
+    }
+
     return () => {
       console.log('Releasing Agora Engine');
-      engine.current?.leaveChannel();
+      endLive();
       engine.current?.unregisterEventHandler(eventHandler);
-      engine.current?.release();
     };
   }, [isHost]);
 
-  const joinChannel = async () => {
+  const setupRemoteChannel = async () => {
+    // Directly add them to live
+    setChannelName(channel);
+
+    console.log("CHANNEL", channel);
+
+    const { data } = await GetLiveStreamToken(`${channel}`);
+
+    setToken(data.agora_token);
+
+    console.log("TOKEN CALL::", data);
+
+    joinChannel({ token: data.agora_token, channel });
+  }
+
+  const joinChannel = async (audienceData?: any) => {
     try {
       console.log('Joining Channel...');
 
-      if (isHost) {
-        console.log('Starting video preview...');
-      engine.current?.joinChannel(token, channelName, 0, {
-        // Set channel profile to live broadcast
-        channelProfile: ChannelProfileType.ChannelProfileLiveBroadcasting,
-        // Set user role to broadcaster
-        clientRoleType: ClientRoleType.ClientRoleBroadcaster,
-        // Publish audio collected by the microphone
-        publishMicrophoneTrack: true,
-        // Publish video collected by the camera
-        publishCameraTrack: true,
-        // Automatically subscribe to all audio streams
-        autoSubscribeAudio: true,
-        // Automatically subscribe to all video streams
-        autoSubscribeVideo: true,
-      });
-
-      }
-      else {
+      if (!liveStarted && isHost) {
         engine.current?.joinChannel(token, channelName, 0, {
+          // Set channel profile to live broadcast
+          channelProfile: ChannelProfileType.ChannelProfileLiveBroadcasting,
+          // Set user role to broadcaster
+          clientRoleType: ClientRoleType.ClientRoleBroadcaster,
+          // Publish audio collected by the microphone
+          publishMicrophoneTrack: false,
+          // Publish video collected by the camera
+          publishCameraTrack: false,
+          // Automatically subscribe to all audio streams
+          autoSubscribeAudio: false,
+          // Automatically subscribe to all video streams
+          autoSubscribeVideo: false,
+        });
+      }
+
+      if (!isHost) {
+        console.log("Is AUDIENCE!!!", audienceData, audienceData.token, audienceData.channel);
+
+        await engine.current?.leaveChannel();
+
+        console.log("JOIN CHANNEL RESPONSE::: ",engine.current?.joinChannel('', audienceData.channel, 0, {
           // Set channel profile to live broadcast
           channelProfile: ChannelProfileType.ChannelProfileLiveBroadcasting,
           // Set user role to audience
@@ -155,12 +208,31 @@ const LiveStreamScreen = () => {
           autoSubscribeVideo: true,
           // Change the delay level of the audience to achieve ultra-fast live broadcast
           audienceLatencyLevel: AudienceLatencyLevelType.AudienceLatencyLevelUltraLowLatency,
-      });
+        }), audienceData.channel);
       }
     } catch (e) {
       console.log('Error joining channel:', e);
     }
   };
+
+  const joinChannelAsHost = (token: string, channelName: string) => {
+    console.log('Starting video preview...');
+
+    engine.current?.joinChannel('', channelName, 0, {
+      // Set channel profile to live broadcast
+      channelProfile: ChannelProfileType.ChannelProfileLiveBroadcasting,
+      // Set user role to broadcaster
+      clientRoleType: ClientRoleType.ClientRoleBroadcaster,
+      // Publish audio collected by the microphone
+      publishMicrophoneTrack: true,
+      // Publish video collected by the camera
+      publishCameraTrack: true,
+      // Automatically subscribe to all audio streams
+      autoSubscribeAudio: true,
+      // Automatically subscribe to all video streams
+      autoSubscribeVideo: true,
+    });
+  }
 
   const leaveChannel = async () => {
     try {
@@ -172,44 +244,88 @@ const LiveStreamScreen = () => {
     }
   };
 
-  const toggleRole = async () => {
-    const newIsHost = !isHost;
-    setIsHost(newIsHost);
-    engine.current?.setClientRole(
-      newIsHost
-        ? ClientRoleType.ClientRoleBroadcaster
-        : ClientRoleType.ClientRoleAudience,
+  const startLive = async () => {
+    try {
+      setIsLoading(true);
+      const { data } = await StartLiveStream();
+
+      // Set state first
+      setChannelName(data.channel_name);
+      setToken(data.agora_token);
+      setLiveStarted(true);
+
+      leaveChannel(); // Prepare to join new channel
+
+      joinChannelAsHost(data.agora_token, data.channel_name);
+    } catch (err) {
+      console.error("ERROR", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const endLive = async () => {
+    try {
+      setIsLoading(true);
+      await EndLiveStream();
+
+      setChannelName(hri.random());
+      setToken('');
+
+      setLiveStarted(false);
+      leaveChannel();
+      joinChannel();
+    } catch (err) {
+      console.error("ERROR", err);
+    }
+    finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSwitchCamera = () => {
+    engine.current?.switchCamera();
+  }
+
+  const renderStreamControl = () => {
+    if (!isHost) return null;
+
+    // Determine the onPress action and label text based on loading and stream status.
+    const onPressAction = isLoading ? null : liveStarted ? endLive : startLive;
+    const label = liveStarted ? 'End Stream' : 'Start Stream';
+
+    return (
+      <View style={ styles.controls }>
+        <CustomButton
+          style={ styles.controls }
+          onPress={ onPressAction }
+          txtstyle={ styles.controlText }
+          loading={ isLoading }>
+          { label }
+        </CustomButton>
+      </View>
     );
   };
 
+
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={ styles.container }>
+      {/* <TouchableOpacity
+        style={ styles.reverseCameraButton }
+        onPress={ handleSwitchCamera }
+      >
+        <FontAwesome6 name="camera-rotate" size={ 24 } color="#fff" iconStyle='solid' />
+      </TouchableOpacity> */}
       { joined && isHost && (
-          <RtcSurfaceView canvas={ { uid: 0 } } style={ styles.videoFill } />
+        <RtcSurfaceView canvas={ { uid: 0 } } style={ styles.videoFill } />
       ) }
 
-      {remoteUid !== 0 && (
-        <RtcSurfaceView canvas={{uid: remoteUid}} style={styles.videoFill} />
-      )}
+      { remoteUid !== 0 && (
+        <RtcSurfaceView canvas={ { uid: remoteUid } } style={ styles.videoFill } />
+      ) }
 
-      <View style={styles.controls}>
-        <TouchableOpacity
-          style={styles.control}
-          onPress={joined ? leaveChannel : joinChannel}>
-          <Text style={styles.controlText}>
-            {joined ? 'Leave Channel' : 'Join Channel'}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.control}
-          onPress={toggleRole}
-          disabled={joined}>
-          <Text style={styles.controlText}>{`Switch to ${
-            isHost ? 'Audience' : 'Host'
-          }`}</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+      { renderStreamControl() }
+    </SafeAreaView>
   );
 };
 
@@ -220,6 +336,15 @@ const styles = StyleSheet.create({
   videoFill: {
     flex: 1,
     width: '100%',
+  },
+  reverseCameraButton: {
+    position: 'absolute',
+    top: 60,
+    right: 20,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    padding: 10,
+    borderRadius: 25,
+    zIndex: 10,
   },
   controls: {
     position: 'absolute',

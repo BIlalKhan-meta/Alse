@@ -230,11 +230,6 @@ const LoginScreen: React.FC = () => {
                 />
 
                 <CustomButton
-                  // onPress={() => {
-                  //   setSubmitted(true)
-                  //   resetForm()
-                  //   handleSubmit()
-                  // }}
                   style={ styles.loginBtn }
                   onPress={ handleSubmit }
                   loading={ submitted }>
