@@ -1,17 +1,16 @@
 {
   "images" : [
     {
-      "filename" : "bootsplash_background.jpg",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "bootsplash_background@2x.jpg",
+      "filename" : "bootsplash_background_1.jpg",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "bootsplash_background@3x.jpg",
+      "filename" : "bootsplash_background_1@3x.jpg",
       "idiom" : "universal",
       "scale" : "3x"
     }

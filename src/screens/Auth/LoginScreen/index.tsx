@@ -238,7 +238,7 @@ const LoginScreen: React.FC = () => {
               </View>
               <View style={ styles.bottomContainer }>
                 <TouchableOpacity style={ styles.bottomTextContainer } onPress={ () => navigation.navigate('RegisterScreen') }>
-                  <Text>Don't have an account?</Text>
+                  <Text style={ styles.bottomText }>Don't have an account?</Text>
                   <Text style={ styles.signUpText }>Sign Up</Text>
                 </TouchableOpacity>
               </View>

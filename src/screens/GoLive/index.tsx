@@ -6,17 +6,16 @@ import {
   PermissionsAndroid,
   Platform,
   TouchableOpacity,
-  SafeAreaView
+  SafeAreaView,
+  Image,
+  ActivityIndicator
 } from 'react-native';
 import {
   createAgoraRtcEngine,
   ChannelProfileType,
   ClientRoleType,
-  IRtcEngine,
   RtcSurfaceView,
   AudienceLatencyLevelType,
-  RtcConnection,
-  IRtcEngineEventHandler,
 } from 'react-native-agora';
 import { colors } from '../../utils/theme';
 import { hri } from 'human-readable-ids';
@@ -30,20 +29,19 @@ const appId = '26fd612e45fb4446b31b70dc15736026';
 
 const LiveStreamScreen = () => {
   const [joined, setJoined] = useState(false);
+  const [initializing, setInitializing] = useState(true);
 
   const route = useRoute();
 
-  const { isHost, channel } = route.params;
-
-  const TEMP_TOKEN = '007eJxTYJAp3cUbVzR5p+jpc9EHD975l+gUyrbS8qGJ5qx26Ve2t5oVGIzM0lLMDI1STUzTkkxMTMySjA2TzA1Skg1NzY3NDIzMCpx2pzcEMjI8t+5hYIRCEJ+fwSezLNU5IzEvLzUnJLW4hIEBAK6GI0E=';
-  const TEMP_CHANNEL = 'LiveChannelTest'
+  const { isHost, channel, streamerName = 'Jemma Ray', streamerAvatar } = route.params;
 
   const [isLoading, setIsLoading] = useState(false);
   const [channelName, setChannelName] = useState(hri.random());
   const [token, setToken] = useState('');
   const [liveStarted, setLiveStarted] = useState(false);
-  const [remoteUid, setRemoteUid] = useState<number>(0);
-  const engine = useRef<IRtcEngine | null>(null);
+  const [remoteUid, setRemoteUid] = useState(0);
+  const [viewers, setViewers] = useState(40); // Example viewer count
+  const engine = useRef(null);
 
   useEffect(() => {
     setIsLoading(true);
@@ -77,26 +75,35 @@ const LiveStreamScreen = () => {
       }
     };
 
-    const eventHandler: IRtcEngineEventHandler = {
+    const eventHandler = {
       onJoinChannelSuccess: () => {
         console.log('Joined Channel Successfully');
         setJoined(true);
+        setInitializing(false); // Mark initialization as complete when successfully joined
       },
       onLeaveChannel: () => {
         console.log('Left Channel');
         setJoined(false);
       },
-      onUserJoined: (_connection: RtcConnection, uid: number) => {
+      onUserJoined: (_connection, uid) => {
         console.log('Remote user ' + uid + ' joined');
         setRemoteUid(uid);
       },
-      onUserOffline: (_connection: RtcConnection, uid: number) => {
+      onUserOffline: (_connection, uid) => {
         console.log('Remote user ' + uid + ' left the channel');
         setRemoteUid(uid);
       },
       onConnectionStateChanged(connection, state, reason) {
         console.log("CONNECTION", connection, state, reason);
       },
+      onError: (err) => {
+        console.log("Agora error:", err);
+        // If there's an error joining, we should still stop showing the loading indicator
+        // after a reasonable timeout
+        setTimeout(() => {
+          setInitializing(false);
+        }, 5000);
+      }
     }
 
     const initializeAgora = async () => {
@@ -128,6 +135,7 @@ const LiveStreamScreen = () => {
         engine.current = agoraEngine;
       } catch (e) {
         console.log('Error initializing Agora:', e);
+        setInitializing(false); // Stop showing loading if initialization fails
       }
     };
 
@@ -139,14 +147,25 @@ const LiveStreamScreen = () => {
         .then(() => {
           setIsLoading(false);
         })
+        .catch((err) => {
+          console.error("Error setting up remote channel:", err);
+          setIsLoading(false);
+          setInitializing(false);
+        });
     }
     else {
       joinChannel();
       setIsLoading(false);
     }
 
+    // Fallback to ensure we don't get stuck in loading state
+    const timeoutId = setTimeout(() => {
+      setInitializing(false);
+    }, 10000);
+
     return () => {
       console.log('Releasing Agora Engine');
+      clearTimeout(timeoutId);
       endLive();
       engine.current?.unregisterEventHandler(eventHandler);
     };
@@ -167,7 +186,7 @@ const LiveStreamScreen = () => {
     joinChannel({ token: data.agora_token, channel });
   }
 
-  const joinChannel = async (audienceData?: any) => {
+  const joinChannel = async (audienceData) => {
     try {
       console.log('Joining Channel...');
 
@@ -189,11 +208,9 @@ const LiveStreamScreen = () => {
       }
 
       if (!isHost) {
-        console.log("Is AUDIENCE!!!", audienceData, audienceData.token, audienceData.channel);
-
         await engine.current?.leaveChannel();
 
-        console.log("JOIN CHANNEL RESPONSE::: ",engine.current?.joinChannel('', audienceData.channel, 0, {
+        console.log("JOIN CHANNEL RESPONSE::: ", engine.current?.joinChannel('', audienceData.channel, 0, {
           // Set channel profile to live broadcast
           channelProfile: ChannelProfileType.ChannelProfileLiveBroadcasting,
           // Set user role to audience
@@ -212,13 +229,14 @@ const LiveStreamScreen = () => {
       }
     } catch (e) {
       console.log('Error joining channel:', e);
+      setInitializing(false); // Ensure loading stops if there's an error
     }
   };
 
-  const joinChannelAsHost = (token: string, channelName: string) => {
+  const joinChannelAsHost = (token, channelName) => {
     console.log('Starting video preview...');
 
-    engine.current?.joinChannel('', channelName, 0, {
+    engine.current?.joinChannel(token, channelName, 0, {
       // Set channel profile to live broadcast
       channelProfile: ChannelProfileType.ChannelProfileLiveBroadcasting,
       // Set user role to broadcaster
@@ -295,36 +313,126 @@ const LiveStreamScreen = () => {
     const label = liveStarted ? 'End Stream' : 'Start Stream';
 
     return (
-      <View style={ styles.controls }>
+      <View style={styles.controls}>
         <CustomButton
-          style={ styles.controls }
-          onPress={ onPressAction }
-          txtstyle={ styles.controlText }
-          loading={ isLoading }>
-          { label }
+          style={styles.controls}
+          onPress={onPressAction}
+          txtstyle={styles.controlText}
+          loading={isLoading}>
+          {label}
         </CustomButton>
       </View>
     );
   };
 
+  // Render the live user header
+  const renderLiveHeader = () => {
+    return (
+      <View style={styles.liveHeaderContainer}>
+        <View style={styles.liveUserInfo}>
+          <Image
+            source={streamerAvatar || { uri: `https://randomuser.me/api/portraits/men/1.jpg` }}
+            style={styles.avatarImage}
+          />
+          <View style={styles.userTextContainer}>
+            <Text style={styles.username}>{streamerName}</Text>
+            <View style={styles.liveIndicatorContainer}>
+              <Text style={styles.liveText}>Live</Text>
+            </View>
+          </View>
+        </View>
+        <View style={styles.viewersContainer}>
+          <Text style={styles.viewersCount}>{viewers}</Text>
+        </View>
+      </View>
+    );
+  };
+
+  // Chat message bubbles
+  const renderChatMessages = () => {
+    return (
+      <View style={styles.chatContainer}>
+        <View style={styles.chatMessage}>
+          <Image
+            source={{ uri: `https://randomuser.me/api/portraits/men/1.jpg` }}
+            style={styles.chatAvatar}
+          />
+          <View style={styles.messageContent}>
+            <Text style={styles.messageText}>haha, looks very fun 😊</Text>
+          </View>
+        </View>
+
+        <View style={styles.chatMessage}>
+          <Image
+            source={{ uri: `https://randomuser.me/api/portraits/men/2.jpg` }}
+            style={styles.chatAvatar}
+          />
+          <View style={[styles.messageContent, styles.secondMessage]}>
+            <Text style={styles.messageText}>I love this</Text>
+          </View>
+        </View>
+
+        <View style={styles.inputContainer}>
+          <Text style={styles.inputPlaceholder}>Type Your Message</Text>
+          <View style={styles.inputIcons}>
+            <TouchableOpacity>
+              <FontAwesome6 name="gift" size={20} color="#0099ff" iconStyle='solid' />
+            </TouchableOpacity>
+            <TouchableOpacity>
+              <FontAwesome6 name="heart" size={20} color="#ff5c5c" iconStyle='solid' />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    );
+  };
+
+  // Render loading screen
+  const renderLoading = () => {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#38b6ff" />
+        <Text style={styles.loadingText}>Preparing livestream...</Text>
+      </View>
+    );
+  };
+
+  // Only render the main content when initializing is complete
+  if (initializing) {
+    return (
+      <SafeAreaView style={styles.container}>
+        {renderLoading()}
+      </SafeAreaView>
+    );
+  }
 
   return (
-    <SafeAreaView style={ styles.container }>
-      <TouchableOpacity
-        style={ styles.reverseCameraButton }
-        onPress={ handleSwitchCamera }
-      >
-        <FontAwesome6 name="camera-rotate" size={ 24 } color="#fff" iconStyle='solid' />
-      </TouchableOpacity>
-      { joined && isHost && (
-        <RtcSurfaceView canvas={ { uid: 0 } } style={ styles.videoFill } />
-      ) }
+    <SafeAreaView style={styles.container}>
+      {/* Video stream */}
+      <View style={styles.videoContainer}>
+        {joined && isHost && (
+          <RtcSurfaceView canvas={{ uid: 0 }} style={styles.videoFill} />
+        )}
 
-      { remoteUid !== 0 && (
-        <RtcSurfaceView canvas={ { uid: remoteUid } } style={ styles.videoFill } />
-      ) }
+        {remoteUid !== 0 && (
+          <RtcSurfaceView canvas={{ uid: remoteUid }} style={styles.videoFill} />
+        )}
 
-      { renderStreamControl() }
+        {/* Live header overlay */}
+        {renderLiveHeader()}
+
+        {/* Camera switch button */}
+        <TouchableOpacity
+          style={styles.reverseCameraButton}
+          onPress={handleSwitchCamera}
+        >
+          <FontAwesome6 name="camera-rotate" size={24} color="#fff" iconStyle='solid' />
+        </TouchableOpacity>
+
+        {renderChatMessages()}
+      </View>
+
+      {renderStreamControl()}
     </SafeAreaView>
   );
 };
@@ -332,10 +440,82 @@ const LiveStreamScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#000',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#000',
+  },
+  loadingText: {
+    color: '#fff',
+    marginTop: 20,
+    fontSize: 16,
+  },
+  videoContainer: {
+    flex: 1,
+    position: 'relative',
   },
   videoFill: {
     flex: 1,
     width: '100%',
+  },
+  liveHeaderContainer: {
+    position: 'absolute',
+    top: 10,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 15,
+    zIndex: 10,
+  },
+  liveUserInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 20,
+    padding: 6,
+    paddingRight: 12,
+  },
+  avatarImage: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    marginRight: 8,
+  },
+  userTextContainer: {
+    flexDirection: 'column',
+  },
+  username: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  liveIndicatorContainer: {
+    backgroundColor: '#38b6ff',
+    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    alignSelf: 'flex-start',
+    marginTop: 2,
+  },
+  liveText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  viewersContainer: {
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 15,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  viewersCount: {
+    color: '#fff',
+    fontSize: 12,
   },
   reverseCameraButton: {
     position: 'absolute',
@@ -363,6 +543,58 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   controlText: {},
+  chatContainer: {
+    position: 'absolute',
+    bottom: 70,
+    left: 0,
+    right: 0,
+    padding: 10,
+  },
+  chatMessage: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  chatAvatar: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    marginRight: 8,
+  },
+  messageContent: {
+    backgroundColor: 'rgba(255,255,255,0.8)',
+    borderRadius: 18,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    maxWidth: '70%',
+  },
+  secondMessage: {
+    backgroundColor: 'rgba(255,94,153,0.85)',
+  },
+  messageText: {
+    color: '#000',
+    fontSize: 14,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderRadius: 25,
+    marginTop: 10,
+    padding: 12,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  inputPlaceholder: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 14,
+  },
+  inputIcons: {
+    flexDirection: 'row',
+    width: 60,
+    justifyContent: 'space-between',
+  },
 });
 
 export default LiveStreamScreen;

@@ -4,15 +4,21 @@ import {
     statusCodes,
   } from '@react-native-google-signin/google-signin';
 
+import { Platform } from 'react-native';
 
-const GOOGLE_CLIENT_ID = '272810491191-f0l1utg4q5la06fuq43si41926gqf8n0.apps.googleusercontent.com';
-// const GOOGLE_IOS_URL_SCHEME = 'com.googleusercontent.apps.272810491191-f0l1utg4q5la06fuq43si41926gqf8n0'
+
+const GOOGLE_CLIENT_ID = '356485755638-s376ec8ugua8tr2mdfcfjtqqn1090tdp.apps.googleusercontent.com';
+const GOOGLE_ANDROID_CLIENT_ID = '356485755638-eenksnfr7lp4jpfcem1eclvgkne4gjuo.apps.googleusercontent.com';
+const GOOGLE_IOS_URL_SCHEME = 'com.googleusercontent.apps.356485755638-s376ec8ugua8tr2mdfcfjtqqn1090tdp'
 
 export const signInWithGoogle = async () => {
 
     try {
         GoogleSignin.configure({
-            iosClientId: GOOGLE_CLIENT_ID
+            iosClientId: GOOGLE_CLIENT_ID,
+            ...(Platform.OS === 'android' && {
+                androidClientId: GOOGLE_ANDROID_CLIENT_ID
+            })
         });
 
         const userInfo = await GoogleSignin.signIn();
