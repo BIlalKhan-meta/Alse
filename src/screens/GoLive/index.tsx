@@ -31,7 +31,7 @@ import ViewerCounter from '../../components/ViewerCounter';
 import firestore from '@react-native-firebase/firestore';
 import ChatComponent from '../../components/LiveStreamChat';
 import { archiveChatMessages } from '../../services/chatService';
-import { initializeViewerTracking, archiveStreamStats } from '../../services/viewerService';
+import { initializeViewerTracking, archiveStreamStats, updateViewerActivity } from '../../services/viewerService';
 
 const appId = 'a0c7366a22ac46b791c69f685591207c';
 
@@ -49,6 +49,8 @@ const LiveStreamScreen = () => {
 
   const user = useSelector(selectUserProfile);
 
+  let viewerTrackingCleanup: any = null;
+
   const { isHost: isHostFromParams, channel, streamerName = user.full_name, streamerAvatar = user.profile_picture_url } = route.params as { isHost: boolean, channel: string, streamerName: string, streamerAvatar: string };
 
   const [isLoading, setIsLoading] = useState(false);
@@ -59,6 +61,33 @@ const LiveStreamScreen = () => {
   const engine = useRef(null);
   const isInitialized = useRef(false);
   const [isHost, setIsHost] = useState(isHostFromParams);
+
+  useEffect(() => {
+    if (route.params?.isHost) {
+      setIsHost(route.params.isHost);
+    }
+
+    if (route.params?.channel) {
+      setChannelName(route.params.channel);
+    }
+  }, [route.params]);
+  
+
+  useEffect(() => {
+    if (!liveStarted || isHost || !channelName) return;
+    
+    // For audience members only: periodically update activity
+    const activityInterval = setInterval(() => {
+      if (channelName) {
+        updateViewerActivity(channelName, user.id)
+          .catch(err => console.error('Error updating viewer activity:', err));
+      }
+    }, 5 * 1000); // Update every 5 seconds
+    
+    return () => {
+      clearInterval(activityInterval);
+    };
+  }, [liveStarted, isHost, channelName, user.id]);
   
   // Track app state (foreground/background)
   useEffect(() => {
@@ -189,9 +218,6 @@ const LiveStreamScreen = () => {
     if (!permissionsGranted) return;
     
     setIsLoading(true);
-
-
-    let viewerTrackingCleanup: any = null;
 
     const eventHandler = {
       onJoinChannelSuccess: (connection, uid) => {
@@ -354,13 +380,18 @@ const LiveStreamScreen = () => {
 
   const setupRemoteChannel = async () => {
     try {
+      const {data} = await GetLiveStreamToken(channel);
+
       // Directly add them to live
       setChannelName(channel);
+      setToken(data.agora_token);
       console.log("Setting up remote channel:", channel);
 
       // Join the channel as audience
       await joinChannel({ 
-        channel: channel
+        channel: channel,
+        token: data.agora_token,
+        uid: data.uid
       });
     } catch (err) {
       console.error("Error setting up remote channel:", err);
@@ -403,9 +434,9 @@ const LiveStreamScreen = () => {
         
         // Join the channel with clear options
         const result = engine.current.joinChannel(
-          '', // Use empty string if token not provided
+          audienceData.token, // Use empty string if token not provided
           audienceData.channel,
-          0,
+          audienceData.uid,
           {
             channelProfile: ChannelProfileType.ChannelProfileLiveBroadcasting,
             clientRoleType: ClientRoleType.ClientRoleAudience,
@@ -425,7 +456,7 @@ const LiveStreamScreen = () => {
     }
   };
 
-  const joinChannelAsHost = async (token, channelName) => {
+  const joinChannelAsHost = async (token: string, channelName: string) => {
     console.log('Starting video preview as host...');
   
     if (!isInitialized.current || !engine.current) {
@@ -434,8 +465,11 @@ const LiveStreamScreen = () => {
     }
   
     try {
+      // Leave current channel
+      await leaveChannel();
+
       console.log("Host joining live channel:", channelName);
-      const result = await engine.current.joinChannel('', channelName, 0, {
+      const result = await engine.current.joinChannel(token, channelName, 0, {
         channelProfile: ChannelProfileType.ChannelProfileLiveBroadcasting,
         clientRoleType: ClientRoleType.ClientRoleBroadcaster,
         publishMicrophoneTrack: true,
@@ -472,12 +506,6 @@ const LiveStreamScreen = () => {
       // Set state first
       setChannelName(data.channel_name);
       setToken(data.agora_token);
-      
-      // Leave current channel
-      await leaveChannel();
-      
-      // Add delay to ensure channel is properly left
-      await new Promise(resolve => setTimeout(resolve, 1000));
 
       // Set live started after successful channel leave
       setLiveStarted(true);
@@ -521,27 +549,9 @@ const LiveStreamScreen = () => {
       // Leave the live channel
       await leaveChannel();
       
-      // Archive chat messages
-      if (channelName) {
-        await archiveChatMessages(channelName, user.id);
-      }
-      
       // Call the API to end the live stream
       const result = await EndLiveStream();
       console.log("End live stream result:", result);
-      
-      // Mark the channel as inactive in Firestore
-      await firestore()
-        .collection('liveStreamChats')
-        .doc(channelName)
-        .update({
-          active: false,
-          endedAt: firestore.FieldValue.serverTimestamp()
-        });
-
-      if (isHost && channelName) {
-        archiveStreamStats(channelName, user.id);
-      }
 
       // Generate a new channel name for the dummy channel
       const newChannelName = hri.random();
@@ -607,12 +617,12 @@ const LiveStreamScreen = () => {
           </View>
         </View>
         
-        <View style={ styles.headerRightContainer }>
+        <View style={styles.headerRightContainer}>
           { liveStarted && (
             <ViewerCounter
-              isLive={ liveStarted }
-              channelId={ channel }
-              style={ styles.viewerCounterMargin }
+              isLive={liveStarted}
+              channelId={channelName} // Use channelName instead of channel
+              style={styles.viewerCounterMargin}
             />
           ) }
           
@@ -648,7 +658,10 @@ const LiveStreamScreen = () => {
           <Text style={styles.noStreamText}>This stream is not available right now</Text>
           <TouchableOpacity 
             style={styles.backButtonLarge}
-            onPress={() => navigation.goBack()}
+            onPress={async () => {
+              await cleanupResources();
+              navigation.goBack();
+            }}
           >
             <Text style={styles.backButtonText}>Go Back</Text>
           </TouchableOpacity>

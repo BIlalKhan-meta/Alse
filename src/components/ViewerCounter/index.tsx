@@ -1,16 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
-import { GetLiveStreamUsers } from '../../api/liveStream';
+import firestore from '@react-native-firebase/firestore';
+import { useSelector } from 'react-redux';
+import { selectUserProfile } from '../../store/slices/authSlice';
 
 /**
- * ViewerCounter component to display the number of viewers in a livestream
- * Uses Agora API to fetch real-time viewer counts
+ * ViewerCounter component that displays real-time viewer count
+ * Uses Firestore to track viewers with host exclusion
  * 
- * @param {Object} props
- * @param {boolean} props.isLive - Whether the stream is currently live
- * @param {string} props.channelId - Agora channel ID for the livestream
- * @param {Object} props.style - Additional styles for the container
+ * @param {boolean} isLive - Whether the stream is currently live
+ * @param {string} channelId - The channel ID of the livestream
+ * @param {object} style - Additional styles for the container
  */
 const ViewerCounter = ({ 
   isLive,
@@ -23,57 +24,139 @@ const ViewerCounter = ({
 }) => {
   // State to track viewer count
   const [viewerCount, setViewerCount] = useState<number>(0);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   
-  // Effect to set up listener for user count changes
+  // Reference to the Firestore listener for cleanup
+  const viewerListener = useRef<(() => void) | null>(null);
+  
+  // Get current user to determine if they're the host
+  const user = useSelector(selectUserProfile);
+  
+  // Set up listener for viewer count changes in Firestore
   useEffect(() => {
-    if (!isLive || !channelId) return;
+    if (!isLive || !channelId) {
+      setViewerCount(0);
+      setIsLoading(false);
+      return () => {};
+    }
     
-    let intervalId: NodeJS.Timeout;
-
-    const setupViewerCountTracking = async () => {
-      try {
-        setIsLoading(true);
-        
-        // Initial fetch of user count
-        const {data} = await GetLiveStreamUsers(channelId);
-        if (data?.data?.audience_total) {
-          // Subtract 1 to exclude the broadcaster (if needed)
-          setViewerCount(Math.max(0, data.data.audience_total));
+    setIsLoading(true);
+    
+    try {
+      // Reference to the stats document in Firestore
+      const statsRef = firestore()
+        .collection('liveStreamStats')
+        .doc(channelId);
+      
+      // Set up real-time listener for viewer count
+      const unsubscribe = statsRef.onSnapshot(
+        (doc) => {
+          if (doc.exists) {
+            const data = doc.data();
+            // Use the viewerCount field from Firestore
+            if (data && typeof data.viewerCount === 'number') {
+              setViewerCount(data.viewerCount);
+            } else {
+              setViewerCount(0);
+            }
+          } else {
+            setViewerCount(0);
+          }
+          setIsLoading(false);
+          setError(null);
+        },
+        (err) => {
+          console.error('Error in viewer count listener:', err);
+          setError('Could not load viewer count');
+          setIsLoading(false);
+        }
+      );
+      
+      // If this is an audience member (not the host), increment the count
+      const addViewerToCount = async () => {
+        try {
+          // Check if this is the channel host
+          const streamDoc = await firestore()
+            .collection('liveStreamChats')
+            .doc(channelId)
+            .get();
+          
+          // Do not increment if this user is the host
+          const streamData = streamDoc.data();
+          const isHost = streamData?.hostId === user.id;
+          
+          if (!isHost) {
+            // Add this viewer to the count
+            await statsRef.update({
+              viewerCount: firestore.FieldValue.increment(1),
+              lastUpdated: firestore.FieldValue.serverTimestamp()
+            });
+            
+            // Also add this user to a "viewers" subcollection for tracking
+            await statsRef.collection('viewers').doc(user.id.toString()).set({
+              userId: user.id,
+              username: user.full_name,
+              joinedAt: firestore.FieldValue.serverTimestamp()
+            });
+          }
+        } catch (err) {
+          console.error('Error adding viewer:', err);
+        }
+      };
+      
+      // Call once when the component mounts to increment count
+      addViewerToCount();
+      
+      // Store the unsubscribe function for cleanup
+      viewerListener.current = unsubscribe;
+      
+      // When component unmounts, decrement the viewer count
+      return () => {
+        if (viewerListener.current) {
+          viewerListener.current();
         }
         
-        // Set up interval to periodically update the count (every 10 seconds)
-        intervalId = setInterval(async () => {
+        // Decrement viewer count if this is not the host
+        const removeViewer = async () => {
           try {
-            const {data} = await GetLiveStreamUsers(channelId);
-            if (data?.data?.audience_total) {
-              setViewerCount(Math.max(0, data.data.audience_total));
+            // Check if this is the channel host
+            const streamDoc = await firestore()
+              .collection('liveStreamChats')
+              .doc(channelId)
+              .get();
+            
+            const streamData = streamDoc.data();
+            const isHost = streamData?.hostId === user.id;
+            
+            if (!isHost) {
+              // Remove this viewer's entry
+              await statsRef.collection('viewers').doc(user.id.toString()).delete();
+              
+              // Decrement the count
+              await statsRef.update({
+                viewerCount: firestore.FieldValue.increment(-1),
+                lastUpdated: firestore.FieldValue.serverTimestamp()
+              });
             }
-          } catch (refreshError) {
-            console.error('Error refreshing viewer count:', refreshError);
-            // Don't set error state for refresh failures to avoid UI flicker
+          } catch (err) {
+            console.error('Error removing viewer:', err);
           }
-        }, 1 * 1000);
+        };
         
-        setIsLoading(false);
-        setError(null);
-      } catch (err) {
-        console.error('Error setting up viewer count tracking:', err);
-        setIsLoading(false);
-        setError('Unable to fetch viewer count');
-        setViewerCount(0);
-      }
-    };
-
-    setupViewerCountTracking();
-
-    // Clean up interval and listeners when component unmounts or channel changes
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-    };
-  }, [isLive, channelId]);
-
+        // Only remove if the component was fully mounted
+        if (!isLoading && isLive && channelId) {
+          removeViewer();
+        }
+      };
+    } catch (err) {
+      console.error('Error setting up viewer counter:', err);
+      setIsLoading(false);
+      setError('Unable to track viewers');
+      return () => {};
+    }
+  }, [isLive, channelId, user.id]);
+  
   // Don't render anything if stream is not live
   if (!isLive) return null;
 

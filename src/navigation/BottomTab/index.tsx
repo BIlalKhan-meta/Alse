@@ -83,6 +83,7 @@ const TabNavigation = () => {
                 component={LiveStreamScreen}
                 initialParams={ { isHost: true, channel: '' } }
                 options={{
+                    unmountOnBlur: true,
                     tabBarIcon: ({ focused }) => (
                         <View style={styles.tabButton}>
                             <Image
