@@ -13,7 +13,7 @@ const MESSAGE_LIMIT = 50;
  * @param {string} userId - The ID of the host user
  * @returns {Promise<void>}
  */
-export const archiveChatMessages = async (channelId, userId) => {
+export const archiveChatMessages = async (channelId: string, userId: string) => {
   if (!channelId) return;
   
   try {
@@ -42,7 +42,7 @@ export const archiveChatMessages = async (channelId, userId) => {
  * @param {string} userId - The current user's ID
  * @returns {Promise<boolean>} - Success status
  */
-export const deleteChatMessage = async (channelId, messageId, userId) => {
+export const deleteChatMessage = async (channelId: string, messageId: string, userId: string) => {
   if (!channelId || !messageId || !userId) return false;
   
   try {
@@ -55,7 +55,7 @@ export const deleteChatMessage = async (channelId, messageId, userId) => {
     const messageDoc = await messageRef.get();
     
     // Only allow deletion if user is the message author
-    if (messageDoc.exists && messageDoc.data().userId === userId) {
+    if (messageDoc.exists && messageDoc.data()?.userId === userId) {
       await messageRef.delete();
       return true;
     }
@@ -75,7 +75,7 @@ export const deleteChatMessage = async (channelId, messageId, userId) => {
  * @param {Object} updates - The updates to apply to matching messages
  * @returns {Promise<number>} - Number of messages updated
  */
-export const batchUpdateMessages = async (channelId, condition, updates) => {
+export const batchUpdateMessages = async (channelId: string, condition: (message: any) => boolean, updates: any) => {
   if (!channelId || !condition || !updates) return 0;
   
   try {

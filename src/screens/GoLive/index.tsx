@@ -31,6 +31,7 @@ import ViewerCounter from '../../components/ViewerCounter';
 import firestore from '@react-native-firebase/firestore';
 import ChatComponent from '../../components/LiveStreamChat';
 import { archiveChatMessages } from '../../services/chatService';
+import { initializeViewerTracking, archiveStreamStats } from '../../services/viewerService';
 
 const appId = 'a0c7366a22ac46b791c69f685591207c';
 
@@ -189,6 +190,9 @@ const LiveStreamScreen = () => {
     
     setIsLoading(true);
 
+
+    let viewerTrackingCleanup: any = null;
+
     const eventHandler = {
       onJoinChannelSuccess: (connection, uid) => {
         console.log('Joined Channel Successfully', connection.channelId, uid);
@@ -252,7 +256,7 @@ const LiveStreamScreen = () => {
 
     const initializeAgora = async () => {
       if (isInitialized.current) return;
-      
+
       try {
         console.log('Initializing Agora...');
         const agoraEngine = createAgoraRtcEngine();
@@ -314,6 +318,10 @@ const LiveStreamScreen = () => {
       if (engine.current) {
         // Clean up resources completely when component unmounts
         cleanupResources();
+      }
+
+      if (viewerTrackingCleanup) {
+        viewerTrackingCleanup();
       }
     };
   }, [permissionsGranted, isHost]);
@@ -426,15 +434,6 @@ const LiveStreamScreen = () => {
     }
   
     try {
-      // If we're already in a channel, leave it first
-      if (joined) {
-        console.log("Leaving preview channel before joining live channel");
-        await leaveChannel();
-        
-        // Add a small delay to ensure resources are properly released
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      }
-      
       console.log("Host joining live channel:", channelName);
       const result = await engine.current.joinChannel('', channelName, 0, {
         channelProfile: ChannelProfileType.ChannelProfileLiveBroadcasting,
@@ -479,22 +478,30 @@ const LiveStreamScreen = () => {
       
       // Add delay to ensure channel is properly left
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       // Set live started after successful channel leave
-      setLiveStarted(true); 
+      setLiveStarted(true);
 
       // Initialize Firestore chat document for this channel
-      await firestore()
-        .collection('liveStreamChats')
-        .doc(data.channel_name)
-        .set({
-          channelId: data.channel_name,
-          hostId: user.id,
-          hostName: user.full_name,
-          startedAt: firestore.FieldValue.serverTimestamp(),
-          active: true
-        });
-      
+      try {
+        await firestore()
+          .collection('liveStreamChats')
+          .doc(data.channel_name)
+          .set({
+            channelId: data.channel_name,
+            hostId: user.id,
+            hostName: user.full_name,
+            startedAt: firestore.FieldValue.serverTimestamp(),
+            active: true
+          });
+      } catch (err) {
+        console.error("ERROR setting up chat document:", err);
+      }
+
+      if (isHost) {
+        viewerTrackingCleanup = initializeViewerTracking(data.channel_name);
+      }
+
       // Join new channel as host
       await joinChannelAsHost(data.agora_token, data.channel_name);
     } catch (err) {
@@ -531,7 +538,11 @@ const LiveStreamScreen = () => {
           active: false,
           endedAt: firestore.FieldValue.serverTimestamp()
         });
-      
+
+      if (isHost && channelName) {
+        archiveStreamStats(channelName, user.id);
+      }
+
       // Generate a new channel name for the dummy channel
       const newChannelName = hri.random();
       setChannelName(newChannelName);
