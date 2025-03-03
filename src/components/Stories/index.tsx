@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Image, PermissionsAndroid, Platform, Text, TouchableOpacity, View } from 'react-native';
 import InstagramStories, { InstagramStoriesProps } from '@birdwingo/react-native-instagram-stories';
 import AddStoryIcon from './AddStoryIcon';
@@ -12,6 +12,10 @@ import { GetLiveStreams } from '../../api/liveStream';
 import { GradientBorderView } from '@good-react-native/gradient-border'
 import { useNavigation } from '@react-navigation/native';
 
+// Constants
+const POLLING_INTERVAL = 30000; // 30 seconds
+const MAX_RETRY_COUNT = 3;
+
 interface LiveStream {
     user_id: number;
     stream_key: string;
@@ -19,33 +23,146 @@ interface LiveStream {
 }
 
 const Stories = () => {
-    const [isLoading, setIsLoading] = useState<boolean>(true);
+    // State management
+    const [isInitialLoading, setIsInitialLoading] = useState<boolean>(true);
+    const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
     const [stories, setStories] = useState<InstagramStoriesProps['stories']>([]);
     const [liveStreams, setLiveStreams] = useState<LiveStream[]>([]);
     const {imageData, captureImage, chooseImageFromLibrary} = useImagePicker();
     const [isUploading, setIsUploading] = useState<boolean>(false);
+    const [pollingEnabled, setPollingEnabled] = useState<boolean>(true);
+    
+    // Refs for polling management
+    const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+    const retryCountRef = useRef<number>(0);
+    
+    const navigation = useNavigation();
 
-    const navigation = useNavigation()
+    // Fetch stories with ability to control loading indicator
+    const getStories = useCallback(async (showLoadingIndicator = true) => {
+        try {
+            if (showLoadingIndicator) {
+                setIsInitialLoading(true);
+            } else {
+                setIsRefreshing(true);
+            }
 
-    useEffect(() => {
-        getStories()
-        getLiveStreams();
+            resetStories();
+
+            const { data } = await GetStories();
+
+            if (data?.data?.stories) {
+                const { stories } = data.data;
+
+                const formattedStories = formatStories(stories);
+                setStories(prevStories => [...prevStories, ...formattedStories]);
+            }
+            
+            // Reset retry count on success
+            retryCountRef.current = 0;
+        }
+        catch (err) {
+            console.log("ERROR:: STORIES", err);
+            retryCountRef.current += 1;
+            
+            // Show error toast on excessive retries
+            if (retryCountRef.current >= MAX_RETRY_COUNT) {
+                Toast.show({
+                    type: 'error',
+                    text1: 'Failed to refresh stories',
+                    text2: 'Please check your connection'
+                });
+                
+                // Temporarily disable polling on excessive failures
+                if (pollingEnabled) {
+                    stopPolling();
+                    setTimeout(() => {
+                        startPolling();
+                    }, POLLING_INTERVAL * 2); // Retry after double the interval
+                }
+            }
+        }
+        finally {
+            if (showLoadingIndicator) {
+                setIsInitialLoading(false);
+            } else {
+                setIsRefreshing(false);
+            }
+        }
     }, []);
 
-    const getLiveStreams = async () => {
+    // Fetch live streams with ability to control loading indicator
+    const getLiveStreams = useCallback(async (showLoadingIndicator = true) => {
         try {
             const { data } = await GetLiveStreams();
 
-            const streams = data?.live_streams?.map((stream) => ({ stream_key: stream.stream_key, user_id: stream.user_id, user_name: stream.user.full_name }))
-
-            console.log("STREAMS::", streams);
+            const streams = data?.live_streams?.map((stream) => ({ 
+                stream_key: stream.stream_key, 
+                user_id: stream.user_id, 
+                user_name: stream.user.full_name 
+            }));
 
             setLiveStreams(streams);
+            
+            // Reset retry count on success
+            retryCountRef.current = 0;
         } catch (err) {
-            console.error(err);
+            console.error("ERROR:: LIVE STREAMS", err);
+            retryCountRef.current += 1;
+            
+            if (retryCountRef.current >= MAX_RETRY_COUNT) {
+                Toast.show({
+                    type: 'error',
+                    text1: 'Failed to refresh live streams',
+                    text2: 'Please check your connection'
+                });
+            }
         }
-    }
+    }, []);
 
+    // Combined data fetching function
+    const fetchData = useCallback(async (showLoadingIndicator = true) => {
+        await Promise.all([
+            getStories(showLoadingIndicator),
+            getLiveStreams(showLoadingIndicator)
+        ]);
+    }, [getStories, getLiveStreams]);
+
+    // Start polling mechanism
+    const startPolling = useCallback(() => {
+        if (pollingIntervalRef.current) {
+            clearInterval(pollingIntervalRef.current);
+        }
+        
+        pollingIntervalRef.current = setInterval(() => {
+            fetchData(false); // Don't show loading indicator during refresh
+        }, POLLING_INTERVAL);
+        
+        setPollingEnabled(true);
+    }, [fetchData]);
+
+    // Stop polling mechanism
+    const stopPolling = useCallback(() => {
+        if (pollingIntervalRef.current) {
+            clearInterval(pollingIntervalRef.current);
+            pollingIntervalRef.current = null;
+        }
+        
+        setPollingEnabled(false);
+    }, []);
+
+    // Initialize data fetch and polling
+    useEffect(() => {
+        fetchData(true); // Initial load with loading indicator
+        startPolling();
+        
+        // Cleanup on unmount
+        return () => {
+            stopPolling();
+        };
+    }, []);
+
+    // Update stories when live streams change
     useEffect(() => {
         if (liveStreams.length > 0) {
             setStories((prevStories) => [...prevStories, ...formattedLives()]);
@@ -64,31 +181,30 @@ const Stories = () => {
         formData.append('file', file);
 
         try {
+            await AddStory(formData);
 
-        await AddStory(formData);
+            Toast.show({
+                type: 'success',
+                text1: 'Successfully uploaded story!'
+            });
 
-        Toast.show({
-            type: 'success',
-            text1: 'Successfully uploaded story!'
-        })
-
-        await getStories();
-        }catch(err) {
+            // Refresh stories after successful upload
+            await getStories(false);
+        } catch(err) {
             if (isAxiosError(err)) {
                 Toast.show({
                     type: 'error',
                     text1: err.response?.data.message
-                })
+                });
             }
-        }
-        finally{
+        } finally {
             setIsUploading(false);
         }
-    }
+    };
 
     useEffect(() => {
         if (imageData) {
-            uploadFile({ uri: imageData?.uri, name: imageData?.fileName, type: imageData?.type })
+            uploadFile({ uri: imageData?.uri, name: imageData?.fileName, type: imageData?.type });
         }
     }, [imageData]);
 
@@ -115,7 +231,7 @@ const Stories = () => {
             console.warn(err);
           }
         }
-      };
+    };
 
     const onPressNewStory = async (event: "upload" | "camera") => {
         if (event === "upload") {
@@ -125,7 +241,7 @@ const Stories = () => {
         await requestCameraAndAudioPermission();
         
         return captureImage('mixed');
-    }
+    };
 
     const resetStories = () => {
         setStories([
@@ -136,7 +252,7 @@ const Stories = () => {
                 stories: [],
                 renderAvatar: () => {
                     if (isUploading) {
-                        return <Loader />
+                        return <Loader />;
                     }
 
                     return (
@@ -154,11 +270,11 @@ const Stories = () => {
                                 </DropdownMenu.Item>
                             </DropdownMenu.Content>
                         </DropdownMenu.Root>
-                    )
+                    );
                 }
             }
-        ])
-    }
+        ]);
+    };
 
     const formatStories = (stories: any[]): InstagramStoriesProps['stories'] => {
         // First group stories by user ID
@@ -186,12 +302,14 @@ const Stories = () => {
         return Object.values(groupedStories);
     };
 
-    const onPressLive = (stream: string) => {
-        return navigation.navigate('LiveStreamNavigation', {
+    const onPressLive = (stream: LiveStream) => {
+        return navigation.navigate('LiveStreamScreen', {
             isHost: false,
-            channel: `agora.${stream}`
-        })
-    }
+            channel: `agora.${ stream.stream_key }`,
+            streamerName: stream.user_name,
+            streamerAvatar: `https://randomuser.me/api/portraits/men/${ stream.user_id }.jpg`
+        });
+    };
 
     const formattedLives = (): InstagramStoriesProps['stories'] => {
         return liveStreams.map((stream) => ({
@@ -201,7 +319,7 @@ const Stories = () => {
                 uri: `https://randomuser.me/api/portraits/men/${ stream.user_id }.jpg`
             },
             renderAvatar: () => (
-                <TouchableOpacity style={ { display: 'flex', justifyContent: 'center', alignItems: 'center' } } onPress={() => onPressLive(stream.stream_key)}>
+                <TouchableOpacity style={ { display: 'flex', justifyContent: 'center', alignItems: 'center' } } onPress={() => onPressLive(stream)}>
                     <GradientBorderView
                         gradientProps={ {
                             colors: ['white', 'red']
@@ -226,41 +344,20 @@ const Stories = () => {
                 </TouchableOpacity>
             ),
             stories: []
-        }))
-    }
+        }));
+    };
 
-      
-
-    const getStories = async () => {
-        try {
-            setIsLoading(true);
-
-            resetStories();
-
-            const { data } = await GetStories();
-
-            if (data?.data?.stories) {
-                const { stories } = data.data;
-
-                const formattedStories = formatStories(stories);
-                setStories(prevStories => [...prevStories, ...formattedStories]);
-            }
-        }
-        catch (err) {
-            console.log("ERROR:: STORIES", err);
-        }
-        finally {
-            setIsLoading(false);
-        }
-
-    }
-
-    if (!stories || !stories.length || isLoading) {
-        return <Loader />
+    if (!stories || !stories.length || isInitialLoading) {
+        return <Loader />;
     }
 
     return (
         <View>
+            {isRefreshing && (
+                <View style={{ position: 'absolute', top: 0, right: 10, zIndex: 10 }}>
+                    <Loader size="small" />
+                </View>
+            )}
             <InstagramStories
                 stories={ stories }
                 avatarBorderColors={['#FF7A51', '#FFDB5C']}

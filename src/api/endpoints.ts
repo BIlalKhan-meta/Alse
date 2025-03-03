@@ -116,7 +116,8 @@ const endpoints = {
     getLiveStreams: '/live-stream',
     createLiveStreams: '/live-stream/start',
     endLiveStreams: '/live-stream/end',
-    getToken: '/live-stream/getToken'
+    getToken: '/live-stream/getToken',
+    getUsers: '/live-stream/users'
   }
 };
 

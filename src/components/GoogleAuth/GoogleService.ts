@@ -1,39 +1,65 @@
+
 import {
     GoogleSignin,
     GoogleSigninButton,
     statusCodes,
-  } from '@react-native-google-signin/google-signin';
-
+} from '@react-native-google-signin/google-signin';
 import { Platform } from 'react-native';
 
 
 const GOOGLE_CLIENT_ID = '356485755638-s376ec8ugua8tr2mdfcfjtqqn1090tdp.apps.googleusercontent.com';
-const GOOGLE_ANDROID_CLIENT_ID = '356485755638-eenksnfr7lp4jpfcem1eclvgkne4gjuo.apps.googleusercontent.com';
+const GOOGLE_WEB_CLIENT_ID = '356485755638-e0a5emd750sgdvivpupqnnaplp55mtbc.apps.googleusercontent.com';
 const GOOGLE_IOS_URL_SCHEME = 'com.googleusercontent.apps.356485755638-s376ec8ugua8tr2mdfcfjtqqn1090tdp'
 
+
+export const configureGoogleSignIn = () => {
+    GoogleSignin.configure({
+        iosClientId: GOOGLE_CLIENT_ID,
+        webClientId: GOOGLE_WEB_CLIENT_ID
+    });
+};
+
 export const signInWithGoogle = async () => {
-
     try {
-        GoogleSignin.configure({
-            iosClientId: GOOGLE_CLIENT_ID,
-            ...(Platform.OS === 'android' && {
-                androidClientId: GOOGLE_ANDROID_CLIENT_ID
-            })
-        });
+        
+        configureGoogleSignIn();
 
+        // Make sure the user can use Google Play services
+        // if (Platform.OS === 'android') {
+        //     await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+        // }
+
+        // Check if user is already signed in
+        const isSignedIn = GoogleSignin.getCurrentUser();
+        if (isSignedIn) {
+            await GoogleSignin.signOut(); // Sign out first to ensure a fresh login
+        }
+
+        // Perform the sign-in
         const userInfo = await GoogleSignin.signIn();
+        console.log("Successfully signed in:", userInfo);
         return userInfo;
     } catch (error) {
-        console.log(error);
+        if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+            console.log("User cancelled the login flow");
+        } else if (error.code === statusCodes.IN_PROGRESS) {
+            console.log("Sign in is in progress already");
+        } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+            console.log("Play services not available or outdated");
+        } 
+        else {
+            console.log("GOOGLE ERROR", error);
+        }
+        throw error;
     }
-}
+};
 
 export const signOutWithGoogle = async () => {
     try {
-        await GoogleSignin.configure({
-            iosClientId: GOOGLE_CLIENT_ID
-        });
+        await GoogleSignin.signOut();
+        console.log("User signed out successfully");
     } catch (error) {
-        console.log(error);
+        console.error("Error signing out:", error);
+        throw error;
     }
-}
+};

@@ -225,7 +225,7 @@ const SignupScreen: React.FC = () => {
                       setFieldValue('agree', value);
                     } }
                   />
-                  <Text>I agree to the terms and conditions and Privacy Policy</Text>
+                  <Text style={ styles.bottomText }>I agree to the terms and conditions and Privacy Policy</Text>
                 </View>
 
                 <CustomButton
@@ -242,7 +242,7 @@ const SignupScreen: React.FC = () => {
               </View>
               <View style={ styles.bottomContainer }>
                 <TouchableOpacity style={ styles.bottomTextContainer } onPress={ () => navigation.navigate('Login' as never) }>
-                  <Text>Do you have an account?</Text>
+                  <Text style={ styles.bottomText }>Do you have an account?</Text>
                   <Text style={ styles.signUpText }>Sign in</Text>
                 </TouchableOpacity>
               </View>

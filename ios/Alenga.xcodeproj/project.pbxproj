@@ -11,7 +11,6 @@
 		041138032D26ACDA00AB2AEC /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 041138022D26ACDA00AB2AEC /* GoogleService-Info.plist */; };
 		08EF1B02A48B45EE99843519 /* index.tsx in Resources */ = {isa = PBXBuildFile; fileRef = E6875A99EBEA48C0B0D57FE3 /* index.tsx */; };
 		0B2BA5D5399444B68094E681 /* Poppins-LightItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 3E72EB7C6B5A467696A00F7D /* Poppins-LightItalic.ttf */; };
-		0C80B921A6F3F58F76C31292 /* libPods-Alenga.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5DCACB8F33CDC322A6C60F78 /* libPods-Alenga.a */; };
 		111AC37F8029812AE524AC15 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 0B6315E31D7E47545A761BE2 /* PrivacyInfo.xcprivacy */; };
 		13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB01A68108700A75B9A /* AppDelegate.mm */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
@@ -28,11 +27,12 @@
 		596ECF4327FF42B3BC880002 /* Inter-Italic.otf in Resources */ = {isa = PBXBuildFile; fileRef = 16D903E74788455186A1C2E8 /* Inter-Italic.otf */; };
 		636F1EE0DD7E48298A539206 /* Inter-Bold.otf in Resources */ = {isa = PBXBuildFile; fileRef = 7435C9091AE140F49650E20A /* Inter-Bold.otf */; };
 		6976EC6A129E4DD3BD29CB22 /* Poppins-ExtraLight.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D8F37734D2984FC8A930BEAE /* Poppins-ExtraLight.ttf */; };
+		6C9F3FAD2EF579A43B33DD79 /* Pods_Alenga.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1E598D5DA284EEB78B9855D7 /* Pods_Alenga.framework */; };
 		6E04CA7C94F44E72A443A1D0 /* Inter-SemiBold.otf in Resources */ = {isa = PBXBuildFile; fileRef = A4B7AAE9D31647F4A2CBC22F /* Inter-SemiBold.otf */; };
 		72C022B5D6CA4BAD831F061D /* Inter-LightItalic-BETA.otf in Resources */ = {isa = PBXBuildFile; fileRef = D97AD30C0545442E8F8B0875 /* Inter-LightItalic-BETA.otf */; };
-		7699B88040F8A987B510C191 /* libPods-Alenga-AlengaTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 19F6CBCC0A4E27FBF8BF4A61 /* libPods-Alenga-AlengaTests.a */; };
 		78541BE586404E99B52F10DB /* Poppins-ExtraLightItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6FC143A151044B3A95799006 /* Poppins-ExtraLightItalic.ttf */; };
 		7FBBD46B0E42471B8FA5EBC6 /* Poppins-ThinItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6AE2DF83E05F403799F16E04 /* Poppins-ThinItalic.ttf */; };
+		7FC33D6194F95E838229B18E /* Pods_Alenga_AlengaTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2309CBC2C1C2AD9E05B48811 /* Pods_Alenga_AlengaTests.framework */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		823CA0FE3D274542BE4F4594 /* Poppins-Thin.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 43AF5E3EEA8F457CBFC3DEBD /* Poppins-Thin.ttf */; };
 		826116CAEF4447679EC2C26C /* Inter-ExtraLightItalic-BETA.otf in Resources */ = {isa = PBXBuildFile; fileRef = 44D6DC5EB3D04DE7958370E6 /* Inter-ExtraLightItalic-BETA.otf */; };
@@ -82,7 +82,8 @@
 		13B07FB71A68108700A75B9A /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = Alenga/main.m; sourceTree = "<group>"; };
 		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = Alenga/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		16D903E74788455186A1C2E8 /* Inter-Italic.otf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Inter-Italic.otf"; path = "../src/assets/fonts/Inter-Italic.otf"; sourceTree = "<group>"; };
-		19F6CBCC0A4E27FBF8BF4A61 /* libPods-Alenga-AlengaTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Alenga-AlengaTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		1E598D5DA284EEB78B9855D7 /* Pods_Alenga.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Alenga.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		2309CBC2C1C2AD9E05B48811 /* Pods_Alenga_AlengaTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Alenga_AlengaTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		2950AA99D12B49B1962C5EBE /* Inter-ExtraLight-BETA.otf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Inter-ExtraLight-BETA.otf"; path = "../src/assets/fonts/Inter-ExtraLight-BETA.otf"; sourceTree = "<group>"; };
 		2E8A0E032F124AEAA186501D /* Poppins-Italic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Poppins-Italic.ttf"; path = "../src/assets/fonts/Poppins-Italic.ttf"; sourceTree = "<group>"; };
 		3B4392A12AC88292D35C810B /* Pods-Alenga.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Alenga.debug.xcconfig"; path = "Target Support Files/Pods-Alenga/Pods-Alenga.debug.xcconfig"; sourceTree = "<group>"; };
@@ -92,7 +93,6 @@
 		5709B34CF0A7D63546082F79 /* Pods-Alenga.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Alenga.release.xcconfig"; path = "Target Support Files/Pods-Alenga/Pods-Alenga.release.xcconfig"; sourceTree = "<group>"; };
 		58D442B58E444978850B61B7 /* Inter-Regular.otf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Inter-Regular.otf"; path = "../src/assets/fonts/Inter-Regular.otf"; sourceTree = "<group>"; };
 		5B7EB9410499542E8C5724F5 /* Pods-Alenga-AlengaTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Alenga-AlengaTests.debug.xcconfig"; path = "Target Support Files/Pods-Alenga-AlengaTests/Pods-Alenga-AlengaTests.debug.xcconfig"; sourceTree = "<group>"; };
-		5DCACB8F33CDC322A6C60F78 /* libPods-Alenga.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Alenga.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		5F902C6A8FA549F686F8F990 /* Poppins-ExtraBold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Poppins-ExtraBold.ttf"; path = "../src/assets/fonts/Poppins-ExtraBold.ttf"; sourceTree = "<group>"; };
 		6AE2DF83E05F403799F16E04 /* Poppins-ThinItalic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Poppins-ThinItalic.ttf"; path = "../src/assets/fonts/Poppins-ThinItalic.ttf"; sourceTree = "<group>"; };
 		6EAAACF687C84638947D552F /* Inter-ExtraBold.otf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Inter-ExtraBold.otf"; path = "../src/assets/fonts/Inter-ExtraBold.otf"; sourceTree = "<group>"; };
@@ -131,7 +131,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				7699B88040F8A987B510C191 /* libPods-Alenga-AlengaTests.a in Frameworks */,
+				7FC33D6194F95E838229B18E /* Pods_Alenga_AlengaTests.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -139,7 +139,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0C80B921A6F3F58F76C31292 /* libPods-Alenga.a in Frameworks */,
+				6C9F3FAD2EF579A43B33DD79 /* Pods_Alenga.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -183,8 +183,8 @@
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				5DCACB8F33CDC322A6C60F78 /* libPods-Alenga.a */,
-				19F6CBCC0A4E27FBF8BF4A61 /* libPods-Alenga-AlengaTests.a */,
+				1E598D5DA284EEB78B9855D7 /* Pods_Alenga.framework */,
+				2309CBC2C1C2AD9E05B48811 /* Pods_Alenga_AlengaTests.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -760,6 +760,17 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers",
+					"${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers/react/nativemodule/core",
+					"${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon-Samples/ReactCommon_Samples.framework/Headers",
+					"${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon-Samples/ReactCommon_Samples.framework/Headers/platform/ios",
+					"${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx",
+					"${PODS_CONFIGURATION_BUILD_DIR}/React-NativeModulesApple/React_NativeModulesApple.framework/Headers",
+					"${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers",
+					"${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers/react/renderer/graphics/platform/ios",
+				);
 				IPHONEOS_DEPLOYMENT_TARGET = 13.4;
 				LD = "";
 				LDPLUSPLUS = "";
@@ -782,7 +793,10 @@
 					"-DFOLLY_CFG_NO_COROUTINES=1",
 					"-DFOLLY_HAVE_CLOCK_GETTIME=1",
 				);
-				OTHER_LDFLAGS = "$(inherited)  ";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					" ",
+				);
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				USE_HERMES = true;
@@ -833,6 +847,17 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers",
+					"${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon/ReactCommon.framework/Headers/react/nativemodule/core",
+					"${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon-Samples/ReactCommon_Samples.framework/Headers",
+					"${PODS_CONFIGURATION_BUILD_DIR}/ReactCommon-Samples/ReactCommon_Samples.framework/Headers/platform/ios",
+					"${PODS_CONFIGURATION_BUILD_DIR}/React-Fabric/React_Fabric.framework/Headers/react/renderer/components/view/platform/cxx",
+					"${PODS_CONFIGURATION_BUILD_DIR}/React-NativeModulesApple/React_NativeModulesApple.framework/Headers",
+					"${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers",
+					"${PODS_CONFIGURATION_BUILD_DIR}/React-graphics/React_graphics.framework/Headers/react/renderer/graphics/platform/ios",
+				);
 				IPHONEOS_DEPLOYMENT_TARGET = 13.4;
 				LD = "";
 				LDPLUSPLUS = "";
@@ -854,7 +879,10 @@
 					"-DFOLLY_CFG_NO_COROUTINES=1",
 					"-DFOLLY_HAVE_CLOCK_GETTIME=1",
 				);
-				OTHER_LDFLAGS = "$(inherited)  ";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					" ",
+				);
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				USE_HERMES = true;

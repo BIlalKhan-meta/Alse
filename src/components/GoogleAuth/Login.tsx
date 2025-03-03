@@ -11,6 +11,8 @@ export default function GoogleLogin({ onSuccess, loading }: { onSuccess: (user: 
         const userInfo = await signInWithGoogle();
 
         if (!userInfo) {
+            console.log("GOOGLE ERROR", userInfo);
+
             Toast.show({
                 type: 'error',
                 text1: 'Error',

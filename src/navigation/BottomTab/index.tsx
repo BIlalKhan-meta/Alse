@@ -79,7 +79,7 @@ const TabNavigation = () => {
                 }}
             />
             <Tab.Screen
-                name="LiveStreamNavigation"
+                name="LiveStreamScreen"
                 component={LiveStreamScreen}
                 initialParams={ { isHost: true, channel: '' } }
                 options={{

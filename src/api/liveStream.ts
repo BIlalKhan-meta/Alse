@@ -14,9 +14,9 @@ export const EndLiveStream = async () => {
 }
 
 export const GetLiveStreamToken = async (channel: string) => {
-const path = `${endpoints.liveStream.getToken}/${channel}`;
-
-console.log("PATH", path);
-
-    return axiosInstance.get(path);
+  return axiosInstance.get(`${ endpoints.liveStream.getToken }/${ channel }`);
 } 
+
+export const GetLiveStreamUsers = async (channel: string) => {
+  return axiosInstance.get(`${ endpoints.liveStream.getUsers }/${ channel }`);
+}

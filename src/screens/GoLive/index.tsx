@@ -8,7 +8,8 @@ import {
   TouchableOpacity,
   SafeAreaView,
   Image,
-  ActivityIndicator
+  ActivityIndicator,
+  AppState,
 } from 'react-native';
 import {
   createAgoraRtcEngine,
@@ -22,32 +23,129 @@ import { hri } from 'human-readable-ids';
 import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
 import { EndLiveStream, GetLiveStreamToken, StartLiveStream } from '../../api/liveStream';
 import Loader from '../../components/Loader';
-import { useRoute } from '@react-navigation/native';
+import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
 import CustomButton from '../../components/CustomButton';
+import { selectUserProfile } from '../../store/slices/authSlice';
+import { useSelector } from 'react-redux';
+import ViewerCounter from '../../components/ViewerCounter';
+import firestore from '@react-native-firebase/firestore';
+import ChatComponent from '../../components/LiveStreamChat';
+import { archiveChatMessages } from '../../services/chatService';
 
-const appId = '26fd612e45fb4446b31b70dc15736026';
+const appId = 'a0c7366a22ac46b791c69f685591207c';
 
 const LiveStreamScreen = () => {
   const [joined, setJoined] = useState(false);
   const [initializing, setInitializing] = useState(true);
+  const [permissionsGranted, setPermissionsGranted] = useState(false);
+  const [isAppActive, setIsAppActive] = useState(true);
+  const [isScreenFocused, setIsScreenFocused] = useState(true);
+  const [joinRetries, setJoinRetries] = useState(0); // Add retry counter for join attempts
 
   const route = useRoute();
+  const navigation = useNavigation();
+  const appState = useRef(AppState.currentState);
 
-  const { isHost, channel, streamerName = 'Jemma Ray', streamerAvatar } = route.params;
+  const user = useSelector(selectUserProfile);
+
+  const { isHost: isHostFromParams, channel, streamerName = user.full_name, streamerAvatar = user.profile_picture_url } = route.params as { isHost: boolean, channel: string, streamerName: string, streamerAvatar: string };
 
   const [isLoading, setIsLoading] = useState(false);
   const [channelName, setChannelName] = useState(hri.random());
   const [token, setToken] = useState('');
   const [liveStarted, setLiveStarted] = useState(false);
   const [remoteUid, setRemoteUid] = useState(0);
-  const [viewers, setViewers] = useState(40); // Example viewer count
   const engine = useRef(null);
-
+  const isInitialized = useRef(false);
+  const [isHost, setIsHost] = useState(isHostFromParams);
+  
+  // Track app state (foreground/background)
   useEffect(() => {
-    setIsLoading(true);
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      const isActive = nextAppState === 'active';
+      const wasActive = appState.current === 'active';
+      appState.current = nextAppState;
+      setIsAppActive(isActive);
+      
+      // Handle app going to background
+      if (wasActive && !isActive) {
+        handleAppBackground();
+      }
+      
+      // Handle app coming back to foreground
+      if (!wasActive && isActive) {
+        handleAppForeground();
+      }
+    });
 
-    const requestCameraAndAudioPermission = async () => {
+    return () => {
+      subscription.remove();
+    };
+  }, []);
+  
+  // Track screen focus
+  useFocusEffect(
+    React.useCallback(() => {
+      setIsScreenFocused(true);
+      
+      // Handle screen coming into focus - restart camera if needed
+      if (isHost && isInitialized.current && isAppActive) {
+        handleScreenFocus();
+      }
+      
+      return () => {
+        setIsScreenFocused(false);
+        // Handle screen losing focus - pause camera
+        if (isHost && isInitialized.current) {
+          handleScreenBlur();
+        }
+      };
+    }, [isHost, isAppActive])
+  );
+  
+  // Handle app going to background
+  const handleAppBackground = () => {
+    if (isHost && isInitialized.current && engine.current) {
+      // Disable camera when app goes to background
+      console.log('App going to background, disabling camera...');
+      engine.current.enableLocalVideo(false);
+      engine.current.muteLocalAudioStream(true);
+    }
+  };
+  
+  // Handle app coming back to foreground
+  const handleAppForeground = () => {
+    if (isHost && isInitialized.current && engine.current && isScreenFocused) {
+      // Re-enable camera when app comes to foreground
+      console.log('App coming to foreground, enabling camera...');
+      engine.current.enableLocalVideo(true);
+      engine.current.muteLocalAudioStream(false);
+    }
+  };
+  
+  // Handle screen focus
+  const handleScreenFocus = () => {
+    if (isHost && isInitialized.current && engine.current) {
+      console.log('Screen focused, enabling camera...');
+      engine.current.enableLocalVideo(true);
+      engine.current.muteLocalAudioStream(false);
+    }
+  };
+  
+  // Handle screen blur
+  const handleScreenBlur = () => {
+    if (isHost && isInitialized.current && engine.current) {
+      console.log('Screen blurred, disabling camera...');
+      engine.current.enableLocalVideo(false);
+      engine.current.muteLocalAudioStream(true);
+    }
+  };
+
+  // Request permissions first, then initialize Agora
+  useEffect(() => {
+    const requestPermissions = async () => {
       if (!isHost) {
+        setPermissionsGranted(true);
         return;
       }
 
@@ -59,54 +157,102 @@ const LiveStreamScreen = () => {
           ]);
 
           if (
-            granted[PermissionsAndroid.PERMISSIONS.CAMERA] !==
-            PermissionsAndroid.RESULTS.GRANTED ||
-            granted[PermissionsAndroid.PERMISSIONS.RECORD_AUDIO] !==
+            granted[PermissionsAndroid.PERMISSIONS.CAMERA] ===
+            PermissionsAndroid.RESULTS.GRANTED &&
+            granted[PermissionsAndroid.PERMISSIONS.RECORD_AUDIO] ===
             PermissionsAndroid.RESULTS.GRANTED
           ) {
+            console.log('All permissions granted');
+            setPermissionsGranted(true);
+          } else {
             console.warn('Camera or Microphone permission denied');
-            return;
+            setPermissionsGranted(false);
+            setInitializing(false);
           }
-
-          console.log('Permissions granted');
         } catch (err) {
           console.warn(err);
+          setPermissionsGranted(false);
+          setInitializing(false);
         }
+      } else {
+        // iOS permissions handled by the Agora SDK
+        setPermissionsGranted(true);
       }
     };
 
+    requestPermissions();
+  }, [isHost]);
+
+  // Initialize Agora after permissions are granted
+  useEffect(() => {
+    if (!permissionsGranted) return;
+    
+    setIsLoading(true);
+
     const eventHandler = {
-      onJoinChannelSuccess: () => {
-        console.log('Joined Channel Successfully');
+      onJoinChannelSuccess: (connection, uid) => {
+        console.log('Joined Channel Successfully', connection.channelId, uid);
         setJoined(true);
-        setInitializing(false); // Mark initialization as complete when successfully joined
+        setInitializing(false);
+        
+        // If this is an audience member joining a live channel, mark live as started
+        if (!isHost && connection.channelId === channel) {
+          setLiveStarted(true);
+        }
       },
       onLeaveChannel: () => {
         console.log('Left Channel');
         setJoined(false);
+        if (!isHost) {
+          // Reset live status when audience leaves channel
+          setLiveStarted(false);
+        }
       },
       onUserJoined: (_connection, uid) => {
         console.log('Remote user ' + uid + ' joined');
         setRemoteUid(uid);
+        
+        // If we're audience and we see the host join, that means the stream is live
+        if (!isHost) {
+          setLiveStarted(true);
+        }
       },
       onUserOffline: (_connection, uid) => {
         console.log('Remote user ' + uid + ' left the channel');
-        setRemoteUid(uid);
+        setRemoteUid(0);
+        
+        // If we're audience and we were watching a host who left
+        if (!isHost && uid === remoteUid) {
+          // Consider trying to rejoin or handling end of stream
+          console.log("Host has left the stream");
+        }
       },
       onConnectionStateChanged(connection, state, reason) {
-        console.log("CONNECTION", connection, state, reason);
+        if (state === 5) { // Failed
+          // Try to reconnect if this is a viewer
+          if (!isHost && joinRetries < 3) {
+            console.log("Attempting to reconnect to stream...");
+            setJoinRetries(prev => prev + 1);
+            setTimeout(() => {
+              setupRemoteChannel();
+            }, 2000);
+          } else if (!isHost) {
+            setInitializing(false);
+            console.log("Failed to connect after multiple attempts");
+          }
+        }
       },
       onError: (err) => {
         console.log("Agora error:", err);
-        // If there's an error joining, we should still stop showing the loading indicator
-        // after a reasonable timeout
         setTimeout(() => {
           setInitializing(false);
         }, 5000);
-      }
-    }
+      },
+    };
 
     const initializeAgora = async () => {
+      if (isInitialized.current) return;
+      
       try {
         console.log('Initializing Agora...');
         const agoraEngine = createAgoraRtcEngine();
@@ -133,129 +279,185 @@ const LiveStreamScreen = () => {
         agoraEngine.setDefaultAudioRouteToSpeakerphone(true);
 
         engine.current = agoraEngine;
+        isInitialized.current = true;
+        
+        // Only join channel after initialization is complete
+        if (!isHost) {
+          console.log("Audience setup - joining channel:", channel);
+          await setupRemoteChannel();
+        } else {
+          console.log("Host setup - joining preview channel");
+          await joinChannel();
+        }
+        
+        setIsLoading(false);
       } catch (e) {
         console.log('Error initializing Agora:', e);
-        setInitializing(false); // Stop showing loading if initialization fails
+        setInitializing(false);
+        setIsLoading(false);
       }
     };
 
-    requestCameraAndAudioPermission();
     initializeAgora();
-
-    if (!isHost) {
-      setupRemoteChannel()
-        .then(() => {
-          setIsLoading(false);
-        })
-        .catch((err) => {
-          console.error("Error setting up remote channel:", err);
-          setIsLoading(false);
-          setInitializing(false);
-        });
-    }
-    else {
-      joinChannel();
-      setIsLoading(false);
-    }
 
     // Fallback to ensure we don't get stuck in loading state
     const timeoutId = setTimeout(() => {
-      setInitializing(false);
-    }, 10000);
+      if (initializing) {
+        console.log("Initialization timed out, forcing UI to render");
+        setInitializing(false);
+      }
+    }, 90 * 1000);
 
     return () => {
       console.log('Releasing Agora Engine');
       clearTimeout(timeoutId);
-      endLive();
-      engine.current?.unregisterEventHandler(eventHandler);
+      if (engine.current) {
+        // Clean up resources completely when component unmounts
+        cleanupResources();
+      }
     };
-  }, [isHost]);
-
-  const setupRemoteChannel = async () => {
-    // Directly add them to live
-    setChannelName(channel);
-
-    console.log("CHANNEL", channel);
-
-    const { data } = await GetLiveStreamToken(`${channel}`);
-
-    setToken(data.agora_token);
-
-    console.log("TOKEN CALL::", data);
-
-    joinChannel({ token: data.agora_token, channel });
-  }
-
-  const joinChannel = async (audienceData) => {
+  }, [permissionsGranted, isHost]);
+  
+  // Complete cleanup of resources
+  const cleanupResources = async () => {
     try {
-      console.log('Joining Channel...');
-
-      if (!liveStarted && isHost) {
-        engine.current?.joinChannel(token, channelName, 0, {
-          // Set channel profile to live broadcast
-          channelProfile: ChannelProfileType.ChannelProfileLiveBroadcasting,
-          // Set user role to broadcaster
-          clientRoleType: ClientRoleType.ClientRoleBroadcaster,
-          // Publish audio collected by the microphone
-          publishMicrophoneTrack: false,
-          // Publish video collected by the camera
-          publishCameraTrack: false,
-          // Automatically subscribe to all audio streams
-          autoSubscribeAudio: false,
-          // Automatically subscribe to all video streams
-          autoSubscribeVideo: false,
-        });
+      console.log('Cleaning up all Agora resources...');
+      if (liveStarted && isHost) {
+        // End any active live stream first
+        await EndLiveStream().catch(err => console.error("Error ending live stream:", err));
       }
-
-      if (!isHost) {
-        await engine.current?.leaveChannel();
-
-        console.log("JOIN CHANNEL RESPONSE::: ", engine.current?.joinChannel('', audienceData.channel, 0, {
-          // Set channel profile to live broadcast
-          channelProfile: ChannelProfileType.ChannelProfileLiveBroadcasting,
-          // Set user role to audience
-          clientRoleType: ClientRoleType.ClientRoleAudience,
-          // Do not publish audio collected by the microphone
-          publishMicrophoneTrack: false,
-          // Do not publish video collected by the camera
-          publishCameraTrack: false,
-          // Automatically subscribe to all audio streams
-          autoSubscribeAudio: true,
-          // Automatically subscribe to all video streams
-          autoSubscribeVideo: true,
-          // Change the delay level of the audience to achieve ultra-fast live broadcast
-          audienceLatencyLevel: AudienceLatencyLevelType.AudienceLatencyLevelUltraLowLatency,
-        }), audienceData.channel);
+      
+      // Destroy preview and leave any channel
+      if (isHost && engine.current) {
+        engine.current.stopPreview();
       }
-    } catch (e) {
-      console.log('Error joining channel:', e);
-      setInitializing(false); // Ensure loading stops if there's an error
+      
+      await leaveChannel();
+      
+      // Unregister event handler and release engine
+      if (isInitialized.current && engine.current) {
+        engine.current.release();
+        isInitialized.current = false;
+      }
+    } catch (err) {
+      console.error("Error during cleanup:", err);
     }
   };
 
-  const joinChannelAsHost = (token, channelName) => {
-    console.log('Starting video preview...');
+  const setupRemoteChannel = async () => {
+    try {
+      // Directly add them to live
+      setChannelName(channel);
+      console.log("Setting up remote channel:", channel);
 
-    engine.current?.joinChannel(token, channelName, 0, {
-      // Set channel profile to live broadcast
-      channelProfile: ChannelProfileType.ChannelProfileLiveBroadcasting,
-      // Set user role to broadcaster
-      clientRoleType: ClientRoleType.ClientRoleBroadcaster,
-      // Publish audio collected by the microphone
-      publishMicrophoneTrack: true,
-      // Publish video collected by the camera
-      publishCameraTrack: true,
-      // Automatically subscribe to all audio streams
-      autoSubscribeAudio: true,
-      // Automatically subscribe to all video streams
-      autoSubscribeVideo: true,
-    });
-  }
+      // Join the channel as audience
+      await joinChannel({ 
+        channel: channel
+      });
+    } catch (err) {
+      console.error("Error setting up remote channel:", err);
+      setInitializing(false);
+    }
+  };
+
+  const joinChannel = async (audienceData) => {
+    try {
+      console.log('Joining Channel...', audienceData);
+
+      if (!isInitialized.current || !engine.current) {
+        console.log('Engine not initialized yet');
+        return;
+      }
+
+      // Host joining preview channel
+      if (isHost && !liveStarted) {
+        console.log('Host joining preview channel:', channelName);
+        engine.current.joinChannel('', channelName, 0, {
+          channelProfile: ChannelProfileType.ChannelProfileLiveBroadcasting,
+          clientRoleType: ClientRoleType.ClientRoleBroadcaster,
+          publishMicrophoneTrack: true,
+          publishCameraTrack: true,
+          autoSubscribeAudio: true,
+          autoSubscribeVideo: true,
+        });
+      }
+
+      // Audience joining live channel
+      if (!isHost && audienceData) {
+        console.log('Audience joining channel:', audienceData.channel);
+        
+        // Make sure we're not in any channel first
+        if (joined) {
+          console.log("Leaving current channel before joining new one");
+          await engine.current.leaveChannel();
+        }
+        console.log("Channel name:", audienceData.channel);
+        
+        // Join the channel with clear options
+        const result = engine.current.joinChannel(
+          '', // Use empty string if token not provided
+          audienceData.channel,
+          0,
+          {
+            channelProfile: ChannelProfileType.ChannelProfileLiveBroadcasting,
+            clientRoleType: ClientRoleType.ClientRoleAudience,
+            publishMicrophoneTrack: false,
+            publishCameraTrack: false,
+            autoSubscribeAudio: true,
+            autoSubscribeVideo: true,
+            audienceLatencyLevel: AudienceLatencyLevelType.AudienceLatencyLevelUltraLowLatency,
+          }
+        );
+        
+        console.log("Join channel result:", result);
+      }
+    } catch (e) {
+      console.log('Error joining channel:', e);
+      setInitializing(false);
+    }
+  };
+
+  const joinChannelAsHost = async (token, channelName) => {
+    console.log('Starting video preview as host...');
+  
+    if (!isInitialized.current || !engine.current) {
+      console.log('Engine not initialized yet');
+      return;
+    }
+  
+    try {
+      // If we're already in a channel, leave it first
+      if (joined) {
+        console.log("Leaving preview channel before joining live channel");
+        await leaveChannel();
+        
+        // Add a small delay to ensure resources are properly released
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+      
+      console.log("Host joining live channel:", channelName);
+      const result = await engine.current.joinChannel('', channelName, 0, {
+        channelProfile: ChannelProfileType.ChannelProfileLiveBroadcasting,
+        clientRoleType: ClientRoleType.ClientRoleBroadcaster,
+        publishMicrophoneTrack: true,
+        publishCameraTrack: true,
+        autoSubscribeAudio: true,
+        autoSubscribeVideo: true,
+      });
+      
+      console.log("Join live channel result:", result);
+    } catch (err) {
+      console.error('Error joining as host:', err);
+    }
+  };
 
   const leaveChannel = async () => {
     try {
       console.log('Leaving Channel...');
-      engine.current?.leaveChannel();
+      if (!isInitialized.current || !engine.current) return;
+      
+      const result = await engine.current.leaveChannel();
+      console.log("Leave channel result:", result);
       setRemoteUid(0);
     } catch (e) {
       console.log('Error leaving channel:', e);
@@ -266,17 +468,37 @@ const LiveStreamScreen = () => {
     try {
       setIsLoading(true);
       const { data } = await StartLiveStream();
-
+      console.log("Start live stream response:", data);
+  
       // Set state first
       setChannelName(data.channel_name);
       setToken(data.agora_token);
-      setLiveStarted(true);
+      
+      // Leave current channel
+      await leaveChannel();
+      
+      // Add delay to ensure channel is properly left
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Set live started after successful channel leave
+      setLiveStarted(true); 
 
-      leaveChannel(); // Prepare to join new channel
-
-      joinChannelAsHost(data.agora_token, data.channel_name);
+      // Initialize Firestore chat document for this channel
+      await firestore()
+        .collection('liveStreamChats')
+        .doc(data.channel_name)
+        .set({
+          channelId: data.channel_name,
+          hostId: user.id,
+          hostName: user.full_name,
+          startedAt: firestore.FieldValue.serverTimestamp(),
+          active: true
+        });
+      
+      // Join new channel as host
+      await joinChannelAsHost(data.agora_token, data.channel_name);
     } catch (err) {
-      console.error("ERROR", err);
+      console.error("ERROR starting live:", err);
     } finally {
       setIsLoading(false);
     }
@@ -285,41 +507,73 @@ const LiveStreamScreen = () => {
   const endLive = async () => {
     try {
       setIsLoading(true);
-      await EndLiveStream();
-
-      setChannelName(hri.random());
-      setToken('');
-
+      
+      // First set states to ensure UI updates properly
       setLiveStarted(false);
-      leaveChannel();
-      joinChannel();
+      
+      // Leave the live channel
+      await leaveChannel();
+      
+      // Archive chat messages
+      if (channelName) {
+        await archiveChatMessages(channelName, user.id);
+      }
+      
+      // Call the API to end the live stream
+      const result = await EndLiveStream();
+      console.log("End live stream result:", result);
+      
+      // Mark the channel as inactive in Firestore
+      await firestore()
+        .collection('liveStreamChats')
+        .doc(channelName)
+        .update({
+          active: false,
+          endedAt: firestore.FieldValue.serverTimestamp()
+        });
+      
+      // Generate a new channel name for the dummy channel
+      const newChannelName = hri.random();
+      setChannelName(newChannelName);
+      setToken('');
+      
+      // Slight delay to ensure channel left properly
+      setTimeout(async () => {
+        // Rejoin a dummy channel to show camera preview
+        await joinChannel();
+        setIsLoading(false);
+      }, 500);
     } catch (err) {
-      console.error("ERROR", err);
-    }
-    finally {
+      console.error("ERROR ending live:", err);
       setIsLoading(false);
     }
   };
+  
+  const handleEndLiveAndGoBack = async () => {
+    if (liveStarted && isHost) {
+      await endLive();
+    }
+    navigation.goBack();
+  };
 
   const handleSwitchCamera = () => {
-    engine.current?.switchCamera();
-  }
+    if (isInitialized.current && engine.current) {
+      engine.current.switchCamera();
+    }
+  };
 
   const renderStreamControl = () => {
     if (!isHost) return null;
-
-    // Determine the onPress action and label text based on loading and stream status.
-    const onPressAction = isLoading ? null : liveStarted ? endLive : startLive;
-    const label = liveStarted ? 'End Stream' : 'Start Stream';
+    if (liveStarted) return null; // Don't show button when live is active
 
     return (
       <View style={styles.controls}>
         <CustomButton
           style={styles.controls}
-          onPress={onPressAction}
+          onPress={isLoading ? null : startLive}
           txtstyle={styles.controlText}
           loading={isLoading}>
-          {label}
+          Start Stream
         </CustomButton>
       </View>
     );
@@ -331,57 +585,35 @@ const LiveStreamScreen = () => {
       <View style={styles.liveHeaderContainer}>
         <View style={styles.liveUserInfo}>
           <Image
-            source={streamerAvatar || { uri: `https://randomuser.me/api/portraits/men/1.jpg` }}
+            source={{ uri: streamerAvatar || `https://randomuser.me/api/portraits/men/${user.id}.jpg` }}
             style={styles.avatarImage}
           />
           <View style={styles.userTextContainer}>
             <Text style={styles.username}>{streamerName}</Text>
-            <View style={styles.liveIndicatorContainer}>
+            {liveStarted && <View style={styles.liveIndicatorContainer}>
               <Text style={styles.liveText}>Live</Text>
-            </View>
+            </View>}
           </View>
         </View>
-        <View style={styles.viewersContainer}>
-          <Text style={styles.viewersCount}>{viewers}</Text>
-        </View>
-      </View>
-    );
-  };
-
-  // Chat message bubbles
-  const renderChatMessages = () => {
-    return (
-      <View style={styles.chatContainer}>
-        <View style={styles.chatMessage}>
-          <Image
-            source={{ uri: `https://randomuser.me/api/portraits/men/1.jpg` }}
-            style={styles.chatAvatar}
-          />
-          <View style={styles.messageContent}>
-            <Text style={styles.messageText}>haha, looks very fun 😊</Text>
-          </View>
-        </View>
-
-        <View style={styles.chatMessage}>
-          <Image
-            source={{ uri: `https://randomuser.me/api/portraits/men/2.jpg` }}
-            style={styles.chatAvatar}
-          />
-          <View style={[styles.messageContent, styles.secondMessage]}>
-            <Text style={styles.messageText}>I love this</Text>
-          </View>
-        </View>
-
-        <View style={styles.inputContainer}>
-          <Text style={styles.inputPlaceholder}>Type Your Message</Text>
-          <View style={styles.inputIcons}>
-            <TouchableOpacity>
-              <FontAwesome6 name="gift" size={20} color="#0099ff" iconStyle='solid' />
+        
+        <View style={ styles.headerRightContainer }>
+          { liveStarted && (
+            <ViewerCounter
+              isLive={ liveStarted }
+              channelId={ channel }
+              style={ styles.viewerCounterMargin }
+            />
+          ) }
+          
+          {/* X button for ending live stream - only show when live and for host */}
+          {isHost && liveStarted && (
+            <TouchableOpacity
+              style={styles.endLiveButton}
+              onPress={handleEndLiveAndGoBack}
+            >
+              <FontAwesome6 name="xmark" size={18} color="#fff" iconStyle='solid' />
             </TouchableOpacity>
-            <TouchableOpacity>
-              <FontAwesome6 name="heart" size={20} color="#ff5c5c" iconStyle='solid' />
-            </TouchableOpacity>
-          </View>
+          )}
         </View>
       </View>
     );
@@ -395,6 +627,24 @@ const LiveStreamScreen = () => {
         <Text style={styles.loadingText}>Preparing livestream...</Text>
       </View>
     );
+  };
+  
+  // Render no stream available message
+  const renderNoStream = () => {
+    if (!isHost && !remoteUid && !initializing) {
+      return (
+        <View style={styles.noStreamContainer}>
+          <Text style={styles.noStreamText}>This stream is not available right now</Text>
+          <TouchableOpacity 
+            style={styles.backButtonLarge}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={styles.backButtonText}>Go Back</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+    return null;
   };
 
   // Only render the main content when initializing is complete
@@ -418,18 +668,21 @@ const LiveStreamScreen = () => {
           <RtcSurfaceView canvas={{ uid: remoteUid }} style={styles.videoFill} />
         )}
 
-        {/* Live header overlay */}
+        {renderNoStream()}
         {renderLiveHeader()}
 
-        {/* Camera switch button */}
-        <TouchableOpacity
+        {isHost ? <TouchableOpacity
           style={styles.reverseCameraButton}
           onPress={handleSwitchCamera}
         >
           <FontAwesome6 name="camera-rotate" size={24} color="#fff" iconStyle='solid' />
-        </TouchableOpacity>
+        </TouchableOpacity> : null}
 
-        {renderChatMessages()}
+        {/* Chat Component */}
+        <ChatComponent 
+          channelId={channelName} 
+          isLive={liveStarted || (!isHost && remoteUid !== 0)}
+        />
       </View>
 
       {renderStreamControl()}
@@ -453,6 +706,34 @@ const styles = StyleSheet.create({
     marginTop: 20,
     fontSize: 16,
   },
+  noStreamContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    zIndex: 5,
+  },
+  noStreamText: {
+    color: '#fff',
+    fontSize: 18,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  backButtonLarge: {
+    backgroundColor: '#38b6ff',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+  },
+  backButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
   videoContainer: {
     flex: 1,
     position: 'relative',
@@ -471,6 +752,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 15,
     zIndex: 10,
+  },
+  viewerCounterMargin: {
+    marginRight: 10,
+  },
+  headerRightContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   liveUserInfo: {
     flexDirection: 'row',
@@ -512,10 +800,27 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     paddingHorizontal: 10,
     paddingVertical: 5,
+    marginRight: 10,
   },
   viewersCount: {
     color: '#fff',
     fontSize: 12,
+  },
+  endLiveButton: {
+    backgroundColor: 'rgba(255,0,0,0.6)',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  backButton: {
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   reverseCameraButton: {
     position: 'absolute',
@@ -543,58 +848,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   controlText: {},
-  chatContainer: {
-    position: 'absolute',
-    bottom: 70,
-    left: 0,
-    right: 0,
-    padding: 10,
-  },
-  chatMessage: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  chatAvatar: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    marginRight: 8,
-  },
-  messageContent: {
-    backgroundColor: 'rgba(255,255,255,0.8)',
-    borderRadius: 18,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    maxWidth: '70%',
-  },
-  secondMessage: {
-    backgroundColor: 'rgba(255,94,153,0.85)',
-  },
-  messageText: {
-    color: '#000',
-    fontSize: 14,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    borderRadius: 25,
-    marginTop: 10,
-    padding: 12,
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.3)',
-  },
-  inputPlaceholder: {
-    color: 'rgba(255,255,255,0.7)',
-    fontSize: 14,
-  },
-  inputIcons: {
-    flexDirection: 'row',
-    width: 60,
-    justifyContent: 'space-between',
-  },
 });
 
 export default LiveStreamScreen;
