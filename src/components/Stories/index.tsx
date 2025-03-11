@@ -1,16 +1,17 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { Image, PermissionsAndroid, Platform, Text, TouchableOpacity, View } from 'react-native';
+import { Image, PermissionsAndroid, Platform, Text, TouchableOpacity, View, Modal, StyleSheet } from 'react-native';
 import InstagramStories, { InstagramStoriesProps } from '@birdwingo/react-native-instagram-stories';
 import AddStoryIcon from './AddStoryIcon';
 import { AddStory, GetStories } from '../../api/stories';
-import * as DropdownMenu from 'zeego/dropdown-menu'
+import * as DropdownMenu from 'zeego/dropdown-menu';
 import Toast from 'react-native-toast-message';
 import useImagePicker from '../../hooks/useImagePicker';
 import { isAxiosError } from 'axios';
 import Loader from '../Loader';
 import { GetLiveStreams } from '../../api/liveStream';
-import { GradientBorderView } from '@good-react-native/gradient-border'
+import { GradientBorderView } from '@good-react-native/gradient-border';
 import { useNavigation } from '@react-navigation/native';
+import Video from 'react-native-video';
 
 // Constants
 const POLLING_INTERVAL = 30000; // 30 seconds
@@ -28,7 +29,15 @@ const Stories = () => {
     const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
     const [stories, setStories] = useState<InstagramStoriesProps['stories']>([]);
     const [liveStreams, setLiveStreams] = useState<LiveStream[]>([]);
-    const {imageData, captureImage, chooseImageFromLibrary} = useImagePicker();
+    const {
+        imageData, 
+        captureImage, 
+        chooseImageFromLibrary, 
+        previewMode, 
+        pendingMedia, 
+        confirmMedia, 
+        cancelMedia
+    } = useImagePicker();
     const [isUploading, setIsUploading] = useState<boolean>(false);
     const [pollingEnabled, setPollingEnabled] = useState<boolean>(true);
     
@@ -47,15 +56,20 @@ const Stories = () => {
                 setIsRefreshing(true);
             }
 
-            resetStories();
-
+            // Get stories first before clearing state
             const { data } = await GetStories();
 
             if (data?.data?.stories) {
+                // Only reset and update stories after we have the new data
                 const { stories } = data.data;
-
                 const formattedStories = formatStories(stories);
+                
+                // Now reset and update with the new data
+                resetStories();
                 setStories(prevStories => [...prevStories, ...formattedStories]);
+            } else {
+                // If no stories returned, just reset
+                resetStories();
             }
             
             // Reset retry count on success
@@ -122,10 +136,14 @@ const Stories = () => {
 
     // Combined data fetching function
     const fetchData = useCallback(async (showLoadingIndicator = true) => {
-        await Promise.all([
-            getStories(showLoadingIndicator),
-            getLiveStreams(showLoadingIndicator)
-        ]);
+        try {
+            // First get stories
+            await getStories(showLoadingIndicator);
+            // Then get live streams after stories are loaded
+            await getLiveStreams(showLoadingIndicator);
+        } catch (error) {
+            console.error("Error in fetchData:", error);
+        }
     }, [getStories, getLiveStreams]);
 
     // Start polling mechanism
@@ -165,15 +183,30 @@ const Stories = () => {
     // Update stories when live streams change
     useEffect(() => {
         if (liveStreams.length > 0) {
-            setStories((prevStories) => [...prevStories, ...formattedLives()]);
+            // Check if we already have live streams in the stories to prevent duplicates during polling
+            const existingLiveIds = new Set(
+                stories
+                    .filter(story => story.stories.length === 0 && story.id !== "0") // Likely live streams
+                    .map(story => story.id)
+            );
+            
+            // Only add new live streams that aren't already in the stories
+            const newLiveStreams = formattedLives().filter(
+                liveStory => !existingLiveIds.has(liveStory.id)
+            );
+            
+            if (newLiveStreams.length > 0) {
+                setStories(prevStories => [...prevStories, ...newLiveStreams]);
+            }
         }
-    }, [liveStreams]);
+    }, [liveStreams, stories]);
 
     const uploadFile = async (file: any) => {
         setIsUploading(true);
         Toast.show({
             type: 'info',
-            text1: 'Uploading Image'
+            text1: 'Uploading Story',
+            text2: 'Please wait...'
         });
 
         const formData = new FormData();
@@ -191,10 +224,16 @@ const Stories = () => {
             // Refresh stories after successful upload
             await getStories(false);
         } catch(err) {
+            console.error("Upload error:", err);
             if (isAxiosError(err)) {
                 Toast.show({
                     type: 'error',
-                    text1: err.response?.data.message
+                    text1: err.response?.data.message || 'Failed to upload story'
+                });
+            } else {
+                Toast.show({
+                    type: 'error',
+                    text1: 'Network error while uploading story'
                 });
             }
         } finally {
@@ -235,12 +274,17 @@ const Stories = () => {
 
     const onPressNewStory = async (event: "upload" | "camera") => {
         if (event === "upload") {
-            return chooseImageFromLibrary('mixed');
+            return chooseImageFromLibrary('mixed', true); // Enable preview
         }
 
         await requestCameraAndAudioPermission();
         
-        return captureImage('mixed');
+        return captureImage('mixed', true); // Enable preview
+    };
+
+    // Handle confirmation of media after preview
+    const handleConfirmMedia = () => {
+        confirmMedia(); // This will trigger the useEffect with imageData
     };
 
     const resetStories = () => {
@@ -313,13 +357,12 @@ const Stories = () => {
 
     const formattedLives = (): InstagramStoriesProps['stories'] => {
         return liveStreams.map((stream) => ({
-            // Creates a random number from 1000 to 5000
-            id: Number(Math.floor(Math.random() * (5000 - 1000 + 1)) + 1000).toString(),
+            id: `live-${ stream.stream_key }`, // Prefix with 'live-' to make it unique from regular stories
             avatarSource: {
                 uri: `https://randomuser.me/api/portraits/men/${ stream.user_id }.jpg`
             },
             renderAvatar: () => (
-                <TouchableOpacity style={ { display: 'flex', justifyContent: 'center', alignItems: 'center' } } onPress={() => onPressLive(stream)}>
+                <TouchableOpacity style={ { display: 'flex', justifyContent: 'center', alignItems: 'center' } } onPress={ () => onPressLive(stream) }>
                     <GradientBorderView
                         gradientProps={ {
                             colors: ['white', 'red']
@@ -347,6 +390,59 @@ const Stories = () => {
         }));
     };
 
+    // Render the media preview UI
+    const renderMediaPreview = () => {
+        if (!pendingMedia) return null;
+        
+        const isVideo = pendingMedia.type?.startsWith('video/');
+        
+        return (
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={previewMode}
+                onRequestClose={cancelMedia}
+            >
+                <View style={styles.modalContainer}>
+                    <View style={styles.previewContainer}>
+                        <Text style={styles.previewTitle}>Preview</Text>
+                        
+                        {isVideo ?(
+                            <Video 
+                                source={{uri: pendingMedia.uri}}
+                                style={styles.mediaPreview}
+                                resizeMode="contain"
+                                controls={true}
+                            />
+                        ) : (
+                            <Image
+                                source={{uri: pendingMedia.uri}}
+                                style={styles.mediaPreview}
+                                resizeMode="contain"
+                            />
+                        )}
+                        
+                        <View style={styles.buttonContainer}>
+                            <TouchableOpacity 
+                                style={[styles.button, styles.cancelButton]} 
+                                onPress={cancelMedia}
+                            >
+                                <Text style={styles.buttonText}>Cancel</Text>
+                            </TouchableOpacity>
+                            
+                            <TouchableOpacity 
+                                style={[styles.button, styles.confirmButton]} 
+                                onPress={handleConfirmMedia}
+                            >
+                                <Text style={[styles.buttonText, styles.confirmText]}>Upload</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
+        );
+    };
+
     if (!stories || !stories.length || isInitialLoading) {
         return <Loader />;
     }
@@ -358,6 +454,10 @@ const Stories = () => {
                     <Loader size="small" />
                 </View>
             )}
+            
+            {/* Media Preview Modal */}
+            {renderMediaPreview()}
+            
             <InstagramStories
                 stories={ stories }
                 avatarBorderColors={['#FF7A51', '#FFDB5C']}
@@ -375,5 +475,80 @@ const Stories = () => {
         </View>
     );
 };
+
+// Styles for the preview modal
+const styles = StyleSheet.create({
+    modalContainer: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    previewContainer: {
+        width: '90%',
+        backgroundColor: 'white',
+        borderRadius: 10,
+        padding: 20,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
+    },
+    previewTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginBottom: 15,
+    },
+    mediaPreview: {
+        width: '100%',
+        height: 300,
+        borderRadius: 10,
+        marginBottom: 20,
+    },
+    videoPlaceholder: {
+        width: '100%',
+        height: 300,
+        borderRadius: 10,
+        backgroundColor: '#f0f0f0',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    mediaPath: {
+        fontSize: 12,
+        color: '#666',
+        marginTop: 10,
+    },
+    buttonContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        width: '100%',
+    },
+    button: {
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 5,
+        minWidth: 100,
+        alignItems: 'center',
+    },
+    cancelButton: {
+        backgroundColor: '#f0f0f0',
+    },
+    confirmButton: {
+        backgroundColor: '#FF7A51',
+    },
+    buttonText: {
+        fontSize: 16,
+        fontWeight: '500',
+    },
+    confirmText: {
+        color: 'white',
+    },
+});
 
 export default Stories;

@@ -8,6 +8,7 @@ import RegisterScreen from '../../screens/Auth/RegisterScreen';
 import PrivacyPolicy from '../../screens/PrivacyPolicy';
 import NavigationOptions from '../NavigationOptions';
 import TermsConditions from '../../screens/TermsConditions';
+import OnboardingScreen from '../../screens/Onboarding';
 
 const AuthNavigation = () => {
   const Stack = createNativeStackNavigator();
@@ -29,6 +30,10 @@ const AuthNavigation = () => {
         name="TermsConditions"
         component={TermsConditions}
         options={NavigationOptions}
+      />
+      <Stack.Screen
+        name="Onboarding"
+        component={ OnboardingScreen }
       />
     </Stack.Navigator>
   );

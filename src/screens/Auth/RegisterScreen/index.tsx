@@ -96,7 +96,7 @@ const SignupScreen: React.FC = () => {
           text1: 'Success',
           text2: 'Your account has been created successfully',
         });
-        navigation.navigate('Login');
+        navigation.navigate('Onboarding');
       } else {
         // Handle known error responses
         Toast.show({
@@ -133,6 +133,7 @@ const SignupScreen: React.FC = () => {
       .then(res => {
         console.log(res.data, 'Res');
         dispatch(setUser(res?.data?.data));
+        navigation.navigate('Onboarding');
       })
       .catch(err => {
         console.log(err, 'Err');

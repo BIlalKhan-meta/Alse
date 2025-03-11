@@ -600,15 +600,21 @@ const LiveStreamScreen = () => {
     );
   };
 
-  // Render the live user header
   const renderLiveHeader = () => {
     return (
       <View style={styles.liveHeaderContainer}>
         <View style={styles.liveUserInfo}>
-          <Image
-            source={{ uri: streamerAvatar || `https://randomuser.me/api/portraits/men/${user.id}.jpg` }}
-            style={styles.avatarImage}
-          />
+          <View style={styles.avatarContainer}>
+            <Image
+              source={{ uri: streamerAvatar || `https://randomuser.me/api/portraits/men/${user.id}.jpg` }}
+              style={styles.avatarImage}
+            />
+            <Image
+              source={require('../../assets/Icons/logo.png')} 
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
+          </View>
           <View style={styles.userTextContainer}>
             <Text style={styles.username}>{streamerName}</Text>
             {liveStarted && <View style={styles.liveIndicatorContainer}>
@@ -719,6 +725,24 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000',
   },
+  avatarContainer: {
+    position: 'relative',
+    width: 36,
+    height: 36,
+    marginRight: 8,
+  },
+  avatarImage: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+  },
+  logoImage: {
+    position: 'absolute',
+    width: 48,
+    height: 48,
+    top: 55,
+    left: -7
+  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -792,14 +816,10 @@ const styles = StyleSheet.create({
     padding: 6,
     paddingRight: 12,
   },
-  avatarImage: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    marginRight: 8,
-  },
   userTextContainer: {
     flexDirection: 'column',
+    justifyContent: 'center',
+    height: 36,
   },
   username: {
     color: '#fff',

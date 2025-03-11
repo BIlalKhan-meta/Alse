@@ -10,32 +10,13 @@ import {
   ScrollView,
   SafeAreaView
 } from 'react-native';
-import EncryptedStorage from 'react-native-encrypted-storage';
 import Welcome_1 from './Welcome_1';
 import Welcome_2 from './Welcome_2';
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 const OnboardingScreen = ({ navigation }) => {
   const [currentPage, setCurrentPage] = useState(0);
   const scrollViewRef = useRef(null);
-
-  // Check if user has seen onboarding before
-  useEffect(() => {
-    const checkOnboardingStatus = async () => {
-      try {
-        const value = await EncryptedStorage.getItem('hasSeenOnboarding');
-        
-        if (value !== null) {
-          // User has seen onboarding, navigate to main app
-          navigation.replace('AuthNavigation');
-        }
-      } catch (error) {
-        console.log('Error checking onboarding status:', error);
-      }
-    };
-
-    checkOnboardingStatus();
-  }, []);
 
   // Handle "Next" button press
   const handleNext = async () => {
@@ -45,12 +26,7 @@ const OnboardingScreen = ({ navigation }) => {
       setCurrentPage(currentPage + 1);
     } else {
       // This is the last screen, mark as completed
-      try {
-        await EncryptedStorage.setItem('hasSeenOnboarding', 'true');
-        navigation.replace('AuthNavigation');
-      } catch (error) {
-        console.log('Error saving onboarding status:', error);
-      }
+      navigation.replace('Login');
     }
   };
 
@@ -58,85 +34,77 @@ const OnboardingScreen = ({ navigation }) => {
   const screens = [
     // First screen
     {
-      title: "Lorem Ipsum is",
-      subtitle: "Lorem Ipsum 👌",
-      description: "Lorem ipsum is simply dummy text of the printing and typesetting industry",
+      title: "Connect, Share, Thrive ✨",
+      subtitle: "",
+      description: "Stay in the loop with your favorite people, trends, and moments—all in one place.",
     },
     // Second screen
     {
-      title: "Lorem Ipsum is",
-      subtitle: "Lorem 🔑",
-      description: "Lorem ipsum is simply dummy text of the printing and typesetting industry"
+      title: "Your World, Your Rules 🔑",
+      subtitle: "",
+      description: "Discover, engage, and express yourself freely—because your voice matters."
     }
   ];
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={ styles.safeArea }>
       <StatusBar barStyle="light-content" backgroundColor="#004D40" />
-      
+
       <ScrollView
-        ref={scrollViewRef}
+        ref={ scrollViewRef }
         horizontal
         pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        scrollEnabled={true} // Enable swipe gestures
-        onMomentumScrollEnd={(event) => {
+        showsHorizontalScrollIndicator={ false }
+        scrollEnabled={ true } // Enable swipe gestures
+        onMomentumScrollEnd={ (event) => {
           // Update current page based on scroll position
           const newPage = Math.floor(event.nativeEvent.contentOffset.x / width + 0.5);
           setCurrentPage(newPage);
-        }}
-        contentContainerStyle={styles.scrollContent}
+        } }
+        contentContainerStyle={ styles.scrollContent }
       >
-        {screens.map((screen, index) => (
-          <View 
-            key={index} 
-            style={styles.screenContainer}
+        { screens.map((screen, index) => (
+          <View
+            key={ index }
+            style={ styles.screenContainer }
           >
-            {index === 0 ? (
+            { index === 0 ? (
               // First screen with social media icons
-              <View style={styles.furnitureContainer}>
+              <View style={ styles.furnitureContainer }>
                 <Welcome_1 />
               </View>
             ) : (
               // Second screen with furniture illustration
-              <View style={styles.furnitureContainer}>
+              <View style={ styles.furnitureContainer }>
                 <Welcome_2 />
               </View>
-            )}
-            
-            {/* Text Content */}
-            <View style={styles.textContainer}>
-              <Text style={styles.heading}>{screen.title}</Text>
-              <View style={styles.subheadingContainer}>
-                <Text style={styles.subheading}>
-                  {index === 0 ? "Lorem Ipsum" : "Lorem"}
-                </Text>
-                <Text style={styles.emoji}>
-                  {index === 0 ? "👌" : "🔑"}
-                </Text>
-              </View>
-              <Text style={styles.description}>{screen.description}</Text>
+            ) }
+
+            {/* Text Content */ }
+            <View style={ styles.textContainer }>
+              <Text style={ styles.heading }>{ screen.title }</Text>
+              <Text style={ styles.description }>{ screen.description }</Text>
             </View>
           </View>
-        ))}
+        )) }
       </ScrollView>
-      
-      {/* Pagination Dots */}
-      <View style={styles.paginationContainer}>
-        <View style={[
-          styles.paginationDot, 
+
+      {/* Pagination Dots */ }
+      <View style={ styles.paginationContainer }>
+        <View style={ [
+          styles.paginationDot,
           currentPage === 0 ? styles.activeDot : {}
-        ]} />
-        <View style={[
-          styles.paginationDot, 
+        ] } />
+        <View style={ [
+          styles.paginationDot,
           currentPage === 1 ? styles.activeDot : {}
-        ]} />
+        ] } />
       </View>
-      
-      {/* Next Button */}
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.button} onPress={handleNext}>
-          <Text style={styles.buttonText}>Next</Text>
+
+      {/* Next Button */ }
+      <View style={ styles.buttonContainer }>
+        <TouchableOpacity style={ styles.button } onPress={ handleNext }>
+          <Text style={ styles.buttonText }>Next</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
