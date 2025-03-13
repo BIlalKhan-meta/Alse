@@ -5,7 +5,7 @@ import AddStoryIcon from './AddStoryIcon';
 import { AddStory, GetStories } from '../../api/stories';
 import * as DropdownMenu from 'zeego/dropdown-menu';
 import Toast from 'react-native-toast-message';
-import useImagePicker from '../../hooks/useImagePicker';
+import useImagePicker from '../../hooks/useImagePicker-story';
 import { isAxiosError } from 'axios';
 import Loader from '../Loader';
 import { GetLiveStreams } from '../../api/liveStream';

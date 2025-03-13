@@ -8,12 +8,10 @@ import { Formik } from 'formik';
 import { colors } from '../../../utils/theme';
 import CustomButton from '../../../components/CustomButton';
 import { useNavigation } from '@react-navigation/native';
-import { useAppDispatch } from '../../../hooks/storeHooks';
 import InterBoldLabel from '../../../components/Text/InterBoldLabel';
 import PoppinsLabel from '../../../components/Text/Poppins';
 import { googleLogin, signup } from '../../../api/auth';
 import Toast from 'react-native-toast-message';
-import { setUser } from '../../../store/slices/authSlice';
 import Checkbox from 'expo-checkbox';
 import GoogleLogin from '../../../components/GoogleAuth/Login';
 
@@ -26,7 +24,6 @@ interface FormValues {
 
 const SignupScreen: React.FC = () => {
   const navigation = useNavigation<any>();
-  const dispatch = useAppDispatch();
 
   const [submitted, setSubmitted] = useState<boolean>(false);
   const [isGoogleSubmitted, setIsGoogleSubmitted] = useState<boolean>(false);
@@ -132,8 +129,9 @@ const SignupScreen: React.FC = () => {
     googleLogin(apiData)
       .then(res => {
         console.log(res.data, 'Res');
-        dispatch(setUser(res?.data?.data));
-        navigation.navigate('Onboarding');
+        navigation.navigate('Onboarding', {
+          user: res?.data?.data,
+        });
       })
       .catch(err => {
         console.log(err, 'Err');
@@ -170,7 +168,7 @@ const SignupScreen: React.FC = () => {
                 </View>
 
                 <InterBoldLabel style={ styles.heading }>Sign Up</InterBoldLabel>
-                <PoppinsLabel style={ styles.subHeading }>It was popularised in the 1960s with the release of Letraset sheetscontaining Lorem Ipsum.</PoppinsLabel>
+                <PoppinsLabel style={ styles.subHeading }>Welcome to Alse, The opportunity is on your fingertips.</PoppinsLabel>
                 <GoogleLogin onSuccess={ onGoogleLoginSuccess } loading={ isGoogleSubmitted } />
 
                 <View style={ styles.lineContainer }>

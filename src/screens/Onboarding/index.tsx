@@ -12,11 +12,15 @@ import {
 } from 'react-native';
 import Welcome_1 from './Welcome_1';
 import Welcome_2 from './Welcome_2';
+import { setUser } from '../../store/slices/authSlice';
+import { useAppDispatch } from '../../hooks/storeHooks';
 const { width } = Dimensions.get('window');
 
-const OnboardingScreen = ({ navigation }) => {
+const OnboardingScreen = ({ navigation, route }: { navigation: any, route: any }) => {
   const [currentPage, setCurrentPage] = useState(0);
   const scrollViewRef = useRef(null);
+  const { user } = route.params;
+  const dispatch = useAppDispatch();
 
   // Handle "Next" button press
   const handleNext = async () => {
@@ -25,6 +29,10 @@ const OnboardingScreen = ({ navigation }) => {
       scrollViewRef.current?.scrollTo({ x: width * (currentPage + 1), animated: true });
       setCurrentPage(currentPage + 1);
     } else {
+      if (user) {
+        return dispatch(setUser(user));
+      }
+
       // This is the last screen, mark as completed
       navigation.replace('Login');
     }

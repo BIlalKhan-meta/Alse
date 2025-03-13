@@ -186,7 +186,7 @@ const LoginScreen: React.FC = () => {
                 </View>
 
                 <InterBoldLabel style={ styles.heading }>Sign In</InterBoldLabel>
-                <PoppinsLabel style={ styles.subHeading }>It was popularised in the 1960s with the release of Letraset sheetscontaining Lorem Ipsum.</PoppinsLabel>
+                <PoppinsLabel style={ styles.subHeading }>Let your ideas travel across the world.</PoppinsLabel>
                 <GoogleLogin onSuccess={ onGoogleLoginSuccess } loading={ googleSubmitted } />
 
                 <View style={ styles.lineContainer }>
