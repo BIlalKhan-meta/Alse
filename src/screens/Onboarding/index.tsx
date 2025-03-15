@@ -42,9 +42,9 @@ const OnboardingScreen = ({ navigation, route }: { navigation: any, route: any }
   const screens = [
     // First screen
     {
-      title: "Connect, Share, Thrive ✨",
-      subtitle: "",
-      description: "Stay in the loop with your favorite people, trends, and moments—all in one place.",
+      title: false,
+      subtitle: false,
+      description: false,
     },
     // Second screen
     {
@@ -79,7 +79,7 @@ const OnboardingScreen = ({ navigation, route }: { navigation: any, route: any }
             { index === 0 ? (
               // First screen with social media icons
               <View style={ styles.furnitureContainer }>
-                <Welcome_1 />
+                <Image source={require('./Welcome_1.png')} style={styles.welcome1Image} />
               </View>
             ) : (
               // Second screen with furniture illustration
@@ -89,10 +89,11 @@ const OnboardingScreen = ({ navigation, route }: { navigation: any, route: any }
             ) }
 
             {/* Text Content */ }
-            <View style={ styles.textContainer }>
+            { screen.title && <View style={ styles.textContainer }>
               <Text style={ styles.heading }>{ screen.title }</Text>
               <Text style={ styles.description }>{ screen.description }</Text>
             </View>
+            }
           </View>
         )) }
       </ScrollView>
@@ -139,6 +140,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1, // Make this take available space
     paddingTop: 20,
+  },
+  welcome1Image: {
+    width: 350,
+    height: 350,
   },
   furnitureImage: {
     width: 180,

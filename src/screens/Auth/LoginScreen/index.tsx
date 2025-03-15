@@ -13,11 +13,12 @@ import { useAppDispatch } from '../../../hooks/storeHooks';
 import { getFcmToken } from '../../../utils/messaging.utils';
 import InterBoldLabel from '../../../components/Text/InterBoldLabel';
 import PoppinsLabel from '../../../components/Text/Poppins';
-import { googleLogin, login } from '../../../api/auth';
+import { appleLogin, googleLogin, login } from '../../../api/auth';
 import Toast from 'react-native-toast-message';
 import { setUser } from '../../../store/slices/authSlice';
 import EncryptedStorage from 'react-native-encrypted-storage';
 import GoogleLogin from '../../../components/GoogleAuth/Login';
+import AppleAuth from '../../../components/AppleAuth';
 interface FormValues {
   identifier: string;
   password: string;
@@ -43,6 +44,7 @@ const LoginScreen: React.FC = () => {
 
   const [submitted, setSubmitted] = useState<boolean>(false);
   const [googleSubmitted, setGoogleSubmitted] = useState<boolean>(false);
+  const [appleSubmitted, setAppleSubmitted] = useState<boolean>(false);
   const [securePassword, setSecurePassword] = useState<boolean>(true);
   const [isSelected, setIsSelected] = useState<boolean>(false);
   const [deviceToken, setDeviceToken] = useState<string | undefined>('');
@@ -165,6 +167,44 @@ const LoginScreen: React.FC = () => {
       });
   }
 
+  const onAppleLoginSuccess = (user: any) => {
+    if (appleSubmitted) return;
+
+    setAppleSubmitted(true);
+
+    const {
+      email,
+      fullName,
+      isAppleLogin,
+      apple_id,
+    } = user;
+
+    const apiData = {
+      email,
+      fullName,
+      isAppleLogin,
+      apple_id,
+    }
+
+    appleLogin(apiData)
+      .then(res => {
+        console.log(res.data, 'Res');
+        dispatch(setUser(res?.data?.data));
+      })
+      .catch(err => {
+        console.log(err, 'Err');
+
+        Toast.show({
+          type: 'error',
+          text1: 'Invalid',
+          text2: err?.message,
+        });
+      })
+      .finally(() => {
+        setAppleSubmitted(false);
+      });
+  }
+
   return (
     <SafeAreaView style={ styles.safeAreaView }>
       <Formik
@@ -188,6 +228,7 @@ const LoginScreen: React.FC = () => {
                 <InterBoldLabel style={ styles.heading }>Sign In</InterBoldLabel>
                 <PoppinsLabel style={ styles.subHeading }>Let your ideas travel across the world.</PoppinsLabel>
                 <GoogleLogin onSuccess={ onGoogleLoginSuccess } loading={ googleSubmitted } />
+                <AppleAuth onSuccess={ onAppleLoginSuccess } loading={ appleSubmitted } />
 
                 <View style={ styles.lineContainer }>
                   <View style={ styles.line } />

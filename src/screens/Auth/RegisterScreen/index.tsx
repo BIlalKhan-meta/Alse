@@ -10,11 +10,11 @@ import CustomButton from '../../../components/CustomButton';
 import { useNavigation } from '@react-navigation/native';
 import InterBoldLabel from '../../../components/Text/InterBoldLabel';
 import PoppinsLabel from '../../../components/Text/Poppins';
-import { googleLogin, signup } from '../../../api/auth';
+import { appleLogin, googleLogin, signup } from '../../../api/auth';
 import Toast from 'react-native-toast-message';
 import Checkbox from 'expo-checkbox';
 import GoogleLogin from '../../../components/GoogleAuth/Login';
-
+import AppleAuth from '../../../components/AppleAuth';
 interface FormValues {
   name: string;
   identifier: string;
@@ -27,6 +27,7 @@ const SignupScreen: React.FC = () => {
 
   const [submitted, setSubmitted] = useState<boolean>(false);
   const [isGoogleSubmitted, setIsGoogleSubmitted] = useState<boolean>(false);
+  const [isAppleSubmitted, setIsAppleSubmitted] = useState<boolean>(false);
   const [securePassword, setSecurePassword] = useState<boolean>(true);
   const [initialValues] = useState<FormValues>({
     name: '',
@@ -147,6 +148,43 @@ const SignupScreen: React.FC = () => {
       });
   }
 
+  const onAppleLoginSuccess = (user: any) => {
+    if (isAppleSubmitted) return;
+
+    setIsAppleSubmitted(true);
+
+
+    const {
+      email,
+      fullName,
+      isAppleLogin,
+      apple_id,
+    } = user;
+
+    const apiData = {
+      email,
+      fullName,
+      isAppleLogin,
+      apple_id,
+    };
+
+    appleLogin(apiData)
+      .then(res => {
+        console.log(res.data, 'Res');
+
+        navigation.navigate('Onboarding', {
+          user: res?.data?.data,
+        });
+      })
+      .catch(err => {
+        console.log(err, 'Err');
+        setIsAppleSubmitted(false);
+      })
+      .finally(() => {
+        setIsAppleSubmitted(false);
+      });
+  }
+
   return (
     <SafeAreaView style={ styles.safeAreaView }>
       <Formik
@@ -170,6 +208,7 @@ const SignupScreen: React.FC = () => {
                 <InterBoldLabel style={ styles.heading }>Sign Up</InterBoldLabel>
                 <PoppinsLabel style={ styles.subHeading }>Welcome to Alse, The opportunity is on your fingertips.</PoppinsLabel>
                 <GoogleLogin onSuccess={ onGoogleLoginSuccess } loading={ isGoogleSubmitted } />
+                <AppleAuth onSuccess={ onAppleLoginSuccess } loading={ isAppleSubmitted } />
 
                 <View style={ styles.lineContainer }>
                   <View style={ styles.line } />

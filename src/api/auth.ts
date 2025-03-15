@@ -12,6 +12,22 @@ export const googleLogin = (data: {
   });
 };
 
+export const appleLogin = (data: {
+  email: string;
+  fullName: string;
+  isAppleLogin: boolean;
+  apple_id: string;
+}) => {
+  const formData = new FormData();
+  formData.append('email', data.email);
+  formData.append('full_name', data.fullName);
+  formData.append('is_apple_login', data.isAppleLogin);
+  formData.append('apple_id', data.apple_id);
+  return axiosInstance.post(endpoints.auth.login, formData, {
+    formData: true,
+  });
+};
+
 
 export const login = (data: {
   identifier: string;
