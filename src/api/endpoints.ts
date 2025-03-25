@@ -96,6 +96,7 @@ const endpoints = {
     createGroup: '/create-group',
     fetchChat: '/get-chat',
     send: '/send-message',
+    getSignature: '/get-signature',
   },
   menu: {
     getSavedItems: '/get-saved-items',

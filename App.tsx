@@ -21,6 +21,7 @@ import {
   configureReanimatedLogger,
   ReanimatedLogLevel,
 } from 'react-native-reanimated';
+import { ZoomVideoSdkProvider } from '@zoom/react-native-videosdk';
 
 const theme = {
   ...DefaultTheme,
@@ -79,18 +80,21 @@ function App(): React.JSX.Element {
   // }
 
   return (
-    <PersistGate loading={null} persistor={persistor}>
-      <Provider store={store}>
-        {/* <SafeAreaView style={styles.container}> */}
+    <ZoomVideoSdkProvider
+      config={ { appGroupId: 'test', domain: 'zoom.us', enableLog: true } }>
+      <PersistGate loading={ null } persistor={ persistor }>
+        <Provider store={ store }>
+          {/* <SafeAreaView style={styles.container}> */ }
 
-        <NavigationContainer theme={theme}>
-          <MainNavigation />
-        </NavigationContainer>
+          <NavigationContainer theme={ theme }>
+            <MainNavigation />
+          </NavigationContainer>
 
-        <Toast />
-        {/* </SafeAreaView> */}
-      </Provider>
-    </PersistGate>
+          <Toast />
+          {/* </SafeAreaView> */ }
+        </Provider>
+      </PersistGate>
+    </ZoomVideoSdkProvider>
   );
 }
 

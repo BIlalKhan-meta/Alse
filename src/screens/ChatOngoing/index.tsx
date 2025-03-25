@@ -34,6 +34,8 @@ import {
   emitMessage,
   listenMessage,
 } from '../../utils/socket';
+import {vh} from '../../constant';
+import { requestMicrophonePermission } from '../../utils/helpers';
 
 const ChatOngoing: React.FC = props => {
   const navigation = useNavigation();
@@ -42,6 +44,8 @@ const ChatOngoing: React.FC = props => {
   const [messages, setMessages] = useState<IMessage[]>([]);
   const [loader, setLoader] = useState(false);
   const user = useSelector(selectUserProfile);
+
+  // console.log("USER++++++++++++++++++",user?.full_name)
 
   useEffect(() => {
     connectSocket();
@@ -54,8 +58,6 @@ const ChatOngoing: React.FC = props => {
     setLoader(true);
     getChat(props?.route?.params?.id)
       .then(res => {
-        // console.log('Response from ===============>', res?.data?.data);
-        // setMessages(res?.data?.data);
         let m = res?.data?.data?.map(item => ({
           _id: item?.id,
           chat_id: item?.chat_id,
@@ -92,8 +94,6 @@ const ChatOngoing: React.FC = props => {
             avatar: res?.user?.avatar,
           },
         };
-        // if(res?.user?._id != user?.id){
-        // console.log('Inside listen', res?.user?._id != user?.id);
 
         setMessages(m => [p, ...m]);
       });
@@ -117,19 +117,12 @@ const ChatOngoing: React.FC = props => {
         // url:
       },
     });
-    // setMessages(m => [data, ...m]);
 
     createMessage(data)
-      .then(res => {
-        // console.log(
-        //   'Response from Create message  =========>',
-        //   res?.data?.data,
-        // );
-      })
+      .then(res => {})
       .catch(Err => {
         console.log('Errorm from Create Message  =======>', Err);
       });
-    // setMessages(GiftedChat.append(messages, newMessages));
   };
 
   useLayoutEffect(() => {
@@ -138,48 +131,26 @@ const ChatOngoing: React.FC = props => {
         backgroundColor: colors.headerColor,
       },
       title: props?.route?.params?.name,
-      headerRight: () => (
-        <View style={styles.header}>
-          {/* <TouchableOpacity onPress={() => {
-                        // setModalVisible(true)
-                    }}>
-                        <Image
-                            source={images.callIcon}
-                            style={styles.threeDots}
-
-                        />
-                    </TouchableOpacity> */}
-
-          {/* <TouchableOpacity onPress={() => {
-                        // setModalVisible(true)
-                    }}>
-                        <Image
-                            source={images.videoIcon}
-                            style={styles.threeDots}
-
-                        />
-                    </TouchableOpacity> */}
-
-          {/* <TouchableOpacity onPress={() => {
-                        // setModalVisible(true)
-                    }}
-                        style={styles.savedConatiner}
-                    >
-                        <Image
-                            source={images.save}
-                            style={styles.saveicon}
-
-                        />
-                    </TouchableOpacity> */}
-        </View>
-      ),
+      headerRight: () => {
+        return (
+          <TouchableOpacity
+            onPress={() =>
+              navigation.navigate('OutgoingCall', {
+                chat_id: props?.route?.params?.id,
+                user: props?.route?.params?.user,
+                role: '1',
+              })
+            }
+            style={styles.header}>
+            <Image source={images.callIcon} style={styles.call_icon} />
+          </TouchableOpacity>
+        );
+      },
     });
   }, [navigation]);
 
   return (
-    <TouchableWithoutFeedback
-    // onPress={() => setModalVisible(false)}
-    >
+    <TouchableWithoutFeedback>
       <View style={styles.container}>
         <Card style={styles.cardStyle}>
           <GiftedChat
@@ -187,18 +158,9 @@ const ChatOngoing: React.FC = props => {
             onSend={onSend}
             user={{_id: user?.id, avatar: user?.image}}
             renderSend={renderSend}
-            // renderInputToolbar={props => <CustomInputToolbar {...props} />}
             renderMessageText={renderMessageText}
-            // renderComposer={renderComposer}
-            // renderTime={renderTime}
             messagesContainerStyle={styles.messagesContainer}
             renderBubble={renderBubble}
-            // renderBubble={(props) => (
-            //     <View>
-            //         <Text>{props.currentMessage.text}</Text>
-            //         {renderTime(props)}
-            //     </View>
-            // )}
           />
         </Card>
       </View>

@@ -43,6 +43,9 @@ import PaymentLogs from '../../screens/PaymentLogs';
 import ProfileScreen from '../../screens/ProfileScreen';
 import PrivacyPolicy from '../../screens/PrivacyPolicy';
 import AddStory from '../../screens/AddStory';
+import { OutgoingCall } from '../../screens/OutgoingCall';
+import AcknowledgeCall from '../../screens/AcknowledgeCall';
+import IncomingCall from '../../screens/IncomingCall';
 
 const AppNavigation = () => {
   const Stack = createNativeStackNavigator();
@@ -108,6 +111,21 @@ const AppNavigation = () => {
           name="ChatOngoing"
           component={ChatOngoing}
           options={NavigationOptions}
+        />
+        <Stack.Screen
+          name="OutgoingCall"
+          component={OutgoingCall}
+          // options={NavigationOptions}
+        />
+        <Stack.Screen
+          name="IncomingCall"
+          component={IncomingCall}
+          // options={NavigationOptions}
+        />
+        <Stack.Screen
+          name="AcknowledgeCall"
+          component={AcknowledgeCall}
+          // options={NavigationOptions}
         />
         <Stack.Screen
           name="MyOrderDetail"

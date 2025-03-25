@@ -2,23 +2,25 @@ import PushNotificationIOS from '@react-native-community/push-notification-ios';
 // notificationService.js
 import PushNotification from 'react-native-push-notification';
 import messaging from '@react-native-firebase/messaging';
+import {navigationRef} from '../../App';
+import {Alert} from 'react-native';
 
 export const requestUserPermission = async () => {
   const authStatus = await messaging().requestPermission();
-  
+
   const enabled =
     authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
     authStatus === messaging.AuthorizationStatus.PROVISIONAL;
 
   if (enabled) {
-    console.log('Authorization status:', authStatus);
+    // console.log('Authorization status:', authStatus);
     return getFcmToken();
   }
 };
 
 export const getFcmToken = async () => {
   const token = await messaging().getToken();
-  console.log(token, 'fcm token');
+  // console.log(token, 'fcm token');
   if (token) {
     return token;
   }
@@ -29,60 +31,98 @@ class NotificationListener {
     this.hasBeenCalled = false;
   }
 
-  
   init(handleNotification) {
-    console.log("CHECKKKKKKKK");
     if (this.hasBeenCalled) {
-      console.log("NotificationListener can only be called once.");
+      // console.log('NotificationListener can only be initialized once.');
       return;
     }
     this.hasBeenCalled = true;
 
     messaging().onNotificationOpenedApp(remoteMessage => {
-      console.log(
-        'Notification caused app to open from background state:',
-        remoteMessage,
-      );
-    });
-
-    messaging().setBackgroundMessageHandler(async remoteMessage => {
-      console.log('BACKKKKKKKKK CALEDLDDDDDDDDDDDD, REMOTEEEEEE ',remoteMessage);
-      
-      createNotificationChannel();
-      if (handleNotification) {
-        handleNotification(remoteMessage);
-      }
-      const notificationData = {
-        channelId: 'channel-id2',
-        message: remoteMessage.notification.body,
-        title: remoteMessage.notification.title,
-      };
-      PushNotification.localNotification(notificationData);
-    });
-
-    messaging().onMessage(async remoteMessage => {
-      console.log('on message what happened:', remoteMessage);
-      createNotificationChannel();
-      
-      if (handleNotification) {
-        handleNotification(remoteMessage);
-      }
-      const notificationData = {
-        channelId: 'channel-id2',
-        message: remoteMessage.notification.body,
-        title: remoteMessage.notification.title,
-      };
-      PushNotification.localNotification(notificationData);
+      // console.log('Notification tapped (background state):', remoteMessage);
+      this.handleNavigation(remoteMessage);
     });
 
     messaging()
       .getInitialNotification()
       .then(remoteMessage => {
-        console.log(
-          'Notification caused app to open from background state:',
-          remoteMessage,
-        );
+        if (remoteMessage) {
+          // console.log('Notification tapped (quit state):', remoteMessage);
+          this.handleNavigation(remoteMessage);
+        }
       });
+
+    messaging().onMessage(async remoteMessage => {
+      // console.log('Foreground message received:', remoteMessage);
+
+      createNotificationChannel();
+      if (handleNotification) {
+        handleNotification(remoteMessage);
+      }
+
+      // PushNotification.configure({
+      //   onAction: action => {
+      //     console.log(
+      //       'AACTIONNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN',
+      //       action,
+      //     );
+      //   },
+      // });
+
+      // Alert.alert('Incoming Call', 'Join Session', [
+      //   {
+      //     text: 'Accept',
+      //     onPress: () => {
+      //       navigationRef?.navigate('IncomingCall', {
+      //         chat_id: remoteMessage?.data?.chat_id,
+      //         role: '0',
+      //       });
+      //     },
+      //   },
+      //   {
+      //     text: 'Reject',
+      //     style: 'cancel',
+      //   },
+      // ]);
+      navigationRef?.navigate('AcknowledgeCall', {
+        chat_id: remoteMessage?.data?.chat_id,
+        role: '0',
+        name: remoteMessage?.data?.name,
+        image: remoteMessage?.data?.avatar,
+      });
+
+      // PushNotification.localNotification({
+      //   channelId: 'channel-id2',
+      //   message: remoteMessage.notification.body,
+      //   title: remoteMessage.notification.title,
+      // });
+    });
+
+    messaging().setBackgroundMessageHandler(async remoteMessage => {
+      // console.log('Background message received:', remoteMessage);
+
+      createNotificationChannel();
+      if (handleNotification) {
+        handleNotification(remoteMessage);
+      }
+
+      PushNotification.localNotification({
+        channelId: 'channel-id2',
+        message: remoteMessage.notification.body,
+        title: remoteMessage.notification.title,
+      });
+    });
+  }
+
+  handleNavigation(remoteMessage) {
+    if (remoteMessage?.data?.chat_id) {
+      navigationRef?.navigate('AcknowledgeCall', {
+        chat_id: remoteMessage?.data?.chat_id,
+        role: '0',
+        name: remoteMessage?.data?.name,
+        image: remoteMessage?.data?.avatar,
+      });
+    }
   }
 }
 
@@ -90,9 +130,9 @@ const createNotificationChannel = () => {
   PushNotification.createChannel(
     {
       channelId: 'channel-id2',
-      channelName: 'My channel',
+      channelName: 'My Channel',
     },
-    created => console.log(`createChannel returned '${created}'`)
+    created => console.log(`createChannel returned '${created}'`),
   );
 };
 

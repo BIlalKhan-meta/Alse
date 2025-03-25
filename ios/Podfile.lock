@@ -2575,6 +2575,12 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
+  - react-native-zoom-video-sdk (1.13.12):
+    - React-Core
+    - ZoomVideoSDK/CptShare (= 1.13.11)
+    - ZoomVideoSDK/zm_annoter_dynamic (= 1.13.11)
+    - ZoomVideoSDK/zoomcml (= 1.13.11)
+    - ZoomVideoSDK/ZoomVideoSDK (= 1.13.11)
   - React-nativeconfig (0.74.1)
   - React-NativeModulesApple (0.74.1):
     - glog
@@ -3017,6 +3023,10 @@ PODS:
   - VisionCamera/React (4.6.3):
     - React-Core
   - Yoga (0.0.0)
+  - ZoomVideoSDK/CptShare (1.13.11)
+  - ZoomVideoSDK/zm_annoter_dynamic (1.13.11)
+  - ZoomVideoSDK/zoomcml (1.13.11)
+  - ZoomVideoSDK/ZoomVideoSDK (1.13.11)
 
 DEPENDENCIES:
   - boost (from `../node_modules/react-native/third-party-podspecs/boost.podspec`)
@@ -3066,6 +3076,7 @@ DEPENDENCIES:
   - "react-native-vector-icons (from `../node_modules/@react-native-vector-icons/common`)"
   - react-native-video (from `../node_modules/react-native-video`)
   - react-native-webview (from `../node_modules/react-native-webview`)
+  - "react-native-zoom-video-sdk (from `../node_modules/@zoom/react-native-videosdk`)"
   - React-nativeconfig (from `../node_modules/react-native/ReactCommon`)
   - React-NativeModulesApple (from `../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios`)
   - React-perflogger (from `../node_modules/react-native/ReactCommon/reactperflogger`)
@@ -3142,6 +3153,7 @@ SPEC REPOS:
     - nanopb
     - PromisesObjC
     - SocketRocket
+    - ZoomVideoSDK
 
 EXTERNAL SOURCES:
   boost:
@@ -3235,6 +3247,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-video"
   react-native-webview:
     :path: "../node_modules/react-native-webview"
+  react-native-zoom-video-sdk:
+    :path: "../node_modules/@zoom/react-native-videosdk"
   React-nativeconfig:
     :path: "../node_modules/react-native/ReactCommon"
   React-NativeModulesApple:
@@ -3397,6 +3411,7 @@ SPEC CHECKSUMS:
   react-native-vector-icons: 4e0b79454efa284498923813ade8c54ed9c8cbe3
   react-native-video: 48d83b8acfcf17f214909fd1b13f99b4794ee7ea
   react-native-webview: ff5bc3a981754f60bbd22b6b7faec3a3d082e90e
+  react-native-zoom-video-sdk: 56955d82ef9de4a7019b8fd7ef69de6df29383c8
   React-nativeconfig: 21d89c65ca39875fad2c5c465e0e013e514eba21
   React-NativeModulesApple: ad4469f7033251f459f0cef1b138bd15822b51f2
   React-perflogger: 3d31e0d1e8ad891e43a09ac70b7b17a79773003a
@@ -3441,6 +3456,7 @@ SPEC CHECKSUMS:
   SocketRocket: abac6f5de4d4d62d24e11868d7a2f427e0ef940d
   VisionCamera: 030bcbf22791d698926e7c0e3b804126165e62e3
   Yoga: dafebc41bc66910af33077aaa41078e89fd635bf
+  ZoomVideoSDK: bb50e826c76609fcddde027aaaf72d04a703d6d7
 
 PODFILE CHECKSUM: c1fc4b8b506de3d62202a17546a3caa806e71c76
 

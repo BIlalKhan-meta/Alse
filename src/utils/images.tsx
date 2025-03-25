@@ -57,6 +57,10 @@ export const images = {
   cross: require('../assets/Icons/cross.png'),
   unsave: require('../assets/Icons/unsave.png'),
   unfillHeart: require('../assets/Icons/unfillHeart.png'),
+  mute: require('../assets/Icons/mute.png'),
+  endCall: require('../assets/Icons/endCall.png'),
+  unmute: require('../assets/Icons/unmute.png'),
+  cancelCall: require('../assets/Icons/cancelCall.png'),
 
   //Imagesssss/////
   shop1: require('../assets/images/shop1.png'),
