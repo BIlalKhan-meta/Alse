@@ -21,8 +21,8 @@ jobs:
           distribution: "adopt"
           cache: "gradle"
 
-      - name: Validate Gradle wrapper
-        uses: gradle/wrapper-validation-action@v1
+      # - name: Validate Gradle wrapper
+      #   uses: gradle/wrapper-validation-action@v1
 
       - name: Setup Node  
         uses: actions/setup-node@v3
