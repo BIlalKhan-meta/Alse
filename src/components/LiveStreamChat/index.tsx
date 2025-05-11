@@ -26,8 +26,6 @@ const ChatComponent = ({ channelId, isLive }: { channelId: string; isLive: boole
   const messageListener = useRef(null);
   const user = useSelector(selectUserProfile);
 
-  const textInputRef = useRef<TextInput>(null);
-
   // Set up Firebase chat listener
   useEffect(() => {
     // Only set up listeners if we have a valid channel and the stream is live
@@ -68,6 +66,7 @@ const ChatComponent = ({ channelId, isLive }: { channelId: string; isLive: boole
       });
       
       // Store the unsubscribe function
+      // @ts-ignore
       messageListener.current = unsubscribe;
     } catch (err) {
       console.error('Failed to set up chat listener:', err);
@@ -78,6 +77,7 @@ const ChatComponent = ({ channelId, isLive }: { channelId: string; isLive: boole
     // Clean up listener on unmount
     return () => {
       if (messageListener.current) {
+        // @ts-ignore
         messageListener.current();
       }
     };
@@ -87,7 +87,8 @@ const ChatComponent = ({ channelId, isLive }: { channelId: string; isLive: boole
   useEffect(() => {
     if (messages.length > 0 && flatListRef.current) {
       setTimeout(() => {
-        flatListRef.current.scrollToEnd({ animated: false });
+        // @ts-ignore
+        flatListRef.current?.scrollToEnd({ animated: false });
       }, 100);
     }
   }, [messages]);
@@ -126,6 +127,9 @@ const ChatComponent = ({ channelId, isLive }: { channelId: string; isLive: boole
         backgroundColor: getMessageColor(user.id),
         textColor: '#000',
       };
+
+      // Clear input
+      setMessageText('');
       
       // Add to Firestore
       await firestore()
@@ -133,11 +137,6 @@ const ChatComponent = ({ channelId, isLive }: { channelId: string; isLive: boole
         .doc(channelId)
         .collection('messages')
         .add(messageData);
-      
-      // Clear input
-      setMessageText('');
-      textInputRef.current?.focus();
-      textInputRef.current?.clear();
     } catch (err) {
       console.error('Error sending message:', err);
       Alert.alert('Error', 'Failed to send message. Please try again.');
@@ -172,10 +171,10 @@ const ChatComponent = ({ channelId, isLive }: { channelId: string; isLive: boole
   if (!isLive) return null;
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : null}
-      style={styles.chatContainer}
-      keyboardVerticalOffset={100}
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={styles.container}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
     >
       {/* Messages area */}
       <View style={styles.messagesArea}>
@@ -201,28 +200,26 @@ const ChatComponent = ({ channelId, isLive }: { channelId: string; isLive: boole
           />
         )}
       </View>
-      
+
       {/* Input area */}
       <View style={styles.inputContainer}>
         <TextInput
-          ref={textInputRef}
-          style={styles.inputField} 
-          placeholder="Type Your Message" 
+          style={styles.inputField}
+          placeholder="Type Your Message"
           placeholderTextColor="rgba(255,255,255,0.7)"
           value={messageText}
           onChangeText={setMessageText}
-          onSubmitEditing={sendMessage}
         />
         <View style={styles.inputIcons}>
-          <TouchableOpacity 
-            onPress={sendMessage} 
+          <TouchableOpacity
+            onPress={sendMessage}
             disabled={!messageText.trim()}
           >
-            <FontAwesome6 
-              name="paper-plane" 
-              size={20} 
-              color={messageText.trim() ? "#38b6ff" : "rgba(56,182,255,0.5)"} 
-              iconStyle='solid' 
+            <FontAwesome6
+              name="paper-plane"
+              size={20}
+              color={messageText.trim() ? "#38b6ff" : "rgba(56,182,255,0.5)"}
+              iconStyle='solid'
             />
           </TouchableOpacity>
         </View>
@@ -232,13 +229,12 @@ const ChatComponent = ({ channelId, isLive }: { channelId: string; isLive: boole
 };
 
 const styles = StyleSheet.create({
-  chatContainer: {
+  container: {
+    flex: 1,
     position: 'absolute',
-    bottom: 0,
+    bottom: 20,
     left: 0,
     right: 0,
-    maxHeight: '40%',
-    padding: 10,
   },
   messagesArea: {
     maxHeight: '80%',

@@ -10,6 +10,7 @@ import {
   Image,
   ActivityIndicator,
   AppState,
+  KeyboardAvoidingView,
 } from 'react-native';
 import {
   createAgoraRtcEngine,
@@ -687,35 +688,34 @@ const LiveStreamScreen = () => {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Video stream */}
-      <View style={styles.videoContainer}>
-        {joined && isHost && (
-          <RtcSurfaceView canvas={{ uid: 0 }} style={styles.videoFill} />
-        )}
+    <SafeAreaView style={ styles.safeAreaContainer }>
 
-        {remoteUid !== 0 && (
-          <RtcSurfaceView canvas={{ uid: remoteUid }} style={styles.videoFill} />
-        )}
+      {/* Video stream */ }
+      <View style={ styles.videoContainer }>
+        { joined && isHost && (
+          <RtcSurfaceView canvas={ { uid: 0 } } style={ styles.videoFill } />
+        ) }
 
-        {renderNoStream()}
-        {renderLiveHeader()}
+        { remoteUid !== 0 && (
+          <RtcSurfaceView canvas={ { uid: remoteUid } } style={ styles.videoFill } />
+        ) }
 
-        {isHost ? <TouchableOpacity
-          style={styles.reverseCameraButton}
-          onPress={handleSwitchCamera}
+        { renderNoStream() }
+        { renderLiveHeader() }
+
+        { isHost ? <TouchableOpacity
+          style={ styles.reverseCameraButton }
+          onPress={ handleSwitchCamera }
         >
-          <FontAwesome6 name="camera-rotate" size={24} color="#fff" iconStyle='solid' />
-        </TouchableOpacity> : null}
-
-        {/* Chat Component */}
-        <ChatComponent 
-          channelId={channelName} 
-          isLive={liveStarted || (!isHost && remoteUid !== 0)}
-        />
+          <FontAwesome6 name="camera-rotate" size={ 24 } color="#fff" iconStyle='solid' />
+        </TouchableOpacity> : null }
+          <ChatComponent
+            channelId={ channelName }
+            isLive={ liveStarted || (!isHost && remoteUid !== 0) }
+          />
       </View>
 
-      {renderStreamControl()}
+      { renderStreamControl() }
     </SafeAreaView>
   );
 };
@@ -724,6 +724,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000',
+  },
+  safeAreaContainer: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+  keyboardAvoidingContainer: {
+    flex: 1,
+    position: 'relative',
   },
   avatarContainer: {
     position: 'relative',

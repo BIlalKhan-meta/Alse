@@ -36,7 +36,7 @@ export const timeFormat = (time: string, offest?: boolean) => {
       date.getTime() + offsetHours * 60 * 60 * 1000,
     );
 
-    return dayjs(adjustedDate.toISOString()).format('hh:mm A');
+    return dayjs(adjustedDate.toISOString()).format('MMM DD, YYYY hh:mm A');
   }
-  return dayjs(time).format('hh:mm A');
+  return dayjs(time).format('MMM DD, YYYY hh:mm A');
 };

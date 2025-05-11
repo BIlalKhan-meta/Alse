@@ -34,11 +34,21 @@ jobs:
              yarn install             
       - name: Build application
         run: |
-             cd ./android
-             ./gradlew assembleRelease             
+          cd ./android
+          ./gradlew assembleDebug
       - name: Upload application
         uses: actions/upload-artifact@v4
         with:
           name: app
-          path: ./android/app/build/outputs/apk/release/app-release.apk
+          path: ./android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 1
+      # - name: Build application
+      #   run: |
+      #        cd ./android
+      #        ./gradlew assembleRelease
+      # - name: Upload application
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: app
+      #     path: ./android/app/build/outputs/apk/release/app-release.apk
+      #     retention-days: 1
