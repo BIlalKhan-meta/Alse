@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { Image, PermissionsAndroid, Platform, Text, TouchableOpacity, View, Modal, StyleSheet } from 'react-native';
+import { Image, PermissionsAndroid, Platform, Text, TouchableOpacity, View, Modal, StyleSheet, Alert } from 'react-native';
 import InstagramStories, { InstagramStoriesProps } from '@birdwingo/react-native-instagram-stories';
 import AddStoryIcon from './AddStoryIcon';
-import { AddStory, GetStories } from '../../api/stories';
+import { AddStory, GetStories, DeleteStory } from '../../api/stories';
 import * as DropdownMenu from 'zeego/dropdown-menu';
 import Toast from 'react-native-toast-message';
 import useImagePicker from '../../hooks/useImagePicker-story';
@@ -12,6 +12,8 @@ import { GetLiveStreams } from '../../api/liveStream';
 import { GradientBorderView } from '@good-react-native/gradient-border';
 import { useNavigation } from '@react-navigation/native';
 import Video from 'react-native-video';
+import { useSelector } from 'react-redux';
+import { selectUserProfile } from '../../store/slices/authSlice';
 
 // Constants
 const POLLING_INTERVAL = 30000; // 30 seconds
@@ -46,6 +48,9 @@ const Stories = () => {
     const retryCountRef = useRef<number>(0);
     
     const navigation = useNavigation();
+
+    // Add current user info
+    const currentUser = useSelector(selectUserProfile);
 
     // Fetch stories with ability to control loading indicator
     const getStories = useCallback(async (showLoadingIndicator = true) => {
@@ -320,25 +325,103 @@ const Stories = () => {
         ]);
     };
 
+    const deleteStory = async (storyId: string | number) => {
+        try {
+            // Show confirmation alert
+            Alert.alert(
+                "Delete Story",
+                "Are you sure you want to delete this story?",
+                [
+                    {
+                        text: "Cancel",
+                        style: "cancel"
+                    },
+                    {
+                        text: "Delete", 
+                        style: "destructive",
+                        onPress: async () => {
+                            setIsRefreshing(true);
+                            
+                            try {
+                                await DeleteStory(storyId);
+                                
+                                Toast.show({
+                                    type: 'success',
+                                    text1: 'Story deleted successfully'
+                                });
+                                
+                                // Refresh stories after successful deletion
+                                await getStories(false);
+                            } catch (err) {
+                                console.error("Delete error:", err);
+                                if (isAxiosError(err)) {
+                                    Toast.show({
+                                        type: 'error',
+                                        text1: err.response?.data.message || 'Failed to delete story'
+                                    });
+                                } else {
+                                    Toast.show({
+                                        type: 'error',
+                                        text1: 'Network error while deleting story'
+                                    });
+                                }
+                            } finally {
+                                setIsRefreshing(false);
+                            }
+                        }
+                    }
+                ]
+            );
+        } catch (err) {
+            console.error("Delete error:", err);
+            Toast.show({
+                type: 'error',
+                text1: 'Failed to delete story'
+            });
+        }
+    };
+
     const formatStories = (stories: any[]): InstagramStoriesProps['stories'] => {
         // First group stories by user ID
         const groupedStories = stories.reduce((acc, story) => {
             const userId = String(story.user.id);
+            const isCurrentUserStory = userId === String(currentUser.id);
+            
             if (!acc[userId]) {
                 acc[userId] = {
                     id: userId,
                     name: story.user.full_name || "Unknown User",
                     avatarSource: {
-                        uri: `https://randomuser.me/api/portraits/men/${ story.user.id }.jpg`
+                        uri: `https://randomuser.me/api/portraits/men/${story.user.id}.jpg`
                     },
                     stories: []
                 };
             }
-            acc[userId].stories.push({
+            
+            const storyItem = {
                 id: String(story.id),
                 source: { uri: story.media_url },
-                // Add other story properties here if needed
-            });
+                // Use renderStoryHeader instead of header
+                renderStoryHeader: isCurrentUserStory ? () => (
+                    <View style={styles.storyHeaderContainer}>
+                        <View style={styles.headerLeft}>
+                            <Image 
+                                source={{ uri: `https://randomuser.me/api/portraits/men/${story.user.id}.jpg` }}
+                                style={styles.headerAvatar}
+                            />
+                            <Text style={styles.headerUsername}>{story.user.full_name || "Unknown User"}</Text>
+                        </View>
+                        <TouchableOpacity
+                            onPress={() => deleteStory(story.id)}
+                            style={styles.deleteButton}
+                        >
+                            <Text style={styles.deleteButtonText}>Delete</Text>
+                        </TouchableOpacity>
+                    </View>
+                ) : undefined
+            };
+            
+            acc[userId].stories.push(storyItem);
             return acc;
         }, {});
 
@@ -548,6 +631,53 @@ const styles = StyleSheet.create({
     },
     confirmText: {
         color: 'white',
+    },
+    storyHeaderContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        width: '100%',
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    },
+    headerLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
+    },
+    headerAvatar: {
+        width: 30,
+        height: 30,
+        borderRadius: 15,
+        marginRight: 10,
+        borderWidth: 1,
+        borderColor: 'white',
+    },
+    headerUsername: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: 'white',
+        textShadowColor: 'rgba(0, 0, 0, 0.75)',
+        textShadowOffset: { width: 1, height: 1 },
+        textShadowRadius: 2,
+    },
+    deleteButton: {
+        backgroundColor: 'rgba(255, 0, 0, 0.8)',
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 16,
+        marginLeft: 8,
+        borderWidth: 1,
+        borderColor: 'white',
+    },
+    deleteButtonText: {
+        color: 'white',
+        fontWeight: 'bold',
+        fontSize: 12,
+        textShadowColor: 'rgba(0, 0, 0, 0.5)',
+        textShadowOffset: { width: 0.5, height: 0.5 },
+        textShadowRadius: 1,
     },
 });
 

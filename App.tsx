@@ -9,7 +9,6 @@ import {Provider} from 'react-redux';
 import store, {persistor} from './src/store';
 import Toast from 'react-native-toast-message';
 import {PersistGate} from 'redux-persist/integration/react';
-import InAppBrowser from 'react-native-inappbrowser-reborn';
 import {
   checkNotifications,
   PERMISSIONS,
