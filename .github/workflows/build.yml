@@ -1,18 +1,19 @@
 name: "Build Android app"
 
+# on: workflow_dispatch
+
 on:
   push:
     branches:
       - "development"
-  workflow_dispatch:  # Adding this back to allow manual triggers
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3  # Updated to v3
-        
+        uses: actions/checkout@v2
+
       - name: Install Java
         uses: actions/setup-java@v4
         with:
@@ -26,44 +27,21 @@ jobs:
       - name: Setup Node  
         uses: actions/setup-node@v3
         with:
-          node-version: '20'
-          cache: 'yarn'  # Added caching for faster builds
+          node-version: '23'
 
       - name: Run Yarn Install
-        run: yarn install --frozen-lockfile  # Added frozen-lockfile for consistent builds
-             
-      # New step to add dependency override for androidx.browser
-      - name: Override browser dependency
         run: |
-          echo 'dependencyResolutionManagement { 
-            versionCatalogs {
-              libs {
-                library("androidx-browser", "androidx.browser:browser:1.6.0")
-              }
-            }
-            
-            resolutionStrategy {
-              eachDependency { details ->
-                if (details.requested.group == "androidx.browser" && details.requested.name == "browser") {
-                  details.useVersion "1.6.0"
-                }
-              }
-            }
-          }' >> ./android/settings.gradle
-      
+             yarn install             
       - name: Build application
         run: |
           cd ./android
-          ./gradlew assembleDebug --stacktrace  # Added stacktrace for better error reporting
-          
+          ./gradlew assembleDebug
       - name: Upload application
         uses: actions/upload-artifact@v4
         with:
           name: app
           path: ./android/app/build/outputs/apk/debug/app-debug.apk
-          retention-days: 5  # Extended retention period
-
-      # Commented release build - uncomment when debug build works
+          retention-days: 1
       # - name: Build application
       #   run: |
       #        cd ./android
