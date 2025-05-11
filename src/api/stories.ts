@@ -7,9 +7,7 @@ export const GetStories = () => {
 
 export const AddStory = async (formData: FormData) => {
   return axiosInstance.post(`${endpoints.stories.addStories}`, formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data'
-    }
+    formData: true,
   });
 };
 
