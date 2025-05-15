@@ -129,6 +129,7 @@ dependencies {
     configurations.all {
         resolutionStrategy {
             force "com.google.protobuf:protobuf-javalite:3.24.0"
+            force "androidx.browser:browser:1.8.0"
         }
     }
 
