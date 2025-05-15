@@ -14,6 +14,7 @@ import { useNavigation } from '@react-navigation/native';
 import Video from 'react-native-video';
 import { useSelector } from 'react-redux';
 import { selectUserProfile } from '../../store/slices/authSlice';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 // Constants
 const POLLING_INTERVAL = 30000; // 30 seconds
@@ -42,6 +43,7 @@ const Stories = () => {
     } = useImagePicker();
     const [isUploading, setIsUploading] = useState<boolean>(false);
     const [pollingEnabled, setPollingEnabled] = useState<boolean>(true);
+    const [isDeleting, setIsDeleting] = useState<boolean>(false);
     
     // Refs for polling management
     const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -340,15 +342,23 @@ const Stories = () => {
                         text: "Delete", 
                         style: "destructive",
                         onPress: async () => {
-                            setIsRefreshing(true);
+                            setIsDeleting(true);
                             
                             try {
+                                Toast.show({
+                                    type: 'info',
+                                    text1: 'Deleting Story',
+                                    text2: 'Please wait...'
+                                });
+
                                 await DeleteStory(storyId);
                                 
                                 Toast.show({
                                     type: 'success',
                                     text1: 'Story deleted successfully'
                                 });
+
+                                setStories(prevStories => prevStories.filter(story => story.id !== String(storyId)));
                                 
                                 // Refresh stories after successful deletion
                                 await getStories(false);
@@ -366,7 +376,7 @@ const Stories = () => {
                                     });
                                 }
                             } finally {
-                                setIsRefreshing(false);
+                                setIsDeleting(false);
                             }
                         }
                     }
@@ -401,23 +411,17 @@ const Stories = () => {
             const storyItem = {
                 id: String(story.id),
                 source: { uri: story.media_url },
-                // Use renderStoryHeader instead of header
-                renderStoryHeader: isCurrentUserStory ? () => (
-                    <View style={styles.storyHeaderContainer}>
-                        <View style={styles.headerLeft}>
-                            <Image 
-                                source={{ uri: `https://randomuser.me/api/portraits/men/${story.user.id}.jpg` }}
-                                style={styles.headerAvatar}
-                            />
-                            <Text style={styles.headerUsername}>{story.user.full_name || "Unknown User"}</Text>
-                        </View>
+                // Use renderFooter instead of renderStoryHeader
+                renderFooter: isCurrentUserStory ? () => (
+                    <SafeAreaView style={styles.footerContainer}>
                         <TouchableOpacity
                             onPress={() => deleteStory(story.id)}
                             style={styles.deleteButton}
+                            disabled={isDeleting}
                         >
-                            <Text style={styles.deleteButtonText}>Delete</Text>
+                            <Text style={styles.deleteButtonText}>{isDeleting ? 'Deleting...' : 'Delete'}</Text>
                         </TouchableOpacity>
-                    </View>
+                    </SafeAreaView>
                 ) : undefined
             };
             
@@ -632,49 +636,30 @@ const styles = StyleSheet.create({
     confirmText: {
         color: 'white',
     },
-    storyHeaderContainer: {
+    footerContainer: {
         flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
+        justifyContent: 'flex-end',
         width: '100%',
-        paddingHorizontal: 12,
-        paddingVertical: 8,
+        paddingVertical: 16,
+        paddingHorizontal: 16,
         backgroundColor: 'rgba(0, 0, 0, 0.3)',
-    },
-    headerLeft: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        flex: 1,
-    },
-    headerAvatar: {
-        width: 30,
-        height: 30,
-        borderRadius: 15,
-        marginRight: 10,
-        borderWidth: 1,
-        borderColor: 'white',
-    },
-    headerUsername: {
-        fontSize: 14,
-        fontWeight: 'bold',
-        color: 'white',
-        textShadowColor: 'rgba(0, 0, 0, 0.75)',
-        textShadowOffset: { width: 1, height: 1 },
-        textShadowRadius: 2,
+        position: 'absolute',
+        bottom: 20,
+        left: 0,
+        right: 0,
     },
     deleteButton: {
         backgroundColor: 'rgba(255, 0, 0, 0.8)',
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 16,
-        marginLeft: 8,
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderRadius: 20,
         borderWidth: 1,
         borderColor: 'white',
     },
     deleteButtonText: {
         color: 'white',
         fontWeight: 'bold',
-        fontSize: 12,
+        fontSize: 14,
         textShadowColor: 'rgba(0, 0, 0, 0.5)',
         textShadowOffset: { width: 0.5, height: 0.5 },
         textShadowRadius: 1,
