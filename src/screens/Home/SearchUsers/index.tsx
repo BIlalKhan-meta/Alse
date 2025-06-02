@@ -1,16 +1,16 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {ActivityIndicator, FlatList, View} from 'react-native';
-import Card from '../../components/Card';
+import Card from '../../../components/Card';
 import {useIsFocused} from '@react-navigation/native';
 import styles from './styles';
-import SearchComponent from '../../components/SearchComponent';
+import SearchComponent from '../../../components/SearchComponent';
 import {useSelector} from 'react-redux';
-import {selectUserProfile} from '../../store/slices/authSlice';
-import {getAllUsers, userFollow, userUnFollow} from '../../api/home';
-import {FollowingCard} from '../../components/FollowingCard';
-import HorizontalSeparator from '../../components/HorizontalSeparator';
-import {EmptyComponent} from '../../components/EmptyComponent';
-import {colors} from '../../utils/theme';
+import {selectUserProfile} from '../../../store/slices/authSlice';
+import {getAllUsers, userFollow, userUnFollow} from '../../../api/home';
+import {FollowingCard} from '../../../components/FollowingCard';
+import HorizontalSeparator from '../../../components/HorizontalSeparator';
+import {EmptyComponent} from '../../../components/EmptyComponent';
+import {colors} from '../../../utils/theme';
 
 const SearchUsers: React.FC = () => {
   const [users, setUsers] = useState([]);

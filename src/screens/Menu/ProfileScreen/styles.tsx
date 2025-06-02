@@ -1,6 +1,6 @@
-import { StyleSheet } from "react-native";
-import { fontSizes, vh, vw } from "../../constant";
-import { colors } from "../../utils/theme";
+import {StyleSheet} from 'react-native';
+import {fontSizes, vh, vw} from '../../../constant';
+import {colors} from '../../../utils/theme';
 
 const styles = StyleSheet.create({
   container: {
@@ -46,7 +46,7 @@ const styles = StyleSheet.create({
     marginBottom: vh & 2,
   },
   followButton: {
-    width: vw * 80
+    width: vw * 80,
   },
   followButtonText: {
     color: '#fff',
@@ -58,15 +58,14 @@ const styles = StyleSheet.create({
   },
   lockContainer: {
     marginVertical: vh * 2,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: vh * 2
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: vh * 2,
   },
   lockTxt: {
     fontSize: fontSizes.f20,
     color: colors.black,
-  }
+  },
 });
-
 
 export default styles;

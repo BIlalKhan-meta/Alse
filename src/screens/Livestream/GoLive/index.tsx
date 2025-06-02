@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, {useEffect, useState, useRef} from 'react';
 import {
   View,
   Text,
@@ -19,20 +19,32 @@ import {
   RtcSurfaceView,
   AudienceLatencyLevelType,
 } from 'react-native-agora';
-import { colors } from '../../utils/theme';
-import { hri } from 'human-readable-ids';
+import {colors} from '../../../utils/theme';
+import {hri} from 'human-readable-ids';
 import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
-import { EndLiveStream, GetLiveStreamToken, StartLiveStream } from '../../api/liveStream';
-import Loader from '../../components/Loader';
-import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
-import CustomButton from '../../components/CustomButton';
-import { selectUserProfile } from '../../store/slices/authSlice';
-import { useSelector } from 'react-redux';
-import ViewerCounter from '../../components/ViewerCounter';
+import {
+  EndLiveStream,
+  GetLiveStreamToken,
+  StartLiveStream,
+} from '../../../api/liveStream';
+import Loader from '../../../components/Loader';
+import {
+  useRoute,
+  useNavigation,
+  useFocusEffect,
+} from '@react-navigation/native';
+import CustomButton from '../../../components/CustomButton';
+import {selectUserProfile} from '../../../store/slices/authSlice';
+import {useSelector} from 'react-redux';
+import ViewerCounter from '../../../components/ViewerCounter';
 import firestore from '@react-native-firebase/firestore';
-import ChatComponent from '../../components/LiveStreamChat';
-import { archiveChatMessages } from '../../services/chatService';
-import { initializeViewerTracking, archiveStreamStats, updateViewerActivity } from '../../services/viewerService';
+import ChatComponent from '../../../components/LiveStreamChat';
+import {archiveChatMessages} from '../../../services/chatService';
+import {
+  initializeViewerTracking,
+  archiveStreamStats,
+  updateViewerActivity,
+} from '../../../services/viewerService';
 
 const appId = 'a0c7366a22ac46b791c69f685591207c';
 
@@ -52,7 +64,17 @@ const LiveStreamScreen = () => {
 
   let viewerTrackingCleanup: any = null;
 
-  const { isHost: isHostFromParams, channel, streamerName = user.full_name, streamerAvatar = user.profile_picture_url } = route.params as { isHost: boolean, channel: string, streamerName: string, streamerAvatar: string };
+  const {
+    isHost: isHostFromParams,
+    channel,
+    streamerName = user.full_name,
+    streamerAvatar = user.profile_picture_url,
+  } = route.params as {
+    isHost: boolean;
+    channel: string;
+    streamerName: string;
+    streamerAvatar: string;
+  };
 
   const [isLoading, setIsLoading] = useState(false);
   const [channelName, setChannelName] = useState(hri.random());
@@ -72,24 +94,24 @@ const LiveStreamScreen = () => {
       setChannelName(route.params.channel);
     }
   }, [route.params]);
-  
 
   useEffect(() => {
     if (!liveStarted || isHost || !channelName) return;
-    
+
     // For audience members only: periodically update activity
     const activityInterval = setInterval(() => {
       if (channelName) {
-        updateViewerActivity(channelName, user.id)
-          .catch(err => console.error('Error updating viewer activity:', err));
+        updateViewerActivity(channelName, user.id).catch(err =>
+          console.error('Error updating viewer activity:', err),
+        );
       }
     }, 5 * 1000); // Update every 5 seconds
-    
+
     return () => {
       clearInterval(activityInterval);
     };
   }, [liveStarted, isHost, channelName, user.id]);
-  
+
   // Track app state (foreground/background)
   useEffect(() => {
     const subscription = AppState.addEventListener('change', nextAppState => {
@@ -97,12 +119,12 @@ const LiveStreamScreen = () => {
       const wasActive = appState.current === 'active';
       appState.current = nextAppState;
       setIsAppActive(isActive);
-      
+
       // Handle app going to background
       if (wasActive && !isActive) {
         handleAppBackground();
       }
-      
+
       // Handle app coming back to foreground
       if (!wasActive && isActive) {
         handleAppForeground();
@@ -113,17 +135,17 @@ const LiveStreamScreen = () => {
       subscription.remove();
     };
   }, []);
-  
+
   // Track screen focus
   useFocusEffect(
     React.useCallback(() => {
       setIsScreenFocused(true);
-      
+
       // Handle screen coming into focus - restart camera if needed
       if (isHost && isInitialized.current && isAppActive) {
         handleScreenFocus();
       }
-      
+
       return () => {
         setIsScreenFocused(false);
         // Handle screen losing focus - pause camera
@@ -131,9 +153,9 @@ const LiveStreamScreen = () => {
           handleScreenBlur();
         }
       };
-    }, [isHost, isAppActive])
+    }, [isHost, isAppActive]),
   );
-  
+
   // Handle app going to background
   const handleAppBackground = () => {
     if (isHost && isInitialized.current && engine.current) {
@@ -143,7 +165,7 @@ const LiveStreamScreen = () => {
       engine.current.muteLocalAudioStream(true);
     }
   };
-  
+
   // Handle app coming back to foreground
   const handleAppForeground = () => {
     if (isHost && isInitialized.current && engine.current && isScreenFocused) {
@@ -153,7 +175,7 @@ const LiveStreamScreen = () => {
       engine.current.muteLocalAudioStream(false);
     }
   };
-  
+
   // Handle screen focus
   const handleScreenFocus = () => {
     if (isHost && isInitialized.current && engine.current) {
@@ -162,7 +184,7 @@ const LiveStreamScreen = () => {
       engine.current.muteLocalAudioStream(false);
     }
   };
-  
+
   // Handle screen blur
   const handleScreenBlur = () => {
     if (isHost && isInitialized.current && engine.current) {
@@ -189,9 +211,9 @@ const LiveStreamScreen = () => {
 
           if (
             granted[PermissionsAndroid.PERMISSIONS.CAMERA] ===
-            PermissionsAndroid.RESULTS.GRANTED &&
+              PermissionsAndroid.RESULTS.GRANTED &&
             granted[PermissionsAndroid.PERMISSIONS.RECORD_AUDIO] ===
-            PermissionsAndroid.RESULTS.GRANTED
+              PermissionsAndroid.RESULTS.GRANTED
           ) {
             console.log('All permissions granted');
             setPermissionsGranted(true);
@@ -217,7 +239,7 @@ const LiveStreamScreen = () => {
   // Initialize Agora after permissions are granted
   useEffect(() => {
     if (!permissionsGranted) return;
-    
+
     setIsLoading(true);
 
     const eventHandler = {
@@ -225,7 +247,7 @@ const LiveStreamScreen = () => {
         console.log('Joined Channel Successfully', connection.channelId, uid);
         setJoined(true);
         setInitializing(false);
-        
+
         // If this is an audience member joining a live channel, mark live as started
         if (!isHost && connection.channelId === channel) {
           setLiveStarted(true);
@@ -242,7 +264,7 @@ const LiveStreamScreen = () => {
       onUserJoined: (_connection, uid) => {
         console.log('Remote user ' + uid + ' joined');
         setRemoteUid(uid);
-        
+
         // If we're audience and we see the host join, that means the stream is live
         if (!isHost) {
           setLiveStarted(true);
@@ -251,30 +273,31 @@ const LiveStreamScreen = () => {
       onUserOffline: (_connection, uid) => {
         console.log('Remote user ' + uid + ' left the channel');
         setRemoteUid(0);
-        
+
         // If we're audience and we were watching a host who left
         if (!isHost && uid === remoteUid) {
           // Consider trying to rejoin or handling end of stream
-          console.log("Host has left the stream");
+          console.log('Host has left the stream');
         }
       },
       onConnectionStateChanged(connection, state, reason) {
-        if (state === 5) { // Failed
+        if (state === 5) {
+          // Failed
           // Try to reconnect if this is a viewer
           if (!isHost && joinRetries < 3) {
-            console.log("Attempting to reconnect to stream...");
+            console.log('Attempting to reconnect to stream...');
             setJoinRetries(prev => prev + 1);
             setTimeout(() => {
               setupRemoteChannel();
             }, 2000);
           } else if (!isHost) {
             setInitializing(false);
-            console.log("Failed to connect after multiple attempts");
+            console.log('Failed to connect after multiple attempts');
           }
         }
       },
-      onError: (err) => {
-        console.log("Agora error:", err);
+      onError: err => {
+        console.log('Agora error:', err);
         setTimeout(() => {
           setInitializing(false);
         }, 5000);
@@ -287,7 +310,7 @@ const LiveStreamScreen = () => {
       try {
         console.log('Initializing Agora...');
         const agoraEngine = createAgoraRtcEngine();
-        agoraEngine.initialize({ appId });
+        agoraEngine.initialize({appId});
 
         agoraEngine.registerEventHandler(eventHandler);
 
@@ -311,16 +334,16 @@ const LiveStreamScreen = () => {
 
         engine.current = agoraEngine;
         isInitialized.current = true;
-        
+
         // Only join channel after initialization is complete
         if (!isHost) {
-          console.log("Audience setup - joining channel:", channel);
+          console.log('Audience setup - joining channel:', channel);
           await setupRemoteChannel();
         } else {
-          console.log("Host setup - joining preview channel");
+          console.log('Host setup - joining preview channel');
           await joinChannel();
         }
-        
+
         setIsLoading(false);
       } catch (e) {
         console.log('Error initializing Agora:', e);
@@ -334,7 +357,7 @@ const LiveStreamScreen = () => {
     // Fallback to ensure we don't get stuck in loading state
     const timeoutId = setTimeout(() => {
       if (initializing) {
-        console.log("Initialization timed out, forcing UI to render");
+        console.log('Initialization timed out, forcing UI to render');
         setInitializing(false);
       }
     }, 90 * 1000);
@@ -352,30 +375,32 @@ const LiveStreamScreen = () => {
       }
     };
   }, [permissionsGranted, isHost]);
-  
+
   // Complete cleanup of resources
   const cleanupResources = async () => {
     try {
       console.log('Cleaning up all Agora resources...');
       if (liveStarted && isHost) {
         // End any active live stream first
-        await EndLiveStream().catch(err => console.error("Error ending live stream:", err));
+        await EndLiveStream().catch(err =>
+          console.error('Error ending live stream:', err),
+        );
       }
-      
+
       // Destroy preview and leave any channel
       if (isHost && engine.current) {
         engine.current.stopPreview();
       }
-      
+
       await leaveChannel();
-      
+
       // Unregister event handler and release engine
       if (isInitialized.current && engine.current) {
         engine.current.release();
         isInitialized.current = false;
       }
     } catch (err) {
-      console.error("Error during cleanup:", err);
+      console.error('Error during cleanup:', err);
     }
   };
 
@@ -386,21 +411,21 @@ const LiveStreamScreen = () => {
       // Directly add them to live
       setChannelName(channel);
       setToken(data.agora_token);
-      console.log("Setting up remote channel:", channel);
+      console.log('Setting up remote channel:', channel);
 
       // Join the channel as audience
-      await joinChannel({ 
+      await joinChannel({
         channel: channel,
         token: data.agora_token,
-        uid: data.uid
+        uid: data.uid,
       });
     } catch (err) {
-      console.error("Error setting up remote channel:", err);
+      console.error('Error setting up remote channel:', err);
       setInitializing(false);
     }
   };
 
-  const joinChannel = async (audienceData) => {
+  const joinChannel = async audienceData => {
     try {
       console.log('Joining Channel...', audienceData);
 
@@ -425,14 +450,14 @@ const LiveStreamScreen = () => {
       // Audience joining live channel
       if (!isHost && audienceData) {
         console.log('Audience joining channel:', audienceData.channel);
-        
+
         // Make sure we're not in any channel first
         if (joined) {
-          console.log("Leaving current channel before joining new one");
+          console.log('Leaving current channel before joining new one');
           await engine.current.leaveChannel();
         }
-        console.log("Channel name:", audienceData.channel);
-        
+        console.log('Channel name:', audienceData.channel);
+
         // Join the channel with clear options
         const result = engine.current.joinChannel(
           audienceData.token, // Use empty string if token not provided
@@ -445,11 +470,12 @@ const LiveStreamScreen = () => {
             publishCameraTrack: false,
             autoSubscribeAudio: true,
             autoSubscribeVideo: true,
-            audienceLatencyLevel: AudienceLatencyLevelType.AudienceLatencyLevelUltraLowLatency,
-          }
+            audienceLatencyLevel:
+              AudienceLatencyLevelType.AudienceLatencyLevelUltraLowLatency,
+          },
         );
-        
-        console.log("Join channel result:", result);
+
+        console.log('Join channel result:', result);
       }
     } catch (e) {
       console.log('Error joining channel:', e);
@@ -459,17 +485,17 @@ const LiveStreamScreen = () => {
 
   const joinChannelAsHost = async (token: string, channelName: string) => {
     console.log('Starting video preview as host...');
-  
+
     if (!isInitialized.current || !engine.current) {
       console.log('Engine not initialized yet');
       return;
     }
-  
+
     try {
       // Leave current channel
       await leaveChannel();
 
-      console.log("Host joining live channel:", channelName);
+      console.log('Host joining live channel:', channelName);
       const result = await engine.current.joinChannel(token, channelName, 0, {
         channelProfile: ChannelProfileType.ChannelProfileLiveBroadcasting,
         clientRoleType: ClientRoleType.ClientRoleBroadcaster,
@@ -478,8 +504,8 @@ const LiveStreamScreen = () => {
         autoSubscribeAudio: true,
         autoSubscribeVideo: true,
       });
-      
-      console.log("Join live channel result:", result);
+
+      console.log('Join live channel result:', result);
     } catch (err) {
       console.error('Error joining as host:', err);
     }
@@ -489,9 +515,9 @@ const LiveStreamScreen = () => {
     try {
       console.log('Leaving Channel...');
       if (!isInitialized.current || !engine.current) return;
-      
+
       const result = await engine.current.leaveChannel();
-      console.log("Leave channel result:", result);
+      console.log('Leave channel result:', result);
       setRemoteUid(0);
     } catch (e) {
       console.log('Error leaving channel:', e);
@@ -501,9 +527,9 @@ const LiveStreamScreen = () => {
   const startLive = async () => {
     try {
       setIsLoading(true);
-      const { data } = await StartLiveStream();
-      console.log("Start live stream response:", data);
-  
+      const {data} = await StartLiveStream();
+      console.log('Start live stream response:', data);
+
       // Set state first
       setChannelName(data.channel_name);
       setToken(data.agora_token);
@@ -521,10 +547,10 @@ const LiveStreamScreen = () => {
             hostId: user.id,
             hostName: user.full_name,
             startedAt: firestore.FieldValue.serverTimestamp(),
-            active: true
+            active: true,
           });
       } catch (err) {
-        console.error("ERROR setting up chat document:", err);
+        console.error('ERROR setting up chat document:', err);
       }
 
       if (isHost) {
@@ -534,7 +560,7 @@ const LiveStreamScreen = () => {
       // Join new channel as host
       await joinChannelAsHost(data.agora_token, data.channel_name);
     } catch (err) {
-      console.error("ERROR starting live:", err);
+      console.error('ERROR starting live:', err);
     } finally {
       setIsLoading(false);
     }
@@ -543,22 +569,22 @@ const LiveStreamScreen = () => {
   const endLive = async () => {
     try {
       setIsLoading(true);
-      
+
       // First set states to ensure UI updates properly
       setLiveStarted(false);
-      
+
       // Leave the live channel
       await leaveChannel();
-      
+
       // Call the API to end the live stream
       const result = await EndLiveStream();
-      console.log("End live stream result:", result);
+      console.log('End live stream result:', result);
 
       // Generate a new channel name for the dummy channel
       const newChannelName = hri.random();
       setChannelName(newChannelName);
       setToken('');
-      
+
       // Slight delay to ensure channel left properly
       setTimeout(async () => {
         // Rejoin a dummy channel to show camera preview
@@ -566,11 +592,11 @@ const LiveStreamScreen = () => {
         setIsLoading(false);
       }, 500);
     } catch (err) {
-      console.error("ERROR ending live:", err);
+      console.error('ERROR ending live:', err);
       setIsLoading(false);
     }
   };
-  
+
   const handleEndLiveAndGoBack = async () => {
     if (liveStarted && isHost) {
       await endLive();
@@ -607,39 +633,49 @@ const LiveStreamScreen = () => {
         <View style={styles.liveUserInfo}>
           <View style={styles.avatarContainer}>
             <Image
-              source={{ uri: streamerAvatar || `https://randomuser.me/api/portraits/men/${user.id}.jpg` }}
+              source={{
+                uri:
+                  streamerAvatar ||
+                  `https://randomuser.me/api/portraits/men/${user.id}.jpg`,
+              }}
               style={styles.avatarImage}
             />
             <Image
-              source={require('../../assets/Icons/logo.png')} 
+              source={require('../../../assets/Icons/logo.png')}
               style={styles.logoImage}
               resizeMode="contain"
             />
           </View>
           <View style={styles.userTextContainer}>
             <Text style={styles.username}>{streamerName}</Text>
-            {liveStarted && <View style={styles.liveIndicatorContainer}>
-              <Text style={styles.liveText}>Live</Text>
-            </View>}
+            {liveStarted && (
+              <View style={styles.liveIndicatorContainer}>
+                <Text style={styles.liveText}>Live</Text>
+              </View>
+            )}
           </View>
         </View>
-        
+
         <View style={styles.headerRightContainer}>
-          { liveStarted && (
+          {liveStarted && (
             <ViewerCounter
               isLive={liveStarted}
               channelId={channelName} // Use channelName instead of channel
               style={styles.viewerCounterMargin}
             />
-          ) }
-          
+          )}
+
           {/* X button for ending live stream - only show when live and for host */}
           {isHost && liveStarted && (
             <TouchableOpacity
               style={styles.endLiveButton}
-              onPress={handleEndLiveAndGoBack}
-            >
-              <FontAwesome6 name="xmark" size={18} color="#fff" iconStyle='solid' />
+              onPress={handleEndLiveAndGoBack}>
+              <FontAwesome6
+                name="xmark"
+                size={18}
+                color="#fff"
+                iconStyle="solid"
+              />
             </TouchableOpacity>
           )}
         </View>
@@ -656,20 +692,21 @@ const LiveStreamScreen = () => {
       </View>
     );
   };
-  
+
   // Render no stream available message
   const renderNoStream = () => {
     if (!isHost && !remoteUid && !initializing) {
       return (
         <View style={styles.noStreamContainer}>
-          <Text style={styles.noStreamText}>This stream is not available right now</Text>
-          <TouchableOpacity 
+          <Text style={styles.noStreamText}>
+            This stream is not available right now
+          </Text>
+          <TouchableOpacity
             style={styles.backButtonLarge}
             onPress={async () => {
               await cleanupResources();
               navigation.goBack();
-            }}
-          >
+            }}>
             <Text style={styles.backButtonText}>Go Back</Text>
           </TouchableOpacity>
         </View>
@@ -681,41 +718,44 @@ const LiveStreamScreen = () => {
   // Only render the main content when initializing is complete
   if (initializing) {
     return (
-      <SafeAreaView style={styles.container}>
-        {renderLoading()}
-      </SafeAreaView>
+      <SafeAreaView style={styles.container}>{renderLoading()}</SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={ styles.safeAreaContainer }>
+    <SafeAreaView style={styles.safeAreaContainer}>
+      {/* Video stream */}
+      <View style={styles.videoContainer}>
+        {joined && isHost && (
+          <RtcSurfaceView canvas={{uid: 0}} style={styles.videoFill} />
+        )}
 
-      {/* Video stream */ }
-      <View style={ styles.videoContainer }>
-        { joined && isHost && (
-          <RtcSurfaceView canvas={ { uid: 0 } } style={ styles.videoFill } />
-        ) }
+        {remoteUid !== 0 && (
+          <RtcSurfaceView canvas={{uid: remoteUid}} style={styles.videoFill} />
+        )}
 
-        { remoteUid !== 0 && (
-          <RtcSurfaceView canvas={ { uid: remoteUid } } style={ styles.videoFill } />
-        ) }
+        {renderNoStream()}
+        {renderLiveHeader()}
 
-        { renderNoStream() }
-        { renderLiveHeader() }
-
-        { isHost ? <TouchableOpacity
-          style={ styles.reverseCameraButton }
-          onPress={ handleSwitchCamera }
-        >
-          <FontAwesome6 name="camera-rotate" size={ 24 } color="#fff" iconStyle='solid' />
-        </TouchableOpacity> : null }
-          <ChatComponent
-            channelId={ channelName }
-            isLive={ liveStarted || (!isHost && remoteUid !== 0) }
-          />
+        {isHost ? (
+          <TouchableOpacity
+            style={styles.reverseCameraButton}
+            onPress={handleSwitchCamera}>
+            <FontAwesome6
+              name="camera-rotate"
+              size={24}
+              color="#fff"
+              iconStyle="solid"
+            />
+          </TouchableOpacity>
+        ) : null}
+        <ChatComponent
+          channelId={channelName}
+          isLive={liveStarted || (!isHost && remoteUid !== 0)}
+        />
       </View>
 
-      { renderStreamControl() }
+      {renderStreamControl()}
     </SafeAreaView>
   );
 };
@@ -749,7 +789,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     top: 55,
-    left: -7
+    left: -7,
   },
   loadingContainer: {
     flex: 1,

@@ -1,8 +1,7 @@
 import 'react-native-gesture-handler';
 import React, {useEffect} from 'react';
-import {Platform, SafeAreaView, StatusBar, StyleSheet} from 'react-native';
+import {Platform, StyleSheet} from 'react-native';
 import {DefaultTheme, NavigationContainer} from '@react-navigation/native';
-import AppNavigation from './src/navigation/AppNavigation';
 import {colors} from './src/utils/theme';
 import BootSplash from 'react-native-bootsplash';
 import {Provider} from 'react-redux';
@@ -15,12 +14,12 @@ import {
   request,
 } from 'react-native-permissions';
 import {requestUserPermission} from './src/utils/NotificationServices';
-import MainNavigation from './src/navigation/MainNavigation';
+import MainNavigation from './src/navigation';
 import {
   configureReanimatedLogger,
   ReanimatedLogLevel,
 } from 'react-native-reanimated';
-import { ZoomVideoSdkProvider } from '@zoom/react-native-videosdk';
+import {ZoomVideoSdkProvider} from '@zoom/react-native-videosdk';
 
 const theme = {
   ...DefaultTheme,
@@ -31,7 +30,6 @@ const theme = {
 };
 
 function App(): React.JSX.Element {
-  
   configureReanimatedLogger({
     level: ReanimatedLogLevel.warn,
     strict: false,
@@ -41,10 +39,10 @@ function App(): React.JSX.Element {
     try {
       const res = await checkNotifications();
       if (
-        res?.status == 'denied' ||
-        res?.status == 'blocked' ||
-        res?.status == 'unavailable' ||
-        res?.status == 'limited'
+        res?.status === 'denied' ||
+        res?.status === 'blocked' ||
+        res?.status === 'unavailable' ||
+        res?.status === 'limited'
       ) {
         const requestResult = await request(
           PERMISSIONS.ANDROID.POST_NOTIFICATIONS,
@@ -63,9 +61,9 @@ function App(): React.JSX.Element {
     requestUserPermission();
   }, []);
 
-  function handleNotificationPress(remoteMessage: object) {
-    // console.log('NTOFIIIIIIIIIIIICATIONNNNNN', remoteMessage);
-  }
+  // function handleNotificationPress(remoteMessage: object) {
+  //   // console.log('NTOFIIIIIIIIIIIICATIONNNNNN', remoteMessage);
+  // }
 
   // function handleNotification(remoteMessage: any) {
   //   console.log('Message handled in the !', remoteMessage?.notification);
@@ -80,17 +78,17 @@ function App(): React.JSX.Element {
 
   return (
     <ZoomVideoSdkProvider
-      config={ { appGroupId: 'test', domain: 'zoom.us', enableLog: true } }>
-      <PersistGate loading={ null } persistor={ persistor }>
-        <Provider store={ store }>
-          {/* <SafeAreaView style={styles.container}> */ }
+      config={{appGroupId: 'test', domain: 'zoom.us', enableLog: true}}>
+      <PersistGate loading={null} persistor={persistor}>
+        <Provider store={store}>
+          {/* <SafeAreaView style={styles.container}> */}
 
-          <NavigationContainer theme={ theme }>
+          <NavigationContainer theme={theme}>
             <MainNavigation />
           </NavigationContainer>
 
           <Toast />
-          {/* </SafeAreaView> */ }
+          {/* </SafeAreaView> */}
         </Provider>
       </PersistGate>
     </ZoomVideoSdkProvider>

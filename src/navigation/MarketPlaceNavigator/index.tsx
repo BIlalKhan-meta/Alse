@@ -1,14 +1,14 @@
 import React from 'react';
 
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import Home from '../../screens/Home';
-import ProfileScreen from '../../screens/ProfileScreen';
+import Home from '../../screens/Home/Feed';
+import ProfileScreen from '../../screens/Menu/ProfileScreen';
 import ChatScreen from '../../screens/ChatScreen';
 import NavigationOptions from '../NavigationOptions';
 import MyPosts from '../../screens/MyPosts';
 import Cart from '../../screens/Cart';
 import BlockedUsers from '../../screens/BlockedUsers';
-import Marketplace from '../../screens/MarketPlace';
+import Marketplace from '../../screens/MarketPlace/Main';
 import MyOrders from '../../screens/MyOrders';
 import PaymentLogs from '../../screens/PaymentLogs';
 

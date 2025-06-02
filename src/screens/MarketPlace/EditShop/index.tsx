@@ -1,16 +1,16 @@
 import React, {useEffect, useState} from 'react';
-import Card from '../../components/Card';
+import Card from '../../../components/Card';
 import {Image, TouchableOpacity, View} from 'react-native';
 import {styles} from './styles';
-import RegularTextInput from '../../components/TextInput/RegularTextInput';
-import InterRegular from '../../components/Text/InterRegular';
-import {images} from '../../utils/images';
-import useImagePicker from '../../hooks/useImagePicker';
+import RegularTextInput from '../../../components/TextInput/RegularTextInput';
+import InterRegular from '../../../components/Text/InterRegular';
+import {images} from '../../../utils/images';
+import useImagePicker from '../../../hooks/useImagePicker';
 import {useNavigation, useRoute} from '@react-navigation/native';
-import {vh} from '../../constant';
-import {shopDetail, updateShop} from '../../api/shop';
-import Loader from '../../components/Loader';
-import CustomButton from '../../components/CustomButton';
+import {vh} from '../../../constant';
+import {shopDetail, updateShop} from '../../../api/shop';
+import Loader from '../../../components/Loader';
+import CustomButton from '../../../components/CustomButton';
 import Toast from 'react-native-toast-message';
 
 export const EditShop = () => {

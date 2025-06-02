@@ -1,15 +1,19 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {View, FlatList, TouchableOpacity} from 'react-native';
-import {images} from '../../utils/images';
-import CardComponent from '../../components/CardComponent';
-import {useFocusEffect, useIsFocused, useNavigation} from '@react-navigation/native';
+import {images} from '../../../utils/images';
+import CardComponent from '../../../components/CardComponent';
+import {
+  useFocusEffect,
+  useIsFocused,
+  useNavigation,
+} from '@react-navigation/native';
 import styles from './styles';
-import PostComponent from '../../components/PostComponent';
-import CommentsModal from '../../components/CommentsModal';
-import ReactModal from '../../components/ReactModal';
-import GeneralModal from '../../components/GeneralModal';
-import {reactions} from '../../dummyData';
-import {useAppDispatch, useAppSelector} from '../../hooks/storeHooks';
+import PostComponent from '../../../components/PostComponent';
+import CommentsModal from '../../../components/CommentsModal';
+import ReactModal from '../../../components/ReactModal';
+import GeneralModal from '../../../components/GeneralModal';
+import {reactions} from '../../../dummyData';
+import {useAppDispatch, useAppSelector} from '../../../hooks/storeHooks';
 import {
   getCommentPost,
   GetNewsFeed,
@@ -17,21 +21,24 @@ import {
   PostDelete,
   postSave,
   updateLike,
-} from '../../store/slices/homeSlice';
-import InterRegular from '../../components/Text/InterRegular';
-import {getMessage, Toast} from '../../utils/helpers';
-import {createPost, getCountriesList, reportPost} from '../../api/home';
-import {removeSavedItem, saveItem} from '../../api/menu';
-import {vh} from '../../constant';
-import {getCountries} from '../../store/slices/generalSlice';
-import {timeFormat} from '../../utils';
+} from '../../../store/slices/homeSlice';
+import InterRegular from '../../../components/Text/InterRegular';
+import {getMessage, Toast} from '../../../utils/helpers';
+import {createPost, getCountriesList, reportPost} from '../../../api/home';
+import {removeSavedItem, saveItem} from '../../../api/menu';
+import {vh} from '../../../constant';
+import {getCountries} from '../../../store/slices/generalSlice';
+import {timeFormat} from '../../../utils';
 import InAppBrowser from 'react-native-inappbrowser-reborn';
-import {notificationListenerInstance} from '../../utils/NotificationServices';
+import {notificationListenerInstance} from '../../../utils/NotificationServices';
 import {useSelector} from 'react-redux';
-import {GetUserProfile, selectUserProfile} from '../../store/slices/authSlice';
-import eventEmitter, {EVENT_TYPES} from '../../utils/EventEmitter';
-import LikesModal from '../../components/LikesModal';
-import Stories from '../../components/Stories';
+import {
+  GetUserProfile,
+  selectUserProfile,
+} from '../../../store/slices/authSlice';
+import eventEmitter, {EVENT_TYPES} from '../../../utils/EventEmitter';
+import LikesModal from '../../../components/LikesModal';
+import Stories from '../../../components/Stories';
 
 const Home: React.FC = () => {
   const flatListRef = useRef(null);
@@ -263,10 +270,8 @@ const Home: React.FC = () => {
     }
   };
 
-
   const onViewableItemsChanged = ({viewableItems}) => {
     // Play only the currently focused video
-   
 
     const focusedIndex = viewableItems[0]?.index;
     setFocusedIndex(focusedIndex);
@@ -282,7 +287,7 @@ const Home: React.FC = () => {
         avatar={item?.avatar}
         name={item?.fullname}
         country={item?.country ? item?.country : ''}
-        time={timeFormat(item?.date,true)}
+        time={timeFormat(item?.date, true)}
         postText={item?.description}
         postImage={item?.media[0]?.path}
         mediaType={item?.media[0]?.type}
@@ -336,16 +341,16 @@ const Home: React.FC = () => {
   useFocusEffect(
     React.useCallback(() => {
       // This will run when the screen is focused
-      setFocusedIndex(0)
-      scrollToTop()
+      setFocusedIndex(0);
+      scrollToTop();
       return () => {
         // This will run when the screen is unfocused
         // Pause the video here (if necessary)
         // Example: setting the video to pause
-        setFocusedIndex(null)
-        setPause(true)
+        setFocusedIndex(null);
+        setPause(true);
       };
-    }, [])
+    }, []),
   );
 
   return (

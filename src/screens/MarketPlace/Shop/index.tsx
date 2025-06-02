@@ -8,26 +8,26 @@ import {
   ScrollView,
   TouchableWithoutFeedback,
 } from 'react-native';
-import {images} from '../../utils/images';
-import {colors} from '../../utils/theme';
-import Card from '../../components/Card';
+import {images} from '../../../utils/images';
+import {colors} from '../../../utils/theme';
+import Card from '../../../components/Card';
 import styles from './styles';
 import {useNavigation, useRoute} from '@react-navigation/native';
-import InterRegular from '../../components/Text/InterRegular';
-import WishlistScreen from '../../components/WishList';
-import InterMedium from '../../components/Text/InterMedium';
-import ReportBlockModal from '../../components/ReportBlockModal';
-import GeneralModal from '../../components/GeneralModal';
-import SortModal from '../../components/SortModal';
-import {getProductByShop, shopDetail} from '../../api/shop';
-import Loader from '../../components/Loader';
-import {getSavedItems, removeSavedItem, saveItem} from '../../api/menu';
-import DropdownPicker from '../../components/DropdownPicker';
-import DropDownTextInput from '../../components/TextInput/DropDownTextInput';
-import Row from '../../components/Row';
-import {vw} from '../../constant';
-import {reportPost} from '../../api/home';
-import {getMessage, Toast} from '../../utils/helpers';
+import InterRegular from '../../../components/Text/InterRegular';
+import WishlistScreen from '../../../components/WishList';
+import InterMedium from '../../../components/Text/InterMedium';
+import ReportBlockModal from '../../../components/ReportBlockModal';
+import GeneralModal from '../../../components/GeneralModal';
+import SortModal from '../../../components/SortModal';
+import {getProductByShop, shopDetail} from '../../../api/shop';
+import Loader from '../../../components/Loader';
+import {getSavedItems, removeSavedItem, saveItem} from '../../../api/menu';
+import DropdownPicker from '../../../components/DropdownPicker';
+import DropDownTextInput from '../../../components/TextInput/DropDownTextInput';
+import Row from '../../../components/Row';
+import {vw} from '../../../constant';
+import {reportPost} from '../../../api/home';
+import {getMessage, Toast} from '../../../utils/helpers';
 
 const filterItems = [
   {label: 'Product Name (A-Z)', value: 'name'},

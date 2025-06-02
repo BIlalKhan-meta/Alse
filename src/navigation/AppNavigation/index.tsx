@@ -1,19 +1,19 @@
 import React from 'react';
 import AuthNavigation from '../AuthNavgation';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import Home from '../../screens/Home';
+import Home from '../../screens/Home/Feed';
 import TabNavigation from '../BottomTab';
 import Saved from '../../screens/Saved';
-import Shop from '../../screens/Shop';
+import Shop from '../../screens/MarketPlace/Shop';
 import CreatePost from '../../screens/CreatePost';
 import RequestScreen from '../../screens/RequestScreen';
 import BlockedUsers from '../../screens/BlockedUsers';
-import Notifications from '../../screens/Notifications';
+import Notifications from '../../screens/Home/Notifications';
 import ContactUs from '../../screens/ContactUs';
 import AboutUs from '../../screens/AboutUs';
 import ChatOngoing from '../../screens/ChatOngoing';
 import NavigationOptions from '../NavigationOptions';
-import ProductView from '../../screens/ProductView';
+import ProductView from '../../screens/MarketPlace/ProductView';
 import MyOrderDetail from '../../screens/MyOrderDetail';
 import CheckoutScreen from '../../screens/Checkout';
 import BankDetailUpdate from '../../screens/BankDetailUpdate';
@@ -36,14 +36,14 @@ import CreatePostEdit from '../../screens/CreatePostEdit';
 import AddProduct from '../../screens/AddProduct';
 import MyShop from '../../screens/MyShop';
 import EditBlog from '../../screens/EditBlog';
-import {EditShop} from '../../screens/EditShop';
+import {EditShop} from '../../screens/MarketPlace/EditShop';
 import MyOrders from '../../screens/MyOrders';
 import SubscriptionPlan from '../../screens/SubscriptionPlan';
 import PaymentLogs from '../../screens/PaymentLogs';
-import ProfileScreen from '../../screens/ProfileScreen';
+import ProfileScreen from '../../screens/Menu/ProfileScreen';
 import PrivacyPolicy from '../../screens/PrivacyPolicy';
 import AddStory from '../../screens/AddStory';
-import { OutgoingCall } from '../../screens/OutgoingCall';
+import {OutgoingCall} from '../../screens/OutgoingCall';
 import AcknowledgeCall from '../../screens/AcknowledgeCall';
 import IncomingCall from '../../screens/IncomingCall';
 
@@ -79,7 +79,7 @@ const AppNavigation = () => {
           component={ProductView}
           options={NavigationOptions}
         />
-          <Stack.Screen name="Profile" component={ProfileScreen} />
+        <Stack.Screen name="Profile" component={ProfileScreen} />
         <Stack.Screen
           name="MyOrders"
           component={MyOrders}
@@ -106,7 +106,7 @@ const AppNavigation = () => {
           component={AboutUs}
           options={NavigationOptions}
         />
-       
+
         <Stack.Screen
           name="ChatOngoing"
           component={ChatOngoing}

@@ -1,12 +1,12 @@
 import React from 'react';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import AppNavigation from '../AppNavigation';
-import AuthNavigation from '../AuthNavgation';
-import {selectBearerToken} from '../../store/slices/authSlice';
+import AppNavigation from './AppNavigation';
+import AuthNavigation from './AuthNavgation';
+import {selectBearerToken} from '../store/slices/authSlice';
 import {useSelector} from 'react-redux';
-import SubscriptionPlan from '../../screens/SubscriptionPlan';
-import NavigationOptions from '../NavigationOptions';
-import SearchUsers from '../../screens/SearchUsers';
+import SubscriptionPlan from '../screens/SubscriptionPlan';
+import NavigationOptions from './NavigationOptions';
+import SearchUsers from '../screens/Home/SearchUsers';
 
 const Stack = createNativeStackNavigator();
 const MainNavigation = () => {

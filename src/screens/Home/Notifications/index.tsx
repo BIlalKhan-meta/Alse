@@ -1,16 +1,16 @@
 import {FlatList, Image, TouchableOpacity, View} from 'react-native';
 import styles from './styles';
 import {useIsFocused, useNavigation} from '@react-navigation/native';
-import InterBold from '../../components/Text/InterBold';
-import {colors} from '../../utils/theme';
-import Card from '../../components/Card';
-import {images} from '../../utils/images';
-import InterMedium from '../../components/Text/InterMedium';
-import HorizontalSeparator from '../../components/HorizontalSeparator';
+import InterBold from '../../../components/Text/InterBold';
+import {colors} from '../../../utils/theme';
+import Card from '../../../components/Card';
+import {images} from '../../../utils/images';
+import InterMedium from '../../../components/Text/InterMedium';
+import HorizontalSeparator from '../../../components/HorizontalSeparator';
 import {useEffect, useLayoutEffect, useState} from 'react';
-import {getNotifications, markAllRead, markRead} from '../../api/home';
-import {EmptyComponent} from '../../components/EmptyComponent';
-import {dateHelper, timeFormat} from '../../utils';
+import {getNotifications, markAllRead, markRead} from '../../../api/home';
+import {EmptyComponent} from '../../../components/EmptyComponent';
+import {dateHelper, timeFormat} from '../../../utils';
 
 const Notifications: React.FC = ({navigation}) => {
   const [data, setData] = useState([]);

@@ -1,21 +1,21 @@
 import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {View, Text, Image, TouchableOpacity, ScrollView} from 'react-native';
-import {images} from '../../utils/images';
-import Card from '../../components/Card';
+import {images} from '../../../utils/images';
+import Card from '../../../components/Card';
 
 import {useIsFocused, useRoute} from '@react-navigation/native';
 
-import GeneralModal from '../../components/GeneralModal';
+import GeneralModal from '../../../components/GeneralModal';
 import styles from './styles';
-import InterRegular from '../../components/Text/InterRegular';
-import InterBoldAverage from '../../components/Text/InterBoldAverage';
-import InterMedium from '../../components/Text/InterMedium';
+import InterRegular from '../../../components/Text/InterRegular';
+import InterBoldAverage from '../../../components/Text/InterBoldAverage';
+import InterMedium from '../../../components/Text/InterMedium';
 import Swiper from 'react-native-swiper';
-import RatingandReviewComponent from '../../components/RatingandReviewComponent';
-import ShopComponent from '../../components/ShopComponent';
-import StoreOrderComponent from '../../components/StoreOrder';
-import {productDetail} from '../../api/product';
-import Loader from '../../components/Loader';
+import RatingandReviewComponent from '../../../components/RatingandReviewComponent';
+import ShopComponent from '../../../components/ShopComponent';
+import StoreOrderComponent from '../../../components/StoreOrder';
+import {productDetail} from '../../../api/product';
+import Loader from '../../../components/Loader';
 
 const ProductView: React.FC = () => {
   const route = useRoute();

@@ -1,17 +1,17 @@
 // Home.tsx
 import React, {useEffect, useState} from 'react';
 import {View} from 'react-native';
-import Card from '../../components/Card';
+import Card from '../../../components/Card';
 import {useIsFocused, useNavigation} from '@react-navigation/native';
 import styles from './styles';
-import WishlistScreen from '../../components/WishList';
-import SearchComponent from '../../components/SearchComponent';
-import CustomButton from '../../components/CustomButton';
-import {getAllShop} from '../../api/shop';
+import WishlistScreen from '../../../components/WishList';
+import SearchComponent from '../../../components/SearchComponent';
+import CustomButton from '../../../components/CustomButton';
+import {getAllShop} from '../../../api/shop';
 import {useSelector} from 'react-redux';
-import {selectUserProfile} from '../../store/slices/authSlice';
-import Loader from '../../components/Loader';
-import {Subscribe} from '../../components/Subscribe';
+import {selectUserProfile} from '../../../store/slices/authSlice';
+import Loader from '../../../components/Loader';
+import {Subscribe} from '../../../components/Subscribe';
 
 const Marketplace: React.FC = () => {
   const navigation = useNavigation();

@@ -1,17 +1,17 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {View, Text, Image, ScrollView, FlatList} from 'react-native';
 import styles from './styles';
-import {images} from '../../utils/images';
-import Card from '../../components/Card';
-import InterMedium from '../../components/Text/InterMedium';
-import ProfileCard from '../../components/ProfileCard';
-import PostComponent from '../../components/PostComponent';
+import {images} from '../../../utils/images';
+import Card from '../../../components/Card';
+import InterMedium from '../../../components/Text/InterMedium';
+import ProfileCard from '../../../components/ProfileCard';
+import PostComponent from '../../../components/PostComponent';
 import {useIsFocused, useRoute} from '@react-navigation/native';
-import ReportBlockModal from '../../components/ReportBlockModal';
-import GeneralModal from '../../components/GeneralModal';
-import ReactModal from '../../components/ReactModal';
-import {reactions} from '../../dummyData';
-import CommentsModal from '../../components/CommentsModal';
+import ReportBlockModal from '../../../components/ReportBlockModal';
+import GeneralModal from '../../../components/GeneralModal';
+import ReactModal from '../../../components/ReactModal';
+import {reactions} from '../../../dummyData';
+import CommentsModal from '../../../components/CommentsModal';
 import {
   blockUser,
   getCommentPost,
@@ -19,18 +19,18 @@ import {
   likePost,
   postSave,
   updateLike,
-} from '../../store/slices/homeSlice';
-import {useAppDispatch} from '../../hooks/storeHooks';
-import Loader from '../../components/Loader';
-import {getMessage, Toast} from '../../utils/helpers';
-import {capitalize, timeFormat} from '../../utils';
-import {createPost, fetchProfileById, reportPost} from '../../api/home';
-import {removeSavedItem, saveItem} from '../../api/menu';
-import {EmptyComponent} from '../../components/EmptyComponent';
-import LikesModal from '../../components/LikesModal';
-import {selectUserProfile} from '../../store/slices/authSlice';
+} from '../../../store/slices/homeSlice';
+import {useAppDispatch} from '../../../hooks/storeHooks';
+import Loader from '../../../components/Loader';
+import {getMessage, Toast} from '../../../utils/helpers';
+import {capitalize, timeFormat} from '../../../utils';
+import {createPost, fetchProfileById, reportPost} from '../../../api/home';
+import {removeSavedItem, saveItem} from '../../../api/menu';
+import {EmptyComponent} from '../../../components/EmptyComponent';
+import LikesModal from '../../../components/LikesModal';
+import {selectUserProfile} from '../../../store/slices/authSlice';
 import {useSelector} from 'react-redux';
-import {vh} from '../../constant';
+import {vh} from '../../../constant';
 
 const ProfileScreen: React.FC = ({navigation}) => {
   const dispatch = useAppDispatch();
@@ -295,7 +295,7 @@ const ProfileScreen: React.FC = ({navigation}) => {
           avatar={item?.avatar}
           name={item?.name}
           account={item?.privacy}
-          time={timeFormat(item?.date,true)}
+          time={timeFormat(item?.date, true)}
           postText={item?.description}
           postImage={item?.media[0]?.path}
           mediaType={item?.media[0]?.type}

@@ -3,27 +3,27 @@ import styles from './styles';
 
 import {useEffect, useLayoutEffect, useState} from 'react';
 // import CheckedIcon from '../../assets/icons/CheckedIcon.png'
-import {colors} from '../../utils/theme';
+import {colors} from '../../../utils/theme';
 // import ProfileModal from '../../components/ProfileModal';
-import {images} from '../../utils/images';
+import {images} from '../../../utils/images';
 import {useIsFocused, useNavigation} from '@react-navigation/native';
-import CustomButton from '../../components/CustomButton';
-import InterMedium from '../../components/Text/InterMedium';
-import InterRegular from '../../components/Text/InterRegular';
-import Card from '../../components/Card';
-import ReportBlockModal from '../../components/ReportBlockModal';
+import CustomButton from '../../../components/CustomButton';
+import InterMedium from '../../../components/Text/InterMedium';
+import InterRegular from '../../../components/Text/InterRegular';
+import Card from '../../../components/Card';
+import ReportBlockModal from '../../../components/ReportBlockModal';
 import {useSelector} from 'react-redux';
 import {
   GetUserProfile,
   logout,
   selectUserProfile,
-} from '../../store/slices/authSlice';
-import {vw} from '../../constant';
-import {useAppDispatch} from '../../hooks/storeHooks';
-import Loader from '../../components/Loader';
-import {deleteAccount, editProfile} from '../../api/profile';
-import Row from '../../components/Row';
-import GeneralModal from '../../components/GeneralModal';
+} from '../../../store/slices/authSlice';
+import {vw} from '../../../constant';
+import {useAppDispatch} from '../../../hooks/storeHooks';
+import Loader from '../../../components/Loader';
+import {deleteAccount, editProfile} from '../../../api/profile';
+import Row from '../../../components/Row';
+import GeneralModal from '../../../components/GeneralModal';
 
 const MyProfile: React.FC = () => {
   const navigation = useNavigation();

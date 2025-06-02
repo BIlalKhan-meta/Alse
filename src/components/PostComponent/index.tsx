@@ -24,7 +24,7 @@ import {useSelector} from 'react-redux';
 import {selectUserProfile} from '../../store/slices/authSlice';
 import {createPost} from '../../api/home';
 import Video from 'react-native-video';
-import { getTimeOffset } from '../../utils/index';
+import {getTimeOffset} from '../../utils/index';
 
 interface PostProps {
   id?: number;
@@ -113,8 +113,6 @@ const PostComponent: React.FC<PostProps> = ({
   };
 
   const myAccount = user?.id == id ? true : false;
-
-  console.log('OFESTSSSSSSSSSSS', getTimeOffset());
 
   const goToProfile = () => {
     if (myAccount) {
