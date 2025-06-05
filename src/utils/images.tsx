@@ -61,6 +61,12 @@ export const images = {
   endCall: require('../assets/Icons/endCall.png'),
   unmute: require('../assets/Icons/unmute.png'),
   cancelCall: require('../assets/Icons/cancelCall.png'),
+  bellIcon: require('../assets/Icons/Group.png'),
+  settingsIcon: require('../assets/Icons/settings.png'),
+  messageIcon: require('../assets/Icons/message.png'),
+  alseLogo: require('../assets/Icons/Alse.png'),
+  videoTab: require('../assets/Icons/videoTab.png'),
+  smsIcon: require('../assets/Icons/sms-notification.png'),
 
   //Imagesssss/////
   shop1: require('../assets/images/shop1.png'),
@@ -71,7 +77,4 @@ export const images = {
   shop5: require('../assets/images/shop5.png'),
   shop6: require('../assets/images/shop6.png'),
   profileBg: require('../assets/images/profileBg.png'),
-
-
-
 };

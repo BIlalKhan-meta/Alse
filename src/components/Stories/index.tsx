@@ -1,669 +1,758 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { Image, PermissionsAndroid, Platform, Text, TouchableOpacity, View, Modal, StyleSheet, Alert } from 'react-native';
-import InstagramStories, { InstagramStoriesProps } from '@birdwingo/react-native-instagram-stories';
+import React, {useEffect, useState, useRef, useCallback} from 'react';
+import {
+  Image,
+  PermissionsAndroid,
+  Platform,
+  Text,
+  TouchableOpacity,
+  View,
+  Modal,
+  StyleSheet,
+  Alert,
+} from 'react-native';
+import InstagramStories, {
+  InstagramStoriesProps,
+} from '@birdwingo/react-native-instagram-stories';
 import AddStoryIcon from './AddStoryIcon';
-import { AddStory, GetStories, DeleteStory } from '../../api/stories';
+import {AddStory, GetStories, DeleteStory} from '../../api/stories';
 import * as DropdownMenu from 'zeego/dropdown-menu';
 import Toast from 'react-native-toast-message';
 import useImagePicker from '../../hooks/useImagePicker-story';
-import { isAxiosError } from 'axios';
+import {isAxiosError} from 'axios';
 import Loader from '../Loader';
-import { GetLiveStreams } from '../../api/liveStream';
-import { GradientBorderView } from '@good-react-native/gradient-border';
-import { useNavigation } from '@react-navigation/native';
+import {GetLiveStreams} from '../../api/liveStream';
+import {GradientBorderView} from '@good-react-native/gradient-border';
+import {useNavigation} from '@react-navigation/native';
 import Video from 'react-native-video';
-import { useSelector } from 'react-redux';
-import { selectUserProfile } from '../../store/slices/authSlice';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import {useSelector} from 'react-redux';
+import {selectUserProfile} from '../../store/slices/authSlice';
+import {SafeAreaView} from 'react-native-safe-area-context';
 
 // Constants
 const POLLING_INTERVAL = 30000; // 30 seconds
 const MAX_RETRY_COUNT = 3;
 
 interface LiveStream {
-    user_id: number;
-    stream_key: string;
-    user_name: string;
+  user_id: number;
+  stream_key: string;
+  user_name: string;
 }
 
 const Stories = () => {
-    // State management
-    const [isInitialLoading, setIsInitialLoading] = useState<boolean>(true);
-    const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
-    const [stories, setStories] = useState<InstagramStoriesProps['stories']>([]);
-    const [liveStreams, setLiveStreams] = useState<LiveStream[]>([]);
-    const {
-        imageData, 
-        captureImage, 
-        chooseImageFromLibrary, 
-        previewMode, 
-        pendingMedia, 
-        confirmMedia, 
-        cancelMedia
-    } = useImagePicker();
-    const [isUploading, setIsUploading] = useState<boolean>(false);
-    const [pollingEnabled, setPollingEnabled] = useState<boolean>(true);
-    const [isDeleting, setIsDeleting] = useState<boolean>(false);
-    
-    // Refs for polling management
-    const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
-    const retryCountRef = useRef<number>(0);
-    
-    const navigation = useNavigation();
+  // State management
+  const [isInitialLoading, setIsInitialLoading] = useState<boolean>(true);
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+  const [stories, setStories] = useState<InstagramStoriesProps['stories']>([]);
+  const [liveStreams, setLiveStreams] = useState<LiveStream[]>([]);
+  const {
+    imageData,
+    captureImage,
+    chooseImageFromLibrary,
+    previewMode,
+    pendingMedia,
+    confirmMedia,
+    cancelMedia,
+  } = useImagePicker();
+  const [isUploading, setIsUploading] = useState<boolean>(false);
+  const [pollingEnabled, setPollingEnabled] = useState<boolean>(true);
+  const [isDeleting, setIsDeleting] = useState<boolean>(false);
 
-    // Add current user info
-    const currentUser = useSelector(selectUserProfile);
+  // Refs for polling management
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const retryCountRef = useRef<number>(0);
 
-    // Fetch stories with ability to control loading indicator
-    const getStories = useCallback(async (showLoadingIndicator = true) => {
-        try {
-            if (showLoadingIndicator) {
-                setIsInitialLoading(true);
-            } else {
-                setIsRefreshing(true);
-            }
+  const navigation = useNavigation();
 
-            // Get stories first before clearing state
-            const { data } = await GetStories();
+  // Add current user info
+  const currentUser = useSelector(selectUserProfile);
 
-            if (data?.data?.stories) {
-                // Only reset and update stories after we have the new data
-                const { stories } = data.data;
-                const formattedStories = formatStories(stories);
-                
-                // Now reset and update with the new data
-                resetStories();
-                setStories(prevStories => [...prevStories, ...formattedStories]);
-            } else {
-                // If no stories returned, just reset
-                resetStories();
-            }
-            
-            // Reset retry count on success
-            retryCountRef.current = 0;
-        }
-        catch (err) {
-            console.log("ERROR:: STORIES", err);
-            retryCountRef.current += 1;
-            
-            // Show error toast on excessive retries
-            if (retryCountRef.current >= MAX_RETRY_COUNT) {
-                Toast.show({
-                    type: 'error',
-                    text1: 'Failed to refresh stories',
-                    text2: 'Please check your connection'
-                });
-                
-                // Temporarily disable polling on excessive failures
-                if (pollingEnabled) {
-                    stopPolling();
-                    setTimeout(() => {
-                        startPolling();
-                    }, POLLING_INTERVAL * 2); // Retry after double the interval
-                }
-            }
-        }
-        finally {
-            if (showLoadingIndicator) {
-                setIsInitialLoading(false);
-            } else {
-                setIsRefreshing(false);
-            }
-        }
-    }, []);
+  // Fetch stories with ability to control loading indicator
+  const getStories = useCallback(async (showLoadingIndicator = true) => {
+    try {
+      if (showLoadingIndicator) {
+        setIsInitialLoading(true);
+      } else {
+        setIsRefreshing(true);
+      }
 
-    // Fetch live streams with ability to control loading indicator
-    const getLiveStreams = useCallback(async (showLoadingIndicator = true) => {
-        try {
-            const { data } = await GetLiveStreams();
+      // Get stories first before clearing state
+      const {data} = await GetStories();
 
-            const streams = data?.live_streams?.map((stream) => ({ 
-                stream_key: stream.stream_key, 
-                user_id: stream.user_id, 
-                user_name: stream.user.full_name 
-            }));
+      if (data?.data?.stories) {
+        // Only reset and update stories after we have the new data
+        const {stories} = data.data;
+        const formattedStories = formatStories(stories);
 
-            setLiveStreams(streams);
-            
-            // Reset retry count on success
-            retryCountRef.current = 0;
-        } catch (err) {
-            console.error("ERROR:: LIVE STREAMS", err);
-            retryCountRef.current += 1;
-            
-            if (retryCountRef.current >= MAX_RETRY_COUNT) {
-                Toast.show({
-                    type: 'error',
-                    text1: 'Failed to refresh live streams',
-                    text2: 'Please check your connection'
-                });
-            }
-        }
-    }, []);
+        // Now reset and update with the new data
+        resetStories();
+        setStories(prevStories => [...prevStories, ...formattedStories]);
+      } else {
+        // If no stories returned, just reset
+        resetStories();
+      }
 
-    // Combined data fetching function
-    const fetchData = useCallback(async (showLoadingIndicator = true) => {
-        try {
-            // First get stories
-            await getStories(showLoadingIndicator);
-            // Then get live streams after stories are loaded
-            await getLiveStreams(showLoadingIndicator);
-        } catch (error) {
-            console.error("Error in fetchData:", error);
-        }
-    }, [getStories, getLiveStreams]);
+      // Reset retry count on success
+      retryCountRef.current = 0;
+    } catch (err) {
+      console.log('ERROR:: STORIES', err);
+      retryCountRef.current += 1;
 
-    // Start polling mechanism
-    const startPolling = useCallback(() => {
-        if (pollingIntervalRef.current) {
-            clearInterval(pollingIntervalRef.current);
-        }
-        
-        pollingIntervalRef.current = setInterval(() => {
-            fetchData(false); // Don't show loading indicator during refresh
-        }, POLLING_INTERVAL);
-        
-        setPollingEnabled(true);
-    }, [fetchData]);
-
-    // Stop polling mechanism
-    const stopPolling = useCallback(() => {
-        if (pollingIntervalRef.current) {
-            clearInterval(pollingIntervalRef.current);
-            pollingIntervalRef.current = null;
-        }
-        
-        setPollingEnabled(false);
-    }, []);
-
-    // Initialize data fetch and polling
-    useEffect(() => {
-        fetchData(true); // Initial load with loading indicator
-        startPolling();
-        
-        // Cleanup on unmount
-        return () => {
-            stopPolling();
-        };
-    }, []);
-
-    // Update stories when live streams change
-    useEffect(() => {
-        if (liveStreams.length > 0) {
-            // Check if we already have live streams in the stories to prevent duplicates during polling
-            const existingLiveIds = new Set(
-                stories
-                    .filter(story => story.stories.length === 0 && story.id !== "0") // Likely live streams
-                    .map(story => story.id)
-            );
-            
-            // Only add new live streams that aren't already in the stories
-            const newLiveStreams = formattedLives().filter(
-                liveStory => !existingLiveIds.has(liveStory.id)
-            );
-            
-            if (newLiveStreams.length > 0) {
-                setStories(prevStories => [...prevStories, ...newLiveStreams]);
-            }
-        }
-    }, [liveStreams, stories]);
-
-    const uploadFile = async (file: any) => {
-        setIsUploading(true);
+      // Show error toast on excessive retries
+      if (retryCountRef.current >= MAX_RETRY_COUNT) {
         Toast.show({
-            type: 'info',
-            text1: 'Uploading Story',
-            text2: 'Please wait...'
+          type: 'error',
+          text1: 'Failed to refresh stories',
+          text2: 'Please check your connection',
         });
 
-        const formData = new FormData();
-
-        formData.append('file', file);
-
-        try {
-            await AddStory(formData);
-
-            Toast.show({
-                type: 'success',
-                text1: 'Successfully uploaded story!'
-            });
-
-            // Refresh stories after successful upload
-            await getStories(false);
-        } catch(err) {
-            console.error("Upload error:", err);
-            if (isAxiosError(err)) {
-                Toast.show({
-                    type: 'error',
-                    text1: err.response?.data.message || 'Failed to upload story'
-                });
-            } else {
-                Toast.show({
-                    type: 'error',
-                    text1: 'Network error while uploading story'
-                });
-            }
-        } finally {
-            setIsUploading(false);
+        // Temporarily disable polling on excessive failures
+        if (pollingEnabled) {
+          stopPolling();
+          setTimeout(() => {
+            startPolling();
+          }, POLLING_INTERVAL * 2); // Retry after double the interval
         }
-    };
+      }
+    } finally {
+      if (showLoadingIndicator) {
+        setIsInitialLoading(false);
+      } else {
+        setIsRefreshing(false);
+      }
+    }
+  }, []);
 
-    useEffect(() => {
-        if (imageData) {
-            uploadFile({ uri: imageData?.uri, name: imageData?.fileName, type: imageData?.type });
-        }
-    }, [imageData]);
+  // Fetch live streams with ability to control loading indicator
+  const getLiveStreams = useCallback(async (showLoadingIndicator = true) => {
+    try {
+      const {data} = await GetLiveStreams();
 
-    const requestCameraAndAudioPermission = async () => {
-        if (Platform.OS === 'android') {
-          try {
-            const granted = await PermissionsAndroid.requestMultiple([
-              PermissionsAndroid.PERMISSIONS.CAMERA,
-              PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
-            ]);
-  
-            if (
-              granted[PermissionsAndroid.PERMISSIONS.CAMERA] !==
-                PermissionsAndroid.RESULTS.GRANTED ||
-              granted[PermissionsAndroid.PERMISSIONS.RECORD_AUDIO] !==
-                PermissionsAndroid.RESULTS.GRANTED
-            ) {
-              console.warn('Camera or Microphone permission denied');
-              return;
-            }
-  
-            console.log('Permissions granted');
-          } catch (err) {
-            console.warn(err);
-          }
-        }
-    };
+      const streams = data?.live_streams?.map(stream => ({
+        stream_key: stream.stream_key,
+        user_id: stream.user_id,
+        user_name: stream.user.full_name,
+      }));
 
-    const onPressNewStory = async (event: "upload" | "camera") => {
-        if (event === "upload") {
-            return chooseImageFromLibrary('mixed', true); // Enable preview
-        }
+      setLiveStreams(streams);
 
-        await requestCameraAndAudioPermission();
-        
-        return captureImage('mixed', true); // Enable preview
-    };
+      // Reset retry count on success
+      retryCountRef.current = 0;
+    } catch (err) {
+      console.error('ERROR:: LIVE STREAMS', err);
+      retryCountRef.current += 1;
 
-    // Handle confirmation of media after preview
-    const handleConfirmMedia = () => {
-        confirmMedia(); // This will trigger the useEffect with imageData
-    };
-
-    const resetStories = () => {
-        setStories([
-            {
-                id: "0",
-                name: "Add Story",
-                avatarSource: { uri: "" },
-                stories: [],
-                renderAvatar: () => {
-                    if (isUploading) {
-                        return <Loader />;
-                    }
-
-                    return (
-                        <DropdownMenu.Root>
-                            <DropdownMenu.Trigger>
-                                <AddStoryIcon />
-                                <Text>Add Story</Text>
-                            </DropdownMenu.Trigger>
-                            <DropdownMenu.Content>
-                                <DropdownMenu.Item key="upload" onSelect={()=> onPressNewStory("upload")}>
-                                    <DropdownMenu.ItemTitle>Upload from gallery</DropdownMenu.ItemTitle>
-                                </DropdownMenu.Item>
-                                <DropdownMenu.Item key="camera" onSelect={() => onPressNewStory("camera")}>
-                                    <DropdownMenu.ItemTitle>Open Camera</DropdownMenu.ItemTitle>
-                                </DropdownMenu.Item>
-                            </DropdownMenu.Content>
-                        </DropdownMenu.Root>
-                    );
-                }
-            }
-        ]);
-    };
-
-    const deleteStory = async (storyId: string | number) => {
-        try {
-            // Show confirmation alert
-            Alert.alert(
-                "Delete Story",
-                "Are you sure you want to delete this story?",
-                [
-                    {
-                        text: "Cancel",
-                        style: "cancel"
-                    },
-                    {
-                        text: "Delete", 
-                        style: "destructive",
-                        onPress: async () => {
-                            setIsDeleting(true);
-                            
-                            try {
-                                Toast.show({
-                                    type: 'info',
-                                    text1: 'Deleting Story',
-                                    text2: 'Please wait...'
-                                });
-
-                                await DeleteStory(storyId);
-                                
-                                Toast.show({
-                                    type: 'success',
-                                    text1: 'Story deleted successfully'
-                                });
-
-                                setStories(prevStories => prevStories.filter(story => story.id !== String(storyId)));
-                                
-                                // Refresh stories after successful deletion
-                                await getStories(false);
-                            } catch (err) {
-                                console.error("Delete error:", err);
-                                if (isAxiosError(err)) {
-                                    Toast.show({
-                                        type: 'error',
-                                        text1: err.response?.data.message || 'Failed to delete story'
-                                    });
-                                } else {
-                                    Toast.show({
-                                        type: 'error',
-                                        text1: 'Network error while deleting story'
-                                    });
-                                }
-                            } finally {
-                                setIsDeleting(false);
-                            }
-                        }
-                    }
-                ]
-            );
-        } catch (err) {
-            console.error("Delete error:", err);
-            Toast.show({
-                type: 'error',
-                text1: 'Failed to delete story'
-            });
-        }
-    };
-
-    const formatStories = (stories: any[]): InstagramStoriesProps['stories'] => {
-        // First group stories by user ID
-        const groupedStories = stories.reduce((acc, story) => {
-            const userId = String(story.user.id);
-            const isCurrentUserStory = userId === String(currentUser.id);
-            
-            if (!acc[userId]) {
-                acc[userId] = {
-                    id: userId,
-                    name: story.user.full_name || "Unknown User",
-                    avatarSource: {
-                        uri: `https://randomuser.me/api/portraits/men/${story.user.id}.jpg`
-                    },
-                    stories: []
-                };
-            }
-            
-            const storyItem = {
-                id: String(story.id),
-                source: { uri: story.media_url },
-                // Use renderFooter instead of renderStoryHeader
-                renderFooter: isCurrentUserStory ? () => (
-                    <SafeAreaView style={styles.footerContainer}>
-                        <TouchableOpacity
-                            onPress={() => deleteStory(story.id)}
-                            style={styles.deleteButton}
-                            disabled={isDeleting}
-                        >
-                            <Text style={styles.deleteButtonText}>{isDeleting ? 'Deleting...' : 'Delete'}</Text>
-                        </TouchableOpacity>
-                    </SafeAreaView>
-                ) : undefined
-            };
-            
-            acc[userId].stories.push(storyItem);
-            return acc;
-        }, {});
-
-        // Convert the grouped object to array
-        return Object.values(groupedStories);
-    };
-
-    const onPressLive = (stream: LiveStream) => {
-        return navigation.navigate('LiveStreamScreen', {
-            isHost: false,
-            channel: `agora.${ stream.stream_key }`,
-            streamerName: stream.user_name,
-            streamerAvatar: `https://randomuser.me/api/portraits/men/${ stream.user_id }.jpg`
+      if (retryCountRef.current >= MAX_RETRY_COUNT) {
+        Toast.show({
+          type: 'error',
+          text1: 'Failed to refresh live streams',
+          text2: 'Please check your connection',
         });
-    };
+      }
+    }
+  }, []);
 
-    const formattedLives = (): InstagramStoriesProps['stories'] => {
-        return liveStreams.map((stream) => ({
-            id: `live-${ stream.stream_key }`, // Prefix with 'live-' to make it unique from regular stories
-            avatarSource: {
-                uri: `https://randomuser.me/api/portraits/men/${ stream.user_id }.jpg`
-            },
-            renderAvatar: () => (
-                <TouchableOpacity style={ { display: 'flex', justifyContent: 'center', alignItems: 'center' } } onPress={ () => onPressLive(stream) }>
-                    <GradientBorderView
-                        gradientProps={ {
-                            colors: ['white', 'red']
-                        } }
-                        style={ {
-                            borderWidth: 5,
-                            borderRadius: 100,
-                            height: 70,
-                            width: 70,
-                        } }
-                    >
-                        <Image
-                            source={ { uri: `https://randomuser.me/api/portraits/men/${ stream.user_id }.jpg` } }
-                            width={ 60 }
-                            height={ 60 }
-                            style={ { borderRadius: 100 } }
-                        />
-                    </GradientBorderView>
-                    <View style={ { display: 'flex', flexDirection: 'row', justifyContent: 'space-between' } }>
-                        <Text>{ stream.user_name }  </Text><Text style={ { color: '#FF5125' } }>Live</Text>
-                    </View>
-                </TouchableOpacity>
-            ),
-            stories: []
-        }));
-    };
+  // Combined data fetching function
+  const fetchData = useCallback(
+    async (showLoadingIndicator = true) => {
+      try {
+        // First get stories
+        await getStories(showLoadingIndicator);
+        // Then get live streams after stories are loaded
+        await getLiveStreams(showLoadingIndicator);
+      } catch (error) {
+        console.error('Error in fetchData:', error);
+      }
+    },
+    [getStories, getLiveStreams],
+  );
 
-    // Render the media preview UI
-    const renderMediaPreview = () => {
-        if (!pendingMedia) return null;
-        
-        const isVideo = pendingMedia.type?.startsWith('video/');
-        
-        return (
-            <Modal
-                animationType="slide"
-                transparent={true}
-                visible={previewMode}
-                onRequestClose={cancelMedia}
-            >
-                <View style={styles.modalContainer}>
-                    <View style={styles.previewContainer}>
-                        <Text style={styles.previewTitle}>Preview</Text>
-                        
-                        {isVideo ?(
-                            <Video 
-                                source={{uri: pendingMedia.uri}}
-                                style={styles.mediaPreview}
-                                resizeMode="contain"
-                                controls={true}
-                            />
-                        ) : (
-                            <Image
-                                source={{uri: pendingMedia.uri}}
-                                style={styles.mediaPreview}
-                                resizeMode="contain"
-                            />
-                        )}
-                        
-                        <View style={styles.buttonContainer}>
-                            <TouchableOpacity 
-                                style={[styles.button, styles.cancelButton]} 
-                                onPress={cancelMedia}
-                            >
-                                <Text style={styles.buttonText}>Cancel</Text>
-                            </TouchableOpacity>
-                            
-                            <TouchableOpacity 
-                                style={[styles.button, styles.confirmButton]} 
-                                onPress={handleConfirmMedia}
-                            >
-                                <Text style={[styles.buttonText, styles.confirmText]}>Upload</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                </View>
-            </Modal>
-        );
-    };
-
-    if (!stories || !stories.length || isInitialLoading) {
-        return <Loader />;
+  // Start polling mechanism
+  const startPolling = useCallback(() => {
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
     }
 
-    return (
-        <View>
-            {isRefreshing && (
-                <View style={{ position: 'absolute', top: 0, right: 10, zIndex: 10 }}>
-                    <Loader size="small" />
+    pollingIntervalRef.current = setInterval(() => {
+      fetchData(false); // Don't show loading indicator during refresh
+    }, POLLING_INTERVAL);
+
+    setPollingEnabled(true);
+  }, [fetchData]);
+
+  // Stop polling mechanism
+  const stopPolling = useCallback(() => {
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
+    }
+
+    setPollingEnabled(false);
+  }, []);
+
+  // Initialize data fetch and polling
+  useEffect(() => {
+    fetchData(true); // Initial load with loading indicator
+    startPolling();
+
+    // Cleanup on unmount
+    return () => {
+      stopPolling();
+    };
+  }, []);
+
+  // Update stories when live streams change
+  useEffect(() => {
+    if (liveStreams.length > 0) {
+      // Check if we already have live streams in the stories to prevent duplicates during polling
+      const existingLiveIds = new Set(
+        stories
+          .filter(story => story.stories.length === 0 && story.id !== '0') // Likely live streams
+          .map(story => story.id),
+      );
+
+      // Only add new live streams that aren't already in the stories
+      const newLiveStreams = formattedLives().filter(
+        liveStory => !existingLiveIds.has(liveStory.id),
+      );
+
+      if (newLiveStreams.length > 0) {
+        setStories(prevStories => [...prevStories, ...newLiveStreams]);
+      }
+    }
+  }, [liveStreams, stories]);
+
+  const uploadFile = async (file: any) => {
+    setIsUploading(true);
+    Toast.show({
+      type: 'info',
+      text1: 'Uploading Story',
+      text2: 'Please wait...',
+    });
+
+    const formData = new FormData();
+
+    formData.append('file', file);
+
+    try {
+      await AddStory(formData);
+
+      Toast.show({
+        type: 'success',
+        text1: 'Successfully uploaded story!',
+      });
+
+      // Refresh stories after successful upload
+      await getStories(false);
+    } catch (err) {
+      console.error('Upload error:', err);
+      if (isAxiosError(err)) {
+        Toast.show({
+          type: 'error',
+          text1: err.response?.data.message || 'Failed to upload story',
+        });
+      } else {
+        Toast.show({
+          type: 'error',
+          text1: 'Network error while uploading story',
+        });
+      }
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (imageData) {
+      uploadFile({
+        uri: imageData?.uri,
+        name: imageData?.fileName,
+        type: imageData?.type,
+      });
+    }
+  }, [imageData]);
+
+  const requestCameraAndAudioPermission = async () => {
+    if (Platform.OS === 'android') {
+      try {
+        const granted = await PermissionsAndroid.requestMultiple([
+          PermissionsAndroid.PERMISSIONS.CAMERA,
+          PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
+        ]);
+
+        if (
+          granted[PermissionsAndroid.PERMISSIONS.CAMERA] !==
+            PermissionsAndroid.RESULTS.GRANTED ||
+          granted[PermissionsAndroid.PERMISSIONS.RECORD_AUDIO] !==
+            PermissionsAndroid.RESULTS.GRANTED
+        ) {
+          console.warn('Camera or Microphone permission denied');
+          return;
+        }
+
+        console.log('Permissions granted');
+      } catch (err) {
+        console.warn(err);
+      }
+    }
+  };
+
+  const onPressNewStory = async (event: 'upload' | 'camera') => {
+    if (event === 'upload') {
+      return chooseImageFromLibrary('mixed', true); // Enable preview
+    }
+
+    await requestCameraAndAudioPermission();
+
+    return captureImage('mixed', true); // Enable preview
+  };
+
+  // Handle confirmation of media after preview
+  const handleConfirmMedia = () => {
+    confirmMedia(); // This will trigger the useEffect with imageData
+  };
+
+  const resetStories = () => {
+    setStories([
+      {
+        id: '0',
+        name: 'Add Story',
+        avatarSource: {uri: ''},
+        stories: [],
+        renderAvatar: () => {
+          if (isUploading) {
+            return <Loader />;
+          }
+
+          return (
+            <DropdownMenu.Root>
+              <DropdownMenu.Trigger>
+                <View style={styles.squareAvatarContainer}>
+                  <AddStoryIcon />
                 </View>
-            )}
-            
-            {/* Media Preview Modal */}
-            {renderMediaPreview()}
-            
-            <InstagramStories
-                stories={ stories }
-                avatarBorderColors={['#FF7A51', '#FFDB5C']}
-                saveProgress
-                avatarListContainerStyle={{
-                    marginHorizontal: 5,
-                    marginVertical: 5,
-                    gap: 10
-                }}
-                showName
-                nameTextStyle={{
-                    paddingHorizontal: 10
-                }}
+                <Text style={styles.storyName}>Add Story</Text>
+              </DropdownMenu.Trigger>
+              <DropdownMenu.Content>
+                <DropdownMenu.Item
+                  key="upload"
+                  onSelect={() => onPressNewStory('upload')}>
+                  <DropdownMenu.ItemTitle>
+                    Upload from gallery
+                  </DropdownMenu.ItemTitle>
+                </DropdownMenu.Item>
+                <DropdownMenu.Item
+                  key="camera"
+                  onSelect={() => onPressNewStory('camera')}>
+                  <DropdownMenu.ItemTitle>Open Camera</DropdownMenu.ItemTitle>
+                </DropdownMenu.Item>
+              </DropdownMenu.Content>
+            </DropdownMenu.Root>
+          );
+        },
+      },
+    ]);
+  };
+
+  const deleteStory = async (storyId: string | number) => {
+    try {
+      // Show confirmation alert
+      Alert.alert(
+        'Delete Story',
+        'Are you sure you want to delete this story?',
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel',
+          },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: async () => {
+              setIsDeleting(true);
+
+              try {
+                Toast.show({
+                  type: 'info',
+                  text1: 'Deleting Story',
+                  text2: 'Please wait...',
+                });
+
+                await DeleteStory(storyId);
+
+                Toast.show({
+                  type: 'success',
+                  text1: 'Story deleted successfully',
+                });
+
+                setStories(prevStories =>
+                  prevStories.filter(story => story.id !== String(storyId)),
+                );
+
+                // Refresh stories after successful deletion
+                await getStories(false);
+              } catch (err) {
+                console.error('Delete error:', err);
+                if (isAxiosError(err)) {
+                  Toast.show({
+                    type: 'error',
+                    text1:
+                      err.response?.data.message || 'Failed to delete story',
+                  });
+                } else {
+                  Toast.show({
+                    type: 'error',
+                    text1: 'Network error while deleting story',
+                  });
+                }
+              } finally {
+                setIsDeleting(false);
+              }
+            },
+          },
+        ],
+      );
+    } catch (err) {
+      console.error('Delete error:', err);
+      Toast.show({
+        type: 'error',
+        text1: 'Failed to delete story',
+      });
+    }
+  };
+
+  const formatStories = (stories: any[]): InstagramStoriesProps['stories'] => {
+    // First group stories by user ID
+    const groupedStories = stories.reduce((acc, story) => {
+      const userId = String(story.user.id);
+      const isCurrentUserStory = userId === String(currentUser.id);
+
+      if (!acc[userId]) {
+        acc[userId] = {
+          id: userId,
+          name: story.user.full_name || 'Unknown User',
+          avatarSource: {
+            uri: `https://randomuser.me/api/portraits/men/${story.user.id}.jpg`,
+          },
+          stories: [],
+        };
+      }
+
+      const storyItem = {
+        id: String(story.id),
+        source: {uri: story.media_url},
+        // Use renderFooter instead of renderStoryHeader
+        renderFooter: isCurrentUserStory
+          ? () => (
+              <SafeAreaView style={styles.footerContainer}>
+                <TouchableOpacity
+                  onPress={() => deleteStory(story.id)}
+                  style={styles.deleteButton}
+                  disabled={isDeleting}>
+                  <Text style={styles.deleteButtonText}>
+                    {isDeleting ? 'Deleting...' : 'Delete'}
+                  </Text>
+                </TouchableOpacity>
+              </SafeAreaView>
+            )
+          : undefined,
+      };
+
+      acc[userId].stories.push(storyItem);
+      return acc;
+    }, {});
+
+    // Convert the grouped object to array
+    return Object.values(groupedStories);
+  };
+
+  const onPressLive = (stream: LiveStream) => {
+    return navigation.navigate('LiveStreamScreen', {
+      isHost: false,
+      channel: `agora.${stream.stream_key}`,
+      streamerName: stream.user_name,
+      streamerAvatar: `https://randomuser.me/api/portraits/men/${stream.user_id}.jpg`,
+    });
+  };
+
+  const formattedLives = (): InstagramStoriesProps['stories'] => {
+    return liveStreams.map(stream => ({
+      id: `live-${stream.stream_key}`, // Prefix with 'live-' to make it unique from regular stories
+      avatarSource: {
+        uri: `https://randomuser.me/api/portraits/men/${stream.user_id}.jpg`,
+      },
+      renderAvatar: () => (
+        <TouchableOpacity
+          style={styles.avatarCenter}
+          onPress={() => onPressLive(stream)}>
+          <GradientBorderView
+            gradientProps={{
+              colors: ['white', 'red'],
+            }}
+            style={styles.squareGradientContainer}>
+            <Image
+              source={{
+                uri: `https://randomuser.me/api/portraits/men/${stream.user_id}.jpg`,
+              }}
+              style={styles.squareImage}
             />
+          </GradientBorderView>
+          <View style={styles.liveLabelContainer}>
+            <Text style={styles.userName}>{stream.user_name} </Text>
+            <Text style={styles.liveText}>Live</Text>
+          </View>
+        </TouchableOpacity>
+      ),
+      stories: [],
+    }));
+  };
+
+  // Render the media preview UI
+  const renderMediaPreview = () => {
+    if (!pendingMedia) return null;
+
+    const isVideo = pendingMedia.type?.startsWith('video/');
+
+    return (
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={previewMode}
+        onRequestClose={cancelMedia}>
+        <View style={styles.modalContainer}>
+          <View style={styles.previewContainer}>
+            <Text style={styles.previewTitle}>Preview</Text>
+
+            {isVideo ? (
+              <Video
+                source={{uri: pendingMedia.uri}}
+                style={styles.mediaPreview}
+                resizeMode="contain"
+                controls={true}
+              />
+            ) : (
+              <Image
+                source={{uri: pendingMedia.uri}}
+                style={styles.mediaPreview}
+                resizeMode="contain"
+              />
+            )}
+
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                style={[styles.button, styles.cancelButton]}
+                onPress={cancelMedia}>
+                <Text style={styles.buttonText}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.button, styles.confirmButton]}
+                onPress={handleConfirmMedia}>
+                <Text style={[styles.buttonText, styles.confirmText]}>
+                  Upload
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
+      </Modal>
     );
+  };
+
+  if (!stories || !stories.length || isInitialLoading) {
+    return <Loader />;
+  }
+
+  return (
+    <View>
+      {isRefreshing && (
+        <View style={{position: 'absolute', top: 0, right: 10, zIndex: 10}}>
+          <Loader size="small" />
+        </View>
+      )}
+
+      {/* Media Preview Modal */}
+      {renderMediaPreview()}
+
+      <InstagramStories
+        stories={stories}
+        avatarBorderColors={['#FF7A51', '#FFDB5C']}
+        saveProgress
+        avatarListContainerStyle={{
+          marginHorizontal: 5,
+          marginVertical: 5,
+          gap: 10,
+        }}
+        containerStyle={{
+          borderRadius: 2,
+        }}
+        avatarSize={60}
+        avatarWrapperStyle={styles.squareAvatarWrapper}
+        avatarStyle={styles.squareAvatar}
+        showName
+        nameTextStyle={{
+          paddingHorizontal: 10,
+          marginLeft: 15,
+          fontSize: 12,
+          marginTop: 4,
+        }}
+      />
+    </View>
+  );
 };
 
 // Styles for the preview modal
 const styles = StyleSheet.create({
-    modalContainer: {
-        flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.7)',
-        justifyContent: 'center',
-        alignItems: 'center',
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'white',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  squareAvatarContainer: {
+    width: 70,
+    height: 70,
+    borderRadius: 15, // Less rounded, more square-like
+    overflow: 'hidden',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f0f0f0',
+  },
+  squareAvatarWrapper: {
+    borderRadius: 15, // Match the container
+    overflow: 'hidden',
+  },
+  squareAvatar: {
+    borderRadius: 15, // Match the container
+  },
+  squareGradientContainer: {
+    borderWidth: 3,
+    borderRadius: 15, // Less rounded corners for more square-like appearance
+    height: 70,
+    width: 70,
+    overflow: 'hidden',
+  },
+  squareImage: {
+    width: 64,
+    height: 64,
+    borderRadius: 12, // Slightly less than container for inner image
+  },
+  avatarCenter: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  liveLabelContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 4,
+  },
+  userName: {
+    fontSize: 12,
+  },
+  liveText: {
+    color: '#FF5125',
+    fontSize: 12,
+  },
+  storyName: {
+    textAlign: 'center',
+    fontSize: 12,
+    marginTop: 1,
+    marginBottom: 2,
+    color: '#333',
+  },
+  previewContainer: {
+    width: '90%',
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 20,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
     },
-    previewContainer: {
-        width: '90%',
-        backgroundColor: 'white',
-        borderRadius: 10,
-        padding: 20,
-        alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
-        elevation: 5,
-    },
-    previewTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        marginBottom: 15,
-    },
-    mediaPreview: {
-        width: '100%',
-        height: 300,
-        borderRadius: 10,
-        marginBottom: 20,
-    },
-    videoPlaceholder: {
-        width: '100%',
-        height: 300,
-        borderRadius: 10,
-        backgroundColor: '#f0f0f0',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 20,
-    },
-    mediaPath: {
-        fontSize: 12,
-        color: '#666',
-        marginTop: 10,
-    },
-    buttonContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        width: '100%',
-    },
-    button: {
-        paddingVertical: 10,
-        paddingHorizontal: 20,
-        borderRadius: 5,
-        minWidth: 100,
-        alignItems: 'center',
-    },
-    cancelButton: {
-        backgroundColor: '#f0f0f0',
-    },
-    confirmButton: {
-        backgroundColor: '#FF7A51',
-    },
-    buttonText: {
-        fontSize: 16,
-        fontWeight: '500',
-    },
-    confirmText: {
-        color: 'white',
-    },
-    footerContainer: {
-        flexDirection: 'row',
-        justifyContent: 'flex-end',
-        width: '100%',
-        paddingVertical: 16,
-        paddingHorizontal: 16,
-        backgroundColor: 'rgba(0, 0, 0, 0.3)',
-        position: 'absolute',
-        bottom: 20,
-        left: 0,
-        right: 0,
-    },
-    deleteButton: {
-        backgroundColor: 'rgba(255, 0, 0, 0.8)',
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: 'white',
-    },
-    deleteButtonText: {
-        color: 'white',
-        fontWeight: 'bold',
-        fontSize: 14,
-        textShadowColor: 'rgba(0, 0, 0, 0.5)',
-        textShadowOffset: { width: 0.5, height: 0.5 },
-        textShadowRadius: 1,
-    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  previewTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 15,
+  },
+  mediaPreview: {
+    width: '100%',
+    height: 300,
+    borderRadius: 10,
+    marginBottom: 20,
+  },
+  videoPlaceholder: {
+    width: '100%',
+    height: 300,
+    borderRadius: 10,
+    backgroundColor: '#f0f0f0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  mediaPath: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 10,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  button: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    minWidth: 100,
+    alignItems: 'center',
+  },
+  cancelButton: {
+    backgroundColor: '#f0f0f0',
+  },
+  confirmButton: {
+    backgroundColor: '#FF7A51',
+  },
+  buttonText: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  confirmText: {
+    color: 'white',
+  },
+  footerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    width: '100%',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    position: 'absolute',
+    bottom: 20,
+    left: 0,
+    right: 0,
+  },
+  deleteButton: {
+    backgroundColor: 'rgba(255, 0, 0, 0.8)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'white',
+  },
+  deleteButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 14,
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: {width: 0.5, height: 0.5},
+    textShadowRadius: 1,
+  },
 });
 
 export default Stories;

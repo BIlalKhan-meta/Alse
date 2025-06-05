@@ -10,6 +10,10 @@ import NavigationOptions from '../NavigationOptions';
 import MarketPlaceNavigation from '../MarketPlaceNavigator';
 import MenuNavigation from '../MenuNavigation';
 import LiveStreamScreen from '../../screens/Livestream/GoLive';
+import VideosTab from '../VideosTab/Index';
+import {fontSizes} from '../../constant';
+import SearchTab from '../SearchTab';
+import {Search} from 'lucide-react-native';
 
 const TabNavigation = () => {
   const Tab = createBottomTabNavigator();
@@ -36,13 +40,55 @@ const TabNavigation = () => {
                   {tintColor: focused ? colors.themeColor : colors.lightGrey},
                 ]}
               />
-              <InterBold
+              {/* <InterBold
                 style={[
                   styles.tabButtonText,
-                  {color: focused ? colors.themeColor : colors.lightGrey},
+                  {
+                    color: focused ? colors.themeColor : colors.lightGrey,
+                    fontSize: fontSizes.f10,
+                  },
                 ]}>
                 Home
-              </InterBold>
+              </InterBold> */}
+            </View>
+          ),
+          ...NavigationOptions,
+        }}
+      />
+
+      <Tab.Screen
+        name="Search"
+        component={SearchTab}
+        options={{
+          tabBarIcon: ({focused}) => (
+            <View style={styles.tabButton}>
+              {/* <Image
+                source={images.menu}
+                style={[
+                  styles.icon,
+                  {
+                    tintColor: focused ? colors.themeColor : colors.lightGrey,
+                  },
+                ]}
+              /> */}
+              <Search
+                style={[
+                  styles.icon,
+                  {
+                    color: focused ? colors.themeColor : colors.lightGrey,
+                  },
+                ]}
+              />
+              {/* <InterBold
+                style={[
+                  styles.tabButtonText,
+                  {
+                    color: focused ? colors.themeColor : colors.lightGrey,
+                    fontSize: fontSizes.f10,
+                  },
+                ]}>
+                Menu
+              </InterBold> */}
             </View>
           ),
           ...NavigationOptions,
@@ -61,13 +107,16 @@ const TabNavigation = () => {
                   {tintColor: focused ? colors.themeColor : colors.lightGrey},
                 ]}
               />
-              <InterBold
+              {/* <InterBold
                 style={[
                   styles.tabButtonText,
-                  {color: focused ? colors.themeColor : colors.lightGrey},
+                  {
+                    color: focused ? colors.themeColor : colors.lightGrey,
+                    fontSize: fontSizes.f10,
+                  },
                 ]}>
-                Market Place
-              </InterBold>
+                MarketPlace
+              </InterBold> */}
             </View>
           ),
           ...NavigationOptions,
@@ -88,42 +137,51 @@ const TabNavigation = () => {
                   {tintColor: focused ? colors.themeColor : colors.lightGrey},
                 ]}
               />
-              <InterBold
+              {/* <InterBold
                 style={[
                   styles.tabButtonText,
-                  {color: focused ? colors.themeColor : colors.lightGrey},
+                  {
+                    color: focused ? colors.themeColor : colors.lightGrey,
+                    fontSize: fontSizes.f10,
+                  },
                 ]}>
                 Go Live
-              </InterBold>
+              </InterBold> */}
             </View>
           ),
           ...NavigationOptions,
         }}
       />
 
-      {/* <Tab.Screen
-                name="Game"
-                component={Game}
-                options={{
-                    tabBarIcon: ({ focused }) => (
-                        <View style={styles.tabButton}>
-                            <Image
-                                source={images.game}
-                                style={[
-                                    styles.icon,
-                                    { tintColor: focused ? colors.themeColor : colors.lightGrey }
-                                ]}
-                            />
-                            <InterBold style={[
-                                styles.tabButtonText,
-                                { color: focused ? colors.themeColor : colors.lightGrey }
-                            ]}>
-                                Game
-                            </InterBold>
-                        </View>
-                    ),
-                }}
-            /> */}
+      <Tab.Screen
+        name="Videos"
+        component={VideosTab}
+        options={{
+          tabBarIcon: ({focused}) => (
+            <View style={styles.tabButton}>
+              <Image
+                source={images.videoTab}
+                style={[
+                  styles.icon,
+                  {
+                    tintColor: focused ? colors.themeColor : colors.lightGrey,
+                  },
+                ]}
+              />
+              {/* <InterBold
+                style={[
+                  styles.tabButtonText,
+                  {
+                    color: focused ? colors.themeColor : colors.lightGrey,
+                    fontSize: fontSizes.f10,
+                  },
+                ]}>
+                Videos
+              </InterBold> */}
+            </View>
+          ),
+        }}
+      />
       <Tab.Screen
         name="MenuNavigation"
         component={MenuNavigation}
@@ -134,16 +192,21 @@ const TabNavigation = () => {
                 source={images.menu}
                 style={[
                   styles.icon,
-                  {tintColor: focused ? colors.themeColor : colors.lightGrey},
+                  {
+                    tintColor: focused ? colors.themeColor : colors.lightGrey,
+                  },
                 ]}
               />
-              <InterBold
+              {/* <InterBold
                 style={[
                   styles.tabButtonText,
-                  {color: focused ? colors.themeColor : colors.lightGrey},
+                  {
+                    color: focused ? colors.themeColor : colors.lightGrey,
+                    fontSize: fontSizes.f10,
+                  },
                 ]}>
                 Menu
-              </InterBold>
+              </InterBold> */}
             </View>
           ),
           ...NavigationOptions,

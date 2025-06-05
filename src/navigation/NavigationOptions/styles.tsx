@@ -19,6 +19,12 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.f16,
     width: vw * 80,
   },
+  homeTitle: {
+    color: '#0C959B',
+    fontSize: fontSizes.f26,
+    fontWeight: '600',
+    width: vw * 80,
+  },
   headericonStyle: {
     width: vw * 5,
     height: vh * 3,
@@ -44,7 +50,7 @@ const styles = StyleSheet.create({
     width: vw * 10,
     height: vh * 5,
     borderRadius: vw * 10,
-    backgroundColor: colors.white,
+    backgroundColor: 'transparent',
     marginHorizontal: vw * 1,
     alignItems: 'center',
     justifyContent: 'center',
@@ -52,6 +58,16 @@ const styles = StyleSheet.create({
   notificationicon: {
     width: vh * 3,
     height: vh * 3,
+    resizeMode: 'contain',
+  },
+  messageIcon: {
+    width: vh * 6,
+    height: vh * 6,
+    resizeMode: 'contain',
+  },
+  logoImage: {
+    height: vh * 4,
+    width: vw * 24,
     resizeMode: 'contain',
   },
   shopcontainer: {},

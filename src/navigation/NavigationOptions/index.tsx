@@ -1,5 +1,5 @@
 import React from 'react';
-import {Image, TouchableOpacity, View} from 'react-native';
+import {Image, TouchableOpacity, View, Text} from 'react-native';
 import styles from './styles';
 import {images} from '../../utils/images';
 
@@ -44,7 +44,7 @@ const titles: {[key: string]: string} = {
   SavedChat: 'Saved Chat',
   SavedChatDetail: 'Saved Chat',
   SavedScripts: 'Saved Scripts',
-  Home: 'News Feed',
+  Home: 'Alse',
   Notifications: 'Notifications',
   // AddProduct: "Add Product",
   // WishList: "Wishlist",
@@ -99,6 +99,11 @@ const getTitle: React.FC<NavigationOptionsProps> = props => {
   if (props?.route?.params?.screenName) {
     return props?.route?.params?.screenName;
   }
+
+  // Special rendering for Home screen title
+  if (props?.route?.name === 'Home') {
+    return titles[props.route.name];
+  }
   if (titles[props?.route?.name]) {
     return titles[props?.route?.name];
   }
@@ -113,14 +118,24 @@ export const getHeaderRight: React.FC<NavigationOptionsProps> = props => {
           style={[styles.iconContainer, {marginRight: 4}]}
           onPress={() => props.navigation.navigate('SearchUsers')}>
           <View style={styles.notificationcontainer}>
-            <Image source={images.search} style={styles.notificationicon} />
+            <Image source={images.bellIcon} style={styles.notificationicon} />
           </View>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.iconContainer, {marginRight: 4}]}
           onPress={() => props.navigation.navigate('Notifications')}>
           <View style={styles.notificationcontainer}>
-            <Image source={images.bellicon} style={styles.notificationicon} />
+            <Image
+              source={images.settingsIcon}
+              style={styles.notificationicon}
+            />
+          </View>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.iconContainer, {marginRight: 4}]}
+          onPress={() => props.navigation.navigate('Notifications')}>
+          <View style={styles.notificationcontainer}>
+            <Image source={images.messageIcon} style={styles.messageIcon} />
           </View>
         </TouchableOpacity>
 
@@ -161,6 +176,8 @@ const getHeaderLeft: React.FC<NavigationOptionsProps> = props => {
 
 const NavigationOptions: React.FC<NavigationOptionsProps> = props => {
   // console.log("THIS IS PROPS" , props?.route?.name);
+  const isHomeScreen = props?.route?.name === 'Home';
+
   return {
     headerShown: true,
     headerShadowVisible: false,
@@ -169,7 +186,7 @@ const NavigationOptions: React.FC<NavigationOptionsProps> = props => {
     headerTransparent:
       props?.route?.name === 'NearestRestaurent' ? true : false,
     headerStyle: styles.header,
-    headerTitleStyle: styles.headerTitle,
+    headerTitleStyle: isHomeScreen ? styles.homeTitle : styles.headerTitle,
     headerBackTitleVisible: false,
     headerBackVisible: false,
     title: getTitle(props),
