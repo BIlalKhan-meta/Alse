@@ -116,7 +116,7 @@ export const getHeaderRight: React.FC<NavigationOptionsProps> = props => {
       <View style={styles.notificationandshopcontainer}>
         <TouchableOpacity
           style={[styles.iconContainer, {marginRight: 4}]}
-          onPress={() => props.navigation.navigate('SearchUsers')}>
+          onPress={() => props.navigation.navigate('Notifications')}>
           <View style={styles.notificationcontainer}>
             <Image source={images.bellIcon} style={styles.notificationicon} />
           </View>

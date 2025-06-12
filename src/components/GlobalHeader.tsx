@@ -7,9 +7,10 @@ import {useNavigation} from '@react-navigation/native';
 
 interface GlobalHeaderProps {
   title?: string;
+  icon?: boolean;
 }
 
-const GlobalHeader: React.FC<GlobalHeaderProps> = ({title = 'Alse'}) => {
+const GlobalHeader: React.FC<GlobalHeaderProps> = ({title = 'Alse', icon}) => {
   const navigation = useNavigation();
 
   const handleNotificationPress = () => {
@@ -23,8 +24,12 @@ const GlobalHeader: React.FC<GlobalHeaderProps> = ({title = 'Alse'}) => {
         <TouchableOpacity
           style={styles.iconButton}
           onPress={handleNotificationPress}>
-          <View style={styles.notificationcontainer}>
-            <Image source={images.bellIcon} style={styles.notificationicon} />
+          <View
+            style={[
+              styles.notificationcontainer,
+              icon && styles.highlightedContainer,
+            ]}>
+            <Image source={images.bellIcon} style={styles.bellIcon} />
           </View>
         </TouchableOpacity>
         <TouchableOpacity style={styles.iconButton}>
@@ -76,10 +81,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  highlightedContainer: {
+    backgroundColor: '#8E8E8E',
+    borderWidth: 1,
+    borderColor: '#CCCCCC',
+  },
   notificationicon: {
     width: vh * 3,
     height: vh * 3,
     resizeMode: 'contain',
+    color: '#000',
+  },
+  bellIcon: {
+    width: vh * 3,
+    height: vh * 3,
+    resizeMode: 'contain',
+    color: '#000',
+    tintColor: 'white',
   },
 });
 

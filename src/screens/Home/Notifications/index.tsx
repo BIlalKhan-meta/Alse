@@ -354,11 +354,12 @@ const Notifications: React.FC = ({navigation}) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <GlobalHeader />
+      <GlobalHeader icon={true} />
 
       <View style={styles.notificationCounter}>
         <Text style={styles.notificationCounterText}>
-          You have 3 notifications
+          You have{' '}
+          <Text style={styles.notificationCounterNumber}>3 notifications</Text>
         </Text>
       </View>
 
@@ -398,6 +399,10 @@ const styles = StyleSheet.create({
   notificationCounterText: {
     fontSize: 14,
     color: '#333',
+  },
+  notificationCounterNumber: {
+    fontSize: 14,
+    color: colors.themeColor,
   },
   sectionHeader: {
     fontSize: 16,
