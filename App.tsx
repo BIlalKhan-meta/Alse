@@ -20,6 +20,7 @@ import {
   ReanimatedLogLevel,
 } from 'react-native-reanimated';
 import {ZoomVideoSdkProvider} from '@zoom/react-native-videosdk';
+import NetworkLoggerFAB from './src/components/NetworkLoggerFAB';
 
 const theme = {
   ...DefaultTheme,
@@ -85,6 +86,7 @@ function App(): React.JSX.Element {
 
           <NavigationContainer theme={theme}>
             <MainNavigation />
+            <NetworkLoggerFAB />
           </NavigationContainer>
 
           <Toast />

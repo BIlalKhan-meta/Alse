@@ -7894,6 +7894,11 @@ react-native-modal-datetime-picker@^18.0.0:
   dependencies:
     prop-types "^15.7.2"
 
+react-native-network-logger@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/react-native-network-logger/-/react-native-network-logger-2.0.0.tgz#3c3dd953b60617126699b2c798b6244273b06bb3"
+  integrity sha512-R4nNyRcsYXfaiCCwAt2iIpd0hyZCfhsAoXjdyt8M2rePevs1JXTMqfY5CZSU/ZMzF0MuCrHd3Njd0720EfOMdw==
+
 react-native-pager-view@^6.3.3:
   version "6.7.0"
   resolved "https://registry.npmjs.org/react-native-pager-view/-/react-native-pager-view-6.7.0.tgz"

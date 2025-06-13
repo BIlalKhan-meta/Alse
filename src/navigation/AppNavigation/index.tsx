@@ -46,6 +46,7 @@ import AddStory from '../../screens/AddStory';
 import {OutgoingCall} from '../../screens/OutgoingCall';
 import AcknowledgeCall from '../../screens/AcknowledgeCall';
 import IncomingCall from '../../screens/IncomingCall';
+import NetworkLogger from 'react-native-network-logger';
 
 const AppNavigation = () => {
   const Stack = createNativeStackNavigator();
@@ -226,6 +227,11 @@ const AppNavigation = () => {
           name="EditShop"
           component={EditShop}
           options={NavigationOptions}
+        />
+        <Stack.Screen
+          name="NetworkLogger"
+          component={NetworkLogger}
+          options={{ headerShown: true }}
         />
       </>
     </Stack.Navigator>
