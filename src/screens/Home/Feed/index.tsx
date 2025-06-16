@@ -39,6 +39,7 @@ import {
 import eventEmitter, {EVENT_TYPES} from '../../../utils/EventEmitter';
 import LikesModal from '../../../components/LikesModal';
 import Stories from '../../../components/Stories';
+import CardDisplay from '../../../components/CardComponent/CardDisplay';
 
 const Home: React.FC = () => {
   const flatListRef = useRef(null);
@@ -375,7 +376,7 @@ const Home: React.FC = () => {
               activeOpacity={0.8}
               onPress={() => navigation.navigate('CreatePost')}>
               <View pointerEvents="none">
-                <CardComponent
+                <CardDisplay
                   onTextInput={() => navigation.navigate('CreatePost')}
                   onVideoPress={() => navigation.navigate('CreatePost')}
                   onImagePress={() => navigation.navigate('CreatePost')}
