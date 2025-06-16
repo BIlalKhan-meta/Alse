@@ -326,7 +326,7 @@ const Stories = () => {
           return (
             <DropdownMenu.Root>
               <DropdownMenu.Trigger>
-                <View style={styles.squareAvatarContainer}>
+                <View>
                   <AddStoryIcon />
                 </View>
                 <Text style={styles.storyName}>Add Story</Text>
@@ -581,18 +581,16 @@ const Stories = () => {
           marginVertical: 5,
           gap: 10,
         }}
-        containerStyle={{
-          borderRadius: 2,
-        }}
-        avatarSize={60}
+        avatarSize={65}
         avatarWrapperStyle={styles.squareAvatarWrapper}
-        avatarStyle={styles.squareAvatar}
-        showName
+        avatarContainerStyle={styles.squareAvatarContainer}
+        avatarStyle={styles.squareAvatarImage} // Make sure to add this prop
+        showName={true}
         nameTextStyle={{
-          paddingHorizontal: 10,
-          marginLeft: 15,
           fontSize: 12,
           marginTop: 4,
+          marginLeft: 13,
+          textAlign: 'center',
         }}
       />
     </View>
@@ -610,22 +608,33 @@ const styles = StyleSheet.create({
   squareAvatarContainer: {
     width: 70,
     height: 70,
-    borderRadius: 15, // Less rounded, more square-like
+    borderRadius: 8, // Much less rounded, more square-like
     overflow: 'hidden',
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#f0f0f0',
   },
   squareAvatarWrapper: {
-    borderRadius: 15, // Match the container
-    overflow: 'hidden',
+    width: 60,
+    height: 60,
+    borderRadius: 6, // More square-like corners
+    padding: 2, // This creates space between border and image
+    borderWidth: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  squareAvatarImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 4, // Even smaller radius for the actual image
   },
   squareAvatar: {
-    borderRadius: 15, // Match the container
+    borderRadius: 20, // Match the container
   },
+  // Update in the styles
   squareGradientContainer: {
     borderWidth: 3,
-    borderRadius: 15, // Less rounded corners for more square-like appearance
+    borderRadius: 8, // Much less rounded corners
     height: 70,
     width: 70,
     overflow: 'hidden',
@@ -633,7 +642,7 @@ const styles = StyleSheet.create({
   squareImage: {
     width: 64,
     height: 64,
-    borderRadius: 12, // Slightly less than container for inner image
+    borderRadius: 6, // Smaller radius for more square-like appearance
   },
   avatarCenter: {
     display: 'flex',
@@ -656,7 +665,6 @@ const styles = StyleSheet.create({
   storyName: {
     textAlign: 'center',
     fontSize: 12,
-    marginTop: 1,
     marginBottom: 2,
     color: '#333',
   },
