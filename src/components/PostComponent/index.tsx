@@ -25,6 +25,7 @@ import {selectUserProfile} from '../../store/slices/authSlice';
 import {createPost} from '../../api/home';
 import Video from 'react-native-video';
 import {getTimeOffset} from '../../utils/index';
+import {HeartIcon} from 'lucide-react-native';
 
 interface PostProps {
   id?: number;
@@ -176,148 +177,191 @@ const PostComponent: React.FC<PostProps> = ({
   return (
     <Pressable onPress={onCardPress}>
       <Card style={styles.card}>
-        <View style={styles.header}>
-          <View style={styles.userInfo}>
-            <TouchableOpacity disabled={myAccount} onPress={goToProfile}>
-              <Image
-                source={avatar ? {uri: avatar} : images.user}
-                style={styles.avatar}
-              />
-            </TouchableOpacity>
-            <View>
-              <InterBold style={styles.name}>{name}</InterBold>
-              <View style={styles.userMeta}>
-                <InterRegular style={styles.country}>{country}</InterRegular>
+        {/* Header section - only for text posts */}
+        {!postImage && (
+          <View
+            style={[
+              styles.header,
+              {
+                borderBottomWidth: 0.5,
+                borderBottomColor: '#eee',
+                paddingBottom: 10,
+              },
+            ]}>
+            <View style={styles.userInfo}>
+              <TouchableOpacity disabled={myAccount} onPress={goToProfile}>
+                <Image
+                  source={avatar ? {uri: avatar} : images.user}
+                  style={styles.avatar}
+                />
+              </TouchableOpacity>
+              <View>
+                <InterBold style={styles.name}>{name}</InterBold>
                 <InterRegular style={styles.time}>{time}</InterRegular>
               </View>
             </View>
+            <TouchableOpacity style={styles.moreButton} onPress={onDotPress}>
+              <Image source={images.saveIcon} style={styles.saveIcon} />
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity style={{padding: vh}} onPress={onDotPress}>
-            <Image source={images.dots} style={styles.threeDots} />
-          </TouchableOpacity>
-        </View>
+        )}
 
-        {/* <InterLight style={styles.postText}>{postText}</InterLight> */}
-        <View style={styles.postContent}>{renderPostText()}</View>
-        {/* {postImage && (
-          <Image source={{uri: postImage}} style={styles.postImage} />
-        )} */}
-
+        {/* Post image section with overlaid header and interactions */}
         {postImage ? (
-          mediaType === 'image' ? (
-            <Image source={{uri: postImage}} style={styles.postImage} />
-          ) : isFocused ? (
-            <View>
-              {videoLoad ? (
-                <ActivityIndicator
-                  size="large"
-                  color="white"
-                  style={{
-                    position: 'absolute',
-                    right: '45%',
-                    top: vh * 11,
-                    zIndex: 100,
-                  }}
-                />
-              ) : null}
-              <TouchableOpacity
-                activeOpacity={0.9}
-                style={{zIndex: 99}}
-                onPress={handleVideoPause}>
-                <Video
-                  onReadyForDisplay={() => setVideoLoad(false)}
-                  source={{uri: postImage}}
-                  style={styles.postImage}
-                  resizeMode="cover"
-                  repeat={true}
-                  fullScreen
-                  paused={isPaused}
-                  onBuffer={res => {
-                    if (res?.isBuffering) {
-                      setVideoLoad(true);
-                    }
-                  }}
-                  // thumbnail={{uri: user?.avatar}}
-                  ignoreSilentSwitch={'ignore'}
+          <View style={styles.mediaContainer}>
+            {/* Image or video content */}
+            {mediaType === 'image' ? (
+              <Image source={{uri: postImage}} style={styles.postImage} />
+            ) : (
+              <View>
+                {videoLoad && (
+                  <ActivityIndicator
+                    size="large"
+                    color="white"
+                    style={styles.videoLoader}
+                  />
+                )}
+                <TouchableOpacity
+                  activeOpacity={0.9}
+                  style={{zIndex: 99}}
+                  onPress={handleVideoPause}>
+                  <Video
+                    onReadyForDisplay={() => setVideoLoad(false)}
+                    source={{uri: postImage}}
+                    style={styles.postImage}
+                    resizeMode="cover"
+                    repeat={true}
+                    paused={isPaused}
+                    onBuffer={res => {
+                      if (res?.isBuffering) {
+                        setVideoLoad(true);
+                      }
+                    }}
+                    ignoreSilentSwitch={'ignore'}
+                  />
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* Header overlay for image posts */}
+            <View style={styles.headerOverlay}>
+              <View style={styles.userInfo}>
+                <TouchableOpacity disabled={myAccount} onPress={goToProfile}>
+                  <Image
+                    source={avatar ? {uri: avatar} : images.user}
+                    style={styles.avatar}
+                  />
+                </TouchableOpacity>
+                <View>
+                  <Text style={styles.nameOverlay}>{name}</Text>
+                  <Text style={styles.timeOverlay}>{time}</Text>
+                </View>
+              </View>
+              <TouchableOpacity style={styles.moreButton} onPress={onDotPress}>
+                <Image
+                  source={images.saveIcon}
+                  style={[styles.threeDots, {tintColor: '#fff'}]}
                 />
               </TouchableOpacity>
             </View>
-          ) : (
-            <View
-              style={[
-                styles.postImage,
-                {backgroundColor: 'transparent'},
-              ]}></View>
-          )
+
+            {/* App logo overlay */}
+            <View style={styles.logoOverlay}>
+              <Image
+                source={images.logoIcon}
+                style={styles.centerLogo}
+                tintColor="#06B6D4"
+              />
+            </View>
+
+            {/* Right side interaction indicators */}
+            <View style={styles.sideInteractions}>
+              <TouchableOpacity style={styles.sideButton} onPress={handleLike}>
+                <Image
+                  // source={isLiked ? images.likeFill : images.like}
+                  source={images.heartLikeIcon}
+                  style={styles.sideIcon}
+                  tintColor={isLiked ? colors.blue : colors.white}
+                />
+                <Text style={styles.sideCount}>{numberLikes}</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.sideButton}
+                onPress={onCommnetPress}>
+                <Image
+                  source={images.commentIcon}
+                  style={styles.sideIcon}
+                  tintColor="#fff"
+                />
+                <Text style={styles.sideCount}>{comments}</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.sideButton} onPress={postShare}>
+                <Image
+                  source={images.shareIcon}
+                  style={styles.sideIcon}
+                  tintColor="#fff"
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
         ) : null}
 
-        {/* <Video
-          source={{uri: source}}
-          paused={false}
-          style={styles.media}
-          controls={control ? control : true}
-          resizeMode="cover"
-        /> */}
-        <View style={styles.postActions}>
-          <View style={styles.leftActions}>
-            <TouchableOpacity
-              onPress={onLikesModal}
-              style={{flexDirection: 'row'}}>
-              <Image
-                // source={images.like}
-                source={images.likeFill}
-                tintColor={colors.blue}
-                style={styles.icon}
-              />
-              <InterRegular style={styles.actionText}>
-                {numberLikes}
-              </InterRegular>
-            </TouchableOpacity>
-            <Image source={images.comment} style={styles.icon} />
-            <InterRegular style={styles.actionText}>{comments}</InterRegular>
-            <Image source={images.share} style={styles.icon} />
-            <InterRegular style={styles.actionText}>{share}</InterRegular>
+        {/* Post text content */}
+        <View style={styles.postContent}>
+          <Text
+            style={styles.postText}
+            numberOfLines={showFullText ? undefined : 2}>
+            {postText}
+            {postText && postText.length > maxTextLength && !showFullText && (
+              <Text style={styles.readMoreText} onPress={handleReadMoreToggle}>
+                {' '}
+                more
+              </Text>
+            )}
+          </Text>
+        </View>
+
+        {/* Post interactions for text-only posts */}
+        {!postImage && (
+          <View style={styles.textPostActions}>
+            <View style={styles.actionRow}>
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={handleLike}>
+                <Image
+                  // source={isLiked ? images.likeFill : images.like}
+                  source={images.heartLikeIcon}
+                  style={styles.HeartIcon}
+                  tintColor={isLiked ? colors.blue : colors.lightGrey}
+                />
+                <Text style={styles.actionText}>{numberLikes}</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={onCommnetPress}>
+                <Image
+                  source={images.commentIcon}
+                  style={styles.actionIcon}
+                  tintColor={colors.lightGrey}
+                />
+                <Text style={styles.actionText}>{comments}</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.actionButton} onPress={postShare}>
+                <Image
+                  source={images.shareIcon}
+                  style={styles.actionIcon}
+                  tintColor={colors.lightGrey}
+                />
+                <Text style={styles.actionText}>{share}</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-          {id != user?.id && (
-            <TouchableOpacity disabled={loading} onPress={onSavePress}>
-              <Image
-                source={isSaved ? images?.unsave : images.save}
-                style={styles.icon}
-              />
-            </TouchableOpacity>
-          )}
-        </View>
-        <View style={styles.separator} />
-        <View style={styles.bottomActions}>
-          <TouchableOpacity
-            style={styles.button}
-            disabled={loading}
-            onPress={handleLike}>
-            <Image
-              // source={images.like}
-              source={isLiked ? images.likeFill : images?.like}
-              style={styles.buttonIcon}
-              tintColor={isLiked ? colors.blue : null}
-            />
-            <Text style={styles.buttonText}>Like</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            disabled={loading}
-            style={styles.button}
-            onPress={onCommnetPress}>
-            <Image source={images.comment} style={styles.buttonIcon} />
-            <Text style={styles.buttonText}>Comment</Text>
-          </TouchableOpacity>
-          {id != user?.id && (
-            <TouchableOpacity
-              disabled={id == user?.id || shareLoader}
-              onPress={postShare}
-              style={styles.button}>
-              <Image source={images.share} style={styles.buttonIcon} />
-              <Text style={styles.buttonText}>Share</Text>
-            </TouchableOpacity>
-          )}
-        </View>
+        )}
+
         <ReportBlockModal
           isVisible={modalVisible}
           options={options}
@@ -331,107 +375,205 @@ const PostComponent: React.FC<PostProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    marginVertical: vh * 4,
+    marginVertical: vh * 2,
+    borderRadius: 16,
+    backgroundColor: '#fff',
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: vh * 2,
+    padding: 12,
   },
   userInfo: {
     flexDirection: 'row',
     alignItems: 'center',
   },
+
+  textPostActions: {
+    paddingHorizontal: 12,
+    paddingBottom: 12,
+    borderTopWidth: 0.5,
+    borderTopColor: '#eee',
+    marginTop: 8,
+  },
+
+  actionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingTop: 12,
+  },
+
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+  },
+
+  actionIcon: {
+    width: 20,
+    height: 20,
+    marginRight: 5,
+  },
+  HeartIcon: {
+    width: 25,
+    height: 22,
+    marginRight: 5,
+  },
+
+  actionText: {
+    fontSize: fontSizes.f12,
+    color: colors.lightGrey,
+  },
+
+  // Update header style to work for both cases
+  // header: {
+  //   flexDirection: 'row',
+  //   justifyContent: 'space-between',
+  //   alignItems: 'center',
+  //   padding: 12,
+  // },
+
+  headerOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 12,
+    zIndex: 10,
+    // backgroundColor: 'rgba(0,0,0,0.2)', // Semi-transparent background for better readability
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+  },
+
+  nameOverlay: {
+    fontSize: fontSizes.f14,
+    color: '#ffffff',
+    fontWeight: 'bold',
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: {width: -1, height: 1},
+    textShadowRadius: 10,
+  },
+
+  timeOverlay: {
+    fontSize: fontSizes.f12,
+    color: '#ffffff',
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: {width: -1, height: 1},
+    textShadowRadius: 10,
+  },
+
+  // You can keep the existing avatar style or adjust as needed
+
+  // Update mediaContainer to not have padding at the top
+  mediaContainer: {
+    position: 'relative',
+    width: '100%',
+    height: vh * 40,
+    overflow: 'hidden',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+  },
   avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     marginRight: 10,
   },
   name: {
-    fontSize: fontSizes.f16,
+    fontSize: fontSizes.f14,
     color: colors.black,
     fontWeight: 'bold',
-  },
-  userMeta: {
-    flexDirection: 'row',
-  },
-  country: {
-    fontSize: fontSizes.f12,
-    color: colors.lightGrey,
   },
   time: {
     fontSize: fontSizes.f12,
     color: colors.lightGrey,
   },
+  moreButton: {
+    padding: 8,
+  },
   threeDots: {
-    width: vh * 2,
-    height: vh * 2,
+    width: 16,
+    height: 16,
     resizeMode: 'contain',
   },
-
-  postImage: {
-    width: '100%',
-    height: vh * 25,
-    borderRadius: 10,
-    marginBottom: 10,
-  },
-  postActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  leftActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  icon: {
+  saveIcon: {
+    tintColor: '#000',
+    padding: 5,
     width: 20,
     height: 20,
-    marginRight: 5,
+    resizeMode: 'contain',
   },
-  actionText: {
-    marginRight: 20,
-    fontSize: fontSizes.f12,
-    color: colors.inputText,
+  // mediaContainer: {
+  //   position: 'relative',
+  //   width: '100%',
+  //   height: vh * 40,
+  // },
+  postImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+    borderRadius: 10,
   },
-  separator: {
-    height: 1,
-    backgroundColor: '#ddd',
-    marginVertical: 10,
+  logoOverlay: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: [{translateX: -15}, {translateY: -15}],
+    zIndex: 10,
   },
-  bottomActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  button: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  buttonIcon: {
+  centerLogo: {
     width: 30,
     height: 30,
-    marginRight: 5,
+    resizeMode: 'contain',
   },
-  buttonText: {
-    fontSize: fontSizes.f14,
-    color: colors.inputText,
+  sideInteractions: {
+    position: 'absolute',
+    right: 15,
+    bottom: 30,
+    alignItems: 'center',
+  },
+  sideButton: {
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  sideIcon: {
+    width: 29,
+    height: 28,
+  },
+  sideCount: {
+    color: '#fff',
+    fontSize: fontSizes.f12,
+    marginTop: 4,
+  },
+  postContent: {
+    padding: 12,
   },
   postText: {
     fontSize: fontSizes.f14,
-    // marginBottom: 10,
     color: colors.inputText,
+    lineHeight: 20,
   },
-  postContent: {
-    // marginVertical: 10,
-    marginBottom: vh * 2,
-  },
-
   readMoreText: {
-    color: colors.themeColor,
-    // marginTop: 5,
+    color: colors.lightGrey,
+  },
+  videoLoader: {
+    position: 'absolute',
+    left: '50%',
+    top: '50%',
+    zIndex: 100,
   },
 });
 

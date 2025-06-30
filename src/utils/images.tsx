@@ -67,7 +67,10 @@ export const images = {
   alseLogo: require('../assets/Icons/Alse.png'),
   videoTab: require('../assets/Icons/videoTab.png'),
   smsIcon: require('../assets/Icons/sms-notification.png'),
-
+  saveIcon: require('../assets/Icons/saveIcon.png'),
+  commentIcon: require('../assets/Icons/commentIcon.png'),
+  shareIcon: require('../assets/Icons/shareIcon.png'),
+  heartLikeIcon: require('../assets/Icons/likeIcon.png'),
   //Imagesssss/////
   shop1: require('../assets/images/shop1.png'),
   shop11: require('../assets/images/shop11.png'),
