@@ -375,7 +375,7 @@ const PostComponent: React.FC<PostProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    marginVertical: vh * 2,
+    marginVertical: vh * 1,
     borderRadius: 16,
     backgroundColor: '#fff',
     overflow: 'hidden',

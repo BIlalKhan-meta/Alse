@@ -12,6 +12,7 @@ import {selectUserProfile} from '../../store/slices/authSlice';
 import {createChat, userFollow, userUnFollow} from '../../api/home';
 import Toast from 'react-native-toast-message';
 import {vw} from '../../constant';
+import InterRegular from '../Text/InterRegular';
 
 interface ProfileCardProps {
   name: string;
@@ -23,6 +24,11 @@ interface ProfileCardProps {
   isRequested: boolean;
   onPress: () => void;
   id: number;
+  username?: string;
+  location?: string;
+  postsCount?: number;
+  followersCount?: number;
+  followingCount?: number;
 }
 
 const ProfileCard: React.FC<ProfileCardProps> = ({
@@ -35,6 +41,11 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
   isRequested,
   is_private,
   id,
+  username = '@alsedaise',
+  location = 'Jersey, NY',
+  postsCount,
+  followersCount = 582,
+  followingCount = 321,
 }) => {
   const navigation = useNavigation();
   const user = useSelector(selectUserProfile);
@@ -159,79 +170,148 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
   };
 
   return (
+    // <View style={styles.container}>
+    //   {/* Header */}
+    //   {/* <View style={styles.header}>
+
+    //     <TouchableOpacity onPress={() => navigation.goBack()}>
+    //       <Image source={images.backicon} style={styles.icon} />
+    //     </TouchableOpacity>
+
+    //     <Image
+    //       source={avatar ? {uri: avatar} : images.user}
+    //       style={styles.avatar}
+    //     />
+
+    //     <TouchableOpacity style={styles.threeDots} onPress={onPress}>
+    //       <Image source={images.dots} style={styles.imageStyle} />
+    //     </TouchableOpacity>
+    //   </View> */}
+
+    //   {/* Profile Info */}
+    //   <View style={styles.profile}>
+    //     <InterBold style={styles.name}>{name}</InterBold>
+    //     <InterMedium style={styles.description}>{description}</InterMedium>
+    //     <InterMedium style={styles.stats}>{stats}</InterMedium>
+    //     {/* Follow Button */}
+
+    //     {user?.id !== id && (
+    //       <View style={{flexDirection: 'row', alignItems: 'center'}}>
+    //         {follow === 'following' ? (
+    //           <View
+    //             style={{
+    //               flexDirection: 'row',
+    //               justifyContent: 'space-between',
+    //               width: '100%',
+    //             }}>
+    //             <CustomButton
+    //               style={styles.smallbtn}
+    //               onPress={handleFollow}
+    //               loading={followLoader}>
+    //               {'Following'}
+    //             </CustomButton>
+    //             <CustomButton
+    //               style={styles.smallbtn}
+    //               onPress={handleMessage}
+    //               loading={messageLoader}>
+    //               {'Message'}
+    //             </CustomButton>
+    //           </View>
+    //         ) : follow === 'requested' ? (
+    //           <CustomButton
+    //             style={styles.followButton}
+    //             onPress={handleFollow}
+    //             loading={followLoader}>
+    //             {'Request Sent'}
+    //           </CustomButton>
+    //         ) : (
+    //           <CustomButton
+    //             style={styles.followButton}
+    //             onPress={handleFollow}
+    //             loading={followLoader}>
+    //             {'Follow'}
+    //           </CustomButton>
+    //         )}
+    //         {/* <CustomButton
+    //         style={styles.followButton}
+    //         onPress={handleFollow}
+    //         loading={followLoader}>
+    //         {follow ? 'Following' : 'Follow'}
+    //       </CustomButton> */}
+    //       </View>
+    //     )}
+    //   </View>
+    // </View>
+
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        {/* Back Icon */}
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Image source={images.backicon} style={styles.icon} />
-        </TouchableOpacity>
-
-        {/* Avatar */}
-        <Image
-          source={avatar ? {uri: avatar} : images.user}
-          style={styles.avatar}
-        />
-
-        {/* Three Dots Icon */}
-        <TouchableOpacity style={styles.threeDots} onPress={onPress}>
-          <Image source={images.dots} style={styles.imageStyle} />
-        </TouchableOpacity>
+      {/* Header with profile info */}
+      <View style={styles.headerContainer}>
+        <View style={styles.profileImageContainer}>
+          <Image
+            source={avatar ? {uri: avatar} : images.user}
+            style={styles.profileImage}
+          />
+        </View>
+        <View style={styles.userInfoContainer}>
+          <View style={styles.nameContainer}>
+            <View>
+              <InterBold style={styles.name}>{name}</InterBold>
+              <InterRegular style={styles.username}>{username}</InterRegular>
+            </View>
+            <InterRegular style={styles.location}>{location}</InterRegular>
+          </View>
+        </View>
       </View>
 
-      {/* Profile Info */}
-      <View style={styles.profile}>
-        <InterBold style={styles.name}>{name}</InterBold>
-        <InterMedium style={styles.description}>{description}</InterMedium>
-        <InterMedium style={styles.stats}>{stats}</InterMedium>
-        {/* Follow Button */}
+      <InterRegular style={styles.bio}>
+        {description ||
+          'Lorem Ipsum is simply dummy text of the printing and typesetting industry.'}
+      </InterRegular>
+      {/* Stats row */}
+      <View style={styles.statsContainer}>
+        <View style={styles.statItem}>
+          <InterBold style={styles.statNumber}>{postsCount}</InterBold>
+          <InterRegular style={styles.statLabel}>Posts</InterRegular>
+        </View>
+        <View style={styles.verticalDivider} />
+        <View style={styles.statItem}>
+          <InterBold style={styles.statNumber}>{followersCount}</InterBold>
+          <InterRegular style={styles.statLabel}>Followers</InterRegular>
+        </View>
+        <View style={styles.verticalDivider} />
+        <View style={styles.statItem}>
+          <InterBold style={styles.statNumber}>{followingCount}</InterBold>
+          <InterRegular style={styles.statLabel}>Following</InterRegular>
+        </View>
+      </View>
 
-        {user?.id !== id && (
-          <View style={{flexDirection: 'row', alignItems: 'center'}}>
-            {follow === 'following' ? (
-              <View
-                style={{
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  width: '100%',
-                }}>
-                <CustomButton
-                  style={styles.smallbtn}
-                  onPress={handleFollow}
-                  loading={followLoader}>
-                  {'Following'}
-                </CustomButton>
-                <CustomButton
-                  style={styles.smallbtn}
-                  onPress={handleMessage}
-                  loading={messageLoader}>
-                  {'Message'}
-                </CustomButton>
-              </View>
-            ) : follow === 'requested' ? (
-              <CustomButton
-                style={styles.followButton}
-                onPress={handleFollow}
-                loading={followLoader}>
-                {'Request Sent'}
-              </CustomButton>
-            ) : (
-              <CustomButton
-                style={styles.followButton}
-                onPress={handleFollow}
-                loading={followLoader}>
-                {'Follow'}
-              </CustomButton>
-            )}
-            {/* <CustomButton
+      {/* Buttons */}
+      {user?.id !== id && (
+        <View style={styles.buttonContainer}>
+          <CustomButton
             style={styles.followButton}
             onPress={handleFollow}
             loading={followLoader}>
-            {follow ? 'Following' : 'Follow'}
-          </CustomButton> */}
-          </View>
-        )}
-      </View>
+            {follow === 'following'
+              ? 'Following'
+              : follow === 'requested'
+              ? 'Requested'
+              : 'Follow'}
+          </CustomButton>
+          <CustomButton
+            style={styles.messageButton}
+            txtstyle={{color: 'black'}}
+            onPress={handleMessage}
+            loading={messageLoader}>
+            {'Message'}
+          </CustomButton>
+        </View>
+      )}
+
+      {/* Three dots menu button */}
+      {/* <TouchableOpacity style={styles.menuButton} onPress={onPress}>
+        <Image source={images.dots} style={styles.menuIcon} />
+      </TouchableOpacity> */}
     </View>
   );
 };

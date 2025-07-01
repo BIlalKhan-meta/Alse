@@ -61,7 +61,7 @@ export const images = {
   endCall: require('../assets/Icons/endCall.png'),
   unmute: require('../assets/Icons/unmute.png'),
   cancelCall: require('../assets/Icons/cancelCall.png'),
-  bellIcon: require('../assets/Icons/Group.png'),
+  bellIcon: require('../assets/Icons/Vector.png'),
   settingsIcon: require('../assets/Icons/settings.png'),
   messageIcon: require('../assets/Icons/message.png'),
   alseLogo: require('../assets/Icons/Alse.png'),

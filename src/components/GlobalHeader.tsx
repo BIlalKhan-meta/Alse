@@ -4,6 +4,7 @@ import {Image} from 'react-native';
 import {images} from '../utils/images';
 import {vh, vw} from '../constant';
 import {useNavigation} from '@react-navigation/native';
+import {colors} from '../utils/theme';
 
 interface GlobalHeaderProps {
   title?: string;
@@ -24,13 +25,11 @@ const GlobalHeader: React.FC<GlobalHeaderProps> = ({title = 'Alse', icon}) => {
         <TouchableOpacity
           style={styles.iconButton}
           onPress={handleNotificationPress}>
-          <View
-            style={[
-              styles.notificationcontainer,
-              icon && styles.highlightedContainer,
-            ]}>
-            <Image source={images.bellIcon} style={styles.bellIcon} />
-          </View>
+          {icon && (
+            <View style={[styles.notificationcontainer]}>
+              <Image source={images.bellIcon} style={styles.bellIcon} />
+            </View>
+          )}
         </TouchableOpacity>
         <TouchableOpacity style={styles.iconButton}>
           <View style={styles.notificationcontainer}>
@@ -55,8 +54,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingTop: vh * 2,
+    paddingHorizontal: 6,
+    paddingTop: vh * 1,
     paddingBottom: 10,
     backgroundColor: '#fff',
   },
@@ -80,9 +79,11 @@ const styles = StyleSheet.create({
     marginHorizontal: vw * 1,
     alignItems: 'center',
     justifyContent: 'center',
+    tintColor: '#000',
   },
   highlightedContainer: {
-    backgroundColor: '#8E8E8E',
+    //set l;ightgrey background color when icon is pressed
+    backgroundColor: '#E0E0E0',
     borderWidth: 1,
     borderColor: '#CCCCCC',
   },
@@ -97,7 +98,7 @@ const styles = StyleSheet.create({
     height: vh * 3,
     resizeMode: 'contain',
     color: '#000',
-    tintColor: 'white',
+    tintColor: colors.midDark,
   },
 });
 

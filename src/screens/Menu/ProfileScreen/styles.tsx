@@ -15,6 +15,35 @@ const styles = StyleSheet.create({
     //   alignItems: 'center',
     marginBottom: 20,
   },
+
+  gridContainer: {
+    padding: 2,
+    marginTop: vh * 2,
+    flexDirection: 'column',
+  },
+  gridRow: {
+    flexDirection: 'row',
+    marginBottom: 2,
+  },
+  smallImagesColumn: {
+    flexDirection: 'column',
+  },
+  smallGridItem: {
+    width: (vw * 100 - 12) / 3,
+    height: (vw * 100 - 12) / 3,
+    margin: 1,
+  },
+  largeGridItem: {
+    width: ((vw * 100 - 12) / 3) * 2,
+    height: ((vw * 100 - 8) / 3) * 2,
+    margin: 1,
+  },
+  gridImage: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#f0f0f0', // Placeholder color while loading
+    borderRadius: 10,
+  },
   icon: {
     width: 30,
     height: 30,

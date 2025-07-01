@@ -14,11 +14,13 @@ export const colors = {
   lightGrey: '#666666',
   blue: '#169BD5',
   borderColor: '#D9D9D9',
-  headerColor: '#EDFAFA',
+  headerColor: '#FFFFFF',
   darkGray: '#666666',
   camBg: '#E7F7FE',
   inputBorder: '#E3E3E3',
-  green: '#0C959B'
+  green: '#0C959B',
+  midGray: '#EFEFEF',
+  midDark: '#8E8E8E',
 };
 
 export const appShadow: Record<string, any> = {
