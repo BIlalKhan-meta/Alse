@@ -2,6 +2,8 @@ import React from 'react';
 import {Image, TouchableOpacity, View, Text} from 'react-native';
 import styles from './styles';
 import {images} from '../../utils/images';
+import {Group} from 'lucide-react-native';
+import GroupDetailsScreen from '../../screens/Groups/GroupDetailsScreen';
 
 interface RouteParams {
   screenName?: string;

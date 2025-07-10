@@ -1,5 +1,5 @@
 import React, {useEffect, useRef, useState} from 'react';
-import {View, FlatList, TouchableOpacity} from 'react-native';
+import {View, FlatList, TouchableOpacity, Animated} from 'react-native';
 import {images} from '../../../utils/images';
 import CardComponent from '../../../components/CardComponent';
 import {
@@ -40,6 +40,7 @@ import eventEmitter, {EVENT_TYPES} from '../../../utils/EventEmitter';
 import LikesModal from '../../../components/LikesModal';
 import Stories from '../../../components/Stories';
 import CardDisplay from '../../../components/CardComponent/CardDisplay';
+import {Camera, Image, Pencil, Plus, Search} from 'lucide-react-native';
 
 const Home: React.FC = () => {
   const flatListRef = useRef(null);
@@ -85,6 +86,9 @@ const Home: React.FC = () => {
 
   const [shareLoader, setShareLoader] = useState(false);
 
+  const [isFabOpen, setIsFabOpen] = useState(false);
+  const animation = useRef(new Animated.Value(0)).current;
+
   const closePaymentProcess = async remoteMessage => {
     console.log('remoteMesssaadssage ==>', remoteMessage);
     await InAppBrowser.isAvailable();
@@ -93,6 +97,18 @@ const Home: React.FC = () => {
       eventEmitter.emit(EVENT_TYPES.CHECKOUT_TRIGGER, remoteMessage);
     }
     // navigation.navigate('Marketplace', {screen: 'MyOrders'});
+  };
+
+  const toggleFab = () => {
+    const toValue = isFabOpen ? 0 : 1;
+
+    Animated.spring(animation, {
+      toValue,
+      friction: 5,
+      useNativeDriver: true,
+    }).start();
+
+    setIsFabOpen(!isFabOpen);
   };
 
   useEffect(() => {
@@ -355,128 +371,191 @@ const Home: React.FC = () => {
   );
 
   return (
-    <View style={{paddingHorizontal: vh * 2}}>
-      <Stories />
-      {/* <TouchableWithoutFeedback onPress={() => handleDotPress(null)}> */}
-      <View>
-        <FlatList
-          ref={flatListRef}
-          onViewableItemsChanged={onViewableItemsChanged}
-          viewabilityConfig={{itemVisiblePercentThreshold: 50}}
-          data={posts}
-          onRefresh={getApi}
-          refreshing={loader}
-          renderItem={renderPost}
-          contentContainerStyle={{paddingBottom: vh * 10}}
-          keyExtractor={item => item.id.toString()}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={renderEmpty}
-          ListHeaderComponent={() => (
-            <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={() => navigation.navigate('CreatePost')}>
-              <View pointerEvents="none">
-                <CardDisplay
-                  onTextInput={() => navigation.navigate('CreatePost')}
-                  onVideoPress={() => navigation.navigate('CreatePost')}
-                  onImagePress={() => navigation.navigate('CreatePost')}
-                />
+    <View style={{flex: 1}}>
+      <View style={{paddingHorizontal: vh * 2, flex: 1}}>
+        <Stories />
+        {/* <TouchableWithoutFeedback onPress={() => handleDotPress(null)}> */}
+        <View>
+          <FlatList
+            ref={flatListRef}
+            onViewableItemsChanged={onViewableItemsChanged}
+            viewabilityConfig={{itemVisiblePercentThreshold: 50}}
+            data={posts}
+            onRefresh={getApi}
+            refreshing={loader}
+            renderItem={renderPost}
+            contentContainerStyle={{paddingBottom: vh * 10}}
+            keyExtractor={item => item.id.toString()}
+            showsVerticalScrollIndicator={false}
+            ListEmptyComponent={renderEmpty}
+            ListHeaderComponent={() => (
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => navigation.navigate('CreatePost')}>
+                <View pointerEvents="none">
+                  <CardDisplay
+                    onTextInput={() => navigation.navigate('CreatePost')}
+                    onVideoPress={() => navigation.navigate('CreatePost')}
+                    onImagePress={() => navigation.navigate('CreatePost')}
+                  />
+                </View>
+              </TouchableOpacity>
+            )}
+          />
+
+          {/* FAB Container */}
+          <View style={styles.fabMenuContainer}>
+            {/* Menu options */}
+            {isFabOpen && (
+              <View style={styles.menuContainer}>
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={() => {
+                    toggleFab();
+                    // Add chat functionality
+                  }}>
+                  <InterRegular style={styles.menuItemText}>Chat</InterRegular>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={() => {
+                    toggleFab();
+                    navigation.navigate('Groups'); // Navigate to Group screen
+                  }}>
+                  <InterRegular style={styles.menuItemText}>Group</InterRegular>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={() => {
+                    toggleFab();
+                    // Add story functionality
+                  }}>
+                  <InterRegular style={styles.menuItemText}>Story</InterRegular>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={() => {
+                    toggleFab();
+                    navigation.navigate('CreatePost');
+                  }}>
+                  <InterRegular style={styles.menuItemText}>Post</InterRegular>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={() => {
+                    toggleFab();
+                    // Add reel functionality
+                  }}>
+                  <InterRegular style={styles.menuItemText}>Reel</InterRegular>
+                </TouchableOpacity>
               </View>
+            )}
+
+            {/* Main FAB Button */}
+            <TouchableOpacity
+              style={styles.fabButton}
+              activeOpacity={0.8}
+              onPress={toggleFab}>
+              <Plus size={24} color="#fff" />
             </TouchableOpacity>
-          )}
-        />
+          </View>
 
-        <CommentsModal
-          visible={commentsVisible.visiblity}
-          closeModal={() => {
-            setCommentsVisible({visiblity: false, comments: [], id: null});
-            getApi();
-          }}
-          // icon={CheckedIcon}
-          title="Successfully"
-          message="Password has been updated successfully"
-          buttonText="Apply"
-          comments={commentsVisible?.comments}
-          postId={commentsVisible?.id}
-        />
+          <CommentsModal
+            visible={commentsVisible.visiblity}
+            closeModal={() => {
+              setCommentsVisible({visiblity: false, comments: [], id: null});
+              getApi();
+            }}
+            // icon={CheckedIcon}
+            title="Successfully"
+            message="Password has been updated successfully"
+            buttonText="Apply"
+            comments={commentsVisible?.comments}
+            postId={commentsVisible?.id}
+          />
 
-        <LikesModal
-          visible={likesVisible.visiblity}
-          likes={likesVisible.likes}
-          closeModal={() => {
-            setLikesVisible({visiblity: false, likes: [], id: null});
-            getApi();
-          }}
-        />
+          <LikesModal
+            visible={likesVisible.visiblity}
+            likes={likesVisible.likes}
+            closeModal={() => {
+              setLikesVisible({visiblity: false, likes: [], id: null});
+              getApi();
+            }}
+          />
 
-        <ReactModal
-          visible={reactVisible}
-          closeModal={() => setrRactVisible(false)}
-          reactions={reactions}
-        />
+          <ReactModal
+            visible={reactVisible}
+            closeModal={() => setrRactVisible(false)}
+            reactions={reactions}
+          />
 
-        <GeneralModal
-          visible={deleteVisible.visibility}
-          closeModal={() =>
-            setDeleteVisible({
-              visibility: false,
-              id: null,
-            })
-          }
-          icon={images.qmark}
-          title="Delete Post"
-          message="Are you sure you want to delete this Post?"
-          SecondaryText1="Yes"
-          SecondaryText2="No"
-          onPress={handleDelete}
-          secondaryBtn={true}
-          loading={reportLoader}
-        />
+          <GeneralModal
+            visible={deleteVisible.visibility}
+            closeModal={() =>
+              setDeleteVisible({
+                visibility: false,
+                id: null,
+              })
+            }
+            icon={images.qmark}
+            title="Delete Post"
+            message="Are you sure you want to delete this Post?"
+            SecondaryText1="Yes"
+            SecondaryText2="No"
+            onPress={handleDelete}
+            secondaryBtn={true}
+            loading={reportLoader}
+          />
 
-        <GeneralModal
-          visible={deleteSuccess}
-          closeModal={() => setDeleteSuccess(false)}
-          icon={images.checkedIcon}
-          title="Delete Post"
-          message="Post has been deleted successfully."
-          buttonText="Ok"
-          onPress={() => {
-            setDeleteSuccess(false);
-          }}
-          primaryBtn={true}
-        />
+          <GeneralModal
+            visible={deleteSuccess}
+            closeModal={() => setDeleteSuccess(false)}
+            icon={images.checkedIcon}
+            title="Delete Post"
+            message="Post has been deleted successfully."
+            buttonText="Ok"
+            onPress={() => {
+              setDeleteSuccess(false);
+            }}
+            primaryBtn={true}
+          />
 
-        <GeneralModal
-          visible={reportVisible.visibility}
-          closeModal={() =>
-            setReportVisible({
-              visibility: false,
-              id: null,
-            })
-          }
-          icon={images.qmark}
-          title="Report Post"
-          message="Are you sure you want to report this post?"
-          SecondaryText1="Yes"
-          SecondaryText2="No"
-          onPress={handleReport}
-          secondaryBtn={true}
-          loading={reportLoader}
-        />
+          <GeneralModal
+            visible={reportVisible.visibility}
+            closeModal={() =>
+              setReportVisible({
+                visibility: false,
+                id: null,
+              })
+            }
+            icon={images.qmark}
+            title="Report Post"
+            message="Are you sure you want to report this post?"
+            SecondaryText1="Yes"
+            SecondaryText2="No"
+            onPress={handleReport}
+            secondaryBtn={true}
+            loading={reportLoader}
+          />
 
-        <GeneralModal
-          visible={reportSuccess}
-          closeModal={() => setReportSuccess(false)}
-          icon={images.checkedIcon}
-          title="Report Post"
-          message="Post has been reported successfully!"
-          buttonText="Ok"
-          onPress={() => {
-            setReportSuccess(false);
-            // navigation.navigate("Profile", { account: account })
-          }}
-          primaryBtn={true}
-        />
+          <GeneralModal
+            visible={reportSuccess}
+            closeModal={() => setReportSuccess(false)}
+            icon={images.checkedIcon}
+            title="Report Post"
+            message="Post has been reported successfully!"
+            buttonText="Ok"
+            onPress={() => {
+              setReportSuccess(false);
+              // navigation.navigate("Profile", { account: account })
+            }}
+            primaryBtn={true}
+          />
+        </View>
       </View>
       {/* </TouchableWithoutFeedback> */}
     </View>

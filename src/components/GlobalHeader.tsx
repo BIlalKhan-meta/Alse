@@ -97,8 +97,7 @@ const styles = StyleSheet.create({
     width: vh * 3,
     height: vh * 3,
     resizeMode: 'contain',
-    color: '#000',
-    tintColor: colors.midDark,
+    tintColor: '#000',
   },
 });
 

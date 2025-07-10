@@ -47,6 +47,9 @@ import {OutgoingCall} from '../../screens/OutgoingCall';
 import AcknowledgeCall from '../../screens/AcknowledgeCall';
 import IncomingCall from '../../screens/IncomingCall';
 import NetworkLogger from 'react-native-network-logger';
+import Groups from '../../screens/Groups';
+import GroupDetailsScreen from '../../screens/Groups/GroupDetailsScreen';
+import CreateGroup from '../../screens/Groups/CreateGroup';
 
 const AppNavigation = () => {
   const Stack = createNativeStackNavigator();
@@ -92,6 +95,19 @@ const AppNavigation = () => {
           component={CreatePost}
           options={NavigationOptions}
         />
+        <Stack.Screen
+          name="Groups"
+          component={Groups}
+          // options={NavigationOptions}
+        />
+        <Stack.Screen
+          name="GroupDetailsScreen"
+          component={GroupDetailsScreen}
+          // options={NavigationOptions}
+        />
+
+        <Stack.Screen name="CreateGroup" component={CreateGroup} />
+
         <Stack.Screen
           name="CreatePostEdit"
           component={CreatePostEdit}
@@ -231,7 +247,7 @@ const AppNavigation = () => {
         <Stack.Screen
           name="NetworkLogger"
           component={NetworkLogger}
-          options={{ headerShown: true }}
+          options={{headerShown: true}}
         />
       </>
     </Stack.Navigator>

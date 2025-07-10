@@ -11,6 +11,8 @@ import BlockedUsers from '../../screens/BlockedUsers';
 import MyProfile from '../../screens/Menu/MyProfile';
 import SubscriptionPlan from '../../screens/SubscriptionPlan';
 import Menu from '../../screens/Menu';
+import Groups from '../../screens/Groups';
+import GroupDetailsScreen from '../../screens/Groups/GroupDetailsScreen';
 
 const MenuNavigation = () => {
   const Stack = createNativeStackNavigator();
@@ -19,6 +21,12 @@ const MenuNavigation = () => {
       initialRouteName="Menu"
       screenOptions={{headerShown: false}}>
       <Stack.Screen name="Menu" component={Menu} options={NavigationOptions} />
+      {/* <Stack.Screen
+        name="Groups"
+        component={Groups}
+        options={NavigationOptions}
+      />
+      <Stack.Screen name="GroupDetailsScreen" component={GroupDetailsScreen} /> */}
     </Stack.Navigator>
   );
 };

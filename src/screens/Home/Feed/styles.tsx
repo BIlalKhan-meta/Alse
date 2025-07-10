@@ -15,6 +15,56 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
   },
+
+  fabMenuContainer: {
+    position: 'absolute',
+    bottom: vh * 16,
+    right: vh * 8,
+    alignItems: 'center',
+    zIndex: 999,
+  },
+  fabButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#009688', // Teal color matching screenshot
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  menuContainer: {
+    position: 'absolute',
+    bottom: 65, // Position above the FAB
+    backgroundColor: '#009688', // Teal color matching screenshot
+    borderRadius: 4,
+    width: 120,
+    paddingVertical: 8,
+    marginBottom: 8,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  menuItem: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    justifyContent: 'center',
+  },
+  menuItemText: {
+    color: '#fff',
+    fontSize: 16,
+  },
   button: {
     flexDirection: 'row',
     alignItems: 'center',

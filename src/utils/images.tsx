@@ -80,4 +80,5 @@ export const images = {
   shop5: require('../assets/images/shop5.png'),
   shop6: require('../assets/images/shop6.png'),
   profileBg: require('../assets/images/profileBg.png'),
+  avatar: require('../assets/images/default-avatar.jpg'),
 };
