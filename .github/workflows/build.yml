@@ -32,7 +32,7 @@ jobs:
       - name: Build application
         run: |
              cd ./android
-             ./gradlew bundleRelease
+             ./gradlew assembleRelease
       - name: Upload application
         uses: actions/upload-artifact@v4
         with:
