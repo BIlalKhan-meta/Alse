@@ -179,6 +179,14 @@ const getHeaderLeft: React.FC<NavigationOptionsProps> = props => {
 const NavigationOptions: React.FC<NavigationOptionsProps> = props => {
   // console.log("THIS IS PROPS" , props?.route?.name);
   const isHomeScreen = props?.route?.name === 'Home';
+  const isMarketplaceScreen = props?.route?.name === 'Marketplace';
+
+  // Hide header for Marketplace screen
+  if (isMarketplaceScreen) {
+    return {
+      headerShown: false,
+    };
+  }
 
   return {
     headerShown: true,

@@ -76,7 +76,7 @@ const AppNavigation = () => {
         <Stack.Screen
           name="Shop"
           component={Shop}
-          options={NavigationOptions}
+          // options={NavigationOptions}
         />
         <Stack.Screen
           name="ProductView"
@@ -237,7 +237,7 @@ const AppNavigation = () => {
         <Stack.Screen
           name="MyShop"
           component={MyShop}
-          options={NavigationOptions}
+          // options={NavigationOptions}
         />
         <Stack.Screen
           name="EditShop"

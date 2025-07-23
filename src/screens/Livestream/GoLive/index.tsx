@@ -21,7 +21,7 @@ import {
 } from 'react-native-agora';
 import {colors} from '../../../utils/theme';
 import {hri} from 'human-readable-ids';
-import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
+import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
 import {
   EndLiveStream,
   GetLiveStreamToken,

@@ -71,6 +71,7 @@ export const images = {
   commentIcon: require('../assets/Icons/commentIcon.png'),
   shareIcon: require('../assets/Icons/shareIcon.png'),
   heartLikeIcon: require('../assets/Icons/likeIcon.png'),
+  shoppingBag: require('../assets/Icons/shopping.png'),
   //Imagesssss/////
   shop1: require('../assets/images/shop1.png'),
   shop11: require('../assets/images/shop11.png'),
@@ -81,4 +82,5 @@ export const images = {
   shop6: require('../assets/images/shop6.png'),
   profileBg: require('../assets/images/profileBg.png'),
   avatar: require('../assets/images/default-avatar.jpg'),
+  xiaomiLogo: require('../assets/images/xiaomi-image.png'),
 };
