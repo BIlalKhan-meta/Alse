@@ -18,7 +18,7 @@ const styles = StyleSheet.create({
 
   fabMenuContainer: {
     position: 'absolute',
-    bottom: vh * 16,
+    bottom: vh * -42,
     right: vh * 8,
     alignItems: 'center',
     zIndex: 999,

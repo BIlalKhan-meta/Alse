@@ -69,6 +69,7 @@ const Cart = () => {
   const getData = async () => {
     setLoading(true);
     const res = await getCart();
+    console.log('RESSSSSSSSSSSSS CARTTTTTTT', res);
 
     // setCartData(res?.data?.data?.carts?.data);
     setCartData(res?.data?.data);

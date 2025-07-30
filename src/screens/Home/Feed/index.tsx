@@ -388,19 +388,6 @@ const Home: React.FC = () => {
             keyExtractor={item => item.id.toString()}
             showsVerticalScrollIndicator={false}
             ListEmptyComponent={renderEmpty}
-            ListHeaderComponent={() => (
-              <TouchableOpacity
-                activeOpacity={0.8}
-                onPress={() => navigation.navigate('CreatePost')}>
-                <View pointerEvents="none">
-                  <CardDisplay
-                    onTextInput={() => navigation.navigate('CreatePost')}
-                    onVideoPress={() => navigation.navigate('CreatePost')}
-                    onImagePress={() => navigation.navigate('CreatePost')}
-                  />
-                </View>
-              </TouchableOpacity>
-            )}
           />
 
           {/* FAB Container */}

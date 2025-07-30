@@ -195,8 +195,6 @@ const Marketplace: React.FC = () => {
     return <Loader />;
   }
 
-  console.log('products', products);
-
   return (
     <View style={styles.container}>
       {/* Header Section (includes title, icons, location, and search) */}
@@ -229,8 +227,9 @@ const Marketplace: React.FC = () => {
               Street, #43 EII New jersey, New york
             </Text>
           </View>
-          {/* <Ionicons name="lock-closed" size={18} color="white" /> */}
-          <Image source={images.shoppingBag} style={styles.shoppingBagIcon} />
+          <TouchableOpacity onPress={() => navigation.navigate('Cart')}>
+            <Image source={images.shoppingBag} style={styles.shoppingBagIcon} />
+          </TouchableOpacity>
         </View>
 
         {/* Search Bar (inside header section) */}
@@ -512,6 +511,7 @@ const styles = StyleSheet.create({
   },
   productCard: {
     marginBottom: 15,
+    marginRight: 10,
     borderRadius: 12,
     backgroundColor: 'white',
     shadowColor: '#000',
