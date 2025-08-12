@@ -13,11 +13,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderRadius: 10,
     padding: 15,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5, // for Android shadow
+    // shadowColor: '#000',
+    // shadowOffset: {width: 0, height: 2},
+    // shadowOpacity: 0.1,
+    // shadowRadius: 8,
+    // elevation: 5, // for Android shadow
   },
   productContainer: {
     flexDirection: 'row',
@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
   },
   checkoutButton: {
     alignSelf: 'center',
-    width: vw * 70,
+    width: vw * 80,
   },
 
   shoppingButton: {

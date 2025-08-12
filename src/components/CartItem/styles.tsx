@@ -32,7 +32,7 @@ const styles = StyleSheet.create({
     paddingLeft: 10,
   },
   productName: {
-    fontSize: fontSizes.f16,
+    fontSize: fontSizes.f12,
     color: colors.black,
     fontWeight: 'bold',
   },
@@ -61,7 +61,7 @@ const styles = StyleSheet.create({
   },
   quantityButton: {
     // padding: 4,
-    backgroundColor: colors.themeColor,
+    // backgroundColor: colors.themeColor,
     width: vw * 8,
     height: vw * 8,
     justifyContent: 'center',
@@ -71,7 +71,7 @@ const styles = StyleSheet.create({
   },
   quantityButtonText: {
     fontSize: fontSizes.f12,
-    color: colors.white,
+    color: colors.black,
     fontWeight: 'bold',
     alignSelf: 'center',
   },

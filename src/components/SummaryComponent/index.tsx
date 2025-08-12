@@ -24,28 +24,14 @@ const Summary: React.FC<SummaryProps> = ({
   style,
   titleStyle,
 }) => (
-  <Card style={[styles.summaryContainer, style]}>
-    <InterBoldSmall style={[styles.summary, titleStyle]}>
-      Summary
-    </InterBoldSmall>
+  <View style={[styles.summaryContainer, style]}>
     <View style={styles.summaryTxtContainer}>
-      <InterMedium style={styles.summaryText}>Sub Total:</InterMedium>
-      <InterRegular style={styles.summaryPrice}>${subTotal}</InterRegular>
-    </View>
-    <View style={styles.summaryTxtContainer}>
-      <InterMedium style={styles.summaryText}>Delivery Charges:</InterMedium>
-      <InterRegular style={styles.summaryPrice}>
-        ${deliveryCharges}
-      </InterRegular>
-    </View>
-    <HorizontalSeparator />
-    <View style={styles.summaryTxtContainer}>
-      <InterMedium style={styles.summaryText}>Total:</InterMedium>
+      <InterMedium style={styles.summaryText}>Subtotal:</InterMedium>
       <InterRegular style={styles.summaryPrice}>
         ${Number(subTotal) + Number(deliveryCharges)}
       </InterRegular>
     </View>
-  </Card>
+  </View>
 );
 
 export default Summary;

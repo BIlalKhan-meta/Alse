@@ -29,17 +29,14 @@ const CartItem: React.FC<Props> = ({
   showSeparator,
   quantity,
   showDelete,
-  status
+  status,
 }) => {
-  console.log("statusdass====>",status);
-  
+  console.log('statusdass====>', status);
+
   return (
     <>
       <View style={styles.productContainer}>
-        <Image
-          source={item?.product_image ? {uri: item?.product_image} : null}
-          style={styles.productImage}
-        />
+        <Image source={item?.product_image} style={styles.productImage} />
         <View style={styles.productDetails}>
           <InterMedium style={styles.productName}>
             {item?.product_name}

@@ -219,7 +219,7 @@ import {
   Alert,
 } from 'react-native';
 import {useIsFocused, useRoute, useNavigation} from '@react-navigation/native';
-import {productDetail} from '../../../api/product';
+import {addProductToCart, productDetail} from '../../../api/product';
 import Loader from '../../../components/Loader';
 import {vh, vw} from '../../../constant';
 import {
@@ -357,7 +357,7 @@ const ProductView: React.FC = () => {
       }
 
       // Call API to add to cart
-      const response = await addToCart(form);
+      const response = await addProductToCart(form);
 
       if (response?.data?.success) {
         setAddedToCart(true);

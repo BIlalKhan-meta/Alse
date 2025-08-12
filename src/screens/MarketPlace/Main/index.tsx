@@ -100,35 +100,31 @@ import {selectUserProfile} from '../../../store/slices/authSlice';
 import {getAllShop} from '../../../api/shop';
 import Loader from '../../../components/Loader';
 import {Subscribe} from '../../../components/Subscribe';
-import Ionicons from 'react-native-vector-icons/Ionicons';
-import {
-  Bell,
-  Settings2,
-  Cloud,
-  MapPin,
-  Search,
-  ChevronRight,
-} from 'lucide-react-native';
+import {MapPin, Search, ChevronRight} from 'lucide-react-native';
 import {images} from '../../../utils/images';
 import {vh, vw} from '../../../constant';
 import {getSimilarProducts} from '../../../api/product';
 
+// Define Product type for API data
+interface Product {
+  id: number;
+  name?: string;
+  image?: string;
+  price?: string | number;
+  oldPrice?: string | number;
+  description?: string;
+  soldBy?: string;
+}
+
 const Marketplace: React.FC = () => {
-  const navigation = useNavigation();
+  const navigation: any = useNavigation();
   const user = useSelector(selectUserProfile);
 
-  const [shops, setShops] = useState([]);
-  const [products, setProducts] = useState([]); // New state for products
+  const [shops, setShops] = useState<any[]>([]);
+  const [products, setProducts] = useState<Product[]>([]); // Typed products
   const [loading, setLoading] = useState(false);
   const isFocused = useIsFocused();
-  const [filteredData, setFilteredData] = useState([]);
-
-  const handleSearch = (query: string) => {
-    let filtered = shops.filter((item: any) =>
-      item?.shop_name?.toLowerCase().includes(query.toLowerCase()),
-    );
-    setFilteredData(filtered);
-  };
+  const [filteredData, setFilteredData] = useState<any[]>([]);
 
   useEffect(() => {
     getData();
@@ -161,29 +157,8 @@ const Marketplace: React.FC = () => {
       console.log('Recommended products:', res.data?.data);
     } catch (error) {
       console.log('Error fetching recommended products:', error);
-      // Fallback data if API fails
-      setProducts([
-        {
-          id: 1,
-          name: 'Razer BlackShark V2 Pro',
-          image: require('../../../assets/images/headset.png'),
-          price: '25',
-          oldPrice: '129',
-          description:
-            'Lorem ipsum to simply dummy text like in the printing and typesetting industry.',
-          soldBy: 'Adam Smith',
-        },
-        {
-          id: 2,
-          name: 'Razer BlackShark V2',
-          image: require('../../../assets/images/headset.png'),
-          price: '23',
-          oldPrice: '119',
-          description:
-            'Lorem ipsum to simply dummy text like in the printing and typesetting industry.',
-          soldBy: 'Adam Smith',
-        },
-      ]);
+      // No fallback dummy data, just leave products empty
+      setProducts([]);
     }
   };
 
@@ -264,17 +239,19 @@ const Marketplace: React.FC = () => {
                   style={styles.storeCard}
                   onPress={() => {
                     if (user.id === store.userId) {
-                      navigation.navigate('MyShop', {shopId: store.id});
+                      (navigation as any).navigate('MyShop', {
+                        shopId: store.id,
+                      });
                     } else {
-                      navigation.navigate('Shop', {shopId: store.id});
+                      (navigation as any).navigate('Shop', {
+                        shopId: store.id,
+                      });
                     }
                   }}>
                   <View
                     style={[
                       styles.storeLogoContainer,
-                      {
-                        backgroundColor: store.logo ? 'white' : '#FF6700', // Orange bg for Xiaomi logo only
-                      },
+                      {backgroundColor: store.logo ? 'white' : '#FF6700'},
                     ]}>
                     <Image
                       source={
@@ -315,29 +292,33 @@ const Marketplace: React.FC = () => {
                 key={index}
                 style={styles.productCard}
                 onPress={() =>
-                  navigation.navigate('ProductView', {productId: product.id})
+                  (navigation as any).navigate('ProductView', {
+                    productId: product.id,
+                  })
                 }>
-                <Image source={product.image} style={styles.productImage} />
+                <Image
+                  source={product.image ? {uri: product.image} : images.avatar}
+                  style={styles.productImage}
+                />
                 <View style={styles.productInfo}>
                   <View style={styles.productNameRow}>
                     <Text style={styles.productName} numberOfLines={1}>
-                      {product.name || 'Razer BlackShark...'}
+                      {product.name || 'Product'}
                     </Text>
                     <View style={styles.priceContainer}>
                       <Text style={styles.oldPrice}>
-                        ${product.oldPrice || '129'}
+                        ${product.oldPrice ?? ''}
                       </Text>
-                      <Text style={styles.price}>${product.price || '25'}</Text>
+                      <Text style={styles.price}>${product.price ?? ''}</Text>
                     </View>
                   </View>
                   <Text style={styles.productDescription} numberOfLines={2}>
-                    {product.description ||
-                      'Lorem ipsum to simply dummy text like in the printing and typesetting industry.'}
+                    {product.description || 'No description available.'}
                   </Text>
                   <Text style={styles.soldBy}>
                     Sold by:{' '}
                     <Text style={styles.sellerName}>
-                      {product.soldBy || 'Adam Smith'}
+                      {product.soldBy || 'Unknown'}
                     </Text>
                   </Text>
                 </View>
@@ -350,7 +331,7 @@ const Marketplace: React.FC = () => {
       {/* Add Shop Button (moved to bottom of screen) */}
       <TouchableOpacity
         style={styles.addButton}
-        onPress={() => navigation.navigate('AddStore')}>
+        onPress={() => (navigation as any).navigate('AddStore')}>
         <Text style={styles.addButtonText}>Create Shop/My Shop</Text>
       </TouchableOpacity>
     </View>
