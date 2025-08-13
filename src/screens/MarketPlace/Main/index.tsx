@@ -248,17 +248,8 @@ const Marketplace: React.FC = () => {
                       });
                     }
                   }}>
-                  <View
-                    style={[
-                      styles.storeLogoContainer,
-                      {backgroundColor: store.logo ? 'white' : '#FF6700'},
-                    ]}>
-                    <Image
-                      source={
-                        store.logo ? {uri: store.logo} : images.xiaomiLogo
-                      }
-                      style={styles.storeLogo}
-                    />
+                  <View style={[styles.storeLogoContainer]}>
+                    <Image source={images.shop11} style={styles.storeLogo} />
                   </View>
                   <Text style={styles.storeName} numberOfLines={1}>
                     {store.shop_name || 'Store'}
@@ -451,16 +442,17 @@ const styles = StyleSheet.create({
     width: 70,
     height: 70,
     borderRadius: 35,
-    backgroundColor: '#FF6700', // Xiaomi orange color
+    // backgroundColor: '#FF6700', // Xiaomi orange color
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 8,
     overflow: 'hidden',
   },
   storeLogo: {
-    width: 40,
-    height: 40,
-    resizeMode: 'contain',
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+    borderRadius: 35,
     // tintColor: 'white', // Make the logo white
   },
   storeName: {

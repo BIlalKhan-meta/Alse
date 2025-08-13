@@ -2,16 +2,8 @@
 import React, {useEffect, useState} from 'react';
 import DropDownPicker from 'react-native-dropdown-picker';
 // import styles from './styles'
-import {
-  StyleProp,
-  StyleSheet,
-  Text,
-  TextStyle,
-  View,
-  ViewStyle,
-} from 'react-native';
+import {StyleProp, StyleSheet, View, ViewStyle} from 'react-native';
 import {colors} from '../../../utils/theme';
-import InterBoldSmall from '../../Text/InterBoldSmall';
 import InterRegularSmallest from '../../Text/InterRegularSmallest';
 import {vh, vw} from '../../../constant';
 interface DropdownItem {
@@ -28,6 +20,7 @@ interface DropdownComponentProps {
   listMode?: 'DEFAULT' | 'FLATLIST' | 'SCROLLVIEW' | 'MODAL';
   idRequired?: boolean;
   label?: string;
+  error?: string;
 }
 
 const DropDownTextInput: React.FC<DropdownComponentProps> = ({
@@ -38,15 +31,15 @@ const DropDownTextInput: React.FC<DropdownComponentProps> = ({
   style,
   listMode,
   idRequired,
-  label,
   error,
 }) => {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState<string | null>(defaultValue);
-  const [dropdownItems, setDropdownItems] = useState(items);
+
   useEffect(() => {
     setValue(defaultValue);
   }, [defaultValue]);
+
   return (
     <View style={{zIndex: 100, marginBottom: vh}}>
       <DropDownPicker
@@ -55,25 +48,22 @@ const DropDownTextInput: React.FC<DropdownComponentProps> = ({
         value={value}
         items={items}
         setOpen={setOpen}
-        // setValue={(val) => {
-        //   setValue(val);
-        //   if (onChangeValue) {
-        //     onChangeValue(val);
-        //   }
-        // }}
+        setValue={setValue}
         onSelectItem={e => {
           if (idRequired) {
-            onChangeValue(e);
+            onChangeValue(e?.value || '');
           } else {
-            onChangeValue(e?.value);
+            onChangeValue(e?.value || '');
           }
         }}
         zIndex={100}
-        setItems={setDropdownItems}
         placeholder={placeholder}
         style={[styles.dropdown, style]}
-        containerStyle={{backgroundColor: colors.inputcolor}}
-        iconContainerStyle={{backgroundColor: colors.pattenBlue}}
+        containerStyle={{backgroundColor: 'white'}}
+        iconContainerStyle={{backgroundColor: 'transparent'}}
+        textStyle={styles.dropdownText}
+        placeholderStyle={styles.placeholderText}
+        arrowIconContainerStyle={styles.iconContainer}
       />
       {error && (
         <InterRegularSmallest style={styles.error}>
@@ -86,11 +76,13 @@ const DropDownTextInput: React.FC<DropdownComponentProps> = ({
 
 const styles = StyleSheet.create({
   dropdown: {
-    backgroundColor: colors.inputcolor,
-    //   borderColor: 'grey',
-    borderRadius: 10,
-    opacity: 0.3,
-    color: 'red',
+    backgroundColor: 'white',
+    borderColor: '#ddd',
+    borderWidth: 1,
+    borderRadius: 8,
+    minHeight: 40,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
 
   error: {
@@ -102,7 +94,19 @@ const styles = StyleSheet.create({
     zIndex: -99,
   },
   icon: {
-    color: 'grey',
+    tintColor: '#666',
+  },
+  dropdownText: {
+    fontSize: 10,
+    color: '#333',
+  },
+  placeholderText: {
+    fontSize: 12,
+    color: '#999',
+  },
+  iconContainer: {
+    // backgroundColor: 'transparent',
+    tintColor: '#666',
   },
 });
 

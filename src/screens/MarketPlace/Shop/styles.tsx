@@ -1,117 +1,215 @@
 import {StyleSheet} from 'react-native';
-import {fontSizes, vh, vw} from '../../../constant';
 import {colors} from '../../../utils/theme';
-import fonts from '../../../assets/fonts';
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.headerColor,
-    paddingHorizontal: 15,
-    // paddingTop: 50,
+    backgroundColor: '#f8f8f8',
   },
-  dropDown: {
-    borderColor: colors.inputcolor,
-    backgroundColor: colors.inputcolor,
-    borderWidth: 1,
-    width: vw * 45,
-  },
-  activeContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-  },
-  activeBtn: {
-    backgroundColor: colors.themeColor,
-    paddingHorizontal: vw * 3,
-    paddingVertical: vw * 2,
-    borderRadius: 5,
-  },
-  activeTxt: {
-    fontSize: fontSizes.f14,
-    color: colors.white,
-  },
-  InactiveBtn: {
-    // backgroundColor: colors.themeColor
-  },
-  InactiveTxt: {
-    fontSize: fontSizes.f14,
-    color: colors.black,
-  },
-  contentContainer: {
-    // marginTop: vh * 2,
-    marginBottom: vh * 4,
-  },
-  mainheading: {
-    fontSize: fontSizes.f16,
-    color: colors.black,
-  },
-  sortConatiner: {
+  header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: vh * 2,
-  },
-  sortInput: {
-    backgroundColor: colors.inputcolor,
-    // backgroundColor:"yellow",
-    marginVertical: vh * 1,
-    width: vw * 40,
-    height: vh * 5,
     alignItems: 'center',
-    justifyContent: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 50,
+    paddingBottom: 16,
+    backgroundColor: 'white',
   },
-  heading: {
-    color: colors.inputText,
-    fontSize: fontSizes.f14,
+  backIcon: {
+    width: 24,
+    height: 24,
   },
-  label: {
-    // fontSize:fontSizes.f14,
-    alignSelf: 'flex-start',
-    // marginLeft:vw*8,
-    marginTop: vh * 2,
-    color: colors.black,
-    fontSize: fontSizes.f14,
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: colors.themeColor,
   },
-  pickercontainer: {
-    fontFamily: fonts.Inter.Bold,
-    color: colors.inputText,
-    fontSize: fontSizes.f11,
-    height: vh * 6,
-    marginTop: vh * 2,
-    width: vw * 55,
-    // fontWeight: '200',
-    borderColor: colors.inputcolor,
-    borderWidth: 1,
-    borderRadius: 5,
-    paddingHorizontal: 10,
-    backgroundColor: colors.inputcolor,
-    // backgroundColor: "yellow"
+  scrollView: {
+    flex: 1,
   },
-  imageStyle: {
+  storeProfileSection: {
+    backgroundColor: 'white',
+    marginBottom: 16,
+  },
+  bannerContainer: {
+    position: 'relative',
+    height: 180,
+    backgroundColor: '#f0f0f0', // Light background to make it visible
+  },
+  bannerImage: {
     width: '100%',
     height: '100%',
-    borderRadius: 10,
+    resizeMode: 'cover',
   },
-  banner: {
-    width: vw * 86,
-    height: vh * 30,
+  avatarContainer: {
+    position: 'absolute',
+    bottom: -30,
+    left: 16,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    borderWidth: 3,
+    borderColor: 'white',
+    overflow: 'hidden',
   },
-  threeDots: {
-    width: vw * 1,
-    height: vh * 2.5,
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
   },
-  btnConatiner: {
+  storeInfoContainer: {
     flexDirection: 'row',
-    width: vw * 80,
     justifyContent: 'space-between',
-    alignSelf: 'center',
+    alignItems: 'flex-start',
+    paddingHorizontal: 16,
+    paddingTop: 40,
+    paddingBottom: 16,
   },
-  secondaryBtn1: {
-    width: vw * 35,
+  storeInfoLeft: {
+    flex: 1,
   },
-  secondaryBtn2: {
-    width: vw * 35,
-    backgroundColor: colors.white,
+  storeName: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 4,
+  },
+  storeCategory: {
+    fontSize: 14,
+    color: '#666',
+  },
+  editButton: {
+    padding: 8,
+  },
+  storeStatsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
+  statItem: {
+    marginRight: 24,
+  },
+  statNumber: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  statLabel: {
+    fontSize: 12,
+    color: '#666',
+  },
+  shareButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 'auto',
+  },
+  shareText: {
+    fontSize: 12,
+    color: '#333',
+    marginLeft: 4,
+  },
+  actionButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingVertical: 20,
+    backgroundColor: 'white',
+    marginBottom: 16,
+  },
+  actionButton: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    borderWidth: 2,
+    borderColor: colors.themeColor,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'white',
+  },
+  filterBar: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: 'white',
+    marginBottom: 16,
+    alignItems: 'center',
+  },
+  filterItem: {
+    flex: 1,
+    marginHorizontal: 2,
+    minWidth: 0, // Ensures flex items can shrink below their content size
+  },
+  filterDropdown: {
+    borderColor: '#ddd',
+    borderWidth: 1,
+    borderRadius: 8,
+    backgroundColor: '#f9f9f9',
+    paddingHorizontal: 8,
+    paddingVertical: 12,
+    height: 44, // Fixed height for all dropdowns
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  productsSection: {
+    backgroundColor: 'white',
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
+  productsTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 16,
+  },
+  productCard: {
+    flexDirection: 'row',
+    marginBottom: 16,
+    backgroundColor: '#f9f9f9',
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  productImage: {
+    width: 120,
+    height: 120,
+    resizeMode: 'cover',
+  },
+  productInfo: {
+    flex: 1,
+    padding: 12,
+  },
+  productName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 8,
+  },
+  productDescription: {
+    fontSize: 14,
+    color: '#666',
+    lineHeight: 20,
+    marginBottom: 12,
+  },
+  productFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  bestDeal: {
+    fontSize: 12,
+    color: colors.themeColor,
+    fontWeight: 'bold',
+  },
+  likedBy: {
+    fontSize: 12,
+    color: '#666',
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#666',
   },
 });
 
