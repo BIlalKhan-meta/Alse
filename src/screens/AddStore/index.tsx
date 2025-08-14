@@ -1,385 +1,242 @@
-import React, {useEffect, useLayoutEffect, useState} from 'react';
-import {View, Text, TouchableOpacity, ScrollView, Image} from 'react-native';
+import React, {useLayoutEffect, useState} from 'react';
+import {View, Text, TouchableOpacity, TextInput} from 'react-native';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {Formik} from 'formik';
 import * as yup from 'yup';
 
-import styles from './styles'; // Ensure you have your styles defined
-import RegularTextInput from '../../components/TextInput/RegularTextInput';
-import DropDownTextInput from '../../components/TextInput/DropDownTextInput';
+import styles from './styles';
 import {useNavigation, useRoute} from '@react-navigation/native';
-import {images} from '../../utils/images';
-import useImagePicker from '../../hooks/useImagePicker';
-import GeneralModal from '../../components/GeneralModal';
-import {colors} from '../../utils/theme';
-import CustomButton from '../../components/CustomButton';
-import InterRegular from '../../components/Text/InterRegular';
-import Card from '../../components/Card';
-import InterBoldSmall from '../../components/Text/InterBoldSmall';
-import {createShop} from '../../api/shop';
-import {getBank} from '../../api/menu';
-import {DialogBox} from '../../components/DialogBox';
-import {vh} from '../../constant';
 import Toast from 'react-native-toast-message';
-import Loader from '../../components/Loader';
+import {ChevronLeft} from 'lucide-react-native';
 
 const initialValues = {
   name: '',
-  delivery_fees: '',
-  // shopImage: '',
-  // accountHolderName: '',
-  // accountType: '',
-  // bankName: '',
-  // routingNumber: '',
-  // confirmRoutingNumber: '',
-  // accountNumber: '',
-  // confirmAccountNumber: '',
+  description: '',
+  address: '',
+  phoneNumber: '',
+  country: '',
 };
 
 const validationSchema = yup.object().shape({
-  name: yup.string().required('Shop Name is required'),
-  delivery_fees: yup.string().required('Delivery Fees is required'),
-  // shopImage: yup.string().required('Shop Image is required'),
-  // accountHolderName: yup.string().required('Account Holder Name is required'),
-  // accountType: yup.string().required('Account Type is required'),
-  // bankName: yup.string().required('Bank Name is required'),
-  // routingNumber: yup.string().required('Routing Number is required'),
-  // confirmRoutingNumber: yup
-  //   .string()
-  //   .oneOf([yup.ref('routingNumber'), null], 'Routing Numbers must match')
-  //   .required('Confirm Routing Number is required'),
-  // accountNumber: yup.string().required('Account Number is required'),
-  // confirmAccountNumber: yup
-  //   .string()
-  //   .oneOf([yup.ref('accountNumber'), null], 'Account Numbers must match')
-  //   .required('Confirm Account Number is required'),
+  name: yup.string().required('Name is required'),
+  description: yup.string().required('Description is required'),
+  address: yup.string().required('Address is required'),
+  phoneNumber: yup.string().required('Phone number is required'),
+  country: yup.string().required('Country is required'),
 });
 
 const AddStore: React.FC = () => {
-  const navigation = useNavigation();
-  const route = useRoute();
+  const navigation: any = useNavigation();
+  const route: any = useRoute();
 
-  const title = route?.params?.title || 'Create Shop';
+  const title = route?.params?.title || 'Submit Store Details';
 
-  const {imageData, captureImage, chooseImageFromLibrary} = useImagePicker();
-  const [shopSuccess, setShopSuccess] = useState(false);
-  const [visible, setVisible] = useState(false);
   const [submitted, setSubmitted] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
-  const [bankLoader, setBankLoader] = useState(false);
-  // const [accountType, setAccountType] = useState<string | null>(null); // State for selected account type
-  // const [bankName, setBankName] = useState<string | null>(null); // State for selected bank name
+  const [showCountryDropdown, setShowCountryDropdown] = useState(false);
 
   useLayoutEffect(() => {
     navigation.setOptions({
       headerStyle: {
-        backgroundColor: colors.headerColor,
+        backgroundColor: '#f8f8f8',
+      },
+      headerTitleStyle: {
+        color: '#333',
+        fontSize: 18,
+        fontWeight: '600',
       },
       title: title,
+      headerLeft: () => (
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <ChevronLeft size={24} color="#333" />
+        </TouchableOpacity>
+      ),
     });
-  }, [navigation]);
+  }, [navigation, title]);
 
-  useEffect(() => {
-    if (imageData) {
-      setVisible(false);
-    }
-  }, [imageData]);
-
-  // const accountTypes = [
-  //   {label: 'Savings', value: 'savings'},
-  //   {label: 'Checking', value: 'checking'},
-  // ];
-
-  // const banks = [
-  //   {label: 'Bank 1', value: 'bank1'},
-  //   {label: 'Bank 2', value: 'bank2'},
-  // ];
-
-  // const handleDropdownChange = (value: string | null) => {
-  //   console.log('Selected value:', value);
-  // };
-
-  const handleShop = async (values: object) => {
-    if (!imageData) {
-      return Toast.show({
-        type: 'error',
-        text1: 'Banner',
-        text2: 'Banner Required',
-      });
-    }
+  const handleStoreDetails = async (values: any) => {
     setLoading(true);
     setSubmitted(true);
-    const data = {
-      name: values?.name,
-      delivery_fees: values?.delivery_fees,
-      // 'bank_details[account_name]': values?.accountHolderName,
-      // 'bank_details[account_type]': accountType,
-      // 'bank_details[bank_name]': bankName,
-      // 'bank_details[routing_number]': values.routingNumber,
-      // 'bank_details[account_number]': values.accountNumber,
-    };
-    if (imageData) {
-      // let imagePath = image.split('/');
 
-      const uploadedImage = {
-        uri: imageData?.uri,
-        name: imageData?.fileName,
-        type: imageData?.type,
+    try {
+      // Store the form data in navigation params to pass to bank details
+      const storeData = {
+        name: values.name,
+        description: values.description,
+        address: values.address,
+        phoneNumber: values.phoneNumber,
+        country: values.country,
       };
-      data['shop_banner'] = uploadedImage;
-    }
 
-    let formData = new FormData();
-
-    Object.entries(data).forEach(item => {
-      formData.append(item[0], item[1]);
-    });
-    console.log('formData===>', formData);
-
-    await createShop(formData)
-      .then(res => {
-        if (res?.status) {
-          console.log('TESTTTTTTTTTTTTTT');
-          // setSubmitted(false);
-          setShopSuccess(true);
-        }
-      })
-      .catch(err => {
-        console.log('ERORRRRRRRRRRRRRRR', err);
-        setSubmitted(false);
-      })
-      .finally(() => {
-        setLoading(false);
+      // Navigate to bank details with the store data
+      navigation.navigate('BankDetail', {storeData, isNewStore: true});
+    } catch (error) {
+      console.log('Error saving store details:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to save store details',
       });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const getData = async () => {
-    setBankLoader(true);
-    await getBank().then(res => {
-      setBankLoader(false);
-      if (!res?.data?.data) {
-        navigation.navigate('BankDetail');
-      }
-    });
-  };
-
-  useEffect(() => {
-    getData();
-  }, []);
-
-  if (bankLoader) {
-    return <Loader />;
-  }
+  const countries = [
+    {label: 'USA', value: 'USA', flag: '🇺🇸'},
+    {label: 'Canada', value: 'Canada', flag: '🇨🇦'},
+    {label: 'UK', value: 'UK', flag: '🇬🇧'},
+    {label: 'Australia', value: 'Australia', flag: '🇦🇺'},
+  ];
 
   return (
-    <KeyboardAwareScrollView
-      contentContainerStyle={styles.container}
-      showsVerticalScrollIndicator={false}
-      enableOnAndroid={true}>
-      <DialogBox
-        status="upload"
-        heading="Upload Media"
-        onClose={() => setVisible(false)}
-        visible={visible}
-        button={[
-          {text: 'Open Camera', onPress: () => captureImage('photo')},
-          {text: 'Open Gallery', onPress: chooseImageFromLibrary},
-        ]}
-      />
-      <Formik
-        initialValues={initialValues}
-        validationSchema={validationSchema}
-        onSubmit={handleShop}>
-        {({handleSubmit, handleChange, handleBlur, values, errors}) => (
-          <>
-            <Card style={styles.contentContainer}>
-              <RegularTextInput
-                label="Shop Name *"
-                placeholder="Enter Shop Name"
-                placeholderTextColor={colors.inputText}
-                onChangeText={handleChange('name')}
-                onBlur={handleBlur('name')}
-                value={values.name}
-                submitted={submitted}
-                errors={errors.name}
-                style={styles.inputStyle}
-              />
-              <RegularTextInput
-                label="Delivery Fees *"
-                placeholder="Enter Delivery Fees"
-                placeholderTextColor={colors.inputText}
-                onChangeText={handleChange('delivery_fees')}
-                onBlur={handleBlur('delivery_fees')}
-                value={values.delivery_fees}
-                submitted={submitted}
-                errors={errors.delivery_fees}
-                style={styles.inputStyle}
-                keyboardType="numeric"
-              />
-
-              <InterRegular style={styles.dropdownLabel}>
-                Banner Image*
-              </InterRegular>
-
-              <TouchableOpacity
-                style={styles.uploadBtn}
-                onPress={() => setVisible(true)}>
-                <InterRegular style={styles.uploadTxt}>Upload</InterRegular>
-                <Image source={images.upload} style={styles.uploadImg} />
-              </TouchableOpacity>
-
-              <View>
-                {imageData && (
-                  <Image
-                    source={{uri: imageData?.uri}}
-                    style={{
-                      width: '100%',
-                      height: vh * 15,
-                      resizeMode: 'cover',
-                    }}
+    <View style={styles.container}>
+      <KeyboardAwareScrollView
+        contentContainerStyle={styles.scrollContainer}
+        showsVerticalScrollIndicator={false}
+        enableOnAndroid={true}>
+        <Formik
+          initialValues={initialValues}
+          validationSchema={validationSchema}
+          onSubmit={handleStoreDetails}>
+          {({
+            handleSubmit,
+            handleChange,
+            handleBlur,
+            values,
+            errors,
+            setFieldValue,
+          }) => (
+            <>
+              <View style={styles.formContainer}>
+                {/* Name Field */}
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>Name</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="Name"
+                    placeholderTextColor="#999"
+                    onChangeText={handleChange('name')}
+                    onBlur={handleBlur('name')}
+                    value={values.name}
                   />
-                )}
+                  {submitted && errors.name && (
+                    <Text style={styles.errorText}>{errors.name}</Text>
+                  )}
+                </View>
+
+                {/* Description Field */}
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>Description</Text>
+                  <TextInput
+                    style={[styles.textInput, styles.textArea]}
+                    placeholder="Description"
+                    placeholderTextColor="#999"
+                    onChangeText={handleChange('description')}
+                    onBlur={handleBlur('description')}
+                    value={values.description}
+                    multiline
+                    numberOfLines={4}
+                    textAlignVertical="top"
+                  />
+                  {submitted && errors.description && (
+                    <Text style={styles.errorText}>{errors.description}</Text>
+                  )}
+                </View>
+
+                {/* Address Field */}
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>Address (Area and Street) *</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="Address (Area and Street) *"
+                    placeholderTextColor="#999"
+                    onChangeText={handleChange('address')}
+                    onBlur={handleBlur('address')}
+                    value={values.address}
+                  />
+                  {submitted && errors.address && (
+                    <Text style={styles.errorText}>{errors.address}</Text>
+                  )}
+                </View>
+
+                {/* Phone Number Field */}
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>Phone Number</Text>
+                  <View style={styles.phoneContainer}>
+                    <TouchableOpacity style={styles.countrySelector}>
+                      <Text style={styles.countryText}>USA</Text>
+                      <Text style={styles.dropdownArrow}>▼</Text>
+                    </TouchableOpacity>
+                    <TextInput
+                      style={[styles.textInput, styles.phoneInput]}
+                      placeholder="Enter phone number"
+                      placeholderTextColor="#999"
+                      onChangeText={handleChange('phoneNumber')}
+                      onBlur={handleBlur('phoneNumber')}
+                      value={values.phoneNumber}
+                      keyboardType="phone-pad"
+                    />
+                  </View>
+                  {submitted && errors.phoneNumber && (
+                    <Text style={styles.errorText}>{errors.phoneNumber}</Text>
+                  )}
+                </View>
+
+                {/* Country Field */}
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>Country</Text>
+                  <TouchableOpacity
+                    style={styles.countryField}
+                    onPress={() =>
+                      setShowCountryDropdown(!showCountryDropdown)
+                    }>
+                    <View style={styles.countryDisplay}>
+                      <Text style={styles.flagText}>🇺🇸</Text>
+                      <Text style={styles.countryValue}>
+                        {values.country || 'Country'}
+                      </Text>
+                    </View>
+                    <Text style={styles.dropdownArrow}>▼</Text>
+                  </TouchableOpacity>
+
+                  {showCountryDropdown && (
+                    <View style={styles.dropdownContainer}>
+                      {countries.map((country, index) => (
+                        <TouchableOpacity
+                          key={index}
+                          style={styles.dropdownItem}
+                          onPress={() => {
+                            setFieldValue('country', country.label);
+                            setShowCountryDropdown(false);
+                          }}>
+                          <Text style={styles.flagText}>{country.flag}</Text>
+                          <Text style={styles.dropdownItemText}>
+                            {country.label}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+
+                  {submitted && errors.country && (
+                    <Text style={styles.errorText}>{errors.country}</Text>
+                  )}
+                </View>
               </View>
 
-              {/* <InterBoldSmall style={styles.heading}>
-                Bank Information
-              </InterBoldSmall>
-
-              <RegularTextInput
-                label="Account Holder Number *"
-                placeholder="Enter account holder Name"
-                placeholderTextColor={colors.inputText}
-                onChangeText={handleChange('accountHolderName')}
-                onBlur={handleBlur('accountHolderName')}
-                value={values.accountHolderName}
-                errors={errors.accountHolderName}
-                style={styles.inputStyle}
-                submitted={submitted}
-              />
-
-              <InterRegular style={styles.countryLabel}>
-                Account type *
-              </InterRegular>
-
-              <View style={styles.dropdownContainer}>
-                <DropDownTextInput
-                  items={accountTypes}
-                  defaultValue={accountTypes[0].value}
-                  placeholder="Select Account type"
-                  onChangeValue={value => {
-                    setAccountType(value);
-                    handleChange('accountType');
-                    handleBlur('accountType');
-                    handleDropdownChange;
-                  }}
-                  style={styles.dropDown}
-                  error={errors.accountType}
-                />
-              </View>
-
-              <InterRegular style={styles.countryLabel}>
-                Bank Name *
-              </InterRegular>
-
-              <View style={[styles.dropdownContainer, {zIndex: 4}]}>
-                <DropDownTextInput
-                  items={banks}
-                  defaultValue={banks[0].value}
-                  placeholder="Select Bank Name"
-                  onChangeValue={value => {
-                    setBankName(value);
-                    handleChange('accountType');
-                    handleBlur('accountType');
-                    handleDropdownChange;
-                  }}
-                  style={styles.dropDown}
-                />
-              </View>
-
-              <RegularTextInput
-                label="Account Number *"
-                placeholder="Enter Account Number"
-                placeholderTextColor={colors.inputText}
-                onChangeText={handleChange('accountNumber')}
-                onBlur={handleBlur('accountNumber')}
-                value={values.accountNumber}
-                errors={errors.accountNumber}
-                style={styles.inputStyle}
-                submitted={submitted}
-              />
-
-              <RegularTextInput
-                label="Confirm Account Number *"
-                placeholder="Confirm Account Number"
-                placeholderTextColor={colors.inputText}
-                onChangeText={handleChange('confirmAccountNumber')}
-                onBlur={handleBlur('confirmAccountNumber')}
-                value={values.confirmAccountNumber}
-                errors={errors.confirmAccountNumber}
-                style={styles.inputStyle}
-                submitted={submitted}
-              />
-
-              <RegularTextInput
-                label="Routing Number *"
-                placeholder="Enter Routing Number"
-                placeholderTextColor={colors.inputText}
-                onChangeText={handleChange('routingNumber')}
-                onBlur={handleBlur('routingNumber')}
-                value={values.routingNumber}
-                errors={errors.routingNumber}
-                style={styles.inputStyle}
-                submitted={submitted}
-              />
-
-              <RegularTextInput
-                label="Confirm Routing Number *"
-                placeholder="Confirm Routing Number"
-                placeholderTextColor={colors.inputText}
-                onChangeText={handleChange('confirmRoutingNumber')}
-                onBlur={handleBlur('confirmRoutingNumber')}
-                value={values.confirmRoutingNumber}
-                errors={errors.confirmRoutingNumber}
-                style={styles.inputStyle}
-                submitted={submitted}
-              />
-
-              <CustomButton
+              {/* Submit Button */}
+              <TouchableOpacity
                 style={styles.submitButton}
-                onPress={() => {
-                  setSubmitted(true);
-                  handleSubmit();
-                }}>
-                {title == 'Edit Shop' ? 'UPDATE' : 'CREATE'}
-              </CustomButton> */}
-              <CustomButton
-                style={styles.submitButton}
-                loading={loading}
-                onPress={handleSubmit}>
-                CREATE SHOP
-              </CustomButton>
-            </Card>
-
-            <GeneralModal
-              visible={shopSuccess}
-              closeModal={() => setShopSuccess(false)}
-              icon={images.checkedIcon}
-              title={
-                title == 'Edit Shop'
-                  ? 'Shop Updated successfully'
-                  : 'Shop Created successfully'
-              }
-              buttonText="Ok"
-              primaryBtn={true}
-              onPress={() => {
-                setShopSuccess(false);
-                navigation.goBack();
-              }}
-            />
-          </>
-        )}
-      </Formik>
-    </KeyboardAwareScrollView>
+                onPress={() => handleSubmit()}
+                disabled={loading}>
+                <Text style={styles.submitButtonText}>Submit Details</Text>
+              </TouchableOpacity>
+            </>
+          )}
+        </Formik>
+      </KeyboardAwareScrollView>
+    </View>
   );
 };
 

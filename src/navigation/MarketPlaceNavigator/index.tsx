@@ -11,6 +11,7 @@ import BlockedUsers from '../../screens/BlockedUsers';
 import Marketplace from '../../screens/MarketPlace/Main';
 import MyOrders from '../../screens/MyOrders';
 import PaymentLogs from '../../screens/PaymentLogs';
+import OrderTracking from '../../screens/OrderTracking';
 
 const MarketPlaceNavigation = () => {
   const Stack = createNativeStackNavigator();
@@ -28,6 +29,11 @@ const MarketPlaceNavigation = () => {
       <Stack.Screen
         name="PaymentLogs"
         component={PaymentLogs}
+        options={NavigationOptions}
+      />
+      <Stack.Screen
+        name="OrderTracking"
+        component={OrderTracking}
         options={NavigationOptions}
       />
       {/*

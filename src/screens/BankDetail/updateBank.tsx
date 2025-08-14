@@ -14,6 +14,8 @@ import Card from '../../components/Card';
 import styles from './styles';
 import {images} from '../../utils/images';
 import {createBank, updateBank} from '../../api/menu';
+import {createShop} from '../../api/shop';
+import Toast from 'react-native-toast-message';
 
 const accountTypes = [
   {label: 'Savings', value: 'savings'},
@@ -36,10 +38,11 @@ const validationSchema = yup.object().shape({
     .required('Confirm Account Number is required'),
 });
 
-export const UpdateBank = ({data, setData}) => {
-  const navigation = useNavigation();
+export const UpdateBank = ({data, setData, storeData, isNewStore}) => {
+  const navigation: any = useNavigation();
   const [detailUpdate, setDetailUpdate] = useState<boolean>(false);
   const [loading, setLoading] = useState(false);
+  const [storeCreated, setStoreCreated] = useState(false);
 
   const initialValues = {
     accountHolderName: data?.account_name || '',
@@ -49,6 +52,43 @@ export const UpdateBank = ({data, setData}) => {
     confirmRoutingNumber: data?.routing_number || '',
     accountNumber: data?.account_number || '',
     confirmAccountNumber: data?.account_number || '',
+  };
+
+  const createStoreAfterBankDetails = async () => {
+    if (!storeData) return;
+
+    try {
+      const storeFormData = new FormData();
+
+      // Add store details
+      Object.entries(storeData).forEach(([key, value]) => {
+        storeFormData.append(key, value);
+      });
+
+      // Add a default delivery fee if not provided
+      if (!storeData.delivery_fees) {
+        storeFormData.append('delivery_fees', '0');
+      }
+
+      const response = await createShop(storeFormData);
+
+      if (response?.status) {
+        console.log('Store created successfully');
+        setStoreCreated(true);
+        Toast.show({
+          type: 'success',
+          text1: 'Success',
+          text2: 'Store created successfully!',
+        });
+      }
+    } catch (error) {
+      console.log('Error creating store:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to create store',
+      });
+    }
   };
 
   const handleSubmit = async (values: any) => {
@@ -64,24 +104,35 @@ export const UpdateBank = ({data, setData}) => {
     Object.entries(temp).forEach(([key, value]) => {
       form.append(key, value);
     });
-    if (data) {
-      await updateBank(form).then(res => {
-        if (res?.data) {
-          console.log('UPDATEEEEEEEDDDDDDDDDDDDDDDDD');
-          setDetailUpdate(true);
-          setLoading(false);
-          setData(temp);
-        }
-      });
-    } else {
-      await createBank(form).then(res => {
-        if (res?.data) {
-          console.log('CREATEEEDDDDDDDDDDDDDDDDDD');
-          setDetailUpdate(true);
-          setLoading(false);
-          setData(temp);
-        }
-      });
+
+    try {
+      if (data) {
+        await updateBank(form).then(res => {
+          if (res?.data) {
+            console.log('UPDATEEEEEEEDDDDDDDDDDDDDDDDD');
+            setDetailUpdate(true);
+            setLoading(false);
+            setData(temp);
+          }
+        });
+      } else {
+        await createBank(form).then(res => {
+          if (res?.data) {
+            console.log('CREATEEEDDDDDDDDDDDDDDDDDD');
+            setDetailUpdate(true);
+            setLoading(false);
+            setData(temp);
+
+            // If this is a new store flow, create the store after bank details
+            if (isNewStore && storeData) {
+              createStoreAfterBankDetails();
+            }
+          }
+        });
+      }
+    } catch (error) {
+      console.log('Error in bank details submission:', error);
+      setLoading(false);
     }
   };
 
@@ -90,8 +141,9 @@ export const UpdateBank = ({data, setData}) => {
       headerStyle: {
         backgroundColor: colors.headerColor,
       },
+      title: isNewStore ? 'Bank Details' : 'Update Bank Details',
     });
-  }, [navigation]);
+  }, [navigation, isNewStore]);
 
   return (
     <KeyboardAwareScrollView showsVerticalScrollIndicator={false}>
@@ -148,20 +200,6 @@ export const UpdateBank = ({data, setData}) => {
                   style={styles.inputStyle}
                 />
 
-                {/* <InterRegular style={styles.countryLabel}>
-                  Bank Name
-                </InterRegular>
-
-                <View style={[styles.dropdownContainer, {zIndex: 4}]}>
-                  <DropDownTextInput
-                    items={banks}
-                    // defaultValue='all'
-                    placeholder="Select"
-                    onChangeValue={handleDropdownChange}
-                    style={styles.dropDown}
-                  />
-                </View> */}
-
                 <RegularTextInput
                   label="Routing Number *"
                   placeholder="Enter Routing Number"
@@ -217,6 +255,8 @@ export const UpdateBank = ({data, setData}) => {
                   {data ? 'UPDATE' : 'ADD'}
                 </CustomButton>
               </Card>
+
+              {/* Bank Details Success Modal */}
               <GeneralModal
                 visible={detailUpdate}
                 closeModal={() => setDetailUpdate(false)}
@@ -228,7 +268,29 @@ export const UpdateBank = ({data, setData}) => {
                 buttonText="OK"
                 onPress={() => {
                   setDetailUpdate(false);
-                  // navigation.navigate('BankDetail');
+                  // If this is a new store flow, navigate back to marketplace
+                  if (isNewStore) {
+                    navigation.navigate('MarketPlaceNavigation', {
+                      screen: 'Marketplace',
+                    });
+                  }
+                }}
+                primaryBtn={true}
+              />
+
+              {/* Store Creation Success Modal */}
+              <GeneralModal
+                visible={storeCreated}
+                closeModal={() => setStoreCreated(false)}
+                icon={images.checkedIcon}
+                title="Store Created Successfully"
+                message="Your store has been created successfully!"
+                buttonText="OK"
+                onPress={() => {
+                  setStoreCreated(false);
+                  navigation.navigate('MarketPlaceNavigation', {
+                    screen: 'Marketplace',
+                  });
                 }}
                 primaryBtn={true}
               />

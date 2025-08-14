@@ -4,82 +4,163 @@ import {fontSizes, vh, vw} from '../../constant';
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: vw * 4,
-    backgroundColor: colors.headerColor,
-    // alignItems: "center",
-    // // paddingBottom: vh * 2,
-    // flex: 1,
+    flex: 1,
+    backgroundColor: '#f8f8f8',
   },
-  contentContainer: {
-    marginVertical: vh * 1,
-    marginTop: Platform.OS == 'ios' ? vh * 8 : 0,
-
-    // flex: 1,
-    // backgroundColor: "yellow"
+  scrollContainer: {
+    flexGrow: 1,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 100,
   },
-  section: {},
-  inputStyle: {
-    // marginBottom: 16,
-    backgroundColor: colors.inputcolor,
-    paddingLeft: vw * 4,
-    height: vh * 6,
+  formContainer: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  heading: {
-    color: colors.black,
-    fontSize: fontSizes.f24,
-    marginTop: vh * 2,
+  inputContainer: {
+    marginBottom: 20,
   },
-  dropdownLabel: {
-    color: colors.black,
-    fontSize: fontSizes.f14,
-    marginLeft: vw * 2,
-    marginTop: vh * 2,
+  label: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 8,
   },
-  // dropDown: {
-  //     marginBottom: 16,
-  //     borderWidth: 0
-  // },
-  submitButton: {
-    alignSelf: 'center',
+  textInput: {
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 16,
+    backgroundColor: 'white',
+    color: '#333',
   },
-  uploadBtn: {
+  textArea: {
+    height: 100,
+    textAlignVertical: 'top',
+  },
+  phoneContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    backgroundColor: colors.inputcolor,
     alignItems: 'center',
-    paddingHorizontal: vw * 4,
-    height: vh * 6,
-    marginBottom: 16,
   },
-  uploadTxt: {
-    fontSize: fontSizes.f12,
+  countrySelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    marginRight: 8,
+    minWidth: 80,
   },
-  uploadImg: {
-    width: vw * 6,
-    height: vh * 3,
+  countryText: {
+    fontSize: 16,
+    color: '#333',
+    marginRight: 4,
+  },
+  phoneInput: {
+    flex: 1,
+    marginLeft: 0,
+  },
+  countryField: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: 'white',
+  },
+  countryDisplay: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  flagText: {
+    fontSize: 18,
+    marginRight: 8,
+  },
+  countryValue: {
+    fontSize: 16,
+    color: '#333',
+  },
+  dropdownArrow: {
+    fontSize: 12,
+    color: '#666',
   },
   dropdownContainer: {
-    // marginTop: vh * 1.4,
-    width: vw * 82,
-    zIndex: 5,
-    backgroundColor: colors.inputcolor,
-  },
-  dropDown: {
-    borderColor: colors.inputcolor,
-    // backgroundColor: colors.dateConatiner,
-    backgroundColor: colors.inputcolor,
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
+    backgroundColor: 'white',
     borderWidth: 1,
-    // zIndex: 100
+    borderColor: '#e0e0e0',
+    borderRadius: 8,
+    marginTop: 4,
+    zIndex: 1000,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  countryLabel: {
-    fontSize: fontSizes.f14,
-    color: colors.black,
-    marginTop: vh * 3,
-    marginLeft: vw * 2,
+  dropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
   },
-  error: {
-    color: colors.redText,
-    marginTop: vh * 1,
+  dropdownItemText: {
+    fontSize: 16,
+    color: '#333',
+    marginLeft: 8,
+  },
+  errorText: {
+    color: '#ff4444',
+    fontSize: 14,
+    marginTop: 4,
+  },
+  submitButton: {
+    backgroundColor: '#00A19D',
+    borderRadius: 8,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    marginTop: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  submitButtonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: '600',
   },
 });
 

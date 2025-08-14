@@ -102,6 +102,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.inputcolor,
     height: vh * 5,
     paddingLeft: vw * 2,
+    color: colors.black,
   },
   label: {
     color: colors.black,

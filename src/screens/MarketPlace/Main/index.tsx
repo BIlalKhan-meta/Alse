@@ -1,90 +1,3 @@
-// // Home.tsx
-// import React, {useEffect, useState} from 'react';
-// import {View} from 'react-native';
-// import Card from '../../../components/Card';
-// import {useIsFocused, useNavigation} from '@react-navigation/native';
-// import styles from './styles';
-// import WishlistScreen from '../../../components/WishList';
-// import SearchComponent from '../../../components/SearchComponent';
-// import CustomButton from '../../../components/CustomButton';
-// import {getAllShop} from '../../../api/shop';
-// import {useSelector} from 'react-redux';
-// import {selectUserProfile} from '../../../store/slices/authSlice';
-// import Loader from '../../../components/Loader';
-// import {Subscribe} from '../../../components/Subscribe';
-
-// const Marketplace: React.FC = () => {
-//   const navigation = useNavigation();
-//   const user = useSelector(selectUserProfile);
-
-//   const [shops, setShops] = useState([]);
-//   const [loading, setLoading] = useState(false);
-//   const isFocused = useIsFocused();
-//   const [filteredData, setFilteredData] = useState([]);
-
-//   const handleSearch = (query: string) => {
-//     let filtered = shops.filter((item: any) =>
-//       item?.shop_name?.includes(query),
-//     );
-//     setFilteredData(filtered);
-//   };
-
-//   useEffect(() => {
-//     getData();
-//   }, [isFocused]);
-
-//   useEffect(() => {
-//     const filterOrders = () => {
-//       let filtered = [...shops];
-//       setFilteredData(filtered);
-//     };
-
-//     filterOrders();
-//   }, [shops]);
-
-//   const getData = async () => {
-//     setLoading(true);
-
-//     const res = await getAllShop();
-//     setLoading(false);
-
-//     setShops(res.data?.data?.data);
-//   };
-
-//   if (!user?.has_subscription && !user.is_child) {
-//     return <Subscribe />;
-//   }
-
-//   if (loading) {
-//     return <Loader />;
-//   }
-
-//   return (
-//     <View style={styles.container}>
-//       <Card>
-//         <SearchComponent onSearch={handleSearch} placeholder="Find shop" />
-//         <WishlistScreen
-//           wishlist={filteredData}
-//           onPress={(shopId, userId) => {
-//             if (user.id == userId) {
-//               navigation.navigate('MyShop', {shopId});
-//             } else {
-//               navigation.navigate('Shop', {shopId});
-//             }
-//           }}
-//         />
-//         <CustomButton
-//           style={styles.button}
-//           onPress={() => navigation.navigate('AddStore')}>
-//           Create Shop/My Shop
-//         </CustomButton>
-//       </Card>
-//     </View>
-//   );
-// };
-
-// export default Marketplace;
-
 import React, {useEffect, useState} from 'react';
 import {
   View,
@@ -93,14 +6,16 @@ import {
   TouchableOpacity,
   Image,
   ScrollView,
+  Animated,
 } from 'react-native';
 import {useIsFocused, useNavigation} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
 import {selectUserProfile} from '../../../store/slices/authSlice';
 import {getAllShop} from '../../../api/shop';
+import {getOrders} from '../../../api/product';
 import Loader from '../../../components/Loader';
 import {Subscribe} from '../../../components/Subscribe';
-import {MapPin, Search, ChevronRight} from 'lucide-react-native';
+import {MapPin, Search, ChevronRight, Plus, Package} from 'lucide-react-native';
 import {images} from '../../../utils/images';
 import {vh, vw} from '../../../constant';
 import {getSimilarProducts} from '../../../api/product';
@@ -116,6 +31,20 @@ interface Product {
   soldBy?: string;
 }
 
+interface Order {
+  order_id: string;
+  product: {
+    title: string;
+    images: Array<{path: string}>;
+    banner: string;
+  };
+  total_amount: string;
+  status: string;
+  tracking_number?: string;
+  carrier?: string;
+  expected_delivery?: string;
+}
+
 const Marketplace: React.FC = () => {
   const navigation: any = useNavigation();
   const user = useSelector(selectUserProfile);
@@ -126,9 +55,15 @@ const Marketplace: React.FC = () => {
   const isFocused = useIsFocused();
   const [filteredData, setFilteredData] = useState<any[]>([]);
 
+  // FAB state
+  const [isFabOpen, setIsFabOpen] = useState(false);
+  const [fabAnimation] = useState(new Animated.Value(0));
+  const [orders, setOrders] = useState<Order[]>([]);
+
   useEffect(() => {
     getData();
     getProductData();
+    getOrdersData();
   }, [isFocused]);
 
   useEffect(() => {
@@ -160,6 +95,39 @@ const Marketplace: React.FC = () => {
       // No fallback dummy data, just leave products empty
       setProducts([]);
     }
+  };
+
+  // Function to get orders data
+  const getOrdersData = async () => {
+    try {
+      const res = await getOrders();
+      setOrders(res?.data?.data?.data || []);
+      console.log('Orders data:', res?.data?.data?.data);
+    } catch (error) {
+      console.log('Error fetching orders:', error);
+      setOrders([]);
+    }
+  };
+
+  // FAB animation functions
+  const toggleFab = () => {
+    const toValue = isFabOpen ? 0 : 1;
+    Animated.spring(fabAnimation, {
+      toValue,
+      useNativeDriver: true,
+    }).start();
+    setIsFabOpen(!isFabOpen);
+  };
+
+  const handleTrackOrder = () => {
+    setIsFabOpen(false);
+    Animated.spring(fabAnimation, {
+      toValue: 0,
+      useNativeDriver: true,
+    }).start();
+
+    // Navigate to tracking screen with orders data
+    navigation.navigate('OrderTracking', {orders});
   };
 
   if (!user?.has_subscription && !user.is_child) {
@@ -318,6 +286,28 @@ const Marketplace: React.FC = () => {
           </ScrollView>
         </View>
       </ScrollView>
+
+      {/* FAB Button */}
+      <View style={styles.fabContainer}>
+        {/* Options Menu */}
+        {isFabOpen && (
+          <View style={styles.fabOptions}>
+            <TouchableOpacity
+              style={styles.fabOption}
+              onPress={handleTrackOrder}>
+              <Package size={16} color="white" style={styles.fabOptionIcon} />
+              <Text style={styles.fabOptionText}>
+                Track Order {orders.length > 0 ? `(${orders.length})` : ''}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Main FAB Button */}
+        <TouchableOpacity style={styles.fabButton} onPress={toggleFab}>
+          <Plus size={24} color="white" />
+        </TouchableOpacity>
+      </View>
 
       {/* Add Shop Button (moved to bottom of screen) */}
       <TouchableOpacity
@@ -578,6 +568,58 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
     fontSize: 16,
+  },
+
+  // FAB Styles
+  fabContainer: {
+    position: 'absolute',
+    bottom: 100,
+    right: 20,
+    alignItems: 'flex-end',
+  },
+  fabOptions: {
+    marginBottom: 10,
+  },
+  fabOption: {
+    backgroundColor: '#333',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 25,
+    marginBottom: 8,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 3,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  fabOptionIcon: {
+    marginRight: 8,
+  },
+  fabOptionText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  fabButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#00A19D',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
   },
 });
 
