@@ -2,123 +2,58 @@ import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {
   View,
   Text,
-  StyleSheet,
   FlatList,
   Image,
   TouchableOpacity,
-  TextInput,
-  TouchableWithoutFeedback,
+  SafeAreaView,
+  StatusBar,
 } from 'react-native';
 import {useIsFocused, useNavigation} from '@react-navigation/native';
 import {images} from '../../utils/images';
 import {colors} from '../../utils/theme';
 import styles from './styles';
-import DropDownTextInput from '../../components/TextInput/DropDownTextInput';
 import InterMedium from '../../components/Text/InterMedium';
 import InterRegular from '../../components/Text/InterRegular';
-import Card from '../../components/Card';
 import GeneralModal from '../../components/GeneralModal';
-import ReportBlockModal from '../../components/ReportBlockModal';
 import NewGroupModal from '../../components/GroupModel';
 import _ from 'lodash';
-import {
-  createChat,
-  userFollow,
-  userUnFollow,
-  getConversations,
-  createGroup,
-} from '../../api/home';
-import {general} from '../../store/slices/generalSlice';
+import {getConversations} from '../../api/home';
 import moment from 'moment';
 import Loader from '../../components/Loader';
 import {EmptyComponent} from '../../components/EmptyComponent';
 import SearchComponent from '../../components/SearchComponent';
-import {dateHelper} from '../../utils';
-import dayjs from 'dayjs';
-import {vh, vw} from '../../constant';
 interface ChatItem {
   id: number;
   name: string;
-  lastMessage: string;
-  lastMessageTime: string;
-  avatar: string;
-  group: boolean;
+  lastMessage?: string;
+  lastMessageTime?: string;
+  avatar?: string;
+  image?: string;
+  group?: boolean;
+  last_message?: {
+    message: string;
+    created_at: string;
+  };
 }
-
-const chatData: ChatItem[] = [
-  {
-    id: 1,
-    name: 'Juliana John',
-    lastMessage:
-      'It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. ',
-    lastMessageTime: '3d ago',
-    avatar: `${images.user}`,
-    group: false,
-  },
-  {
-    id: 2,
-    name: 'Food group',
-    lastMessage:
-      'It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. ',
-    lastMessageTime: '1d ago',
-    avatar: `${images.user2}`,
-    group: true,
-  },
-  {
-    id: 3,
-    name: 'Jessy Roy',
-    lastMessage:
-      'It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. ',
-    lastMessageTime: '2d ago',
-    avatar: `${images.user}`,
-    group: false,
-  },
-  {
-    id: 4,
-    name: 'Peter Tom',
-    lastMessage:
-      'It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. ',
-    lastMessageTime: '3d ago',
-    avatar: `${images.user2}`,
-    group: false,
-  },
-];
-
-interface User {
-  id: number;
-  avatar: string;
-  name: string;
-}
-
-const usersData: User[] = [
-  {id: 1, avatar: images.user, name: 'Marvel Edward'},
-  {id: 2, avatar: images.user, name: 'Madvil'},
-  {id: 3, avatar: images.user, name: 'Juliana David'},
-  {id: 4, avatar: images.user, name: 'Roy Rose'},
-  {id: 5, avatar: images.user, name: 'Marvel Edward'},
-];
 
 const ChatScreen: React.FC = () => {
-  const [searchText, setSearchText] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const [reportVisible, setReportVisible] = useState(false);
-  const [reportInput, setReportInput] = useState(false);
   const [ReportSuccess, setReportSuccess] = useState(false);
   const [blockVisible, setBlockVisible] = useState(false);
   const [blockSuccess, setBlockSuccess] = useState(false);
   const [linkVisible, setLinkVisible] = useState(false);
-  const [activeChatId, setActiveChatId] = useState<number | null>(null);
   const [loader, setLoader] = useState(false);
+  const [activeTab, setActiveTab] = useState('Chats');
 
   const [data, setData] = useState([]);
-  const [grpLoader, setGrpLoader] = useState(false);
 
   const IsFocused = useIsFocused();
   const navigation = useNavigation();
 
   const getData = () => {
     setLoader(true);
-    getConversations()
+    getConversations({})
       .then(res => {
         setData(res?.data?.data);
         setLoader(false);
@@ -149,96 +84,20 @@ const ChatScreen: React.FC = () => {
       });
   });
 
-  const handleGroupCreationbtn = formData => {
-    setGrpLoader(true);
-    createGroup(formData)
-      .then(res => {
-        setGrpLoader(false);
-        console.log('Response from CreateGroup ==========>', res);
-        closeModal();
-        getData();
-      })
-      .catch(err => {
-        setGrpLoader(false);
-        console.log('Error from Create Group====>', err);
-      });
-  };
   useEffect(() => {
     getData();
   }, [IsFocused]);
 
-  const openModal = (id: number) => {
-    console.log('id ===>');
-
-    // setModalVisible(true);
-  };
-
   const closeModal = () => {
     setModalVisible(false);
   };
-  const items = [
-    {label: 'All', value: 'all'},
-    {label: 'Read', value: 'read'},
-    {label: 'Unread', value: 'unread'},
-  ];
-  const handleDropdownChange = (value: string | null) => {
-    console.log('Selected value:', value);
-  };
+
   useLayoutEffect(() => {
     navigation.setOptions({
-      // headerShown: true,
-      // headerTransparent: true,
-      headerStyle: {
-        backgroundColor: colors.headerColor,
-      },
-      // headerRight: () => (
-      //     <TouchableOpacity style={styles.newGroupButton}
-      //         onPress={openModal}
-      //     >
-
-      //         <Text style={styles.newGroupButtonText}>
-      //             New Group</Text>
-      //     </TouchableOpacity>
-      // ),
+      headerShown: false,
     });
   }, [navigation]);
 
-  const handleReportPress = () => {
-    setActiveChatId(null);
-    setReportVisible(true);
-  };
-
-  const handleBlockPress = () => {
-    setActiveChatId(null);
-    setBlockVisible(true);
-  };
-
-  const handleGetLink = () => {
-    setModalVisible(false);
-    setLinkVisible(true);
-  };
-
-  const options = [
-    // { text: 'Get Link', onPress: () => { handleGetLink(); } },
-    {
-      text: 'Leave',
-      onPress: () => {
-        handleReportPress();
-      },
-    },
-    // { text: 'Block', onPress: () => { handleBlockPress(); } },
-  ];
-
-  const options2 = [
-    // { text: 'Get Link', onPress: () => { handleGetLink(); } },
-    // { text: 'Report', onPress: () => { handleReportPress(); } },
-    {
-      text: 'Block',
-      onPress: () => {
-        handleBlockPress();
-      },
-    },
-  ];
   if (loader) {
     return <Loader />;
   }
@@ -246,133 +105,182 @@ const ChatScreen: React.FC = () => {
     <TouchableOpacity
       style={styles.chatContainer}
       onPress={() =>
-        navigation.navigate('ChatOngoing', {id: item?.id, name: item?.name})
+        (navigation as any).navigate('ChatOngoing', {
+          id: item?.id,
+          name: item?.name,
+        })
       }>
       <View style={styles.chatItem}>
-        <Image
-          source={item?.image ? {uri: item?.image} : images.profile}
-          style={styles.avatar}
-        />
+        <View style={styles.avatarContainer}>
+          <Image
+            source={item?.image ? {uri: item?.image} : images.profile}
+            style={styles.avatar}
+          />
+          <View style={styles.onlineIndicator} />
+        </View>
         <View style={styles.chatInfo}>
-          <InterMedium style={styles.name}>{item.name}</InterMedium>
-          <InterRegular style={[styles.lastMessage]}>
-            {moment(item?.last_message?.created_at).local().fromNow()}
+          <View style={styles.chatHeader}>
+            <InterMedium style={styles.name}>{item.name}</InterMedium>
+            <InterRegular style={styles.time}>
+              {moment(item?.last_message?.created_at).local().fromNow()}
+            </InterRegular>
+          </View>
+          <InterRegular style={styles.lastMessage}>
+            {item.last_message?.message
+              ? item.last_message?.message
+              : 'No messages yet'}
           </InterRegular>
         </View>
       </View>
-      <InterRegular
-        style={[
-          styles.lastMessage,
-          {
-            marginTop: vh,
-            marginLeft: vw * 17,
-          },
-        ]}>
-        {item.last_message?.message ? item.last_message?.message : ''}
-      </InterRegular>
+    </TouchableOpacity>
+  );
+
+  const renderTabButton = (tabName: string) => (
+    <TouchableOpacity
+      style={[
+        styles.tabButton,
+        activeTab === tabName && styles.activeTabButton,
+      ]}
+      onPress={() => setActiveTab(tabName)}>
+      <Text
+        style={[styles.tabText, activeTab === tabName && styles.activeTabText]}>
+        {tabName}
+      </Text>
     </TouchableOpacity>
   );
 
   return (
-    <TouchableWithoutFeedback onPress={() => setActiveChatId(null)}>
-      <View style={styles.container}>
-        <Card style={styles.cardStyle}>
-          <View style={styles.searchContainer}>
-            <SearchComponent
-              onSearch={handleSearchTxt}
-              placeholder="Search here"
-            />
+    <SafeAreaView style={styles.container}>
+      <StatusBar backgroundColor={colors.white} barStyle="dark-content" />
 
-            <View style={styles.dropdownContainer}></View>
-          </View>
-          <FlatList
-            showsVerticalScrollIndicator={false}
-            data={data}
-            renderItem={renderItem}
-            keyExtractor={item => item?.id}
-            contentContainerStyle={styles.chatList}
-            ListEmptyComponent={() => <EmptyComponent text={'No chat found'} />}
-          />
-        </Card>
+      {/* Custom Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Alse</Text>
+        <View style={styles.headerIcons}>
+          {/* <TouchableOpacity style={styles.iconButton}>
+            <Image source={images.searchIcon} style={styles.headerIcon} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.iconButton}>
+            <Image source={images.bellIcon} style={styles.headerIcon} />
+            <View style={styles.notificationBadge} />
+          </TouchableOpacity> */}
+        </View>
+      </View>
 
-        <GeneralModal
-          visible={reportVisible}
-          closeModal={() => setReportVisible(false)}
-          icon={images.qmark}
-          title="Leave Group"
-          message="Are you sure you want to leave this group?"
-          SecondaryText1="Yes"
-          SecondaryText2="No"
-          onPress={() => {
-            setReportVisible(false);
-            setReportSuccess(true);
-          }}
-          secondaryBtn={true}
-        />
+      {/* Search Bar */}
+      <View style={styles.searchContainer}>
+        <SearchComponent onSearch={handleSearchTxt} placeholder="Search" />
+      </View>
 
-        <NewGroupModal
-          visible={modalVisible}
-          closeModal={closeModal}
-          users={[]}
-          handleGroupCreationbtn={handleGroupCreationbtn}
-          loader={grpLoader}
-        />
+      {/* Tabs */}
+      <View style={styles.tabContainer}>
+        {renderTabButton('Chats')}
+        {renderTabButton('Groups')}
+        {renderTabButton('Favourite')}
+      </View>
 
-        <GeneralModal
-          visible={ReportSuccess}
-          closeModal={() => setReportSuccess(false)}
-          icon={images.checkedIcon}
-          title="Leave Group"
-          message="Group has been leave successfully."
-          buttonText="Ok"
-          onPress={() => {
-            setReportSuccess(false);
-          }}
-          primaryBtn={true}
-        />
-
-        <GeneralModal
-          visible={blockVisible}
-          closeModal={() => setBlockVisible(false)}
-          icon={images.qmark}
-          title="Block User"
-          message="Are you sure you want to block this Group?"
-          SecondaryText1="Yes"
-          SecondaryText2="No"
-          onPress={() => {
-            setBlockVisible(false);
-            setBlockSuccess(true);
-          }}
-          secondaryBtn={true}
-        />
-
-        <GeneralModal
-          visible={blockSuccess}
-          closeModal={() => setBlockSuccess(false)}
-          icon={images.checkedIcon}
-          title="Block User"
-          message="User has been blocked successfully!"
-          buttonText="Ok"
-          onPress={() => {
-            setBlockSuccess(false);
-          }}
-          primaryBtn={true}
-        />
-
-        <GeneralModal
-          visible={linkVisible}
-          closeModal={() => setLinkVisible(false)}
-          title="Get Link"
-          buttonText="COPY"
-          buttonText2="CANCEL"
-          smallButtons={true}
-          getLink={true}
-          onPress={() => {
-            setLinkVisible(false);
-          }}
+      {/* Chat List */}
+      <View style={styles.chatListContainer}>
+        <FlatList
+          showsVerticalScrollIndicator={false}
+          data={data}
+          renderItem={renderItem}
+          keyExtractor={(item, index) =>
+            item?.id?.toString() || index.toString()
+          }
+          contentContainerStyle={styles.chatList}
+          ListEmptyComponent={() => <EmptyComponent text={'No chat found'} />}
         />
       </View>
-    </TouchableWithoutFeedback>
+
+      {/* Floating Action Button */}
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() => setModalVisible(true)}>
+        <Image source={images.chatIcon} style={styles.fabIcon} />
+      </TouchableOpacity>
+
+      <GeneralModal
+        visible={reportVisible}
+        closeModal={() => setReportVisible(false)}
+        icon={images.qmark}
+        title="Leave Group"
+        message="Are you sure you want to leave this group?"
+        SecondaryText1="Yes"
+        SecondaryText2="No"
+        buttonText="Yes"
+        onPress={() => {
+          setReportVisible(false);
+          setReportSuccess(true);
+        }}
+        secondaryBtn={true}
+        primaryBtn={false}
+      />
+
+      <NewGroupModal
+        visible={modalVisible}
+        closeModal={closeModal}
+        users={[]}
+        handleGroupCreationbtn={() => ({})}
+        loader={false}
+      />
+
+      <GeneralModal
+        visible={ReportSuccess}
+        closeModal={() => setReportSuccess(false)}
+        icon={images.checkedIcon}
+        title="Leave Group"
+        message="Group has been leave successfully."
+        buttonText="Ok"
+        onPress={() => {
+          setReportSuccess(false);
+        }}
+        primaryBtn={true}
+      />
+
+      <GeneralModal
+        visible={blockVisible}
+        closeModal={() => setBlockVisible(false)}
+        icon={images.qmark}
+        title="Block User"
+        message="Are you sure you want to block this Group?"
+        SecondaryText1="Yes"
+        SecondaryText2="No"
+        buttonText="Yes"
+        onPress={() => {
+          setBlockVisible(false);
+          setBlockSuccess(true);
+        }}
+        secondaryBtn={true}
+        primaryBtn={false}
+      />
+
+      <GeneralModal
+        visible={blockSuccess}
+        closeModal={() => setBlockSuccess(false)}
+        icon={images.checkedIcon}
+        title="Block User"
+        message="User has been blocked successfully!"
+        buttonText="Ok"
+        onPress={() => {
+          setBlockSuccess(false);
+        }}
+        primaryBtn={true}
+      />
+
+      <GeneralModal
+        visible={linkVisible}
+        closeModal={() => setLinkVisible(false)}
+        icon={images.checkedIcon}
+        title="Get Link"
+        message="Copy the link to share"
+        buttonText="COPY"
+        onPress={() => {
+          setLinkVisible(false);
+        }}
+        primaryBtn={true}
+      />
+    </SafeAreaView>
   );
 };
 

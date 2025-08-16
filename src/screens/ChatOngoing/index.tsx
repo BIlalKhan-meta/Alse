@@ -1,30 +1,20 @@
-import React, {useState, useEffect, useLayoutEffect} from 'react';
+import React, {useState, useEffect, useLayoutEffect, useCallback} from 'react';
 import {
   View,
   Text,
-  StyleSheet,
   TouchableOpacity,
   Image,
-  TouchableWithoutFeedback,
+  SafeAreaView,
+  StatusBar,
 } from 'react-native';
-import {
-  GiftedChat,
-  IMessage,
-  Send,
-  InputToolbar,
-  Composer,
-} from 'react-native-gifted-chat';
+import {GiftedChat, IMessage} from 'react-native-gifted-chat';
 import {useIsFocused, useNavigation} from '@react-navigation/native';
 import {images} from '../../utils/images';
 import {colors} from '../../utils/theme';
 import {renderBubble, renderMessageText} from './MessageContainer';
 import styles from './styles';
-import messagesData from './messages';
-import {renderComposer, renderInputToolbar, renderSend} from './InputToolbar';
-import CustomInputToolbar from './CustomInputToolbar';
-import GeneralModal from '../../components/GeneralModal';
-import ReportBlockModal from '../../components/ReportBlockModal';
-import Card from '../../components/Card';
+
+import {renderInputToolbar} from './InputToolbar';
 import {getChat, createMessage} from '../../api/home';
 import {selectUserProfile} from '../../store/slices/authSlice';
 import {useSelector} from 'react-redux';
@@ -34,15 +24,23 @@ import {
   emitMessage,
   listenMessage,
 } from '../../utils/socket';
-import {vh} from '../../constant';
-import { requestMicrophonePermission } from '../../utils/helpers';
+import {EllipsisVertical, Phone, Video} from 'lucide-react-native';
 
-const ChatOngoing: React.FC = props => {
+interface Props {
+  route?: {
+    params?: {
+      id?: string;
+      name?: string;
+      user?: any;
+    };
+  };
+}
+
+const ChatOngoing: React.FC<Props> = props => {
   const navigation = useNavigation();
   const isFocused = useIsFocused();
 
   const [messages, setMessages] = useState<IMessage[]>([]);
-  const [loader, setLoader] = useState(false);
   const user = useSelector(selectUserProfile);
 
   // console.log("USER++++++++++++++++++",user?.full_name)
@@ -54,117 +52,172 @@ const ChatOngoing: React.FC = props => {
     };
   }, []);
 
-  const getData = () => {
-    setLoader(true);
-    getChat(props?.route?.params?.id)
-      .then(res => {
-        let m = res?.data?.data?.map(item => ({
-          _id: item?.id,
-          chat_id: item?.chat_id,
-          text: item?.message,
-          user: {_id: item?.user_id, avatar: item?.image},
-        }));
-        setMessages(m);
-        setLoader(false);
-      })
-      .catch(Err => {
-        setLoader(false);
+  const getData = useCallback(() => {
+    if (!props?.route?.params?.id) {
+      return;
+    }
 
-        console.log('Error from get Conversation ', Err);
+    getChat(props?.route?.params?.id)
+      .then((res: any) => {
+        const messagesData = res?.data?.data || [];
+        const formattedMessages = messagesData.map((item: any) => ({
+          _id: item?.id || Math.random(),
+          chat_id: item?.chat_id,
+          text: item?.message || '',
+          createdAt: new Date(item?.created_at || Date.now()),
+          user: {
+            _id: item?.user_id,
+            avatar: item?.image || images.profile,
+          },
+        }));
+        setMessages(formattedMessages);
+      })
+      .catch((Err: any) => {
+        console.log('Error from get Conversation:', Err);
       });
-  };
+  }, [props?.route?.params?.id]);
 
   useEffect(() => {
     if (isFocused) {
       getData();
     }
-  }, [isFocused]);
+  }, [isFocused, getData]);
 
   useEffect(() => {
     if (props?.route?.params?.id) {
-      listenMessage(props?.route?.params?.id, res => {
+      listenMessage(props?.route?.params?.id, (res: any) => {
         console.log('Response from socket ==>', res);
 
-        let p = {
-          _id: Math.random(),
-          chat_id: res?.chat_id,
-          text: res?.message,
-          user: {
-            _id: res?.user?._id,
-            avatar: res?.user?.avatar,
-          },
-        };
+        // Only add message if it's from another user (not current user)
+        if (res?.user?._id !== user?.id) {
+          const newMessage = {
+            _id: Math.random(),
+            chat_id: res?.chat_id,
+            text: res?.message,
+            createdAt: new Date(),
+            user: {
+              _id: res?.user?._id,
+              avatar: res?.user?.avatar,
+            },
+          };
 
-        setMessages(m => [p, ...m]);
+          setMessages(previousMessages =>
+            GiftedChat.append(previousMessages, [newMessage]),
+          );
+        }
       });
     }
-  }, []);
+  }, [props?.route?.params?.id, user?.id]);
 
-  const onSend = (newMessages: IMessage[] = []) => {
-    let message = newMessages?.[0];
-    const data = {
-      chat_id: props?.route?.params?.id,
-      message: message?.text,
-      created_at: Date.now(),
-    };
-    emitMessage({
-      chat_id: props?.route?.params?.id,
-      message: message?.text,
-      created_at: Date.now(),
-      user: {
-        _id: user?.id,
-        avatar: user?.avatar ? user?.avatar : images.profile,
-        // url:
-      },
-    });
+  const onSend = useCallback(
+    (newMessages: IMessage[] = []) => {
+      // Immediately update the UI with optimistic update
+      setMessages(previousMessages =>
+        GiftedChat.append(previousMessages, newMessages),
+      );
 
-    createMessage(data)
-      .then(res => {})
-      .catch(Err => {
-        console.log('Errorm from Create Message  =======>', Err);
+      const message = newMessages?.[0];
+      if (!message?.text) {
+        return;
+      }
+
+      const data = {
+        chat_id: props?.route?.params?.id,
+        message: message.text,
+        created_at: Date.now(),
+      };
+
+      // Send to socket for real-time updates to other users
+      emitMessage({
+        chat_id: props?.route?.params?.id,
+        message: message.text,
+        created_at: Date.now(),
+        user: {
+          _id: user?.id,
+          avatar: user?.avatar ? user?.avatar : images.profile,
+        },
       });
-  };
+
+      // Save to backend (async, doesn't block UI)
+      createMessage(data)
+        .then((_res: any) => {
+          console.log('Message saved successfully');
+        })
+        .catch((Err: any) => {
+          console.log('Error saving message:', Err);
+          // TODO: Implement retry logic or show error to user
+        });
+    },
+    [props?.route?.params?.id, user?.id, user?.avatar],
+  );
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerStyle: {
-        backgroundColor: colors.headerColor,
-      },
-      title: props?.route?.params?.name,
-      headerRight: () => {
-        return (
+      headerShown: false,
+    });
+  }, [navigation]);
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <StatusBar backgroundColor={colors.white} barStyle="dark-content" />
+
+      {/* Custom Header */}
+      <View style={styles.customHeader}>
+        <View style={styles.headerLeft}>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={styles.backButton}>
+            <Image source={images.backicon} style={styles.backIcon} />
+          </TouchableOpacity>
+          <View style={styles.userInfo}>
+            <Image source={images.profile} style={styles.profileImage} />
+            <View style={styles.userDetails}>
+              <Text style={styles.userName}>
+                {props?.route?.params?.name || 'Mad'}
+              </Text>
+              <Text style={styles.userStatus}>● Always active</Text>
+            </View>
+          </View>
+        </View>
+        <View style={styles.headerRight}>
           <TouchableOpacity
             onPress={() =>
-              navigation.navigate('OutgoingCall', {
+              (navigation as any).navigate('OutgoingCall', {
                 chat_id: props?.route?.params?.id,
                 user: props?.route?.params?.user,
                 role: '1',
               })
             }
-            style={styles.header}>
-            <Image source={images.callIcon} style={styles.call_icon} />
+            style={styles.iconContainer}>
+            <Phone size={20} color="#666" strokeWidth={2} />
           </TouchableOpacity>
-        );
-      },
-    });
-  }, [navigation]);
-
-  return (
-    <TouchableWithoutFeedback>
-      <View style={styles.container}>
-        <Card style={styles.cardStyle}>
-          <GiftedChat
-            messages={messages}
-            onSend={onSend}
-            user={{_id: user?.id, avatar: user?.image}}
-            renderSend={renderSend}
-            renderMessageText={renderMessageText}
-            messagesContainerStyle={styles.messagesContainer}
-            renderBubble={renderBubble}
-          />
-        </Card>
+          <TouchableOpacity style={styles.iconContainer}>
+            <Video size={20} color="#666" strokeWidth={2} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.iconContainer}>
+            <EllipsisVertical size={20} color="#666" strokeWidth={2} />
+          </TouchableOpacity>
+        </View>
       </View>
-    </TouchableWithoutFeedback>
+
+      {/* Chat Messages */}
+      <View style={styles.chatContainer}>
+        <GiftedChat
+          messages={messages}
+          onSend={onSend}
+          user={{_id: user?.id, avatar: user?.image}}
+          renderMessageText={renderMessageText}
+          messagesContainerStyle={styles.messagesContainer}
+          renderBubble={renderBubble}
+          renderInputToolbar={renderInputToolbar}
+          minInputToolbarHeight={60}
+          maxInputLength={1000}
+          keyboardShouldPersistTaps="never"
+          loadEarlier={false}
+          inverted={true}
+        />
+      </View>
+    </SafeAreaView>
   );
 };
 

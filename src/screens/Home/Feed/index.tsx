@@ -399,19 +399,19 @@ const Home: React.FC = () => {
                   style={styles.menuItem}
                   onPress={() => {
                     toggleFab();
-                    // Add chat functionality
+                    navigation.navigate('ChatScreen');
                   }}>
                   <InterRegular style={styles.menuItemText}>Chat</InterRegular>
                 </TouchableOpacity>
 
-                <TouchableOpacity
+                {/* <TouchableOpacity
                   style={styles.menuItem}
                   onPress={() => {
                     toggleFab();
-                    navigation.navigate('Groups'); // Navigate to Group screen
+                    // navigation.navigate('Groups'); // Navigate to Group screen
                   }}>
                   <InterRegular style={styles.menuItemText}>Group</InterRegular>
-                </TouchableOpacity>
+                </TouchableOpacity> */}
 
                 <TouchableOpacity
                   style={styles.menuItem}

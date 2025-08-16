@@ -15,12 +15,45 @@ import {vh} from '../../constant';
 export const renderBubble: React.FC<BubbleProps> = props => (
   <Bubble
     {...props}
-    // renderTime={() => null}
     wrapperStyle={{
-      left: styles.rightAlignMessageContainer,
-      right: [styles.messagesContainer, styles.leftAlignMessageContainer],
+      left: {
+        backgroundColor: '#E8F5E8',
+        marginVertical: vh * 0.5,
+        marginHorizontal: 4,
+        borderRadius: 18,
+        paddingHorizontal: 4,
+      },
+      right: {
+        backgroundColor: '#00BCD4',
+        marginVertical: vh * 0.5,
+        marginHorizontal: 4,
+        borderRadius: 18,
+        paddingHorizontal: 4,
+      },
     }}
-    tickStyle={{}}
+    textStyle={{
+      left: {
+        color: colors.black,
+        fontSize: 14,
+      },
+      right: {
+        color: colors.white,
+        fontSize: 14,
+      },
+    }}
+    timeTextStyle={{
+      left: {
+        color: colors.gray,
+        fontSize: 11,
+      },
+      right: {
+        color: 'rgba(255,255,255,0.8)',
+        fontSize: 11,
+      },
+    }}
+    tickStyle={{
+      color: 'rgba(255,255,255,0.8)',
+    }}
   />
 );
 
@@ -36,20 +69,35 @@ export const renderMessageText: React.FC<MessageTextProps> = props => (
   <MessageText
     {...props}
     containerStyle={{
-      left: {backgroundColor: colors.headerColor},
+      left: {
+        backgroundColor: 'transparent',
+      },
       right: {
-        padding: 0,
+        backgroundColor: 'transparent',
       },
     }}
     textStyle={{
-      left: styles.messageTxt,
-      right: styles.messageTxtSelf,
+      left: {
+        color: colors.black,
+        fontSize: 14,
+        lineHeight: 20,
+      },
+      right: {
+        color: colors.white,
+        fontSize: 14,
+        lineHeight: 20,
+      },
     }}
     linkStyle={{
-      left: styles.messageTxt,
-      right: styles.messageTxtSelf,
+      left: {
+        color: '#00BCD4',
+        textDecorationLine: 'underline',
+      },
+      right: {
+        color: colors.white,
+        textDecorationLine: 'underline',
+      },
     }}
-    // customTextStyle={{ fontSize: fontSize.f16 }}
   />
 );
 

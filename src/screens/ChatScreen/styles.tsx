@@ -5,7 +5,7 @@ import {colors} from '../../utils/theme';
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.headerColor,
+    backgroundColor: colors.white,
   },
   cardStyle: {
     margin: vh * 2,
@@ -16,27 +16,80 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.lightGray,
+    justifyContent: 'space-between',
+    paddingHorizontal: vw * 4,
+    paddingVertical: vh * 2,
+    backgroundColor: colors.white,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
   headerTitle: {
-    flex: 1,
-    textAlign: 'center',
-    fontSize: 18,
+    fontSize: 24,
     fontWeight: 'bold',
-    color: colors.black,
+    color: '#00BCD4',
+    letterSpacing: 1,
   },
-  searchContainer: {
+  headerIcons: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+  },
+  iconButton: {
+    marginLeft: vw * 4,
+    position: 'relative',
+  },
+  headerIcon: {
+    width: 24,
+    height: 24,
+    tintColor: colors.gray,
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#FF5722',
+  },
+  searchContainer: {
     paddingHorizontal: vw * 4,
     paddingVertical: vh * 1,
     backgroundColor: colors.white,
-    zIndex: 100,
-    width: vw * 92,
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    backgroundColor: colors.white,
+    paddingHorizontal: vw * 4,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+  },
+  tabButton: {
+    paddingVertical: vh * 2,
+    paddingHorizontal: vw * 6,
+    marginRight: vw * 4,
+  },
+  activeTabButton: {
+    borderBottomWidth: 2,
+    borderBottomColor: '#00BCD4',
+  },
+  tabText: {
+    fontSize: 16,
+    color: colors.gray,
+    fontWeight: '500',
+  },
+  activeTabText: {
+    color: '#00BCD4',
+    fontWeight: 'bold',
+  },
+  chatListContainer: {
+    flex: 1,
+    backgroundColor: colors.white,
   },
   searchInput: {
     flex: 1,
@@ -87,30 +140,56 @@ const styles = StyleSheet.create({
     marginRight: 4,
   },
   chatList: {
-    paddingHorizontal: 16,
+    paddingBottom: vh * 10,
   },
   chatItem: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
+    paddingVertical: vh * 2,
+  },
+  avatarContainer: {
+    position: 'relative',
+    marginRight: vw * 3,
   },
   avatar: {
     width: 50,
     height: 50,
     borderRadius: 25,
-    marginRight: 12,
+  },
+  onlineIndicator: {
+    position: 'absolute',
+    bottom: 2,
+    right: 2,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#4CAF50',
+    borderWidth: 2,
+    borderColor: colors.white,
   },
   chatInfo: {
     flex: 1,
+  },
+  chatHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: vh * 0.5,
   },
   name: {
     fontSize: 16,
     fontWeight: 'bold',
     color: colors.black,
   },
+  time: {
+    fontSize: 12,
+    color: colors.gray,
+  },
   lastMessage: {
     fontSize: 14,
     color: colors.gray,
-
+    marginTop: vh * 0.5,
+    lineHeight: 18,
   },
   dotStyle: {
     width: vw * 1.5,
@@ -152,10 +231,34 @@ const styles = StyleSheet.create({
     marginRight: vw * 2,
   },
   chatContainer: {
-    backgroundColor: colors.inputcolor,
-    marginBottom: vh * 2,
-    padding: vh * 2,
-    borderRadius: 2,
+    backgroundColor: colors.white,
+    paddingHorizontal: vw * 4,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F5F5F5',
+  },
+  fab: {
+    position: 'absolute',
+    bottom: vh * 3,
+    right: vw * 4,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#00BCD4',
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+  },
+  fabIcon: {
+    width: 24,
+    height: 24,
+    tintColor: colors.white,
   },
   headerBtn: {
     backgroundColor: colors.btnColor,
