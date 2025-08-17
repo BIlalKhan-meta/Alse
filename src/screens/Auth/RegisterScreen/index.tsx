@@ -1,16 +1,16 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Image, SafeAreaView } from 'react-native';
+import React, {useState} from 'react';
+import {View, Text, TouchableOpacity, Image, SafeAreaView} from 'react-native';
 import * as yup from 'yup';
 import styles from './styles';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import RegularTextInput from '../../../components/TextInput/RegularTextInput';
-import { Formik } from 'formik';
-import { colors } from '../../../utils/theme';
+import {Formik} from 'formik';
+import {colors} from '../../../utils/theme';
 import CustomButton from '../../../components/CustomButton';
-import { useNavigation } from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 import InterBoldLabel from '../../../components/Text/InterBoldLabel';
 import PoppinsLabel from '../../../components/Text/Poppins';
-import { appleLogin, googleLogin, signup } from '../../../api/auth';
+import {appleLogin, googleLogin, signup} from '../../../api/auth';
 import Toast from 'react-native-toast-message';
 import Checkbox from 'expo-checkbox';
 import GoogleLogin from '../../../components/GoogleAuth/Login';
@@ -33,9 +33,8 @@ const SignupScreen: React.FC = () => {
     name: '',
     identifier: '',
     password: '',
-    agree: false
+    agree: false,
   });
-
 
   const validationSchema = yup.object().shape({
     // Either email or phone number is required
@@ -45,7 +44,12 @@ const SignupScreen: React.FC = () => {
       .min(6, 'Password must be at least 6 characters')
       .required('Password is required'),
     name: yup.string().required('Name is required'),
-    agree: yup.boolean().oneOf([true], 'You must agree to the terms and conditions and Privacy Policy'),
+    agree: yup
+      .boolean()
+      .oneOf(
+        [true],
+        'You must agree to the terms and conditions and Privacy Policy',
+      ),
   });
 
   const handleSubmit = async (values: FormValues) => {
@@ -76,7 +80,10 @@ const SignupScreen: React.FC = () => {
       // Basic phone validation (assumes minimum 7 digits)
       const phoneRegex = /^\d{7,}$/;
 
-      if (!emailRegex.test(values.identifier) && !phoneRegex.test(values.identifier)) {
+      if (
+        !emailRegex.test(values.identifier) &&
+        !phoneRegex.test(values.identifier)
+      ) {
         Toast.show({
           type: 'error',
           text1: 'Invalid Input',
@@ -94,23 +101,25 @@ const SignupScreen: React.FC = () => {
           text1: 'Success',
           text2: 'Your account has been created successfully',
         });
-        navigation.navigate('Onboarding');
+        // navigation.navigate('Onboarding');
+        navigation.navigate('Onboarding', {user: res?.data?.data});
       } else {
         // Handle known error responses
         Toast.show({
           type: 'error',
           text1: 'Signup Failed',
-          text2: res?.data?.message || 'Something went wrong. Please try again.',
+          text2:
+            res?.data?.message || 'Something went wrong. Please try again.',
         });
       }
     } catch (error: any) {
-
       console.log('error ===>', error, error?.response?.data);
       // Handle unexpected errors
       Toast.show({
         type: 'error',
         text1: 'Error',
-        text2: error?.message || 'An unexpected error occurred. Please try again.',
+        text2:
+          error?.message || 'An unexpected error occurred. Please try again.',
       });
     } finally {
       setSubmitted(false);
@@ -121,7 +130,7 @@ const SignupScreen: React.FC = () => {
     if (isGoogleSubmitted) return;
 
     setIsGoogleSubmitted(true);
-    
+
     console.log(user, 'User');
     const apiData = {
       token: user,
@@ -146,20 +155,14 @@ const SignupScreen: React.FC = () => {
       .finally(() => {
         setIsGoogleSubmitted(false);
       });
-  }
+  };
 
   const onAppleLoginSuccess = (user: any) => {
     if (isAppleSubmitted) return;
 
     setIsAppleSubmitted(true);
 
-
-    const {
-      email,
-      fullName,
-      isAppleLogin,
-      apple_id,
-    } = user;
+    const {email, fullName, isAppleLogin, apple_id} = user;
 
     const apiData = {
       email,
@@ -183,87 +186,101 @@ const SignupScreen: React.FC = () => {
       .finally(() => {
         setIsAppleSubmitted(false);
       });
-  }
+  };
 
   return (
-    <SafeAreaView style={ styles.safeAreaView }>
+    <SafeAreaView style={styles.safeAreaView}>
       <Formik
-        initialValues={ initialValues }
-        validationSchema={ validationSchema }
+        initialValues={initialValues}
+        validationSchema={validationSchema}
         enableReinitialize
-        onSubmit={ handleSubmit }>
-        { ({ handleSubmit, handleChange, handleBlur, values, errors, setFieldValue }) => (
-
+        onSubmit={handleSubmit}>
+        {({
+          handleSubmit,
+          handleChange,
+          handleBlur,
+          values,
+          errors,
+          setFieldValue,
+        }) => (
           <>
-            <KeyboardAwareScrollView
-              showsVerticalScrollIndicator={ false }>
-              <View style={ styles.container }>
-                <View style={ styles.imageContainer }>
+            <KeyboardAwareScrollView showsVerticalScrollIndicator={false}>
+              <View style={styles.container}>
+                <View style={styles.imageContainer}>
                   <Image
-                    source={ require('./images/Wave.png') }
-                    style={ styles.loginImage }
+                    source={require('./images/Wave.png')}
+                    style={styles.loginImage}
                   />
                 </View>
 
-                <InterBoldLabel style={ styles.heading }>Sign Up</InterBoldLabel>
-                <PoppinsLabel style={ styles.subHeading }>Welcome to Alse, The opportunity is on your fingertips.</PoppinsLabel>
-                <GoogleLogin onSuccess={ onGoogleLoginSuccess } loading={ isGoogleSubmitted } />
-                <AppleAuth onSuccess={ onAppleLoginSuccess } loading={ isAppleSubmitted } />
+                <InterBoldLabel style={styles.heading}>Sign Up</InterBoldLabel>
+                <PoppinsLabel style={styles.subHeading}>
+                  Welcome to Alse, The opportunity is on your fingertips.
+                </PoppinsLabel>
+                <GoogleLogin
+                  onSuccess={onGoogleLoginSuccess}
+                  loading={isGoogleSubmitted}
+                />
+                <AppleAuth
+                  onSuccess={onAppleLoginSuccess}
+                  loading={isAppleSubmitted}
+                />
 
-                <View style={ styles.lineContainer }>
-                  <View style={ styles.line } />
+                <View style={styles.lineContainer}>
+                  <View style={styles.line} />
                   <View>
-                    <Text style={ styles.lineText }>Or</Text>
+                    <Text style={styles.lineText}>Or</Text>
                   </View>
-                  <View style={ styles.line } />
+                  <View style={styles.line} />
                 </View>
 
-
                 <RegularTextInput
-                  placeholder='Name'
-                  placeholderTextColor={ colors.darkGray }
-                  onChangeText={ handleChange('name') }
-                  onBlur={ handleBlur('name') }
-                  value={ values.name }
-                  submitted={ submitted }
-                  errors={ errors.name }
-                  style={ styles.input }
+                  placeholder="Name"
+                  placeholderTextColor={colors.darkGray}
+                  onChangeText={handleChange('name')}
+                  onBlur={handleBlur('name')}
+                  value={values.name}
+                  submitted={submitted}
+                  errors={errors.name}
+                  style={styles.input}
                 />
 
                 <RegularTextInput
-                  placeholder='Email/Phone Number'
-                  placeholderTextColor={ colors.darkGray }
-                  onChangeText={ handleChange('identifier') }
-                  onBlur={ handleBlur('identifier') }
-                  value={ values.identifier }
-                  submitted={ submitted }
-                  errors={ errors.identifier }
-                  style={ styles.input }
+                  placeholder="Email/Phone Number"
+                  placeholderTextColor={colors.darkGray}
+                  onChangeText={handleChange('identifier')}
+                  onBlur={handleBlur('identifier')}
+                  value={values.identifier}
+                  submitted={submitted}
+                  errors={errors.identifier}
+                  style={styles.input}
                 />
 
                 <RegularTextInput
                   placeholder="Enter Password"
-                  placeholderTextColor={ colors.darkGray }
-                  onChangeText={ handleChange('password') }
-                  onBlur={ handleBlur('password') }
-                  value={ values.password }
-                  submitted={ submitted }
-                  errors={ errors.password }
-                  secureTextEntry={ securePassword }
-                  onPressCurrentPassword={ () =>
+                  placeholderTextColor={colors.darkGray}
+                  onChangeText={handleChange('password')}
+                  onBlur={handleBlur('password')}
+                  value={values.password}
+                  submitted={submitted}
+                  errors={errors.password}
+                  secureTextEntry={securePassword}
+                  onPressCurrentPassword={() =>
                     setSecurePassword(!securePassword)
                   }
-                  style={ styles.input }
+                  style={styles.input}
                 />
 
-                <View style={ styles.checkboxcontainer }>
+                <View style={styles.checkboxcontainer}>
                   <Checkbox
-                    value={ values.agree }
-                    onValueChange={ (value: boolean) => {
+                    value={values.agree}
+                    onValueChange={(value: boolean) => {
                       setFieldValue('agree', value);
-                    } }
+                    }}
                   />
-                  <Text style={ styles.bottomText }>I agree to the terms and conditions and Privacy Policy</Text>
+                  <Text style={styles.bottomText}>
+                    I agree to the terms and conditions and Privacy Policy
+                  </Text>
                 </View>
 
                 <CustomButton
@@ -272,21 +289,23 @@ const SignupScreen: React.FC = () => {
                   //   resetForm()
                   //   handleSubmit()
                   // }}
-                  style={ styles.loginBtn }
-                  onPress={ handleSubmit }
-                  loading={ submitted }>
+                  style={styles.loginBtn}
+                  onPress={handleSubmit}
+                  loading={submitted}>
                   Create Account
                 </CustomButton>
               </View>
-              <View style={ styles.bottomContainer }>
-                <TouchableOpacity style={ styles.bottomTextContainer } onPress={ () => navigation.navigate('Login' as never) }>
-                  <Text style={ styles.bottomText }>Do you have an account?</Text>
-                  <Text style={ styles.signUpText }>Sign in</Text>
+              <View style={styles.bottomContainer}>
+                <TouchableOpacity
+                  style={styles.bottomTextContainer}
+                  onPress={() => navigation.navigate('Login' as never)}>
+                  <Text style={styles.bottomText}>Do you have an account?</Text>
+                  <Text style={styles.signUpText}>Sign in</Text>
                 </TouchableOpacity>
               </View>
             </KeyboardAwareScrollView>
           </>
-        ) }
+        )}
       </Formik>
     </SafeAreaView>
   );
