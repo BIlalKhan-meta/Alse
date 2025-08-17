@@ -140,9 +140,10 @@ import {
 import {useIsFocused} from '@react-navigation/native';
 import GlobalHeader from '../../../components/GlobalHeader';
 import {colors} from '../../../utils/theme';
-import {images} from '../../../utils/images';
-import {getNotifications, markAllRead, markRead} from '../../../api/home';
-import {vw, vh} from '../../../constant';
+import {getNotifications} from '../../../api/home';
+import {vh} from '../../../constant';
+import moment from 'moment';
+import {getDateSection} from '../../../utils/helpers';
 
 interface Notification {
   id: string;
@@ -162,11 +163,8 @@ interface GroupedNotifications {
   data: Notification[];
 }
 
-const Notifications: React.FC = ({navigation}) => {
+const Notifications: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [groupedNotifications, setGroupedNotifications] = useState<
-    GroupedNotifications[]
-  >([]);
   const [loading, setLoading] = useState(false);
   const isFocused = useIsFocused();
 
@@ -177,79 +175,6 @@ const Notifications: React.FC = ({navigation}) => {
   useEffect(() => {
     if (notifications.length > 0) {
       groupNotifications();
-    } else {
-      // Mock data to match the screenshot exactly
-      const mockData: GroupedNotifications[] = [
-        {
-          title: 'Today',
-          data: [
-            {
-              id: '1',
-              data: {type: 'like', message: 'liked your post'},
-              user_id: '1',
-              created_at: new Date().toISOString(),
-              read_at: null,
-              favorites: 3,
-            },
-            {
-              id: '2',
-              data: {type: 'mention', message: 'mentioned you'},
-              user_id: '2',
-              created_at: new Date().toISOString(),
-              read_at: null,
-            },
-            {
-              id: '3',
-              data: {type: 'mention', message: 'mentioned you'},
-              user_id: '2',
-              created_at: new Date().toISOString(),
-              read_at: null,
-            },
-            {
-              id: '4',
-              data: {type: 'mention', message: 'mentioned you'},
-              user_id: '2',
-              created_at: new Date().toISOString(),
-              read_at: null,
-            },
-          ],
-        },
-        {
-          title: 'This Week',
-          data: [
-            {
-              id: '5',
-              data: {type: 'like', message: 'liked your post'},
-              user_id: '1',
-              created_at: new Date(Date.now() - 86400000 * 2).toISOString(),
-              read_at: null,
-              favorites: 2,
-            },
-            {
-              id: '6',
-              data: {type: 'mention', message: 'mentioned you'},
-              user_id: '2',
-              created_at: new Date(Date.now() - 86400000 * 2).toISOString(),
-              read_at: null,
-            },
-            {
-              id: '7',
-              data: {type: 'mention', message: 'mentioned you'},
-              user_id: '2',
-              created_at: new Date(Date.now() - 86400000 * 3).toISOString(),
-              read_at: null,
-            },
-            {
-              id: '8',
-              data: {type: 'mention', message: 'mentioned you'},
-              user_id: '2',
-              created_at: new Date(Date.now() - 86400000 * 3).toISOString(),
-              read_at: null,
-            },
-          ],
-        },
-      ];
-      setGroupedNotifications(mockData);
     }
   }, [notifications]);
 
@@ -295,9 +220,83 @@ const Notifications: React.FC = ({navigation}) => {
     }
   };
 
+  const renderSectionHeader = (title: string) => {
+    return (
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionHeaderText}>{title}</Text>
+      </View>
+    );
+  };
+
+  // Check if we need to show a section header for this item
+  const shouldShowSectionHeader = (
+    currentItem: Notification,
+    index: number,
+  ) => {
+    if (index === 0) return true; // Always show header for first item
+
+    const currentSection = getDateSection(currentItem.created_at);
+    const previousSection = getDateSection(notifications[index - 1].created_at);
+
+    return currentSection !== previousSection;
+  };
+
+  // Modified renderNotificationItem to include conditional section header
+  const renderNotificationItemWithHeader = (
+    item: Notification,
+    index: number,
+  ) => {
+    const isLike = item.data.type === 'like';
+    const userAction = isLike ? 'liked your post' : 'Mentioned you';
+    const userName = isLike ? 'Alse' : 'Ali';
+    const favorites = item.favorites || 0;
+
+    return (
+      <View>
+        {/* Conditionally render section header */}
+        {shouldShowSectionHeader(item, index) &&
+          renderSectionHeader(getDateSection(item.created_at))}
+
+        {/* Original notification item */}
+        <TouchableOpacity
+          style={styles.notificationItem}
+          onPress={() => handleMarkAsRead(item.id)}>
+          <View style={styles.profileImageContainer}>
+            <Image
+              source={{
+                uri: `https://randomuser.me/api/portraits/men/${
+                  item.user_id || '1'
+                }.jpg`,
+              }}
+              style={styles.profileImage}
+            />
+          </View>
+
+          <View style={styles.notificationContent}>
+            <Text style={styles.notificationText}>
+              <Text style={styles.userName}>{userName} </Text>
+              {userAction}
+            </Text>
+
+            <View style={styles.notificationMeta}>
+              <Text style={styles.notificationMetaText}>
+                {isLike ? 'like' : 'a mentioned'}{' '}
+                {isLike && favorites > 0 ? `• favorites • ` : '• '}
+                {getTimeAgo(item.created_at)}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.contentImageContainer}>
+            {/* Your image content here */}
+          </View>
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
   const renderNotificationItem = ({item}: {item: Notification}) => {
     const isLike = item.data.type === 'like';
-    const isMention = item.data.type === 'mention';
     const userAction = isLike ? 'liked your post' : 'Mentioned you';
     const userName = isLike ? 'Alse' : 'Ali';
     const favorites = item.favorites || 0;
@@ -348,39 +347,36 @@ const Notifications: React.FC = ({navigation}) => {
     );
   };
 
-  const renderSectionHeader = ({title}: {title: string}) => {
-    return <Text style={styles.sectionHeader}>{title}</Text>;
-  };
-
   return (
     <SafeAreaView style={styles.container}>
       <GlobalHeader icon={true} />
 
       <View style={styles.notificationCounter}>
         <Text style={styles.notificationCounterText}>
-          You have{' '}
-          <Text style={styles.notificationCounterNumber}>3 notifications</Text>
+          {notifications.length === 0 ? (
+            "You're all caught up!"
+          ) : (
+            <>
+              You have{' '}
+              <Text style={styles.notificationCounterNumber}>
+                {notifications.length}
+              </Text>{' '}
+              new notification{notifications.length !== 1 ? 's' : ''}
+            </>
+          )}
         </Text>
       </View>
 
       <FlatList
-        data={groupedNotifications}
-        keyExtractor={item => item.title}
-        renderItem={({item}) => (
-          <View>
-            {renderSectionHeader({title: item.title})}
-            <FlatList
-              data={item.data}
-              keyExtractor={notification => notification.id}
-              renderItem={renderNotificationItem}
-              scrollEnabled={false}
-            />
-          </View>
-        )}
+        data={notifications}
+        renderItem={({item, index}) =>
+          renderNotificationItemWithHeader(item, index)
+        }
         refreshing={loading}
         onRefresh={fetchNotifications}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContentContainer}
+        keyExtractor={item => item.id}
       />
     </SafeAreaView>
   );
@@ -466,6 +462,11 @@ const styles = StyleSheet.create({
   },
   listContentContainer: {
     paddingBottom: vh * 10,
+  },
+  sectionHeaderText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#666',
   },
 });
 

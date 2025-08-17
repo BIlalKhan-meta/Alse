@@ -13,12 +13,11 @@ export const EmptyComponent = ({text}) => {
 
 export const styles = StyleSheet.create({
   emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: colors.headerColor,
   },
   emptyText: {
-    color: colors.blue,
+    marginTop: 16,
+    color: colors.themeColor,
   },
 });

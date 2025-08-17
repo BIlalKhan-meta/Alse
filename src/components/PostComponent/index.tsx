@@ -59,13 +59,9 @@ interface PostProps {
 }
 
 const PostComponent: React.FC<PostProps> = ({
-  isFocused,
-  shareLoader,
-  postID,
   id,
   avatar,
   name,
-  country,
   time,
   postText,
   postImage,
@@ -75,7 +71,6 @@ const PostComponent: React.FC<PostProps> = ({
   share,
   account,
   onCommnetPress,
-  onSavePress,
   onLikePress,
   onDotPress,
   modalVisible,
@@ -83,11 +78,8 @@ const PostComponent: React.FC<PostProps> = ({
   handleBlockPress,
   handleReportPost,
   isLiked,
-  isSaved,
   onCardPress,
-  onLikesModal,
   sharePost,
-  mediaId,
   isPaused,
   handleVideoPause,
 }) => {

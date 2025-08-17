@@ -1,9 +1,7 @@
-import PushNotificationIOS from '@react-native-community/push-notification-ios';
 // notificationService.js
 import PushNotification from 'react-native-push-notification';
 import messaging from '@react-native-firebase/messaging';
-import {navigationRef} from '../../App';
-import {Alert} from 'react-native';
+import navigationRef from '../../App';
 
 export const requestUserPermission = async () => {
   const authStatus = await messaging().requestPermission();

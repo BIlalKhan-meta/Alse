@@ -1,13 +1,10 @@
 import React from 'react';
-import AuthNavigation from '../AuthNavgation';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import Home from '../../screens/Home/Feed';
 import TabNavigation from '../BottomTab';
 import Saved from '../../screens/Saved';
 import Shop from '../../screens/MarketPlace/Shop';
 import CreatePost from '../../screens/CreatePost';
 import RequestScreen from '../../screens/RequestScreen';
-import BlockedUsers from '../../screens/BlockedUsers';
 import Notifications from '../../screens/Home/Notifications';
 import ContactUs from '../../screens/ContactUs';
 import AboutUs from '../../screens/AboutUs';
@@ -30,18 +27,13 @@ import AddBlog from '../../screens/AddBlog';
 import SavedChat from '../../screens/SavedChat';
 import SavedChatDetail from '../../screens/SavedChatDetail';
 import SavedScripts from '../../screens/SavedScripts';
-import {useSelector} from 'react-redux';
-import {selectBearerToken} from '../../store/slices/authSlice';
 import CreatePostEdit from '../../screens/CreatePostEdit';
 import AddProduct from '../../screens/AddProduct';
 import MyShop from '../../screens/MyShop';
 import EditBlog from '../../screens/EditBlog';
 import {EditShop} from '../../screens/MarketPlace/EditShop';
 import MyOrders from '../../screens/MyOrders';
-import SubscriptionPlan from '../../screens/SubscriptionPlan';
-import PaymentLogs from '../../screens/PaymentLogs';
 import ProfileScreen from '../../screens/Menu/ProfileScreen';
-import PrivacyPolicy from '../../screens/PrivacyPolicy';
 import AddStory from '../../screens/AddStory';
 import {OutgoingCall} from '../../screens/OutgoingCall';
 import AcknowledgeCall from '../../screens/AcknowledgeCall';
@@ -50,6 +42,7 @@ import NetworkLogger from 'react-native-network-logger';
 import Groups from '../../screens/Groups';
 import GroupDetailsScreen from '../../screens/Groups/GroupDetailsScreen';
 import CreateGroup from '../../screens/Groups/CreateGroup';
+import Settings from '../../screens/Settings';
 
 const AppNavigation = () => {
   const Stack = createNativeStackNavigator();
@@ -71,6 +64,11 @@ const AppNavigation = () => {
         <Stack.Screen
           name="Notifications"
           component={Notifications}
+          options={NavigationOptions}
+        />
+        <Stack.Screen
+          name="Settings"
+          component={Settings}
           options={NavigationOptions}
         />
         <Stack.Screen

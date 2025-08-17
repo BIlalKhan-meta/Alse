@@ -31,7 +31,9 @@ const GlobalHeader: React.FC<GlobalHeaderProps> = ({title = 'Alse', icon}) => {
             </View>
           )}
         </TouchableOpacity>
-        <TouchableOpacity style={styles.iconButton}>
+        <TouchableOpacity
+          onPress={() => navigation.navigate('Settings')}
+          style={styles.iconButton}>
           <View style={styles.notificationcontainer}>
             <Image
               source={images.settingsIcon}
@@ -61,7 +63,7 @@ const styles = StyleSheet.create({
   },
   title: {
     width: vw * 20,
-    height: vh * 5,
+    height: vh * 4,
     resizeMode: 'contain',
   },
   iconsContainer: {

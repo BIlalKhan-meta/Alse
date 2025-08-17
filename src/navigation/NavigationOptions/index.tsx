@@ -1,9 +1,7 @@
 import React from 'react';
-import {Image, TouchableOpacity, View, Text} from 'react-native';
+import {Image, TouchableOpacity, View, Text, Settings} from 'react-native';
 import styles from './styles';
 import {images} from '../../utils/images';
-import {Group} from 'lucide-react-native';
-import GroupDetailsScreen from '../../screens/Groups/GroupDetailsScreen';
 
 interface RouteParams {
   screenName?: string;
@@ -16,7 +14,7 @@ interface NavigationOptionsProps {
 }
 
 const titles: {[key: string]: string} = {
-  ChatScreen: 'Chat',
+  ChatScreen: 'Chat Screen',
   ChatOngoing: 'Group 1',
   IncomingCall: 'Incoming Call',
   OutgoingCall: 'Outgoing Call',
@@ -48,6 +46,7 @@ const titles: {[key: string]: string} = {
   SavedScripts: 'Saved Scripts',
   Home: 'Alse',
   Notifications: 'Notifications',
+  Settings: 'Settings',
   // AddProduct: "Add Product",
   // WishList: "Wishlist",
   ContactUs: 'Contact Us',
@@ -90,10 +89,12 @@ const backButtonRoutes: {[key: string]: boolean} = {
   PrivacyPolicy: true,
   MyOrders: true,
   Notifications: true,
+  Settings: true,
   PaymentLogs: true,
   ContactUs: true,
   RequestScreen: true,
   SearchUsers: true,
+  ChatScreen: true,
 };
 
 const getTitle: React.FC<NavigationOptionsProps> = props => {
@@ -125,7 +126,7 @@ export const getHeaderRight: React.FC<NavigationOptionsProps> = props => {
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.iconContainer, {marginRight: 4}]}
-          onPress={() => props.navigation.navigate('Notifications')}>
+          onPress={() => props.navigation.navigate('Settings')}>
           <View style={styles.notificationcontainer}>
             <Image
               source={images.settingsIcon}
@@ -135,25 +136,18 @@ export const getHeaderRight: React.FC<NavigationOptionsProps> = props => {
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.iconContainer, {marginRight: 4}]}
-          onPress={() => props.navigation.navigate('Notifications')}>
+          onPress={() => props.navigation.navigate('ChatScreen')}>
           <View style={styles.notificationcontainer}>
             <Image source={images.messageIcon} style={styles.messageIcon} />
           </View>
         </TouchableOpacity>
-
-        {/* <TouchableOpacity style={styles.iconContainer}>
-                    <View style={styles.notificationcontainer}>
-                        <Image source={images.search} style={styles.notificationicon} />
-                    </View>
-                </TouchableOpacity> */}
       </View>
     );
   }
 };
+
 const getHeaderLeft: React.FC<NavigationOptionsProps> = props => {
   if (backButtonRoutes[props?.route?.name]) {
-    // console.log("THIS ISPROPS.ROUTE.NAME", props?.route?.name);
-
     return (
       <TouchableOpacity
         onPress={() => {
@@ -164,7 +158,6 @@ const getHeaderLeft: React.FC<NavigationOptionsProps> = props => {
         <Image
           resizeMode="contain"
           style={styles.headericonStyle}
-          // source={props?.route?.name == 'NearestRestaurent' ? backbuttonwhite : BackIcon}
           source={images.backicon}
         />
       </TouchableOpacity>

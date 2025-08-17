@@ -1,7 +1,6 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {View, FlatList, TouchableOpacity, Animated} from 'react-native';
 import {images} from '../../../utils/images';
-import CardComponent from '../../../components/CardComponent';
 import {
   useFocusEffect,
   useIsFocused,
@@ -39,8 +38,8 @@ import {
 import eventEmitter, {EVENT_TYPES} from '../../../utils/EventEmitter';
 import LikesModal from '../../../components/LikesModal';
 import Stories from '../../../components/Stories';
-import CardDisplay from '../../../components/CardComponent/CardDisplay';
-import {Camera, Image, Pencil, Plus, Search} from 'lucide-react-native';
+import {Plus} from 'lucide-react-native';
+import PostSkeleton from '../../../components/SkeletonLoaders';
 
 const Home: React.FC = () => {
   const flatListRef = useRef(null);
@@ -52,6 +51,7 @@ const Home: React.FC = () => {
 
   const {posts} = useAppSelector(state => state.home);
   const [loader, setLoader] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true); // New state for initial load
 
   const [commentsVisible, setCommentsVisible] = useState({
     visiblity: false,
@@ -96,7 +96,6 @@ const Home: React.FC = () => {
     if (remoteMessage?.notification?.title === 'Payment Successful') {
       eventEmitter.emit(EVENT_TYPES.CHECKOUT_TRIGGER, remoteMessage);
     }
-    // navigation.navigate('Marketplace', {screen: 'MyOrders'});
   };
 
   const toggleFab = () => {
@@ -112,7 +111,6 @@ const Home: React.FC = () => {
   };
 
   useEffect(() => {
-    // NotificationLstener(closePaymentProcess());
     notificationListenerInstance.init(closePaymentProcess);
   }, []);
 
@@ -128,7 +126,6 @@ const Home: React.FC = () => {
           comments: res?.payload?.data?.data?.data,
           id: id,
         });
-        // getData();
       })
       .catch(err => {
         console.log('error from like post', err);
@@ -143,13 +140,24 @@ const Home: React.FC = () => {
   }, [isFoused]);
 
   const getApi = async () => {
-    const checkData = await dispatch(GetNewsFeed());
-    await dispatch(GetUserProfile());
-    await getCountriesList().then(res => {
-      if (res?.data) {
-        dispatch(getCountries(res?.data?.data));
+    try {
+      // Only show initial loading on first load
+      if (posts.length === 0) {
+        setInitialLoading(true);
       }
-    });
+
+      const checkData = await dispatch(GetNewsFeed());
+      await dispatch(GetUserProfile());
+      await getCountriesList().then(res => {
+        if (res?.data) {
+          dispatch(getCountries(res?.data?.data));
+        }
+      });
+    } catch (error) {
+      console.log('Error fetching data:', error);
+    } finally {
+      setInitialLoading(false);
+    }
   };
 
   const scrollToTop = () => {
@@ -164,7 +172,6 @@ const Home: React.FC = () => {
       .then(res => {
         if (res?.data) {
           setShareLoader(false);
-
           getApi();
           scrollToTop();
           console.log('POSTTTTTT SHAREDDDDDDDDDDDDDDDD');
@@ -176,7 +183,6 @@ const Home: React.FC = () => {
       })
       .finally(() => {
         setShareLoader(false);
-        // setLoading(false);
       });
   };
 
@@ -223,7 +229,6 @@ const Home: React.FC = () => {
         });
         handleDotPress(null);
         Toast.error(getMessage(err?.message));
-
         console.log('Errorr  errerrerrerrerrerrerrerrerrfrom ', err);
       });
   };
@@ -242,7 +247,6 @@ const Home: React.FC = () => {
       formData.append(item[0], item[1]);
     });
     await reportPost(formData)
-      // .unwrap()
       .then(res => {
         setReportVisible({
           visibility: false,
@@ -261,7 +265,6 @@ const Home: React.FC = () => {
         });
         handleDotPress(null);
         Toast.error(getMessage(err?.message));
-
         console.log('Errorr  errerrerrerrerrerrerrerrerrfrom ', err);
       });
   };
@@ -288,8 +291,6 @@ const Home: React.FC = () => {
   };
 
   const onViewableItemsChanged = ({viewableItems}) => {
-    // Play only the currently focused video
-
     const focusedIndex = viewableItems[0]?.index;
     setFocusedIndex(focusedIndex);
   };
@@ -300,7 +301,6 @@ const Home: React.FC = () => {
       <PostComponent
         isFocused={isFocused}
         id={item?.user_id}
-        // postID={item?.media[0]?.post_id}
         avatar={item?.avatar}
         name={item?.fullname}
         country={item?.country ? item?.country : ''}
@@ -313,14 +313,12 @@ const Home: React.FC = () => {
         share={item?.share}
         account={item?.privacy}
         shareLoader={shareLoader}
-        // onCommnetPress={() => setCommentsVisible(true)}
         onCommnetPress={() => handleCommentPress(item?.id)}
         onLikesModal={() =>
           setLikesVisible({visiblity: true, likes: item?.likes, id: item?.id})
         }
         onLikePress={() => handleLikePress(item?.id)}
         onSavePress={() => handleSave(item?.id, item?.is_saved)}
-        // onLikePress={() => setrRactVisible(true)}
         onDotPress={() => handleDotPress(item?.id)}
         modalVisible={activePostId === item?.id}
         onCardPress={() => setActivePostId(null)}
@@ -328,15 +326,12 @@ const Home: React.FC = () => {
         isPaused={pause && currendId == item?.id}
         handleVideoPause={() => handleVideoPause(item?.id)}
         handleBlockPress={() => {
-          // handleDotPress();
-          // setDeleteVisible(true);
           setDeleteVisible({visibility: true, id: item?.id});
         }}
         handleReportPost={() => {
           setReportVisible({visibility: true, id: item?.id});
         }}
         handleReportPress={() => {
-          // handleDotPress();
           setActivePostId(null);
           navigation.navigate('CreatePostEdit', {
             title: 'Edit Post',
@@ -349,21 +344,37 @@ const Home: React.FC = () => {
     );
   };
 
-  const renderEmpty = () => (
-    <View style={styles.emptyContainer}>
-      <InterRegular style={styles.emptyText}>No Posts to Show.</InterRegular>
-    </View>
-  );
+  const renderEmpty = () => {
+    // Don't show empty state when initially loading
+    if (initialLoading) {
+      return null;
+    }
+
+    return (
+      <View style={styles.emptyContainer}>
+        <InterRegular style={styles.emptyText}>No Posts to Show.</InterRegular>
+      </View>
+    );
+  };
+
+  // Render skeleton loaders during initial loading
+  const renderSkeletonLoaders = () => {
+    if (!initialLoading) return null;
+
+    return (
+      <View>
+        {[1, 2, 3, 4, 5].map((_, index) => (
+          <PostSkeleton key={index} />
+        ))}
+      </View>
+    );
+  };
 
   useFocusEffect(
     React.useCallback(() => {
-      // This will run when the screen is focused
       setFocusedIndex(0);
       scrollToTop();
       return () => {
-        // This will run when the screen is unfocused
-        // Pause the video here (if necessary)
-        // Example: setting the video to pause
         setFocusedIndex(null);
         setPause(true);
       };
@@ -374,21 +385,25 @@ const Home: React.FC = () => {
     <View style={{flex: 1}}>
       <View style={{paddingHorizontal: vh * 2, flex: 1}}>
         <Stories />
-        {/* <TouchableWithoutFeedback onPress={() => handleDotPress(null)}> */}
+
         <View>
-          <FlatList
-            ref={flatListRef}
-            onViewableItemsChanged={onViewableItemsChanged}
-            viewabilityConfig={{itemVisiblePercentThreshold: 50}}
-            data={posts}
-            onRefresh={getApi}
-            refreshing={loader}
-            renderItem={renderPost}
-            contentContainerStyle={{paddingBottom: vh * 10}}
-            keyExtractor={item => item.id.toString()}
-            showsVerticalScrollIndicator={false}
-            ListEmptyComponent={renderEmpty}
-          />
+          {initialLoading ? (
+            renderSkeletonLoaders()
+          ) : (
+            <FlatList
+              ref={flatListRef}
+              onViewableItemsChanged={onViewableItemsChanged}
+              viewabilityConfig={{itemVisiblePercentThreshold: 50}}
+              data={posts}
+              onRefresh={getApi}
+              refreshing={loader}
+              renderItem={renderPost}
+              contentContainerStyle={{paddingBottom: vh * 10}}
+              keyExtractor={item => item.id.toString()}
+              showsVerticalScrollIndicator={false}
+              ListEmptyComponent={renderEmpty}
+            />
+          )}
 
           {/* FAB Container */}
           <View style={styles.fabMenuContainer}>
@@ -403,15 +418,6 @@ const Home: React.FC = () => {
                   }}>
                   <InterRegular style={styles.menuItemText}>Chat</InterRegular>
                 </TouchableOpacity>
-
-                {/* <TouchableOpacity
-                  style={styles.menuItem}
-                  onPress={() => {
-                    toggleFab();
-                    // navigation.navigate('Groups'); // Navigate to Group screen
-                  }}>
-                  <InterRegular style={styles.menuItemText}>Group</InterRegular>
-                </TouchableOpacity> */}
 
                 <TouchableOpacity
                   style={styles.menuItem}
@@ -457,7 +463,6 @@ const Home: React.FC = () => {
               setCommentsVisible({visiblity: false, comments: [], id: null});
               getApi();
             }}
-            // icon={CheckedIcon}
             title="Successfully"
             message="Password has been updated successfully"
             buttonText="Apply"
@@ -538,13 +543,11 @@ const Home: React.FC = () => {
             buttonText="Ok"
             onPress={() => {
               setReportSuccess(false);
-              // navigation.navigate("Profile", { account: account })
             }}
             primaryBtn={true}
           />
         </View>
       </View>
-      {/* </TouchableWithoutFeedback> */}
     </View>
   );
 };

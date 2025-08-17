@@ -61,8 +61,8 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
   },
   messageIcon: {
-    width: vh * 6,
-    height: vh * 6,
+    width: vh * 3.5,
+    height: vh * 3.5,
     resizeMode: 'contain',
   },
   logoImage: {

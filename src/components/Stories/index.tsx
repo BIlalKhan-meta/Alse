@@ -635,8 +635,8 @@ const styles = StyleSheet.create({
   squareGradientContainer: {
     borderWidth: 3,
     borderRadius: 8, // Much less rounded corners
-    height: 70,
-    width: 70,
+    height: 60,
+    width: 60,
     overflow: 'hidden',
   },
   squareImage: {

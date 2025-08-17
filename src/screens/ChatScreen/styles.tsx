@@ -32,7 +32,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#00BCD4',
+    color: colors.themeColor,
     letterSpacing: 1,
   },
   headerIcons: {
@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
   },
   activeTabButton: {
     borderBottomWidth: 2,
-    borderBottomColor: '#00BCD4',
+    borderBottomColor: colors.themeColor,
   },
   tabText: {
     fontSize: 16,
@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   activeTabText: {
-    color: '#00BCD4',
+    color: colors.themeColor,
     fontWeight: 'bold',
   },
   chatListContainer: {
@@ -243,7 +243,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#00BCD4',
+    backgroundColor: colors.themeColor,
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 8,

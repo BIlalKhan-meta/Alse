@@ -1,3 +1,4 @@
+import moment from 'moment';
 import {
   check,
   request,
@@ -157,5 +158,20 @@ export const getMessage = (json: Message): string => {
     default: {
       return 'An error occurred. Please try again later';
     }
+  }
+};
+
+export const getDateSection = date => {
+  const today = moment();
+  const itemDate = moment(date);
+
+  if (itemDate.isSame(today, 'day')) {
+    return 'Today';
+  } else if (itemDate.isSame(today.clone().subtract(1, 'day'), 'day')) {
+    return 'Yesterday';
+  } else if (itemDate.isAfter(today.clone().subtract(7, 'days'))) {
+    return 'Last Week';
+  } else {
+    return itemDate.format('MMM DD, YYYY');
   }
 };
