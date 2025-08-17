@@ -21,6 +21,11 @@ export const changePassword = (formData: FormData) => {
     formData: true,
   });
 };
+
+export const getUserPosts = (userId: string) => {
+  const endpoint = endpoints.profile.getUserPosts.replace('{id}', userId);
+  return axiosInstance.get(endpoint);
+};
 export const deleteAccount = () => {
   return axiosInstance.post(endpoints.profile.deleteAccount);
 };

@@ -12,11 +12,15 @@ const styles = StyleSheet.create({
   profileSection: {
     paddingHorizontal: 16,
     paddingTop: 20,
-    paddingBottom: 24,
+    paddingBottom: 16,
+  },
+  profileHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 16,
   },
   profileImageContainer: {
-    alignItems: 'center',
-    marginBottom: 16,
+    marginRight: 16,
   },
   profileImage: {
     width: 80,
@@ -34,67 +38,70 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   profileInfo: {
-    alignItems: 'center',
-    marginBottom: 16,
+    flex: 1,
+    justifyContent: 'center',
   },
-  userName: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 4,
+  bioSection: {
+    marginBottom: 8,
   },
-  userHandle: {
-    fontSize: 16,
-    color: '#666',
-  },
-  locationSection: {
-    alignItems: 'flex-start',
-  },
-  location: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#666',
-  },
-  address: {
+  bioText: {
     fontSize: 14,
     color: '#333',
-    textAlign: 'right',
-    maxWidth: '80%',
+    lineHeight: 20,
   },
-  addressActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
+  userName: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 2,
   },
-  defaultBadge: {
-    backgroundColor: '#E3F2FD',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-    marginRight: 8,
+  userHandle: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 2,
   },
-  defaultText: {
-    fontSize: 12,
-    color: '#1976D2',
-    fontWeight: '500',
+
+  location: {
+    fontSize: 14,
+    color: '#666',
   },
-  moreButton: {
-    padding: 4,
-  },
-  moreIcon: {
-    width: 16,
-    height: 16,
-    tintColor: '#666',
-  },
+
   statsSection: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     paddingHorizontal: 16,
-    paddingVertical: 20,
-    backgroundColor: '#f8f9fa',
-    marginHorizontal: 16,
-    borderRadius: 12,
+    paddingVertical: 16,
+    marginBottom: 16,
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
     marginBottom: 24,
+    gap: 12,
+  },
+  editButton: {
+    flex: 1,
+    backgroundColor: '#E8E8E8',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  editButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#333',
+  },
+  shareButton: {
+    flex: 1,
+    backgroundColor: '#E8E8E8',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  shareButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#333',
   },
   statItem: {
     alignItems: 'center',
@@ -110,80 +117,26 @@ const styles = StyleSheet.create({
     color: '#666',
     textAlign: 'center',
   },
-  ordersSection: {
+  postsSection: {
     paddingHorizontal: 16,
     paddingBottom: 24,
   },
-  ordersTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
+  postsContainer: {
+    paddingBottom: 80,
+  },
+  postsRow: {
+    justifyContent: 'space-between',
     marginBottom: 16,
   },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f8f9fa',
+  postItem: {
+    width: '48%',
     borderRadius: 8,
-    paddingHorizontal: 12,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#e9ecef',
+    overflow: 'hidden',
   },
-  searchIcon: {
-    marginRight: 8,
-  },
-  searchInput: {
-    flex: 1,
-    height: 40,
-    fontSize: 16,
-    color: '#333',
-  },
-  orderItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  orderImage: {
-    width: 60,
-    height: 60,
+  postImage: {
+    width: '100%',
+    aspectRatio: 1,
     borderRadius: 8,
-    marginRight: 12,
-  },
-  orderInfo: {
-    flex: 1,
-  },
-  orderTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 4,
-  },
-  orderPrice: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  orderStatus: {
-    alignItems: 'flex-end',
-  },
-  statusBadge: {
-    backgroundColor: '#E8F5E8',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    marginBottom: 4,
-  },
-  statusText: {
-    fontSize: 12,
-    color: '#2E7D32',
-    fontWeight: '600',
-  },
-  orderCategory: {
-    fontSize: 14,
-    color: '#666',
   },
   emptyContainer: {
     alignItems: 'center',

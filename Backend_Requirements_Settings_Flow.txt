@@ -1,0 +1,354 @@
+BACKEND API REQUIREMENTS FOR SETTINGS FLOW (REVISED)
+====================================================
+
+PROJECT: ALSE Mobile App Settings Interface
+DOCUMENT VERSION: 2.0 (REVISED - HYBRID APPROACH)
+DATE: December 2024
+
+OVERVIEW
+--------
+This document outlines the MINIMAL backend API requirements for the ALSE settings interface. After analysis, most settings (theme, language, UI preferences) will be handled via AsyncStorage on the frontend for better performance and immediate implementation. Backend APIs are only needed for settings requiring server-side enforcement, cross-device synchronization, or functional integration.
+
+FRONTEND vs BACKEND DECISION:
+- AsyncStorage: UI preferences, local settings, performance-critical settings
+- Backend: Privacy controls, notification delivery, cross-device sync, server-side enforcement
+
+PRIORITY LEVELS
+---------------
+🔴 CRITICAL - Must have before frontend development
+🟡 IMPORTANT - Needed for full functionality
+🟢 NICE-TO-HAVE - Can be implemented later
+
+==============================================
+FRONTEND SETTINGS (AsyncStorage) - NO BACKEND NEEDED
+==============================================
+
+The following settings will be handled locally via AsyncStorage for better performance:
+- Theme mode (light/dark/system) - Pure UI preference
+- Language selection - App localization only
+- Notification sounds/tones - Local device setting
+- Bid confirmation prompts - UI behavior only  
+- Default bid increments - UI convenience
+- Haptic feedback - Local device setting
+- Auto-save preferences - Local caching behavior
+
+BENEFITS: Instant loading, offline support, no API overhead, immediate implementation
+
+==============================================
+🔴 CRITICAL BACKEND APIS (IMPLEMENT FIRST)
+==============================================
+
+1. PRIVACY SETTINGS API
+----------------------
+PURPOSE: Server-side privacy controls that need enforcement across all clients
+
+ENDPOINT: /api/privacy/settings
+METHODS: GET, POST/PUT
+
+GET /api/privacy/settings
+Response Structure:
+{
+  "status": true,
+  "data": {
+    "post_visibility": "public|followers|private",
+    "allow_tags": boolean,
+    "comment_permissions": "everyone|followers|none",
+    "story_visibility": "everyone|followers|none", 
+    "story_replies": "everyone|followers|off",
+    "profile_visibility": "public|buyers_only",
+    "auto_filter_offensive": boolean,
+    "message_requests": "everyone|followers|none"
+  }
+}
+
+POST/PUT /api/privacy/settings
+Request Body: (Same structure as GET response data)
+Response:
+{
+  "status": true,
+  "message": "Privacy settings updated successfully",
+  "data": {updated_settings_object}
+}
+
+2. NOTIFICATION DELIVERY PREFERENCES
+-----------------------------------
+PURPOSE: Server needs to know what notifications to send to user
+
+ENDPOINT: /api/notifications/delivery-preferences
+METHODS: GET, POST/PUT
+
+GET /api/notifications/delivery-preferences
+Response Structure:
+{
+  "status": true,
+  "data": {
+    "push_enabled": boolean,
+    "email_enabled": boolean,
+    "types": {
+      "social_likes": boolean,
+      "social_comments": boolean,
+      "social_follows": boolean,
+      "marketplace_orders": boolean,
+      "marketplace_payments": boolean,
+      "seller_new_orders": boolean,
+      "seller_reviews": boolean,
+      "security_alerts": boolean
+    }
+  }
+}
+
+POST/PUT /api/notifications/delivery-preferences
+Request Body: (Same structure as GET response data)
+Response:
+{
+  "status": true,
+  "message": "Notification preferences updated successfully",
+  "data": {updated_settings_object}
+}
+
+3. SELLER SETTINGS API (For Shop Owners Only)
+--------------------------------------------
+PURPOSE: Settings that affect seller functionality and need server-side storage
+
+ENDPOINT: /api/seller/settings
+METHODS: GET, POST/PUT
+
+GET /api/seller/settings
+Response Structure:
+{
+  "status": true,
+  "data": {
+    "auto_responder_enabled": boolean,
+    "cross_post_to_feed": boolean,
+    "allow_dm_inquiries": boolean,
+    "show_store_feedback": boolean,
+    "auto_accept_orders": boolean
+  }
+}
+
+4. GET USER SHOPS API
+--------------------
+PURPOSE: Determine if user has seller capabilities by checking shop ownership
+
+ENDPOINT: /api/user/shops
+METHOD: GET
+
+GET /api/user/shops
+Response:
+{
+  "status": true,
+  "data": [
+    {
+      "id": 1,
+      "shop_name": "Tech Store",
+      "status": "active|pending|suspended",
+      "created_at": "2024-01-15T10:30:00Z",
+      "product_count": 25,
+      "is_verified": boolean
+    },
+    {
+      "id": 2,
+      "shop_name": "Fashion Hub", 
+      "status": "active",
+      "created_at": "2024-02-01T14:20:00Z",
+      "product_count": 12,
+      "is_verified": boolean
+    }
+  ]
+}
+
+IMPLEMENTATION: Filter existing shops table by user_id = current_user.id
+
+DATABASE REQUIREMENTS:
+- Add privacy_settings JSON column to users table, OR create separate privacy_settings table
+- Add notification_preferences JSON column to users table, OR create separate notification_preferences table  
+- Add seller_settings JSON column to users table, OR create separate seller_settings table
+- Leverage existing shops table for user shop ownership queries
+
+==============================================
+🟡 ENHANCED APIS (IMPLEMENT LATER)
+==============================================
+
+5. ADVANCED NOTIFICATION FEATURES
+---------------------------------
+PURPOSE: Enhanced notification controls (quiet hours, delivery channels)
+
+ENDPOINT: /api/notifications/advanced-settings
+- Quiet hours configuration
+- SMS/email delivery preferences
+- Notification scheduling
+
+6. ADVANCED PRIVACY CONTROLS
+----------------------------
+PURPOSE: Enhanced privacy features beyond basic controls
+
+ENDPOINT: /api/privacy/advanced-settings  
+- Tag approval workflows
+- Advanced comment filtering
+- Profile discovery controls
+
+==============================================
+🟢 NICE-TO-HAVE APIS (IMPLEMENT LATER)
+==============================================
+
+5. SECURITY SETTINGS (Future Enhancement)
+-----------------------------------------
+ENDPOINTS:
+- /api/security/login-history
+- /api/security/active-sessions
+- /api/security/2fa/enable
+- /api/security/2fa/disable
+
+6. DATA EXPORT (GDPR Compliance)
+-------------------------------
+ENDPOINTS:
+- /api/user/data-export/request
+- /api/user/data-export/status
+- /api/user/data-export/download
+
+==============================================
+IMPLEMENTATION NOTES (REVISED HYBRID APPROACH)
+==============================================
+
+FRONTEND SETTINGS (AsyncStorage):
+- Theme mode, language, notification tones, UI preferences
+- Immediate implementation, no backend dependency
+- Better performance, offline support
+- Settings stored locally per device
+
+BACKEND SETTINGS (API Required):
+- Privacy controls that need server-side enforcement
+- Push notification delivery preferences
+- Cross-device synchronization requirements
+- Seller functionality settings
+
+USER ROLE DETECTION LOGIC (No Backend Changes Needed):
+- Frontend will determine roles as follows:
+  - isAdmin: user.role_id === 1
+  - isBuyer: user.role_id === 2 (all regular users can buy)
+  - isSeller: user has shops (from /api/user/shops response)
+  - Settings access based on these capabilities
+
+EXISTING APIS TO LEVERAGE (No Changes Needed):
+- /edit-profile (for basic profile settings)
+- /change-password (for password changes)  
+- /delete-my-account (for account deletion)
+- get-blocked-users, /block-user, /unblock-user (for blocked users)
+- /shop/update (for shop profile settings)
+- /bank/update (for payout settings)
+
+VALIDATION RULES:
+- Privacy settings: Validate enum values for visibility options
+- Notification preferences: Default to true for most notification types
+- Server-side validation for all privacy enforcement settings
+
+SECURITY CONSIDERATIONS:
+- User can only access/modify their own settings
+- Validate user ownership of shops in /api/user/shops
+- Rate limiting on settings update endpoints
+- Input sanitization for all text fields
+
+ERROR HANDLING:
+- Return consistent error format:
+{
+  "status": false,
+  "error": "Error message",
+  "code": "ERROR_CODE"
+}
+
+MIGRATION STRATEGY:
+- For existing users, create default settings on first API call
+- Provide sensible defaults for all preference fields
+- Backward compatibility with current profile/notification systems
+
+==============================================
+TESTING REQUIREMENTS
+==============================================
+
+1. Unit tests for all new endpoints
+2. Test user settings CRUD operations
+3. Test shop ownership validation
+4. Test permission-based access controls
+5. Test default settings creation for new users
+6. Integration tests with existing profile/shop systems
+
+==============================================
+DEPLOYMENT TIMELINE SUGGESTION (REVISED)
+==============================================
+
+IMMEDIATE FRONTEND IMPLEMENTATION:
+- Settings interface can be built immediately using AsyncStorage
+- 80% of settings functionality available without backend
+- Theme switching, language selection, UI preferences work instantly
+
+PHASE 1 (Week 1) - MINIMAL BACKEND:
+- Implement /api/privacy/settings (privacy controls)
+- Implement /api/user/shops (role detection)
+- Basic testing and deployment
+- Frontend can integrate privacy settings
+
+PHASE 2 (Week 2) - NOTIFICATION BACKEND:
+- Implement /api/notifications/delivery-preferences
+- Implement /api/seller/settings (for sellers)
+- Complete backend integration testing
+
+PHASE 3 (Future) - ENHANCEMENTS:
+- Advanced notification features (quiet hours, etc.)
+- Security settings APIs
+- Data export functionality
+
+BENEFITS OF REVISED APPROACH:
+- Frontend team can start immediately (no waiting)
+- 80% reduction in initial backend work required
+- Better user experience (instant settings)
+- Gradual enhancement possible
+
+==============================================
+QUESTIONS FOR BACKEND TEAM
+==============================================
+
+1. Do you prefer JSON column in users table or separate user_settings table?
+2. Should we implement versioning for settings (track changes)?
+3. Any existing notification infrastructure we should integrate with?
+4. Preferred approach for default settings initialization?
+5. Any database schema constraints we should be aware of?
+
+==============================================
+CONTACT
+==============================================
+
+For questions or clarifications on these requirements, please contact the frontend development team.
+
+IMPORTANT: This document focuses ONLY on settings functionality. Bidding system APIs are not included and will be specified separately.
+
+==============================================
+SUMMARY OF REVISED APPROACH
+==============================================
+
+KEY CHANGES FROM VERSION 1.0:
+- Moved 80% of settings to AsyncStorage (frontend only)
+- Reduced backend APIs from 6 major endpoints to 4 minimal endpoints  
+- Eliminated complex user settings JSON storage requirement
+- Enabled immediate frontend development without backend dependency
+
+WHAT FRONTEND HANDLES (AsyncStorage):
+✅ Theme mode (dark/light/system)
+✅ Language/localization preferences  
+✅ Notification sounds and tones
+✅ UI behavior preferences (confirmations, increments)
+✅ Local caching and performance settings
+
+WHAT BACKEND HANDLES (APIs):
+⚙️ Privacy controls (server-side enforcement)
+⚙️ Push notification delivery (server needs to know what to send)
+⚙️ Seller functionality settings (cross-device sync)
+⚙️ User shop ownership detection (role determination)
+
+BENEFITS:
+🚀 80% faster implementation
+🚀 Better user experience (instant settings)
+🚀 Reduced server load and complexity
+🚀 Offline support for most settings
+🚀 No complex database schema changes needed
+
+This hybrid approach provides the best of both worlds: immediate functionality with AsyncStorage and server-side capabilities where truly needed.

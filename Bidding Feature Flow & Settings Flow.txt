@@ -1,0 +1,548 @@
+1. Feature Overview: Bidding System
+
+The bidding system allows sellers to list items for auction, and buyers to place bids within a
+defined time frame. Once the auction ends, the highest bidder wins. Admins oversee all
+activities.
+
+
+
+2. User Roles & Screen List
+
+A. Buyer Screens
+
+   1. Browse Auctions Screen
+
+           o   Filter by categories, price, time left, location
+
+           o   Sort by newest, ending soon, highest/lowest bids
+
+   2. Auction Detail Page
+
+           o   Item images, description
+
+           o   Current bid
+
+           o   Time remaining (Realtime countdown)
+
+           o   Seller profile
+
+           o   Bid history
+
+           o   "Place Bid" button
+
+           o   Buy Now option (if enabled)
+
+   3. Place Bid Screen (Modal or Inline)
+
+           o   Enter bid amount
+
+           o   Auto-bid toggle (optional)
+
+           o   Confirm bid button
+
+           o   Show minimum next bid requirement
+
+   4. My Bids / Watchlist
+
+           o   Track active and past bids
+
+           o   Bid status (winning/losing/won/lost)
+
+           o   Notifications for outbid, auction ending, won, etc.
+   5. Checkout / Payment
+
+           o   Triggered if buyer wins
+
+           o   Payment options (linked wallet, PayPal, card, Lengo Lingo (M-Pesa)
+
+           o   Shipping details
+
+   6. Bid Success / Summary
+
+           o   Confirmation screen with details of winning bid
+
+           o   Option to message seller or view order status
+
+
+
+B. Seller Screens
+
+   1. Create Auction
+
+           o   Upload product images
+
+           o   Title, description, category
+
+           o   Starting price
+
+           o   Reserve price (optional)
+
+           o   Buy Now price (optional)
+
+           o   Auction duration (e.g., 1 day – 14 days)
+
+           o   Shipping info
+
+   2. Manage My Listings
+
+           o   View all active, ended, scheduled auctions
+
+           o   Edit, pause, or delete auction (if no bids yet)
+
+           o   See current highest bid and time left
+
+   3. Auction Detail (Seller View)
+
+           o   Bids received
+
+           o   Bidder profiles
+
+           o   Finalize deal if auction ends
+
+           o   Message winning bidder
+   4. Post-Auction Management
+
+          o   Mark item as sold
+
+          o   Mark item as shipped
+
+          o   View payment confirmation
+
+          o   Rate buyer
+
+
+
+3. Optional Features to Consider
+
+   •   Auto-Bid Feature: User sets max bid, system auto-bids until limit is reached
+
+   •   Verified Sellers: Badge for trusted sellers
+
+   •   Auction Extensions: Extends time if bids are placed near end (anti-sniping)
+
+   •   Bid History Transparency: Optionally anonymized for privacy
+    Buyer Settings Interface (with Social + Marketplace)
+
+1. Profile Settings
+
+•   Edit username, profile photo, display name, bio
+
+•   Add cover photo/banner
+
+•   Pronouns and visibility settings
+
+•   Social links (Instagram, LinkedIn, etc.)
+
+•   View public profile preview
+
+2. Social Activity Settings
+
+•   Post visibility: public / followers only / private
+
+•   Tag settings: allow/disallow tags
+
+•   Comment moderation:
+
+        o   Auto-filter offensive words
+
+        o   Who can comment: everyone / followers / no one
+
+•   Story settings:
+
+        o   Who can view
+
+        o   Allow replies: everyone / followers / off
+
+•   Blocked users list
+
+3. Bidding & Auction Settings
+
+•   Auto-bid configuration
+
+•   Default bid increment settings (if customizable)
+
+•   Turn on/off bid confirmation prompts
+
+•   Notifications for:
+
+        o   Outbid alerts
+
+        o   Auctions won
+
+        o   Watched items updates
+4. Marketplace Activity
+
+•   View purchase history
+
+•   Saved auctions / Watchlist
+
+•   Shipping address management
+
+•   Linked payment methods
+
+•   Refund/return request center
+
+5. Notifications
+
+•   Toggle alerts for:
+
+        o   Likes/comments/follows
+
+        o   New posts from followed sellers
+
+        o   Auction updates
+
+6. Security & Privacy
+
+•   Two-factor authentication
+
+•   Change email/password
+
+•   Device & login activity log
+
+•   Post, profile, and auction visibility controls
+
+•   Disable or delete account
+
+
+
+    Seller Settings Interface (with Social + Marketplace)
+
+1. Profile & Store Settings
+
+•   Public store name & handle
+
+•   Store banner and description
+
+•   Verified badge status (e.g., "Top Seller", "Verified Business")
+
+•   Social link buttons
+
+•   Show/hide store feedback
+2. Social Engagement Controls
+
+•   Cross-post products to personal feed or story
+
+•   Allow DM inquiries
+
+•   Live selling preferences (if using live auctions)
+
+•   Promote listings via sponsored posts (optional)
+
+3. Auction & Listing Preferences
+
+•   Default auction settings (duration, reserve price, Buy Now)
+
+•   Category defaults
+
+•   Shipping profiles
+
+•   Enable "bundle listings" or offers
+
+•   Set return/refund policies
+
+4. Order Management
+
+•   Sold items list
+
+•   Shipment tracking updates
+
+•   Buyer communication history
+
+•   Auto-responder for post-sale messages
+
+5. Payments & Payouts
+
+•   Link bank accounts / wallets
+
+•   Earnings summary
+
+•   Payout schedule settings
+
+•   Sales report downloads
+
+6. Notifications
+
+•   Alerts for:
+
+        o   New bids / Auction ending soon
+
+        o   Comments on listings
+
+        o   Follows/messages
+        o   Items sold or shipped
+
+•   Custom notification tones (if in-app sounds are used)
+
+7. Privacy & Security
+
+•   Profile visibility (public / buyers only)
+
+•   Story & content privacy
+
+•   Manage followers/blocklist
+
+•   Login activity logs
+
+•   Account deactivation / business pause option
+
+
+
+Universal Settings (Both Buyer & Seller Can Access)
+
+•   Language & localization
+
+•   Theme mode (dark/light/system)
+
+•   Push/email notification preferences
+
+•   Data export & GDPR compliance
+
+•   Help center / FAQ access
+
+•   Contact support / Report an issue
+
+
+
+Example Use Cases Enabled by These Settings:
+
+•   A seller can promote a product auction on their story, then manage bids in the same
+    interface.
+
+•   A buyer can hide their bidding activity while remaining active in the social feed.
+
+•   Users can toggle visibility of personal posts vs. commercial (store) content.
+
+•   Admin can tailor permissions for sellers with higher reputation scores (e.g., unlock
+    sponsored posts or live auctions).
+Admin Interface – Settings & Controls for ALSE
+
+
+
+   1. Platform Dashboard Settings
+
+   •   Analytics Preferences
+
+          o   Toggle dashboard modules (auctions, social, users, revenue)
+
+          o   Set default timeframe (daily, weekly, monthly)
+
+          o   Export reports (PDF/CSV)
+
+   •   Theme & Appearance (Admin Panel Only)
+
+          o   Light/dark mode
+
+          o   Custom admin panel layout
+
+          o   Enable quick access widgets (e.g., “Flagged Content”, “Top Sellers”)
+
+
+
+   2. User Management Settings
+
+   •   User Role Control
+
+          o   Add/edit roles: Buyer, Seller, Moderator, Admin, Support Agent
+
+          o   Set role-based permissions
+
+   •   User Behavior Settings
+
+          o   Define strike thresholds (e.g., 3 content flags = auto-suspension)
+
+          o   Shill bidding detection toggles and parameters
+
+          o   Auto-ban settings for hate speech or spam
+
+   •   Verification Rules
+
+          o   Set requirements for seller verification (ID, tax ID, etc.)
+
+          o   Enable auto-verification or require manual review
+3. Marketplace & Bidding Settings
+
+•   Auction Configuration
+
+       o   Max/Min auction duration
+
+       o   Enable/disable Buy Now option globally
+
+       o   Reserve price toggle
+
+       o   Auto-extend last-minute bidding (anti-sniping feature)
+
+•   Commission Settings
+
+       o   Set platform commission rate per category or globally
+
+       o   Define payment flow (escrow, instant payout, etc.)
+
+•   Bid Limits
+
+       o   Set daily bid limits per user type
+
+       o   Auto-bid rules and cap
+
+•   Featured Listings
+
+       o   Enable/disable paid featured spots
+
+       o   Price and approval workflow
+
+
+
+4. Social Media Moderation Settings
+
+•   Content Control
+
+       o   Toggle AI/moderator-assisted content scanning
+
+       o   Set sensitivity level for nudity, hate speech, or spam detection
+
+       o   Define post types allowed (text, image, video, polls, lives)
+
+•   Privacy Control Defaults
+
+       o   Default post visibility: public / friends only / custom
+
+       o   Story duration limits
+
+       o   Tagging controls (who can tag, moderation required, etc.)
+•   Reporting System
+
+       o   Auto-action on repeated post reports
+
+       o   Custom report categories
+
+
+
+5. Admin Tools & Utilities
+
+•   Manual Moderation Tools
+
+       o   Approve/reject flagged posts or users
+
+       o   Directly suspend or delete users
+
+       o   Shadowban (user can post but others don’t see it)
+
+•   Admin Messaging
+
+       o   Broadcast message to:
+
+              ▪   All users
+
+              ▪   Only buyers/sellers
+
+              ▪   Affected users (e.g., system outage)
+
+•   Dispute Management Tools
+
+       o   View dispute queue
+
+       o   Assign disputes to agents
+
+       o   Mark dispute as resolved
+
+       o   Partial refund triggers
+
+
+
+6. Security & Access Control
+
+•   Admin Access Logs
+
+       o   View activity logs by admin account
+
+       o   Location, IP, time, action taken
+
+•   Role-based Access Control (RBAC)
+
+       o   Set access rules per admin type (full admin, content mod, finance, etc.)
+•   Two-Factor Auth Settings
+
+       o   Force-enable 2FA for all users or roles
+
+•   Fraud Detection Settings
+
+       o   Configure bidding anomaly rules
+
+       o   IP rate limiting
+
+       o   Identity fraud monitoring (KYC check integrations)
+
+
+
+7. Analytics & Reports
+
+•   Usage Reports
+
+       o   DAU/MAU, bounce rates, time on platform
+
+•   Marketplace Reports
+
+       o   Active listings, average bid amount, top sellers
+
+•   Social Trends
+
+       o   Most engaged posts, follower growth
+
+•   Revenue Dashboard
+
+       o   Commissions, payouts, refunds, marketing spend
+
+
+
+8. Platform-Wide Configuration
+
+•   Terms & Policies
+
+       o   Update ToS, privacy policy, seller guidelines
+
+       o   Attach multi-language support
+
+•   Language & Localization
+
+       o   Add/remove supported languages (e.g., English, Swahili, Chinese)
+
+       o   Set default locale
+
+•   Notifications Control
+
+       o   Customize in-app/push/email templates
+          o   Schedule maintenance alerts
+
+   •   Feature Toggles
+
+          o   Enable/disable features like:
+
+                    ▪   Live selling
+
+                    ▪   Auto-bidding
+
+                    ▪   Social polls
+
+                    ▪   Marketplace access for new users
+
+
+
+Summary of Admin Interface Sections:
+Section                  Purpose
+
+Dashboard                Quick view of platform stats and actions
+
+User Management          Control user roles, bans, and verification
+
+Bidding & Auctions       Set rules for auctions, commissions, and bids
+
+Social Moderation        Handle flagged content, privacy defaults, and engagement settings
+
+Tools & Moderation       Take manual action on users, listings, or posts
+
+Security & Permissions Manage admin access, fraud detection, 2FA
+
+Reports & Analytics      Get insight into platform usage, sales, and social activity
+
+Platform Settings        Configure ToS, notifications, supported languages, etc.
+
