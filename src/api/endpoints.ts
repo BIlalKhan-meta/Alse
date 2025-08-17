@@ -12,7 +12,7 @@ const endpoints = {
     profileById: '/get-user',
     createPost: '/post/create',
     updatePost: '/post/update',
-    mediaDelete:'/post',
+    mediaDelete: '/post',
     deletePost: '/post/delete',
     reportPost: '/report/create',
     myPost: '/get-user',
@@ -34,12 +34,13 @@ const endpoints = {
     markRead: '/mark-as-read',
     markAllRead: '/mark-all-as-read',
     allUsers: '/search-users',
+    videos: 'videos',
   },
   profile: {
     editProfile: '/edit-profile',
     getProfile: '/profile',
     changePassword: '/change-password',
-    deleteAccount : '/delete-my-account'
+    deleteAccount: '/delete-my-account',
   },
   subscription: {
     getSubscription: '/get-subscription-plans',
@@ -111,15 +112,15 @@ const endpoints = {
 
   stories: {
     getStories: '/stories',
-    addStories: '/stories'
+    addStories: '/stories',
   },
   liveStream: {
     getLiveStreams: '/live-stream',
     createLiveStreams: '/live-stream/start',
     endLiveStreams: '/live-stream/end',
     getToken: '/live-stream/getToken',
-    getUsers: '/live-stream/users'
-  }
+    getUsers: '/live-stream/users',
+  },
 };
 
 export default endpoints;

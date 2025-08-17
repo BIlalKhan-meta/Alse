@@ -114,24 +114,6 @@ const Home: React.FC = () => {
     notificationListenerInstance.init(closePaymentProcess);
   }, []);
 
-  const handleCommentPress = id => {
-    dispatch(getCommentPost(id))
-      .then(res => {
-        console.log(
-          res?.payload?.data?.data?.data,
-          'Commentsss Ressss frommm screennnn ',
-        );
-        setCommentsVisible({
-          visiblity: true,
-          comments: res?.payload?.data?.data?.data,
-          id: id,
-        });
-      })
-      .catch(err => {
-        console.log('error from like post', err);
-      });
-  };
-
   useEffect(() => {
     if (!user?.has_subscription && !user?.is_child) {
       navigation.navigate('SubscriptionPlan');
@@ -186,8 +168,22 @@ const Home: React.FC = () => {
       });
   };
 
-  const handleDotPress = (postId: number) => {
-    setActivePostId(activePostId == null ? postId : null);
+  const handleCommentPress = id => {
+    dispatch(getCommentPost(id))
+      .then(res => {
+        console.log(
+          res?.payload?.data?.data?.data,
+          'Commentsss Ressss frommm screennnn ',
+        );
+        setCommentsVisible({
+          visiblity: true,
+          comments: res?.payload?.data?.data?.data,
+          id: id,
+        });
+      })
+      .catch(err => {
+        console.log('error from like post', err);
+      });
   };
 
   const handleLikePress = (id: number) => {
@@ -205,6 +201,10 @@ const Home: React.FC = () => {
     };
     dispatch(updateLike(data));
     dispatch(likePost(id));
+  };
+
+  const handleDotPress = (postId: number) => {
+    setActivePostId(activePostId == null ? postId : null);
   };
 
   const handleDelete = () => {

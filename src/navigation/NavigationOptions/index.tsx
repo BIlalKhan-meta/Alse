@@ -57,6 +57,7 @@ const titles: {[key: string]: string} = {
   Saved: 'Saved',
   EditShop: 'Edit Shop',
   SearchUsers: 'Search User',
+  Videos: 'Videos',
 };
 const backButtonRoutes: {[key: string]: boolean} = {
   ChatOngoing: true,
@@ -95,6 +96,7 @@ const backButtonRoutes: {[key: string]: boolean} = {
   RequestScreen: true,
   SearchUsers: true,
   ChatScreen: true,
+  Videos: true,
 };
 
 const getTitle: React.FC<NavigationOptionsProps> = props => {
@@ -170,10 +172,9 @@ const getHeaderLeft: React.FC<NavigationOptionsProps> = props => {
 };
 
 const NavigationOptions: React.FC<NavigationOptionsProps> = props => {
-  // console.log("THIS IS PROPS" , props?.route?.name);
+  console.log('THIS IS PROPS', props?.route?.name);
   const isHomeScreen = props?.route?.name === 'Home';
   const isMarketplaceScreen = props?.route?.name === 'Marketplace';
-
   // Hide header for Marketplace screen
   if (isMarketplaceScreen) {
     return {
