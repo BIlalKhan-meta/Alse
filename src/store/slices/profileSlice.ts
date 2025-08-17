@@ -7,6 +7,34 @@ interface PostItem {
   title?: string;
 }
 
+interface MediaItem {
+  id: number;
+  post_id: number;
+  file: string;
+  type: 'image' | 'video';
+  path: string;
+  date: string;
+}
+
+interface ApiPost {
+  id: number;
+  user_id: number;
+  name: string;
+  fullname: string;
+  username: string;
+  avatar: string;
+  description: string;
+  privacy: number;
+  date: string;
+  total_likes: number;
+  total_comments: number;
+  is_liked: boolean;
+  is_saved: boolean;
+  media: MediaItem[];
+  likes: any[];
+  comments: any[];
+}
+
 interface ProfileState {
   posts: PostItem[];
   loading: boolean;
@@ -32,8 +60,25 @@ export const fetchUserPosts = createAsyncThunk(
   async (userId: string, {rejectWithValue}) => {
     try {
       const response = await getUserPosts(userId);
-      return response.data;
+      console.log('API Response:', response.data);
+      
+      // Extract posts from nested response structure: response.data.data.data
+      const apiPosts: ApiPost[] = response.data?.data?.data || [];
+      console.log('API Posts:', apiPosts.length, 'posts found');
+      
+      // Filter posts that have media (disregard posts without media) and transform to PostItem format
+      const postsWithMedia = apiPosts
+        .filter((post: ApiPost) => post.media && post.media.length > 0)
+        .map((post: ApiPost) => ({
+          id: post.id.toString(),
+          uri: post.media[0].path, // Use first media item's path for grid display
+          title: post.description,
+        }));
+      
+      console.log('Posts with media:', postsWithMedia.length, 'posts');
+      return postsWithMedia;
     } catch (error: any) {
+      console.error('Fetch posts error:', error);
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch posts');
     }
   },
@@ -58,7 +103,7 @@ const profileSlice = createSlice({
       })
       .addCase(fetchUserPosts.fulfilled, (state, action) => {
         state.loading = false;
-        state.posts = action.payload?.data || [];
+        state.posts = action.payload || [];
       })
       .addCase(fetchUserPosts.rejected, (state, action) => {
         state.loading = false;

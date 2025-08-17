@@ -81,11 +81,11 @@ const MyProfile: React.FC = () => {
       }
 
       // Update stats with actual data (replace with actual API calls)
-      setStats({
-        posts: posts.length || 21, // Use actual posts count
+      setStats(prevStats => ({
+        ...prevStats,
         followers: 582, // Replace with actual followers count
         following: 321, // Replace with actual following count
-      });
+      }));
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
