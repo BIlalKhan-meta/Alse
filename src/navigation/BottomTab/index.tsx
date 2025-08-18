@@ -10,7 +10,7 @@ import NavigationOptions from '../NavigationOptions';
 import MarketPlaceNavigation from '../MarketPlaceNavigator';
 import MenuNavigation from '../MenuNavigation';
 import LiveStreamScreen from '../../screens/Livestream/GoLive';
-import VideosTab from '../VideosTab';
+import VideosTab from '../VideosTab/Index';
 import {fontSizes} from '../../constant';
 import SearchTab from '../SearchTab';
 import {Search} from 'lucide-react-native';

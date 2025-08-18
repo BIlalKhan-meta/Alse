@@ -15,7 +15,14 @@ import {getAllShop} from '../../../api/shop';
 import {getOrders} from '../../../api/product';
 import Loader from '../../../components/Loader';
 import {Subscribe} from '../../../components/Subscribe';
-import {MapPin, Search, ChevronRight, Plus, Package} from 'lucide-react-native';
+import {
+  MapPin,
+  Search,
+  ChevronRight,
+  Plus,
+  Package,
+  Bike,
+} from 'lucide-react-native';
 import {images} from '../../../utils/images';
 import {vh, vw} from '../../../constant';
 import {getSimilarProducts} from '../../../api/product';
@@ -128,6 +135,17 @@ const Marketplace: React.FC = () => {
 
     // Navigate to tracking screen with orders data
     navigation.navigate('OrderTracking', {orders});
+  };
+
+  const handleBecomeRider = () => {
+    setIsFabOpen(false);
+    Animated.spring(fabAnimation, {
+      toValue: 0,
+      useNativeDriver: true,
+    }).start();
+
+    // Navigate to become rider screen
+    navigation.navigate('BecomeRider');
   };
 
   if (!user?.has_subscription && !user.is_child) {
@@ -292,6 +310,12 @@ const Marketplace: React.FC = () => {
         {/* Options Menu */}
         {isFabOpen && (
           <View style={styles.fabOptions}>
+            <TouchableOpacity
+              style={styles.fabOption}
+              onPress={handleBecomeRider}>
+              <Bike size={16} color="white" style={styles.fabOptionIcon} />
+              <Text style={styles.fabOptionText}>Become a Rider</Text>
+            </TouchableOpacity>
             <TouchableOpacity
               style={styles.fabOption}
               onPress={handleTrackOrder}>

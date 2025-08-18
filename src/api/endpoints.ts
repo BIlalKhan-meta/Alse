@@ -40,8 +40,8 @@ const endpoints = {
     editProfile: '/edit-profile',
     getProfile: '/profile',
     changePassword: '/change-password',
-    deleteAccount : '/delete-my-account',
-    getUserPosts: '/get-user/{id}/posts'
+    deleteAccount: '/delete-my-account',
+    getUserPosts: '/get-user/{id}/posts',
   },
   subscription: {
     getSubscription: '/get-subscription-plans',
@@ -121,6 +121,9 @@ const endpoints = {
     endLiveStreams: '/live-stream/end',
     getToken: '/live-stream/getToken',
     getUsers: '/live-stream/users',
+  },
+  rider: {
+    submitApplication: '/rider/submit-application',
   },
 };
 

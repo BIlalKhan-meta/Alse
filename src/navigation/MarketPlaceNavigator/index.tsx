@@ -12,6 +12,9 @@ import Marketplace from '../../screens/MarketPlace/Main';
 import MyOrders from '../../screens/MyOrders';
 import PaymentLogs from '../../screens/PaymentLogs';
 import OrderTracking from '../../screens/OrderTracking';
+import BecomeRider from '../../screens/BecomeRider';
+import VerificationPending from '../../screens/VerificationPending';
+import RiderDashboard from '../../screens/RiderDashboard';
 
 const MarketPlaceNavigation = () => {
   const Stack = createNativeStackNavigator();
@@ -34,6 +37,21 @@ const MarketPlaceNavigation = () => {
       <Stack.Screen
         name="OrderTracking"
         component={OrderTracking}
+        options={NavigationOptions}
+      />
+      <Stack.Screen
+        name="BecomeRider"
+        component={BecomeRider}
+        options={NavigationOptions}
+      />
+      <Stack.Screen
+        name="VerificationPending"
+        component={VerificationPending}
+        options={NavigationOptions}
+      />
+      <Stack.Screen
+        name="RiderDashboard"
+        component={RiderDashboard}
         options={NavigationOptions}
       />
       {/*
