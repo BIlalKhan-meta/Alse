@@ -42,17 +42,17 @@ const MarketPlaceNavigation = () => {
       <Stack.Screen
         name="BecomeRider"
         component={BecomeRider}
-        options={NavigationOptions}
+        // options={NavigationOptions}
       />
       <Stack.Screen
         name="VerificationPending"
         component={VerificationPending}
-        options={NavigationOptions}
+        // options={NavigationOptions}
       />
       <Stack.Screen
         name="RiderDashboard"
         component={RiderDashboard}
-        options={NavigationOptions}
+        // options={NavigationOptions}
       />
       {/*
        */}

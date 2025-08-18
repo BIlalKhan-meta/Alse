@@ -5,7 +5,7 @@ export const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#ffffff',
     paddingTop: 0,
-    marginTop: 0,
+    marginTop: 10,
   },
   scrollView: {
     flex: 1,
