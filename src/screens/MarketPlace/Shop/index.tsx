@@ -240,7 +240,18 @@ const Shop: React.FC = () => {
 
           {shopProducts.length > 0 ? (
             shopProducts.map((product, index) => (
-              <View key={index} style={styles.productCard}>
+              <TouchableOpacity
+                key={index}
+                style={styles.productCard}
+                onPress={() => {
+                  console.log(
+                    'Navigating to ProductView with product:',
+                    product,
+                  );
+                  (navigation as any).navigate('ProductView', {
+                    productId: product.id,
+                  });
+                }}>
                 <Image
                   source={
                     product?.images?.length > 0
@@ -256,15 +267,15 @@ const Shop: React.FC = () => {
                     {product?.title || 'Razer BlackShark...'}
                   </Text>
                   <Text style={styles.productDescription} numberOfLines={2}>
-                    Lorem ipsum is simply dummy text of the printing and
-                    typesetting industry. Lorem ipsum
+                    {product?.description ||
+                      'Lorem ipsum is simply dummy text of the printing and typesetting industry. Lorem ipsum'}
                   </Text>
                   <View style={styles.productFooter}>
                     <Text style={styles.bestDeal}>Best Deal '25</Text>
                     <Text style={styles.likedBy}>Liked by Aaron Byrnes</Text>
                   </View>
                 </View>
-              </View>
+              </TouchableOpacity>
             ))
           ) : (
             <View style={styles.emptyContainer}>

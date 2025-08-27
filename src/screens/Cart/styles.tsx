@@ -120,11 +120,12 @@ const styles = StyleSheet.create({
   checkoutButton: {
     alignSelf: 'center',
     width: vw * 80,
+    marginBottom: -10,
   },
 
   shoppingButton: {
     backgroundColor: colors.white,
-    width: vw * 70,
+    width: vw * 80,
     alignSelf: 'center',
     alignItems: 'center',
   },

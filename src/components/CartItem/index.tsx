@@ -29,17 +29,28 @@ const CartItem: React.FC<Props> = ({
   showSeparator,
   quantity,
   showDelete,
-  status,
 }) => {
-  console.log('statusdass====>', status);
-
   return (
     <>
       <View style={styles.productContainer}>
-        <Image source={item?.product_image} style={styles.productImage} />
+        <Image
+          source={
+            item?.product_image
+              ? typeof item.product_image === 'string'
+                ? {uri: item.product_image}
+                : item.product_image
+              : item?.product?.images?.[0]?.path
+              ? {uri: item.product.images[0].path}
+              : item?.product?.banner
+              ? {uri: item.product.banner}
+              : require('../../assets/images/headset.png') // Fallback image
+          }
+          style={styles.productImage}
+          defaultSource={require('../../assets/images/headset.png')}
+        />
         <View style={styles.productDetails}>
           <InterMedium style={styles.productName}>
-            {item?.product_name}
+            {item?.product_name || item?.product?.title || 'Product Name'}
           </InterMedium>
           <View style={styles.colorContainer}>
             <InterRegular style={styles.productColor}>Color : </InterRegular>
@@ -75,7 +86,9 @@ const CartItem: React.FC<Props> = ({
           )}
 
           <InterBoldSmall style={styles.productPrice}>
-            ${Number(item.product_price) * item?.quantity}
+            $
+            {Number(item.product_price || item?.product?.price || 0) *
+              (item?.quantity || 1)}
           </InterBoldSmall>
 
           {quantity && (

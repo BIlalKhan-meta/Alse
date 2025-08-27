@@ -1,5 +1,5 @@
 import React, {useEffect, useLayoutEffect, useState} from 'react';
-import {View, Text, FlatList, Linking} from 'react-native';
+import {View, Text, FlatList} from 'react-native';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {Formik} from 'formik';
 import * as yup from 'yup';
@@ -21,8 +21,8 @@ import Card from '../../components/Card';
 import {colors} from '../../utils/theme';
 import {checkout, getCart} from '../../api/product';
 import Loader from '../../components/Loader';
-import InAppBrowser from 'react-native-inappbrowser-reborn';
-import {notificationListenerInstance} from '../../utils/NotificationServices';
+import {Toast} from '../../utils/helpers';
+
 import {useSelector} from 'react-redux';
 import {countriesList} from '../../store/slices/generalSlice';
 import {getCity, getState} from '../../api/home';
@@ -41,7 +41,6 @@ const CheckoutScreen: React.FC = () => {
     0,
   );
   const adminCommission = 5;
-  const grandTotal = subTotal + adminCommission;
 
   const countries = useSelector(countriesList);
   const [shippStates, setShipStates] = useState([]);
@@ -50,10 +49,6 @@ const CheckoutScreen: React.FC = () => {
   const [billCities, setBillCities] = useState([]);
 
   const validationSchema = yup.object().shape({
-    first_name: yup.string().required('First Name is required'),
-    last_name: yup.string().required('Last Name is required'),
-    email: yup.string().email('Invalid email').required('Email is required'),
-    phone: yup.string().required('Contact number is required'),
     shipping_first_name: yup.string().required('First Name is required'),
     shipping_last_name: yup.string().required('Last Name is required'),
     shipping_email: yup
@@ -63,27 +58,27 @@ const CheckoutScreen: React.FC = () => {
     shipping_phone: yup.string().required('Contact number is required'),
     shipping_address: yup.string().required('Shipping Address is required'),
     shipping_country: yup.string().required('Country is required'),
-    shipping_state: yup.string(),
-    shipping_city: yup.string(),
+    shipping_state: yup.string().optional(),
+    shipping_city: yup.string().optional(),
     shipping_zip: yup.string().required('Zip Code is required'),
 
     ...(!isSelected && {
       billing_first_name: yup.string().required('First Name is required'),
       billing_last_name: yup.string().required('Last Name is required'),
+      billing_email: yup
+        .string()
+        .email('Invalid email')
+        .required('Email is required'),
       billing_phone: yup.string().required('Phone Number is required'),
       billing_address: yup.string().required('Billing Address is required'),
       billing_country: yup.string().required('Country is required'),
-      billing_state: yup.string(),
-      billing_city: yup.string(),
+      billing_state: yup.string().optional(),
+      billing_city: yup.string().optional(),
       billing_zip: yup.string().required('Zip Code is required'),
     }),
   });
 
   const initialValues = {
-    first_name: '',
-    last_name: '',
-    email: '',
-    phone: '',
     shipping_first_name: '',
     shipping_last_name: '',
     shipping_email: '',
@@ -114,8 +109,8 @@ const CheckoutScreen: React.FC = () => {
     };
   }, []);
 
-  const handleSubmit = async (values: object) => {
-    // navigation.navigate('Payment');
+  const handleSubmit = async (values: any) => {
+    console.log('handleSubmit called with values:', values);
 
     setLoading(true);
 
@@ -143,22 +138,36 @@ const CheckoutScreen: React.FC = () => {
       form.append(key, value);
     });
 
-    console.log('Form submitted:', JSON.stringify(form, null, 4));
-    await checkout(form)
-      .then(async res => {
-        if (res?.data) {
-          if (await InAppBrowser.isAvailable()) {
-            const result = await InAppBrowser.open(res?.data?.data?.url);
-            if (result) {
-              console.log('RESSSSSSSSSSSSSSSSULTTTTTT', result);
-            }
-          } else Linking.openURL(res?.data?.data?.url);
-        }
-      })
-      .catch(err => console.log('ERRORRRRRRRRRRRRRRRRR', err))
-      .finally(() => {
-        setLoading(false);
-      });
+    console.log('Form submitted:', JSON.stringify(temp, null, 4));
+
+    // Navigate to Payment screen with order data
+    console.log('Checkout Screen - Sending order data:', temp);
+    console.log('Navigating to Payment screen...');
+    Toast.success('Form submitted successfully! Navigating to payment...');
+    (navigation as any).navigate('Payment', {orderData: temp});
+    setLoading(false);
+
+    // Uncomment below for actual API call
+    /*
+    try {
+      const res = await checkout(form);
+      console.log('Checkout API response:', res);
+      if (res?.data) {
+        // Navigate to payment page instead of opening browser
+        console.log('Navigating to Payment screen...');
+        Toast.success('Order placed successfully! Navigating to payment...');
+        navigation.navigate('Payment' as never);
+      } else {
+        Toast.error('Failed to place order. Please check your details and try again.');
+      }
+    } catch (err: any) {
+      console.log('ERRORRRRRRRRRRRRRRRRR', err);
+      const errorMessage = err?.response?.data?.message || err?.message || 'Failed to place order. Please try again.';
+      Toast.error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+    */
   };
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -225,7 +234,9 @@ const CheckoutScreen: React.FC = () => {
       <Formik
         initialValues={initialValues}
         validationSchema={validationSchema}
-        onSubmit={handleSubmit}>
+        onSubmit={handleSubmit}
+        validateOnChange={false}
+        validateOnBlur={false}>
         {({
           handleChange,
           handleBlur,
@@ -233,7 +244,6 @@ const CheckoutScreen: React.FC = () => {
           values,
           errors,
           setFieldValue,
-          setValues,
         }) => (
           <>
             {loading ? (
@@ -251,6 +261,7 @@ const CheckoutScreen: React.FC = () => {
                         showQuantityControls={false}
                         showSeparator={index !== products.length - 1}
                         quantity={true}
+                        showDelete={false}
                       />
                     )}
                     keyExtractor={item => item?.id.toString()}
@@ -261,58 +272,13 @@ const CheckoutScreen: React.FC = () => {
                     subTotal={cartData?.total_amount}
                     deliveryCharges={cartData?.total_delivery_Fees}
                     style={{marginHorizontal: 2}}
+                    titleStyle={styles.summaryText}
                   />
                 </View>
               </>
             )}
             {/* Product Details and other sections as needed */}
             <Card>
-              <Text style={styles.sectionTitle}>Contact Information</Text>
-              <RegularTextInput
-                label="First Name *"
-                placeholder="Enter First Name"
-                onChangeText={handleChange('first_name')}
-                onBlur={handleBlur('first_name')}
-                value={values.first_name}
-                errors={errors.first_name}
-                submitted={submitted}
-                style={styles.inputStyle}
-              />
-
-              {/* Add other text inputs */}
-              <RegularTextInput
-                label="Last Name *"
-                placeholder="Enter Last Name"
-                onChangeText={handleChange('last_name')}
-                onBlur={handleBlur('last_name')}
-                value={values.last_name}
-                errors={errors.last_name}
-                submitted={submitted}
-                style={styles.inputStyle}
-              />
-              {/* Add other text inputs */}
-              <RegularTextInput
-                label="Email Address *"
-                placeholder="Enter Email Address"
-                onChangeText={handleChange('email')}
-                onBlur={handleBlur('email')}
-                value={values.email}
-                errors={errors.email}
-                submitted={submitted}
-                style={styles.inputStyle}
-              />
-
-              <PhoneNumberInput
-                initialNumber={values.phone}
-                onNumberChange={handleChange('phone')}
-                label="Contact Number *"
-                // submitted={submitted}
-                errors={errors.phone}
-                submitted={submitted}
-                labelStyle={styles.label}
-                style={styles.inputStyle}
-              />
-
               <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Shipping Address</Text>
 
@@ -348,14 +314,12 @@ const CheckoutScreen: React.FC = () => {
                 />
 
                 <PhoneNumberInput
-                  initialNumber={values.phone}
+                  initialNumber={values.shipping_phone}
                   onNumberChange={handleChange('shipping_phone')}
                   label="Contact Number *"
-                  // submitted={submitted}
                   errors={errors.shipping_phone}
                   submitted={submitted}
                   labelStyle={styles.label}
-                  style={styles.inputStyle}
                 />
 
                 <RegularTextInput
@@ -385,12 +349,21 @@ const CheckoutScreen: React.FC = () => {
                     // defaultValue='all'
                     placeholder="Select Country"
                     onChangeValue={e => {
-                      setFieldValue('shipping_country', e?.label);
+                      console.log('Country selected:', e);
+                      setFieldValue('shipping_country', e);
                       setFieldValue('shipping_state', '');
                       setFieldValue('shipping_city', '');
                       setShipStates([]);
                       setShipCities([]);
-                      fetchState(e?.id, true);
+
+                      // Find the country object to get the ID
+                      const selectedCountry = countries?.find(
+                        (country: any) => country.name === e,
+                      );
+                      if (selectedCountry?.id) {
+                        console.log('Country ID found:', selectedCountry.id);
+                        fetchState(selectedCountry.id, true);
+                      }
                     }}
                     style={styles.dropDown}
                   />
@@ -421,8 +394,17 @@ const CheckoutScreen: React.FC = () => {
                         // defaultValue='all'
                         placeholder="Select State"
                         onChangeValue={e => {
-                          setFieldValue('shipping_state', e?.label);
-                          fetchCity(e?.id, true);
+                          console.log('State selected:', e);
+                          setFieldValue('shipping_state', e);
+
+                          // Find the state object to get the ID
+                          const selectedState = shippStates?.find(
+                            (state: any) => state.label === e,
+                          );
+                          if (selectedState?.id) {
+                            console.log('State ID found:', selectedState.id);
+                            fetchCity(selectedState.id, true);
+                          }
                         }}
                         style={styles.dropDown}
                       />
@@ -455,7 +437,8 @@ const CheckoutScreen: React.FC = () => {
                         // defaultValue='all'
                         placeholder="Select City"
                         onChangeValue={e => {
-                          setFieldValue('shipping_city', e?.label);
+                          console.log('City selected:', e);
+                          setFieldValue('shipping_city', e);
                         }}
                         style={styles.dropDown}
                       />
@@ -478,6 +461,7 @@ const CheckoutScreen: React.FC = () => {
               <BillingAddressSame
                 isSelected={isSelected}
                 setIsSelected={setIsSelected}
+                onPress={() => setIsSelected(!isSelected)}
               />
 
               {/* Billing Address */}
@@ -518,14 +502,12 @@ const CheckoutScreen: React.FC = () => {
                   />
 
                   <PhoneNumberInput
-                    initialNumber={values.phone}
+                    initialNumber={values.billing_phone}
                     onNumberChange={handleChange('billing_phone')}
                     label="Contact Number *"
-                    // submitted={submitted}
                     errors={errors.billing_phone}
                     submitted={submitted}
                     labelStyle={styles.label}
-                    style={styles.inputStyle}
                   />
 
                   <RegularTextInput
@@ -568,12 +550,24 @@ const CheckoutScreen: React.FC = () => {
                       // defaultValue='all'
                       placeholder="Select Country"
                       onChangeValue={e => {
-                        setFieldValue('billing_country', e?.label);
+                        console.log('Billing country selected:', e);
+                        setFieldValue('billing_country', e);
                         setFieldValue('billing_state', '');
                         setFieldValue('billing_city', '');
                         setBillStates([]);
                         setBillCities([]);
-                        fetchState(e?.id, false);
+
+                        // Find the country object to get the ID
+                        const selectedCountry = countries?.find(
+                          (country: any) => country.name === e,
+                        );
+                        if (selectedCountry?.id) {
+                          console.log(
+                            'Billing Country ID found:',
+                            selectedCountry.id,
+                          );
+                          fetchState(selectedCountry.id, false);
+                        }
                       }}
                       style={styles.dropDown}
                     />
@@ -604,8 +598,20 @@ const CheckoutScreen: React.FC = () => {
                           // defaultValue='all'
                           placeholder="Select State"
                           onChangeValue={e => {
-                            setFieldValue('billing_state', e?.label);
-                            fetchCity(e?.id, false);
+                            console.log('Billing state selected:', e);
+                            setFieldValue('billing_state', e);
+
+                            // Find the state object to get the ID
+                            const selectedState = billStates?.find(
+                              (state: any) => state.label === e,
+                            );
+                            if (selectedState?.id) {
+                              console.log(
+                                'Billing State ID found:',
+                                selectedState.id,
+                              );
+                              fetchCity(selectedState.id, false);
+                            }
                           }}
                           style={styles.dropDown}
                         />
@@ -639,7 +645,8 @@ const CheckoutScreen: React.FC = () => {
                           // defaultValue='all'
                           placeholder="Select City"
                           onChangeValue={e => {
-                            setFieldValue('billing_city', e?.label);
+                            console.log('Billing city selected:', e);
+                            setFieldValue('billing_city', e);
                           }}
                           style={styles.dropDown}
                         />
@@ -666,11 +673,34 @@ const CheckoutScreen: React.FC = () => {
                 loading={loading}
                 style={styles.placeOrderButton}
                 onPress={() => {
-                  // navigation.navigate('Marketplace', {screen: 'MyOrders'});
+                  console.log('Place Order button clicked');
+                  console.log('Current form values:', values);
+                  console.log('Current form errors:', errors);
+
+                  // Check for validation errors and show toast
+                  const errorKeys = Object.keys(errors);
+                  if (errorKeys.length > 0) {
+                    const firstError = errors[errorKeys[0]];
+                    Toast.error(`Please fix: ${firstError}`);
+                    console.log('Validation errors:', errors);
+                    return;
+                  }
+
                   setSubmitted(true);
                   handleSubmit();
                 }}>
                 Place Order
+              </CustomButton>
+
+              {/* Test Navigation Button */}
+              <CustomButton
+                style={[styles.placeOrderButton, {marginTop: 10}]}
+                onPress={() => {
+                  console.log('Test navigation button clicked');
+                  Toast.success('Testing navigation to Payment screen...');
+                  navigation.navigate('Payment' as never);
+                }}>
+                Test Navigation to Payment
               </CustomButton>
             </Card>
           </>

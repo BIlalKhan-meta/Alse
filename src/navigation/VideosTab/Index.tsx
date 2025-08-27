@@ -1,4 +1,4 @@
-import React, {useEffect, useState, useRef} from 'react';
+import React, {useEffect, useState, useRef, useCallback} from 'react';
 import {
   View,
   Text,
@@ -9,16 +9,19 @@ import {
   Dimensions,
   Image,
   TouchableOpacity,
-  SafeAreaView,
 } from 'react-native';
 import Video from 'react-native-video';
 import {getVideos} from '../../api/reels';
 import {images} from '../../utils/images';
-import {fontSizes, vh} from '../../constant';
+import axiosInstance from '../../api';
+import endpoints from '../../api/endpoints';
+import {fontSizes} from '../../constant';
 import {colors} from '../../utils/theme';
 import {useNavigation} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
 import {selectUserProfile} from '../../store/slices/authSlice';
+import store from '../../store';
+import {BASE_URL} from '../../utils/baseurl';
 
 const {height: screenHeight} = Dimensions.get('window');
 
@@ -33,7 +36,7 @@ interface ReelItemProps {
 
 const ReelItem: React.FC<ReelItemProps> = ({
   item,
-  index,
+  index: _index,
   isVisible,
   onLike,
   onComment,
@@ -43,20 +46,78 @@ const ReelItem: React.FC<ReelItemProps> = ({
   const user = useSelector(selectUserProfile);
   const [isPaused, setIsPaused] = useState(!isVisible);
   const [videoLoad, setVideoLoad] = useState(true);
+  const [videoError, setVideoError] = useState(false);
   const [showFullText, setShowFullText] = useState(false);
   const maxTextLength = 100;
+
+  // Function to process video URL
+  const processVideoUrl = (url: string) => {
+    if (!url) return null;
+
+    // If it's already a full URL, return as is
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+
+    // If it's a relative path, make it absolute
+    if (url.startsWith('/')) {
+      return `${BASE_URL.replace('/api/', '')}${url}`;
+    }
+
+    // If it's just a filename, construct the full path
+    return `${BASE_URL.replace('/api/', '')}/storage/videos/${url}`;
+  };
+
+  const videoUrl = processVideoUrl(item.video);
+  const token = store.getState().auth.token;
+  console.log('Original video URL:', item.video);
+  console.log('Processed video URL:', videoUrl);
+  console.log('Auth token available:', !!token);
+
+  // Function to test video URL accessibility
+  const testVideoUrl = useCallback(
+    async (url: string) => {
+      try {
+        const response = await fetch(url, {
+          method: 'HEAD',
+          headers: {
+            Authorization: `Bearer ${token || ''}`,
+            Accept: 'video/*',
+          },
+        });
+        return response.ok;
+      } catch (error) {
+        console.log('Video URL test failed:', error);
+        return false;
+      }
+    },
+    [token],
+  );
 
   useEffect(() => {
     setIsPaused(!isVisible);
   }, [isVisible]);
 
+  useEffect(() => {
+    if (videoUrl && isVisible) {
+      // Test video URL accessibility
+      testVideoUrl(videoUrl).then(isAccessible => {
+        console.log('Video URL accessible:', isAccessible);
+        if (!isAccessible) {
+          setVideoError(true);
+          setVideoLoad(false);
+        }
+      });
+    }
+  }, [videoUrl, isVisible, testVideoUrl]);
+
   const myAccount = user?.id == item.user?.id;
 
   const goToProfile = () => {
     if (myAccount) {
-      navigation.navigate('MyProfile', {account: item.privacy});
+      (navigation as any).navigate('MyProfile', {account: item.privacy});
     } else if (item.user?.id) {
-      navigation.navigate('Profile', {
+      (navigation as any).navigate('Profile', {
         account: item.privacy,
         id: item.user.id,
       });
@@ -100,24 +161,75 @@ const ReelItem: React.FC<ReelItemProps> = ({
             style={styles.videoLoader}
           />
         )}
+        {videoError && (
+          <View style={styles.videoErrorContainer}>
+            <Text style={styles.videoErrorText}>Video unavailable</Text>
+            <TouchableOpacity
+              style={styles.retryButton}
+              onPress={() => {
+                setVideoError(false);
+                setVideoLoad(true);
+                // Retry loading the video
+                if (videoUrl) {
+                  testVideoUrl(videoUrl).then(isAccessible => {
+                    if (isAccessible) {
+                      setVideoError(false);
+                    }
+                  });
+                }
+              }}>
+              <Text style={styles.retryButtonText}>Retry</Text>
+            </TouchableOpacity>
+          </View>
+        )}
         <TouchableOpacity
           activeOpacity={0.9}
           style={styles.videoTouchable}
           onPress={handleVideoPause}>
-          <Video
-            onReadyForDisplay={() => setVideoLoad(false)}
-            source={{uri: item.video}}
-            style={styles.video}
-            resizeMode="cover"
-            repeat={true}
-            paused={isPaused}
-            onBuffer={res => {
-              if (res?.isBuffering) {
-                setVideoLoad(true);
-              }
-            }}
-            ignoreSilentSwitch={'ignore'}
-          />
+          {videoUrl ? (
+            <Video
+              onReadyForDisplay={() => {
+                console.log('Video ready for display:', videoUrl);
+                setVideoLoad(false);
+                setVideoError(false);
+              }}
+              onLoad={() => {
+                console.log('Video loaded successfully:', videoUrl);
+                setVideoLoad(false);
+                setVideoError(false);
+              }}
+              onError={error => {
+                console.log('Video error:', error);
+                console.log('Failed video URL:', videoUrl);
+                setVideoLoad(false);
+                setVideoError(true);
+              }}
+              source={{
+                uri: videoUrl,
+                headers: {
+                  Authorization: `Bearer ${token || ''}`,
+                  Accept: 'video/*',
+                },
+              }}
+              style={styles.video}
+              resizeMode="cover"
+              repeat={true}
+              paused={isPaused}
+              onBuffer={res => {
+                console.log('Video buffer event:', res);
+                if (res?.isBuffering) {
+                  setVideoLoad(true);
+                } else {
+                  setVideoLoad(false);
+                }
+              }}
+              ignoreSilentSwitch={'ignore'}
+            />
+          ) : (
+            <View style={styles.videoErrorContainer}>
+              <Text style={styles.videoErrorText}>No video available</Text>
+            </View>
+          )}
         </TouchableOpacity>
 
         {/* Header overlay */}
@@ -149,7 +261,7 @@ const ReelItem: React.FC<ReelItemProps> = ({
         {/* App logo overlay */}
         <View style={styles.logoOverlay}>
           <Image
-            source={images.logoIcon}
+            source={images.alseLogo}
             style={styles.centerLogo}
             tintColor="#06B6D4"
           />
@@ -201,13 +313,30 @@ const ReelItem: React.FC<ReelItemProps> = ({
   );
 };
 
+interface VideoItem {
+  id: number;
+  video: string;
+  content?: string;
+  user?: {
+    id: number;
+    name: string;
+    avatar?: string;
+  };
+  user_id?: number;
+  date?: string;
+  isLiked: boolean;
+  likes: number;
+  comments: number;
+  privacy?: string;
+}
+
 const VideosTab = () => {
-  const [reels, setReels] = useState([]);
+  const [reels, setReels] = useState<VideoItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const flatListRef = useRef(null);
+  const flatListRef = useRef<FlatList<VideoItem> | null>(null);
 
   useEffect(() => {
     fetchVideos();
@@ -216,21 +345,34 @@ const VideosTab = () => {
   const fetchVideos = async (page = 1, append = false) => {
     try {
       setLoading(!append);
-      const response = await getVideos(page);
+      let response;
 
-      console.log('API Response:', response);
+      try {
+        // Try education endpoint first
+        response = await getVideos(page);
+        console.log('Education API Response:', response);
+      } catch (error) {
+        console.log('Education endpoint failed, trying home endpoint...');
+        // Fallback to home endpoint
+        response = await axiosInstance.get(
+          `${endpoints.home.videos}?page=${page}&limit=10`,
+        );
+        console.log('Home API Response:', response);
+      }
 
-      // Handle both response structures - direct data or nested in response.data
+      console.log('Final API Response:', response);
+
+      // Handle different response structures
       let apiData;
-      if (response.data && response.data.data && response.data.data.data) {
-        // Handle axios response structure: response.data.data.data
+      if (response?.data?.data?.data) {
+        // Handle nested structure: response.data.data.data
         apiData = response.data.data;
-      } else if (response.data && response.data.data) {
-        // Handle direct response structure: response.data.data
+      } else if (response?.data?.data) {
+        // Handle structure: response.data.data
         apiData = response.data;
-      } else if (response.status && response.data) {
-        // Handle status-based response: response.data
-        apiData = response.data;
+      } else if (response?.data) {
+        // Handle structure: response.data
+        apiData = response;
       } else {
         console.log('Unexpected response structure:', response);
         apiData = {data: [], total: 0};
@@ -240,20 +382,45 @@ const VideosTab = () => {
       console.log('Video data array:', videoData);
       console.log('Video data length:', videoData.length);
 
+      // Log the first video item to see its structure
+      if (videoData.length > 0) {
+        console.log('First video item:', JSON.stringify(videoData[0], null, 2));
+        console.log('Video URL:', videoData[0].video);
+        console.log('Video URL type:', typeof videoData[0].video);
+      }
+
       if (videoData.length > 0) {
         // Transform data to include like state and other interactive properties
-        const transformedReels = videoData.map(video => ({
-          ...video,
-          isLiked: false, // You can set this based on user's like status from API
-          likes: Math.floor(Math.random() * 1000), // Replace with actual likes from API
-          comments: Math.floor(Math.random() * 100), // Replace with actual comments from API
-          // Create user object from user_id if user object doesn't exist
-          user: video.user || {
-            id: video.user_id,
-            name: `User ${video.user_id}`,
-            avatar: null,
-          },
-        }));
+        const transformedReels = videoData.map((video: any) => {
+          // Try different possible video URL field names
+          const videoUrl =
+            video.video ||
+            video.video_url ||
+            video.url ||
+            video.media_url ||
+            video.file;
+          console.log('Video URL found:', videoUrl);
+
+          // If no video URL found, use a test video URL for debugging
+          const finalVideoUrl =
+            videoUrl ||
+            'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
+          console.log('Final video URL:', finalVideoUrl);
+
+          return {
+            ...video,
+            video: finalVideoUrl, // Ensure video field is set
+            isLiked: false, // You can set this based on user's like status from API
+            likes: video.likes || Math.floor(Math.random() * 1000), // Use actual likes from API if available
+            comments: video.comments || Math.floor(Math.random() * 100), // Use actual comments from API if available
+            // Create user object from user_id if user object doesn't exist
+            user: video.user || {
+              id: video.user_id,
+              name: video.user_name || `User ${video.user_id}`,
+              avatar: video.user_avatar || null,
+            },
+          };
+        });
 
         console.log('Transformed reels:', transformedReels);
 
@@ -263,9 +430,10 @@ const VideosTab = () => {
           setReels(transformedReels);
         }
 
-        const totalPages = Math.ceil(
-          (apiData.total || videoData.length) / videoData.length,
-        );
+        // Calculate if there are more pages
+        const itemsPerPage = 10; // Default limit
+        const totalItems = apiData.total || videoData.length;
+        const totalPages = Math.ceil(totalItems / itemsPerPage);
         setHasMore(page < totalPages);
         setCurrentPage(page);
       } else {
@@ -273,6 +441,7 @@ const VideosTab = () => {
         if (!append) {
           setReels([]);
         }
+        setHasMore(false);
       }
     } catch (error) {
       console.error('Error fetching videos:', error);
@@ -315,7 +484,7 @@ const VideosTab = () => {
     // Add your share functionality here
   };
 
-  const onViewRef = useRef(({viewableItems}) => {
+  const onViewRef = useRef(({viewableItems}: {viewableItems: any[]}) => {
     if (viewableItems.length > 0) {
       setCurrentIndex(viewableItems[0].index || 0);
     }
@@ -323,7 +492,7 @@ const VideosTab = () => {
 
   const viewConfigRef = useRef({viewAreaCoveragePercentThreshold: 50});
 
-  const renderReel = ({item, index}) => (
+  const renderReel = ({item, index}: {item: VideoItem; index: number}) => (
     <ReelItem
       item={item}
       index={index}
@@ -346,7 +515,11 @@ const VideosTab = () => {
   if (reels.length === 0 && !loading) {
     return (
       <View style={styles.emptyContainer}>
+        <Image source={images.videoIcon} style={styles.emptyIcon} />
         <Text style={styles.emptyText}>No videos available</Text>
+        <Text style={styles.emptySubText}>
+          Check back later for new content
+        </Text>
       </View>
     );
   }
@@ -400,6 +573,19 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     textAlign: 'center',
+    marginTop: 10,
+  },
+  emptySubText: {
+    color: '#999',
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: 5,
+  },
+  emptyIcon: {
+    width: 80,
+    height: 80,
+    tintColor: '#666',
+    marginBottom: 10,
   },
   reelContainer: {
     flex: 1,
@@ -425,6 +611,34 @@ const styles = StyleSheet.create({
     left: '50%',
     top: '50%',
     zIndex: 100,
+  },
+  videoErrorContainer: {
+    position: 'absolute',
+    left: '50%',
+    top: '50%',
+    transform: [{translateX: -50}, {translateY: -50}],
+    zIndex: 100,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    padding: 10,
+    borderRadius: 5,
+  },
+  videoErrorText: {
+    color: '#fff',
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  retryButton: {
+    backgroundColor: '#06B6D4',
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 5,
+    marginTop: 10,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontSize: 12,
+    textAlign: 'center',
+    fontWeight: 'bold',
   },
   headerOverlay: {
     position: 'absolute',

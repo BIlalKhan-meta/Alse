@@ -11,7 +11,7 @@ import {
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {ChevronLeft, X} from 'lucide-react-native';
 import {images} from '../../utils/images';
-import {vh, vw} from '../../constant';
+import GoogleMapsLink from '../../components/GoogleMapsLink';
 
 interface Order {
   order_id: string;
@@ -25,6 +25,16 @@ interface Order {
   tracking_number?: string;
   carrier?: string;
   expected_delivery?: string;
+  buyer_location?: {
+    latitude: number;
+    longitude: number;
+    address: string;
+  };
+  seller_location?: {
+    latitude: number;
+    longitude: number;
+    address: string;
+  };
 }
 
 interface TrackingStep {
@@ -37,11 +47,103 @@ interface TrackingStep {
 const OrderTracking: React.FC = () => {
   const navigation: any = useNavigation();
   const route: any = useRoute();
-  const orders: Order[] = route?.params?.orders || [];
+
+  // Dummy order data for demonstration
+  const dummyOrders: Order[] = [
+    {
+      order_id: 'ORD-2024-001',
+      product: {
+        title: 'Premium Wireless Headphones',
+        images: [{path: 'https://via.placeholder.com/80x80'}],
+        banner: 'https://via.placeholder.com/300x200',
+      },
+      total_amount: '$299.99',
+      status: 'Out for Delivery',
+      tracking_number: 'TRK-123456789',
+      carrier: 'Leopards Express',
+      expected_delivery: '2024-12-20',
+      buyer_location: {
+        latitude: 40.7128,
+        longitude: -74.006,
+        address: '123 Main St, New York, NY 10001',
+      },
+      seller_location: {
+        latitude: 40.7589,
+        longitude: -73.9851,
+        address: '456 Broadway, New York, NY 10013',
+      },
+    },
+    {
+      order_id: 'ORD-2024-002',
+      product: {
+        title: 'Smart Fitness Watch',
+        images: [{path: 'https://via.placeholder.com/80x80'}],
+        banner: 'https://via.placeholder.com/300x200',
+      },
+      total_amount: '$199.99',
+      status: 'In Transit',
+      tracking_number: 'TRK-987654321',
+      carrier: 'FedEx',
+      expected_delivery: '2024-12-22',
+      buyer_location: {
+        latitude: 40.7505,
+        longitude: -73.9934,
+        address: '789 Park Ave, New York, NY 10021',
+      },
+      seller_location: {
+        latitude: 40.7589,
+        longitude: -73.9851,
+        address: '456 Broadway, New York, NY 10013',
+      },
+    },
+  ];
+
+  const orders: Order[] =
+    route?.params?.orders?.length > 0 ? route.params.orders : dummyOrders;
+
+  console.log('Orders available:', orders.length);
+  console.log('Route params orders:', route?.params?.orders);
+  console.log('Using dummy orders:', orders === dummyOrders);
 
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(
     orders.length > 0 ? orders[0] : null,
   );
+
+  // Get location data from the selected order
+  const getOrderLocations = () => {
+    if (!selectedOrder?.buyer_location || !selectedOrder?.seller_location) {
+      // Fallback to default locations if order data is missing
+      return {
+        buyerLocation: {
+          latitude: 40.7128,
+          longitude: -74.006,
+          title: 'Delivery Address',
+          description: 'Your location',
+        },
+        sellerLocation: {
+          latitude: 40.7589,
+          longitude: -73.9851,
+          title: 'Seller Location',
+          description: 'Store location',
+        },
+      };
+    }
+
+    return {
+      buyerLocation: {
+        latitude: selectedOrder.buyer_location.latitude,
+        longitude: selectedOrder.buyer_location.longitude,
+        title: 'Delivery Address',
+        description: selectedOrder.buyer_location.address,
+      },
+      sellerLocation: {
+        latitude: selectedOrder.seller_location.latitude,
+        longitude: selectedOrder.seller_location.longitude,
+        title: 'Seller Location',
+        description: selectedOrder.seller_location.address,
+      },
+    };
+  };
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -68,7 +170,7 @@ const OrderTracking: React.FC = () => {
   }, [navigation]);
 
   // Mock tracking steps - in real app, this would come from API
-  const getTrackingSteps = (order: Order): TrackingStep[] => {
+  const getTrackingSteps = (_order: Order): TrackingStep[] => {
     return [
       {
         title: 'Shipment Processed by Leopard shipping company',
@@ -136,11 +238,16 @@ const OrderTracking: React.FC = () => {
     navigation.goBack();
   };
 
-  if (!selectedOrder) {
+  // Ensure we always have orders to display
+  if (!selectedOrder || orders.length === 0) {
     return (
       <View style={styles.container}>
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyText}>No orders available for tracking</Text>
+          <Text style={styles.emptySubtext}>
+            Debug: Orders count = {orders.length}, Selected ={' '}
+            {selectedOrder ? 'Yes' : 'No'}
+          </Text>
         </View>
       </View>
     );
@@ -210,25 +317,49 @@ const OrderTracking: React.FC = () => {
           </View>
         </View>
 
+        {/* Order Selector */}
+        {orders.length > 1 && (
+          <View style={styles.orderSelector}>
+            <Text style={styles.orderSelectorTitle}>Select Order:</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {orders.map(order => (
+                <TouchableOpacity
+                  key={order.order_id}
+                  style={[
+                    styles.orderOption,
+                    selectedOrder?.order_id === order.order_id &&
+                      styles.selectedOrderOption,
+                  ]}
+                  onPress={() => setSelectedOrder(order)}>
+                  <Text
+                    style={[
+                      styles.orderOptionText,
+                      selectedOrder?.order_id === order.order_id &&
+                        styles.selectedOrderOptionText,
+                    ]}>
+                    {order.product.title}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.orderOptionStatus,
+                      selectedOrder?.order_id === order.order_id &&
+                        styles.selectedOrderOptionStatus,
+                    ]}>
+                    {order.status}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
+
         {/* Map Section */}
         <View style={styles.mapContainer}>
-          <View style={styles.mapPlaceholder}>
-            <Text style={styles.mapText}>Map View</Text>
-            <Text style={styles.mapSubtext}>
-              Satellite view with tracking pins
-            </Text>
-          </View>
-          <View style={styles.mapControls}>
-            <TouchableOpacity style={styles.mapControl}>
-              <Text style={styles.mapControlText}>+</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.mapControl}>
-              <Text style={styles.mapControlText}>-</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.mapControl}>
-              <Text style={styles.mapControlText}>⛶</Text>
-            </TouchableOpacity>
-          </View>
+          <GoogleMapsLink
+            buyerLocation={getOrderLocations().buyerLocation}
+            sellerLocation={getOrderLocations().sellerLocation}
+            height={200}
+          />
         </View>
 
         {/* Tracking Timeline */}
@@ -265,6 +396,11 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 16,
     color: '#999',
+  },
+  emptySubtext: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 8,
   },
   orderCard: {
     backgroundColor: 'white',
@@ -335,49 +471,62 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#333',
   },
+  orderSelector: {
+    backgroundColor: 'white',
+    margin: 16,
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  orderSelectorTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 12,
+  },
+  orderOption: {
+    backgroundColor: '#f8f8f8',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginRight: 12,
+    minWidth: 120,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  selectedOrderOption: {
+    backgroundColor: '#00A19D',
+    borderColor: '#00A19D',
+  },
+  orderOptionText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#666',
+    marginBottom: 4,
+  },
+  selectedOrderOptionText: {
+    color: 'white',
+  },
+  orderOptionStatus: {
+    fontSize: 10,
+    color: '#999',
+  },
+  selectedOrderOptionStatus: {
+    color: 'rgba(255, 255, 255, 0.8)',
+  },
   mapContainer: {
     backgroundColor: 'white',
     margin: 16,
     borderRadius: 12,
-    height: 200,
     overflow: 'hidden',
     position: 'relative',
-  },
-  mapPlaceholder: {
-    flex: 1,
-    backgroundColor: '#e0e0e0',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  mapText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#666',
-  },
-  mapSubtext: {
-    fontSize: 14,
-    color: '#999',
-    marginTop: 4,
-  },
-  mapControls: {
-    position: 'absolute',
-    bottom: 16,
-    right: 16,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    borderRadius: 8,
-    padding: 8,
-  },
-  mapControl: {
-    width: 32,
-    height: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  mapControlText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
   },
   timelineContainer: {
     backgroundColor: 'white',

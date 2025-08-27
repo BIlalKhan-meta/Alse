@@ -69,6 +69,8 @@ const endpoints = {
     paymentLogs: '/get-payment-logs',
     similar: '/product',
     acceptOrder: 'get-order-detail/',
+    recommended: '/products/recommended',
+    allProducts: '/products',
   },
   education: {
     getArticles: '/articles',
