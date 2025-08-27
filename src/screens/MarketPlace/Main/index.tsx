@@ -27,6 +27,7 @@ import {
   Package,
   Bike,
   Gavel,
+  DollarSign,
 } from 'lucide-react-native';
 import {images} from '../../../utils/images';
 import {vh, vw} from '../../../constant';
@@ -188,6 +189,17 @@ const Marketplace: React.FC = () => {
 
     // Navigate to become rider screen
     navigation.navigate('BecomeRider');
+  };
+
+  const handleFinancials = () => {
+    setIsFabOpen(false);
+    Animated.spring(fabAnimation, {
+      toValue: 0,
+      useNativeDriver: true,
+    }).start();
+
+    // Navigate to financials screen
+    navigation.navigate('Financials');
   };
 
   if (!user?.has_subscription && !user.is_child) {
@@ -467,6 +479,16 @@ const Marketplace: React.FC = () => {
               onPress={() => navigation.navigate('AuctionBidding')}>
               <Gavel size={16} color="white" style={styles.fabOptionIcon} />
               <Text style={styles.fabOptionText}>Auctions & Bidding</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.fabOption}
+              onPress={handleFinancials}>
+              <DollarSign
+                size={16}
+                color="white"
+                style={styles.fabOptionIcon}
+              />
+              <Text style={styles.fabOptionText}>Financials</Text>
             </TouchableOpacity>
           </View>
         )}

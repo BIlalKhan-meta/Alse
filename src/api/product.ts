@@ -59,11 +59,19 @@ export const checkout = (formData: FormData) => {
 export const getCart = () => {
   return axiosInstance.get(`${endpoints.products.getCart}`);
 };
-export const getOrders = () => {
-  return axiosInstance.get(`${endpoints.products.ordersList}`);
+export const getOrders = (params?: {
+  page?: number;
+  per_page?: number;
+  status?: string;
+}) => {
+  return axiosInstance.get(`${endpoints.products.ordersList}`, {params});
 };
-export const getMyOrders = () => {
-  return axiosInstance.get(`${endpoints.products.shopOrders}`);
+export const getMyOrders = (params?: {
+  page?: number;
+  per_page?: number;
+  status?: string;
+}) => {
+  return axiosInstance.get(`${endpoints.products.shopOrders}`, {params});
 };
 export const getOrderDetail = (id: number) => {
   return axiosInstance.get(`${endpoints.products.orderDetail}/${id}`);

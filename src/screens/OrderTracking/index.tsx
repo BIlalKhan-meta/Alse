@@ -1,4 +1,4 @@
-import React, {useState, useLayoutEffect} from 'react';
+import React, {useState, useLayoutEffect, useEffect, useCallback} from 'react';
 import {
   View,
   Text,
@@ -7,11 +7,14 @@ import {
   Image,
   ScrollView,
   FlatList,
+  Alert,
 } from 'react-native';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {ChevronLeft, X} from 'lucide-react-native';
 import {images} from '../../utils/images';
 import GoogleMapsLink from '../../components/GoogleMapsLink';
+import {getOrders, getMyOrders, getOrderDetail} from '../../api/product';
+import Loader from '../../components/Loader';
 
 interface Order {
   order_id: string;
@@ -44,70 +47,139 @@ interface TrackingStep {
   time: string;
 }
 
+interface PaginationMeta {
+  current_page: number;
+  last_page: number;
+  per_page: number;
+  total: number;
+}
+
 const OrderTracking: React.FC = () => {
   const navigation: any = useNavigation();
   const route: any = useRoute();
 
-  // Dummy order data for demonstration
-  const dummyOrders: Order[] = [
-    {
-      order_id: 'ORD-2024-001',
-      product: {
-        title: 'Premium Wireless Headphones',
-        images: [{path: 'https://via.placeholder.com/80x80'}],
-        banner: 'https://via.placeholder.com/300x200',
-      },
-      total_amount: '$299.99',
-      status: 'Out for Delivery',
-      tracking_number: 'TRK-123456789',
-      carrier: 'Leopards Express',
-      expected_delivery: '2024-12-20',
-      buyer_location: {
-        latitude: 40.7128,
-        longitude: -74.006,
-        address: '123 Main St, New York, NY 10001',
-      },
-      seller_location: {
-        latitude: 40.7589,
-        longitude: -73.9851,
-        address: '456 Broadway, New York, NY 10013',
-      },
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [lastPage, setLastPage] = useState(1);
+  const [hasMoreData, setHasMoreData] = useState(true);
+  const [perPage] = useState(10); // Items per page
+
+  console.log('Route params:', route?.params);
+
+  // Fetch orders from API with pagination
+  const fetchOrders = useCallback(
+    async (page: number = 1, append: boolean = false) => {
+      if (page === 1) {
+        setLoading(true);
+      } else {
+        setLoadingMore(true);
+      }
+      setError(null);
+
+      try {
+        let response;
+
+        // Check if we should fetch shop orders or regular orders
+        if (route?.params?.isShopOrder) {
+          response = await getMyOrders({
+            page,
+            per_page: perPage,
+          });
+        } else {
+          response = await getOrders({
+            page,
+            per_page: perPage,
+          });
+        }
+
+        console.log('Orders API response:', response?.data);
+
+        if (response?.data?.data?.data) {
+          const fetchedOrders = response.data.data.data;
+          const meta: PaginationMeta = response.data.data.meta;
+
+          // Update pagination state
+          setCurrentPage(meta.current_page);
+          setLastPage(meta.last_page);
+          setHasMoreData(meta.current_page < meta.last_page);
+
+          // Update orders list
+          if (append) {
+            setOrders(prev => [...prev, ...fetchedOrders]);
+          } else {
+            setOrders(fetchedOrders);
+
+            // Set the first order as selected, or use the specific order from route params
+            if (route?.params?.orderId) {
+              const specificOrder = fetchedOrders.find(
+                (order: Order) => order.order_id === route.params.orderId,
+              );
+              setSelectedOrder(specificOrder || fetchedOrders[0]);
+            } else {
+              setSelectedOrder(fetchedOrders[0]);
+            }
+          }
+        } else {
+          if (!append) {
+            setOrders([]);
+            setSelectedOrder(null);
+          }
+          setHasMoreData(false);
+        }
+      } catch (err: any) {
+        console.error('Error fetching orders:', err);
+        setError(err?.response?.data?.message || 'Failed to fetch orders');
+        if (!append) {
+          setOrders([]);
+          setSelectedOrder(null);
+        }
+      } finally {
+        setLoading(false);
+        setLoadingMore(false);
+      }
     },
-    {
-      order_id: 'ORD-2024-002',
-      product: {
-        title: 'Smart Fitness Watch',
-        images: [{path: 'https://via.placeholder.com/80x80'}],
-        banner: 'https://via.placeholder.com/300x200',
-      },
-      total_amount: '$199.99',
-      status: 'In Transit',
-      tracking_number: 'TRK-987654321',
-      carrier: 'FedEx',
-      expected_delivery: '2024-12-22',
-      buyer_location: {
-        latitude: 40.7505,
-        longitude: -73.9934,
-        address: '789 Park Ave, New York, NY 10021',
-      },
-      seller_location: {
-        latitude: 40.7589,
-        longitude: -73.9851,
-        address: '456 Broadway, New York, NY 10013',
-      },
-    },
-  ];
-
-  const orders: Order[] =
-    route?.params?.orders?.length > 0 ? route.params.orders : dummyOrders;
-
-  console.log('Orders available:', orders.length);
-  console.log('Route params orders:', route?.params?.orders);
-  console.log('Using dummy orders:', orders === dummyOrders);
-
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(
-    orders.length > 0 ? orders[0] : null,
+    [route?.params?.isShopOrder, route?.params?.orderId, perPage],
   );
+
+  // Load more orders (for infinite scroll)
+  const loadMoreOrders = useCallback(async () => {
+    if (!loadingMore && hasMoreData && currentPage < lastPage) {
+      await fetchOrders(currentPage + 1, true);
+    }
+  }, [loadingMore, hasMoreData, currentPage, lastPage, fetchOrders]);
+
+  // Fetch specific order details if orderId is provided
+  const fetchOrderDetail = async (orderId: string) => {
+    try {
+      const response = await getOrderDetail(parseInt(orderId));
+      console.log('Order detail response:', response?.data);
+
+      if (response?.data?.data) {
+        const orderDetail = response.data.data;
+        setSelectedOrder(orderDetail);
+        setOrders([orderDetail]); // Set as single order in array
+      }
+    } catch (err: any) {
+      console.error('Error fetching order detail:', err);
+      Alert.alert('Error', 'Failed to fetch order details');
+    }
+  };
+
+  useEffect(() => {
+    // If specific orderId is provided, fetch that order detail
+    if (route?.params?.orderId) {
+      fetchOrderDetail(route.params.orderId);
+    } else {
+      // Otherwise fetch all orders starting from page 1
+      fetchOrders(1, false);
+    }
+  }, [route?.params?.orderId, route?.params?.isShopOrder, fetchOrders]);
 
   // Get location data from the selected order
   const getOrderLocations = () => {
@@ -238,15 +310,51 @@ const OrderTracking: React.FC = () => {
     navigation.goBack();
   };
 
-  // Ensure we always have orders to display
+  // Render loading footer for pagination
+  const renderFooter = () => {
+    if (!loadingMore) return null;
+    return (
+      <View style={styles.loadingFooter}>
+        <Loader />
+        <Text style={styles.loadingText}>Loading more orders...</Text>
+      </View>
+    );
+  };
+
+  // Show loading state
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <Loader />
+      </View>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>Error loading orders</Text>
+          <Text style={styles.emptySubtext}>{error}</Text>
+          <TouchableOpacity
+            style={styles.retryButton}
+            onPress={() => fetchOrders(1, false)}>
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
+  // Show empty state when no orders are available
   if (!selectedOrder || orders.length === 0) {
     return (
       <View style={styles.container}>
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyText}>No orders available for tracking</Text>
           <Text style={styles.emptySubtext}>
-            Debug: Orders count = {orders.length}, Selected ={' '}
-            {selectedOrder ? 'Yes' : 'No'}
+            Please select an order to track its delivery status
           </Text>
         </View>
       </View>
@@ -272,7 +380,7 @@ const OrderTracking: React.FC = () => {
                 {selectedOrder.product.title || 'Product Name'}
               </Text>
               <Text style={styles.productVariant}>Brown 1</Text>
-              <Text style={styles.orderStatus}>Out for Delivery</Text>
+              <Text style={styles.orderStatus}>{selectedOrder.status}</Text>
             </View>
           </View>
 
@@ -317,10 +425,15 @@ const OrderTracking: React.FC = () => {
           </View>
         </View>
 
-        {/* Order Selector */}
+        {/* Order Selector with Pagination */}
         {orders.length > 1 && (
           <View style={styles.orderSelector}>
-            <Text style={styles.orderSelectorTitle}>Select Order:</Text>
+            <View style={styles.orderSelectorHeader}>
+              <Text style={styles.orderSelectorTitle}>Select Order:</Text>
+              <Text style={styles.paginationInfo}>
+                Page {currentPage} of {lastPage} ({orders.length} orders)
+              </Text>
+            </View>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               {orders.map(order => (
                 <TouchableOpacity
@@ -350,6 +463,18 @@ const OrderTracking: React.FC = () => {
                 </TouchableOpacity>
               ))}
             </ScrollView>
+
+            {/* Load More Button */}
+            {hasMoreData && (
+              <TouchableOpacity
+                style={styles.loadMoreButton}
+                onPress={loadMoreOrders}
+                disabled={loadingMore}>
+                <Text style={styles.loadMoreButtonText}>
+                  {loadingMore ? 'Loading...' : 'Load More Orders'}
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
         )}
 
@@ -392,15 +517,30 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 20,
   },
   emptyText: {
     fontSize: 16,
     color: '#999',
+    textAlign: 'center',
   },
   emptySubtext: {
     fontSize: 12,
     color: '#666',
     marginTop: 8,
+    textAlign: 'center',
+  },
+  retryButton: {
+    backgroundColor: '#00A19D',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+    marginTop: 16,
+  },
+  retryButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
   },
   orderCard: {
     backgroundColor: 'white',
@@ -485,11 +625,20 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
+  orderSelectorHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
   orderSelectorTitle: {
     fontSize: 16,
     fontWeight: '600',
     color: '#333',
-    marginBottom: 12,
+  },
+  paginationInfo: {
+    fontSize: 12,
+    color: '#666',
   },
   orderOption: {
     backgroundColor: '#f8f8f8',
@@ -520,6 +669,27 @@ const styles = StyleSheet.create({
   },
   selectedOrderOptionStatus: {
     color: 'rgba(255, 255, 255, 0.8)',
+  },
+  loadMoreButton: {
+    backgroundColor: '#f0f0f0',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  loadMoreButtonText: {
+    color: '#333',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  loadingFooter: {
+    paddingVertical: 20,
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 8,
+    fontSize: 12,
+    color: '#666',
   },
   mapContainer: {
     backgroundColor: 'white',
