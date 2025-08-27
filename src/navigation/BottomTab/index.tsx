@@ -5,13 +5,11 @@ import {colors} from '../../utils/theme';
 import styles from './styles';
 import HomeNavigation from '../HomeNavigation';
 import {images} from '../../utils/images';
-import InterBold from '../../components/Text/InterBold';
 import NavigationOptions from '../NavigationOptions';
 import MarketPlaceNavigation from '../MarketPlaceNavigator';
 import MenuNavigation from '../MenuNavigation';
 import LiveStreamScreen from '../../screens/Livestream/GoLive';
-import VideosTab from '../VideosTab/Index';
-import {fontSizes} from '../../constant';
+import VideosTab from '../VideosTab/index';
 import SearchTab from '../SearchTab';
 import {Search} from 'lucide-react-native';
 

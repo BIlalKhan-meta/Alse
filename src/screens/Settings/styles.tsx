@@ -6,24 +6,14 @@ const {width} = Dimensions.get('window');
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.midGray,
   },
 
   // Profile Section
   profileSection: {
-    backgroundColor: colors.white,
-    marginHorizontal: 16,
     marginTop: 16,
+    marginHorizontal: 16,
     borderRadius: 12,
     padding: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
   },
 
   profileImageContainer: {
@@ -32,9 +22,9 @@ const styles = StyleSheet.create({
   },
 
   profileImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 90,
+    height: 90,
+    borderRadius: 60,
     backgroundColor: colors.lightGrey,
   },
 
@@ -121,22 +111,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  // Settings Section
-  settingsSection: {
-    backgroundColor: colors.white,
-    marginHorizontal: 16,
-    borderRadius: 12,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-
   // Settings Item
   settingsItem: {
     flexDirection: 'row',
@@ -144,8 +118,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.lightGrey,
+    // borderBottomWidth: 1,
     backgroundColor: colors.white,
   },
 
@@ -195,11 +168,6 @@ const styles = StyleSheet.create({
   selectButtonText: {
     fontSize: 14,
     color: colors.themeColor,
-  },
-
-  // Remove bottom border from last item
-  'settingsItem:last-child': {
-    borderBottomWidth: 0,
   },
 
   // Loading and Error States
@@ -263,8 +231,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 16,
     paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.lightGrey,
+    // borderBottomWidth: 1,
+    // borderBottomColor: colors.lightGrey,
   },
 
   optionText: {

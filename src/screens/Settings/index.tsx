@@ -213,12 +213,6 @@ const Settings = () => {
   );
 
   // Section Header Component
-  const SectionHeader = ({title, icon: IconComponent}) => (
-    <View style={styles.sectionHeader}>
-      {IconComponent && <IconComponent size={20} color={colors.themeColor} />}
-      <InterMedium style={styles.sectionTitle}>{title}</InterMedium>
-    </View>
-  );
 
   // Profile Form Component
   const ProfileForm = () => (
@@ -359,429 +353,406 @@ const Settings = () => {
       {!isEditing && (
         <>
           {/* Security & Privacy Settings */}
-          <SectionHeader title="Security & Privacy" icon={Shield} />
-          <View style={styles.settingsSection}>
-            <SettingsItem
-              title="Two-Factor Authentication"
-              subtitle="Add an extra layer of security"
-              icon={Lock}
-              value={securitySettings.twoFactorAuth}
-              onToggle={value =>
-                handleSettingUpdate('security', 'twoFactorAuth', value)
-              }
-              onPress={undefined}
-            />
-            <SettingsItem
-              title="Change Password"
-              icon={Lock}
-              type="navigation"
-              onPress={() => {
-                /* Navigate to change password */
-              }}
-              subtitle={undefined}
-              value={undefined}
-              onToggle={undefined}
-            />
-            <SettingsItem
-              title="Login Activity"
-              subtitle="View recent login activity"
-              icon={Eye}
-              type="navigation"
-              onPress={() => {
-                /* Navigate to login activity */
-              }}
-              value={undefined}
-              onToggle={undefined}
-            />
-          </View>
+          <SettingsItem
+            title="Two-Factor Authentication"
+            subtitle="Add an extra layer of security"
+            icon={Lock}
+            value={securitySettings.twoFactorAuth}
+            onToggle={value =>
+              handleSettingUpdate('security', 'twoFactorAuth', value)
+            }
+            onPress={undefined}
+          />
+          <SettingsItem
+            title="Change Password"
+            icon={Lock}
+            type="navigation"
+            onPress={() => {
+              /* Navigate to change password */
+            }}
+            subtitle={undefined}
+            value={undefined}
+            onToggle={undefined}
+          />
+          <SettingsItem
+            title="Login Activity"
+            subtitle="View recent login activity"
+            icon={Eye}
+            type="navigation"
+            onPress={() => {
+              /* Navigate to login activity */
+            }}
+            value={undefined}
+            onToggle={undefined}
+          />
 
           {/* Social Activity Settings */}
-          <SectionHeader title="Social Activity" icon={Users} />
-          <View style={styles.settingsSection}>
-            <SettingsItem
-              title="Post Visibility"
-              subtitle="Who can see your posts"
-              icon={Eye}
-              type="select"
-              value={socialSettings.postVisibility}
-              options={[
-                {label: 'Public', value: 'public'},
-                {label: 'Followers Only', value: 'followers'},
-                {label: 'Private', value: 'private'},
-              ]}
-              onPress={() => {
-                /* Show visibility options */
-              }}
-            />
-            <SettingsItem
-              title="Allow Tags"
-              subtitle="Let others tag you in posts"
-              icon={User}
-              value={socialSettings.allowTags}
-              onToggle={value =>
-                handleSettingUpdate('social', 'allowTags', value)
-              }
-              onPress={undefined}
-            />
-            <SettingsItem
-              title="Auto-filter Offensive Content"
-              subtitle="Automatically hide offensive comments"
-              icon={MessageSquare}
-              value={socialSettings.autoFilterOffensive}
-              onToggle={value =>
-                handleSettingUpdate('social', 'autoFilterOffensive', value)
-              }
-              onPress={undefined}
-            />
-            <SettingsItem
-              title="Comment Permissions"
-              subtitle="Who can comment on your posts"
-              icon={MessageSquare}
-              type="select"
-              value={socialSettings.commentPermissions}
-              options={[
-                {label: 'Everyone', value: 'everyone'},
-                {label: 'Followers', value: 'followers'},
-                {label: 'No One', value: 'none'},
-              ]}
-              onPress={() => {
-                /* Show comment permissions */
-              }}
-            />
-            <SettingsItem
-              title="Blocked Users"
-              subtitle="Manage your blocked users list"
-              icon={EyeOff}
-              type="navigation"
-              onPress={() => {
-                /* Navigate to blocked users */
-              }}
-              value={undefined}
-              onToggle={undefined}
-            />
-          </View>
+          <SettingsItem
+            title="Post Visibility"
+            subtitle="Who can see your posts"
+            icon={Eye}
+            type="select"
+            value={socialSettings.postVisibility}
+            options={[
+              {label: 'Public', value: 'public'},
+              {label: 'Followers Only', value: 'followers'},
+              {label: 'Private', value: 'private'},
+            ]}
+            onPress={() => {
+              /* Show visibility options */
+            }}
+          />
+          <SettingsItem
+            title="Allow Tags"
+            subtitle="Let others tag you in posts"
+            icon={User}
+            value={socialSettings.allowTags}
+            onToggle={value =>
+              handleSettingUpdate('social', 'allowTags', value)
+            }
+            onPress={undefined}
+          />
+          <SettingsItem
+            title="Auto-filter Offensive Content"
+            subtitle="Automatically hide offensive comments"
+            icon={MessageSquare}
+            value={socialSettings.autoFilterOffensive}
+            onToggle={value =>
+              handleSettingUpdate('social', 'autoFilterOffensive', value)
+            }
+            onPress={undefined}
+          />
+          <SettingsItem
+            title="Comment Permissions"
+            subtitle="Who can comment on your posts"
+            icon={MessageSquare}
+            type="select"
+            value={socialSettings.commentPermissions}
+            options={[
+              {label: 'Everyone', value: 'everyone'},
+              {label: 'Followers', value: 'followers'},
+              {label: 'No One', value: 'none'},
+            ]}
+            onPress={() => {
+              /* Show comment permissions */
+            }}
+          />
+          <SettingsItem
+            title="Blocked Users"
+            subtitle="Manage your blocked users list"
+            icon={EyeOff}
+            type="navigation"
+            onPress={() => {
+              /* Navigate to blocked users */
+            }}
+            value={undefined}
+            onToggle={undefined}
+          />
 
           {/* Bidding & Auction Settings */}
-          <SectionHeader title="Bidding & Auctions" icon={Gavel} />
-          <View style={styles.settingsSection}>
-            <SettingsItem
-              title="Auto-bid"
-              subtitle="Automatically bid up to your maximum"
-              icon={Gavel}
-              value={biddingSettings.autoBid}
-              onToggle={value =>
-                handleSettingUpdate('bidding', 'autoBid', value)
-              }
-              onPress={undefined}
-            />
-            <SettingsItem
-              title="Bid Confirmation"
-              subtitle="Confirm before placing bids"
-              icon={Shield}
-              value={biddingSettings.bidConfirmation}
-              onToggle={value =>
-                handleSettingUpdate('bidding', 'bidConfirmation', value)
-              }
-              onPress={undefined}
-            />
-            <SettingsItem
-              title="Outbid Alerts"
-              subtitle="Get notified when you're outbid"
-              icon={Bell}
-              value={biddingSettings.outbidAlerts}
-              onToggle={value =>
-                handleSettingUpdate('bidding', 'outbidAlerts', value)
-              }
-              onPress={undefined}
-            />
-            <SettingsItem
-              title="Auction Won Alerts"
-              subtitle="Get notified when you win auctions"
-              icon={Bell}
-              value={biddingSettings.auctionsWon}
-              onToggle={value =>
-                handleSettingUpdate('bidding', 'auctionsWon', value)
-              }
-              onPress={undefined}
-            />
-            <SettingsItem
-              title="Watchlist Updates"
-              subtitle="Get updates on watched items"
-              icon={Bell}
-              value={biddingSettings.watchlistUpdates}
-              onToggle={value =>
-                handleSettingUpdate('bidding', 'watchlistUpdates', value)
-              }
-              onPress={undefined}
-            />
-          </View>
+          <SettingsItem
+            title="Auto-bid"
+            subtitle="Automatically bid up to your maximum"
+            icon={Gavel}
+            value={biddingSettings.autoBid}
+            onToggle={value => handleSettingUpdate('bidding', 'autoBid', value)}
+            onPress={undefined}
+          />
+          <SettingsItem
+            title="Bid Confirmation"
+            subtitle="Confirm before placing bids"
+            icon={Shield}
+            value={biddingSettings.bidConfirmation}
+            onToggle={value =>
+              handleSettingUpdate('bidding', 'bidConfirmation', value)
+            }
+            onPress={undefined}
+          />
+          <SettingsItem
+            title="Outbid Alerts"
+            subtitle="Get notified when you're outbid"
+            icon={Bell}
+            value={biddingSettings.outbidAlerts}
+            onToggle={value =>
+              handleSettingUpdate('bidding', 'outbidAlerts', value)
+            }
+            onPress={undefined}
+          />
+          <SettingsItem
+            title="Auction Won Alerts"
+            subtitle="Get notified when you win auctions"
+            icon={Bell}
+            value={biddingSettings.auctionsWon}
+            onToggle={value =>
+              handleSettingUpdate('bidding', 'auctionsWon', value)
+            }
+            onPress={undefined}
+          />
+          <SettingsItem
+            title="Watchlist Updates"
+            subtitle="Get updates on watched items"
+            icon={Bell}
+            value={biddingSettings.watchlistUpdates}
+            onToggle={value =>
+              handleSettingUpdate('bidding', 'watchlistUpdates', value)
+            }
+            onPress={undefined}
+          />
 
           {/* Marketplace Settings */}
-          <SectionHeader title="Marketplace" icon={ShoppingCart} />
-          <View style={styles.settingsSection}>
-            <SettingsItem
-              title="Purchase History"
-              subtitle="View your purchase history"
-              icon={ShoppingCart}
-              type="navigation"
-              onPress={() => {
-                /* Navigate to purchase history */
-              }}
-              value={undefined}
-              onToggle={undefined}
-            />
-            <SettingsItem
-              title="Watchlist"
-              subtitle="Manage your saved auctions"
-              icon={Eye}
-              type="navigation"
-              onPress={() => {
-                /* Navigate to watchlist */
-              }}
-              value={undefined}
-              onToggle={undefined}
-            />
-            <SettingsItem
-              title="Shipping Addresses"
-              subtitle="Manage delivery addresses"
-              icon={Package}
-              type="navigation"
-              onPress={() => {
-                /* Navigate to shipping addresses */
-              }}
-              value={undefined}
-              onToggle={undefined}
-            />
-            <SettingsItem
-              title="Payment Methods"
-              subtitle="Manage your payment methods"
-              icon={CreditCard}
-              type="navigation"
-              onPress={() => {
-                /* Navigate to payment methods */
-              }}
-              value={undefined}
-              onToggle={undefined}
-            />
-          </View>
+          <SettingsItem
+            title="Purchase History"
+            subtitle="View your purchase history"
+            icon={ShoppingCart}
+            type="navigation"
+            onPress={() => {
+              /* Navigate to purchase history */
+            }}
+            value={undefined}
+            onToggle={undefined}
+          />
+          <SettingsItem
+            title="Watchlist"
+            subtitle="Manage your saved auctions"
+            icon={Eye}
+            type="navigation"
+            onPress={() => {
+              /* Navigate to watchlist */
+            }}
+            value={undefined}
+            onToggle={undefined}
+          />
+          <SettingsItem
+            title="Shipping Addresses"
+            subtitle="Manage delivery addresses"
+            icon={Package}
+            type="navigation"
+            onPress={() => {
+              /* Navigate to shipping addresses */
+            }}
+            value={undefined}
+            onToggle={undefined}
+          />
+          <SettingsItem
+            title="Payment Methods"
+            subtitle="Manage your payment methods"
+            icon={CreditCard}
+            type="navigation"
+            onPress={() => {
+              /* Navigate to payment methods */
+            }}
+            value={undefined}
+            onToggle={undefined}
+          />
 
           {/* Seller Settings - Only shown if user is seller */}
           {userRole === 'seller' && (
             <>
-              <SectionHeader title="Seller Settings" icon={Store} />
-              <View style={styles.settingsSection}>
-                <SettingsItem
-                  title="Cross-post Products"
-                  subtitle="Share listings to your personal feed"
-                  icon={Globe}
-                  value={sellerSettings.crossPostProducts}
-                  onToggle={value =>
-                    handleSettingUpdate('seller', 'crossPostProducts', value)
-                  }
-                  onPress={undefined}
-                />
-                <SettingsItem
-                  title="Allow DM Inquiries"
-                  subtitle="Let buyers message you directly"
-                  icon={MessageSquare}
-                  value={sellerSettings.allowDMInquiries}
-                  onToggle={value =>
-                    handleSettingUpdate('seller', 'allowDMInquiries', value)
-                  }
-                  onPress={undefined}
-                />
-                <SettingsItem
-                  title="Enable Bundle Listings"
-                  subtitle="Allow multiple items in one listing"
-                  icon={Package}
-                  value={sellerSettings.enableBundles}
-                  onToggle={value =>
-                    handleSettingUpdate('seller', 'enableBundles', value)
-                  }
-                  onPress={undefined}
-                />
-                <SettingsItem
-                  title="Auto-responder"
-                  subtitle="Automatically respond to messages"
-                  icon={MessageSquare}
-                  value={sellerSettings.autoResponder}
-                  onToggle={value =>
-                    handleSettingUpdate('seller', 'autoResponder', value)
-                  }
-                  onPress={undefined}
-                />
-                <SettingsItem
-                  title="Sales Reports"
-                  subtitle="Download your sales data"
-                  icon={Package}
-                  type="navigation"
-                  onPress={() => {
-                    /* Navigate to sales reports */
-                  }}
-                  value={undefined}
-                  onToggle={undefined}
-                />
-                <SettingsItem
-                  title="Payout Settings"
-                  subtitle="Manage your payout methods"
-                  icon={CreditCard}
-                  type="navigation"
-                  onPress={() => {
-                    /* Navigate to payout settings */
-                  }}
-                  value={undefined}
-                  onToggle={undefined}
-                />
-              </View>
+              <SettingsItem
+                title="Cross-post Products"
+                subtitle="Share listings to your personal feed"
+                icon={Globe}
+                value={sellerSettings.crossPostProducts}
+                onToggle={value =>
+                  handleSettingUpdate('seller', 'crossPostProducts', value)
+                }
+                onPress={undefined}
+              />
+              <SettingsItem
+                title="Allow DM Inquiries"
+                subtitle="Let buyers message you directly"
+                icon={MessageSquare}
+                value={sellerSettings.allowDMInquiries}
+                onToggle={value =>
+                  handleSettingUpdate('seller', 'allowDMInquiries', value)
+                }
+                onPress={undefined}
+              />
+              <SettingsItem
+                title="Enable Bundle Listings"
+                subtitle="Allow multiple items in one listing"
+                icon={Package}
+                value={sellerSettings.enableBundles}
+                onToggle={value =>
+                  handleSettingUpdate('seller', 'enableBundles', value)
+                }
+                onPress={undefined}
+              />
+              <SettingsItem
+                title="Auto-responder"
+                subtitle="Automatically respond to messages"
+                icon={MessageSquare}
+                value={sellerSettings.autoResponder}
+                onToggle={value =>
+                  handleSettingUpdate('seller', 'autoResponder', value)
+                }
+                onPress={undefined}
+              />
+              <SettingsItem
+                title="Sales Reports"
+                subtitle="Download your sales data"
+                icon={Package}
+                type="navigation"
+                onPress={() => {
+                  /* Navigate to sales reports */
+                }}
+                value={undefined}
+                onToggle={undefined}
+              />
+              <SettingsItem
+                title="Payout Settings"
+                subtitle="Manage your payout methods"
+                icon={CreditCard}
+                type="navigation"
+                onPress={() => {
+                  /* Navigate to payout settings */
+                }}
+                value={undefined}
+                onToggle={undefined}
+              />
             </>
           )}
 
           {/* Notifications */}
-          <SectionHeader title="Notifications" icon={Bell} />
-          <View style={styles.settingsSection}>
-            <SettingsItem
-              title="Push Notifications"
-              subtitle="Receive notifications on your device"
-              icon={Bell}
-              value={universalSettings.pushNotifications}
-              onToggle={value =>
-                handleSettingUpdate('universal', 'pushNotifications', value)
-              }
-              onPress={undefined}
-            />
-            <SettingsItem
-              title="Email Notifications"
-              subtitle="Receive notifications via email"
-              icon={Bell}
-              value={universalSettings.emailNotifications}
-              onToggle={value =>
-                handleSettingUpdate('universal', 'emailNotifications', value)
-              }
-              onPress={undefined}
-            />
-            <SettingsItem
-              title="Likes & Comments"
-              subtitle="Activity on your posts"
-              icon={Bell}
-              value={notificationSettings.likes}
-              onToggle={value =>
-                handleSettingUpdate('notifications', 'likes', value)
-              }
-              onPress={undefined}
-            />
-            <SettingsItem
-              title="New Followers"
-              subtitle="When someone follows you"
-              icon={Users}
-              value={notificationSettings.follows}
-              onToggle={value =>
-                handleSettingUpdate('notifications', 'follows', value)
-              }
-              onPress={undefined}
-            />
-            <SettingsItem
-              title="Messages"
-              subtitle="New direct messages"
-              icon={MessageSquare}
-              value={notificationSettings.messages}
-              onToggle={value =>
-                handleSettingUpdate('notifications', 'messages', value)
-              }
-              onPress={undefined}
-            />
-            {userRole === 'seller' && (
-              <>
-                <SettingsItem
-                  title="New Bids"
-                  subtitle="When someone bids on your items"
-                  icon={Gavel}
-                  value={notificationSettings.newBids}
-                  onToggle={value =>
-                    handleSettingUpdate('notifications', 'newBids', value)
-                  }
-                  onPress={undefined}
-                />
-                <SettingsItem
-                  title="Auction Ending Soon"
-                  subtitle="When your auctions are about to end"
-                  icon={Bell}
-                  value={notificationSettings.auctionEnding}
-                  onToggle={value =>
-                    handleSettingUpdate('notifications', 'auctionEnding', value)
-                  }
-                  onPress={undefined}
-                />
-              </>
-            )}
-          </View>
+          <SettingsItem
+            title="Push Notifications"
+            subtitle="Receive notifications on your device"
+            icon={Bell}
+            value={universalSettings.pushNotifications}
+            onToggle={value =>
+              handleSettingUpdate('universal', 'pushNotifications', value)
+            }
+            onPress={undefined}
+          />
+          <SettingsItem
+            title="Email Notifications"
+            subtitle="Receive notifications via email"
+            icon={Bell}
+            value={universalSettings.emailNotifications}
+            onToggle={value =>
+              handleSettingUpdate('universal', 'emailNotifications', value)
+            }
+            onPress={undefined}
+          />
+          <SettingsItem
+            title="Likes & Comments"
+            subtitle="Activity on your posts"
+            icon={Bell}
+            value={notificationSettings.likes}
+            onToggle={value =>
+              handleSettingUpdate('notifications', 'likes', value)
+            }
+            onPress={undefined}
+          />
+          <SettingsItem
+            title="New Followers"
+            subtitle="When someone follows you"
+            icon={Users}
+            value={notificationSettings.follows}
+            onToggle={value =>
+              handleSettingUpdate('notifications', 'follows', value)
+            }
+            onPress={undefined}
+          />
+          <SettingsItem
+            title="Messages"
+            subtitle="New direct messages"
+            icon={MessageSquare}
+            value={notificationSettings.messages}
+            onToggle={value =>
+              handleSettingUpdate('notifications', 'messages', value)
+            }
+            onPress={undefined}
+          />
+          {userRole === 'seller' && (
+            <>
+              <SettingsItem
+                title="New Bids"
+                subtitle="When someone bids on your items"
+                icon={Gavel}
+                value={notificationSettings.newBids}
+                onToggle={value =>
+                  handleSettingUpdate('notifications', 'newBids', value)
+                }
+                onPress={undefined}
+              />
+              <SettingsItem
+                title="Auction Ending Soon"
+                subtitle="When your auctions are about to end"
+                icon={Bell}
+                value={notificationSettings.auctionEnding}
+                onToggle={value =>
+                  handleSettingUpdate('notifications', 'auctionEnding', value)
+                }
+                onPress={undefined}
+              />
+            </>
+          )}
 
           {/* Universal Settings */}
-          <SectionHeader title="General" icon={SettingsIcon} />
-          <View style={styles.settingsSection}>
-            <SettingsItem
-              title="Language"
-              subtitle="App display language"
-              icon={Globe}
-              type="select"
-              value={universalSettings.language}
-              options={[
-                {label: 'English', value: 'English'},
-                {label: 'Spanish', value: 'Spanish'},
-                {label: 'French', value: 'French'},
-              ]}
-              onPress={() => {
-                /* Show language options */
-              }}
-            />
-            <SettingsItem
-              title="Theme"
-              subtitle="App appearance"
-              icon={universalSettings.theme === 'dark' ? Moon : Sun}
-              type="select"
-              value={universalSettings.theme}
-              options={[
-                {label: 'Light', value: 'light'},
-                {label: 'Dark', value: 'dark'},
-                {label: 'System', value: 'system'},
-              ]}
-              onPress={() => {
-                /* Show theme options */
-              }}
-            />
-            <SettingsItem
-              title="Help Center"
-              subtitle="Get help and support"
-              icon={HelpCircle}
-              type="navigation"
-              onPress={() => {
-                /* Navigate to help center */
-              }}
-              value={undefined}
-              onToggle={undefined}
-            />
-            <SettingsItem
-              title="Contact Support"
-              subtitle="Get in touch with our team"
-              icon={MessageSquare}
-              type="navigation"
-              onPress={() => {
-                /* Navigate to contact support */
-              }}
-              value={undefined}
-              onToggle={undefined}
-            />
-            <SettingsItem
-              title="Delete Account"
-              subtitle="Permanently delete your account"
-              icon={User}
-              type="navigation"
-              onPress={() => {
-                /* Show delete account confirmation */
-              }}
-              value={undefined}
-              onToggle={undefined}
-            />
-          </View>
+          <SettingsItem
+            title="Language"
+            subtitle="App display language"
+            icon={Globe}
+            type="select"
+            value={universalSettings.language}
+            options={[
+              {label: 'English', value: 'English'},
+              {label: 'Spanish', value: 'Spanish'},
+              {label: 'French', value: 'French'},
+            ]}
+            onPress={() => {
+              /* Show language options */
+            }}
+          />
+          <SettingsItem
+            title="Theme"
+            subtitle="App appearance"
+            icon={universalSettings.theme === 'dark' ? Moon : Sun}
+            type="select"
+            value={universalSettings.theme}
+            options={[
+              {label: 'Light', value: 'light'},
+              {label: 'Dark', value: 'dark'},
+              {label: 'System', value: 'system'},
+            ]}
+            onPress={() => {
+              /* Show theme options */
+            }}
+          />
+          <SettingsItem
+            title="Help Center"
+            subtitle="Get help and support"
+            icon={HelpCircle}
+            type="navigation"
+            onPress={() => {
+              /* Navigate to help center */
+            }}
+            value={undefined}
+            onToggle={undefined}
+          />
+          <SettingsItem
+            title="Contact Support"
+            subtitle="Get in touch with our team"
+            icon={MessageSquare}
+            type="navigation"
+            onPress={() => {
+              /* Navigate to contact support */
+            }}
+            value={undefined}
+            onToggle={undefined}
+          />
+          <SettingsItem
+            title="Delete Account"
+            subtitle="Permanently delete your account"
+            icon={User}
+            type="navigation"
+            onPress={() => {
+              /* Show delete account confirmation */
+            }}
+            value={undefined}
+            onToggle={undefined}
+          />
         </>
       )}
     </ScrollView>
