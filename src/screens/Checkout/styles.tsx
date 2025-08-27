@@ -17,6 +17,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: vh * 1,
+    color: colors.black,
   },
   placeOrderButton: {
     // backgroundColor: colors.primary,
@@ -61,6 +62,7 @@ const styles = StyleSheet.create({
   inputStyle: {
     backgroundColor: colors.inputcolor,
     height: vh * 5,
+    color: colors.black,
   },
   label: {
     color: colors.black,

@@ -5,15 +5,18 @@ export const productDetail = (id: number) => {
   return axiosInstance.get(`${endpoints.products.productDetail}/${id}`);
 };
 
-export const DeliverOrder = (id: number) =>{
-  return axiosInstance.post(`${endpoints.products.acceptOrder}${id}/delivered`)
-}
-export const AcceptOrder = (id: number) =>{
-  return axiosInstance.post(`${endpoints.products.acceptOrder}${id}/accepted`)
-}
-export const RejectOrder = (data, id) =>{
-  return axiosInstance.post(`${endpoints.products.acceptOrder}${id}/cancelled`, data)
-}
+export const DeliverOrder = (id: number) => {
+  return axiosInstance.post(`${endpoints.products.acceptOrder}${id}/delivered`);
+};
+export const AcceptOrder = (id: number) => {
+  return axiosInstance.post(`${endpoints.products.acceptOrder}${id}/accepted`);
+};
+export const RejectOrder = (data, id) => {
+  return axiosInstance.post(
+    `${endpoints.products.acceptOrder}${id}/cancelled`,
+    data,
+  );
+};
 // /get-order-detail/13/accepted
 
 export const productRating = (id: number) => {
@@ -70,4 +73,45 @@ export const getPaymentLogs = () => {
 };
 export const getSimilarProducts = (id: number) => {
   return axiosInstance.get(`${endpoints.products.similar}/${id}/similar`);
+};
+
+export const getRecommendedProducts = () => {
+  return axiosInstance.get(endpoints.products.recommended);
+};
+
+// Get all products with optional filters
+export const getAllProducts = (params?: {
+  search?: string;
+  category_id?: number;
+  sort?: string;
+  per_page?: number;
+  min_price?: number;
+  max_price?: number;
+}) => {
+  return axiosInstance.get(endpoints.products.allProducts, {params});
+};
+
+// Get products with search and category filter
+export const searchProducts = (
+  search: string,
+  categoryId?: number,
+  sort?: string,
+  perPage?: number,
+) => {
+  const params: any = {search};
+  if (categoryId) params.category_id = categoryId;
+  if (sort) params.sort = sort;
+  if (perPage) params.per_page = perPage;
+  return axiosInstance.get(endpoints.products.allProducts, {params});
+};
+
+// Get products with price range filter
+export const getProductsByPriceRange = (
+  minPrice: number,
+  maxPrice: number,
+  sort?: string,
+) => {
+  const params: any = {min_price: minPrice, max_price: maxPrice};
+  if (sort) params.sort = sort;
+  return axiosInstance.get(endpoints.products.allProducts, {params});
 };

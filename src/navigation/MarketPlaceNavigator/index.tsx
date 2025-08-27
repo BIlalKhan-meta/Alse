@@ -15,6 +15,8 @@ import OrderTracking from '../../screens/OrderTracking';
 import BecomeRider from '../../screens/BecomeRider';
 import VerificationPending from '../../screens/VerificationPending';
 import RiderDashboard from '../../screens/RiderDashboard';
+import AuctionBidding from '../../screens/AuctionBidding';
+import CreateAuction from '../../screens/CreateAuction';
 
 const MarketPlaceNavigation = () => {
   const Stack = createNativeStackNavigator();
@@ -52,6 +54,16 @@ const MarketPlaceNavigation = () => {
       <Stack.Screen
         name="RiderDashboard"
         component={RiderDashboard}
+        // options={NavigationOptions}
+      />
+      <Stack.Screen
+        name="AuctionBidding"
+        component={AuctionBidding}
+        // options={NavigationOptions}
+      />
+      <Stack.Screen
+        name="CreateAuction"
+        component={CreateAuction}
         // options={NavigationOptions}
       />
       {/*

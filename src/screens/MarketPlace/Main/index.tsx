@@ -12,7 +12,11 @@ import {useIsFocused, useNavigation} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
 import {selectUserProfile} from '../../../store/slices/authSlice';
 import {getAllShop} from '../../../api/shop';
-import {getOrders} from '../../../api/product';
+import {
+  getOrders,
+  getAllProducts,
+  getRecommendedProducts,
+} from '../../../api/product';
 import Loader from '../../../components/Loader';
 import {Subscribe} from '../../../components/Subscribe';
 import {
@@ -22,10 +26,10 @@ import {
   Plus,
   Package,
   Bike,
+  Gavel,
 } from 'lucide-react-native';
 import {images} from '../../../utils/images';
 import {vh, vw} from '../../../constant';
-import {getSimilarProducts} from '../../../api/product';
 
 // Define Product type for API data
 interface Product {
@@ -36,6 +40,11 @@ interface Product {
   oldPrice?: string | number;
   description?: string;
   soldBy?: string;
+  rating?: number;
+  reviews?: number;
+  discount?: number;
+  isNew?: boolean;
+  isFeatured?: boolean;
 }
 
 interface Order {
@@ -59,6 +68,7 @@ const Marketplace: React.FC = () => {
   const [shops, setShops] = useState<any[]>([]);
   const [products, setProducts] = useState<Product[]>([]); // Typed products
   const [loading, setLoading] = useState(false);
+  const [productsLoading, setProductsLoading] = useState(false);
   const isFocused = useIsFocused();
   const [filteredData, setFilteredData] = useState<any[]>([]);
 
@@ -67,11 +77,70 @@ const Marketplace: React.FC = () => {
   const [fabAnimation] = useState(new Animated.Value(0));
   const [orders, setOrders] = useState<Order[]>([]);
 
+  // New function to get recommended products
+  const getProductData = React.useCallback(async () => {
+    setProductsLoading(true);
+    try {
+      // First try to get recommended products from API
+      const recommendedRes = await getRecommendedProducts();
+      if (recommendedRes.data?.data && recommendedRes.data.data.length > 0) {
+        setProducts(recommendedRes.data.data);
+        console.log('Recommended products from API:', recommendedRes.data.data);
+        return;
+      }
+
+      // If recommended products are empty, try to get all products
+      console.log('Recommended products empty, trying all products API...');
+      const allProductsRes = await getAllProducts();
+      if (allProductsRes.data?.data && allProductsRes.data.data.length > 0) {
+        setProducts(allProductsRes.data.data);
+        console.log('All products from API:', allProductsRes.data.data);
+        return;
+      }
+
+      // If both APIs return empty, try with some filters to get more products
+      console.log('All products empty, trying with filters...');
+      const filteredRes = await getAllProducts({
+        per_page: 20,
+        sort: 'newest',
+      });
+      if (filteredRes.data?.data && filteredRes.data.data.length > 0) {
+        setProducts(filteredRes.data.data);
+        console.log('Filtered products from API:', filteredRes.data.data);
+        return;
+      }
+
+      // If all API calls fail or return empty, set empty array
+      console.log(
+        'All API calls failed or returned empty, no products available',
+      );
+      setProducts([]);
+    } catch (error) {
+      console.log('Error fetching products from all APIs:', error);
+      // Set empty array if all APIs fail
+      setProducts([]);
+    } finally {
+      setProductsLoading(false);
+    }
+  }, []);
+
+  // Function to get orders data
+  const getOrdersData = async () => {
+    try {
+      const res = await getOrders();
+      setOrders(res?.data?.data?.data || []);
+      console.log('Orders data:', res?.data?.data?.data);
+    } catch (error) {
+      console.log('Error fetching orders:', error);
+      setOrders([]);
+    }
+  };
+
   useEffect(() => {
     getData();
     getProductData();
     getOrdersData();
-  }, [isFocused]);
+  }, [isFocused, getProductData]);
 
   useEffect(() => {
     const filterOrders = () => {
@@ -87,33 +156,6 @@ const Marketplace: React.FC = () => {
     const res = await getAllShop();
     setLoading(false);
     setShops(res.data?.data?.data);
-  };
-
-  // New function to get recommended products
-  const getProductData = async () => {
-    try {
-      // Use a demo product ID to get similar products as recommendation
-      // Or you could use another API endpoint based on what's available
-      const res = await getSimilarProducts(1); // Using ID 1 as example
-      setProducts(res.data?.data || []);
-      console.log('Recommended products:', res.data?.data);
-    } catch (error) {
-      console.log('Error fetching recommended products:', error);
-      // No fallback dummy data, just leave products empty
-      setProducts([]);
-    }
-  };
-
-  // Function to get orders data
-  const getOrdersData = async () => {
-    try {
-      const res = await getOrders();
-      setOrders(res?.data?.data?.data || []);
-      console.log('Orders data:', res?.data?.data?.data);
-    } catch (error) {
-      console.log('Error fetching orders:', error);
-      setOrders([]);
-    }
   };
 
   // FAB animation functions
@@ -152,7 +194,8 @@ const Marketplace: React.FC = () => {
     return <Subscribe />;
   }
 
-  if (loading) {
+  // Show loader only if both shops and products are loading and no products are available
+  if (loading && productsLoading && products.length === 0) {
     return <Loader />;
   }
 
@@ -214,41 +257,57 @@ const Marketplace: React.FC = () => {
         {/* Featured Stores Section */}
         <View style={styles.featuredSection}>
           <Text style={styles.featuredTitle}>Featured stores</Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.carouselContainer}>
-            {filteredData.length > 0 ? (
-              filteredData.map((store, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={styles.storeCard}
-                  onPress={() => {
-                    if (user.id === store.userId) {
-                      (navigation as any).navigate('MyShop', {
-                        shopId: store.id,
-                      });
-                    } else {
-                      (navigation as any).navigate('Shop', {
-                        shopId: store.id,
-                      });
-                    }
-                  }}>
-                  <View style={[styles.storeLogoContainer]}>
-                    <Image source={images.shop11} style={styles.storeLogo} />
+          {loading ? (
+            <View style={styles.storesLoadingContainer}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.carouselContainer}>
+                {[1, 2, 3, 4].map((_, index) => (
+                  <View key={index} style={styles.storeCardSkeleton}>
+                    <View style={styles.storeLogoSkeleton} />
+                    <View style={styles.storeNameSkeleton} />
                   </View>
-                  <Text style={styles.storeName} numberOfLines={1}>
-                    {store.shop_name || 'Store'}
-                  </Text>
-                </TouchableOpacity>
-              ))
-            ) : (
-              // Placeholder when no stores are available
-              <View style={styles.emptyContainer}>
-                <Text style={styles.emptyText}>No stores available</Text>
-              </View>
-            )}
-          </ScrollView>
+                ))}
+              </ScrollView>
+            </View>
+          ) : (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.carouselContainer}>
+              {filteredData.length > 0 ? (
+                filteredData.map((store, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={styles.storeCard}
+                    onPress={() => {
+                      if (user.id === store.userId) {
+                        (navigation as any).navigate('MyShop', {
+                          shopId: store.id,
+                        });
+                      } else {
+                        (navigation as any).navigate('Shop', {
+                          shopId: store.id,
+                        });
+                      }
+                    }}>
+                    <View style={[styles.storeLogoContainer]}>
+                      <Image source={images.shop11} style={styles.storeLogo} />
+                    </View>
+                    <Text style={styles.storeName} numberOfLines={1}>
+                      {store.shop_name || 'Store'}
+                    </Text>
+                  </TouchableOpacity>
+                ))
+              ) : (
+                // Placeholder when no stores are available
+                <View style={styles.emptyContainer}>
+                  <Text style={styles.emptyText}>No stores available</Text>
+                </View>
+              )}
+            </ScrollView>
+          )}
         </View>
 
         {/* Socially Recommended Products Section */}
@@ -260,48 +319,127 @@ const Marketplace: React.FC = () => {
             <ChevronRight size={20} color="#333" />
           </View>
 
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.productCarouselContainer}>
-            {products.map((product, index) => (
-              <TouchableOpacity
-                key={index}
-                style={styles.productCard}
-                onPress={() =>
-                  (navigation as any).navigate('ProductView', {
-                    productId: product.id,
-                  })
-                }>
-                <Image
-                  source={product.image ? {uri: product.image} : images.avatar}
-                  style={styles.productImage}
-                />
-                <View style={styles.productInfo}>
-                  <View style={styles.productNameRow}>
-                    <Text style={styles.productName} numberOfLines={1}>
-                      {product.name || 'Product'}
-                    </Text>
-                    <View style={styles.priceContainer}>
-                      <Text style={styles.oldPrice}>
-                        ${product.oldPrice ?? ''}
-                      </Text>
-                      <Text style={styles.price}>${product.price ?? ''}</Text>
-                    </View>
+          {productsLoading ? (
+            <View style={styles.productsLoadingContainer}>
+              <Loader />
+            </View>
+          ) : products.length > 0 ? (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.productCarouselContainer}>
+              {products.map((product, index) => (
+                <TouchableOpacity
+                  key={`product-${product.id}-${index}`}
+                  style={styles.productCard}
+                  onPress={() => {
+                    console.log(
+                      'Main MarketPlace: Navigating to ProductView with product:',
+                      product,
+                    );
+                    (navigation as any).navigate('ProductView', {
+                      productId: product.id,
+                    });
+                  }}>
+                  <View style={styles.productImageContainer}>
+                    <Image
+                      source={
+                        product.image &&
+                        typeof product.image === 'string' &&
+                        product.image.startsWith('http')
+                          ? {uri: product.image}
+                          : product.image || images.avatar
+                      }
+                      style={styles.productImage}
+                      resizeMode="cover"
+                      defaultSource={images.avatar}
+                      onError={() => {
+                        console.log(
+                          'Image failed to load for product:',
+                          product.id,
+                        );
+                      }}
+                    />
+                    {/* Discount Badge */}
+                    {product.discount && product.discount > 0 && (
+                      <View style={styles.discountBadge}>
+                        <Text style={styles.discountText}>
+                          -{product.discount}%
+                        </Text>
+                      </View>
+                    )}
+                    {/* New Product Badge */}
+                    {product.isNew && (
+                      <View style={styles.newBadge}>
+                        <Text style={styles.newBadgeText}>NEW</Text>
+                      </View>
+                    )}
+                    {/* Featured Badge */}
+                    {product.isFeatured && (
+                      <View style={styles.featuredBadge}>
+                        <Text style={styles.featuredBadgeText}>FEATURED</Text>
+                      </View>
+                    )}
                   </View>
-                  <Text style={styles.productDescription} numberOfLines={2}>
-                    {product.description || 'No description available.'}
-                  </Text>
-                  <Text style={styles.soldBy}>
-                    Sold by:{' '}
-                    <Text style={styles.sellerName}>
-                      {product.soldBy || 'Unknown'}
+                  <View style={styles.productInfo}>
+                    <View style={styles.productNameRow}>
+                      <Text style={styles.productName} numberOfLines={1}>
+                        {product.name || 'Product'}
+                      </Text>
+                      <View style={styles.priceContainer}>
+                        {product.oldPrice &&
+                          product.oldPrice !== product.price && (
+                            <Text style={styles.oldPrice}>
+                              ${product.oldPrice}
+                            </Text>
+                          )}
+                        <Text style={styles.price}>${product.price}</Text>
+                      </View>
+                    </View>
+                    <Text style={styles.productDescription} numberOfLines={2}>
+                      {product.description || 'No description available.'}
                     </Text>
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+                    {/* Rating and Reviews */}
+                    {product.rating && (
+                      <View style={styles.ratingContainer}>
+                        <View style={styles.starsContainer}>
+                          {[1, 2, 3, 4, 5].map(star => (
+                            <Text
+                              key={star}
+                              style={[
+                                styles.star,
+                                star <= product.rating!
+                                  ? styles.starFilled
+                                  : styles.starEmpty,
+                              ]}>
+                              ★
+                            </Text>
+                          ))}
+                        </View>
+                        {product.reviews && (
+                          <Text style={styles.reviewsText}>
+                            ({product.reviews} reviews)
+                          </Text>
+                        )}
+                      </View>
+                    )}
+                    <Text style={styles.soldBy}>
+                      Sold by:{' '}
+                      <Text style={styles.sellerName}>
+                        {product.soldBy || 'Unknown'}
+                      </Text>
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          ) : (
+            <View style={styles.noProductsContainer}>
+              <Text style={styles.noProductsText}>
+                No products available right now
+              </Text>
+            </View>
+          )}
         </View>
       </ScrollView>
 
@@ -323,6 +461,12 @@ const Marketplace: React.FC = () => {
               <Text style={styles.fabOptionText}>
                 Track Order {orders.length > 0 ? `(${orders.length})` : ''}
               </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.fabOption}
+              onPress={() => navigation.navigate('AuctionBidding')}>
+              <Gavel size={16} color="white" style={styles.fabOptionIcon} />
+              <Text style={styles.fabOptionText}>Auctions & Bidding</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -426,6 +570,7 @@ const styles = StyleSheet.create({
   searchPlaceholder: {
     color: '#999',
   },
+
   contentArea: {
     flex: 1,
     backgroundColor: 'white',
@@ -512,11 +657,61 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     width: vw * 90,
   },
-  productImage: {
+  productImageContainer: {
+    position: 'relative',
     width: '100%',
     height: 140,
+  },
+  productImage: {
+    width: '100%',
+    height: '100%',
     resizeMode: 'cover',
     backgroundColor: '#121212',
+  },
+  discountBadge: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    backgroundColor: '#FF0000',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 5,
+    zIndex: 1,
+  },
+  discountText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  newBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: '#4CAF50',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 5,
+    zIndex: 1,
+  },
+  newBadgeText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  featuredBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: '#2196F3',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 5,
+    zIndex: 1,
+  },
+  featuredBadgeText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
   productInfo: {
     padding: 12,
@@ -560,6 +755,28 @@ const styles = StyleSheet.create({
   },
   sellerName: {
     color: '#00A19D',
+  },
+  ratingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  starsContainer: {
+    flexDirection: 'row',
+    marginRight: 8,
+  },
+  star: {
+    fontSize: 16,
+  },
+  starFilled: {
+    color: '#FFD700', // Gold color for filled stars
+  },
+  starEmpty: {
+    color: '#888', // Grey color for empty stars
+  },
+  reviewsText: {
+    fontSize: 12,
+    color: '#888',
   },
   emptyContainer: {
     width: '100%',
@@ -644,6 +861,42 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,
+  },
+  productsLoadingContainer: {
+    paddingVertical: 20,
+    alignItems: 'center',
+  },
+  storesLoadingContainer: {
+    paddingVertical: 20,
+    alignItems: 'center',
+  },
+  storeCardSkeleton: {
+    alignItems: 'center',
+    marginRight: 16,
+    width: 80,
+  },
+  storeLogoSkeleton: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: '#e0e0e0',
+    marginBottom: 8,
+  },
+  storeNameSkeleton: {
+    width: 80,
+    height: 18,
+    backgroundColor: '#e0e0e0',
+  },
+
+  noProductsContainer: {
+    paddingVertical: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  noProductsText: {
+    fontSize: 16,
+    color: '#999',
+    textAlign: 'center',
   },
 });
 

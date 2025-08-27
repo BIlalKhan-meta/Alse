@@ -289,8 +289,10 @@ const ProductView: React.FC = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
+        console.log('ProductView: Received productId:', productId);
         if (productId) {
           const response = await productDetail(productId);
+          console.log('ProductView: API response:', response);
           if (response?.data?.data) {
             console.log(
               'Product details fetched successfully:',
@@ -299,10 +301,12 @@ const ProductView: React.FC = () => {
             setProductDetails(response.data.data);
           } else {
             // Fallback data if API doesn't return expected structure
+            console.log('ProductView: Using fallback data');
             setProductDetails(getFallbackProductData());
           }
         } else {
           // If no productId is provided, use fallback data
+          console.log('ProductView: No productId, using fallback data');
           setProductDetails(getFallbackProductData());
         }
       } catch (error) {
@@ -343,25 +347,35 @@ const ProductView: React.FC = () => {
       return;
     }
 
+    // Check if product details and ID are available
+    if (!productDetails || !productDetails.id) {
+      showMessage('Product information not available. Please try again.');
+      return;
+    }
+
     try {
       setAddingToCart(true);
 
       // Prepare form data
       const form = new FormData();
-      form.append('product_id', productDetails.id);
-      form.append('quantity', quantity);
+      form.append('quantity', quantity.toString());
 
       // Add color if available
       if (colors[selectedColor]) {
         form.append('color', colors[selectedColor].color);
       }
 
-      // Call API to add to cart
-      const response = await addProductToCart(form);
+      console.log('Adding to cart - Product ID:', productDetails.id);
+      console.log('Form data:', form);
 
-      if (response?.data?.success) {
+      // Call API to add to cart - pass product ID as first parameter
+      const response = await addProductToCart(productDetails.id, form);
+
+      console.log('Add to cart response:', response);
+
+      if (response?.data?.success || response?.data?.message) {
         setAddedToCart(true);
-        showMessage('Product added to cart!');
+        showMessage(response?.data?.message || 'Product added to cart!');
       } else {
         showMessage('Failed to add product to cart.');
       }
