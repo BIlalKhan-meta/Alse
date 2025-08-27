@@ -11,6 +11,11 @@ import BlockedUsers from '../../screens/BlockedUsers';
 import Marketplace from '../../screens/MarketPlace/Main';
 import MyOrders from '../../screens/MyOrders';
 import PaymentLogs from '../../screens/PaymentLogs';
+import Financials from '../../screens/Financials';
+import Withdrawal from '../../screens/Withdrawal';
+import EnterDetails from '../../screens/EnterDetails';
+import WithdrawalReview from '../../screens/WithdrawalReview';
+import WithdrawalSuccess from '../../screens/WithdrawalSuccess';
 import OrderTracking from '../../screens/OrderTracking';
 import BecomeRider from '../../screens/BecomeRider';
 import VerificationPending from '../../screens/VerificationPending';
@@ -35,6 +40,31 @@ const MarketPlaceNavigation = () => {
         name="PaymentLogs"
         component={PaymentLogs}
         options={NavigationOptions}
+      />
+      <Stack.Screen
+        name="Financials"
+        component={Financials}
+        // options={NavigationOptions}
+      />
+      <Stack.Screen
+        name="Withdrawal"
+        component={Withdrawal}
+        // options={NavigationOptions}
+      />
+      <Stack.Screen
+        name="EnterDetails"
+        component={EnterDetails}
+        // options={NavigationOptions}
+      />
+      <Stack.Screen
+        name="WithdrawalReview"
+        component={WithdrawalReview}
+        // options={NavigationOptions}
+      />
+      <Stack.Screen
+        name="WithdrawalSuccess"
+        component={WithdrawalSuccess}
+        // options={NavigationOptions}
       />
       <Stack.Screen
         name="OrderTracking"

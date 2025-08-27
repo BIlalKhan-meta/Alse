@@ -11,6 +11,7 @@ import AboutUs from '../../screens/AboutUs';
 import ChatOngoing from '../../screens/ChatOngoing';
 import NavigationOptions from '../NavigationOptions';
 import ProductView from '../../screens/MarketPlace/ProductView';
+import ProductDetail from '../../screens/ProductDetail';
 import MyOrderDetail from '../../screens/MyOrderDetail';
 import CheckoutScreen from '../../screens/Checkout';
 import BankDetailUpdate from '../../screens/BankDetailUpdate';
@@ -80,6 +81,11 @@ const AppNavigation = () => {
         <Stack.Screen
           name="ProductView"
           component={ProductView}
+          options={NavigationOptions}
+        />
+        <Stack.Screen
+          name="ProductDetail"
+          component={ProductDetail}
           options={NavigationOptions}
         />
         <Stack.Screen name="Profile" component={ProfileScreen} />
