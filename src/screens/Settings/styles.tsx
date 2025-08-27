@@ -376,6 +376,88 @@ const styles = StyleSheet.create({
   fadeOut: {
     opacity: 0.3,
   },
+
+  // dropdown settings
+  chevronIcon: {
+    marginLeft: 8,
+    transform: [{rotate: '0deg'}],
+    transition: 'transform 0.2s ease',
+  },
+  chevronIconRotated: {
+    transform: [{rotate: '180deg'}],
+  },
+
+  dropdown: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    maxHeight: 200,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  optionsList: {
+    flexGrow: 0,
+  },
+
+  selectedOption: {
+    backgroundColor: 'rgba(0, 122, 255, 0.1)',
+  },
+
+  selectedOptionText: {
+    color: '#007AFF',
+    fontWeight: '500',
+  },
+  pickerContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: -2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  pickerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  cancelButton: {
+    padding: 8,
+  },
+  cancelText: {
+    fontSize: 16,
+    color: '#666',
+  },
+  doneButton: {
+    padding: 8,
+  },
+  doneText: {
+    fontSize: 16,
+    color: '#007AFF',
+    fontWeight: '600',
+  },
+  picker: {
+    height: 200,
+  },
 });
 
 export default styles;

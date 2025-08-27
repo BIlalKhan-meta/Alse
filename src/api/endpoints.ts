@@ -53,6 +53,7 @@ const endpoints = {
     createShop: '/shop/create',
     shopDetail: '/shop',
     updateShop: '/shop/update',
+    isSeller: '/user/shops',
   },
   products: {
     productDetail: '/product',
@@ -126,6 +127,11 @@ const endpoints = {
   },
   rider: {
     submitApplication: '/rider/submit-application',
+  },
+  settings: {
+    privacy: '/privacy/settings',
+    notifications: '/notifications/delivery-preferences',
+    sellerSettings: '/seller/settings',
   },
 };
 

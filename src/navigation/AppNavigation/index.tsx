@@ -43,7 +43,7 @@ import Groups from '../../screens/Groups';
 import GroupDetailsScreen from '../../screens/Groups/GroupDetailsScreen';
 import CreateGroup from '../../screens/Groups/CreateGroup';
 import Settings from '../../screens/Settings';
-import VideosTab from '../VideosTab/index';
+import VideosTab from '../VideosTab';
 
 const AppNavigation = () => {
   const Stack = createNativeStackNavigator();

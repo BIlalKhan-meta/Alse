@@ -1,10 +1,9 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   ScrollView,
   TouchableOpacity,
   Image,
-  Switch,
   TextInput,
   Alert,
 } from 'react-native';
@@ -20,7 +19,6 @@ import {
   Gavel,
   ShoppingCart,
   Lock,
-  Store,
   CreditCard,
   Package,
   Users,
@@ -28,23 +26,47 @@ import {
   Moon,
   Sun,
   HelpCircle,
-  ChevronRight,
   Eye,
   EyeOff,
 } from 'lucide-react-native';
 import InterRegular from '../../components/Text/InterRegular';
 import InterLight from '../../components/Text/InterLight';
 import InterBoldLabel from '../../components/Text/InterBoldLabel';
-import InterMedium from '../../components/Text/InterMedium';
 import {selectUserProfile} from '../../store/slices/authSlice';
 import {images} from '../../utils/images';
 import styles from './styles';
 import GlobalHeader from '../../components/GlobalHeader';
 import {colors} from '../../utils/theme';
+import SettingsItem from './components/settingsItem';
+import {useAppDispatch, useAppSelector} from '../../hooks/storeHooks';
+import {
+  fetchAllSettings,
+  saveNotificationSettings,
+  updateBidding,
+  updateNotifications,
+  updateSecurity,
+  updateSeller,
+} from '../../store/slices/settingsSlice';
 
 const Settings = () => {
+  const dispatch = useAppDispatch();
   const user = useSelector(selectUserProfile);
   const userRole = user?.role || 'buyer';
+
+  const {
+    security,
+    notifications,
+    seller,
+    biddingSettings,
+    universalSettings,
+    loading,
+  } = useAppSelector(state => state.settings);
+
+  useEffect(() => {
+    if (!security || !notifications || !seller) {
+      dispatch(fetchAllSettings());
+    }
+  }, [dispatch, security, notifications, seller]);
 
   // Profile editing state
   const [isEditing, setIsEditing] = useState(false);
@@ -59,89 +81,41 @@ const Settings = () => {
     storeDescription: user?.store_description || '',
   });
 
-  // Settings states - organized by category
-  const [securitySettings, setSecuritySettings] = useState({
-    advanceProtection: true,
-    twoFactorAuth: user?.two_factor_enabled || false,
-  });
-
-  const [socialSettings, setSocialSettings] = useState({
-    postVisibility: user?.post_visibility || 'public', // 'public', 'followers', 'private'
-    allowTags: user?.allow_tags ?? true,
-    autoFilterOffensive: user?.auto_filter_offensive ?? true,
-    commentPermissions: user?.comment_permissions || 'everyone', // 'everyone', 'followers', 'none'
-    storyViewers: user?.story_viewers || 'everyone',
-    storyReplies: user?.story_replies || 'everyone',
-  });
-
-  const [biddingSettings, setBiddingSettings] = useState({
-    autoBid: user?.auto_bid_enabled || false,
-    bidConfirmation: user?.bid_confirmation ?? true,
-    outbidAlerts: user?.outbid_alerts ?? true,
-    auctionsWon: user?.auctions_won_alerts ?? true,
-    watchlistUpdates: user?.watchlist_alerts ?? true,
-  });
-
-  const [notificationSettings, setNotificationSettings] = useState({
-    general: user?.general_notifications ?? true,
-    messages: user?.message_notifications ?? true,
-    likes: user?.like_notifications ?? false,
-    comments: user?.comment_notifications ?? true,
-    follows: user?.follow_notifications ?? true,
-    posts: user?.post_notifications ?? false,
-    newBids: user?.new_bid_notifications ?? true,
-    auctionEnding: user?.auction_ending_notifications ?? true,
-  });
-
-  // Seller-specific settings
-  const [sellerSettings, setSellerSettings] = useState({
-    crossPostProducts: user?.cross_post_products ?? true,
-    allowDMInquiries: user?.allow_dm_inquiries ?? true,
-    enableBundles: user?.enable_bundles ?? false,
-    autoResponder: user?.auto_responder_enabled ?? false,
-    profileVisibility: user?.seller_profile_visibility || 'public',
-  });
-
-  const [universalSettings, setUniversalSettings] = useState({
-    language: user?.language || 'English',
-    theme: user?.theme || 'system', // 'light', 'dark', 'system'
-    pushNotifications: user?.push_notifications ?? true,
-    emailNotifications: user?.email_notifications ?? true,
-  });
-
   // Generic handler for settings updates
   const handleSettingUpdate = async (
     category: string,
-    key: any,
+    key: string,
     value: any,
-    onChange?: () => void,
+    onChange?: (key: string, value: any) => Promise<void>,
   ) => {
     try {
-      // Call the onChange prop if provided (for API calls)
+      // Call API update if provided
       if (onChange) {
         await onChange(key, value);
       }
 
-      // Update local state based on category
+      // Dispatch to redux store instead of local useState
       switch (category) {
         case 'security':
-          setSecuritySettings(prev => ({...prev, [key]: value}));
-          break;
-        case 'social':
-          setSocialSettings(prev => ({...prev, [key]: value}));
-          break;
-        case 'bidding':
-          setBiddingSettings(prev => ({...prev, [key]: value}));
+          dispatch(updateSecurity({[key]: value}));
           break;
         case 'notifications':
-          setNotificationSettings(prev => ({...prev, [key]: value}));
+          dispatch(updateNotifications({[key]: value}));
           break;
         case 'seller':
-          setSellerSettings(prev => ({...prev, [key]: value}));
+          dispatch(updateSeller({[key]: value}));
           break;
-        case 'universal':
-          setUniversalSettings(prev => ({...prev, [key]: value}));
-          break;
+        //  case 'social':
+        //   dispatch(updateSocial({[key]: value}));
+        //   break;
+        // case 'bidding':
+        //   dispatch(updateBidding({[key]: value}));
+        //   break;
+        // case 'universal':
+        //   dispatch(updateUniversal({[key]: value}));
+        //   break;
+        default:
+          console.warn(`Unknown settings category: ${category}`);
       }
     } catch (error) {
       console.error('Settings update failed:', error);
@@ -155,64 +129,6 @@ const Settings = () => {
       [field]: value,
     }));
   };
-
-  // Reusable Settings Item Component
-  const SettingsItem = ({
-    title,
-    subtitle,
-    icon: IconComponent,
-    value,
-    onToggle,
-    type = 'switch', // 'switch', 'select', 'navigation'
-    options = [],
-    onPress,
-    showChevron = false,
-  }) => (
-    <View style={styles.settingsItem}>
-      <View style={styles.settingsItemLeft}>
-        {IconComponent && (
-          <View style={styles.settingsIcon}>
-            <IconComponent size={20} color={colors.inputText} />
-          </View>
-        )}
-        <View style={styles.settingsTextContainer}>
-          <InterRegular style={styles.settingsItemText}>{title}</InterRegular>
-          {subtitle && (
-            <InterLight style={styles.settingsItemSubtitle}>
-              {subtitle}
-            </InterLight>
-          )}
-        </View>
-      </View>
-
-      {type === 'switch' && (
-        <Switch
-          value={value}
-          onValueChange={onToggle}
-          trackColor={{false: '#E5E7EB', true: colors.themeColor}}
-          thumbColor={value ? '#ffffff' : '#ffffff'}
-          ios_backgroundColor="#E5E7EB"
-        />
-      )}
-
-      {type === 'select' && (
-        <TouchableOpacity onPress={onPress} style={styles.selectButton}>
-          <InterRegular style={styles.selectButtonText}>
-            {options.find(opt => opt.value === value)?.label || value}
-          </InterRegular>
-          <ChevronRight size={16} color={colors.inputText} />
-        </TouchableOpacity>
-      )}
-
-      {(type === 'navigation' || showChevron) && (
-        <TouchableOpacity onPress={onPress}>
-          <ChevronRight size={20} color={colors.inputText} />
-        </TouchableOpacity>
-      )}
-    </View>
-  );
-
-  // Section Header Component
 
   // Profile Form Component
   const ProfileForm = () => (
@@ -353,16 +269,70 @@ const Settings = () => {
       {!isEditing && (
         <>
           {/* Security & Privacy Settings */}
+          {/* Lets first organize the settings */}
+
+          {/* Social Activity Settings */}
           <SettingsItem
-            title="Two-Factor Authentication"
-            subtitle="Add an extra layer of security"
-            icon={Lock}
-            value={securitySettings.twoFactorAuth}
+            title="Post Visibility"
+            subtitle="Who can see your posts"
+            icon={Eye}
+            type="select"
+            value={security.postVisibility}
+            options={[
+              {label: 'Public', value: 'public'},
+              {label: 'Followers Only', value: 'followers'},
+              {label: 'Private', value: 'private'},
+            ]}
+            onValueChange={() => {}}
+          />
+          <SettingsItem
+            title="Allow Tags"
+            subtitle="Let others tag you in posts"
+            icon={User}
+            value={security.allowTags}
             onToggle={value =>
-              handleSettingUpdate('security', 'twoFactorAuth', value)
+              handleSettingUpdate('social', 'allowTags', value)
             }
             onPress={undefined}
           />
+          <SettingsItem
+            title="Auto-filter Offensive Content"
+            subtitle="Automatically hide offensive comments"
+            icon={MessageSquare}
+            value={security.autoFilterOffensive}
+            onToggle={value =>
+              handleSettingUpdate('social', 'autoFilterOffensive', value)
+            }
+            onPress={undefined}
+          />
+          <SettingsItem
+            title="Comment Permissions"
+            subtitle="Who can comment on your posts"
+            icon={MessageSquare}
+            type="select"
+            value={security.commentPermissions}
+            options={[
+              {label: 'Everyone', value: 'everyone'},
+              {label: 'Followers', value: 'followers'},
+              {label: 'No One', value: 'none'},
+            ]}
+            onPress={() => {
+              /* Show comment permissions */
+            }}
+          />
+
+          <SettingsItem
+            title="Blocked Users"
+            subtitle="Manage your blocked users list"
+            icon={EyeOff}
+            type="navigation"
+            onPress={() => {
+              /* Navigate to blocked users */
+            }}
+            value={undefined}
+            onToggle={undefined}
+          />
+
           <SettingsItem
             title="Change Password"
             icon={Lock}
@@ -370,9 +340,6 @@ const Settings = () => {
             onPress={() => {
               /* Navigate to change password */
             }}
-            subtitle={undefined}
-            value={undefined}
-            onToggle={undefined}
           />
           <SettingsItem
             title="Login Activity"
@@ -386,76 +353,17 @@ const Settings = () => {
             onToggle={undefined}
           />
 
-          {/* Social Activity Settings */}
-          <SettingsItem
-            title="Post Visibility"
-            subtitle="Who can see your posts"
-            icon={Eye}
-            type="select"
-            value={socialSettings.postVisibility}
-            options={[
-              {label: 'Public', value: 'public'},
-              {label: 'Followers Only', value: 'followers'},
-              {label: 'Private', value: 'private'},
-            ]}
-            onPress={() => {
-              /* Show visibility options */
-            }}
-          />
-          <SettingsItem
-            title="Allow Tags"
-            subtitle="Let others tag you in posts"
-            icon={User}
-            value={socialSettings.allowTags}
-            onToggle={value =>
-              handleSettingUpdate('social', 'allowTags', value)
-            }
-            onPress={undefined}
-          />
-          <SettingsItem
-            title="Auto-filter Offensive Content"
-            subtitle="Automatically hide offensive comments"
-            icon={MessageSquare}
-            value={socialSettings.autoFilterOffensive}
-            onToggle={value =>
-              handleSettingUpdate('social', 'autoFilterOffensive', value)
-            }
-            onPress={undefined}
-          />
-          <SettingsItem
-            title="Comment Permissions"
-            subtitle="Who can comment on your posts"
-            icon={MessageSquare}
-            type="select"
-            value={socialSettings.commentPermissions}
-            options={[
-              {label: 'Everyone', value: 'everyone'},
-              {label: 'Followers', value: 'followers'},
-              {label: 'No One', value: 'none'},
-            ]}
-            onPress={() => {
-              /* Show comment permissions */
-            }}
-          />
-          <SettingsItem
-            title="Blocked Users"
-            subtitle="Manage your blocked users list"
-            icon={EyeOff}
-            type="navigation"
-            onPress={() => {
-              /* Navigate to blocked users */
-            }}
-            value={undefined}
-            onToggle={undefined}
-          />
-
           {/* Bidding & Auction Settings */}
           <SettingsItem
             title="Auto-bid"
             subtitle="Automatically bid up to your maximum"
             icon={Gavel}
             value={biddingSettings.autoBid}
-            onToggle={value => handleSettingUpdate('bidding', 'autoBid', value)}
+            onToggle={val => {
+              // Only updates locally, no backend call
+              dispatch(updateBidding({autoBid: val}));
+            }}
+            // onToggle={value => handleSettingUpdate('bidding', 'autoBid', value)}
             onPress={undefined}
           />
           <SettingsItem
@@ -552,7 +460,7 @@ const Settings = () => {
                 title="Cross-post Products"
                 subtitle="Share listings to your personal feed"
                 icon={Globe}
-                value={sellerSettings.crossPostProducts}
+                value={seller.crossPostProducts}
                 onToggle={value =>
                   handleSettingUpdate('seller', 'crossPostProducts', value)
                 }
@@ -562,7 +470,7 @@ const Settings = () => {
                 title="Allow DM Inquiries"
                 subtitle="Let buyers message you directly"
                 icon={MessageSquare}
-                value={sellerSettings.allowDMInquiries}
+                value={seller.allowDMInquiries}
                 onToggle={value =>
                   handleSettingUpdate('seller', 'allowDMInquiries', value)
                 }
@@ -572,7 +480,7 @@ const Settings = () => {
                 title="Enable Bundle Listings"
                 subtitle="Allow multiple items in one listing"
                 icon={Package}
-                value={sellerSettings.enableBundles}
+                value={seller.enableBundles}
                 onToggle={value =>
                   handleSettingUpdate('seller', 'enableBundles', value)
                 }
@@ -582,7 +490,7 @@ const Settings = () => {
                 title="Auto-responder"
                 subtitle="Automatically respond to messages"
                 icon={MessageSquare}
-                value={sellerSettings.autoResponder}
+                value={seller.autoResponder}
                 onToggle={value =>
                   handleSettingUpdate('seller', 'autoResponder', value)
                 }
@@ -618,78 +526,127 @@ const Settings = () => {
             title="Push Notifications"
             subtitle="Receive notifications on your device"
             icon={Bell}
-            value={universalSettings.pushNotifications}
-            onToggle={value =>
-              handleSettingUpdate('universal', 'pushNotifications', value)
-            }
+            value={notifications.push_enabled}
+            onToggle={val => {
+              dispatch(updateNotifications({receiveNotifications: val}));
+              const formData = new FormData();
+              formData.append('push_enabled', String(val));
+              dispatch(saveNotificationSettings({formData, id: user?.id}));
+            }}
+            // onToggle={value =>
+            //   // handleSettingUpdate('universal', 'pushNotifications', value)
+            // }
             onPress={undefined}
           />
           <SettingsItem
             title="Email Notifications"
             subtitle="Receive notifications via email"
             icon={Bell}
-            value={universalSettings.emailNotifications}
-            onToggle={value =>
-              handleSettingUpdate('universal', 'emailNotifications', value)
-            }
+            value={notifications.email_enabled}
+            onToggle={val => {
+              dispatch(updateNotifications({receiveNotifications: val}));
+              const formData = new FormData();
+              formData.append('email_enabled', String(val));
+              dispatch(saveNotificationSettings({formData, id: user?.id}));
+            }}
             onPress={undefined}
           />
           <SettingsItem
             title="Likes & Comments"
             subtitle="Activity on your posts"
             icon={Bell}
-            value={notificationSettings.likes}
-            onToggle={value =>
-              handleSettingUpdate('notifications', 'likes', value)
-            }
+            value={notifications.types.social_likes}
+            onToggle={val => {
+              dispatch(updateNotifications({receiveNotifications: val}));
+              const formData = new FormData();
+              formData.append('email_enabled', String(val));
+              dispatch(saveNotificationSettings({formData, id: user?.id}));
+            }}
             onPress={undefined}
           />
           <SettingsItem
             title="New Followers"
             subtitle="When someone follows you"
             icon={Users}
-            value={notificationSettings.follows}
-            onToggle={value =>
-              handleSettingUpdate('notifications', 'follows', value)
-            }
-            onPress={undefined}
-          />
-          <SettingsItem
-            title="Messages"
-            subtitle="New direct messages"
-            icon={MessageSquare}
-            value={notificationSettings.messages}
-            onToggle={value =>
-              handleSettingUpdate('notifications', 'messages', value)
-            }
+            value={notifications.types.social_follows}
+            onToggle={val => {
+              dispatch(
+                updateNotifications({
+                  types: {
+                    ...notifications.types,
+                    social_follows: val,
+                  },
+                }),
+              );
+              const formData = new FormData();
+              formData.append(
+                'types',
+                JSON.stringify({
+                  ...notifications?.types,
+                  social_comments: val,
+                }),
+              );
+              dispatch(saveNotificationSettings({formData, id: user?.id}));
+            }}
             onPress={undefined}
           />
           {userRole === 'seller' && (
             <>
               <SettingsItem
-                title="New Bids"
-                subtitle="When someone bids on your items"
+                title="Auto Responder"
+                subtitle="Auto respond to messages"
                 icon={Gavel}
-                value={notificationSettings.newBids}
-                onToggle={value =>
-                  handleSettingUpdate('notifications', 'newBids', value)
-                }
+                value={seller.auto_responder_enabled}
+                onValueChange={val => {
+                  dispatch(updateSeller({auto_responder_enabled: val}));
+                }}
                 onPress={undefined}
               />
               <SettingsItem
-                title="Auction Ending Soon"
-                subtitle="When your auctions are about to end"
+                title="Cross Post to Feed"
+                subtitle="Share listings to your personal feed"
                 icon={Bell}
-                value={notificationSettings.auctionEnding}
-                onToggle={value =>
-                  handleSettingUpdate('notifications', 'auctionEnding', value)
-                }
+                value={seller.cross_post_to_feed}
+                onValueChange={val => {
+                  dispatch(updateSeller({cross_post_to_feed: val}));
+                }}
+                onPress={undefined}
+              />
+              <SettingsItem
+                title="Allow DM Inquiries"
+                subtitle="Let buyers message you directly"
+                icon={Bell}
+                value={seller.allow_dm_inquiries}
+                onValueChange={val => {
+                  dispatch(updateSeller({allow_dm_inquiries: val}));
+                }}
+                onPress={undefined}
+              />
+              <SettingsItem
+                title="Show store feedback"
+                subtitle="Show store feedback from buyers"
+                icon={Bell}
+                value={seller.show_store_feedback}
+                onValueChange={val => {
+                  dispatch(updateSeller({show_store_feedback: val}));
+                }}
+                onPress={undefined}
+              />
+              <SettingsItem
+                title="Auto accept orders"
+                subtitle="Automatically accept orders"
+                icon={Bell}
+                value={seller.auto_accept_orders}
+                onValueChange={val => {
+                  dispatch(updateSeller({auto_accept_orders: val}));
+                }}
                 onPress={undefined}
               />
             </>
           )}
 
           {/* Universal Settings */}
+          {/* TODO for language, we need to shift the UI into language selection view */}
           <SettingsItem
             title="Language"
             subtitle="App display language"
@@ -697,9 +654,9 @@ const Settings = () => {
             type="select"
             value={universalSettings.language}
             options={[
-              {label: 'English', value: 'English'},
-              {label: 'Spanish', value: 'Spanish'},
-              {label: 'French', value: 'French'},
+              {label: 'English', value: 'english'},
+              {label: 'Spanish', value: 'spanish'},
+              {label: 'French', value: 'french'},
             ]}
             onPress={() => {
               /* Show language options */
@@ -720,6 +677,7 @@ const Settings = () => {
               /* Show theme options */
             }}
           />
+          {/* TODO need a screen for help centre */}
           <SettingsItem
             title="Help Center"
             subtitle="Get help and support"
@@ -728,8 +686,6 @@ const Settings = () => {
             onPress={() => {
               /* Navigate to help center */
             }}
-            value={undefined}
-            onToggle={undefined}
           />
           <SettingsItem
             title="Contact Support"
@@ -739,8 +695,6 @@ const Settings = () => {
             onPress={() => {
               /* Navigate to contact support */
             }}
-            value={undefined}
-            onToggle={undefined}
           />
           <SettingsItem
             title="Delete Account"
@@ -750,8 +704,6 @@ const Settings = () => {
             onPress={() => {
               /* Show delete account confirmation */
             }}
-            value={undefined}
-            onToggle={undefined}
           />
         </>
       )}
