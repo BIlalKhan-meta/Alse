@@ -13,7 +13,7 @@ interface SettingsItemProps {
   icon: any;
   value?: any;
   onToggle?: (value: any) => void;
-  onValueChange?: (value: string) => void; // New prop for select type
+  onValueChange?: (value: string) => void;
   type?: string; // 'switch', 'select', 'navigation'
   options?: {label: string; value: string}[];
   onPress?: () => void;
@@ -26,21 +26,50 @@ const SettingsItem = ({
   icon: IconComponent,
   value,
   onToggle,
-  onValueChange, // New prop for select type
-  type = 'switch', // 'switch', 'select', 'navigation'
+  onValueChange,
+  type = 'switch',
   options = [],
   onPress,
   showChevron = false,
 }: SettingsItemProps) => {
   const [isPickerVisible, setIsPickerVisible] = useState(false);
 
+  // For navigation items, wrap the entire content in TouchableOpacity
+  if (type === 'navigation' || showChevron) {
+    return (
+      <>
+        <TouchableOpacity style={styles.settingsItem} onPress={onPress}>
+          <View style={styles.settingsItemLeft}>
+            {IconComponent && (
+              <View style={styles.settingsIcon}>
+                <IconComponent size={20} color={colors.lightGrey} />
+              </View>
+            )}
+            <View style={styles.settingsTextContainer}>
+              <InterRegular style={styles.settingsItemText}>
+                {title}
+              </InterRegular>
+              {subtitle && (
+                <InterLight style={styles.settingsItemSubtitle}>
+                  {subtitle}
+                </InterLight>
+              )}
+            </View>
+          </View>
+          <ChevronRight size={20} color={colors.lightGrey} />
+        </TouchableOpacity>
+      </>
+    );
+  }
+
+  // For other types (switch, select), use the original structure
   return (
     <>
       <View style={styles.settingsItem}>
         <View style={styles.settingsItemLeft}>
           {IconComponent && (
             <View style={styles.settingsIcon}>
-              <IconComponent size={20} color={colors.inputText} />
+              <IconComponent size={20} color={colors.lightGrey} />
             </View>
           )}
           <View style={styles.settingsTextContainer}>
@@ -70,13 +99,7 @@ const SettingsItem = ({
             <InterRegular style={styles.selectButtonText}>
               {options.find(opt => opt.value === value)?.label || value}
             </InterRegular>
-            <ChevronDown size={16} color={colors.inputText} />
-          </TouchableOpacity>
-        )}
-
-        {(type === 'navigation' || showChevron) && (
-          <TouchableOpacity onPress={onPress}>
-            <ChevronRight size={20} color={colors.inputText} />
+            <ChevronDown size={16} color={colors.lightGrey} />
           </TouchableOpacity>
         )}
       </View>

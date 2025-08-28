@@ -1,38 +1,98 @@
-import {StyleSheet, Dimensions} from 'react-native';
+import {StyleSheet} from 'react-native';
 import {colors} from '../../utils/theme';
-
-const {width} = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: colors.white,
+  },
+
+  scrollContainer: {
+    flex: 1,
+  },
+
+  // Header
+  header: {
+    // flexDirection: 'row',
+    // justifyContent: 'space-between',
+    // alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingTop: 5,
+    paddingBottom: 10,
+    backgroundColor: colors.white,
+  },
+
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: colors.themeColor,
+  },
+
+  headerIcons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+
+  headerIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  activeHeaderIcon: {
+    backgroundColor: '#F0F0F0',
   },
 
   // Profile Section
   profileSection: {
-    marginTop: 16,
-    marginHorizontal: 16,
-    borderRadius: 12,
-    padding: 16,
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 20,
   },
 
   profileImageContainer: {
-    alignItems: 'center',
     marginBottom: 16,
   },
 
   profileImage: {
-    width: 90,
-    height: 90,
-    borderRadius: 60,
-    backgroundColor: colors.lightGrey,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#FFE4E6',
   },
 
   profileInfo: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 16,
+    justifyContent: 'space-between',
+    width: '100%',
+    paddingHorizontal: 20,
+  },
+
+  profileTextContainer: {
+    flex: 1,
+    alignItems: 'center',
+  },
+
+  profileName: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.black,
+    marginBottom: 4,
+  },
+
+  profileUsername: {
+    fontSize: 16,
+    color: colors.lightGrey,
+    marginBottom: 4,
+  },
+
+  profileLocation: {
+    fontSize: 14,
+    color: colors.lightGrey,
   },
 
   editButton: {
@@ -45,6 +105,7 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     borderTopWidth: 1,
     borderTopColor: colors.lightGrey,
+    width: '100%',
   },
 
   inputRow: {
@@ -95,20 +156,10 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
 
-  // Section Headers
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginHorizontal: 16,
-    marginTop: 24,
-    marginBottom: 12,
-    gap: 8,
-  },
-
-  sectionTitle: {
-    fontSize: 18,
-    color: colors.themeColor,
-    fontWeight: '600',
+  // Settings Container
+  settingsContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
   },
 
   // Settings Item
@@ -116,9 +167,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
     paddingVertical: 16,
-    // borderBottomWidth: 1,
     backgroundColor: colors.white,
   },
 
@@ -133,7 +182,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: colors.lightColor,
+    backgroundColor: '#F0F0F0',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -144,13 +193,13 @@ const styles = StyleSheet.create({
 
   settingsItemText: {
     fontSize: 16,
-    color: colors.themeColor,
+    color: colors.black,
     fontWeight: '500',
   },
 
   settingsItemSubtitle: {
     fontSize: 14,
-    color: colors.inputText,
+    color: colors.lightGrey,
     marginTop: 2,
   },
 
@@ -168,6 +217,44 @@ const styles = StyleSheet.create({
   selectButtonText: {
     fontSize: 14,
     color: colors.themeColor,
+  },
+
+  // Separator
+  separator: {
+    height: 1,
+    backgroundColor: colors.lightGrey,
+    marginVertical: 8,
+    opacity: 0.3,
+  },
+
+  // Bottom Navigation
+  bottomNav: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    backgroundColor: colors.white,
+    borderTopWidth: 1,
+    borderTopColor: '#F0F0F0',
+  },
+
+  navItem: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+  },
+
+  activeNavItem: {
+    backgroundColor: colors.themeColor + '20',
+  },
+
+  navProfileImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
   },
 
   // Loading and Error States
@@ -231,8 +318,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 16,
     paddingHorizontal: 16,
-    // borderBottomWidth: 1,
-    // borderBottomColor: colors.lightGrey,
   },
 
   optionText: {
@@ -269,38 +354,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.lightGrey,
   },
 
-  // Danger Zone Styles
-  dangerSection: {
-    backgroundColor: '#FEF2F2',
-    marginHorizontal: 16,
-    borderRadius: 12,
-    overflow: 'hidden',
-    marginTop: 24,
-    borderWidth: 1,
-    borderColor: '#FECACA',
-  },
-
-  dangerItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    backgroundColor: '#FEF2F2',
-  },
-
-  dangerText: {
-    fontSize: 16,
-    color: '#DC2626',
-    fontWeight: '500',
-  },
-
-  dangerSubtext: {
-    fontSize: 14,
-    color: '#991B1B',
-    marginTop: 2,
-  },
-
   // Toggle Animation
   toggleContainer: {
     width: 50,
@@ -325,63 +378,10 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
 
-  // Responsive adjustments
-  ...(width < 375 && {
-    settingsItem: {
-      paddingVertical: 14,
-    },
-    settingsItemText: {
-      fontSize: 15,
-    },
-    profileImage: {
-      width: 70,
-      height: 70,
-      borderRadius: 35,
-    },
-  }),
-
-  // Dark mode styles (can be conditionally applied)
-  darkContainer: {
-    backgroundColor: colors.darkGray || '#1A1A1A',
-  },
-
-  darkSettingsSection: {
-    backgroundColor: colors.darkGray || '#2A2A2A',
-  },
-
-  darkSettingsItem: {
-    backgroundColor: colors.darkGray || '#2A2A2A',
-    borderBottomColor: colors.darkGray || '#404040',
-  },
-
-  darkText: {
-    color: colors.black || '#FFFFFF',
-  },
-
-  darkinputText: {
-    color: colors.midGray || '#B0B0B0',
-  },
-
-  // Accessibility improvements
-  accessibleTouchArea: {
-    minHeight: 44,
-    minWidth: 44,
-  },
-
-  // Animation support
-  fadeIn: {
-    opacity: 1,
-  },
-
-  fadeOut: {
-    opacity: 0.3,
-  },
-
   // dropdown settings
   chevronIcon: {
     marginLeft: 8,
     transform: [{rotate: '0deg'}],
-    transition: 'transform 0.2s ease',
   },
   chevronIconRotated: {
     transform: [{rotate: '180deg'}],
@@ -457,6 +457,120 @@ const styles = StyleSheet.create({
   },
   picker: {
     height: 200,
+  },
+
+  // Language Selection Screen Styles
+  languageHeader: {
+    alignItems: 'center',
+    paddingVertical: 40,
+    paddingHorizontal: 20,
+  },
+
+  globeContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: colors.themeColor,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
+
+  languageTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: colors.black,
+  },
+
+  searchContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8F9FA',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginBottom: 8,
+  },
+
+  searchIcon: {
+    marginRight: 12,
+  },
+
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: colors.black,
+  },
+
+  allLanguagesLabel: {
+    fontSize: 14,
+    color: colors.lightGrey,
+    marginLeft: 4,
+  },
+
+  languageList: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+
+  languageCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+
+  selectedLanguageCard: {
+    backgroundColor: colors.themeColor + '10',
+    borderColor: colors.themeColor,
+  },
+
+  languageCardLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+
+  languageIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+
+  languageIconText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.themeColor,
+  },
+
+  languageTextContainer: {
+    flex: 1,
+  },
+
+  languageName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.black,
+    marginBottom: 4,
+  },
+
+  languageEnglishName: {
+    fontSize: 14,
+    color: colors.lightGrey,
   },
 });
 
