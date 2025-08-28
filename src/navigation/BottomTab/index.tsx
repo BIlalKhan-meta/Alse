@@ -11,7 +11,7 @@ import MenuNavigation from '../MenuNavigation';
 import LiveStreamScreen from '../../screens/Livestream/GoLive';
 import SearchTab from '../SearchTab';
 import {Search} from 'lucide-react-native';
-import VideosTab from '../VideosTab/Index';
+import VideosTab from '../VideosTab';
 
 const TabNavigation = () => {
   const Tab = createBottomTabNavigator();

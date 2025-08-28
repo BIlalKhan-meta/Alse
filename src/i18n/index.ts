@@ -1,10 +1,15 @@
-import i18n from 'i18next';
+import i18n, {t} from 'i18next';
 import {initReactI18next} from 'react-i18next';
 import {Platform, NativeModules} from 'react-native';
 
 // Import translation files
 import en from './locales/en';
 import sw from './locales/sw';
+import fr from './locales/fr';
+import zh from './locales/zh';
+import hi from './locales/hi';
+import pt from './locales/pt';
+import es from './locales/es';
 
 const resources = {
   en: {
@@ -12,6 +17,21 @@ const resources = {
   },
   sw: {
     translation: sw,
+  },
+  fr: {
+    translation: fr,
+  },
+  zh: {
+    translation: zh,
+  },
+  hi: {
+    translation: hi,
+  },
+  pt: {
+    translation: pt,
+  },
+  es: {
+    translation: es,
   },
 };
 

@@ -33,6 +33,12 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
   const availableLanguages = [
     {code: 'en', name: 'English', nativeName: 'English'},
     {code: 'sw', name: 'Swahili', nativeName: 'Kiswahili'},
+    //
+    {code: 'fr', name: 'French', nativeName: 'Français'},
+    {code: 'hi', name: 'Hindi', nativeName: 'हिंदी'},
+    {code: 'zh', name: 'Chinese', nativeName: '中国人'},
+    {code: 'pt', name: 'Portuguese', nativeName: 'Português'},
+    {code: 'es', name: 'Spanish', nativeName: 'Español'},
   ];
 
   // Load saved language on app start
