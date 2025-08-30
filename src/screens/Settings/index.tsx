@@ -322,7 +322,7 @@ const Settings = ({navigation}: any) => {
       </ScrollView>
 
       {/* Bottom Navigation Bar */}
-      <View style={styles.bottomNav}>
+      {/* <View style={styles.bottomNav}>
         <TouchableOpacity style={[styles.navItem, styles.activeNavItem]}>
           <User size={24} color={colors.themeColor} />
         </TouchableOpacity>
@@ -342,7 +342,7 @@ const Settings = ({navigation}: any) => {
             resizeMode="cover"
           />
         </TouchableOpacity>
-      </View>
+      </View> */}
     </View>
   );
 };

@@ -182,7 +182,7 @@ const LanguageSelection = ({navigation}: any) => {
       </ScrollView>
 
       {/* Bottom Navigation Bar */}
-      <View style={styles.bottomNav}>
+      {/* <View style={styles.bottomNav}>
         <TouchableOpacity style={[styles.navItem, styles.activeNavItem]}>
           <Home size={24} color={colors.themeColor} />
         </TouchableOpacity>
@@ -202,7 +202,7 @@ const LanguageSelection = ({navigation}: any) => {
             resizeMode="cover"
           />
         </TouchableOpacity>
-      </View>
+      </View> */}
     </View>
   );
 };
