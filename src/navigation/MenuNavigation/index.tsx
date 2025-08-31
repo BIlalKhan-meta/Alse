@@ -8,7 +8,7 @@ import NavigationOptions from '../NavigationOptions';
 import MyPosts from '../../screens/MyPosts';
 import Cart from '../../screens/Cart';
 import BlockedUsers from '../../screens/BlockedUsers';
-import MyProfile from '../../screens/Menu/MyProfile';
+import MyProfile from '../../screens/MyProfile';
 import SubscriptionPlan from '../../screens/SubscriptionPlan';
 import Menu from '../../screens/Menu';
 import Groups from '../../screens/Groups';

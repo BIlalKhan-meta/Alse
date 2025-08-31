@@ -320,29 +320,6 @@ const Settings = ({navigation}: any) => {
           </View>
         )}
       </ScrollView>
-
-      {/* Bottom Navigation Bar */}
-      {/* <View style={styles.bottomNav}>
-        <TouchableOpacity style={[styles.navItem, styles.activeNavItem]}>
-          <User size={24} color={colors.themeColor} />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Bell size={24} color={colors.inputText} />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <ShoppingCart size={24} color={colors.inputText} />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Globe size={24} color={colors.inputText} />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Image
-            source={user?.avatar ? {uri: user.avatar} : images.profile}
-            style={styles.navProfileImage}
-            resizeMode="cover"
-          />
-        </TouchableOpacity>
-      </View> */}
     </View>
   );
 };

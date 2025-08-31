@@ -12,9 +12,15 @@ import LiveStreamScreen from '../../screens/Livestream/GoLive';
 import SearchTab from '../SearchTab';
 import {Search} from 'lucide-react-native';
 import VideosTab from '../VideosTab';
+import MyProfile from '../../screens/MyProfile';
+import {useSelector} from 'react-redux';
+import {selectUserProfile} from '../../store/slices/authSlice';
+import {User} from 'lucide-react-native';
 
 const TabNavigation = () => {
   const Tab = createBottomTabNavigator();
+  const user = useSelector(selectUserProfile);
+  console.log('this is user', user);
 
   return (
     <Tab.Navigator
@@ -181,21 +187,35 @@ const TabNavigation = () => {
           ...NavigationOptions,
         }}
       />
+      {/* TODO need to set the profile screen here directly */}
       <Tab.Screen
-        name="MenuNavigation"
-        component={MenuNavigation}
+        name="MyProfile"
+        component={MyProfile}
         options={{
           tabBarIcon: ({focused}) => (
             <View style={styles.tabButton}>
-              <Image
-                source={images.menu}
-                style={[
-                  styles.icon,
-                  {
-                    tintColor: focused ? colors.themeColor : colors.lightGrey,
-                  },
-                ]}
-              />
+              {/* TODO need to place user profile picture, or icon */}
+              {user.avatar ? (
+                <Image
+                  source={{uri: user.avatar}}
+                  style={[
+                    // need this style
+                    // styles.avatarImage,
+                    {
+                      width: 40,
+                      height: 40,
+                      borderRadius: 20,
+                    },
+                  ]}
+                />
+              ) : (
+                <View style={[styles.tabButton]}>
+                  <User
+                    // name="person"
+                    color={focused ? colors.themeColor : colors.lightGrey}
+                  />
+                </View>
+              )}
               {/* <InterBold
                 style={[
                   styles.tabButtonText,

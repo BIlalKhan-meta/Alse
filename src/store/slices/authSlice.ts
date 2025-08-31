@@ -10,7 +10,7 @@ import {
 import {getProfile} from '../../api/profile';
 
 interface AuthState {
-  user: any;
+  user: any; // it would be much better to save user's type
   token: string | null;
   loading: boolean;
   error: string | null;
