@@ -7,10 +7,10 @@ export const getProfile = () => {
 };
 
 export const editProfile = (formData: FormData) => {
-  console.log('body, id body, idbody, idbody, idbody, id ==>', formData);
-
   return axiosInstance.post(endpoints.profile.editProfile, formData, {
-    formData: true,
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
   });
 };
 

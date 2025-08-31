@@ -46,6 +46,7 @@ import CreateGroup from '../../screens/Groups/CreateGroup';
 import Settings from '../../screens/Settings';
 import LanguageSelection from '../../screens/Settings/LanguageSelection';
 import VideosTab from '../VideosTab';
+import SocialActivity from '../../screens/Settings/SocialActivity';
 
 const AppNavigation = () => {
   const Stack = createNativeStackNavigator();
@@ -77,6 +78,11 @@ const AppNavigation = () => {
         <Stack.Screen
           name="LanguageSelection"
           component={LanguageSelection}
+          // options={NavigationOptions}
+        />
+        <Stack.Screen
+          name="SocialActivity"
+          component={SocialActivity}
           // options={NavigationOptions}
         />
         <Stack.Screen

@@ -18,6 +18,8 @@ import {
   ShoppingCart,
   Lock,
   Users,
+  Icon,
+  Edit,
 } from 'lucide-react-native';
 import InterRegular from '../../components/Text/InterRegular';
 import InterLight from '../../components/Text/InterLight';
@@ -31,19 +33,28 @@ import {useAppDispatch} from '../../hooks/storeHooks';
 import {fetchAllSettings} from '../../store/slices/settingsSlice';
 import {useAppTranslation} from '../../i18n/hooks/useAppTranslation';
 import GlobalHeader from '../../components/GlobalHeader';
+import ProfileForm from './components/profileForm';
+import {launchImageLibrary} from 'react-native-image-picker';
+import Toast from 'react-native-toast-message';
+import {editProfile} from '../../api/profile';
+import {useRoute} from '@react-navigation/native';
 
 const Settings = ({navigation}: any) => {
   const dispatch = useAppDispatch();
   const user = useSelector(selectUserProfile);
   const userRole = user?.role || 'buyer';
   const {currentLanguage, t} = useAppTranslation();
+  const [uploading, setUploading] = useState(false);
+  const [avatarUri, setAvatarUri] = useState(user?.avatar || null);
 
   useEffect(() => {
     dispatch(fetchAllSettings());
   }, [dispatch]);
 
   // Profile editing state
-  const [isEditing, setIsEditing] = useState(false);
+  const route = useRoute();
+  const {isEditMode} = route.params ?? {};
+  const [isEditing, setIsEditing] = useState(isEditMode || false);
   const [profileData, setProfileData] = useState({
     firstName: user?.first_name || user?.full_name?.split(' ')[0] || '',
     lastName: user?.last_name || user?.full_name?.split(' ')[1] || '',
@@ -62,124 +73,91 @@ const Settings = ({navigation}: any) => {
     }));
   };
 
-  // Profile Form Component
-  const ProfileForm = () => (
-    <View style={styles.profileForm}>
-      <View style={styles.inputRow}>
-        <View style={styles.inputContainer}>
-          <InterRegular style={styles.inputLabel}>
-            {t('settings.firstName')}
-          </InterRegular>
-          <TextInput
-            style={styles.textInput}
-            value={profileData.firstName}
-            onChangeText={text => handleProfileUpdate('firstName', text)}
-            placeholder={t('settings.firstName')}
-          />
-        </View>
-        <View style={styles.inputContainer}>
-          <InterRegular style={styles.inputLabel}>
-            {t('settings.lastName')}
-          </InterRegular>
-          <TextInput
-            style={styles.textInput}
-            value={profileData.lastName}
-            onChangeText={text => handleProfileUpdate('lastName', text)}
-            placeholder={t('settings.lastName')}
-          />
-        </View>
-      </View>
+  // Upload image functions
+  const handleImagePick = async () => {
+    const options = {
+      mediaType: 'photo',
+      quality: 0.8,
+      maxWidth: 800,
+      maxHeight: 800,
+    };
 
-      <View style={styles.inputContainer}>
-        <InterRegular style={styles.inputLabel}>
-          {t('settings.userName')}
-        </InterRegular>
-        <TextInput
-          style={styles.textInput}
-          value={profileData.userName}
-          onChangeText={text => handleProfileUpdate('userName', text)}
-          placeholder={t('settings.userName')}
-        />
-      </View>
+    try {
+      const result = await launchImageLibrary(options);
 
-      <View style={styles.inputContainer}>
-        <InterRegular style={styles.inputLabel}>
-          {t('settings.pronouns')}
-        </InterRegular>
-        <TextInput
-          style={styles.textInput}
-          value={profileData.pronouns}
-          onChangeText={text => handleProfileUpdate('pronouns', text)}
-          placeholder={t('settings.pronounsPlaceholder')}
-        />
-      </View>
+      if (result.didCancel) {
+        console.log('User cancelled image picker');
+        return;
+      }
 
-      <View style={styles.inputContainer}>
-        <InterRegular style={styles.inputLabel}>
-          {t('settings.location')}
-        </InterRegular>
-        <View style={styles.textInputWithIcon}>
-          <TextInput
-            style={[styles.textInput, styles.textInputWithIconInput]}
-            value={profileData.location}
-            onChangeText={text => handleProfileUpdate('location', text)}
-            placeholder={t('settings.location')}
-          />
-          <TouchableOpacity style={styles.inputIcon}>
-            <LocationEdit size={20} color={colors.inputText} />
-          </TouchableOpacity>
-        </View>
-      </View>
+      if (result.errorCode) {
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: 'Failed to pick image',
+        });
+        return;
+      }
 
-      <View style={styles.inputContainer}>
-        <InterRegular style={styles.inputLabel}>
-          {t('settings.bio')}
-        </InterRegular>
-        <TextInput
-          style={[styles.textInput, styles.textArea]}
-          value={profileData.description}
-          onChangeText={text => handleProfileUpdate('description', text)}
-          placeholder={t('settings.bioPlaceholder')}
-          multiline
-          numberOfLines={4}
-          textAlignVertical="top"
-        />
-      </View>
+      if (result.assets && result.assets.length > 0) {
+        const selectedImage = result.assets[0];
+        await uploadProfileImage(selectedImage);
+      }
+    } catch (error) {
+      console.error('Error picking image:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to pick image',
+      });
+    }
+  };
 
-      {userRole === 'seller' && (
-        <>
-          <View style={styles.inputContainer}>
-            <InterRegular style={styles.inputLabel}>
-              {t('settings.storeName')}
-            </InterRegular>
-            <TextInput
-              style={styles.textInput}
-              value={profileData.storeName}
-              onChangeText={text => handleProfileUpdate('storeName', text)}
-              placeholder={t('settings.storeNamePlaceholder')}
-            />
-          </View>
+  const uploadProfileImage = async image => {
+    if (!image.uri) return;
 
-          <View style={styles.inputContainer}>
-            <InterRegular style={styles.inputLabel}>
-              {t('settings.storeDescription')}
-            </InterRegular>
-            <TextInput
-              style={[styles.textInput, styles.textArea]}
-              value={profileData.storeDescription}
-              onChangeText={text =>
-                handleProfileUpdate('storeDescription', text)
-              }
-              placeholder={t('settings.storeDescriptionPlaceholder')}
-              multiline
-              numberOfLines={3}
-              textAlignVertical="top"
-            />
-          </View>
-        </>
-      )}
-    </View>
-  );
+    setUploading(true);
+
+    try {
+      const formData = new FormData();
+
+      // Append the image file
+      formData.append('avatar', {
+        uri: image.uri,
+        type: image.type || 'image/jpeg',
+        name: image.fileName || `profile-${Date.now()}.jpg`,
+      });
+
+      // Append other profile data if needed
+      Object.keys(profileData).forEach(key => {
+        if (key !== 'avatar') {
+          formData.append(key, profileData[key]);
+        }
+      });
+
+      const response = await editProfile(formData);
+
+      if (response.data) {
+        // If your API returns the new avatar URL
+        const newAvatarUrl = response.data.avatar;
+
+        setAvatarUri(newAvatarUrl || image.uri); // fallback to local uri if API doesn't return URL
+
+        Toast.show({
+          type: 'success',
+          text1: 'Profile image uploaded successfully',
+        });
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Failed to upload profile image',
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
 
   // Get current language display name
   const getCurrentLanguageName = () => {
@@ -187,7 +165,17 @@ const Settings = ({navigation}: any) => {
       case 'en':
         return 'English';
       case 'sw':
-        return 'Kiswahili';
+        return 'Swahili';
+      case 'zh':
+        return '中文';
+      case 'fr':
+        return 'Français';
+      case 'hi':
+        return 'हिंदी';
+      case 'pt':
+        return 'Português';
+      case 'es':
+        return 'Español';
       default:
         return 'English';
     }
@@ -207,21 +195,32 @@ const Settings = ({navigation}: any) => {
         <View style={styles.profileSection}>
           <View style={styles.profileImageContainer}>
             <Image
-              source={user?.avatar ? {uri: user.avatar} : images.profile}
-              style={styles.profileImage}
+              source={avatarUri ? {uri: avatarUri} : images.profile}
+              // source={user?.avatar ? {uri: user.avatar} : images.profile}
               resizeMode="cover"
+              style={styles.profileImage}
             />
+            {isEditing && (
+              <TouchableOpacity
+                style={styles.editIconContainer}
+                // TODO image upload functionality
+                onPress={() => handleImagePick()}>
+                <PencilLine size={20} color={colors.themeColor} />
+              </TouchableOpacity>
+            )}
           </View>
           <View style={styles.profileInfo}>
-            <View style={styles.profileTextContainer}>
-              <InterBoldLabel style={styles.profileName}>
-                {user?.full_name || 'Alse'}
-              </InterBoldLabel>
-              <InterLight style={styles.profileUsername}>
-                {user?.username || '_alsepereze'}
-              </InterLight>
+            <View>
+              <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                <InterBoldLabel style={styles.profileName}>
+                  {user?.full_name || 'Alse'}
+                </InterBoldLabel>
+                <InterLight style={styles.profileUsername}>
+                  _{user?.username || user?.email?.split('@')[0]}
+                </InterLight>
+              </View>
               <InterLight style={styles.profileLocation}>
-                {user?.location || 'New jersey, NY'}
+                {user?.location || 'New Jersey, USA'}
               </InterLight>
             </View>
             <TouchableOpacity
@@ -231,19 +230,25 @@ const Settings = ({navigation}: any) => {
             </TouchableOpacity>
           </View>
 
-          {isEditing && <ProfileForm />}
+          {isEditing && (
+            <ProfileForm
+              profileData={profileData}
+              handleProfileUpdate={handleProfileUpdate}
+              setIsEditing={() => {
+                setIsEditing(false);
+              }}
+            />
+          )}
         </View>
 
         {!isEditing && (
           <View style={styles.settingsContainer}>
-            {/* Notification */}
+            {/* Social Activity */}
             <SettingsItem
-              title={t('settings.notification')}
-              icon={Bell}
+              title={t('settings.socialActivity')}
+              icon={Users}
               type="navigation"
-              onPress={() => {
-                /* Navigate to notification settings */
-              }}
+              onPress={() => navigation.navigate('SocialActivity')}
             />
 
             {/* Language */}
@@ -256,33 +261,14 @@ const Settings = ({navigation}: any) => {
                 navigation.navigate('LanguageSelection');
               }}
             />
-
-            {/* Profile Setting */}
+            {/* Notification */}
             <SettingsItem
-              title={t('settings.profileSetting')}
-              icon={User}
+              title={t('settings.notification')}
+              icon={Bell}
               type="navigation"
               onPress={() => {
-                /* Navigate to profile settings */
+                /* Navigate to notification settings */
               }}
-            />
-
-            {/* Social Activity */}
-            <SettingsItem
-              title={t('settings.socialActivity')}
-              icon={Users}
-              type="navigation"
-              onPress={() => {
-                /* Navigate to social activity */
-              }}
-            />
-
-            {/* Advance protection */}
-            <SettingsItem
-              title={t('settings.advanceProtection')}
-              icon={Shield}
-              value={true}
-              onToggle={() => {}}
             />
 
             {/* Separator */}

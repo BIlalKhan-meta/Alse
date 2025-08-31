@@ -5,12 +5,14 @@ export const getPrivacySettings = () => {
   return axiosInstance.get(endpoints.settings.privacy);
 };
 
-export const updatePrivacySettings = (formData: FormData, id: number) => {
-  return axiosInstance.post(`${endpoints.settings.privacy}/${id}`, formData, {
-    formData: true,
+export const updatePrivacySettings = (data: any) => {
+  return axiosInstance.put(endpoints.settings.privacy, data, {
+    // Changed to POST
+    headers: {
+      'Content-Type': 'application/json',
+    },
   });
 };
-
 export const getNotificationSettings = () => {
   return axiosInstance.get(endpoints.settings.notifications);
 };

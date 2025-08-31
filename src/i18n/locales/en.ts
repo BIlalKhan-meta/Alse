@@ -67,5 +67,6 @@ export default {
     biddingAuctionSetting: 'Bidding & Auction Setting',
     marketplaceActivity: 'Marketplace Activity',
     securityPrivacy: 'Security & Privacy',
+    save: 'Save',
   },
 };

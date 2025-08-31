@@ -146,9 +146,8 @@ const MyProfile: React.FC = () => {
   }, []);
 
   const handleEditProfile = useCallback(() => {
-    // navigation.navigate('EditProfile');
-    console.log('Navigate to EditProfile');
-  }, []);
+    navigation.navigate('Settings', {isEditMode: true});
+  }, [navigation]);
 
   const handleShareProfile = useCallback(() => {
     // Implement share functionality
@@ -202,7 +201,7 @@ const MyProfile: React.FC = () => {
                   user?.avatar !==
                     'http://aabcndbkji.us-east-1.awsapprunner.com/storage/default.png'
                     ? {uri: user.avatar}
-                    : images.user2 // TODO replace with avatar placeholder
+                    : images.profile // TODO replace with avatar placeholder
                 }
                 style={styles.profileImage}
               />

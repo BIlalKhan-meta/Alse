@@ -195,7 +195,7 @@ const TabNavigation = () => {
           tabBarIcon: ({focused}) => (
             <View style={styles.tabButton}>
               {/* TODO need to place user profile picture, or icon */}
-              {user.avatar ? (
+              {user?.avatar ? (
                 <Image
                   source={{uri: user.avatar}}
                   style={[

@@ -1,16 +1,17 @@
 import {Picker} from '@react-native-picker/picker';
 import {ChevronDown, ChevronRight} from 'lucide-react-native';
 import React, {useState} from 'react';
-import {View, Switch, TouchableOpacity} from 'react-native';
+import {View, Switch, TouchableOpacity, Platform} from 'react-native';
 import InterLight from '../../../components/Text/InterLight';
 import InterRegular from '../../../components/Text/InterRegular';
 import {colors} from '../../../utils/theme';
 import styles from '../styles';
+import InterBold from '../../../components/Text/InterBold';
 
 interface SettingsItemProps {
   title: string;
   subtitle?: string;
-  icon: any;
+  icon?: any;
   value?: any;
   onToggle?: (value: any) => void;
   onValueChange?: (value: string) => void;
@@ -46,9 +47,7 @@ const SettingsItem = ({
               </View>
             )}
             <View style={styles.settingsTextContainer}>
-              <InterRegular style={styles.settingsItemText}>
-                {title}
-              </InterRegular>
+              <InterBold style={styles.settingsItemText}>{title}</InterBold>
               {subtitle && (
                 <InterLight style={styles.settingsItemSubtitle}>
                   {subtitle}
@@ -73,7 +72,7 @@ const SettingsItem = ({
             </View>
           )}
           <View style={styles.settingsTextContainer}>
-            <InterRegular style={styles.settingsItemText}>{title}</InterRegular>
+            <InterBold style={styles.settingsItemText}>{title}</InterBold>
             {subtitle && (
               <InterLight style={styles.settingsItemSubtitle}>
                 {subtitle}
@@ -93,46 +92,25 @@ const SettingsItem = ({
         )}
 
         {type === 'select' && (
-          <TouchableOpacity
-            onPress={() => setIsPickerVisible(true)}
-            style={styles.selectButton}>
-            <InterRegular style={styles.selectButtonText}>
-              {options.find(opt => opt.value === value)?.label || value}
-            </InterRegular>
-            <ChevronDown size={16} color={colors.lightGrey} />
-          </TouchableOpacity>
+          <View style={styles.selectWrapper}>
+            <Picker
+              selectedValue={value}
+              onValueChange={onValueChange}
+              mode="dropdown"
+              style={styles.picker}
+              itemStyle={styles.pickerItem}
+              dropdownIconColor={colors.lightGrey}>
+              {options.map(opt => (
+                <Picker.Item
+                  key={opt.value}
+                  label={opt.label}
+                  value={opt.value}
+                />
+              ))}
+            </Picker>
+          </View>
         )}
       </View>
-
-      {/* Picker Modal for Select Type */}
-      {type === 'select' && isPickerVisible && (
-        <View style={styles.pickerContainer}>
-          <View style={styles.pickerHeader}>
-            <TouchableOpacity
-              onPress={() => setIsPickerVisible(false)}
-              style={styles.cancelButton}>
-              <InterRegular style={styles.cancelText}>Cancel</InterRegular>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => setIsPickerVisible(false)}
-              style={styles.doneButton}>
-              <InterRegular style={styles.doneText}>Done</InterRegular>
-            </TouchableOpacity>
-          </View>
-          <Picker
-            selectedValue={value}
-            onValueChange={onValueChange}
-            style={styles.picker}>
-            {options.map(option => (
-              <Picker.Item
-                key={option.value}
-                label={option.label}
-                value={option.value}
-              />
-            ))}
-          </Picker>
-        </View>
-      )}
     </>
   );
 };

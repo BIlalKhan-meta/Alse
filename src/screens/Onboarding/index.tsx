@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, {useEffect, useState, useRef} from 'react';
 import {
   View,
   Text,
@@ -8,25 +8,34 @@ import {
   Image,
   Dimensions,
   ScrollView,
-  SafeAreaView
+  SafeAreaView,
 } from 'react-native';
 import Welcome_1 from './Welcome_1';
 import Welcome_2 from './Welcome_2';
-import { setUser } from '../../store/slices/authSlice';
-import { useAppDispatch } from '../../hooks/storeHooks';
-const { width } = Dimensions.get('window');
+import {setUser} from '../../store/slices/authSlice';
+import {useAppDispatch} from '../../hooks/storeHooks';
+const {width} = Dimensions.get('window');
 
-const OnboardingScreen = ({ navigation, route }: { navigation: any, route: any }) => {
+const OnboardingScreen = ({
+  navigation,
+  route,
+}: {
+  navigation: any;
+  route: any;
+}) => {
   const [currentPage, setCurrentPage] = useState(0);
   const scrollViewRef = useRef(null);
-  const { user } = route.params;
+  const {user} = route.params;
   const dispatch = useAppDispatch();
 
   // Handle "Next" button press
   const handleNext = async () => {
     if (currentPage < 1) {
       // Use ScrollView's built-in animation for smoother transitions
-      scrollViewRef.current?.scrollTo({ x: width * (currentPage + 1), animated: true });
+      scrollViewRef.current?.scrollTo({
+        x: width * (currentPage + 1),
+        animated: true,
+      });
       setCurrentPage(currentPage + 1);
     } else {
       if (user) {
@@ -48,72 +57,79 @@ const OnboardingScreen = ({ navigation, route }: { navigation: any, route: any }
     },
     // Second screen
     {
-      title: "Your World, Your Rules 🔑",
-      subtitle: "",
-      description: "Discover, engage, and express yourself freely—because your voice matters."
-    }
+      title: 'Your World, Your Rules 🔑',
+      subtitle: '',
+      description:
+        'Discover, engage, and express yourself freely—because your voice matters.',
+    },
   ];
 
   return (
-    <SafeAreaView style={ styles.safeArea }>
+    <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor="#004D40" />
 
       <ScrollView
-        ref={ scrollViewRef }
+        ref={scrollViewRef}
         horizontal
         pagingEnabled
-        showsHorizontalScrollIndicator={ false }
-        scrollEnabled={ true } // Enable swipe gestures
-        onMomentumScrollEnd={ (event) => {
+        showsHorizontalScrollIndicator={false}
+        scrollEnabled={true} // Enable swipe gestures
+        onMomentumScrollEnd={event => {
           // Update current page based on scroll position
-          const newPage = Math.floor(event.nativeEvent.contentOffset.x / width + 0.5);
+          const newPage = Math.floor(
+            event.nativeEvent.contentOffset.x / width + 0.5,
+          );
           setCurrentPage(newPage);
-        } }
-        contentContainerStyle={ styles.scrollContent }
-      >
-        { screens.map((screen, index) => (
-          <View
-            key={ index }
-            style={ styles.screenContainer }
-          >
-            { index === 0 ? (
+        }}
+        contentContainerStyle={styles.scrollContent}>
+        {screens.map((screen, index) => (
+          <View key={index} style={styles.screenContainer}>
+            {index === 0 ? (
               // First screen with social media icons
-              <View style={ styles.furnitureContainer }>
-                <Image source={require('./Welcome_1.png')} style={styles.welcome1Image} />
+              <View style={styles.furnitureContainer}>
+                <Image
+                  source={require('./Welcome_1.png')}
+                  style={styles.welcome1Image}
+                />
               </View>
             ) : (
               // Second screen with furniture illustration
-              <View style={ styles.furnitureContainer }>
+              <View style={styles.furnitureContainer}>
                 <Welcome_2 />
               </View>
-            ) }
+            )}
 
-            {/* Text Content */ }
-            { screen.title && <View style={ styles.textContainer }>
-              <Text style={ styles.heading }>{ screen.title }</Text>
-              <Text style={ styles.description }>{ screen.description }</Text>
-            </View>
-            }
+            {/* Text Content */}
+            {screen.title && (
+              <View style={styles.textContainer}>
+                <Text style={styles.heading}>{screen.title}</Text>
+                <Text style={styles.description}>{screen.description}</Text>
+              </View>
+            )}
           </View>
-        )) }
+        ))}
       </ScrollView>
 
-      {/* Pagination Dots */ }
-      <View style={ styles.paginationContainer }>
-        <View style={ [
-          styles.paginationDot,
-          currentPage === 0 ? styles.activeDot : {}
-        ] } />
-        <View style={ [
-          styles.paginationDot,
-          currentPage === 1 ? styles.activeDot : {}
-        ] } />
+      {/* Pagination Dots */}
+      <View style={styles.paginationContainer}>
+        <View
+          style={[
+            styles.paginationDot,
+            currentPage === 0 ? styles.activeDot : {},
+          ]}
+        />
+        <View
+          style={[
+            styles.paginationDot,
+            currentPage === 1 ? styles.activeDot : {},
+          ]}
+        />
       </View>
 
-      {/* Next Button */ }
-      <View style={ styles.buttonContainer }>
-        <TouchableOpacity style={ styles.button } onPress={ handleNext }>
-          <Text style={ styles.buttonText }>Next</Text>
+      {/* Next Button */}
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity style={styles.button} onPress={handleNext}>
+          <Text style={styles.buttonText}>Next</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

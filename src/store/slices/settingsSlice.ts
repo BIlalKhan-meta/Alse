@@ -99,10 +99,12 @@ export const fetchAllSettings = createAsyncThunk(
   'settings/fetchAll',
   async () => {
     const [privacyRes, notifRes, sellerRes] = await Promise.all([
-      getPrivacySettings(),
+      getPrivacySettings(), // Remove the .then() chain
       getNotificationSettings(),
       getSellerSettings(),
     ]);
+
+    console.log('Privacy Settings', privacyRes.data);
 
     return {
       security: privacyRes.data,
@@ -114,9 +116,12 @@ export const fetchAllSettings = createAsyncThunk(
 
 export const savePrivacySettings = createAsyncThunk(
   'settings/savePrivacy',
-  async ({formData, id}: {formData: FormData; id: number}) => {
-    const res = await updatePrivacySettings(formData, id);
-    return res.data;
+  async (data: any) => {
+    // Remove the id parameter
+    console.log('Making PUT API call with data:', data);
+    const res = await updatePrivacySettings(data);
+    console.log('API response:', res.data);
+    return res.data.data; // Return the updated settings
   },
 );
 

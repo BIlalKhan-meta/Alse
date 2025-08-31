@@ -1,5 +1,8 @@
-import {StyleSheet} from 'react-native';
+import {StyleSheet, Dimensions} from 'react-native';
 import {colors} from '../../utils/theme';
+
+const {height, width} = Dimensions.get('screen');
+const avatarSize = Math.min(width, height) * 0.3;
 
 const styles = StyleSheet.create({
   container: {
@@ -49,19 +52,8 @@ const styles = StyleSheet.create({
   // Profile Section
   profileSection: {
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: 12,
     paddingVertical: 20,
-  },
-
-  profileImageContainer: {
-    marginBottom: 16,
-  },
-
-  profileImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#FFE4E6',
   },
 
   profileInfo: {
@@ -69,25 +61,34 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     justifyContent: 'space-between',
     width: '100%',
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
   },
 
-  profileTextContainer: {
-    flex: 1,
-    alignItems: 'center',
+  profileImage: {
+    position: 'relative',
+    width: avatarSize,
+    height: avatarSize,
+    borderRadius: 60,
+    borderWidth: 3,
+    borderColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
 
   profileName: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: colors.black,
-    marginBottom: 4,
+    fontSize: 18,
   },
 
   profileUsername: {
-    fontSize: 16,
+    fontSize: 14,
     color: colors.lightGrey,
-    marginBottom: 4,
+    marginLeft: 8,
   },
 
   profileLocation: {
@@ -158,7 +159,7 @@ const styles = StyleSheet.create({
 
   // Settings Container
   settingsContainer: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingTop: 20,
   },
 
@@ -194,7 +195,7 @@ const styles = StyleSheet.create({
   settingsItemText: {
     fontSize: 16,
     color: colors.black,
-    fontWeight: '500',
+    fontWeight: '600',
   },
 
   settingsItemSubtitle: {
@@ -337,8 +338,11 @@ const styles = StyleSheet.create({
   },
 
   saveButton: {
+    alignSelf: 'flex-end',
     backgroundColor: colors.themeColor,
+    margin: 16,
     paddingVertical: 14,
+    width: width * 0.25,
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
@@ -414,51 +418,6 @@ const styles = StyleSheet.create({
     color: '#007AFF',
     fontWeight: '500',
   },
-  pickerContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: -2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  pickerHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  cancelButton: {
-    padding: 8,
-  },
-  cancelText: {
-    fontSize: 16,
-    color: '#666',
-  },
-  doneButton: {
-    padding: 8,
-  },
-  doneText: {
-    fontSize: 16,
-    color: '#007AFF',
-    fontWeight: '600',
-  },
-  picker: {
-    height: 200,
-  },
-
   // Language Selection Screen Styles
   languageHeader: {
     alignItems: 'center',
@@ -571,6 +530,68 @@ const styles = StyleSheet.create({
   languageEnglishName: {
     fontSize: 14,
     color: colors.lightGrey,
+  },
+  //
+  selectWrapper: {
+    backgroundColor: '#F9FAFB',
+    borderRadius: 8,
+    height: 36,
+    minWidth: width * 0.35,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+
+  picker: {
+    flex: 1, // <-- important, makes text visible
+    color: '#111827', // text color on Android
+  },
+
+  pickerItem: {
+    fontSize: 14,
+    color: '#111827', // text color on iOS
+  },
+
+  // Profile form
+  profileImageSection: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  editOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    padding: 8,
+    alignItems: 'center',
+  },
+  editText: {
+    color: 'white',
+    fontSize: 12,
+  },
+  uploadingContainer: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.lightGrey,
+  },
+  //
+  profileImageContainer: {
+    position: 'relative',
+    width: 120,
+    height: 120,
+  },
+  editIconContainer: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    borderRadius: 20,
+    padding: 6,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 

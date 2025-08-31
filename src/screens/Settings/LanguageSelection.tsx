@@ -180,29 +180,6 @@ const LanguageSelection = ({navigation}: any) => {
           ))}
         </View>
       </ScrollView>
-
-      {/* Bottom Navigation Bar */}
-      {/* <View style={styles.bottomNav}>
-        <TouchableOpacity style={[styles.navItem, styles.activeNavItem]}>
-          <Home size={24} color={colors.themeColor} />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Search size={24} color={colors.inputText} />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <User size={24} color={colors.inputText} />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Globe size={24} color={colors.inputText} />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Image
-            source={user?.avatar ? {uri: user.avatar} : images.profile}
-            style={styles.navProfileImage}
-            resizeMode="cover"
-          />
-        </TouchableOpacity>
-      </View> */}
     </View>
   );
 };
