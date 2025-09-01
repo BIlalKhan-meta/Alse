@@ -1,27 +1,15 @@
 import React, {useEffect, useState} from 'react';
-import {
-  View,
-  ScrollView,
-  TouchableOpacity,
-  Image,
-  TextInput,
-} from 'react-native';
+import {View, ScrollView, TouchableOpacity, Image} from 'react-native';
 import {useSelector} from 'react-redux';
 import {
-  LocationEdit,
   PencilLine,
-  Shield,
   Bell,
   Globe,
-  User,
   Gavel,
   ShoppingCart,
   Lock,
   Users,
-  Icon,
-  Edit,
 } from 'lucide-react-native';
-import InterRegular from '../../components/Text/InterRegular';
 import InterLight from '../../components/Text/InterLight';
 import InterBoldLabel from '../../components/Text/InterBoldLabel';
 import {selectUserProfile} from '../../store/slices/authSlice';
@@ -42,7 +30,6 @@ import {useRoute} from '@react-navigation/native';
 const Settings = ({navigation}: any) => {
   const dispatch = useAppDispatch();
   const user = useSelector(selectUserProfile);
-  const userRole = user?.role || 'buyer';
   const {currentLanguage, t} = useAppTranslation();
   const [uploading, setUploading] = useState(false);
   const [avatarUri, setAvatarUri] = useState(user?.avatar || null);
@@ -223,11 +210,13 @@ const Settings = ({navigation}: any) => {
                 {user?.location || 'New Jersey, USA'}
               </InterLight>
             </View>
-            <TouchableOpacity
-              style={styles.editButton}
-              onPress={() => setIsEditing(!isEditing)}>
-              <PencilLine size={20} color={colors.themeColor} />
-            </TouchableOpacity>
+            {!isEditing && (
+              <TouchableOpacity
+                style={styles.editButton}
+                onPress={() => setIsEditing(!isEditing)}>
+                <PencilLine size={20} color={colors.themeColor} />
+              </TouchableOpacity>
+            )}
           </View>
 
           {isEditing && (
@@ -267,7 +256,7 @@ const Settings = ({navigation}: any) => {
               icon={Bell}
               type="navigation"
               onPress={() => {
-                /* Navigate to notification settings */
+                navigation.navigate('NotificationSettings');
               }}
             />
 
@@ -280,7 +269,7 @@ const Settings = ({navigation}: any) => {
               icon={Gavel}
               type="navigation"
               onPress={() => {
-                /* Navigate to bidding settings */
+                navigation.navigate('BiddingAuctionSetting');
               }}
             />
 
@@ -290,7 +279,7 @@ const Settings = ({navigation}: any) => {
               icon={ShoppingCart}
               type="navigation"
               onPress={() => {
-                /* Navigate to marketplace activity */
+                navigation.navigate('MarketplaceActivity');
               }}
             />
 
@@ -300,7 +289,7 @@ const Settings = ({navigation}: any) => {
               icon={Lock}
               type="navigation"
               onPress={() => {
-                /* Navigate to security settings */
+                navigation.navigate('SecurityPrivacy');
               }}
             />
           </View>

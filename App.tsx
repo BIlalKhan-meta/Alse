@@ -22,6 +22,7 @@ import {
 import {ZoomVideoSdkProvider} from '@zoom/react-native-videosdk';
 import {LanguageProvider} from './src/i18n/LanguageContext';
 import './src/i18n';
+import NetworkLoggerFAB from './src/components/NetworkLoggerFAB';
 
 const theme = {
   ...DefaultTheme,
@@ -88,7 +89,7 @@ function App(): React.JSX.Element {
 
             <NavigationContainer theme={theme}>
               <MainNavigation />
-              {/* <NetworkLoggerFAB /> */}
+              {__DEV__ && <NetworkLoggerFAB />}
             </NavigationContainer>
 
             <Toast />

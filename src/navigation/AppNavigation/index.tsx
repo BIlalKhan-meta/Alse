@@ -45,8 +45,12 @@ import GroupDetailsScreen from '../../screens/Groups/GroupDetailsScreen';
 import CreateGroup from '../../screens/Groups/CreateGroup';
 import Settings from '../../screens/Settings';
 import LanguageSelection from '../../screens/Settings/LanguageSelection';
-import VideosTab from '../VideosTab';
+import VideosTab from '../VideosTab/Index';
 import SocialActivity from '../../screens/Settings/SocialActivity';
+import BiddingAuctionSetting from '../../screens/Settings/Bidding&Auction';
+import MarketplaceActivity from '../../screens/Settings/MarketplaceActivity';
+import NotificationSettings from '../../screens/Settings/NotificationSettings';
+import SecurityPrivacy from '../../screens/Settings/Security&Privacy';
 
 const AppNavigation = () => {
   const Stack = createNativeStackNavigator();
@@ -68,7 +72,7 @@ const AppNavigation = () => {
         <Stack.Screen
           name="Notifications"
           component={Notifications}
-          options={NavigationOptions}
+          // options={NavigationOptions}
         />
         <Stack.Screen
           name="Settings"
@@ -83,6 +87,26 @@ const AppNavigation = () => {
         <Stack.Screen
           name="SocialActivity"
           component={SocialActivity}
+          // options={NavigationOptions}
+        />
+        <Stack.Screen
+          name="BiddingAuctionSetting"
+          component={BiddingAuctionSetting}
+          // options={NavigationOptions}
+        />
+        <Stack.Screen
+          name="MarketplaceActivity"
+          component={MarketplaceActivity}
+          // options={NavigationOptions}
+        />
+        <Stack.Screen
+          name="NotificationSettings"
+          component={NotificationSettings}
+          // options={NavigationOptions}
+        />
+        <Stack.Screen
+          name="SecurityPrivacy"
+          component={SecurityPrivacy}
           // options={NavigationOptions}
         />
         <Stack.Screen

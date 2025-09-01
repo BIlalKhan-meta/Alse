@@ -114,10 +114,26 @@ const ProfileForm = ({profileData, handleProfileUpdate, setIsEditing}) => {
             setUploading(true);
             const formData = new FormData();
 
-            // Append all profile data
-            Object.keys(profileData).forEach(key => {
-              formData.append(key, profileData[key]);
-            });
+            // Map profile data to API fields according to the curl example
+            if (profileData.description) {
+              formData.append('bio', profileData.description);
+            }
+            if (profileData.location) {
+              formData.append('location_name', profileData.location);
+            }
+            // Add other fields as needed
+            if (profileData.firstName) {
+              formData.append('first_name', profileData.firstName);
+            }
+            if (profileData.lastName) {
+              formData.append('last_name', profileData.lastName);
+            }
+            if (profileData.userName) {
+              formData.append('username', profileData.userName);
+            }
+            if (profileData.pronouns) {
+              formData.append('pronouns', profileData.pronouns);
+            }
 
             const response = await editProfile(formData);
 
@@ -127,8 +143,8 @@ const ProfileForm = ({profileData, handleProfileUpdate, setIsEditing}) => {
                 text1: 'Success',
                 text2: 'Profile updated successfully!',
               });
+              setIsEditing();
             }
-            setIsEditing();
           } catch (error) {
             console.error('Upload error:', error);
             Toast.show({
