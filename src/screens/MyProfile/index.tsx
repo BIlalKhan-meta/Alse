@@ -5,15 +5,17 @@ import {
   Image,
   TouchableOpacity,
   ScrollView,
-  TextInput,
   FlatList,
-  Modal,
   RefreshControl,
 } from 'react-native';
 import {useIsFocused, useNavigation} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
 import {images} from '../../utils/images';
 import {selectUserProfile, GetUserProfile} from '../../store/slices/authSlice';
+import {
+  selectProfileData,
+  initializeProfile,
+} from '../../store/slices/settingsSlice';
 import {
   fetchUserPosts,
   selectUserPosts,
@@ -23,7 +25,6 @@ import {
 import {useAppDispatch} from '../../hooks/storeHooks';
 import Loader from '../../components/Loader';
 import GlobalHeader from '../../components/GlobalHeader';
-import {MessageCircle, Bookmark} from 'lucide-react-native';
 
 import styles from './styles';
 import {colors} from '../../utils/theme';
@@ -38,6 +39,7 @@ const MyProfile: React.FC = () => {
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const user = useSelector(selectUserProfile);
+  const profileData = useSelector(selectProfileData); // Get profile data from settings
   const isFocused = useIsFocused();
 
   // Local state
@@ -50,11 +52,48 @@ const MyProfile: React.FC = () => {
   const postsLoading = useSelector(selectPostsLoading);
   const postsError = useSelector(selectPostsError);
 
+  // Initialize profile data when user is available
+  useEffect(() => {
+    if (user && !profileData) {
+      dispatch(initializeProfile(user));
+    }
+  }, [user, profileData, dispatch]);
+
+  // Get the most up-to-date profile information
+  const getProfileInfo = useCallback(() => {
+    // Priority: profileData from settings > user from auth > defaults
+    return {
+      fullName:
+        profileData?.firstName && profileData?.lastName
+          ? `${profileData.firstName} ${profileData.lastName}`.trim()
+          : user?.full_name || 'User',
+
+      username:
+        profileData?.userName ||
+        user?.username ||
+        user?.email?.split('@')[0] ||
+        'user',
+
+      location:
+        profileData?.location || user?.location_name || user?.city || '',
+
+      bio:
+        profileData?.description ||
+        user?.bio ||
+        '✨ Add a short bio to tell people about yourself! 🌟: \n 🌍 Traveler \n 🎨 Artist \n 💻 Developer',
+
+      avatar: profileData?.avatar || user?.avatar,
+    };
+  }, [profileData, user]);
+
+  // Get current profile info
+  const currentProfile = getProfileInfo();
+
   // Statistics derived from actual data
   const stats = {
     posts: posts.length,
-    followers: user?.followers_count ?? 0, // Use actual data or fallback
-    following: user?.following_count ?? 0, // Use actual data or fallback
+    followers: user?.followers?.length || user?.followers_count || 0,
+    following: user?.following?.length || user?.following_count || 0,
   };
 
   useLayoutEffect(() => {
@@ -68,6 +107,11 @@ const MyProfile: React.FC = () => {
     if (!user || !user.id) {
       try {
         const userProfile = await dispatch(GetUserProfile()).unwrap();
+
+        // Initialize profile data in settings slice
+        if (userProfile?.data) {
+          dispatch(initializeProfile(userProfile.data));
+        }
 
         // Fetch posts using the user ID
         if (userProfile?.data?.id) {
@@ -93,6 +137,11 @@ const MyProfile: React.FC = () => {
     try {
       // Always refetch profile data on manual refresh
       const userProfile = await dispatch(GetUserProfile()).unwrap();
+
+      // Update profile data in settings slice
+      if (userProfile?.data) {
+        dispatch(initializeProfile(userProfile.data));
+      }
 
       // Refetch posts
       if (userProfile?.data?.id) {
@@ -154,6 +203,21 @@ const MyProfile: React.FC = () => {
     console.log('Share Profile');
   }, []);
 
+  // Helper function to get display avatar
+  const getDisplayAvatar = useCallback(() => {
+    const avatar = currentProfile.avatar;
+
+    if (
+      !avatar ||
+      avatar ===
+        'http://aabcndbkji.us-east-1.awsapprunner.com/storage/default.png'
+    ) {
+      return images.profile;
+    }
+
+    return {uri: avatar};
+  }, [currentProfile.avatar]);
+
   const renderPostItem = useCallback(
     ({item}: {item: PostItem}) => (
       <TouchableOpacity style={styles.postItem}>
@@ -195,32 +259,20 @@ const MyProfile: React.FC = () => {
         <View style={styles.profileSection}>
           <View style={styles.profileHeader}>
             <View style={styles.profileImageContainer}>
-              <Image
-                source={
-                  user?.avatar &&
-                  user?.avatar !==
-                    'http://aabcndbkji.us-east-1.awsapprunner.com/storage/default.png'
-                    ? {uri: user.avatar}
-                    : images.profile // TODO replace with avatar placeholder
-                }
-                style={styles.profileImage}
-              />
+              <Image source={getDisplayAvatar()} style={styles.profileImage} />
             </View>
 
             <View style={styles.profileInfo}>
-              <Text style={styles.userName}>{user?.full_name || 'User'}</Text>
-              <Text style={styles.userHandle}>
-                @{user?.username || user?.email?.split('@')[0]}
-              </Text>
-              <Text style={styles.location}>{user?.city}</Text>
+              <Text style={styles.userName}>{currentProfile.fullName}</Text>
+              <Text style={styles.userHandle}>@{currentProfile.username}</Text>
+              {currentProfile.location ? (
+                <Text style={styles.location}>{currentProfile.location}</Text>
+              ) : null}
             </View>
           </View>
 
           <View style={styles.bioSection}>
-            <Text style={styles.bioText}>
-              {user?.bio ||
-                '✨ Add a short bio to tell people about yourself! 🌟: \n 🌍 Traveler \n 🎨 Artist \n 💻 Developer'}
-            </Text>
+            <Text style={styles.bioText}>{currentProfile.bio}</Text>
           </View>
         </View>
 

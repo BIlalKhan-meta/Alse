@@ -1,26 +1,41 @@
-import React, {useState} from 'react';
+import React from 'react';
 import {
   View,
-  Image,
   TextInput,
   TouchableOpacity,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
-import {launchImageLibrary} from 'react-native-image-picker';
 import styles from '../styles';
-import {editProfile} from '../../../api/profile';
 import {colors} from '../../../utils/theme';
 import InterRegular from '../../../components/Text/InterRegular';
 import {useAppTranslation} from '../../../i18n/hooks/useAppTranslation';
-import Toast from 'react-native-toast-message';
 import {LocationEdit} from 'lucide-react-native';
-import {useSelector} from 'react-redux';
-import {selectUserProfile} from '../../../store/slices/authSlice';
 
-const ProfileForm = ({profileData, handleProfileUpdate, setIsEditing}) => {
-  const user = useSelector(selectUserProfile);
-  const [uploading, setUploading] = useState(false);
+interface ProfileFormProps {
+  profileData: {
+    firstName: string;
+    lastName: string;
+    userName: string;
+    location: string;
+    description: string;
+    pronouns: string;
+    storeName: string;
+    storeDescription: string;
+    avatar: string | null;
+  };
+  handleProfileUpdate: (field: string, value: string) => void;
+  onSave: () => void;
+  onCancel: () => void;
+  loading: boolean;
+}
+
+const ProfileForm: React.FC<ProfileFormProps> = ({
+  profileData,
+  handleProfileUpdate,
+  onSave,
+  onCancel,
+  loading,
+}) => {
   const {t} = useAppTranslation();
 
   return (
@@ -35,7 +50,6 @@ const ProfileForm = ({profileData, handleProfileUpdate, setIsEditing}) => {
             value={profileData.firstName}
             onChangeText={text => handleProfileUpdate('firstName', text)}
             placeholder={t('settings.firstName')}
-            // editable={isEditing}
           />
         </View>
         <View style={styles.inputContainer}>
@@ -109,55 +123,9 @@ const ProfileForm = ({profileData, handleProfileUpdate, setIsEditing}) => {
 
       <TouchableOpacity
         style={styles.saveButton}
-        onPress={async () => {
-          try {
-            setUploading(true);
-            const formData = new FormData();
-
-            // Map profile data to API fields according to the curl example
-            if (profileData.description) {
-              formData.append('bio', profileData.description);
-            }
-            if (profileData.location) {
-              formData.append('location_name', profileData.location);
-            }
-            // Add other fields as needed
-            if (profileData.firstName) {
-              formData.append('first_name', profileData.firstName);
-            }
-            if (profileData.lastName) {
-              formData.append('last_name', profileData.lastName);
-            }
-            if (profileData.userName) {
-              formData.append('username', profileData.userName);
-            }
-            if (profileData.pronouns) {
-              formData.append('pronouns', profileData.pronouns);
-            }
-
-            const response = await editProfile(formData);
-
-            if (response.data) {
-              Toast.show({
-                type: 'success',
-                text1: 'Success',
-                text2: 'Profile updated successfully!',
-              });
-              setIsEditing();
-            }
-          } catch (error) {
-            console.error('Upload error:', error);
-            Toast.show({
-              type: 'error',
-              text1: 'Error',
-              text2: 'Failed to update profile',
-            });
-          } finally {
-            setUploading(false);
-          }
-        }}
-        disabled={uploading}>
-        {uploading ? (
+        onPress={onSave}
+        disabled={loading}>
+        {loading ? (
           <ActivityIndicator color="white" />
         ) : (
           <InterRegular style={styles.saveButtonText}>

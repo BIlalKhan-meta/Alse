@@ -7,11 +7,10 @@ import HomeNavigation from '../HomeNavigation';
 import {images} from '../../utils/images';
 import NavigationOptions from '../NavigationOptions';
 import MarketPlaceNavigation from '../MarketPlaceNavigator';
-import MenuNavigation from '../MenuNavigation';
 import LiveStreamScreen from '../../screens/Livestream/GoLive';
 import SearchTab from '../SearchTab';
 import {Search} from 'lucide-react-native';
-import VideosTab from '../VideosTab/Index';
+import VideosTab from '../VideosTab';
 import MyProfile from '../../screens/MyProfile';
 import {useSelector} from 'react-redux';
 import {selectUserProfile} from '../../store/slices/authSlice';
@@ -20,7 +19,6 @@ import {User} from 'lucide-react-native';
 const TabNavigation = () => {
   const Tab = createBottomTabNavigator();
   const user = useSelector(selectUserProfile);
-  console.log('this is user', user);
 
   return (
     <Tab.Navigator

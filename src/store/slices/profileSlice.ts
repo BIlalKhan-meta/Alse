@@ -60,12 +60,9 @@ export const fetchUserPosts = createAsyncThunk(
   async (userId: string, {rejectWithValue}) => {
     try {
       const response = await getUserPosts(userId);
-      console.log('API Response:', response.data);
-      
       // Extract posts from nested response structure: response.data.data.data
       const apiPosts: ApiPost[] = response.data?.data?.data || [];
-      console.log('API Posts:', apiPosts.length, 'posts found');
-      
+
       // Filter posts that have media (disregard posts without media) and transform to PostItem format
       const postsWithMedia = apiPosts
         .filter((post: ApiPost) => post.media && post.media.length > 0)
@@ -74,12 +71,13 @@ export const fetchUserPosts = createAsyncThunk(
           uri: post.media[0].path, // Use first media item's path for grid display
           title: post.description,
         }));
-      
-      console.log('Posts with media:', postsWithMedia.length, 'posts');
+
       return postsWithMedia;
     } catch (error: any) {
       console.error('Fetch posts error:', error);
-      return rejectWithValue(error.response?.data?.message || 'Failed to fetch posts');
+      return rejectWithValue(
+        error.response?.data?.message || 'Failed to fetch posts',
+      );
     }
   },
 );
@@ -88,16 +86,16 @@ const profileSlice = createSlice({
   name: 'profile',
   initialState,
   reducers: {
-    clearPosts: (state) => {
+    clearPosts: state => {
       state.posts = [];
     },
-    clearError: (state) => {
+    clearError: state => {
       state.error = null;
     },
   },
-  extraReducers: (builder) => {
+  extraReducers: builder => {
     builder
-      .addCase(fetchUserPosts.pending, (state) => {
+      .addCase(fetchUserPosts.pending, state => {
         state.loading = true;
         state.error = null;
       })

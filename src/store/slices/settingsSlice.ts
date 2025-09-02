@@ -7,6 +7,8 @@ import {
   updateNotificationSettings,
   updateSellerSettings,
 } from '../../api/settings';
+import {editProfile} from '../../api/profile';
+import {GetUserProfile} from './authSlice';
 
 interface SecuritySettings {
   post_visibility: 'public' | 'followers' | 'private';
@@ -44,6 +46,19 @@ interface SellerSettings {
   auto_accept_orders: boolean;
 }
 
+// Add Profile interface
+interface ProfileData {
+  firstName: string;
+  lastName: string;
+  userName: string;
+  location: string;
+  description: string;
+  pronouns: string;
+  storeName: string;
+  storeDescription: string;
+  avatar: string | null;
+}
+
 // local-only
 interface BiddingSettings {
   autoBid: boolean;
@@ -62,9 +77,11 @@ interface SettingsState {
   security: SecuritySettings | null;
   notifications: NotificationSettings | null;
   seller: SellerSettings | null;
+  profile: ProfileData | null; // Add profile to state
   biddingSettings: BiddingSettings; // always present
   universalSettings: UniversalSettings;
   loading: boolean;
+  profileUpdateLoading: boolean; // Separate loading state for profile updates
   error: string | null;
 }
 
@@ -72,6 +89,7 @@ const initialState: SettingsState = {
   security: null,
   notifications: null,
   seller: null,
+  profile: null, // Initialize profile
   biddingSettings: {
     autoBid: false,
     bidConfirmation: false,
@@ -84,13 +102,9 @@ const initialState: SettingsState = {
     theme: 'system',
   },
   loading: false,
+  profileUpdateLoading: false,
   error: null,
 };
-
-// biddingSettings: {
-//     autoBid: boolean;
-//
-//   };
 
 // -----------------------
 // Thunks
@@ -99,7 +113,7 @@ export const fetchAllSettings = createAsyncThunk(
   'settings/fetchAll',
   async () => {
     const [privacyRes, notifRes, sellerRes] = await Promise.all([
-      getPrivacySettings(), // Remove the .then() chain
+      getPrivacySettings(),
       getNotificationSettings(),
       getSellerSettings(),
     ]);
@@ -114,14 +128,38 @@ export const fetchAllSettings = createAsyncThunk(
   },
 );
 
+// New thunk for updating profile
+export const updateUserProfile = createAsyncThunk(
+  'settings/updateProfile',
+  async (
+    profileData: {
+      formData: FormData;
+      profileFields: ProfileData;
+    },
+    {rejectWithValue},
+  ) => {
+    try {
+      const response = await editProfile(profileData.formData);
+      console.log('this is response from edit profile', response);
+
+      // Return both the API response and the local profile fields
+      return {
+        apiResponse: response.data,
+        profileFields: profileData.profileFields,
+      };
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data || 'Profile update failed');
+    }
+  },
+);
+
 export const savePrivacySettings = createAsyncThunk(
   'settings/savePrivacy',
   async (data: any) => {
-    // Remove the id parameter
     console.log('Making PUT API call with data:', data);
     const res = await updatePrivacySettings(data);
     console.log('API response:', res.data);
-    return res.data.data; // Return the updated settings
+    return res.data.data;
   },
 );
 
@@ -164,6 +202,25 @@ export const settingsSlice = createSlice({
     ) => {
       state.biddingSettings = {...state.biddingSettings, ...action.payload};
     },
+    // New reducer for updating profile data locally
+    updateProfile: (state, action: PayloadAction<Partial<ProfileData>>) => {
+      state.profile = {...state.profile, ...action.payload};
+    },
+    // Initialize profile from user data
+    initializeProfile: (state, action: PayloadAction<any>) => {
+      const user = action.payload;
+      state.profile = {
+        firstName: user?.first_name || user?.full_name?.split(' ')[0] || '',
+        lastName: user?.last_name || user?.full_name?.split(' ')[1] || '',
+        userName: user?.username || user?.full_name || '',
+        location: user?.location_name || '',
+        description: user?.bio || '',
+        pronouns: user?.pronouns || '',
+        storeName: user?.store_name || '',
+        storeDescription: user?.store_description || '',
+        avatar: user?.avatar || null,
+      };
+    },
   },
   extraReducers: builder => {
     // Fetch all
@@ -180,6 +237,31 @@ export const settingsSlice = createSlice({
     builder.addCase(fetchAllSettings.rejected, (state, action) => {
       state.loading = false;
       state.error = action.error.message || 'Failed to fetch settings';
+    });
+
+    builder.addCase(GetUserProfile.fulfilled, (state, action) => {
+      state.profile = action.payload?.data; // full backend profile
+    });
+    // Profile update cases
+    builder.addCase(updateUserProfile.pending, state => {
+      state.profileUpdateLoading = true;
+      state.error = null;
+    });
+    builder.addCase(updateUserProfile.fulfilled, (state, action) => {
+      state.profileUpdateLoading = false;
+
+      // Safely merge existing profile with API response + profileFields
+      state.profile = {
+        ...state.profile, // keep everything already there
+        ...action.payload.profileFields, // local fields (like inputs)
+        ...action.payload.apiResponse, // API-confirmed fields
+        avatar: action.payload.apiResponse?.avatar ?? state.profile?.avatar, // keep old avatar if not returned
+      };
+    });
+    //
+    builder.addCase(updateUserProfile.rejected, (state, action) => {
+      state.profileUpdateLoading = false;
+      state.error = action.payload as string;
     });
 
     // Save updates
@@ -201,6 +283,13 @@ export const {
   updateNotifications,
   updateSeller,
   updateBidding,
+  updateProfile,
+  initializeProfile,
 } = settingsSlice.actions;
+
+// Selectors
+export const selectProfileData = (state: any) => state.settings.profile;
+export const selectProfileUpdateLoading = (state: any) =>
+  state.settings.profileUpdateLoading;
 
 export default settingsSlice.reducer;
