@@ -2,7 +2,6 @@ import axiosInstance from '.';
 import endpoints from './endpoints';
 
 export const getProfile = () => {
-  // console.log("=====",axiosInstance.get(`${endpoints.profile.getProfile}`));
   return axiosInstance.get(`${endpoints.profile.getProfile}`);
 };
 

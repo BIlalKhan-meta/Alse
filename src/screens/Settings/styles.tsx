@@ -347,6 +347,7 @@ const styles = StyleSheet.create({
   saveButton: {
     alignSelf: 'flex-end',
     backgroundColor: colors.themeColor,
+    marginTop: 8,
     paddingVertical: 14,
     marginTop: 16,
     width: '100%',
@@ -950,6 +951,22 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 4,
     marginLeft: 4,
+  },
+  // Profile form
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+    gap: 15,
+  },
+  cancelButton: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: colors.themeColor,
+    flex: 1,
+  },
+  cancelButtonText: {
+    color: colors.themeColor,
   },
 });
 

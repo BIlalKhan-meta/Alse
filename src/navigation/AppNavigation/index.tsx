@@ -45,7 +45,7 @@ import GroupDetailsScreen from '../../screens/Groups/GroupDetailsScreen';
 import CreateGroup from '../../screens/Groups/CreateGroup';
 import Settings from '../../screens/Settings';
 import LanguageSelection from '../../screens/Settings/LanguageSelection';
-import VideosTab from '../VideosTab/Index';
+import VideosTab from '../VideosTab';
 import SocialActivity from '../../screens/Settings/SocialActivity';
 import BiddingAuctionSetting from '../../screens/Settings/Bidding&Auction';
 import MarketplaceActivity from '../../screens/Settings/MarketplaceActivity';
