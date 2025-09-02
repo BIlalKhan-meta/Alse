@@ -13,6 +13,31 @@ export const updatePrivacySettings = (data: any) => {
     },
   });
 };
+
+export const changePassword = (data: {
+  old_password: string;
+  new_password: string;
+  confirm_password: string;
+}) => {
+  return axiosInstance.post(endpoints.settings.changePassword, data, {
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+};
+
+export const deleteAccount = () => {
+  return axiosInstance.post(
+    endpoints.settings.deleteAccount,
+    {},
+    {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    },
+  );
+};
+
 export const getNotificationSettings = () => {
   return axiosInstance.get(endpoints.settings.notifications);
 };

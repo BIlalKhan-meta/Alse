@@ -51,6 +51,11 @@ import BiddingAuctionSetting from '../../screens/Settings/Bidding&Auction';
 import MarketplaceActivity from '../../screens/Settings/MarketplaceActivity';
 import NotificationSettings from '../../screens/Settings/NotificationSettings';
 import SecurityPrivacy from '../../screens/Settings/Security&Privacy';
+import ChangePassword from '../../screens/Settings/ChangePassword';
+import DisableDeleteAccount from '../../screens/Settings/DisableDeleteAccount';
+import PurchaseHistory from '../../screens/Settings/PurchaseHistory';
+import SavedAuctions from '../../screens/Settings/SavedAuctions';
+import ShippingAddress from '../../screens/Settings/ShippingAddress';
 
 const AppNavigation = () => {
   const Stack = createNativeStackNavigator();
@@ -107,6 +112,31 @@ const AppNavigation = () => {
         <Stack.Screen
           name="SecurityPrivacy"
           component={SecurityPrivacy}
+          // options={NavigationOptions}
+        />
+        <Stack.Screen
+          name="ChangePassword"
+          component={ChangePassword}
+          // options={NavigationOptions}
+        />
+        <Stack.Screen
+          name="DisableDeleteAccount"
+          component={DisableDeleteAccount}
+          // options={NavigationOptions}
+        />
+        <Stack.Screen
+          name="PurchaseHistory"
+          component={PurchaseHistory}
+          // options={NavigationOptions}
+        />
+        <Stack.Screen
+          name="SavedAuctions"
+          component={SavedAuctions}
+          // options={NavigationOptions}
+        />
+        <Stack.Screen
+          name="ShippingAddress"
+          component={ShippingAddress}
           // options={NavigationOptions}
         />
         <Stack.Screen

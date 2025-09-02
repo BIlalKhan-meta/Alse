@@ -132,6 +132,11 @@ const endpoints = {
     privacy: '/privacy/settings',
     notifications: '/notifications/delivery-preferences',
     sellerSettings: '/seller/settings',
+    changePassword: '/change-password',
+    deleteAccount: '/delete-my-account',
+  },
+  bidding: {
+    settings: '/bidding/settings',
   },
 };
 

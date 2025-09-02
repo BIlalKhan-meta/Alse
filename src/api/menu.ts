@@ -1,8 +1,12 @@
 import axiosInstance from '.';
 import endpoints from './endpoints';
 
-export const getSavedItems = () => {
-  return axiosInstance.get(endpoints.menu.getSavedItems);
+export const getSavedItems = (params?: {
+  type?: string;
+  page?: number;
+  per_page?: number;
+}) => {
+  return axiosInstance.get(endpoints.menu.getSavedItems, {params});
 };
 export const getAboutUs = () => {
   return axiosInstance.get(endpoints.menu.aboutUs);

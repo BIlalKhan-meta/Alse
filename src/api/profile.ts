@@ -7,11 +7,16 @@ export const getProfile = () => {
 };
 
 export const editProfile = (formData: FormData) => {
+  console.log('editProfile called with FormData:', formData);
+
+  // Log FormData contents for debugging
+  if (formData && typeof formData.getParts === 'function') {
+    console.log('FormData parts:', formData.getParts());
+  }
+
   return axiosInstance.post(endpoints.profile.editProfile, formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
+    formData: true,
+  } as any);
 };
 
 export const changePassword = (formData: FormData) => {
@@ -19,7 +24,7 @@ export const changePassword = (formData: FormData) => {
 
   return axiosInstance.post(endpoints.profile.changePassword, formData, {
     formData: true,
-  });
+  } as any);
 };
 
 export const getUserPosts = (userId: string) => {

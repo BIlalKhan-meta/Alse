@@ -1,7 +1,13 @@
 import {Picker} from '@react-native-picker/picker';
 import {ChevronDown, ChevronRight} from 'lucide-react-native';
 import React, {useState} from 'react';
-import {View, Switch, TouchableOpacity, Platform} from 'react-native';
+import {
+  View,
+  Switch,
+  TouchableOpacity,
+  Platform,
+  ActivityIndicator,
+} from 'react-native';
 import InterLight from '../../../components/Text/InterLight';
 import InterRegular from '../../../components/Text/InterRegular';
 import {colors} from '../../../utils/theme';
@@ -19,6 +25,7 @@ interface SettingsItemProps {
   options?: {label: string; value: string}[];
   onPress?: () => void;
   showChevron?: boolean;
+  loading?: boolean;
 }
 
 const SettingsItem = ({
@@ -32,6 +39,7 @@ const SettingsItem = ({
   options = [],
   onPress,
   showChevron = false,
+  loading = false,
 }: SettingsItemProps) => {
   const [isPickerVisible, setIsPickerVisible] = useState(false);
 
@@ -82,13 +90,19 @@ const SettingsItem = ({
         </View>
 
         {type === 'switch' && (
-          <Switch
-            value={value}
-            onValueChange={onToggle}
-            trackColor={{false: '#E5E7EB', true: colors.themeColor}}
-            thumbColor={value ? '#ffffff' : '#ffffff'}
-            ios_backgroundColor="#E5E7EB"
-          />
+          <View style={styles.switchContainer}>
+            {loading ? (
+              <ActivityIndicator size="small" color={colors.themeColor} />
+            ) : (
+              <Switch
+                value={value}
+                onValueChange={onToggle}
+                trackColor={{false: '#E5E7EB', true: colors.themeColor}}
+                thumbColor={value ? '#ffffff' : '#ffffff'}
+                ios_backgroundColor="#E5E7EB"
+              />
+            )}
+          </View>
         )}
 
         {type === 'select' && (

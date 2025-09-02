@@ -172,6 +172,13 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
   },
 
+  switchContainer: {
+    width: 50,
+    height: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
   settingsItemLeft: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -340,9 +347,9 @@ const styles = StyleSheet.create({
   saveButton: {
     alignSelf: 'flex-end',
     backgroundColor: colors.themeColor,
-    margin: 16,
     paddingVertical: 14,
-    width: width * 0.25,
+    marginTop: 16,
+    width: '100%',
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
@@ -420,9 +427,9 @@ const styles = StyleSheet.create({
   },
   // Language Selection Screen Styles
   languageHeader: {
-    alignItems: 'center',
-    paddingVertical: 40,
-    paddingHorizontal: 20,
+    alignItems: 'flex-start',
+    paddingVertical: 10,
+    paddingLeft: 16,
   },
 
   globeContainer: {
@@ -436,7 +443,7 @@ const styles = StyleSheet.create({
   },
 
   languageTitle: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
     color: colors.black,
   },
@@ -592,6 +599,357 @@ const styles = StyleSheet.create({
     padding: 6,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+
+  // Navigation Item Styles for Marketplace Activity
+  navigationItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    backgroundColor: colors.white,
+  },
+
+  navigationItemText: {
+    fontSize: 16,
+    color: colors.black,
+    fontWeight: '500',
+  },
+
+  navigationArrow: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F0F0F0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // Delete/Disable Account Buttons
+  deleteAccountButton: {
+    backgroundColor: '#DC2626',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+
+  deleteAccountButtonText: {
+    color: colors.white,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+
+  disableAccountButton: {
+    backgroundColor: '#DC2626',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+
+  disableAccountButtonText: {
+    color: colors.white,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+
+  // Modal Styles
+  modalMessage: {
+    fontSize: 16,
+    color: colors.black,
+    lineHeight: 24,
+    marginBottom: 24,
+    textAlign: 'center',
+  },
+
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+
+  modalCancelButton: {
+    flex: 1,
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.lightGrey,
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  modalCancelButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.black,
+  },
+
+  modalConfirmButton: {
+    flex: 1,
+    backgroundColor: '#DC2626',
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  modalConfirmButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.white,
+  },
+
+  // Purchase History Styles
+  purchasesContainer: {
+    paddingHorizontal: 16,
+    paddingTop: 20,
+  },
+
+  purchaseItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    backgroundColor: colors.white,
+    marginBottom: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+
+  productImageContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 8,
+    overflow: 'hidden',
+    marginRight: 12,
+  },
+
+  productImage: {
+    width: '100%',
+    height: '100%',
+  },
+
+  productDetails: {
+    flex: 1,
+    marginRight: 12,
+  },
+
+  productName: {
+    fontSize: 16,
+    color: colors.black,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+
+  productId: {
+    fontSize: 14,
+    color: colors.lightGrey,
+  },
+
+  quantityContainer: {
+    marginRight: 12,
+    minWidth: 60,
+    alignItems: 'center',
+  },
+
+  quantityText: {
+    fontSize: 14,
+    color: colors.black,
+    fontWeight: '500',
+  },
+
+  categoryContainer: {
+    marginRight: 12,
+    minWidth: 80,
+    alignItems: 'center',
+  },
+
+  categoryText: {
+    fontSize: 14,
+    color: colors.black,
+    fontWeight: '500',
+  },
+
+  optionsButton: {
+    padding: 8,
+    borderRadius: 4,
+  },
+
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+    paddingHorizontal: 20,
+  },
+
+  emptyText: {
+    fontSize: 16,
+    color: colors.lightGrey,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+
+  retryButton: {
+    backgroundColor: colors.themeColor,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+  },
+
+  retryButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.white,
+  },
+
+  // Saved Auctions Styles
+  savedItemsContainer: {
+    paddingHorizontal: 16,
+    paddingTop: 20,
+  },
+
+  savedItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    backgroundColor: colors.white,
+    marginBottom: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+
+  // Shipping Address Styles
+  formContainer: {
+    paddingHorizontal: 16,
+    paddingTop: 20,
+    paddingBottom: 40,
+  },
+
+  shippingInputContainer: {
+    marginBottom: 20,
+  },
+
+  shippingTextInput: {
+    borderWidth: 1,
+    borderColor: colors.lightGrey,
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 16,
+    color: colors.themeColor,
+    backgroundColor: colors.white,
+  },
+
+  phoneInputContainer: {
+    flexDirection: 'row',
+    marginBottom: 20,
+  },
+
+  countryCodeContainer: {
+    width: 100,
+    borderWidth: 1,
+    borderColor: colors.lightGrey,
+    borderRadius: 8,
+    backgroundColor: colors.white,
+    marginRight: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+  },
+
+  countryCodePicker: {
+    flex: 1,
+    height: 50,
+  },
+
+  phoneNumberContainer: {
+    flex: 1,
+  },
+
+  phoneNumberInput: {
+    borderWidth: 1,
+    borderColor: colors.lightGrey,
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 16,
+    color: colors.themeColor,
+    backgroundColor: colors.white,
+  },
+
+  dropdownInput: {
+    borderWidth: 1,
+    borderColor: colors.lightGrey,
+    borderRadius: 8,
+    backgroundColor: colors.white,
+  },
+
+  dropdownContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+
+  dropdownText: {
+    fontSize: 16,
+    color: colors.themeColor,
+  },
+
+  pickerContainer: {
+    borderWidth: 1,
+    borderColor: colors.lightGrey,
+    borderRadius: 8,
+    backgroundColor: colors.white,
+    marginTop: 4,
+  },
+
+  shippingPicker: {
+    height: 200,
+  },
+
+  rowContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+
+  halfWidth: {
+    flex: 1,
+  },
+
+  shippingErrorText: {
+    color: '#DC2626',
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 4,
   },
 });
 

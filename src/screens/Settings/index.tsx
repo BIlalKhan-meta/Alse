@@ -22,16 +22,23 @@ import {fetchAllSettings} from '../../store/slices/settingsSlice';
 import {useAppTranslation} from '../../i18n/hooks/useAppTranslation';
 import GlobalHeader from '../../components/GlobalHeader';
 import ProfileForm from './components/profileForm';
-import {launchImageLibrary} from 'react-native-image-picker';
+import {
+  launchImageLibrary,
+  ImageLibraryOptions,
+  Asset,
+} from 'react-native-image-picker';
 import Toast from 'react-native-toast-message';
 import {editProfile} from '../../api/profile';
 import {useRoute} from '@react-navigation/native';
+
+interface RouteParams {
+  isEditMode?: boolean;
+}
 
 const Settings = ({navigation}: any) => {
   const dispatch = useAppDispatch();
   const user = useSelector(selectUserProfile);
   const {currentLanguage, t} = useAppTranslation();
-  const [uploading, setUploading] = useState(false);
   const [avatarUri, setAvatarUri] = useState(user?.avatar || null);
 
   useEffect(() => {
@@ -40,7 +47,7 @@ const Settings = ({navigation}: any) => {
 
   // Profile editing state
   const route = useRoute();
-  const {isEditMode} = route.params ?? {};
+  const {isEditMode} = (route.params as RouteParams) ?? {};
   const [isEditing, setIsEditing] = useState(isEditMode || false);
   const [profileData, setProfileData] = useState({
     firstName: user?.first_name || user?.full_name?.split(' ')[0] || '',
@@ -53,6 +60,8 @@ const Settings = ({navigation}: any) => {
     storeDescription: user?.store_description || '',
   });
 
+  console.log('User ======>', JSON.stringify(user, null, 2));
+
   const handleProfileUpdate = (field: string, value: string) => {
     setProfileData(prev => ({
       ...prev,
@@ -62,7 +71,7 @@ const Settings = ({navigation}: any) => {
 
   // Upload image functions
   const handleImagePick = async () => {
-    const options = {
+    const options: ImageLibraryOptions = {
       mediaType: 'photo',
       quality: 0.8,
       maxWidth: 800,
@@ -100,10 +109,8 @@ const Settings = ({navigation}: any) => {
     }
   };
 
-  const uploadProfileImage = async image => {
+  const uploadProfileImage = async (image: Asset) => {
     if (!image.uri) return;
-
-    setUploading(true);
 
     try {
       const formData = new FormData();
@@ -113,14 +120,13 @@ const Settings = ({navigation}: any) => {
         uri: image.uri,
         type: image.type || 'image/jpeg',
         name: image.fileName || `profile-${Date.now()}.jpg`,
-      });
+      } as any);
 
-      // Append other profile data if needed
-      Object.keys(profileData).forEach(key => {
-        if (key !== 'avatar') {
-          formData.append(key, profileData[key]);
-        }
-      });
+      // Log the FormData contents for debugging
+      console.log('Image FormData contents:');
+      console.log('Avatar URI:', image.uri);
+      console.log('Avatar type:', image.type);
+      console.log('Avatar name:', image.fileName);
 
       const response = await editProfile(formData);
 
@@ -141,8 +147,6 @@ const Settings = ({navigation}: any) => {
         type: 'error',
         text1: 'Failed to upload profile image',
       });
-    } finally {
-      setUploading(false);
     }
   };
 
@@ -204,6 +208,7 @@ const Settings = ({navigation}: any) => {
                 </InterBoldLabel>
                 <InterLight style={styles.profileUsername}>
                   _{user?.username || user?.email?.split('@')[0]}
+                  {user?.email?.split('@')[0]}
                 </InterLight>
               </View>
               <InterLight style={styles.profileLocation}>
