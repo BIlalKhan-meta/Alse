@@ -13,6 +13,7 @@ import InterRegular from '../../components/Text/InterRegular';
 import {colors} from '../../utils/theme';
 import {changePassword} from '../../api/settings';
 import Toast from 'react-native-toast-message';
+import {useTranslation} from 'react-i18next';
 
 const ChangePassword = ({navigation}: any) => {
   const [oldPassword, setOldPassword] = useState('');
@@ -20,12 +21,14 @@ const ChangePassword = ({navigation}: any) => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  const {t} = useTranslation();
+
   const validateForm = () => {
     if (!oldPassword.trim()) {
       Toast.show({
         type: 'error',
-        text1: 'Error',
-        text2: 'Please enter your current password',
+        text1: t('error'),
+        text2: t('toast.currentPassword'),
       });
       return false;
     }
@@ -33,8 +36,8 @@ const ChangePassword = ({navigation}: any) => {
     if (!newPassword.trim()) {
       Toast.show({
         type: 'error',
-        text1: 'Error',
-        text2: 'Please enter a new password',
+        text1: t('error'),
+        text2: t('toast.newPassword'),
       });
       return false;
     }
@@ -42,8 +45,8 @@ const ChangePassword = ({navigation}: any) => {
     if (newPassword.length < 6) {
       Toast.show({
         type: 'error',
-        text1: 'Error',
-        text2: 'New password must be at least 6 characters long',
+        text1: t('error'),
+        text2: t('toast.newPasswordLength'),
       });
       return false;
     }
@@ -51,8 +54,8 @@ const ChangePassword = ({navigation}: any) => {
     if (newPassword !== confirmPassword) {
       Toast.show({
         type: 'error',
-        text1: 'Error',
-        text2: 'New password and confirm password do not match',
+        text1: t('error'),
+        text2: t('toast.passwordMatch'),
       });
       return false;
     }
@@ -60,8 +63,8 @@ const ChangePassword = ({navigation}: any) => {
     if (oldPassword === newPassword) {
       Toast.show({
         type: 'error',
-        text1: 'Error',
-        text2: 'New password must be different from current password',
+        text1: t('error'),
+        text2: t('toast.passwordMatch'),
       });
       return false;
     }
@@ -86,8 +89,8 @@ const ChangePassword = ({navigation}: any) => {
       if (response.data) {
         Toast.show({
           type: 'success',
-          text1: 'Success',
-          text2: 'Password changed successfully!',
+          text1: t('success'),
+          text2: t('toast.passwordChanged'),
         });
 
         // Clear form and navigate back
@@ -103,19 +106,19 @@ const ChangePassword = ({navigation}: any) => {
     } catch (error: any) {
       console.error('Change password error:', error);
 
-      let errorMessage = 'Failed to change password. Please try again.';
+      let errorMessage = t('toast.failedToChangePassword');
 
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
       } else if (error.response?.status === 401) {
-        errorMessage = 'Current password is incorrect';
+        errorMessage = t('toast.incorrectPassword');
       } else if (error.response?.status === 400) {
-        errorMessage = 'Invalid password format';
+        errorMessage = t('toast.invalidFormat');
       }
 
       Toast.show({
         type: 'error',
-        text1: 'Error',
+        text1: t('error'),
         text2: errorMessage,
       });
     } finally {
@@ -136,7 +139,7 @@ const ChangePassword = ({navigation}: any) => {
         {/* Screen Title */}
         <View style={styles.languageHeader}>
           <InterBoldLabel style={styles.languageTitle}>
-            Change Password
+            {t('changePassword.title')}
           </InterBoldLabel>
         </View>
 
@@ -145,7 +148,7 @@ const ChangePassword = ({navigation}: any) => {
           {/* Current Password Input */}
           <View style={styles.inputContainer}>
             <InterRegular style={styles.inputLabel}>
-              Current Password
+              {t('currentPassword')}
             </InterRegular>
             <TextInput
               style={styles.textInput}
@@ -159,12 +162,14 @@ const ChangePassword = ({navigation}: any) => {
 
           {/* New Password Input */}
           <View style={styles.inputContainer}>
-            <InterRegular style={styles.inputLabel}>New Password</InterRegular>
+            <InterRegular style={styles.inputLabel}>
+              {t('changePassword.newPassword')}
+            </InterRegular>
             <TextInput
               style={styles.textInput}
               value={newPassword}
               onChangeText={setNewPassword}
-              placeholder="Enter new password"
+              placeholder={t('newPassword')}
               placeholderTextColor={colors.lightGrey}
               secureTextEntry
             />
@@ -173,13 +178,13 @@ const ChangePassword = ({navigation}: any) => {
           {/* Confirm Password Input */}
           <View style={styles.inputContainer}>
             <InterRegular style={styles.inputLabel}>
-              Confirm Password
+              {t('changePassword.confirmPassword')}
             </InterRegular>
             <TextInput
               style={styles.textInput}
               value={confirmPassword}
               onChangeText={setConfirmPassword}
-              placeholder="Confirm new password"
+              placeholder={t('confirmPassword')}
               placeholderTextColor={colors.lightGrey}
               secureTextEntry
             />
@@ -193,7 +198,9 @@ const ChangePassword = ({navigation}: any) => {
             {isLoading ? (
               <ActivityIndicator color="white" />
             ) : (
-              <InterRegular style={styles.saveButtonText}>Save</InterRegular>
+              <InterRegular style={styles.saveButtonText}>
+                {t('save')}
+              </InterRegular>
             )}
           </TouchableOpacity>
         </View>

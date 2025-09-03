@@ -16,6 +16,7 @@ import {colors} from '../../utils/theme';
 import {getSavedItems} from '../../api/menu';
 import {MoreVertical} from 'lucide-react-native';
 import Toast from 'react-native-toast-message';
+import {useTranslation} from 'react-i18next';
 
 interface SavedItem {
   id?: number;
@@ -46,6 +47,8 @@ const SavedAuctions = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const {t} = useTranslation();
 
   const fetchSavedItems = async (isRefresh = false) => {
     if (isRefresh) {
@@ -208,7 +211,7 @@ const SavedAuctions = () => {
         {/* Saved Auctions Header */}
         <View style={styles.languageHeader}>
           <InterLightAverage style={styles.languageTitle}>
-            Saved Auctions
+            {t('savedAuctions.title')}
           </InterLightAverage>
         </View>
 
@@ -236,12 +239,14 @@ const SavedAuctions = () => {
         ) : (
           <View style={styles.emptyContainer}>
             <InterRegular style={styles.emptyText}>
-              No saved auctions found
+              {t('savedAuctions.noData')}
             </InterRegular>
             <TouchableOpacity
               style={styles.retryButton}
               onPress={() => fetchSavedItems()}>
-              <InterRegular style={styles.retryButtonText}>Retry</InterRegular>
+              <InterRegular style={styles.retryButtonText}>
+                {t('retry')}
+              </InterRegular>
             </TouchableOpacity>
           </View>
         )}

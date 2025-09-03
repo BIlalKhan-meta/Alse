@@ -47,6 +47,41 @@ export default {
   cancel: 'Cancel',
   done: 'Done',
   or: 'Or',
+  public: 'Public',
+  private: 'Private',
+  followers: 'Followers',
+  everyone: 'Everyone',
+  off: 'Off',
+  retry: 'Retry',
+  save: 'Save',
+  success: 'Success',
+  error: 'Error',
+
+  // Dropdown placeholders
+  selectCountry: 'Select Country',
+  selectCity: 'Select City',
+  selectState: 'Select State',
+  newPassword: 'Enter New Password',
+  confirmPassword: 'Enter Confirm Password',
+
+  // Toasts
+  toast: {
+    // errors
+    somethingWentWrong: 'Something went wrong. Please try again later.',
+    currentPassword: 'Please enter your current password',
+    newPassword: 'Please enter a new password',
+    newPasswordLength: 'New password must be at least 6 characters long',
+    passwordMatch: 'New password and confirm password do not match',
+    samePassword: 'New password must be different from current password',
+    confirmPassword: 'Please confirm your password',
+    incorrectPassword: 'Current password is incorrect',
+    invalidFormat: 'Invalid password format',
+    failedToChangePassword:
+      'Failed to change password. Please try again later.',
+    // success
+    passwordChanged: 'Password changed successfully!',
+    biddingSettingsChanged: 'Bidding settings updated successfully!',
+  },
 
   // input fields:
   emailOrPhone: 'Email/Phone Number',
@@ -134,5 +169,82 @@ export default {
     marketplaceActivity: 'Marketplace Activity',
     securityPrivacy: 'Security & Privacy',
     save: 'Save',
+  },
+
+  // Social Activity
+  socialActivity: {
+    postVisibility: 'Post visibility',
+    allowTags: 'Allow tags',
+    filterOffensive: 'Auto filter offensive words',
+    messageAllowed: 'Who can send a message',
+    commentAllowed: 'Who can comment',
+    storyVisibility: 'Story Visibility',
+    storyReply: 'Who can reply to your story',
+    blockedUsers: 'Blocked users',
+  },
+
+  marketplaceActivity: {
+    title: 'Marketplace activity',
+    purchaseHistory: 'View purchase history',
+    savedAuctions: 'Saved actions',
+    shippingAddress: 'Shipping address',
+    paymentMethods: 'Linked payment methods',
+  },
+
+  purchaseHistory: {
+    title: 'Purchase history',
+    noData: 'No purchase history found',
+  },
+
+  savedAuctions: {
+    title: 'Saved actions',
+    noData: 'No saved actions found',
+  },
+
+  securiyPrivacy: {
+    title: 'Security And Privacy',
+    deviceInfo: 'Device & Login Activity',
+    changePassword: 'Change password',
+    deleteAccount: 'Disable or Delete Account',
+  },
+
+  shippingAddress: {
+    title: 'Shipping address',
+    name: 'Enter full name',
+    address: 'Address (Area and Street)',
+    phoneNumber: 'Enter phone number',
+    //
+    country: 'Country',
+    countryCode: 'Select country code',
+    postalCode: 'Postal code',
+    landmark: 'Landmark',
+    city: 'City',
+    state: 'State',
+  },
+
+  deleteAccount: {
+    title: 'Disable Or Delete Account',
+    deleteAccount: 'Delete Account',
+    deleteYourAccount: 'Delete Your Account',
+    deleteConfirmation:
+      'Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently removed',
+    disableAccount: 'Disable Account',
+    disableYourAccount: 'Disable Your Account',
+    disableConfirmation:
+      'Are you sure you want to disable your account? You can reactivate it later by logging in',
+  },
+
+  changePassword: {
+    title: 'Change Password',
+    currentPassword: 'Current Password',
+    newPassword: 'New Password',
+    confirmPassword: 'Confirm Password',
+  },
+
+  biddingAuction: {
+    title: 'Bidding & Auction Settings',
+    autoBid: 'Auto Bid Configuration',
+    defaultBidIncrement: 'Default Bid Increment',
+    bidConfirmation: 'Bid Confirmation prompts',
   },
 };

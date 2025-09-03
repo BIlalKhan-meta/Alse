@@ -5,8 +5,11 @@ import GlobalHeader from '../../components/GlobalHeader';
 import InterLightAverage from '../../components/Text/InterLightAverage';
 import {ChevronRight} from 'lucide-react-native';
 import {colors} from '../../utils/theme';
+import {useTranslation} from 'react-i18next';
 
 const MarketplaceActivity = ({navigation}: any) => {
+  const {t} = useTranslation();
+
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -20,7 +23,7 @@ const MarketplaceActivity = ({navigation}: any) => {
         {/* Marketplace Activity Header */}
         <View style={styles.languageHeader}>
           <InterLightAverage style={styles.languageTitle}>
-            Marketplace Activity
+            {t('marketplaceActivity.title')}
           </InterLightAverage>
         </View>
 
@@ -31,7 +34,7 @@ const MarketplaceActivity = ({navigation}: any) => {
             style={styles.navigationItem}
             onPress={() => navigation.navigate('PurchaseHistory')}>
             <InterLightAverage style={styles.navigationItemText}>
-              View Purchase History
+              {t('marketplaceActivity.purchaseHistory')}
             </InterLightAverage>
             <View style={styles.navigationArrow}>
               <ChevronRight size={20} color={colors.lightGrey} />
@@ -43,7 +46,7 @@ const MarketplaceActivity = ({navigation}: any) => {
             style={styles.navigationItem}
             onPress={() => navigation.navigate('SavedAuctions')}>
             <InterLightAverage style={styles.navigationItemText}>
-              Saved Auctions
+              {t('marketplaceActivity.savedAuctions')}
             </InterLightAverage>
             <View style={styles.navigationArrow}>
               <ChevronRight size={20} color={colors.lightGrey} />
@@ -55,7 +58,7 @@ const MarketplaceActivity = ({navigation}: any) => {
             style={styles.navigationItem}
             onPress={() => navigation.navigate('ShippingAddress')}>
             <InterLightAverage style={styles.navigationItemText}>
-              Shipping address
+              {t('marketplaceActivity.shippingAddress')}
             </InterLightAverage>
             <View style={styles.navigationArrow}>
               <ChevronRight size={20} color={colors.lightGrey} />
@@ -65,7 +68,7 @@ const MarketplaceActivity = ({navigation}: any) => {
           {/* Linked Payment Methods */}
           <TouchableOpacity style={styles.navigationItem}>
             <InterLightAverage style={styles.navigationItemText}>
-              Linked Payment Methods
+              {t('marketplaceActivity.paymentMethods')}
             </InterLightAverage>
             <View style={styles.navigationArrow}>
               <ChevronRight size={20} color={colors.lightGrey} />

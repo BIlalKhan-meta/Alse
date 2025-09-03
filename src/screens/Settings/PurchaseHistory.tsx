@@ -16,6 +16,7 @@ import {colors} from '../../utils/theme';
 import {getOrders} from '../../api/product';
 import {MoreVertical} from 'lucide-react-native';
 import Toast from 'react-native-toast-message';
+import {useTranslation} from 'react-i18next';
 
 interface PurchaseItem {
   id?: number;
@@ -43,6 +44,8 @@ const PurchaseHistory = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const {t} = useTranslation();
 
   const fetchPurchaseHistory = async (isRefresh = false) => {
     if (isRefresh) {
@@ -196,7 +199,7 @@ const PurchaseHistory = () => {
         {/* Purchase History Header */}
         <View style={styles.languageHeader}>
           <InterLightAverage style={styles.languageTitle}>
-            Purchase History
+            {t('purchaseHistory.title')}
           </InterLightAverage>
         </View>
 
@@ -224,12 +227,14 @@ const PurchaseHistory = () => {
         ) : (
           <View style={styles.emptyContainer}>
             <InterRegular style={styles.emptyText}>
-              No purchase history found
+              {t('purchaseHistory.noData')}
             </InterRegular>
             <TouchableOpacity
               style={styles.retryButton}
               onPress={() => fetchPurchaseHistory()}>
-              <InterRegular style={styles.retryButtonText}>Retry</InterRegular>
+              <InterRegular style={styles.retryButtonText}>
+                {t('retry')}
+              </InterRegular>
             </TouchableOpacity>
           </View>
         )}

@@ -10,6 +10,7 @@ import {
   BiddingSettings,
 } from '../../api/bidding';
 import Toast from 'react-native-toast-message';
+import {useTranslation} from 'react-i18next';
 
 const BiddingAuctionSetting = () => {
   // State for the three toggle switches
@@ -19,6 +20,8 @@ const BiddingAuctionSetting = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [autoBidLoading, setAutoBidLoading] = useState(false);
   const [bidConfirmationLoading, setBidConfirmationLoading] = useState(false);
+
+  const {t} = useTranslation();
 
   // Load initial settings
   useEffect(() => {
@@ -61,8 +64,8 @@ const BiddingAuctionSetting = () => {
       if (response.data) {
         Toast.show({
           type: 'success',
-          text1: 'Success',
-          text2: 'Bidding settings updated successfully!',
+          text1: t('success'),
+          text2: t('toast.biddingSettingsChanged'),
         });
       } else {
         throw new Error('No response data received');
@@ -145,7 +148,7 @@ const BiddingAuctionSetting = () => {
         {/* Bidding & Auction Settings Header */}
         <View style={styles.languageHeader}>
           <InterLightAverage style={styles.languageTitle}>
-            Bidding & Auction Settings
+            {t('biddingAuction.title')}
           </InterLightAverage>
         </View>
 
@@ -153,7 +156,7 @@ const BiddingAuctionSetting = () => {
         <View style={styles.settingsContainer}>
           {/* Auto-Bid Configuration */}
           <SettingsItem
-            title="Auto-Bid Configuration"
+            title={t('biddingAuction.autoBid')}
             value={autoBidConfig}
             onToggle={handleAutoBidToggle}
             loading={autoBidLoading}
@@ -161,14 +164,14 @@ const BiddingAuctionSetting = () => {
 
           {/* Default bid increment Setting */}
           <SettingsItem
-            title="Default bid increment Setting"
+            title={t('biddingAuction.defaultBidIncrement')}
             value={defaultBidIncrement}
             onToggle={handleDefaultBidIncrementToggle}
           />
 
           {/* Bid Confirmation prompts */}
           <SettingsItem
-            title="Bid Confirmation prompts"
+            title={t('biddingAuction.bidConfirmation')}
             value={bidConfirmationPrompts}
             onToggle={handleBidConfirmationToggle}
             loading={bidConfirmationLoading}

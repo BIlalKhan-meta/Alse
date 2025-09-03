@@ -58,21 +58,21 @@ const SocialActivity = () => {
   ];
 
   const commentOptions = [
-    {label: 'Everyone', value: 'everyone'},
-    {label: 'Followers', value: 'followers'},
-    {label: 'Private', value: 'private'}, // Updated to match your interface
+    {label: t('everyone'), value: 'everyone'},
+    {label: t('followers'), value: 'followers'},
+    {label: t('private'), value: 'private'}, // Updated to match your interface
   ];
 
   const storyReplyOptions = [
-    {label: 'Everyone', value: 'everyone'},
-    {label: 'Followers', value: 'followers'},
-    {label: 'Off', value: 'off'},
+    {label: t('everyone'), value: 'everyone'},
+    {label: t('followers'), value: 'followers'},
+    {label: t('off'), value: 'off'},
   ];
 
   const msgRequestOptions = [
-    {label: 'Everyone', value: 'everyone'},
-    {label: 'Followers', value: 'followers'},
-    {label: 'Off', value: 'off'}, // Updated to match your interface
+    {label: t('everyone'), value: 'everyone'},
+    {label: t('followers'), value: 'followers'},
+    {label: t('off'), value: 'off'}, // Updated to match your interface
   ];
 
   // Handle settings update

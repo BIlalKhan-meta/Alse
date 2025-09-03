@@ -17,6 +17,7 @@ import InterRegular from '../../components/Text/InterRegular';
 import {colors} from '../../utils/theme';
 import {getCountriesList, getState, getCity} from '../../api/home';
 import Toast from 'react-native-toast-message';
+import {useTranslation} from 'react-i18next';
 
 interface Country {
   id: number;
@@ -70,6 +71,8 @@ const ShippingAddress = () => {
   const [showCountryPicker, setShowCountryPicker] = useState(false);
   const [showStatePicker, setShowStatePicker] = useState(false);
   const [showCityPicker, setShowCityPicker] = useState(false);
+
+  const {t} = useTranslation();
 
   const initialValues: ShippingAddressForm = {
     fullName: '',
@@ -214,7 +217,7 @@ const ShippingAddress = () => {
         {/* Shipping Address Header */}
         <View style={styles.languageHeader}>
           <InterLightAverage style={styles.languageTitle}>
-            Shipping address
+            {t('shippingAddress.title')}
           </InterLightAverage>
         </View>
 
@@ -239,7 +242,7 @@ const ShippingAddress = () => {
                 <View style={styles.shippingInputContainer}>
                   <TextInput
                     style={styles.shippingTextInput}
-                    placeholder="Enter full name"
+                    placeholder={t('shippingAddress.name')}
                     placeholderTextColor={colors.lightGrey}
                     value={values.fullName}
                     onChangeText={handleChange('fullName')}
@@ -256,7 +259,7 @@ const ShippingAddress = () => {
                 <View style={styles.shippingInputContainer}>
                   <TextInput
                     style={styles.shippingTextInput}
-                    placeholder="Address (Area and Street) *"
+                    placeholder={t('shippingAddress.address')}
                     placeholderTextColor={colors.lightGrey}
                     value={values.address}
                     onChangeText={handleChange('address')}
@@ -291,7 +294,7 @@ const ShippingAddress = () => {
                   <View style={styles.phoneNumberContainer}>
                     <TextInput
                       style={styles.phoneNumberInput}
-                      placeholder="Enter phone number"
+                      placeholder={t('shippingAddress.phoneNumber')}
                       placeholderTextColor={colors.lightGrey}
                       value={values.phoneNumber}
                       onChangeText={handleChange('phoneNumber')}
@@ -313,7 +316,7 @@ const ShippingAddress = () => {
                     onPress={() => setShowCountryPicker(!showCountryPicker)}>
                     <View style={styles.dropdownContent}>
                       <InterRegular style={styles.dropdownText}>
-                        {values.country || 'Country'}
+                        {values.country || t('shippingAddress.country')}
                       </InterRegular>
                       <ChevronDown size={16} color={colors.lightGrey} />
                     </View>
@@ -328,7 +331,7 @@ const ShippingAddress = () => {
                           setShowCountryPicker(false);
                         }}
                         style={styles.shippingPicker}>
-                        <Picker.Item label="Select Country" value="" />
+                        <Picker.Item label={t('selectCountry')} value="" />
                         {countries.map(country => (
                           <Picker.Item
                             key={country.id}
@@ -350,7 +353,7 @@ const ShippingAddress = () => {
                 <View style={styles.shippingInputContainer}>
                   <TextInput
                     style={styles.shippingTextInput}
-                    placeholder="Postal Code"
+                    placeholder={t('shippingAddress.postalCode')}
                     placeholderTextColor={colors.lightGrey}
                     value={values.postalCode}
                     onChangeText={handleChange('postalCode')}
@@ -368,7 +371,7 @@ const ShippingAddress = () => {
                 <View style={styles.shippingInputContainer}>
                   <TextInput
                     style={styles.shippingTextInput}
-                    placeholder="Enter Landmark"
+                    placeholder={t('shippingAddress.landmark')}
                     placeholderTextColor={colors.lightGrey}
                     value={values.landmark}
                     onChangeText={handleChange('landmark')}
@@ -391,7 +394,7 @@ const ShippingAddress = () => {
                       onPress={() => setShowCityPicker(!showCityPicker)}>
                       <View style={styles.dropdownContent}>
                         <InterRegular style={styles.dropdownText}>
-                          {values.city || 'City'}
+                          {values.city || t('shippingAddress.city')}
                         </InterRegular>
                         <ChevronDown size={16} color={colors.lightGrey} />
                       </View>
@@ -405,7 +408,7 @@ const ShippingAddress = () => {
                             setShowCityPicker(false);
                           }}
                           style={styles.shippingPicker}>
-                          <Picker.Item label="Select City" value="" />
+                          <Picker.Item label={t('selectCity')} value="" />
                           {cities.map(city => (
                             <Picker.Item
                               key={city.id}
@@ -431,7 +434,7 @@ const ShippingAddress = () => {
                       onPress={() => setShowStatePicker(!showStatePicker)}>
                       <View style={styles.dropdownContent}>
                         <InterRegular style={styles.dropdownText}>
-                          {values.state || 'State'}
+                          {values.state || t('shippingAddress.state')}
                         </InterRegular>
                         <ChevronDown size={16} color={colors.lightGrey} />
                       </View>
@@ -446,7 +449,7 @@ const ShippingAddress = () => {
                             setShowStatePicker(false);
                           }}
                           style={styles.shippingPicker}>
-                          <Picker.Item label="Select State" value="" />
+                          <Picker.Item label={t('selectState')} value="" />
                           {states.map(state => (
                             <Picker.Item
                               key={state.id}
@@ -477,7 +480,7 @@ const ShippingAddress = () => {
                     <ActivityIndicator color="white" />
                   ) : (
                     <InterRegular style={styles.saveButtonText}>
-                      Save
+                      {t('save')}
                     </InterRegular>
                   )}
                 </TouchableOpacity>

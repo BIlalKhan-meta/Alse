@@ -14,11 +14,14 @@ import InterRegular from '../../components/Text/InterRegular';
 import {colors} from '../../utils/theme';
 import {deleteAccount} from '../../api/settings';
 import Toast from 'react-native-toast-message';
+import {useTranslation} from 'react-i18next';
 
 const DisableDeleteAccount = ({navigation}: any) => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showDisableModal, setShowDisableModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const {t} = useTranslation();
 
   const handleDeleteAccount = async () => {
     setIsDeleting(true);
@@ -106,7 +109,7 @@ const DisableDeleteAccount = ({navigation}: any) => {
               style={styles.modalCancelButton}
               onPress={onClose}>
               <InterRegular style={styles.modalCancelButtonText}>
-                Cancel
+                {t('cancel')}
               </InterRegular>
             </TouchableOpacity>
 
@@ -141,7 +144,7 @@ const DisableDeleteAccount = ({navigation}: any) => {
         {/* Screen Title */}
         <View style={styles.languageHeader}>
           <InterBoldLabel style={styles.languageTitle}>
-            Disable or Delete Account
+            {t('deleteAccount.title')}
           </InterBoldLabel>
         </View>
 
@@ -152,7 +155,7 @@ const DisableDeleteAccount = ({navigation}: any) => {
             style={styles.deleteAccountButton}
             onPress={() => setShowDeleteModal(true)}>
             <InterRegular style={styles.deleteAccountButtonText}>
-              Delete your account
+              {t('deleteAccount.deleteYourAccount')}
             </InterRegular>
           </TouchableOpacity>
 
@@ -161,7 +164,7 @@ const DisableDeleteAccount = ({navigation}: any) => {
             style={styles.disableAccountButton}
             onPress={() => setShowDisableModal(true)}>
             <InterRegular style={styles.disableAccountButtonText}>
-              Disable your Account
+              {t('deleteAccount.disableYourAccount')}
             </InterRegular>
           </TouchableOpacity>
         </View>
@@ -172,9 +175,9 @@ const DisableDeleteAccount = ({navigation}: any) => {
         visible={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
         onConfirm={handleDeleteAccount}
-        title="Delete Account"
-        message="Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently removed."
-        confirmText="Delete Account"
+        title={t('deleteAccount.title')}
+        message={t('deleteAccount.deleteConfirmation')}
+        confirmText={t('deleteAccount.title')}
       />
 
       {/* Disable Account Confirmation Modal */}
@@ -182,9 +185,9 @@ const DisableDeleteAccount = ({navigation}: any) => {
         visible={showDisableModal}
         onClose={() => setShowDisableModal(false)}
         onConfirm={handleDisableAccount}
-        title="Disable Account"
-        message="Are you sure you want to disable your account? You can reactivate it later by logging in."
-        confirmText="Disable Account"
+        title={t('deleteAccount.disableAccount')}
+        message={t('deleteAccount.disableConfirmation')}
+        confirmText={t('deleteAccount.disableAccount')}
       />
     </View>
   );
