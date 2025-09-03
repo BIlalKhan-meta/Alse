@@ -12,20 +12,13 @@ import {
 } from 'lucide-react-native';
 import InterLight from '../../components/Text/InterLight';
 import InterBoldLabel from '../../components/Text/InterBoldLabel';
-import {GetUserProfile, selectUserProfile} from '../../store/slices/authSlice';
+import {selectUserProfile} from '../../store/slices/authSlice';
 import {images} from '../../utils/images';
 import styles from './styles';
 import {colors} from '../../utils/theme';
 import SettingsItem from './components/settingsItem';
 import {useAppDispatch} from '../../hooks/storeHooks';
-import {
-  fetchAllSettings,
-  updateUserProfile,
-  initializeProfile,
-  selectProfileData,
-  selectProfileUpdateLoading,
-  updateProfile,
-} from '../../store/slices/settingsSlice';
+import {fetchAllSettings} from '../../store/slices/settingsSlice';
 import {useAppTranslation} from '../../i18n/hooks/useAppTranslation';
 import GlobalHeader from '../../components/GlobalHeader';
 import ProfileForm from './components/profileForm';
@@ -35,6 +28,7 @@ import {
   Asset,
 } from 'react-native-image-picker';
 import Toast from 'react-native-toast-message';
+import {editProfile} from '../../api/profile';
 import {useRoute} from '@react-navigation/native';
 
 interface RouteParams {
@@ -44,8 +38,6 @@ interface RouteParams {
 const Settings = ({navigation}: any) => {
   const dispatch = useAppDispatch();
   const user = useSelector(selectUserProfile);
-  const profileData = useSelector(selectProfileData);
-  const profileUpdateLoading = useSelector(selectProfileUpdateLoading);
   const {currentLanguage, t} = useAppTranslation();
   const [avatarUri, setAvatarUri] = useState(user?.avatar || null);
 
@@ -57,28 +49,27 @@ const Settings = ({navigation}: any) => {
   const route = useRoute();
   const {isEditMode} = (route.params as RouteParams) ?? {};
   const [isEditing, setIsEditing] = useState(isEditMode || false);
-  const [selectedImage, setSelectedImage] = useState<any>(null);
+  const [profileData, setProfileData] = useState({
+    firstName: user?.first_name || user?.full_name?.split(' ')[0] || '',
+    lastName: user?.last_name || user?.full_name?.split(' ')[1] || '',
+    userName: user?.username || user?.full_name || '',
+    location: user?.location || '',
+    description: user?.bio || '',
+    pronouns: user?.pronouns || '',
+    storeName: user?.store_name || '',
+    storeDescription: user?.store_description || '',
+  });
 
   console.log('User ======>', JSON.stringify(user, null, 2));
 
-  // Initialize profile data from user when component mounts
-  useEffect(() => {
-    if (user && !profileData) {
-      // ✅ Instead of mapping from auth.user, fetch full profile
-      dispatch(GetUserProfile());
-    }
-  }, [user, profileData, dispatch]);
-
-  useEffect(() => {
-    dispatch(fetchAllSettings());
-  }, [dispatch]);
-
-  // Handle profile field updates
   const handleProfileUpdate = (field: string, value: string) => {
-    dispatch(updateProfile({[field]: value}));
+    setProfileData(prev => ({
+      ...prev,
+      [field]: value,
+    }));
   };
 
-  // Handle image selection
+  // Upload image functions
   const handleImagePick = async () => {
     const options: ImageLibraryOptions = {
       mediaType: 'photo',
@@ -106,10 +97,7 @@ const Settings = ({navigation}: any) => {
 
       if (result.assets && result.assets.length > 0) {
         const selectedImage = result.assets[0];
-        setSelectedImage(selectedImage);
-
-        // Immediately update the local avatar for preview
-        dispatch(updateProfile({avatar: selectedImage.uri}));
+        await uploadProfileImage(selectedImage);
       }
     } catch (error) {
       console.error('Error picking image:', error);
@@ -123,9 +111,6 @@ const Settings = ({navigation}: any) => {
 
   const uploadProfileImage = async (image: Asset) => {
     if (!image.uri) return;
-  // Handle profile save (both image and form data)
-  const handleProfileSave = async () => {
-    if (!profileData) return;
 
     try {
       const formData = new FormData();
@@ -154,58 +139,13 @@ const Settings = ({navigation}: any) => {
         Toast.show({
           type: 'success',
           text1: 'Profile image uploaded successfully',
-      // Add image if selected
-      if (selectedImage) {
-        formData.append('avatar', {
-          uri: selectedImage.uri,
-          type: selectedImage.type || 'image/jpeg',
-          name: selectedImage.fileName || `profile-${Date.now()}.jpg`,
         });
       }
-
-      // Add profile fields
-      if (profileData.description) {
-        formData.append('bio', profileData.description);
-      }
-      if (profileData.location) {
-        formData.append('location_name', profileData.location);
-      }
-      if (profileData.firstName) {
-        formData.append('first_name', profileData.firstName);
-      }
-      if (profileData.lastName) {
-        formData.append('last_name', profileData.lastName);
-      }
-      if (profileData.userName) {
-        formData.append('username', profileData.userName);
-      }
-      if (profileData.pronouns) {
-        formData.append('pronouns', profileData.pronouns);
-      }
-
-      // Dispatch the update
-      const result = await dispatch(
-        updateUserProfile({
-          formData,
-          profileFields: profileData,
-        }),
-      ).unwrap();
-
-      Toast.show({
-        type: 'success',
-        text1: 'Success',
-        text2: 'Profile updated successfully!',
-      });
-
-      // Reset selected image and exit editing mode
-      setSelectedImage(null);
-      setIsEditing(false);
     } catch (error) {
-      console.error('Profile update error:', error);
+      console.error('Upload error:', error);
       Toast.show({
         type: 'error',
-        text1: 'Error',
-        text2: 'Failed to update profile',
+        text1: 'Failed to upload profile image',
       });
     }
   };
@@ -232,14 +172,6 @@ const Settings = ({navigation}: any) => {
     }
   };
 
-  // Get display avatar URL
-  const getDisplayAvatar = () => {
-    if (profileData?.avatar) {
-      return profileData.avatar;
-    }
-    return user?.avatar || null;
-  };
-
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -254,16 +186,16 @@ const Settings = ({navigation}: any) => {
         <View style={styles.profileSection}>
           <View style={styles.profileImageContainer}>
             <Image
-              source={
-                getDisplayAvatar() ? {uri: getDisplayAvatar()} : images.profile
-              }
+              source={avatarUri ? {uri: avatarUri} : images.profile}
+              // source={user?.avatar ? {uri: user.avatar} : images.profile}
               resizeMode="cover"
               style={styles.profileImage}
             />
             {isEditing && (
               <TouchableOpacity
                 style={styles.editIconContainer}
-                onPress={handleImagePick}>
+                // TODO image upload functionality
+                onPress={() => handleImagePick()}>
                 <PencilLine size={20} color={colors.themeColor} />
               </TouchableOpacity>
             )}
@@ -272,23 +204,15 @@ const Settings = ({navigation}: any) => {
             <View>
               <View style={{flexDirection: 'row', alignItems: 'center'}}>
                 <InterBoldLabel style={styles.profileName}>
-                  {profileData?.firstName && profileData?.lastName
-                    ? `${profileData.firstName} ${profileData.lastName}`
-                    : user?.full_name || 'Alse'}
+                  {user?.full_name || 'Alse'}
                 </InterBoldLabel>
                 <InterLight style={styles.profileUsername}>
                   _{user?.username || user?.email?.split('@')[0]}
                   {user?.email?.split('@')[0]}
-                  _
-                  {profileData?.userName ||
-                    user?.username ||
-                    user?.email?.split('@')[0]}
                 </InterLight>
               </View>
               <InterLight style={styles.profileLocation}>
-                {profileData?.location ||
-                  user?.location_name ||
-                  'New Jersey, USA'}
+                {user?.location || 'New Jersey, USA'}
               </InterLight>
             </View>
             {!isEditing && (
@@ -300,17 +224,12 @@ const Settings = ({navigation}: any) => {
             )}
           </View>
 
-          {isEditing && profileData && (
+          {isEditing && (
             <ProfileForm
               profileData={profileData}
               handleProfileUpdate={handleProfileUpdate}
-              onSave={handleProfileSave}
-              loading={profileUpdateLoading}
-              onCancel={() => {
+              setIsEditing={() => {
                 setIsEditing(false);
-                setSelectedImage(null);
-                // Reset profile data to original user data
-                dispatch(initializeProfile(user));
               }}
             />
           )}

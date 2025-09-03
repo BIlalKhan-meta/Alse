@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import {
   View,
   TextInput,
@@ -6,11 +6,12 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import styles from '../styles';
+import {editProfile} from '../../../api/profile';
 import {colors} from '../../../utils/theme';
 import InterRegular from '../../../components/Text/InterRegular';
 import {useAppTranslation} from '../../../i18n/hooks/useAppTranslation';
+import Toast from 'react-native-toast-message';
 import {LocationEdit} from 'lucide-react-native';
-import { editProfile } from '../../../api/profile';
 
 interface ProfileData {
   firstName: string;
@@ -33,31 +34,6 @@ const ProfileForm = ({
   setIsEditing,
 }: ProfileFormProps) => {
   const [uploading, setUploading] = useState(false);
-interface ProfileFormProps {
-  profileData: {
-    firstName: string;
-    lastName: string;
-    userName: string;
-    location: string;
-    description: string;
-    pronouns: string;
-    storeName: string;
-    storeDescription: string;
-    avatar: string | null;
-  };
-  handleProfileUpdate: (field: string, value: string) => void;
-  onSave: () => void;
-  onCancel: () => void;
-  loading: boolean;
-}
-
-const ProfileForm: React.FC<ProfileFormProps> = ({
-  profileData,
-  handleProfileUpdate,
-  onSave,
-  onCancel,
-  loading,
-}) => {
   const {t} = useAppTranslation();
 
   return (
@@ -72,6 +48,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
             value={profileData.firstName}
             onChangeText={text => handleProfileUpdate('firstName', text)}
             placeholder={t('settings.firstName')}
+            // editable={isEditing}
           />
         </View>
         <View style={styles.inputContainer}>
@@ -260,9 +237,6 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
         }}
         disabled={uploading}>
         {uploading ? (
-        onPress={onSave}
-        disabled={loading}>
-        {loading ? (
           <ActivityIndicator color="white" />
         ) : (
           <InterRegular style={styles.saveButtonText}>
