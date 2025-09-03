@@ -1,7 +1,6 @@
 export default {
   // Language Selection Page
   selectLanguage: 'Chagua Lugha',
-  search: 'Tafuta',
   allLanguages: 'Lugha Zote',
 
   // Language Names
@@ -39,33 +38,265 @@ export default {
   search: 'Tafuta',
   store: 'Duka',
   calendar: 'Kalenda',
-  profile: 'Wasifu',
+  profile: 'Profaili',
 
   // Common
   cancel: 'Ghairi',
-  done: 'Imekamilika',
+  done: 'Kamilisha',
+  or: 'Au',
+  noPosts: 'Hakuna machapisho ya kuonyesha',
+  public: 'Wazi',
+  private: 'Binafsi',
+  followers: 'Wafuasi',
+  everyone: 'Kila mtu',
+  off: 'Zima',
+  retry: 'Jaribu tena',
+  save: 'Hifadhi',
+  success: 'Mafanikio',
+  error: 'Hitilafu',
+  followed: 'Umefuata',
+  unfollowed: 'Umeacha kufuata',
+  galleryUpload: 'Pakia kutoka kwenye galeria',
+  camera: 'Kamera',
+  cameraUpload: 'Fungua Kamera',
+  checkInternet: 'Tafadhali angalia muunganisho wako wa intaneti',
+  loadingText: 'Tafadhali subiri...',
+  invalid: 'Batili',
+  size: 'Ukubwa',
+  color: 'Rangi',
+  image: 'Picha',
+  video: 'Video',
+  upload: 'Pakia',
+  uploadImage: 'Pakia picha',
+  uploadImages: 'Pakia picha nyingi',
+  uploadMedia: 'Pakia media',
+  uploadVideo: 'Pakia video',
+  category: 'Kategoria',
+  status: 'Hali',
+  description: 'Maelezo',
+  add: 'Ongeza',
+  update: 'Sasisha',
 
-  // Settings Screen
+  // Dropdown placeholders
+  selectCountry: 'Chagua nchi',
+  selectCity: 'Chagua jiji',
+  selectState: 'Chagua jimbo',
+  newPassword: 'Weka nenosiri jipya',
+  confirmPassword: 'Thibitisha nenosiri',
+  selectCategory: 'Chagua kategoria',
+  selectStatus: 'Chagua hali',
+
+  // input placeholders
+  enterContent: 'Weka maudhui',
+  enterTitle: 'Weka kichwa',
+
+  // Toasts
+  toast: {
+    somethingWentWrong: 'Kuna kitu kimekosea. Tafadhali jaribu tena baadaye.',
+    currentPassword: 'Tafadhali weka nenosiri lako la sasa',
+    newPassword: 'Tafadhali weka nenosiri jipya',
+    newPasswordLength: 'Nenosiri jipya lazima liwe na angalau herufi 6',
+    passwordMatch: 'Nenosiri jipya na uthibitisho havilingani',
+    samePassword: 'Nenosiri jipya lazima liwe tofauti na la sasa',
+    confirmPassword: 'Tafadhali thibitisha nenosiri lako',
+    incorrectPassword: 'Nenosiri la sasa si sahihi',
+    invalidFormat: 'Muundo wa nenosiri si sahihi',
+    failedToChangePassword:
+      'Imeshindikana kubadilisha nenosiri. Jaribu tena baadaye.',
+    cantBeEmpty: 'Tafadhali jaza angalau sehemu moja kusasisha',
+    failedProfileUpdate: 'Imeshindikana kusasisha profaili',
+    failedGoogleAuth: 'Imeshindikana kuingia kwa Google',
+    enterGroupName: 'Tafadhali weka jina la kundi',
+    selectGroupImage: 'Tafadhali pakia picha ya profaili',
+    selectGroupMembers: 'Tafadhali chagua wanakundi',
+    followReqFailed: 'Imeshindikana kutuma ombi la kufuata',
+    unfollowFailed: 'Imeshindikana kuacha kufuata',
+    storyRefreshFailed: 'Imeshindikana kusasisha hadithi',
+    livestreamRefreshFailed:
+      'Imeshindikana kusasisha matangazo ya moja kwa moja',
+    storyUploadFailed: 'Imeshindikana kupakia hadithi',
+    passwordChanged: 'Nenosiri limebadilishwa kwa mafanikio!',
+    biddingSettingsChanged: 'Mipangilio ya mnada imesasishwa kwa mafanikio!',
+    followReqSencc: 'Ombi la kufuata limetumwa',
+    storyUploadSuccess: 'Hadithi imesasishwa kwa mafanikio',
+    addedToCart: 'Bidhaa imeongezwa kwenye toroli',
+    uploadingStory: 'Inapakia hadithi...',
+  },
+
+  // input fields:
+  emailOrPhone: 'Barua pepe/Namba ya simu',
+  password: 'Weka nenosiri',
+
+  signIn: {
+    title: 'Ingia',
+    subTitle: 'Wacha mawazo yako yasafiri kote duniani',
+    login: 'Ingia',
+    forgotPassword: 'Umesahau nenosiri',
+    rememberMe: 'Nikumbuke',
+    createAccount: 'Unda Akaunti',
+    noAccount: 'Huna akaunti?',
+    signUp: 'Jisajili',
+    appleAuth: 'Ingia kwa Apple',
+  },
+
+  signUp: {
+    title: 'Jisajili',
+    subTitle: 'Karibu kwenye Alse, fursa iko mikononi mwako',
+    policy: 'Ninakubaliana na Sheria na Masharti na Sera ya Faragha',
+    createAccount: 'Unda Akaunti',
+    alreadyHaveAccount: 'Je, tayari una akaunti?',
+    signIn: 'Ingia',
+  },
+
+  searchScr: {
+    noResults: 'Hakuna matokeo yaliyopatikana',
+    recent: 'Utafutaji wa hivi karibuni',
+  },
+
+  streamingScr: {
+    loading: 'Inajiandaa kwa matangazo ya moja kwa moja...',
+    start: 'Anza Matangazo',
+    live: 'Moja kwa moja',
+  },
+
+  reels: {
+    loading: 'Inajiandaa kwa reels...',
+    noReels: 'Hakuna reels za kuonyesha',
+    checkLater: 'Angalia tena baadaye kwa maudhui mapya',
+  },
+
+  profileScr: {
+    posts: 'Machapisho',
+    followers: 'Wafuasi',
+    following: 'Unaofuata',
+    noPosts: 'Hakuna machapisho ya kuonyesha',
+    edit: 'Hariri Profaili',
+    share: 'Shiriki Profaili',
+    loading: 'Inapakia machapisho...',
+  },
+
+  marketplace: {
+    featuredStores: 'Maduka yaliyopendekezwa',
+    noStores: 'Hakuna maduka yanayopatikana',
+    recommendedProds: 'Bidhaa zilizopendekezwa kijamii',
+    noProds: 'Hakuna bidhaa kwa sasa',
+    createShop: 'Unda Duka / Duka Langu',
+  },
+
+  blogs: {
+    forChildren: 'Kwa Watoto',
+    forAdult: 'Kwa Watu Wazima',
+    forAll: 'Kwa Wote',
+    myBlogs: 'Blogu Zangu',
+    addBlog: 'Ongeza Blogu',
+    updateBlog: 'Sasisha Blogu',
+    addVideos: 'Ongeza Video',
+    addArticle: 'Ongeza Makala',
+    blogTitle: 'Kichwa cha Blogu',
+    articleTitle: 'Kichwa cha Makala',
+    title: 'Kichwa',
+  },
+
   settings: {
     firstName: 'Jina la Kwanza',
     lastName: 'Jina la Mwisho',
     userName: 'Jina la Mtumiaji',
-    pronouns: 'Vivumishi',
-    pronounsPlaceholder: 'mfano, wao/wao, yeye/yeye, yeye/yeye',
-    location: 'Mahali',
+    pronouns: 'Viwakilishi',
+    pronounsPlaceholder: 'mfano: yeye/yeye, wao',
+    location: 'Eneo',
     bio: 'Wasifu',
-    bioPlaceholder: 'Tueleze kuhusu wewe',
+    bioPlaceholder: 'Tuambie kuhusu wewe',
     storeName: 'Jina la Duka',
     storeNamePlaceholder: 'Jina la duka lako',
     storeDescription: 'Maelezo ya Duka',
     storeDescriptionPlaceholder: 'Elezea duka lako',
     notification: 'Arifa',
     language: 'Lugha',
-    profileSetting: 'Mipangilio ya Wasifu',
+    profileSetting: 'Mipangilio ya Profaili',
     socialActivity: 'Shughuli za Kijamii',
-    advanceProtection: 'Ulinzi wa juu',
-    biddingAuctionSetting: 'Mipangilio ya Zabuni na Mnada',
+    advanceProtection: 'Ulinzi wa Juu',
+    biddingAuctionSetting: 'Mipangilio ya Mnada',
     marketplaceActivity: 'Shughuli za Soko',
     securityPrivacy: 'Usalama na Faragha',
+    save: 'Hifadhi',
+  },
+
+  socialActivity: {
+    postVisibility: 'Uonekano wa chapisho',
+    allowTags: 'Ruhusu alama',
+    filterOffensive: 'Chuja maneno mabaya kiotomatiki',
+    messageAllowed: 'Nani anaweza kutuma ujumbe',
+    commentAllowed: 'Nani anaweza kutoa maoni',
+    storyVisibility: 'Uonekano wa hadithi',
+    storyReply: 'Nani anaweza kujibu hadithi yako',
+    blockedUsers: 'Watumiaji waliopigwa marufuku',
+  },
+
+  marketplaceActivity: {
+    title: 'Shughuli za Soko',
+    purchaseHistory: 'Tazama historia ya ununuzi',
+    savedAuctions: 'Minada iliyohifadhiwa',
+    shippingAddress: 'Anwani ya usafirishaji',
+    paymentMethods: 'Mbinu za malipo zilizounganishwa',
+  },
+
+  purchaseHistory: {
+    title: 'Historia ya ununuzi',
+    noData: 'Hakuna historia ya ununuzi iliyopatikana',
+  },
+
+  savedAuctions: {
+    title: 'Minada iliyohifadhiwa',
+    noData: 'Hakuna minada iliyopatikana',
+  },
+
+  securiyPrivacy: {
+    title: 'Usalama na Faragha',
+    deviceInfo: 'Maelezo ya kifaa na shughuli za kuingia',
+    changePassword: 'Badilisha nenosiri',
+    deleteAccount: 'Zima au Futa Akaunti',
+  },
+
+  shippingAddress: {
+    title: 'Anwani ya usafirishaji',
+    name: 'Weka jina kamili',
+    address: 'Anwani (Eneo na Barabara)',
+    phoneNumber: 'Weka namba ya simu',
+    country: 'Nchi',
+    countryCode: 'Chagua msimbo wa nchi',
+    postalCode: 'Msimbo wa posta',
+    landmark: 'Alama ya karibu',
+    city: 'Jiji',
+    state: 'Jimbo',
+  },
+
+  deleteAccount: {
+    title: 'Zima au Futa Akaunti',
+    deleteAccount: 'Futa Akaunti',
+    deleteYourAccount: 'Futa Akaunti Yako',
+    deleteConfirmation:
+      'Je, una uhakika unataka kufuta akaunti yako? Hatua hii haiwezi kutenduliwa na data yako yote itafutwa kabisa.',
+    disableAccount: 'Zima Akaunti',
+    disableYourAccount: 'Zima Akaunti Yako',
+    disableConfirmation:
+      'Je, una uhakika unataka kuzima akaunti yako? Unaweza kuifufua tena kwa kuingia tena.',
+  },
+
+  changePassword: {
+    title: 'Badilisha Nenosiri',
+    currentPassword: 'Nenosiri la sasa',
+    newPassword: 'Nenosiri jipya',
+    confirmPassword: 'Thibitisha nenosiri',
+  },
+
+  biddingAuction: {
+    title: 'Mipangilio ya Mnada',
+    autoBid: 'Mipangilio ya Zabuni Otomatiki',
+    defaultBidIncrement: 'Ongezeko la Zabuni la Kawaida',
+    bidConfirmation: 'Uthibitisho wa Zabuni',
+  },
+
+  stories: {
+    addStory: 'Ongeza Hadithi',
   },
 };

@@ -21,6 +21,7 @@ import {vh} from '../../constant';
 import InterLightSmall from '../../components/Text/InterLightSmall';
 import {createArticle, createBlog, createVideo} from '../../api/education';
 import {getCategories} from '../../api/product';
+import {useTranslation} from 'react-i18next';
 
 const statuses = [
   {label: 'Active', value: '1'},
@@ -48,6 +49,8 @@ const AddBlog = () => {
   const {imageData, captureImage, chooseImageFromLibrary} = useImagePicker();
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState([]);
+
+  const {t} = useTranslation();
 
   const initialValues = {
     title: editItem?.title || '',
@@ -80,8 +83,8 @@ const AddBlog = () => {
   const handleForm = async (data: any) => {
     if (media.length == 0) {
       return Toast.show({
-        text1: 'Upload Images',
-        text2: `${title == 'Add Videos' ? 'Video' : 'Image'} is Required`,
+        text1: t('uploadImages'),
+        text2: `${title == t('blogs.addVideos') ? t('video') : t('image')} is Required`,
         type: 'error',
       });
     }
@@ -90,9 +93,9 @@ const AddBlog = () => {
     const temp = {
       ...data,
       privacy: selected,
-      ...(title == 'Add Blog' ? {blog_image: media[0]} : {}),
-      ...(title == 'Add Article' ? {article_image: media[0]} : {}),
-      ...(title == 'Add Videos' ? {video_file: media[0]} : {}),
+      ...(title == t('blogs.addBlog') ? {blog_image: media[0]} : {}),
+      ...(title == t('blogs.addArticle') ? {article_image: media[0]} : {}),
+      ...(title == 'Add Vidt('blogs.addVideos')o_file: media[0]} : {}),
     };
 
     const form = new FormData();
@@ -100,7 +103,7 @@ const AddBlog = () => {
       form.append(key, value);
     });
     console.log('DATAAAAAAA', JSON.stringify(form, null, 4));
-    if (title == 'Add Blog') {
+    if (title == t('blogs.addBlog')) {
       await createBlog(form)
         .then(res => {
           if (res?.data) {
@@ -113,8 +116,8 @@ const AddBlog = () => {
         .finally(() => {
           setLoading(false);
         });
-    } else if (title == 'Add Article') {
-      await createArticle(form)
+    } else if (title == t('blogs.addArticle')) {
+      await createAt('blogs.addVideos')
         .then(res => {
           if (res?.data) {
             navigation.goBack();
@@ -136,7 +139,7 @@ const AddBlog = () => {
           } else {
             Toast.show({
               type: 'error',
-              text1: 'Error',
+              text1: t('error'),
               text2: res?.data?.message,
             });
           }
@@ -144,7 +147,7 @@ const AddBlog = () => {
         .catch(err => {
           Toast.show({
             type: 'error',
-            text1: 'Error',
+            text1: t('error'),
             text2: err?.message,
           });
         })
@@ -178,14 +181,14 @@ const AddBlog = () => {
       showsVerticalScrollIndicator={false}>
       <DialogBox
         status="upload"
-        heading="Upload Media"
+        heading={t('uploadMedia')}
         onClose={() => setVisible(false)}
         visible={visible}
         button={[
           {
-            text: 'Open Camera',
+            text: t('cameraUpload'),
             onPress: () =>
-              captureImage(title == 'Add Videos' ? 'video' : 'photo'),
+              captureImage(title == t('blogs.addVideos') ? 'video' : 'photo'),
           },
           {text: 'Open Gallery', onPress: chooseImageFromLibrary},
         ]}
@@ -194,7 +197,7 @@ const AddBlog = () => {
         initialValues={initialValues}
         enableReinitialize
         validationSchema={
-          title != 'Add Videos'
+          title != t('blogs.addVideos')
             ? validationSchema
             : validationSchema.concat(videoSchema)
         }
@@ -210,23 +213,23 @@ const AddBlog = () => {
           <Card style={styles.cardStyle}>
             <RegularTextInput
               label={
-                title == ('Add Blog' || 'Update Blog')
-                  ? 'Blog Title *'
-                  : title == 'Add Videos'
-                  ? 'Title *'
-                  : 'Article Title *'
+                title == (t('blogs.addBlog') || t('blogs.updateBlog'))
+                  ? `${t('blogs.blogTitle')} *`
+                  : title == t('blogs.addVideos')
+                  ? `${t('blogs.title')} *`
+                  : `${t('blogs.articleTitle')} *`
               }
-              placeholder="Enter Title"
+              placeholder={t('enterTitle')}
               onChangeText={handleChange('title')}
               onBlur={handleBlur('title')}
               value={values.title}
               errors={errors.title}
             />
 
-            {(title == 'Add Videos' || title == 'Update Video') && (
+            {(title == t('blogs.addVideos') || title == 'Update Video') && (
               <>
                 <InterRegular style={styles.dropdownLabel}>
-                  Category *
+                  {t('category')} *
                 </InterRegular>
                 <View style={styles.dropDownContainer}>
                   <DropDownTextInput
@@ -234,7 +237,7 @@ const AddBlog = () => {
                       return {label: item?.title, value: item?.id};
                     })}
                     defaultValue={values.category_id}
-                    placeholder="Select Category"
+                    placeholder={t('selectCategory')}
                     onChangeValue={e => setValues({...values, category_id: e})}
                     style={[styles.dropDown]}
                     error={errors.category_id}
@@ -242,14 +245,14 @@ const AddBlog = () => {
                 </View>
 
                 <InterRegular style={styles.dropdownLabel}>
-                  Status *
+                  {t('status')} *
                 </InterRegular>
 
                 <View style={[styles.dropDownContainer, {zIndex: 97}]}>
                   <DropDownTextInput
                     items={statuses}
                     defaultValue={values.status}
-                    placeholder="Select Status"
+                    placeholder={t('selectStatus')}
                     onChangeValue={e => setValues({...values, status: e})}
                     style={styles.dropDown}
                     error={errors.status}
@@ -259,14 +262,16 @@ const AddBlog = () => {
             )}
 
             <InterRegular style={styles.imgTxt}>
-              {title == 'Add Videos' ? 'Upload Video*' : 'Images *'}
+              {title == t('blogs.addVideos') ? 'Upload Video*' : 'Images *'}
             </InterRegular>
 
             <TouchableOpacity
               onPress={() => setVisible(true)}
               disabled={media.length > 0}
               style={styles.uploadBtn}>
-              <InterRegular style={styles.uploadTxt}>Upload</InterRegular>
+              <InterRegular style={styles.uploadTxt}>
+                {t('upload')}
+              </InterRegular>
               <Image source={images.upload} style={styles.uploadImg} />
             </TouchableOpacity>
 
@@ -275,7 +280,7 @@ const AddBlog = () => {
                 return (
                   <Row justify="space-between" style={styles.row_style}>
                     <InterLightSmall>
-                      {title == 'Add Videos' ? 'Video' : 'Image'}
+                      {title == t('blogs.addVideos') ? t('video') : t('image')}
                     </InterLightSmall>
                     <TouchableOpacity onPress={() => handleDelete(index)}>
                       <Image
@@ -293,8 +298,8 @@ const AddBlog = () => {
             </View>
 
             <RegularTextInput
-              label="Description *"
-              placeholder="Enter content"
+              label={t('description')}
+              placeholder={t('enterContent')}
               onChangeText={handleChange('content')}
               onBlur={handleBlur('content')}
               value={values.content}
@@ -308,7 +313,7 @@ const AddBlog = () => {
                   onValueChange={() => setSelected('children')}
                 />
                 <InterRegular style={styles.checkboxLabel}>
-                  For Children
+                  {t('blogs.forChildren')}
                 </InterRegular>
               </View>
               <View style={styles.checkbox}>
@@ -317,7 +322,7 @@ const AddBlog = () => {
                   onValueChange={() => setSelected('adult')}
                 />
                 <InterRegular style={styles.checkboxLabel}>
-                  For Adult
+                  {t('blogs.forAdult')}
                 </InterRegular>
               </View>
               <View style={styles.checkbox}>
@@ -326,7 +331,7 @@ const AddBlog = () => {
                   onValueChange={() => setSelected('public')}
                 />
                 <InterRegular style={styles.checkboxLabel}>
-                  For All
+                  {t('blogs.forAll')}
                 </InterRegular>
               </View>
             </View>
@@ -335,11 +340,11 @@ const AddBlog = () => {
               loading={loading}
               style={styles.submitButton}
               onPress={handleSubmit}>
-              {title == 'Add Blog' ||
-              title == 'Add Article' ||
-              title == 'Add Videos'
-                ? 'Add'
-                : 'Update'}
+              {title == t('blogs.addBlog') ||
+              title == t('blogs.addArticle') ||
+              title == t('blogs.addVideos')
+                ? t('add')
+                : t('update')}
             </CustomButton>
           </Card>
         )}

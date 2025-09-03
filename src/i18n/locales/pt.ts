@@ -1,17 +1,16 @@
 export default {
   // Language Selection Page
-  selectLanguage: 'Select Language',
-  search: 'Search',
-  allLanguages: 'All Languages',
+  selectLanguage: 'Selecionar idioma',
+  allLanguages: 'Todos os idiomas',
 
   // Language Names
-  english: 'English',
-  chinese: 'Chinese',
-  french: 'French',
+  english: 'Inglês',
+  chinese: 'Chinês',
+  french: 'Francês',
   hindi: 'Hindi',
-  portuguese: 'Portuguese',
-  spanish: 'Spanish',
-  swahili: 'Swahili',
+  portuguese: 'Português',
+  spanish: 'Espanhol',
+  swahili: 'Suaíli',
 
   // Language Native Names
   englishNative: 'English',
@@ -41,29 +40,263 @@ export default {
   calendar: 'Calendário',
   profile: 'Perfil',
 
+  // Common
   cancel: 'Cancelar',
-  done: 'Concluído',
+  done: 'Concluir',
+  or: 'ou',
+  noPosts: 'Nenhuma publicação para mostrar',
+  public: 'Público',
+  private: 'Privado',
+  followers: 'Seguidores',
+  everyone: 'Todos',
+  off: 'Desligado',
+  retry: 'Tentar novamente',
+  save: 'Salvar',
+  success: 'Sucesso',
+  error: 'Erro',
+  followed: 'Seguindo',
+  unfollowed: 'Deixar de seguir',
+  galleryUpload: 'Enviar da galeria',
+  camera: 'Câmera',
+  cameraUpload: 'Abrir câmera',
+  checkInternet: 'Por favor, verifique sua conexão com a internet',
+  loadingText: 'Por favor, aguarde...',
+  invalid: 'Inválido',
+  size: 'Tamanho',
+  color: 'Cor',
+  image: 'Imagem',
+  video: 'Vídeo',
+  upload: 'Enviar',
+  uploadImage: 'Enviar imagem',
+  uploadImages: 'Enviar imagens',
+  uploadMedia: 'Enviar mídia',
+  uploadVideo: 'Enviar vídeo',
+  category: 'Categoria',
+  status: 'Status',
+  description: 'Descrição',
+  add: 'Adicionar',
+  update: 'Atualizar',
+
+  // Dropdown placeholders
+  selectCountry: 'Selecionar país',
+  selectCity: 'Selecionar cidade',
+  selectState: 'Selecionar estado',
+  newPassword: 'Digite a nova senha',
+  confirmPassword: 'Confirme a senha',
+  selectCategory: 'Selecionar categoria',
+  selectStatus: 'Selecionar status',
+
+  // input placeholders
+  enterContent: 'Digite o conteúdo',
+  enterTitle: 'Digite o título',
+
+  // Toasts
+  toast: {
+    somethingWentWrong:
+      'Algo deu errado. Por favor, tente novamente mais tarde.',
+    currentPassword: 'Por favor, insira sua senha atual',
+    newPassword: 'Por favor, insira a nova senha',
+    newPasswordLength: 'A nova senha deve ter pelo menos 6 caracteres',
+    passwordMatch: 'A nova senha e a confirmação não correspondem',
+    samePassword: 'A nova senha deve ser diferente da senha atual',
+    confirmPassword: 'Por favor, confirme sua senha',
+    incorrectPassword: 'Senha atual incorreta',
+    invalidFormat: 'Formato de senha inválido',
+    failedToChangePassword:
+      'Falha ao alterar a senha. Tente novamente mais tarde.',
+    cantBeEmpty: 'Preencha pelo menos um campo para atualizar',
+    failedProfileUpdate: 'Falha ao atualizar o perfil',
+    failedGoogleAuth: 'Falha ao entrar com o Google',
+    enterGroupName: 'Por favor, insira o nome do grupo',
+    selectGroupImage: 'Por favor, envie uma foto de perfil',
+    selectGroupMembers: 'Por favor, selecione os membros do grupo',
+    followReqFailed: 'Falha ao enviar solicitação de seguir',
+    unfollowFailed: 'Falha ao deixar de seguir',
+    storyRefreshFailed: 'Falha ao atualizar a história',
+    livestreamRefreshFailed: 'Falha ao atualizar a transmissão ao vivo',
+    storyUploadFailed: 'Falha ao enviar a história',
+    passwordChanged: 'Senha alterada com sucesso!',
+    biddingSettingsChanged: 'Configurações de leilão atualizadas com sucesso!',
+    followReqSencc: 'Solicitação de seguir enviada',
+    storyUploadSuccess: 'História atualizada com sucesso',
+    addedToCart: 'Produto adicionado ao carrinho',
+    uploadingStory: 'Enviando história...',
+  },
+
+  // input fields:
+  emailOrPhone: 'Email/Telefone',
+  password: 'Digite a senha',
+
+  signIn: {
+    title: 'Entrar',
+    subTitle: 'Deixe suas ideias se espalharem pelo mundo',
+    login: 'Login',
+    forgotPassword: 'Esqueceu a senha?',
+    rememberMe: 'Lembrar-me',
+    createAccount: 'Criar conta',
+    noAccount: 'Não tem uma conta?',
+    signUp: 'Cadastre-se',
+    appleAuth: 'Entrar com Apple',
+  },
+
+  signUp: {
+    title: 'Cadastre-se',
+    subTitle: 'Bem-vindo ao Alse, oportunidade ao seu alcance',
+    policy: 'Eu concordo com os Termos e Condições e a Política de Privacidade',
+    createAccount: 'Criar conta',
+    alreadyHaveAccount: 'Já tem uma conta?',
+    signIn: 'Entrar',
+  },
+
+  searchScr: {
+    noResults: 'Nenhum resultado encontrado',
+    recent: 'Pesquisas recentes',
+  },
+
+  streamingScr: {
+    loading: 'Preparando transmissão ao vivo...',
+    start: 'Iniciar transmissão',
+    live: 'Ao vivo',
+  },
+
+  reels: {
+    loading: 'Preparando reels...',
+    noReels: 'Nenhum reel para mostrar',
+    checkLater: 'Verifique novamente mais tarde para novos conteúdos',
+  },
+
+  profileScr: {
+    posts: 'Publicações',
+    followers: 'Seguidores',
+    following: 'Seguindo',
+    noPosts: 'Nenhuma publicação para mostrar',
+    edit: 'Editar perfil',
+    share: 'Compartilhar perfil',
+    loading: 'Carregando publicações...',
+  },
+
+  marketplace: {
+    featuredStores: 'Lojas em destaque',
+    noStores: 'Nenhuma loja disponível',
+    recommendedProds: 'Produtos recomendados socialmente',
+    noProds: 'Nenhum produto disponível no momento',
+    createShop: 'Criar loja / Minha loja',
+  },
+
+  blogs: {
+    forChildren: 'Para crianças',
+    forAdult: 'Para adultos',
+    forAll: 'Para todos',
+    myBlogs: 'Meus blogs',
+    addBlog: 'Adicionar blog',
+    updateBlog: 'Atualizar blog',
+    addVideos: 'Adicionar vídeos',
+    addArticle: 'Adicionar artigo',
+    blogTitle: 'Título do blog',
+    articleTitle: 'Título do artigo',
+    title: 'Título',
+  },
 
   settings: {
-    firstName: 'Primeiro Nome',
+    firstName: 'Nome',
     lastName: 'Sobrenome',
-    userName: 'Nome de Usuário',
+    userName: 'Nome de usuário',
     pronouns: 'Pronomes',
-    pronounsPlaceholder: 'ex.: eles/elas, ele/dele, ela/dela',
+    pronounsPlaceholder: 'ex: ele/dele, ela/dela',
     location: 'Localização',
     bio: 'Biografia',
-    bioPlaceholder: 'Conte-nos sobre você',
-    storeName: 'Nome da Loja',
+    bioPlaceholder: 'Fale sobre você',
+    storeName: 'Nome da loja',
     storeNamePlaceholder: 'Nome da sua loja',
-    storeDescription: 'Descrição da Loja',
+    storeDescription: 'Descrição da loja',
     storeDescriptionPlaceholder: 'Descreva sua loja',
-    notification: 'Notificações',
+    notification: 'Notificação',
     language: 'Idioma',
-    profileSetting: 'Configurações de Perfil',
-    socialActivity: 'Atividade Social',
-    advanceProtection: 'Proteção Avançada',
-    biddingAuctionSetting: 'Configurações de Lances e Leilões',
-    marketplaceActivity: 'Atividade no Mercado',
-    securityPrivacy: 'Segurança e Privacidade',
+    profileSetting: 'Configurações do perfil',
+    socialActivity: 'Atividade social',
+    advanceProtection: 'Proteção avançada',
+    biddingAuctionSetting: 'Configurações de leilão',
+    marketplaceActivity: 'Atividade no marketplace',
+    securityPrivacy: 'Segurança e privacidade',
+    save: 'Salvar',
+  },
+
+  socialActivity: {
+    postVisibility: 'Visibilidade da publicação',
+    allowTags: 'Permitir marcações',
+    filterOffensive: 'Filtrar palavras ofensivas automaticamente',
+    messageAllowed: 'Quem pode enviar mensagens',
+    commentAllowed: 'Quem pode comentar',
+    storyVisibility: 'Visibilidade da história',
+    storyReply: 'Quem pode responder sua história',
+    blockedUsers: 'Usuários bloqueados',
+  },
+
+  marketplaceActivity: {
+    title: 'Atividade no marketplace',
+    purchaseHistory: 'Ver histórico de compras',
+    savedAuctions: 'Leilões salvos',
+    shippingAddress: 'Endereço de entrega',
+    paymentMethods: 'Métodos de pagamento vinculados',
+  },
+
+  purchaseHistory: {
+    title: 'Histórico de compras',
+    noData: 'Nenhum histórico de compras encontrado',
+  },
+
+  savedAuctions: {
+    title: 'Leilões salvos',
+    noData: 'Nenhum leilão encontrado',
+  },
+
+  securiyPrivacy: {
+    title: 'Segurança e privacidade',
+    deviceInfo: 'Informações do dispositivo e atividades de login',
+    changePassword: 'Alterar senha',
+    deleteAccount: 'Desativar ou excluir conta',
+  },
+
+  shippingAddress: {
+    title: 'Endereço de entrega',
+    name: 'Digite o nome completo',
+    address: 'Endereço (área e rua)',
+    phoneNumber: 'Digite o número de telefone',
+    country: 'País',
+    countryCode: 'Selecione o código do país',
+    postalCode: 'Código postal',
+    landmark: 'Ponto de referência próximo',
+    city: 'Cidade',
+    state: 'Estado',
+  },
+
+  deleteAccount: {
+    title: 'Desativar ou excluir conta',
+    deleteAccount: 'Excluir conta',
+    deleteYourAccount: 'Excluir sua conta',
+    deleteConfirmation:
+      'Tem certeza de que deseja excluir sua conta? Esta ação não pode ser desfeita e todos os seus dados serão excluídos permanentemente.',
+    disableAccount: 'Desativar conta',
+    disableYourAccount: 'Desativar sua conta',
+    disableConfirmation:
+      'Tem certeza de que deseja desativar sua conta? Você pode reativá-la entrando novamente.',
+  },
+
+  changePassword: {
+    title: 'Alterar senha',
+    currentPassword: 'Senha atual',
+    newPassword: 'Nova senha',
+    confirmPassword: 'Confirmar senha',
+  },
+
+  biddingAuction: {
+    title: 'Configurações de leilão',
+    autoBid: 'Configuração de lance automático',
+    defaultBidIncrement: 'Incremento de lance padrão',
+    bidConfirmation: 'Confirmação de lance',
+  },
+
+  stories: {
+    addStory: 'Adicionar história',
   },
 };

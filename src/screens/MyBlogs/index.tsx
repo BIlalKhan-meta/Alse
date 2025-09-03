@@ -12,6 +12,7 @@ import {useSelector} from 'react-redux';
 import {getMyArticles, getMyBlogs, getMyVideos} from '../../api/education';
 import Loader from '../../components/Loader';
 import {EmptyComponent} from '../../components/EmptyComponent';
+import {useTranslation} from 'react-i18next';
 
 const MyBlogs: React.FC = () => {
   const navigation = useNavigation();
@@ -50,6 +51,8 @@ const MyBlogs: React.FC = () => {
     fetchData();
   }, [title, isFocused]);
 
+  const {t} = useTranslation();
+
   useLayoutEffect(() => {
     navigation.setOptions({
       headerStyle: {
@@ -60,12 +63,12 @@ const MyBlogs: React.FC = () => {
         <TouchableOpacity
           style={styles.postButton}
           onPress={() => {
-            if (title == 'My Blogs') {
-              navigation.navigate('AddBlog', {title: 'Add Blog'});
+            if (title == t('blogs.myBlogs')) {
+              navigation.navigate('AddBlog', {title: t('blogs.addBlog')});
             } else if (title == 'My Videos') {
-              navigation.navigate('AddBlog', {title: 'Add Videos'});
+              navigation.navigate('AddBlog', {title: t('blogs.addVideos')});
             } else {
-              navigation.navigate('AddBlog', {title: 'Add Article'});
+              navigation.navigate('AddBlog', {title: t('blogs.addArticle')});
             }
           }}>
           <InterMedium style={styles.postTxt}>
@@ -83,7 +86,6 @@ const MyBlogs: React.FC = () => {
   // if (display.length == 0) {
   //   return <EmptyComponent text={'No Data Available'} />;
   // }
-
 
   return (
     <View style={styles.container}>

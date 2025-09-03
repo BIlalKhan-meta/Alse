@@ -23,7 +23,7 @@ import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import {vh, vw} from '../../constant';
 import Toast from 'react-native-toast-message';
 import {useDispatch} from 'react-redux';
-
+import {useTranslation} from 'react-i18next';
 
 interface User {
   id: number;
@@ -56,6 +56,8 @@ const NewGroupModal: React.FC<NewGroupModalProps> = props => {
       setSelectedUsers([...selectedUsers, userId]);
     }
   };
+
+  const {t} = useTranslation();
 
   const Camera = () => {
     let options = {
@@ -111,8 +113,8 @@ const NewGroupModal: React.FC<NewGroupModalProps> = props => {
     // () => setGroupModel(true)
     if (groupName == '') {
       Toast.show({
-        text1: 'Error',
-        text2: 'Please enter group name',
+        text1: t('error'),
+        text2: t('toast.enterGroupName'),
         type: 'error',
         props: {
           style: {
@@ -125,8 +127,8 @@ const NewGroupModal: React.FC<NewGroupModalProps> = props => {
     }
     if (!image) {
       Toast.show({
-        text1: 'Error',
-        text2: 'Please upload profile picture',
+        text1: t('error'),
+        text2: t('toast.selectGroupImage'),
         type: 'error',
         props: {
           style: {
@@ -140,8 +142,8 @@ const NewGroupModal: React.FC<NewGroupModalProps> = props => {
     }
     if (selectedUsers.length < 1) {
       Toast.show({
-        text1: 'Error',
-        text2: 'Please select group memebers',
+        text1: t('error'),
+        text2: t('toast.selectGroupMembers'),
         type: 'error',
         props: {
           style: {
@@ -245,7 +247,6 @@ const NewGroupModal: React.FC<NewGroupModalProps> = props => {
         <GeneralModal
           visible={groupSuccess}
           closeModal={() => setGroupSuccess(false)}
-
           title="Group Created"
           message="New Group Created successfully."
           buttonText="OK"

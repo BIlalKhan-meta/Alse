@@ -10,6 +10,7 @@ import appleAuth from '@invertase/react-native-apple-authentication';
 import {colors} from '../../utils/theme';
 import {vh} from '../../constant';
 import Icon from 'react-native-vector-icons/FontAwesome6';
+import {useTranslation} from 'react-i18next';
 
 const AppleAuth = ({
   onSuccess,
@@ -18,6 +19,7 @@ const AppleAuth = ({
   onSuccess: (user: any) => void;
   loading: boolean;
 }) => {
+  const {t} = useTranslation();
   const onAppleButtonPress = async () => {
     try {
       const appleAuthRequestResponse = await appleAuth.performRequest({
@@ -73,7 +75,7 @@ const AppleAuth = ({
           iconStyle="brand"
           style={styles.appleIcon}
         />
-        <Text style={styles.buttonText}>Sign in with Apple</Text>
+        <Text style={styles.buttonText}>{t('signIn.appleAuth')}</Text>
       </View>
     </TouchableOpacity>
   );

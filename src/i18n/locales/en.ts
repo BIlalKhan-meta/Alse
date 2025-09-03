@@ -3,7 +3,6 @@ import {create} from 'lodash';
 export default {
   // Language Selection Page
   selectLanguage: 'Select Language',
-  search: 'Search',
   allLanguages: 'All Languages',
 
   // Language Names
@@ -47,6 +46,7 @@ export default {
   cancel: 'Cancel',
   done: 'Done',
   or: 'Or',
+  noPosts: 'No posts to show',
   public: 'Public',
   private: 'Private',
   followers: 'Followers',
@@ -56,13 +56,41 @@ export default {
   save: 'Save',
   success: 'Success',
   error: 'Error',
+  followed: 'Followed',
+  unfollowed: 'Unfollowed',
+  galleryUpload: 'Upload from gallery',
+  camera: 'camera',
+  cameraUpload: 'Open Camera',
+  checkInternet: 'Please check your internet connection',
+  loadingText: 'Please wait...',
+  invalid: 'Invalid',
+  size: 'Size',
+  color: 'Color',
+  image: 'Image',
+  video: 'Video',
+  upload: 'Upload',
+  uploadImage: 'Upload image',
+  uploadImages: 'Upload images',
+  uploadMedia: 'Upload media',
+  uploadVideo: 'Upload video',
+  category: 'Category',
+  status: 'Status',
+  description: 'Description',
+  add: 'Add',
+  update: 'update',
 
   // Dropdown placeholders
-  selectCountry: 'Select Country',
-  selectCity: 'Select City',
-  selectState: 'Select State',
-  newPassword: 'Enter New Password',
-  confirmPassword: 'Enter Confirm Password',
+  selectCountry: 'Select country',
+  selectCity: 'Select city',
+  selectState: 'Select state',
+  newPassword: 'Enter new password',
+  confirmPassword: 'Enter confirm password',
+  selectCategory: 'Select category',
+  selectStatus: 'Select status',
+
+  // input placeholders
+  enterContent: 'Enter content',
+  enterTitle: 'Enter title',
 
   // Toasts
   toast: {
@@ -78,9 +106,25 @@ export default {
     invalidFormat: 'Invalid password format',
     failedToChangePassword:
       'Failed to change password. Please try again later.',
+    cantBeEmpty: 'Please fill in at least one field to update',
+    failedProfileUpdate: 'Failed to update profile',
+    failedGoogleAuth: 'Failed to sign in with Google',
+    enterGroupName: 'Please enter a group name',
+    selectGroupImage: 'Please upload profile picture',
+    selectGroupMembers: 'Please select group members',
+    followReqFailed: 'Failed to send follow request',
+    unfollowFailed: 'Failed to unfollow user',
+    storyRefreshFailed: 'Failed to refresh stories',
+    livestreamRefreshFailed: 'Failed to refresh livestreams',
+    storyUploadFailed: 'Failed to upload story',
     // success
     passwordChanged: 'Password changed successfully!',
     biddingSettingsChanged: 'Bidding settings updated successfully!',
+    followReqSencc: 'Follow Request Sent',
+    storyUploadSuccess: 'Story updated successfully',
+    addedToCart: 'Product added to cart',
+    // progress
+    uploadingStory: 'Uploading Story',
   },
 
   // input fields:
@@ -96,6 +140,7 @@ export default {
     createAccount: 'Create Account',
     noAccount: "Don't have an account?",
     signUp: 'Sign up',
+    appleAuth: 'Sign in with Apple',
   },
 
   signUp: {
@@ -105,10 +150,6 @@ export default {
     createAccount: 'Create Account',
     alreadyHaveAccount: 'Do you have an account?',
     signIn: 'Sign in',
-  },
-
-  homeScr: {
-    noPosts: 'No posts to show',
   },
 
   searchScr: {
@@ -144,6 +185,20 @@ export default {
     recommendedProds: 'Socially recommended products',
     noProds: 'No products available right now',
     createShop: 'Create Shop/My Shop',
+  },
+
+  blogs: {
+    forChildren: 'For Children',
+    forAdult: 'For Adult',
+    forAll: 'For All',
+    myBlogs: 'My Blogs',
+    addBlog: 'Add Blog',
+    updateBlog: 'Update Blog',
+    addVideos: 'Add Videos',
+    addArticle: 'Add Article',
+    blogTitle: 'Blog Title',
+    articleTitle: 'Article Title',
+    title: 'Title',
   },
 
   // Settings Screen
@@ -246,5 +301,9 @@ export default {
     autoBid: 'Auto Bid Configuration',
     defaultBidIncrement: 'Default Bid Increment',
     bidConfirmation: 'Bid Confirmation prompts',
+  },
+
+  stories: {
+    addStory: 'Add Story',
   },
 };

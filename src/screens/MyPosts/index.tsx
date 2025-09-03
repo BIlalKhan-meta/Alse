@@ -43,6 +43,7 @@ import {timeFormat, timeHelper} from '../../utils';
 import {removeSavedItem, saveItem} from '../../api/menu';
 import LikesModal from '../../components/LikesModal';
 import {fetchMyPost} from '../../api/home';
+import {useTranslation} from 'react-i18next';
 
 const MyPosts: React.FC = () => {
   const navigation = useNavigation();
@@ -296,11 +297,14 @@ const MyPosts: React.FC = () => {
     );
   };
 
-  const renderEmpty = () => (
-    <View style={styles.emptyContainer}>
-      <InterRegular style={styles.emptyText}>No Posts to Show.</InterRegular>
-    </View>
-  );
+  const renderEmpty = () => {
+    const {t} = useTranslation();
+    return (
+      <View style={styles.emptyContainer}>
+        <InterRegular style={styles.emptyText}>{t('noPosts')}</InterRegular>
+      </View>
+    );
+  };
 
   const viewabilityConfig = useRef({
     waitForInteraction: true,

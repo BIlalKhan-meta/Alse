@@ -10,9 +10,11 @@ import {
 } from 'react-native';
 
 import styles from './styles';
-import { images } from '../../utils/images';
-import { colors } from '../../utils/theme';
-import { vh, vw } from '../../constant';
+import {images} from '../../utils/images';
+import {colors} from '../../utils/theme';
+import {vh, vw} from '../../constant';
+import React from 'react';
+import {useTranslation} from 'react-i18next';
 
 interface BottomModalProps {
   visible: boolean;
@@ -50,6 +52,7 @@ const BottomModal: React.FC<BottomModalProps> = props => {
     onPressImage,
     onPressGallery,
   } = props;
+  const {t} = useTranslation();
   return (
     <>
       <Modal
@@ -68,7 +71,7 @@ const BottomModal: React.FC<BottomModalProps> = props => {
           <View style={styles.uploadOptions}>
             <TouchableOpacity style={styles.button} onPress={onPressGallery}>
               <Image source={images.media} style={styles.buttonIcon2} />
-              <Text style={styles.buttonText}>Upload Image</Text>
+              <Text style={styles.buttonText}>{t('uploadImage')}</Text>
             </TouchableOpacity>
 
             <View
@@ -83,8 +86,12 @@ const BottomModal: React.FC<BottomModalProps> = props => {
             />
 
             <TouchableOpacity style={styles.button} onPress={onPressImage}>
-              <Image source={images.camera} resizeMode='contain' style={styles.buttonIcon2} />
-              <Text style={styles.buttonText}>Camera</Text>
+              <Image
+                source={images.camera}
+                resizeMode="contain"
+                style={styles.buttonIcon2}
+              />
+              <Text style={styles.buttonText}>{t('camera')}</Text>
             </TouchableOpacity>
             {onPress && (
               <View>
@@ -100,7 +107,7 @@ const BottomModal: React.FC<BottomModalProps> = props => {
                 />
                 <TouchableOpacity style={styles.button} onPress={onPress}>
                   <Image source={images.video} style={styles.buttonIcon} />
-                  <Text style={styles.buttonText}>Upload Video</Text>
+                  <Text style={styles.buttonText}>{t('uploadVideo')}</Text>
                 </TouchableOpacity>
               </View>
             )}

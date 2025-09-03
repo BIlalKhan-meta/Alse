@@ -148,15 +148,6 @@ const ProfileForm = ({
               formData.append('pronouns', profileData.pronouns.trim());
             }
 
-            // Log the FormData contents for debugging
-            console.log('FormData contents:');
-            console.log('Bio:', profileData.description);
-            console.log('Location:', profileData.location);
-            console.log('First Name:', profileData.firstName);
-            console.log('Last Name:', profileData.lastName);
-            console.log('Username:', profileData.userName);
-            console.log('Pronouns:', profileData.pronouns);
-
             // Check if FormData has any content
             let hasContent = false;
             if (profileData.description && profileData.description.trim()) {
@@ -181,8 +172,8 @@ const ProfileForm = ({
             if (!hasContent) {
               Toast.show({
                 type: 'error',
-                text1: 'Error',
-                text2: 'Please fill in at least one field to update',
+                text1: t('error'),
+                text2: t('toast.cantBeEmpty'),
               });
               return;
             }
@@ -228,8 +219,8 @@ const ProfileForm = ({
             console.error('Error data:', error.response?.data);
             Toast.show({
               type: 'error',
-              text1: 'Error',
-              text2: 'Failed to update profile',
+              text1: t('error'),
+              text2: t('toast.failedProfileUpdate'),
             });
           } finally {
             setUploading(false);

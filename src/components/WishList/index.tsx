@@ -1,12 +1,5 @@
 import React, {useState} from 'react';
-import {
-  View,
-  Text,
-  Image,
-  TouchableOpacity,
-  StyleSheet,
-  FlatList,
-} from 'react-native';
+import {View, Text, Image, TouchableOpacity, FlatList} from 'react-native';
 import {images} from '../../utils/images';
 import styles from './styles';
 import InterRegular from '../Text/InterRegular';
@@ -16,6 +9,7 @@ import {addProductToCart} from '../../api/product';
 import {EmptyComponent} from '../EmptyComponent';
 import {vh} from '../../constant';
 import Toast from 'react-native-toast-message';
+import {useTranslation} from 'react-i18next';
 
 interface WishlistProps {
   wishlist: [];
@@ -41,12 +35,12 @@ const WishlistScreen: React.FC<WishlistProps> = ({
     size: string,
     color: string,
   ) => {
-    console.log('PRODUCCCCCCCCCCCCCC', productId);
-
     const data = {
       size: size,
       colors: color,
     };
+
+    const {t} = useTranslation();
 
     const form = new FormData();
     Object.entries(data).forEach(([key, value]) => {
@@ -60,21 +54,21 @@ const WishlistScreen: React.FC<WishlistProps> = ({
         if (res?.data) {
           return Toast.show({
             type: 'success',
-            text1: 'Cart',
-            text2: 'Product Added to Cart',
+            text1: t('toast.addedToCart'),
           });
         }
       })
       .catch(err => {
         return Toast.show({
           type: 'error',
-          text1: 'Invalid',
+          text1: t('invalid'),
           text2: err?.message,
         });
       });
   };
 
   const renderItem = ({item}) => {
+    const {t} = useTranslation();
     return (
       <TouchableOpacity
         style={styles.productContainer}
@@ -138,12 +132,12 @@ const WishlistScreen: React.FC<WishlistProps> = ({
           </View>
           {item?.sizes != undefined && item?.sizes?.length != 0 && (
             <InterRegular style={styles.product}>
-              Size: {item.sizes[0].size}
+              {t('size')}: {item.sizes[0].size}
             </InterRegular>
           )}
           {item?.colors != undefined && item?.colors?.length != 0 && (
             <InterRegular style={styles.product}>
-              Color: {item.colors[0].color}
+              {t('color')}: {item.colors[0].color}
             </InterRegular>
           )}
         </View>

@@ -27,6 +27,7 @@ import Video from 'react-native-video';
 import {useSelector} from 'react-redux';
 import {selectUserProfile} from '../../store/slices/authSlice';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {useTranslation} from 'react-i18next';
 
 // Constants
 const POLLING_INTERVAL = 30000; // 30 seconds
@@ -66,6 +67,8 @@ const Stories = () => {
   // Add current user info
   const currentUser = useSelector(selectUserProfile);
 
+  const {t} = useTranslation();
+
   // Fetch stories with ability to control loading indicator
   const getStories = useCallback(async (showLoadingIndicator = true) => {
     try {
@@ -101,8 +104,8 @@ const Stories = () => {
       if (retryCountRef.current >= MAX_RETRY_COUNT) {
         Toast.show({
           type: 'error',
-          text1: 'Failed to refresh stories',
-          text2: 'Please check your connection',
+          text1: t('toast.storyRefreshFailed'),
+          text2: t('checkInternet'),
         });
 
         // Temporarily disable polling on excessive failures
@@ -144,8 +147,8 @@ const Stories = () => {
       if (retryCountRef.current >= MAX_RETRY_COUNT) {
         Toast.show({
           type: 'error',
-          text1: 'Failed to refresh live streams',
-          text2: 'Please check your connection',
+          text1: t('toast.livestreamRefreshFailed'),
+          text2: t('checkInternet'),
         });
       }
     }
@@ -225,8 +228,8 @@ const Stories = () => {
     setIsUploading(true);
     Toast.show({
       type: 'info',
-      text1: 'Uploading Story',
-      text2: 'Please wait...',
+      text1: t('toast.uploadingStory'),
+      text2: t('loadingText'),
     });
 
     const formData = new FormData();
@@ -238,7 +241,7 @@ const Stories = () => {
 
       Toast.show({
         type: 'success',
-        text1: 'Successfully uploaded story!',
+        text1: t('toast.storyUploadSuccess'),
       });
 
       // Refresh stories after successful upload
@@ -248,12 +251,12 @@ const Stories = () => {
       if (isAxiosError(err)) {
         Toast.show({
           type: 'error',
-          text1: err.response?.data.message || 'Failed to upload story',
+          text1: err.response?.data.message || t('toast.storyUploadFailed'),
         });
       } else {
         Toast.show({
           type: 'error',
-          text1: 'Network error while uploading story',
+          text1: t('checkInternet'),
         });
       }
     } finally {
@@ -329,20 +332,22 @@ const Stories = () => {
                 <View>
                   <AddStoryIcon />
                 </View>
-                <Text style={styles.storyName}>Add Story</Text>
+                <Text style={styles.storyName}>{t('addStory')}</Text>
               </DropdownMenu.Trigger>
               <DropdownMenu.Content>
                 <DropdownMenu.Item
                   key="upload"
                   onSelect={() => onPressNewStory('upload')}>
                   <DropdownMenu.ItemTitle>
-                    Upload from gallery
+                    {t('galleryUpload')}
                   </DropdownMenu.ItemTitle>
                 </DropdownMenu.Item>
                 <DropdownMenu.Item
                   key="camera"
                   onSelect={() => onPressNewStory('camera')}>
-                  <DropdownMenu.ItemTitle>Open Camera</DropdownMenu.ItemTitle>
+                  <DropdownMenu.ItemTitle>
+                    {t('cameraUpload')}
+                  </DropdownMenu.ItemTitle>
                 </DropdownMenu.Item>
               </DropdownMenu.Content>
             </DropdownMenu.Root>

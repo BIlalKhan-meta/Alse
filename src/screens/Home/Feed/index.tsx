@@ -355,9 +355,7 @@ const Home: React.FC = () => {
 
     return (
       <View style={styles.emptyContainer}>
-        <InterRegular style={styles.emptyText}>
-          {t('homeScr.noPosts')}
-        </InterRegular>
+        <InterRegular style={styles.emptyText}>{t('noPosts')}</InterRegular>
       </View>
     );
   };
@@ -506,6 +504,8 @@ const Home: React.FC = () => {
             onPress={handleDelete}
             secondaryBtn={true}
             loading={reportLoader}
+            buttonText={''}
+            primaryBtn={false}
           />
 
           <GeneralModal
@@ -537,6 +537,8 @@ const Home: React.FC = () => {
             onPress={handleReport}
             secondaryBtn={true}
             loading={reportLoader}
+            buttonText={''}
+            primaryBtn={false}
           />
 
           <GeneralModal

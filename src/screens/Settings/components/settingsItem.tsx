@@ -41,8 +41,6 @@ const SettingsItem = ({
   showChevron = false,
   loading = false,
 }: SettingsItemProps) => {
-  const [isPickerVisible, setIsPickerVisible] = useState(false);
-
   // For navigation items, wrap the entire content in TouchableOpacity
   if (type === 'navigation' || showChevron) {
     return (

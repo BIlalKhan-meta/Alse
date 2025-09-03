@@ -13,6 +13,7 @@ import {createChat, userFollow, userUnFollow} from '../../api/home';
 import Toast from 'react-native-toast-message';
 import {vw} from '../../constant';
 import InterRegular from '../Text/InterRegular';
+import {useTranslation} from 'react-i18next';
 
 interface ProfileCardProps {
   name: string;
@@ -57,6 +58,8 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
     isFollowing ? 'following' : isRequested ? 'requested' : 'notFollowing',
   );
 
+  const {t} = useTranslation();
+
   const handleFollow = () => {
     setFollowLoader(true);
 
@@ -69,8 +72,8 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
               console.log('REQUESTINGGGGGGGGGGGGGGGGGGGGGGGG================');
               setFollow('requested');
               Toast.show({
-                type: 'success',
-                text1: 'Follow Request Sent',
+                type: t('success'),
+                text1: t('toast.followRequestSent'),
                 text2: res?.data?.message,
               });
             }
@@ -78,8 +81,8 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
           .catch(err => {
             Toast.show({
               type: 'error',
-              text1: 'Error',
-              text2: 'Failed to send follow request.',
+              text1: t('error'),
+              text2: t('toast.followReqFailed'),
             });
             console.log('Error sending follow request:', err);
           })
@@ -95,7 +98,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
               setFollow('following');
               Toast.show({
                 type: 'success',
-                text1: 'Followed',
+                text1: t('followed'),
                 text2: res?.data?.message,
               });
             }
@@ -103,10 +106,9 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
           .catch(err => {
             Toast.show({
               type: 'error',
-              text1: 'Error',
-              text2: 'Failed to follow user.',
+              text1: t('error'),
+              text2: t('toast.followReqFailed'),
             });
-            console.log('Error following user:', err);
           })
           .finally(() => {
             setFollowLoader(false);
@@ -117,13 +119,11 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
       userUnFollow(id)
         .then(res => {
           if (res?.data) {
-            console.log(
-              'UNFOLOWWWWWWWWWWWWWWWWWWWWWWWWWWWINGGGGG===================',
-            );
+            console.log();
             setFollow('notFollowing');
             Toast.show({
               type: 'success',
-              text1: 'Unfollowed',
+              text1: t('unfollowed'),
               text2: res?.data?.message,
             });
           }
@@ -131,8 +131,8 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
         .catch(err => {
           Toast.show({
             type: 'error',
-            text1: 'Error',
-            text2: 'Failed to unfollow user.',
+            text1: t('error'),
+            text2: t('toast.unfollowFailed'),
           });
           console.log('Error unfollowing user:', err);
         })
@@ -143,7 +143,6 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
   };
 
   const handleMessage = () => {
-    console.log('Messageads');
     setMessageLoader(true);
     const data = {
       user_id: id,
@@ -154,7 +153,6 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
     createChat(data)
       .then(res => {
         setMessageLoader(false);
-        console.log('res?.data?.data?.full_name=', res?.data?.data);
 
         navigation.navigate('ChatOngoing', {
           id: res?.data?.data?.id,
