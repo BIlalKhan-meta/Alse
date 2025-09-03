@@ -40,6 +40,7 @@ import LikesModal from '../../../components/LikesModal';
 import Stories from '../../../components/Stories';
 import {Plus} from 'lucide-react-native';
 import PostSkeleton from '../../../components/SkeletonLoaders';
+import {useTranslation} from 'react-i18next';
 
 const Home: React.FC = () => {
   const flatListRef = useRef(null);
@@ -48,6 +49,8 @@ const Home: React.FC = () => {
   const dispatch = useAppDispatch();
   const isFoused = useIsFocused();
   const user = useSelector(selectUserProfile);
+
+  const {t} = useTranslation();
 
   const {posts} = useAppSelector(state => state.home);
   const [loader, setLoader] = useState(false);
@@ -352,7 +355,9 @@ const Home: React.FC = () => {
 
     return (
       <View style={styles.emptyContainer}>
-        <InterRegular style={styles.emptyText}>No Posts to Show.</InterRegular>
+        <InterRegular style={styles.emptyText}>
+          {t('homeScr.noPosts')}
+        </InterRegular>
       </View>
     );
   };
@@ -386,7 +391,7 @@ const Home: React.FC = () => {
       <View style={{paddingHorizontal: vh * 2, flex: 1}}>
         <Stories />
 
-        <View>
+        <View style={{flex: 1, position: 'relative'}}>
           {initialLoading ? (
             renderSkeletonLoaders()
           ) : (

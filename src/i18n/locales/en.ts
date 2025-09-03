@@ -1,3 +1,5 @@
+import {create} from 'lodash';
+
 export default {
   // Language Selection Page
   selectLanguage: 'Select Language',
@@ -44,6 +46,70 @@ export default {
   // Common
   cancel: 'Cancel',
   done: 'Done',
+  or: 'Or',
+
+  // input fields:
+  emailOrPhone: 'Email/Phone Number',
+  password: 'Enter Password',
+
+  signIn: {
+    title: 'Sign In',
+    subTitle: 'Let your ideas travel across the world',
+    login: 'Log in',
+    forgotPassword: 'Forgot Password',
+    rememberMe: 'Remember me',
+    createAccount: 'Create Account',
+    noAccount: "Don't have an account?",
+    signUp: 'Sign up',
+  },
+
+  signUp: {
+    title: 'Sign Up',
+    subTitle: 'Welcome to Alse, The opportunity is on your fingertips',
+    policy: 'I agree to the terms and conditions and Privacy Policy',
+    createAccount: 'Create Account',
+    alreadyHaveAccount: 'Do you have an account?',
+    signIn: 'Sign in',
+  },
+
+  homeScr: {
+    noPosts: 'No posts to show',
+  },
+
+  searchScr: {
+    noResults: 'No results found',
+    recent: 'Recent Searches',
+  },
+
+  streamingScr: {
+    loading: 'Preparing Livestream...',
+    start: 'Start Stream',
+    live: 'Live',
+  },
+
+  reels: {
+    loading: 'Preparing reels...',
+    noReels: 'No reels to show',
+    checkLater: 'Check back later for new content',
+  },
+
+  profileScr: {
+    posts: 'Posts',
+    followers: 'Followers',
+    following: 'Following',
+    noPosts: 'No posts to show',
+    edit: 'Edit Profile',
+    share: 'Share Profile',
+    loading: 'Loading posts...',
+  },
+
+  marketplace: {
+    featuredStores: 'Featured Stores',
+    noStores: 'No stores available',
+    recommendedProds: 'Socially recommended products',
+    noProds: 'No products available right now',
+    createShop: 'Create Shop/My Shop',
+  },
 
   // Settings Screen
   settings: {

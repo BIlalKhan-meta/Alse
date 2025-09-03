@@ -3,45 +3,50 @@ import {StyleSheet} from 'react-native';
 import {colors} from '../../utils/theme';
 import {fontSizes, vh, vw} from '../../constant';
 import fonts from '../../assets/fonts';
-import { useState } from 'react';
+import {useState} from 'react';
 import CheckBox from 'expo-checkbox';
 import InterLight from '../Text/InterLight';
+import React from 'react';
+import {useTranslation} from 'react-i18next';
 
-interface RememberMeContainerProps{
-    isSelected:boolean;
-    setIsSelected:(isSelected:boolean) => void;
-    onPress:()=> void;
+interface RememberMeContainerProps {
+  isSelected: boolean;
+  setIsSelected: (isSelected: boolean) => void;
+  onPress: () => void;
 }
 
-const RememberMeContainer: React.FC<RememberMeContainerProps> = (props) => {
-
-    const {isSelected , setIsSelected , onPress} = props;
+const RememberMeContainer: React.FC<RememberMeContainerProps> = props => {
+  const {isSelected, setIsSelected, onPress} = props;
+  const {t} = useTranslation();
 
   return (
     <>
       <View style={styles.container}>
         <View style={styles.remembermecontainer}>
-            <CheckBox
+          <CheckBox
             value={isSelected}
-            onValueChange={()=> setIsSelected(!isSelected)}
-            />
-            <InterLight style={styles.remembermetext}>Remember me</InterLight>
+            onValueChange={() => setIsSelected(!isSelected)}
+          />
+          <InterLight style={styles.remembermetext}>
+            {t('signIn.rememberMe')}
+          </InterLight>
         </View>
         <TouchableOpacity style={styles.forgottextcontainer} onPress={onPress}>
-            <InterLight style={styles.forgottext}>Forgot Password?</InterLight>
+          <InterLight style={styles.forgottext}>
+            {t('signIn.forgotPassword')}?
+          </InterLight>
         </TouchableOpacity>
-        
       </View>
     </>
   );
 };
 
 const styles = StyleSheet.create({
-    container:{flexDirection:'row' , marginTop:vh*2,width:vw*84},
-    remembermecontainer:{flexDirection:'row', alignItems:'center'},
-    remembermetext:{marginLeft:vw*2,color:colors.inputText},
-    forgottextcontainer:{marginLeft:'auto', },
-  forgottext: { color: colors.lightGrey }
+  container: {flexDirection: 'row', marginTop: vh * 2, width: vw * 84},
+  remembermecontainer: {flexDirection: 'row', alignItems: 'center'},
+  remembermetext: {marginLeft: vw * 2, color: colors.inputText},
+  forgottextcontainer: {marginLeft: 'auto'},
+  forgottext: {color: colors.lightGrey},
 });
 
 export default RememberMeContainer;

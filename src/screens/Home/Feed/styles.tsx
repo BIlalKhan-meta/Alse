@@ -1,6 +1,6 @@
 import {StyleSheet} from 'react-native';
 import {colors} from '../../../utils/theme';
-import {vh} from '../../../constant';
+import {vh, vw} from '../../../constant';
 
 const styles = StyleSheet.create({
   container: {
@@ -18,8 +18,8 @@ const styles = StyleSheet.create({
 
   fabMenuContainer: {
     position: 'absolute',
-    bottom: vh * 17,
-    right: vh * 8,
+    bottom: vh * 8,
+    right: vw * 14, // TODO change to vh * 10 after removing network logger fab
     alignItems: 'center',
     zIndex: 999,
   },

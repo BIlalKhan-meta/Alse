@@ -28,6 +28,7 @@ import GlobalHeader from '../../components/GlobalHeader';
 
 import styles from './styles';
 import {colors} from '../../utils/theme';
+import {useTranslation} from 'react-i18next';
 
 interface PostItem {
   id: string;
@@ -41,6 +42,8 @@ const MyProfile: React.FC = () => {
   const user = useSelector(selectUserProfile);
   const profileData = useSelector(selectProfileData); // Get profile data from settings
   const isFocused = useIsFocused();
+
+  const {t} = useTranslation();
 
   // Local state
   const [fabMenuVisible, setFabMenuVisible] = useState(false);
@@ -280,15 +283,15 @@ const MyProfile: React.FC = () => {
         <View style={styles.statsSection}>
           <View style={styles.statItem}>
             <Text style={styles.statNumber}>{stats.posts}</Text>
-            <Text style={styles.statLabel}>Posts</Text>
+            <Text style={styles.statLabel}>{t('profileScr.posts')}</Text>
           </View>
           <View style={styles.statItem}>
             <Text style={styles.statNumber}>{stats.followers}</Text>
-            <Text style={styles.statLabel}>Followers</Text>
+            <Text style={styles.statLabel}>{t('profileScr.followers')}</Text>
           </View>
           <View style={styles.statItem}>
             <Text style={styles.statNumber}>{stats.following}</Text>
-            <Text style={styles.statLabel}>Following</Text>
+            <Text style={styles.statLabel}>{t('profileScr.following')}</Text>
           </View>
         </View>
 
@@ -297,12 +300,12 @@ const MyProfile: React.FC = () => {
           <TouchableOpacity
             style={styles.editButton}
             onPress={handleEditProfile}>
-            <Text style={styles.editButtonText}>Edit Profile</Text>
+            <Text style={styles.editButtonText}>{t('profileScr.edit')}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.shareButton}
             onPress={handleShareProfile}>
-            <Text style={styles.shareButtonText}>Share Profile</Text>
+            <Text style={styles.shareButtonText}>{t('profileScr.share')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -321,8 +324,8 @@ const MyProfile: React.FC = () => {
               <View style={styles.emptyContainer}>
                 <Text style={styles.emptyText}>
                   {postsLoading && posts.length !== 0
-                    ? 'Loading Posts..'
-                    : 'No posts yet.'}
+                    ? t('profileScr.loading')
+                    : t('profileScr.noPosts')}
                 </Text>
               </View>
             }

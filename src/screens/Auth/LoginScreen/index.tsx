@@ -1,30 +1,31 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, Image, SafeAreaView } from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {View, Text, TouchableOpacity, Image, SafeAreaView} from 'react-native';
 import * as yup from 'yup';
 import styles from './styles';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import RegularTextInput from '../../../components/TextInput/RegularTextInput';
-import { Formik } from 'formik';
-import { colors } from '../../../utils/theme';
+import {Formik} from 'formik';
+import {colors} from '../../../utils/theme';
 import CustomButton from '../../../components/CustomButton';
-import { useNavigation } from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 import RememberMeContainer from '../../../components/RememberMeContainer';
-import { useAppDispatch } from '../../../hooks/storeHooks';
-import { getFcmToken } from '../../../utils/messaging.utils';
+import {useAppDispatch} from '../../../hooks/storeHooks';
+import {getFcmToken} from '../../../utils/messaging.utils';
 import InterBoldLabel from '../../../components/Text/InterBoldLabel';
 import PoppinsLabel from '../../../components/Text/Poppins';
-import { appleLogin, googleLogin, login } from '../../../api/auth';
+import {appleLogin, googleLogin, login} from '../../../api/auth';
 import Toast from 'react-native-toast-message';
-import { setUser } from '../../../store/slices/authSlice';
+import {setUser} from '../../../store/slices/authSlice';
 import EncryptedStorage from 'react-native-encrypted-storage';
 import GoogleLogin from '../../../components/GoogleAuth/Login';
 import AppleAuth from '../../../components/AppleAuth';
+import {useTranslation} from 'react-i18next';
 interface FormValues {
   identifier: string;
   password: string;
 }
 async function storeUserSession(identifier: string, password: string) {
-  console.log("email ===>", identifier, "Password= ===>", password)
+  console.log('email ===>', identifier, 'Password= ===>', password);
   await EncryptedStorage.setItem(
     'user_session',
     JSON.stringify({
@@ -53,13 +54,14 @@ const LoginScreen: React.FC = () => {
     password: '',
   });
 
+  const {t} = useTranslation();
 
   const retrieveUserSession = async () => {
     try {
       const session = await EncryptedStorage.getItem('user_session');
       if (session != undefined) {
         const parsedSession = JSON.parse(session);
-        console.log("parsedSession.email ===>", parsedSession?.password)
+        console.log('parsedSession.email ===>', parsedSession?.password);
         setIsSelected(true);
         setInitialValues({
           identifier: parsedSession.identifier || '',
@@ -125,7 +127,7 @@ const LoginScreen: React.FC = () => {
         }
       })
       .catch(err => {
-        console.log("err ===>", err, typeof err, err.message)
+        console.log('err ===>', err, typeof err, err.message);
 
         Toast.show({
           type: 'error',
@@ -142,7 +144,7 @@ const LoginScreen: React.FC = () => {
     if (googleSubmitted) return;
 
     setGoogleSubmitted(true);
-    
+
     console.log(user, 'User');
     const apiData = {
       token: user,
@@ -165,26 +167,21 @@ const LoginScreen: React.FC = () => {
       .finally(() => {
         setGoogleSubmitted(false);
       });
-  }
+  };
 
   const onAppleLoginSuccess = (user: any) => {
     if (appleSubmitted) return;
 
     setAppleSubmitted(true);
 
-    const {
-      email,
-      fullName,
-      isAppleLogin,
-      apple_id,
-    } = user;
+    const {email, fullName, isAppleLogin, apple_id} = user;
 
     const apiData = {
       email,
       fullName,
       isAppleLogin,
       apple_id,
-    }
+    };
 
     appleLogin(apiData)
       .then(res => {
@@ -203,89 +200,99 @@ const LoginScreen: React.FC = () => {
       .finally(() => {
         setAppleSubmitted(false);
       });
-  }
+  };
 
   return (
-    <SafeAreaView style={ styles.safeAreaView }>
+    <SafeAreaView style={styles.safeAreaView}>
       <Formik
-        initialValues={ initialValues }
-        validationSchema={ validationSchema }
+        initialValues={initialValues}
+        validationSchema={validationSchema}
         enableReinitialize
-        onSubmit={ handleSubmit }>
-        { ({ handleSubmit, handleChange, handleBlur, values, errors }) => (
-
+        onSubmit={handleSubmit}>
+        {({handleSubmit, handleChange, handleBlur, values, errors}) => (
           <>
-            <KeyboardAwareScrollView
-              showsVerticalScrollIndicator={ false }>
-              <View style={ styles.container }>
-                <View style={ styles.imageContainer }>
+            <KeyboardAwareScrollView showsVerticalScrollIndicator={false}>
+              <View style={styles.container}>
+                <View style={styles.imageContainer}>
                   <Image
-                    source={ require('./images/loginHands.png') }
-                    style={ styles.loginImage }
+                    source={require('./images/loginHands.png')}
+                    style={styles.loginImage}
                   />
                 </View>
 
-                <InterBoldLabel style={ styles.heading }>Sign In</InterBoldLabel>
-                <PoppinsLabel style={ styles.subHeading }>Let your ideas travel across the world.</PoppinsLabel>
-                <GoogleLogin onSuccess={ onGoogleLoginSuccess } loading={ googleSubmitted } />
-                <AppleAuth onSuccess={ onAppleLoginSuccess } loading={ appleSubmitted } />
+                <InterBoldLabel style={styles.heading}>
+                  {t('signIn.title')}
+                </InterBoldLabel>
+                <PoppinsLabel style={styles.subHeading}>
+                  {t('signIn.subTitle')}
+                </PoppinsLabel>
+                <GoogleLogin
+                  onSuccess={onGoogleLoginSuccess}
+                  loading={googleSubmitted}
+                />
+                <AppleAuth
+                  onSuccess={onAppleLoginSuccess}
+                  loading={appleSubmitted}
+                />
 
-                <View style={ styles.lineContainer }>
-                  <View style={ styles.line } />
+                <View style={styles.lineContainer}>
+                  <View style={styles.line} />
                   <View>
-                    <Text style={ styles.lineText }>Or</Text>
+                    <Text style={styles.lineText}>{t('or')}</Text>
                   </View>
-                  <View style={ styles.line } />
+                  <View style={styles.line} />
                 </View>
 
                 <RegularTextInput
-                  placeholder='Email/Phone Number'
-                  placeholderTextColor={ colors.darkGray }
-                  onChangeText={ handleChange('identifier') }
-                  onBlur={ handleBlur('identifier') }
-                  value={ values.identifier }
-                  submitted={ submitted }
-                  errors={ errors.identifier }
-                  style={ styles.input }
+                  placeholder={t('email')}
+                  placeholderTextColor={colors.darkGray}
+                  onChangeText={handleChange('identifier')}
+                  onBlur={handleBlur('identifier')}
+                  value={values.identifier}
+                  submitted={submitted}
+                  errors={errors.identifier}
+                  style={styles.input}
                 />
 
                 <RegularTextInput
-                  placeholder="Enter Password"
-                  placeholderTextColor={ colors.darkGray }
-                  onChangeText={ handleChange('password') }
-                  onBlur={ handleBlur('password') }
-                  value={ values.password }
-                  submitted={ submitted }
-                  errors={ errors.password }
-                  secureTextEntry={ securePassword }
-                  onPressCurrentPassword={ () =>
+                  placeholder={t('password')}
+                  placeholderTextColor={colors.darkGray}
+                  onChangeText={handleChange('password')}
+                  onBlur={handleBlur('password')}
+                  value={values.password}
+                  submitted={submitted}
+                  errors={errors.password}
+                  secureTextEntry={securePassword}
+                  onPressCurrentPassword={() =>
                     setSecurePassword(!securePassword)
                   }
-                  style={ styles.input }
+                  style={styles.input}
                 />
 
                 <RememberMeContainer
-                  isSelected={ isSelected }
-                  setIsSelected={ setIsSelected }
-                  onPress={ () => navigation.navigate('ForgotPassword') }
+                  isSelected={isSelected}
+                  setIsSelected={setIsSelected}
+                  onPress={() => navigation.navigate('ForgotPassword')}
                 />
 
                 <CustomButton
-                  style={ styles.loginBtn }
-                  onPress={ handleSubmit }
-                  loading={ submitted }>
-                  Log in
+                  style={styles.loginBtn}
+                  onPress={handleSubmit}
+                  loading={submitted}>
+                  {t('signIn.login')}
                 </CustomButton>
               </View>
-              <View style={ styles.bottomContainer }>
-                <TouchableOpacity style={ styles.bottomTextContainer } onPress={ () => navigation.navigate('RegisterScreen') }>
-                  <Text style={ styles.bottomText }>Don't have an account?</Text>
-                  <Text style={ styles.signUpText }>Sign Up</Text>
+              <View style={styles.bottomContainer}>
+                <TouchableOpacity
+                  style={styles.bottomTextContainer}
+                  onPress={() => navigation.navigate('RegisterScreen')}>
+                  <Text style={styles.bottomText}>{t('signIn.noAccount')}</Text>
+                  <Text style={styles.signUpText}>{t('signIn.signUp')}</Text>
                 </TouchableOpacity>
               </View>
             </KeyboardAwareScrollView>
           </>
-        ) }
+        )}
       </Formik>
     </SafeAreaView>
   );

@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import {Clock, Search} from 'lucide-react-native';
 import GlobalHeader from '../../components/GlobalHeader';
+import {useTranslation} from 'react-i18next';
 
 const SearchTab = () => {
   const [searchText, setSearchText] = useState('');
@@ -17,6 +18,8 @@ const SearchTab = () => {
     {id: '2', text: 'Penoza'},
     {id: '3', text: 'Penoza'},
   ]);
+
+  const {t} = useTranslation();
 
   const renderRecentSearchItem = ({item}) => (
     <TouchableOpacity style={styles.recentSearchItem}>
@@ -34,7 +37,7 @@ const SearchTab = () => {
 
         <TextInput
           style={styles.searchInput}
-          placeholder="Search"
+          placeholder={t('search')}
           value={searchText}
           onChangeText={setSearchText}
           placeholderTextColor="#888"
@@ -45,7 +48,7 @@ const SearchTab = () => {
       <View style={styles.separator} />
 
       <View style={styles.recentSearchesContainer}>
-        <Text style={styles.recentSearchesTitle}>Recent Searches</Text>
+        <Text style={styles.recentSearchesTitle}>{t('searchScr.recent')}</Text>
         <FlatList
           data={recentSearches}
           renderItem={renderRecentSearchItem}

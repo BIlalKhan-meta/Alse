@@ -45,6 +45,7 @@ import {
   archiveStreamStats,
   updateViewerActivity,
 } from '../../../services/viewerService';
+import {useTranslation} from 'react-i18next';
 
 const appId = 'a0c7366a22ac46b791c69f685591207c';
 
@@ -59,6 +60,8 @@ const LiveStreamScreen = () => {
   const route = useRoute();
   const navigation = useNavigation();
   const appState = useRef(AppState.currentState);
+
+  const {t} = useTranslation();
 
   const user = useSelector(selectUserProfile);
 
@@ -621,7 +624,7 @@ const LiveStreamScreen = () => {
           onPress={isLoading ? null : startLive}
           txtstyle={styles.controlText}
           loading={isLoading}>
-          Start Stream
+          {t('streamingScr.start')}
         </CustomButton>
       </View>
     );
@@ -650,7 +653,7 @@ const LiveStreamScreen = () => {
             <Text style={styles.username}>{streamerName}</Text>
             {liveStarted && (
               <View style={styles.liveIndicatorContainer}>
-                <Text style={styles.liveText}>Live</Text>
+                <Text style={styles.liveText}>{t('streamingScr.live')}</Text>
               </View>
             )}
           </View>
@@ -688,7 +691,7 @@ const LiveStreamScreen = () => {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#38b6ff" />
-        <Text style={styles.loadingText}>Preparing livestream...</Text>
+        <Text style={styles.loadingText}>{t('streamingScr.loading')}</Text>
       </View>
     );
   };

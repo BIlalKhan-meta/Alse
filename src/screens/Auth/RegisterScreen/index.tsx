@@ -15,6 +15,7 @@ import Toast from 'react-native-toast-message';
 import Checkbox from 'expo-checkbox';
 import GoogleLogin from '../../../components/GoogleAuth/Login';
 import AppleAuth from '../../../components/AppleAuth';
+import {useTranslation} from 'react-i18next';
 interface FormValues {
   name: string;
   identifier: string;
@@ -24,6 +25,8 @@ interface FormValues {
 
 const SignupScreen: React.FC = () => {
   const navigation = useNavigation<any>();
+
+  const {t} = useTranslation();
 
   const [submitted, setSubmitted] = useState<boolean>(false);
   const [isGoogleSubmitted, setIsGoogleSubmitted] = useState<boolean>(false);
@@ -213,9 +216,11 @@ const SignupScreen: React.FC = () => {
                   />
                 </View>
 
-                <InterBoldLabel style={styles.heading}>Sign Up</InterBoldLabel>
+                <InterBoldLabel style={styles.heading}>
+                  {t('signUp.title')}
+                </InterBoldLabel>
                 <PoppinsLabel style={styles.subHeading}>
-                  Welcome to Alse, The opportunity is on your fingertips.
+                  {t('signUp.subTitle')}
                 </PoppinsLabel>
                 <GoogleLogin
                   onSuccess={onGoogleLoginSuccess}
@@ -229,13 +234,13 @@ const SignupScreen: React.FC = () => {
                 <View style={styles.lineContainer}>
                   <View style={styles.line} />
                   <View>
-                    <Text style={styles.lineText}>Or</Text>
+                    <Text style={styles.lineText}>{t('or')}</Text>
                   </View>
                   <View style={styles.line} />
                 </View>
 
                 <RegularTextInput
-                  placeholder="Name"
+                  placeholder={t('name')}
                   placeholderTextColor={colors.darkGray}
                   onChangeText={handleChange('name')}
                   onBlur={handleBlur('name')}
@@ -246,7 +251,7 @@ const SignupScreen: React.FC = () => {
                 />
 
                 <RegularTextInput
-                  placeholder="Email/Phone Number"
+                  placeholder={t('emailOrPhone')}
                   placeholderTextColor={colors.darkGray}
                   onChangeText={handleChange('identifier')}
                   onBlur={handleBlur('identifier')}
@@ -257,7 +262,7 @@ const SignupScreen: React.FC = () => {
                 />
 
                 <RegularTextInput
-                  placeholder="Enter Password"
+                  placeholder={t('password')}
                   placeholderTextColor={colors.darkGray}
                   onChangeText={handleChange('password')}
                   onBlur={handleBlur('password')}
@@ -278,9 +283,7 @@ const SignupScreen: React.FC = () => {
                       setFieldValue('agree', value);
                     }}
                   />
-                  <Text style={styles.bottomText}>
-                    I agree to the terms and conditions and Privacy Policy
-                  </Text>
+                  <Text style={styles.bottomText}>{t('signUp.policy')}</Text>
                 </View>
 
                 <CustomButton
@@ -292,15 +295,17 @@ const SignupScreen: React.FC = () => {
                   style={styles.loginBtn}
                   onPress={handleSubmit}
                   loading={submitted}>
-                  Create Account
+                  {t('signUp.createAccount')}
                 </CustomButton>
               </View>
               <View style={styles.bottomContainer}>
                 <TouchableOpacity
                   style={styles.bottomTextContainer}
                   onPress={() => navigation.navigate('Login' as never)}>
-                  <Text style={styles.bottomText}>Do you have an account?</Text>
-                  <Text style={styles.signUpText}>Sign in</Text>
+                  <Text style={styles.bottomText}>
+                    {t('signUp.alreadyHaveAccount')}
+                  </Text>
+                  <Text style={styles.signUpText}>{t('signUp.signIn')}</Text>
                 </TouchableOpacity>
               </View>
             </KeyboardAwareScrollView>

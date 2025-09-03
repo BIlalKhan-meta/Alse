@@ -22,6 +22,7 @@ import {useSelector} from 'react-redux';
 import {selectUserProfile} from '../../store/slices/authSlice';
 import store from '../../store';
 import {BASE_URL} from '../../utils/baseurl';
+import {useTranslation} from 'react-i18next';
 
 const {height: screenHeight} = Dimensions.get('window');
 
@@ -49,6 +50,7 @@ const ReelItem: React.FC<ReelItemProps> = ({
   const [videoError, setVideoError] = useState(false);
   const [showFullText, setShowFullText] = useState(false);
   const maxTextLength = 100;
+  const {t} = useTranslation();
 
   // Function to process video URL
   const processVideoUrl = (url: string) => {
@@ -227,7 +229,7 @@ const ReelItem: React.FC<ReelItemProps> = ({
             />
           ) : (
             <View style={styles.videoErrorContainer}>
-              <Text style={styles.videoErrorText}>No video available</Text>
+              <Text style={styles.videoErrorText}>{t('reels.noReels')}</Text>
             </View>
           )}
         </TouchableOpacity>
@@ -337,6 +339,7 @@ const VideosTab = () => {
   const [hasMore, setHasMore] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef<FlatList<VideoItem> | null>(null);
+  const {t} = useTranslation();
 
   useEffect(() => {
     fetchVideos();
@@ -507,7 +510,7 @@ const VideosTab = () => {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#007AFF" />
-        <Text style={styles.loadingText}>Loading videos...</Text>
+        <Text style={styles.loadingText}>{t('reels.loading')}</Text>
       </View>
     );
   }
@@ -516,10 +519,8 @@ const VideosTab = () => {
     return (
       <View style={styles.emptyContainer}>
         <Image source={images.videoIcon} style={styles.emptyIcon} />
-        <Text style={styles.emptyText}>No videos available</Text>
-        <Text style={styles.emptySubText}>
-          Check back later for new content
-        </Text>
+        <Text style={styles.emptyText}>{t('reels.noReels')}</Text>
+        <Text style={styles.emptySubText}>{t('reels.checkLater')}</Text>
       </View>
     );
   }

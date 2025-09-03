@@ -31,6 +31,7 @@ import {
 } from 'lucide-react-native';
 import {images} from '../../../utils/images';
 import {vh, vw} from '../../../constant';
+import {useTranslation} from 'react-i18next';
 
 // Define Product type for API data
 interface Product {
@@ -77,6 +78,8 @@ const Marketplace: React.FC = () => {
   const [isFabOpen, setIsFabOpen] = useState(false);
   const [fabAnimation] = useState(new Animated.Value(0));
   const [orders, setOrders] = useState<Order[]>([]);
+
+  const {t} = useTranslation();
 
   // New function to get recommended products
   const getProductData = React.useCallback(async () => {
@@ -240,6 +243,7 @@ const Marketplace: React.FC = () => {
             {/* <Ionicons name="location-outline" size={20} color="white" /> */}
             <MapPin size={20} color="white" />
             <Text style={styles.locationText}>
+              {/* TODO : Add location */}
               Street, #43 EII New jersey, New york
             </Text>
           </View>
@@ -254,7 +258,7 @@ const Marketplace: React.FC = () => {
           <TouchableOpacity
             style={styles.searchInput}
             onPress={() => navigation.navigate('Search')}>
-            <Text style={styles.searchPlaceholder}>Search</Text>
+            <Text style={styles.searchPlaceholder}>{t('search')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -268,7 +272,9 @@ const Marketplace: React.FC = () => {
 
         {/* Featured Stores Section */}
         <View style={styles.featuredSection}>
-          <Text style={styles.featuredTitle}>Featured stores</Text>
+          <Text style={styles.featuredTitle}>
+            {t('marketplace.featuredStores')}
+          </Text>
           {loading ? (
             <View style={styles.storesLoadingContainer}>
               <ScrollView
@@ -315,7 +321,9 @@ const Marketplace: React.FC = () => {
               ) : (
                 // Placeholder when no stores are available
                 <View style={styles.emptyContainer}>
-                  <Text style={styles.emptyText}>No stores available</Text>
+                  <Text style={styles.emptyText}>
+                    {t('marketplace.noStores')}
+                  </Text>
                 </View>
               )}
             </ScrollView>
@@ -326,7 +334,7 @@ const Marketplace: React.FC = () => {
         <View style={styles.recommendedSection}>
           <View style={styles.sectionHeaderRow}>
             <Text style={styles.sectionTitle}>
-              Socially recommended products
+              {t('marketplace.recommendedProds')}
             </Text>
             <ChevronRight size={20} color="#333" />
           </View>
@@ -448,7 +456,7 @@ const Marketplace: React.FC = () => {
           ) : (
             <View style={styles.noProductsContainer}>
               <Text style={styles.noProductsText}>
-                No products available right now
+                {t('marketplace.noProds')}
               </Text>
             </View>
           )}
