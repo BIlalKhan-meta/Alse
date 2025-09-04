@@ -1,5 +1,5 @@
 import React, {useEffect, useLayoutEffect, useState} from 'react';
-import {View, Image, TouchableOpacity, ScrollView} from 'react-native';
+import {View, Image, TouchableOpacity} from 'react-native';
 import {Formik} from 'formik';
 import * as yup from 'yup';
 import RegularTextInput from '../../components/TextInput/RegularTextInput';
@@ -23,6 +23,17 @@ import {createArticle, createBlog, createVideo} from '../../api/education';
 import {getCategories} from '../../api/product';
 import {useTranslation} from 'react-i18next';
 
+interface Category {
+  id: string;
+  title: string;
+}
+
+interface MediaItem {
+  uri: string;
+  name: string;
+  type: string;
+}
+
 const statuses = [
   {label: 'Active', value: '1'},
   {label: 'Inactive', value: '0'},
@@ -41,14 +52,14 @@ const videoSchema = yup.object().shape({
 const AddBlog = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  const title = route?.params?.title || '';
-  const editItem = route?.params?.item || {};
+  const title = (route?.params as any)?.title || '';
+  const editItem = (route?.params as any)?.item || {};
   const [selected, setSelected] = useState('children');
   const [visible, setVisible] = useState(false);
-  const [media, setMedia] = useState<object[]>([]);
+  const [media, setMedia] = useState<MediaItem[]>([]);
   const {imageData, captureImage, chooseImageFromLibrary} = useImagePicker();
   const [loading, setLoading] = useState(false);
-  const [categories, setCategories] = useState([]);
+  const [categories, setCategories] = useState<Category[]>([]);
 
   const {t} = useTranslation();
 
@@ -78,13 +89,15 @@ const AddBlog = () => {
       },
       title: title,
     });
-  }, [navigation]);
+  }, [navigation, title]);
 
   const handleForm = async (data: any) => {
     if (media.length == 0) {
       return Toast.show({
         text1: t('uploadImages'),
-        text2: `${title == t('blogs.addVideos') ? t('video') : t('image')} is Required`,
+        text2: `${
+          title == t('blogs.addVideos') ? t('video') : t('image')
+        } is Required`,
         type: 'error',
       });
     }
@@ -95,7 +108,7 @@ const AddBlog = () => {
       privacy: selected,
       ...(title == t('blogs.addBlog') ? {blog_image: media[0]} : {}),
       ...(title == t('blogs.addArticle') ? {article_image: media[0]} : {}),
-      ...(title == 'Add Vidt('blogs.addVideos')o_file: media[0]} : {}),
+      ...(title == t('blogs.addVideos') ? {video_file: media[0]} : {}),
     };
 
     const form = new FormData();
@@ -117,7 +130,7 @@ const AddBlog = () => {
           setLoading(false);
         });
     } else if (title == t('blogs.addArticle')) {
-      await createAt('blogs.addVideos')
+      await createArticle(form)
         .then(res => {
           if (res?.data) {
             navigation.goBack();
@@ -159,9 +172,14 @@ const AddBlog = () => {
 
   useEffect(() => {
     if (imageData) {
-      setMedia([
-        ...media,
-        {uri: imageData?.uri, name: imageData?.fileName, type: imageData?.type},
+      const data = imageData as any;
+      setMedia(prevMedia => [
+        ...prevMedia,
+        {
+          uri: data?.uri || '',
+          name: data?.fileName || '',
+          type: data?.type || '',
+        },
       ]);
       setVisible(false);
     }
@@ -223,7 +241,7 @@ const AddBlog = () => {
               onChangeText={handleChange('title')}
               onBlur={handleBlur('title')}
               value={values.title}
-              errors={errors.title}
+              errors={errors.title as string}
             />
 
             {(title == t('blogs.addVideos') || title == 'Update Video') && (
@@ -240,7 +258,7 @@ const AddBlog = () => {
                     placeholder={t('selectCategory')}
                     onChangeValue={e => setValues({...values, category_id: e})}
                     style={[styles.dropDown]}
-                    error={errors.category_id}
+                    error={errors.category_id as string}
                   />
                 </View>
 
@@ -255,7 +273,7 @@ const AddBlog = () => {
                     placeholder={t('selectStatus')}
                     onChangeValue={e => setValues({...values, status: e})}
                     style={styles.dropDown}
-                    error={errors.status}
+                    error={errors.status as string}
                   />
                 </View>
               </>
@@ -303,7 +321,7 @@ const AddBlog = () => {
               onChangeText={handleChange('content')}
               onBlur={handleBlur('content')}
               value={values.content}
-              errors={errors.content}
+              errors={errors.content as string}
             />
 
             <View style={styles.checkboxContainer}>

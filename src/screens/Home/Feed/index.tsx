@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {View, FlatList, TouchableOpacity, Animated} from 'react-native';
 import {images} from '../../../utils/images';
 import {
@@ -23,7 +23,7 @@ import {
 } from '../../../store/slices/homeSlice';
 import InterRegular from '../../../components/Text/InterRegular';
 import {getMessage, Toast} from '../../../utils/helpers';
-import {createPost, getCountriesList, reportPost} from '../../../api/home';
+import {getCountriesList, reportPost} from '../../../api/home';
 import {removeSavedItem, saveItem} from '../../../api/menu';
 import {vh} from '../../../constant';
 import {getCountries} from '../../../store/slices/generalSlice';
@@ -43,9 +43,9 @@ import PostSkeleton from '../../../components/SkeletonLoaders';
 import {useTranslation} from 'react-i18next';
 
 const Home: React.FC = () => {
-  const flatListRef = useRef(null);
-  const [focusedIndex, setFocusedIndex] = useState(0);
-  const navigation = useNavigation();
+  const flatListRef = useRef<FlatList>(null);
+  const [focusedIndex, setFocusedIndex] = useState<number | null>(0);
+  const navigation = useNavigation<any>();
   const dispatch = useAppDispatch();
   const isFoused = useIsFocused();
   const user = useSelector(selectUserProfile);
@@ -53,49 +53,59 @@ const Home: React.FC = () => {
   const {t} = useTranslation();
 
   const {posts} = useAppSelector(state => state.home);
-  const [loader, setLoader] = useState(false);
+  const [loader, _setLoader] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true); // New state for initial load
 
-  const [commentsVisible, setCommentsVisible] = useState({
+  const [commentsVisible, setCommentsVisible] = useState<{
+    visiblity: boolean;
+    comments: any[];
+    id: number | null;
+  }>({
     visiblity: false,
     comments: [],
     id: null,
   });
-  const [likesVisible, setLikesVisible] = useState({
+  const [likesVisible, setLikesVisible] = useState<{
+    visiblity: boolean;
+    likes: any[];
+    id: number | null;
+  }>({
     visiblity: false,
     likes: [],
     id: null,
   });
   const [reactVisible, setrRactVisible] = useState(false);
   const [activePostId, setActivePostId] = useState<number | null>(null);
-  const [deleteVisible, setDeleteVisible] = useState({
+  const [deleteVisible, setDeleteVisible] = useState<{
+    visibility: boolean;
+    id: number | null;
+  }>({
     visibility: false,
     id: null,
   });
   const [deleteSuccess, setDeleteSuccess] = useState(false);
   const [reportLoader, setReportLoader] = useState(false);
 
-  const [reportVisible, setReportVisible] = useState({
+  const [reportVisible, setReportVisible] = useState<{
+    visibility: boolean;
+    id: number | null;
+  }>({
     visibility: false,
     id: null,
   });
-  const [pause, setPause] = useState(false);
-  const [currendId, setCurrentID] = useState(0);
-  const handleVideoPause = id => {
-    setPause(!pause);
-    setCurrentID(id);
-  };
+  const [_pause, _setPause] = useState(false);
+  const [_currendId, _setCurrentID] = useState(0);
   const [reportSuccess, setReportSuccess] = useState(false);
 
-  const [shareLoader, setShareLoader] = useState(false);
+  const [shareLoader, _setShareLoader] = useState(false);
 
   const [isFabOpen, setIsFabOpen] = useState(false);
   const animation = useRef(new Animated.Value(0)).current;
 
-  const closePaymentProcess = async remoteMessage => {
+  const closePaymentProcess = async (remoteMessage: any) => {
     console.log('remoteMesssaadssage ==>', remoteMessage);
     await InAppBrowser.isAvailable();
-    const closePrevios = InAppBrowser.close();
+    InAppBrowser.close();
     if (remoteMessage?.notification?.title === 'Payment Successful') {
       eventEmitter.emit(EVENT_TYPES.CHECKOUT_TRIGGER, remoteMessage);
     }
@@ -113,25 +123,10 @@ const Home: React.FC = () => {
     setIsFabOpen(!isFabOpen);
   };
 
-  useEffect(() => {
-    notificationListenerInstance.init(closePaymentProcess);
-  }, []);
-
-  useEffect(() => {
-    if (!user?.has_subscription && !user?.is_child) {
-      navigation.navigate('SubscriptionPlan');
-    }
-    getApi();
-  }, [isFoused]);
-
-  const getApi = async () => {
+  const getApi = useCallback(async () => {
     try {
-      // Only show initial loading on first load
-      if (posts.length === 0) {
-        setInitialLoading(true);
-      }
-
-      const checkData = await dispatch(GetNewsFeed());
+      setInitialLoading(true);
+      await dispatch(GetNewsFeed());
       await dispatch(GetUserProfile());
       await getCountriesList().then(res => {
         if (res?.data) {
@@ -143,7 +138,18 @@ const Home: React.FC = () => {
     } finally {
       setInitialLoading(false);
     }
-  };
+  }, [dispatch]);
+
+  useEffect(() => {
+    notificationListenerInstance.init(closePaymentProcess);
+  }, []);
+
+  useEffect(() => {
+    if (!user?.has_subscription && !user?.is_child) {
+      navigation.navigate('SubscriptionPlan');
+    }
+    getApi();
+  }, [isFoused, getApi, navigation, user?.has_subscription, user?.is_child]);
 
   const scrollToTop = () => {
     if (flatListRef.current) {
@@ -151,27 +157,7 @@ const Home: React.FC = () => {
     }
   };
 
-  const sharePost = async form => {
-    setShareLoader(true);
-    await createPost(form)
-      .then(res => {
-        if (res?.data) {
-          setShareLoader(false);
-          getApi();
-          scrollToTop();
-          console.log('POSTTTTTT SHAREDDDDDDDDDDDDDDDD');
-        }
-      })
-      .catch(err => {
-        console.log('ERORRRRRRR', err);
-        setShareLoader(false);
-      })
-      .finally(() => {
-        setShareLoader(false);
-      });
-  };
-
-  const handleCommentPress = id => {
+  const handleCommentPress = (id: any) => {
     dispatch(getCommentPost(id))
       .then(res => {
         console.log(
@@ -206,15 +192,15 @@ const Home: React.FC = () => {
     dispatch(likePost(id));
   };
 
-  const handleDotPress = (postId: number) => {
+  const handleDotPress = (postId: number | null) => {
     setActivePostId(activePostId == null ? postId : null);
   };
 
   const handleDelete = () => {
     setReportLoader(true);
-    dispatch(PostDelete(deleteVisible?.id))
+    dispatch(PostDelete(deleteVisible?.id || 0))
       .unwrap()
-      .then(res => {
+      .then(_res => {
         setDeleteVisible({
           visibility: false,
           id: null,
@@ -240,7 +226,7 @@ const Home: React.FC = () => {
     console.log(reportVisible.id, 'Reportttt idddddd');
     setReportLoader(true);
     const data = {
-      reportable_type: `Post`,
+      reportable_type: 'Post',
       reportable_id: reportVisible?.id,
       reason: 'testingg',
     };
@@ -250,7 +236,7 @@ const Home: React.FC = () => {
       formData.append(item[0], item[1]);
     });
     await reportPost(formData)
-      .then(res => {
+      .then(_res => {
         setReportVisible({
           visibility: false,
           id: null,
@@ -293,17 +279,18 @@ const Home: React.FC = () => {
     }
   };
 
-  const onViewableItemsChanged = ({viewableItems}) => {
-    const focusedIndex = viewableItems[0]?.index;
-    setFocusedIndex(focusedIndex);
+  const onViewableItemsChanged = ({viewableItems}: any) => {
+    const newFocusedIndex = viewableItems[0]?.index;
+    setFocusedIndex(newFocusedIndex);
   };
 
-  const renderPost = ({item, index}) => {
+  const renderPost = ({item, index}: any) => {
     const isFocused = focusedIndex === index;
     return (
       <PostComponent
         isFocused={isFocused}
         id={item?.user_id}
+        mediaId={item?.id}
         avatar={item?.avatar}
         name={item?.fullname}
         country={item?.country ? item?.country : ''}
@@ -325,9 +312,6 @@ const Home: React.FC = () => {
         onDotPress={() => handleDotPress(item?.id)}
         modalVisible={activePostId === item?.id}
         onCardPress={() => setActivePostId(null)}
-        sharePost={sharePost}
-        isPaused={pause && currendId == item?.id}
-        handleVideoPause={() => handleVideoPause(item?.id)}
         handleBlockPress={() => {
           setDeleteVisible({visibility: true, id: item?.id});
         }}
@@ -379,7 +363,6 @@ const Home: React.FC = () => {
       scrollToTop();
       return () => {
         setFocusedIndex(null);
-        setPause(true);
       };
     }, []),
   );
@@ -466,16 +449,17 @@ const Home: React.FC = () => {
               setCommentsVisible({visiblity: false, comments: [], id: null});
               getApi();
             }}
+            icon={images.checkedIcon}
             title="Successfully"
             message="Password has been updated successfully"
             buttonText="Apply"
             comments={commentsVisible?.comments}
-            postId={commentsVisible?.id}
+            postId={commentsVisible?.id || 0}
           />
 
           <LikesModal
             visible={likesVisible.visiblity}
-            likes={likesVisible.likes}
+            likes={likesVisible.likes as any}
             closeModal={() => {
               setLikesVisible({visiblity: false, likes: [], id: null});
               getApi();
@@ -485,7 +469,7 @@ const Home: React.FC = () => {
           <ReactModal
             visible={reactVisible}
             closeModal={() => setrRactVisible(false)}
-            reactions={reactions}
+            reactions={reactions as any}
           />
 
           <GeneralModal

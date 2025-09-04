@@ -101,6 +101,7 @@ const Marketplace: React.FC = () => {
         });
       }
     } catch (error) {
+      console.log('Location error in handleLocationPress:', error);
       Toast.show({
         type: 'error',
         text1: 'Location Error',
@@ -172,9 +173,14 @@ const Marketplace: React.FC = () => {
     getData();
     getProductData();
     getOrdersData();
-    // Get user's location when component mounts
-    getCurrentLocation();
-  }, [isFocused, getProductData, getCurrentLocation]);
+  }, [isFocused, getProductData]);
+
+  // Separate useEffect for location to prevent infinite loops
+  useEffect(() => {
+    if (isFocused) {
+      getCurrentLocation();
+    }
+  }, [isFocused, getCurrentLocation]);
 
   useEffect(() => {
     const filterOrders = () => {
@@ -186,10 +192,16 @@ const Marketplace: React.FC = () => {
   }, [shops]);
 
   const getData = async () => {
-    setLoading(true);
-    const res = await getAllShop();
-    setLoading(false);
-    setShops(res.data?.data?.data);
+    try {
+      setLoading(true);
+      const res = await getAllShop();
+      setShops(res.data?.data?.data || []);
+    } catch (error) {
+      console.log('Error fetching shops:', error);
+      setShops([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // FAB animation functions
@@ -242,6 +254,11 @@ const Marketplace: React.FC = () => {
   // Show loader only if both shops and products are loading and no products are available
   if (loading && productsLoading && products.length === 0) {
     return <Loader />;
+  }
+
+  // Add error boundary for location errors
+  if (locationError && !location) {
+    console.log('Location error:', locationError);
   }
 
   return (
