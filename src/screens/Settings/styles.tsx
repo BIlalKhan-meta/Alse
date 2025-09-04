@@ -85,6 +85,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
 
+  profileNameContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
   profileUsername: {
     fontSize: 14,
     color: colors.lightGrey,

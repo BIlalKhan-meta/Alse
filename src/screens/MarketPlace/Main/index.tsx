@@ -32,6 +32,8 @@ import {
 import {images} from '../../../utils/images';
 import {vh, vw} from '../../../constant';
 import {useTranslation} from 'react-i18next';
+import {useLocation} from '../../../hooks/useLocation';
+import Toast from 'react-native-toast-message';
 
 // Define Product type for API data
 interface Product {
@@ -80,6 +82,32 @@ const Marketplace: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
 
   const {t} = useTranslation();
+  const {
+    location,
+    loading: locationLoading,
+    error: locationError,
+    getCurrentLocation,
+  } = useLocation();
+
+  // Handle location with toast
+  const handleLocationPress = async () => {
+    try {
+      await getCurrentLocation();
+      if (location?.address) {
+        Toast.show({
+          type: 'success',
+          text1: 'Location Updated',
+          text2: location.address,
+        });
+      }
+    } catch (error) {
+      Toast.show({
+        type: 'error',
+        text1: 'Location Error',
+        text2: locationError || 'Failed to get your location',
+      });
+    }
+  };
 
   // New function to get recommended products
   const getProductData = React.useCallback(async () => {
@@ -144,7 +172,9 @@ const Marketplace: React.FC = () => {
     getData();
     getProductData();
     getOrdersData();
-  }, [isFocused, getProductData]);
+    // Get user's location when component mounts
+    getCurrentLocation();
+  }, [isFocused, getProductData, getCurrentLocation]);
 
   useEffect(() => {
     const filterOrders = () => {
@@ -239,14 +269,22 @@ const Marketplace: React.FC = () => {
 
         {/* Location Bar (inside header section) */}
         <View style={styles.locationBar}>
-          <View style={styles.locationLeft}>
+          <TouchableOpacity
+            style={styles.locationLeft}
+            onPress={handleLocationPress}
+            disabled={locationLoading}>
             {/* <Ionicons name="location-outline" size={20} color="white" /> */}
             <MapPin size={20} color="white" />
             <Text style={styles.locationText}>
-              {/* TODO : Add location */}
-              Street, #43 EII New jersey, New york
+              {locationLoading
+                ? 'Getting location...'
+                : location?.address
+                ? location.address
+                : locationError
+                ? 'Tap to retry location'
+                : 'Tap to get location'}
             </Text>
-          </View>
+          </TouchableOpacity>
           <TouchableOpacity onPress={() => navigation.navigate('Cart')}>
             <Image source={images.shoppingBag} style={styles.shoppingBagIcon} />
           </TouchableOpacity>

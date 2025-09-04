@@ -8,6 +8,7 @@ import {Formik} from 'formik';
 import {colors} from '../../../utils/theme';
 import CustomButton from '../../../components/CustomButton';
 import {useNavigation} from '@react-navigation/native';
+import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import RememberMeContainer from '../../../components/RememberMeContainer';
 import {useAppDispatch} from '../../../hooks/storeHooks';
 import {getFcmToken} from '../../../utils/messaging.utils';
@@ -39,8 +40,21 @@ async function removeUserSession() {
   await EncryptedStorage.removeItem('user_session');
 }
 
+type AuthStackParamList = {
+  ForgotPassword: undefined;
+  RegisterScreen: undefined;
+  Login: undefined;
+  Verification: undefined;
+  RecoverPassword: undefined;
+};
+
+type LoginScreenNavigationProp = NativeStackNavigationProp<
+  AuthStackParamList,
+  'Login'
+>;
+
 const LoginScreen: React.FC = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<LoginScreenNavigationProp>();
   const dispatch = useAppDispatch();
 
   const [submitted, setSubmitted] = useState<boolean>(false);
@@ -59,7 +73,7 @@ const LoginScreen: React.FC = () => {
   const retrieveUserSession = async () => {
     try {
       const session = await EncryptedStorage.getItem('user_session');
-      if (session != undefined) {
+      if (session !== null) {
         const parsedSession = JSON.parse(session);
         console.log('parsedSession.email ===>', parsedSession?.password);
         setIsSelected(true);
@@ -74,10 +88,14 @@ const LoginScreen: React.FC = () => {
   };
 
   const getToken = async () => {
-    const token = await getFcmToken();
-    console.log('Token ========<', token);
-
-    setDeviceToken(token);
+    try {
+      const token = await getFcmToken();
+      console.log('FCM Token received:', token);
+      setDeviceToken(token || 'no-token');
+    } catch (error) {
+      console.log('Error getting FCM token:', error);
+      setDeviceToken('no-token');
+    }
   };
 
   useEffect(() => {
@@ -95,44 +113,60 @@ const LoginScreen: React.FC = () => {
   });
 
   const handleSubmit = async (values: FormValues) => {
-    if (submitted) return;
+    if (submitted) {
+      return;
+    }
 
-    console.log(values, 'Valuessssssss');
+    console.log('Login Form Values:', values);
+    console.log('Device Token:', deviceToken);
     setSubmitted(true);
 
     const apiData = {
-      identifier: values.identifier,
+      identifier: values.identifier.trim(),
       password: values.password,
-      token: deviceToken,
+      token: deviceToken || '',
     };
 
-    login({...apiData, token: deviceToken || ''})
+    console.log('Login API Data:', apiData);
+
+    login(apiData)
       .then(res => {
+        console.log('Login Response:', res?.data);
         if (res?.data?.status) {
           if (isSelected) {
             storeUserSession(values?.identifier, values?.password);
           } else {
             removeUserSession();
           }
-          console.log('resssssssssssssss', res?.data);
+          console.log('Login Success, setting user data:', res?.data?.data);
 
           dispatch(setUser(res?.data?.data));
           // navigation.navigate('TabNavigation');
         } else {
+          console.log('Login failed with message:', res?.data?.message);
           Toast.show({
             type: 'error',
-            text1: 'Invalid',
-            text2: res?.data?.message,
+            text1: 'Login Failed',
+            text2: res?.data?.message || 'Invalid credentials',
           });
         }
       })
       .catch(err => {
-        console.log('err ===>', err, typeof err, err.message);
+        console.log('Login Error Details:', {
+          error: err,
+          message: err?.message,
+          response: err?.response?.data,
+          status: err?.response?.status,
+        });
 
+        const errorMessage =
+          err?.response?.data?.message ||
+          err?.message ||
+          'Login failed. Please try again.';
         Toast.show({
           type: 'error',
-          text1: 'Invalid',
-          text2: err?.message,
+          text1: 'Login Error',
+          text2: errorMessage,
         });
       })
       .finally(() => {
@@ -141,7 +175,9 @@ const LoginScreen: React.FC = () => {
   };
 
   const onGoogleLoginSuccess = (user: any) => {
-    if (googleSubmitted) return;
+    if (googleSubmitted) {
+      return;
+    }
 
     setGoogleSubmitted(true);
 
@@ -170,7 +206,9 @@ const LoginScreen: React.FC = () => {
   };
 
   const onAppleLoginSuccess = (user: any) => {
-    if (appleSubmitted) return;
+    if (appleSubmitted) {
+      return;
+    }
 
     setAppleSubmitted(true);
 
@@ -209,7 +247,13 @@ const LoginScreen: React.FC = () => {
         validationSchema={validationSchema}
         enableReinitialize
         onSubmit={handleSubmit}>
-        {({handleSubmit, handleChange, handleBlur, values, errors}) => (
+        {({
+          handleSubmit: formikSubmit,
+          handleChange,
+          handleBlur,
+          values,
+          errors,
+        }) => (
           <>
             <KeyboardAwareScrollView showsVerticalScrollIndicator={false}>
               <View style={styles.container}>
@@ -277,7 +321,7 @@ const LoginScreen: React.FC = () => {
 
                 <CustomButton
                   style={styles.loginBtn}
-                  onPress={handleSubmit}
+                  onPress={formikSubmit}
                   loading={submitted}>
                   {t('signIn.login')}
                 </CustomButton>

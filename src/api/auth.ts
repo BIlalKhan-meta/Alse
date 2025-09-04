@@ -2,9 +2,7 @@ import {Platform} from 'react-native';
 import axiosInstance from '.';
 import endpoints from './endpoints';
 
-export const googleLogin = (data: {
-  token: string;
-}) => {
+export const googleLogin = (data: {token: string}) => {
   const formData = new FormData();
   formData.append('token', data.token);
   return axiosInstance.post(endpoints.auth.login, formData, {
@@ -28,10 +26,9 @@ export const appleLogin = (data: {
   });
 };
 
-
 export const login = (data: {
   identifier: string;
-  password?: string;
+  password: string;
   token: string;
 }) => {
   // Initialize FormData
@@ -39,7 +36,7 @@ export const login = (data: {
   formData.append('identifier', data.identifier);
   formData.append('password', data.password);
   formData.append('device_id', data.token);
-  formData.append('device_type', Platform.OS == 'ios' ? 'ios' : 'android');
+  formData.append('device_type', Platform.OS === 'ios' ? 'ios' : 'android');
   // Make API request with FormData
   return axiosInstance.post(endpoints.auth.login, formData, {
     formData: true, // This triggers the form-data handling in the interceptor

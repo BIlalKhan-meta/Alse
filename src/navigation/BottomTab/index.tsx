@@ -10,7 +10,7 @@ import MarketPlaceNavigation from '../MarketPlaceNavigator';
 import LiveStreamScreen from '../../screens/Livestream/GoLive';
 import SearchTab from '../SearchTab';
 import {Search} from 'lucide-react-native';
-import VideosTab from '../VideosTab';
+import VideosTab from '../VideosTab/Index';
 import MyProfile from '../../screens/MyProfile';
 import {useSelector} from 'react-redux';
 import {selectUserProfile} from '../../store/slices/authSlice';
