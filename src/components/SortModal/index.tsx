@@ -1,7 +1,8 @@
 // SortModal.tsx
 import React from 'react';
-import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { colors } from '../../utils/theme';
+import {Modal, View, Text, TouchableOpacity, StyleSheet} from 'react-native';
+import {colors} from '../../utils/theme';
+import {useTranslation} from 'react-i18next';
 
 interface SortModalProps {
   visible: boolean;
@@ -9,23 +10,24 @@ interface SortModalProps {
   onSelect: (value: string) => void;
 }
 
-const SortModal: React.FC<SortModalProps> = ({ visible, onClose, onSelect }) => {
+const SortModal: React.FC<SortModalProps> = ({visible, onClose, onSelect}) => {
   const options = [
-    { name: 'Product name (a-z)', value: 'a-z' },
-    { name: 'Product name (z-a)', value: 'z-a' },
+    {name: 'Product name (a-z)', value: 'a-z'},
+    {name: 'Product name (z-a)', value: 'z-a'},
     // Add more options as needed
   ];
+
+  const {t} = useTranslation();
 
   return (
     <Modal
       transparent
       visible={visible}
       animationType="slide"
-      onRequestClose={onClose}
-    >
+      onRequestClose={onClose}>
       <View style={styles.overlay}>
         <View style={styles.modal}>
-          <Text style={styles.title}>Sort by:</Text>
+          <Text style={styles.title}>{t('sort')}:</Text>
           {options.map(option => (
             <TouchableOpacity
               key={option.value}
@@ -33,13 +35,12 @@ const SortModal: React.FC<SortModalProps> = ({ visible, onClose, onSelect }) => 
               onPress={() => {
                 onSelect(option.value);
                 onClose();
-              }}
-            >
+              }}>
               <Text style={styles.optionText}>{option.name}</Text>
             </TouchableOpacity>
           ))}
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <Text style={styles.closeButtonText}>Close</Text>
+            <Text style={styles.closeButtonText}>{t('close')}</Text>
           </TouchableOpacity>
         </View>
       </View>

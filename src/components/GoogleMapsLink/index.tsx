@@ -1,4 +1,5 @@
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 import {View, Text, StyleSheet, TouchableOpacity, Linking} from 'react-native';
 
 interface Location {
@@ -37,6 +38,8 @@ const GoogleMapsLink: React.FC<GoogleMapsLinkProps> = ({
   };
 
   const distance = calculateDistance();
+
+  const {t} = useTranslation();
 
   // Create Google Maps URL with both locations
   const createGoogleMapsUrl = () => {
@@ -90,8 +93,8 @@ const GoogleMapsLink: React.FC<GoogleMapsLinkProps> = ({
       <View style={styles.mapCard}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>🗺️ Google Maps Tracking</Text>
-          <Text style={styles.subtitle}>Tap to open with both locations</Text>
+          <Text style={styles.title}>🗺️ {t('orderTracking.tracking')}</Text>
+          <Text style={styles.subtitle}>{t('orderTracking.openLocation')}</Text>
         </View>
 
         {/* Location Cards */}
@@ -137,8 +140,12 @@ const GoogleMapsLink: React.FC<GoogleMapsLinkProps> = ({
         <TouchableOpacity
           style={styles.openMapsButton}
           onPress={openGoogleMaps}>
-          <Text style={styles.openMapsButtonText}>🗺️ Open in Google Maps</Text>
-          <Text style={styles.openMapsSubtext}>View route & navigation</Text>
+          <Text style={styles.openMapsButtonText}>
+            🗺️ {t('orderTracking.openMaps')}
+          </Text>
+          <Text style={styles.openMapsSubtext}>
+            {t('orderTracking.viewRoute')}
+          </Text>
         </TouchableOpacity>
 
         {/* Debug info - remove this later */}

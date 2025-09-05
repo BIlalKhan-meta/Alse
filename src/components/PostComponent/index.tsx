@@ -26,6 +26,7 @@ import {createPost} from '../../api/home';
 import Video from 'react-native-video';
 import {getTimeOffset} from '../../utils/index';
 import {HeartIcon} from 'lucide-react-native';
+import {useTranslation} from 'react-i18next';
 
 interface PostProps {
   id?: number;
@@ -95,6 +96,8 @@ const PostComponent: React.FC<PostProps> = ({
   useEffect(() => {
     setNumberLikes(likes);
   }, [likes]);
+
+  const {t} = useTranslation();
 
   const handleLike = () => {
     if (isLiked) {
@@ -262,7 +265,7 @@ const PostComponent: React.FC<PostProps> = ({
               <Image
                 source={images.logoIcon}
                 style={styles.centerLogo}
-                tintColor="#06B6D4"
+                tintColor={colors.themeColor}
               />
             </View>
 
@@ -309,7 +312,7 @@ const PostComponent: React.FC<PostProps> = ({
             {postText && postText.length > maxTextLength && !showFullText && (
               <Text style={styles.readMoreText} onPress={handleReadMoreToggle}>
                 {' '}
-                more
+                {t('more')}
               </Text>
             )}
           </Text>

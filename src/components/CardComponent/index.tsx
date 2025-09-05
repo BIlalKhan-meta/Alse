@@ -17,6 +17,7 @@ import DropDownPicker from 'react-native-dropdown-picker';
 import {vh, vw} from '../../constant';
 import {useSelector} from 'react-redux';
 import {selectUserProfile} from '../../store/slices/authSlice';
+import {useTranslation} from 'react-i18next';
 
 interface CardComponentProps {
   onTextInput: () => void;
@@ -49,8 +50,8 @@ const CardComponent: React.FC<CardComponentProps> = ({
   removeMedia,
 }) => {
   const [open, setOpen] = useState(false);
-
   const user = useSelector(selectUserProfile);
+  const {t} = useTranslation();
 
   // console.log('USERRRRRRRRRRRRRRRRRRRRR', user);
 
@@ -65,7 +66,7 @@ const CardComponent: React.FC<CardComponentProps> = ({
         <TextInput
           // onPress={() => onTextInput()}
           style={styles.input}
-          placeholder="What's on your mind?"
+          placeholder={`${t('createPost')}?`}
           placeholderTextColor={colors.inputText}
           onChangeText={handleOnChangeText}
           multiline
@@ -77,7 +78,7 @@ const CardComponent: React.FC<CardComponentProps> = ({
           <DropDownPicker
             open={open}
             setOpen={setOpen}
-            placeholder="Select"
+            placeholder={t('select')}
             items={ListOptions}
             containerStyle={{height: vh * 3}}
             style={{
@@ -104,11 +105,11 @@ const CardComponent: React.FC<CardComponentProps> = ({
       <View style={styles.uploadOptions}>
         <TouchableOpacity style={styles.button} onPress={onVideoPress}>
           <Image source={images.video} style={styles.buttonIcon} />
-          <Text style={styles.buttonText}> Video</Text>
+          <Text style={styles.buttonText}>{t('video')}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.button} onPress={onImagePress}>
           <Image source={images.media} style={styles.buttonIcon2} />
-          <Text style={styles.buttonText}> Image</Text>
+          <Text style={styles.buttonText}>{t('image')}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.button} onPress={onCameraPress}>
@@ -117,7 +118,7 @@ const CardComponent: React.FC<CardComponentProps> = ({
             resizeMode="contain"
             style={styles.buttonIcon2}
           />
-          <Text style={styles.buttonText}> Camera</Text>
+          <Text style={styles.buttonText}>{t('camera')}</Text>
         </TouchableOpacity>
       </View>
 

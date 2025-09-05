@@ -360,66 +360,61 @@ const Stories = () => {
   const deleteStory = async (storyId: string | number) => {
     try {
       // Show confirmation alert
-      Alert.alert(
-        'Delete Story',
-        'Are you sure you want to delete this story?',
-        [
-          {
-            text: 'Cancel',
-            style: 'cancel',
-          },
-          {
-            text: 'Delete',
-            style: 'destructive',
-            onPress: async () => {
-              setIsDeleting(true);
+      Alert.alert(t('stories.deleteStory'), t('stories.confirmMsg'), [
+        {
+          text: t('cancel'),
+          style: 'cancel',
+        },
+        {
+          text: t('delete'),
+          style: 'destructive',
+          onPress: async () => {
+            setIsDeleting(true);
 
-              try {
+            try {
+              Toast.show({
+                type: 'info',
+                text1: t('toast.deletingStory'),
+                text2: t('loadingText'),
+              });
+
+              await DeleteStory(storyId);
+
+              Toast.show({
+                type: 'success',
+                text1: t('toast.storyDeleted'),
+              });
+
+              setStories(prevStories =>
+                prevStories.filter(story => story.id !== String(storyId)),
+              );
+
+              // Refresh stories after successful deletion
+              await getStories(false);
+            } catch (err) {
+              console.error('Delete error:', err);
+              if (isAxiosError(err)) {
                 Toast.show({
-                  type: 'info',
-                  text1: 'Deleting Story',
-                  text2: 'Please wait...',
+                  type: 'error',
+                  text1: err.response?.data.message || 'Failed to delete story',
                 });
-
-                await DeleteStory(storyId);
-
+              } else {
                 Toast.show({
-                  type: 'success',
-                  text1: 'Story deleted successfully',
+                  type: 'error',
+                  text1: t('toast.storyDelNetworkFailed'),
                 });
-
-                setStories(prevStories =>
-                  prevStories.filter(story => story.id !== String(storyId)),
-                );
-
-                // Refresh stories after successful deletion
-                await getStories(false);
-              } catch (err) {
-                console.error('Delete error:', err);
-                if (isAxiosError(err)) {
-                  Toast.show({
-                    type: 'error',
-                    text1:
-                      err.response?.data.message || 'Failed to delete story',
-                  });
-                } else {
-                  Toast.show({
-                    type: 'error',
-                    text1: 'Network error while deleting story',
-                  });
-                }
-              } finally {
-                setIsDeleting(false);
               }
-            },
+            } finally {
+              setIsDeleting(false);
+            }
           },
-        ],
-      );
+        },
+      ]);
     } catch (err) {
       console.error('Delete error:', err);
       Toast.show({
         type: 'error',
-        text1: 'Failed to delete story',
+        text1: t('toast.storyDelFailed'),
       });
     }
   };

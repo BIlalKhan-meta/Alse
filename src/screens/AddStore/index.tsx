@@ -8,6 +8,7 @@ import styles from './styles';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import Toast from 'react-native-toast-message';
 import {ChevronLeft} from 'lucide-react-native';
+import {useTranslation} from 'react-i18next';
 
 const initialValues = {
   name: '',
@@ -34,6 +35,8 @@ const AddStore: React.FC = () => {
   const [submitted, setSubmitted] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
+
+  const {t} = useTranslation();
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -111,7 +114,7 @@ const AddStore: React.FC = () => {
               <View style={styles.formContainer}>
                 {/* Name Field */}
                 <View style={styles.inputContainer}>
-                  <Text style={styles.label}>Name</Text>
+                  <Text style={styles.label}>{t('addStore.name')}</Text>
                   <TextInput
                     style={styles.textInput}
                     placeholder="Name"
@@ -127,7 +130,7 @@ const AddStore: React.FC = () => {
 
                 {/* Description Field */}
                 <View style={styles.inputContainer}>
-                  <Text style={styles.label}>Description</Text>
+                  <Text style={styles.label}>{t('addStore.description')}</Text>
                   <TextInput
                     style={[styles.textInput, styles.textArea]}
                     placeholder="Description"
@@ -146,10 +149,10 @@ const AddStore: React.FC = () => {
 
                 {/* Address Field */}
                 <View style={styles.inputContainer}>
-                  <Text style={styles.label}>Address (Area and Street) *</Text>
+                  <Text style={styles.label}>{t('addStore.address')} *</Text>
                   <TextInput
                     style={styles.textInput}
-                    placeholder="Address (Area and Street) *"
+                    placeholder={`${t('addStore.address *')}`}
                     placeholderTextColor="#999"
                     onChangeText={handleChange('address')}
                     onBlur={handleBlur('address')}
@@ -162,7 +165,7 @@ const AddStore: React.FC = () => {
 
                 {/* Phone Number Field */}
                 <View style={styles.inputContainer}>
-                  <Text style={styles.label}>Phone Number</Text>
+                  <Text style={styles.label}>{t('addStore.phone')}</Text>
                   <View style={styles.phoneContainer}>
                     <TouchableOpacity style={styles.countrySelector}>
                       <Text style={styles.countryText}>USA</Text>
@@ -170,7 +173,7 @@ const AddStore: React.FC = () => {
                     </TouchableOpacity>
                     <TextInput
                       style={[styles.textInput, styles.phoneInput]}
-                      placeholder="Enter phone number"
+                      placeholder={t('enterPhone')}
                       placeholderTextColor="#999"
                       onChangeText={handleChange('phoneNumber')}
                       onBlur={handleBlur('phoneNumber')}
@@ -185,7 +188,7 @@ const AddStore: React.FC = () => {
 
                 {/* Country Field */}
                 <View style={styles.inputContainer}>
-                  <Text style={styles.label}>Country</Text>
+                  <Text style={styles.label}>{t('addStore.country')}</Text>
                   <TouchableOpacity
                     style={styles.countryField}
                     onPress={() =>
@@ -194,7 +197,7 @@ const AddStore: React.FC = () => {
                     <View style={styles.countryDisplay}>
                       <Text style={styles.flagText}>🇺🇸</Text>
                       <Text style={styles.countryValue}>
-                        {values.country || 'Country'}
+                        {values.country || t('addStore.country')}
                       </Text>
                     </View>
                     <Text style={styles.dropdownArrow}>▼</Text>
@@ -230,7 +233,9 @@ const AddStore: React.FC = () => {
                 style={styles.submitButton}
                 onPress={() => handleSubmit()}
                 disabled={loading}>
-                <Text style={styles.submitButtonText}>Submit Details</Text>
+                <Text style={styles.submitButtonText}>
+                  {t('addStore.submit')}
+                </Text>
               </TouchableOpacity>
             </>
           )}

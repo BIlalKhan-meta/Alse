@@ -192,7 +192,7 @@ const NewGroupModal: React.FC<NewGroupModalProps> = props => {
       <TouchableOpacity style={styles.blurContainer} onPress={closeModal} />
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.heading}>New Group</Text>
+          <Text style={styles.heading}>{t('groups.newGroup')}</Text>
           <TouchableOpacity
             style={styles.createButton}
             onPress={handleCreate}
@@ -200,7 +200,7 @@ const NewGroupModal: React.FC<NewGroupModalProps> = props => {
             {props?.loader ? (
               <ActivityIndicator size={'small'} color={colors.white} />
             ) : (
-              <Text style={styles.createButtonText}>CREATE</Text>
+              <Text style={styles.createButtonText}>{t('groups.create')}</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -217,7 +217,7 @@ const NewGroupModal: React.FC<NewGroupModalProps> = props => {
           </TouchableOpacity>
           <TextInput
             style={styles.groupNameInput}
-            placeholder="Enter Group name"
+            placeholder={t('groups.enterGroupName')}
             value={groupName}
             onChangeText={setGroupName}
             placeholderTextColor={colors.black}
@@ -234,8 +234,8 @@ const NewGroupModal: React.FC<NewGroupModalProps> = props => {
         <GeneralModal
           visible={groupModel}
           closeModal={() => setGroupModel(false)}
-          title="Set Privacy To Restriction"
-          buttonText="APPLY"
+          title={t('groups.setPrivacy')}
+          buttonText={t('apply').toUpperCase()}
           groupPrivacy={true}
           onPress={() => {
             setGroupModel(false);
@@ -247,9 +247,9 @@ const NewGroupModal: React.FC<NewGroupModalProps> = props => {
         <GeneralModal
           visible={groupSuccess}
           closeModal={() => setGroupSuccess(false)}
-          title="Group Created"
-          message="New Group Created successfully."
-          buttonText="OK"
+          title={t('groups.groupCreated')}
+          message={t('groups.groupCreatedMsg')}
+          buttonText={t('ok').toUpperCase()}
           onPress={() => {
             setGroupSuccess(false);
             closeModal();

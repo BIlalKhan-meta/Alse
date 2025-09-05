@@ -1,5 +1,3 @@
-import {create} from 'lodash';
-
 export default {
   // Language Selection Page
   selectLanguage: 'Select Language',
@@ -46,6 +44,7 @@ export default {
   cancel: 'Cancel',
   done: 'Done',
   or: 'Or',
+  by: 'By',
   noPosts: 'No posts to show',
   public: 'Public',
   private: 'Private',
@@ -78,6 +77,19 @@ export default {
   description: 'Description',
   add: 'Add',
   update: 'update',
+  photo: 'Photo',
+  text: 'Text',
+  quantityShort: 'Qty',
+  apply: 'Apply',
+  ok: 'Ok',
+  distance: 'Distance',
+  more: 'more',
+  sort: 'Sort by',
+  close: 'Close',
+  delete: 'Delete',
+  deleting: 'Deleting',
+  subtotal: 'Subtotal',
+  videoUnavailable: 'Video unavailable',
 
   // Dropdown placeholders
   selectCountry: 'Select country',
@@ -87,10 +99,14 @@ export default {
   confirmPassword: 'Enter confirm password',
   selectCategory: 'Select category',
   selectStatus: 'Select status',
+  select: 'Select',
 
   // input placeholders
   enterContent: 'Enter content',
   enterTitle: 'Enter title',
+  createPost: "What's on your mind",
+  writeComment: 'Write a comment',
+  enterPhone: 'Enter your phone number',
 
   // Toasts
   toast: {
@@ -117,14 +133,18 @@ export default {
     storyRefreshFailed: 'Failed to refresh stories',
     livestreamRefreshFailed: 'Failed to refresh livestreams',
     storyUploadFailed: 'Failed to upload story',
+    storyDelNetworkFailed: 'Network error while deleting story',
+    storyDelFailed: 'Failed to delete story',
     // success
     passwordChanged: 'Password changed successfully!',
     biddingSettingsChanged: 'Bidding settings updated successfully!',
     followReqSencc: 'Follow Request Sent',
     storyUploadSuccess: 'Story updated successfully',
     addedToCart: 'Product added to cart',
+    storyDeleted: 'Story deleted successfully',
     // progress
     uploadingStory: 'Uploading Story',
+    deletingStory: 'Deleting Story',
   },
 
   // input fields:
@@ -179,12 +199,37 @@ export default {
     loading: 'Loading posts...',
   },
 
+  notifications: {
+    noNotifications: "You're all caught up!",
+    notifyText: 'You have',
+    notifySubText: 'notifications',
+    likedYourPost: 'liked your post',
+    mentionedYou: 'Mentioned you',
+    followedYou: 'followed you',
+  },
+
   marketplace: {
     featuredStores: 'Featured Stores',
     noStores: 'No stores available',
     recommendedProds: 'Socially recommended products',
     noProds: 'No products available right now',
     createShop: 'Create Shop/My Shop',
+  },
+
+  auctionBidding: {
+    currentBid: 'Current Bid',
+    placeBid: 'Place Bid',
+    noResults: 'No products found',
+    noResultsSubtext: 'Try adjusting your search or filters',
+  },
+
+  addStore: {
+    name: 'Name',
+    description: 'Description',
+    address: 'Address (Area and Street)',
+    phoneNumber: 'Phone Number',
+    country: 'Country',
+    submit: 'Submit Details',
   },
 
   blogs: {
@@ -305,5 +350,42 @@ export default {
 
   stories: {
     addStory: 'Add Story',
+    deleteStory: 'Delete Story',
+    confirmMsg: 'Are you sure you want to delete this story?',
+  },
+
+  order: {
+    orderDate: 'Order date',
+    paidAmount: 'Paid amount',
+  },
+
+  orderTracking: {
+    tracking: 'Google Maps Tracking',
+    openLocation: 'Tap to open with both locations',
+    openMaps: 'Open in Google Maps',
+    viewRoute: 'View route and navigation',
+  },
+
+  groups: {
+    title: 'Groups',
+    newGroup: 'New Group',
+    create: 'Create',
+    enterGroupName: 'Enter group name',
+    setPrivacy: 'Set privacy to restriction',
+    groupCreated: 'Group created',
+    groupCreatedMsg: 'New group created successfully',
+  },
+
+  livestreamChat: {
+    loading: 'Loading chat...',
+    noMessages: 'No messages yet',
+    typeMsg: 'Type your message',
+  },
+
+  reactionModel: {
+    whoReacted: 'People who reacted',
+    all: 'All',
+    like: 'Like',
+    heart: 'Heart',
   },
 };

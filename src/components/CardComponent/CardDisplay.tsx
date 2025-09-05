@@ -14,6 +14,7 @@ import {selectUserProfile} from '../../store/slices/authSlice';
 import {vh, vw} from '../../constant';
 import {images} from '../../utils/images';
 import {AlignLeft, Camera} from 'lucide-react-native';
+import {useTranslation} from 'react-i18next';
 
 interface CardDisplayProps {
   style?: StyleProp<ViewStyle>;
@@ -30,6 +31,8 @@ const CardDisplay: React.FC<CardDisplayProps> = ({
 }) => {
   const navigation = useNavigation();
   const user = useSelector(selectUserProfile);
+
+  const {t} = useTranslation();
 
   const defaultTextHandler = () => navigation.navigate('CreatePost');
   const defaultImageHandler = () =>
@@ -50,7 +53,7 @@ const CardDisplay: React.FC<CardDisplayProps> = ({
           activeOpacity={0.7}
           onPress={onTextInput || defaultTextHandler}>
           <Text style={styles.inputText}>
-            What's on your mind, {user?.full_name?.split(' ')[0] || 'there'}?
+            {t('createPost')}, {user?.full_name?.split(' ')[0] || 'there'}?
           </Text>
         </TouchableOpacity>
       </View>
@@ -63,7 +66,7 @@ const CardDisplay: React.FC<CardDisplayProps> = ({
           activeOpacity={0.7}
           onPress={onImagePress || defaultImageHandler}>
           <Image source={images.media} style={styles.actionIcon} />
-          <Text style={styles.actionText}>Photo</Text>
+          <Text style={styles.actionText}>{t('photo')}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -71,7 +74,7 @@ const CardDisplay: React.FC<CardDisplayProps> = ({
           activeOpacity={0.7}
           onPress={onVideoPress || defaultVideoHandler}>
           <Camera style={styles.actionText} />
-          <Text style={styles.actionText}>Camera</Text>
+          <Text style={styles.actionText}>{t('camera')}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -79,7 +82,7 @@ const CardDisplay: React.FC<CardDisplayProps> = ({
           activeOpacity={0.7}
           onPress={onTextInput || defaultTextHandler}>
           <AlignLeft style={styles.actionIcon} />
-          <Text style={styles.actionText}>Text</Text>
+          <Text style={styles.actionText}>{t('text')}</Text>
         </TouchableOpacity>
       </View>
     </View>

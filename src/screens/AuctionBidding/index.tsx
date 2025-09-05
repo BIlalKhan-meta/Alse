@@ -23,6 +23,7 @@ import {
   Plus,
   Lock,
 } from 'lucide-react-native';
+import {useTranslation} from 'react-i18next';
 
 interface Product {
   id: number;
@@ -73,6 +74,8 @@ const AuctionBidding: React.FC = () => {
   }>({});
 
   const filterOptions = ['Category', 'Price', 'Location', 'Time Left'];
+
+  const {t} = useTranslation();
 
   useEffect(() => {
     getProducts();
@@ -204,8 +207,6 @@ const AuctionBidding: React.FC = () => {
         ? item.images[0].path
         : 'https://via.placeholder.com/300x200?text=No+Image';
 
-    console.log(`Using image URI for product ${item.id}:`, imageUri);
-
     return (
       <TouchableOpacity
         style={styles.productCard}
@@ -243,18 +244,20 @@ const AuctionBidding: React.FC = () => {
 
           <View style={styles.sellerContainer}>
             <Text style={styles.sellerText}>
-              by @{item.shop.fullname || item.shop.shop_name || 'seller'}
+              {t('by')} @{item.shop.fullname || item.shop.shop_name || 'seller'}
             </Text>
           </View>
 
           <View style={styles.priceContainer}>
             <Text style={styles.currentBid}>
-              Current Bid: {formatPrice(item.price)}
+              {t('auctionBidding.currentBid')}: {formatPrice(item.price)}
             </Text>
           </View>
 
           <TouchableOpacity style={styles.bidButton}>
-            <Text style={styles.bidButtonText}>Place Bid</Text>
+            <Text style={styles.bidButtonText}>
+              {t('auctionBidding.placeBid')}
+            </Text>
           </TouchableOpacity>
         </View>
       </TouchableOpacity>
@@ -317,7 +320,7 @@ const AuctionBidding: React.FC = () => {
           <Search size={20} color="#666" />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search"
+            placeholder={t('search')}
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholderTextColor="#666"
@@ -357,9 +360,11 @@ const AuctionBidding: React.FC = () => {
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Gavel size={48} color="#ccc" />
-            <Text style={styles.emptyText}>No products found</Text>
+            <Text style={styles.emptyText}>
+              {t('auctionBidding.noResults')}
+            </Text>
             <Text style={styles.emptySubtext}>
-              Try adjusting your search or filters
+              {t('auctionBidding.noResultsSubtext')}
             </Text>
           </View>
         }

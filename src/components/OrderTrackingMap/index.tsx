@@ -8,6 +8,7 @@ import {
   Platform,
 } from 'react-native';
 import {vh, vw} from '../../constant';
+import {useTranslation} from 'react-i18next';
 
 interface Location {
   latitude: number;
@@ -36,6 +37,8 @@ const OrderTrackingMap: React.FC<OrderTrackingMapProps> = ({
   const centerLatitude = (buyerLocation.latitude + sellerLocation.latitude) / 2;
   const centerLongitude =
     (buyerLocation.longitude + sellerLocation.longitude) / 2;
+
+  const {t} = useTranslation();
 
   // Calculate distance between points for zoom adjustment
   const calculateDistance = (
@@ -123,7 +126,7 @@ const OrderTrackingMap: React.FC<OrderTrackingMapProps> = ({
         {/* Distance indicator */}
         <View style={styles.distanceIndicator}>
           <Text style={styles.distanceText}>
-            Distance: {distance.toFixed(1)} km
+            {t('distance')}: {distance.toFixed(1)} km
           </Text>
         </View>
       </View>

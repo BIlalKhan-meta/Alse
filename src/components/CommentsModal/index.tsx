@@ -36,6 +36,7 @@ import {postComment} from '../../api/home';
 import {vh, vw} from '../../constant';
 import {EmptyComponent} from '../EmptyComponent';
 import {useNavigation} from '@react-navigation/native';
+import React from 'react';
 
 interface Comment {
   id: number;
@@ -214,7 +215,7 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
           <View style={styles.inputConatiner}>
             <View style={styles.inputCon}>
               <TextInput
-                placeholder="Write a comment "
+                placeholder="Write a comment"
                 style={styles.input}
                 placeholderTextColor={colors.inputText}
                 value={newComment}

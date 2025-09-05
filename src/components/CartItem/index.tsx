@@ -10,6 +10,7 @@ import InterMedium from '../Text/InterMedium';
 import InterRegular from '../Text/InterRegular';
 import InterBoldSmall from '../Text/InterBoldSmall';
 import {Product} from '../../dummyData';
+import {useTranslation} from 'react-i18next';
 
 interface Props {
   item: [];
@@ -30,6 +31,8 @@ const CartItem: React.FC<Props> = ({
   quantity,
   showDelete,
 }) => {
+  const {t} = useTranslation();
+
   return (
     <>
       <View style={styles.productContainer}>
@@ -94,7 +97,7 @@ const CartItem: React.FC<Props> = ({
           {quantity && (
             <View style={styles.quantityContainer}>
               <InterRegular style={styles.quantityText2}>
-                Qty:{item.quantity}
+                {t('quantity')}:{item.quantity}
               </InterRegular>
             </View>
           )}

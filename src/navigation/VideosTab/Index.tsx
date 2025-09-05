@@ -136,6 +136,7 @@ const ReelItem: React.FC<ReelItemProps> = ({
 
   const renderPostText = () => {
     if (!item.content) return null;
+    const {t} = useTranslation();
 
     return (
       <Text
@@ -145,7 +146,7 @@ const ReelItem: React.FC<ReelItemProps> = ({
         {item.content.length > maxTextLength && !showFullText && (
           <Text style={styles.readMoreText} onPress={handleReadMoreToggle}>
             {' '}
-            more
+            {t('more')}
           </Text>
         )}
       </Text>
@@ -165,7 +166,7 @@ const ReelItem: React.FC<ReelItemProps> = ({
         )}
         {videoError && (
           <View style={styles.videoErrorContainer}>
-            <Text style={styles.videoErrorText}>Video unavailable</Text>
+            <Text style={styles.videoErrorText}>{t('videoUnavailable')}</Text>
             <TouchableOpacity
               style={styles.retryButton}
               onPress={() => {
@@ -180,7 +181,7 @@ const ReelItem: React.FC<ReelItemProps> = ({
                   });
                 }
               }}>
-              <Text style={styles.retryButtonText}>Retry</Text>
+              <Text style={styles.retryButtonText}>{t('retry')}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -265,7 +266,7 @@ const ReelItem: React.FC<ReelItemProps> = ({
           <Image
             source={images.alseLogo}
             style={styles.centerLogo}
-            tintColor="#06B6D4"
+            tintColor={colors.themeColor}
           />
         </View>
 

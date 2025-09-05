@@ -15,6 +15,7 @@ import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
 import firestore from '@react-native-firebase/firestore';
 import {useSelector} from 'react-redux';
 import {selectUserProfile} from '../../store/slices/authSlice';
+import {useTranslation} from 'react-i18next';
 
 const ChatComponent = ({
   channelId,
@@ -31,6 +32,8 @@ const ChatComponent = ({
   const flatListRef = useRef(null);
   const messageListener = useRef(null);
   const user = useSelector(selectUserProfile);
+
+  const {t} = useTranslation();
 
   // Set up Firebase chat listener
   useEffect(() => {
@@ -192,7 +195,7 @@ const ChatComponent = ({
       <View style={styles.messagesArea}>
         {loading ? (
           <View style={styles.centerContainer}>
-            <Text style={styles.statusText}>Loading chat...</Text>
+            <Text style={styles.statusText}>{t('livestreamChat.loading')}</Text>
           </View>
         ) : error ? (
           <View style={styles.centerContainer}>
@@ -200,7 +203,9 @@ const ChatComponent = ({
           </View>
         ) : messages.length === 0 ? (
           <View style={styles.centerContainer}>
-            <Text style={styles.statusText}>No messages yet</Text>
+            <Text style={styles.statusText}>
+              {t('livestreamChat.noMessages')}
+            </Text>
           </View>
         ) : (
           <FlatList
@@ -217,7 +222,7 @@ const ChatComponent = ({
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.inputField}
-          placeholder="Type Your Message"
+          placeholder={t('livestreamChat.typeMsg')}
           placeholderTextColor="rgba(255,255,255,0.7)"
           value={messageText}
           onChangeText={setMessageText}

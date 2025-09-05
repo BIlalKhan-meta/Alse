@@ -1,3 +1,4 @@
+import React from 'react';
 import {useEffect, useRef} from 'react';
 import {SafeAreaView, Text} from 'react-native';
 import {
