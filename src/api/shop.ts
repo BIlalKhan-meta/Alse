@@ -27,14 +27,26 @@ export const updateShop = (formData: FormData, id: number) => {
 };
 
 export const createProduct = (formData: FormData, id: number) => {
-  // console.log(formData, id, 'Formmmm Dataaaa Createee possttt');
-  return axiosInstance.post(
+  console.log('🌐 API: createProduct called');
+  console.log('🌐 API: Shop ID:', id);
+  console.log(
+    '🌐 API: Endpoint:',
+    `${endpoints.shop.shopDetail}/${id}/product/create`,
+  );
+  console.log('🌐 API: FormData type:', typeof formData);
+  console.log('🌐 API: axiosInstance type:', typeof axiosInstance);
+  console.log('🌐 API: About to make axios POST request...');
+
+  const promise = axiosInstance.post(
     `${endpoints.shop.shopDetail}/${id}/product/create`,
     formData,
     {
       formData: true, // This triggers the form-data handling in the interceptor
     },
   );
+
+  console.log('🌐 API: axios POST request initiated, promise created');
+  return promise;
 };
 
 export const updateProduct = (

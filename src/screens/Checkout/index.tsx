@@ -23,16 +23,17 @@ import {checkout, getCart} from '../../api/product';
 import Loader from '../../components/Loader';
 import {Toast} from '../../utils/helpers';
 
-import {useSelector} from 'react-redux';
-import {countriesList} from '../../store/slices/generalSlice';
-import {getCity, getState} from '../../api/home';
+import {useSelector, useDispatch} from 'react-redux';
+import {countriesList, getCountries} from '../../store/slices/generalSlice';
+import {getCity, getState, getCountriesList} from '../../api/home';
 import eventEmitter, {EVENT_TYPES} from '../../utils/EventEmitter';
 
 const CheckoutScreen: React.FC = () => {
   const navigation = useNavigation();
+  const dispatch = useDispatch();
   const isFoused = useIsFocused();
 
-  const [isSelected, setIsSelected] = useState<boolean>(false);
+  const [isSelected, setIsSelected] = useState<boolean>(true);
   const [submitted, setSubmitted] = useState<boolean>(false);
   const [loading, setLoading] = useState(false);
   const [cartData, setCartData] = useState([]);
@@ -84,7 +85,7 @@ const CheckoutScreen: React.FC = () => {
     shipping_email: '',
     shipping_phone: '',
     shipping_address: '',
-    shipping_country: '', // Initialize with default value
+    shipping_country: 'United States', // Set USA as default
     shipping_state: '', // Initialize with default value
     shipping_city: '', // Initialize with default value
     shipping_zip: '',
@@ -93,7 +94,7 @@ const CheckoutScreen: React.FC = () => {
     billing_email: '',
     billing_phone: '',
     billing_address: '',
-    billing_country: '', // Initialize with default value
+    billing_country: 'United States', // Set USA as default
     billing_state: '', // Initialize with default value
     billing_city: '', // Initialize with default value
     billing_zip: '',
@@ -140,12 +141,18 @@ const CheckoutScreen: React.FC = () => {
 
     console.log('Form submitted:', JSON.stringify(temp, null, 4));
 
-    // Navigate to Payment screen with order data
-    console.log('Checkout Screen - Sending order data:', temp);
-    console.log('Navigating to Payment screen...');
-    Toast.success('Form submitted successfully! Navigating to payment...');
-    (navigation as any).navigate('Payment', {orderData: temp});
-    setLoading(false);
+    try {
+      // Navigate to Payment screen with order data
+      console.log('Checkout Screen - Sending order data:', temp);
+      console.log('Navigating to Payment screen...');
+      Toast.success('Form submitted successfully! Navigating to payment...');
+      (navigation as any).navigate('Payment', {orderData: temp});
+    } catch (error) {
+      console.error('Navigation error:', error);
+      Toast.error('Failed to navigate to payment screen');
+    } finally {
+      setLoading(false);
+    }
 
     // Uncomment below for actual API call
     /*
@@ -179,7 +186,14 @@ const CheckoutScreen: React.FC = () => {
 
   useEffect(() => {
     getData();
+    loadCountries();
   }, [isFoused]);
+
+  // Debug countries state
+  useEffect(() => {
+    console.log('Countries from Redux store:', countries);
+    console.log('Countries length:', countries?.length);
+  }, [countries]);
 
   const fetchState = async (id: number, ship: boolean) => {
     console.log('IDDDDDDDDDDDDDDDDD', id);
@@ -227,6 +241,53 @@ const CheckoutScreen: React.FC = () => {
     setLoading(false);
   };
 
+  const loadCountries = async () => {
+    try {
+      console.log('Loading countries...');
+      const response = await getCountriesList();
+      console.log('Countries API response:', response);
+
+      if (response?.data?.data && response.data.data.length > 0) {
+        console.log('Countries loaded:', response.data.data);
+        dispatch(getCountries(response.data.data));
+      } else {
+        console.log(
+          'No countries data received or empty array - using fallback',
+        );
+        // Fallback countries if API fails or returns empty array
+        const fallbackCountries = [
+          {id: 1, name: 'United States'},
+          {id: 2, name: 'Canada'},
+          {id: 3, name: 'United Kingdom'},
+          {id: 4, name: 'Australia'},
+          {id: 5, name: 'Germany'},
+          {id: 6, name: 'France'},
+          {id: 7, name: 'India'},
+          {id: 8, name: 'Japan'},
+          {id: 9, name: 'Brazil'},
+          {id: 10, name: 'Mexico'},
+        ];
+        dispatch(getCountries(fallbackCountries));
+      }
+    } catch (error) {
+      console.error('Error loading countries:', error);
+      // Fallback countries if API fails
+      const fallbackCountries = [
+        {id: 1, name: 'United States'},
+        {id: 2, name: 'Canada'},
+        {id: 3, name: 'United Kingdom'},
+        {id: 4, name: 'Australia'},
+        {id: 5, name: 'Germany'},
+        {id: 6, name: 'France'},
+        {id: 7, name: 'India'},
+        {id: 8, name: 'Japan'},
+        {id: 9, name: 'Brazil'},
+        {id: 10, name: 'Mexico'},
+      ];
+      dispatch(getCountries(fallbackCountries));
+    }
+  };
+
   return (
     <KeyboardAwareScrollView
       contentContainerStyle={styles.container}
@@ -236,7 +297,8 @@ const CheckoutScreen: React.FC = () => {
         validationSchema={validationSchema}
         onSubmit={handleSubmit}
         validateOnChange={false}
-        validateOnBlur={false}>
+        validateOnBlur={false}
+        enableReinitialize={true}>
         {({
           handleChange,
           handleBlur,
@@ -340,9 +402,17 @@ const CheckoutScreen: React.FC = () => {
                 <View style={styles.dropdownContainer}>
                   <DropDownTextInput
                     key={'countries'}
-                    items={countries?.map((item: any) => {
-                      return {label: item.name, value: item.name, id: item?.id};
-                    })}
+                    items={
+                      countries?.length > 0
+                        ? countries.map((item: any) => {
+                            return {
+                              label: item.name,
+                              value: item.name,
+                              id: item?.id,
+                            };
+                          })
+                        : []
+                    }
                     listMode="MODAL"
                     idRequired
                     defaultValue={values.shipping_country}
@@ -536,14 +606,18 @@ const CheckoutScreen: React.FC = () => {
                       style={styles.dropDown}
                     /> */}
                     <DropDownTextInput
-                      key={'countries'}
-                      items={countries?.map((item: any) => {
-                        return {
-                          label: item.name,
-                          value: item.name,
-                          id: item?.id,
-                        };
-                      })}
+                      key={'billingCountries'}
+                      items={
+                        countries?.length > 0
+                          ? countries.map((item: any) => {
+                              return {
+                                label: item.name,
+                                value: item.name,
+                                id: item?.id,
+                              };
+                            })
+                          : []
+                      }
                       listMode="MODAL"
                       idRequired
                       defaultValue={values.billing_country}
@@ -676,13 +750,29 @@ const CheckoutScreen: React.FC = () => {
                   console.log('Place Order button clicked');
                   console.log('Current form values:', values);
                   console.log('Current form errors:', errors);
+                  console.log(
+                    'isSelected (billing same as shipping):',
+                    isSelected,
+                  );
 
-                  // Check for validation errors and show toast
-                  const errorKeys = Object.keys(errors);
-                  if (errorKeys.length > 0) {
-                    const firstError = errors[errorKeys[0]];
-                    Toast.error(`Please fix: ${firstError}`);
-                    console.log('Validation errors:', errors);
+                  // Validate required fields manually
+                  const requiredFields = [
+                    'shipping_first_name',
+                    'shipping_last_name',
+                    'shipping_email',
+                    'shipping_phone',
+                    'shipping_address',
+                    'shipping_country',
+                    'shipping_zip',
+                  ];
+
+                  const missingFields = requiredFields.filter(
+                    field => !values[field],
+                  );
+
+                  if (missingFields.length > 0) {
+                    Toast.error(`Please fill in: ${missingFields.join(', ')}`);
+                    console.log('Missing required fields:', missingFields);
                     return;
                   }
 
@@ -690,17 +780,6 @@ const CheckoutScreen: React.FC = () => {
                   handleSubmit();
                 }}>
                 Place Order
-              </CustomButton>
-
-              {/* Test Navigation Button */}
-              <CustomButton
-                style={[styles.placeOrderButton, {marginTop: 10}]}
-                onPress={() => {
-                  console.log('Test navigation button clicked');
-                  Toast.success('Testing navigation to Payment screen...');
-                  navigation.navigate('Payment' as never);
-                }}>
-                Test Navigation to Payment
               </CustomButton>
             </Card>
           </>

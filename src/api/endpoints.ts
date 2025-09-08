@@ -138,6 +138,20 @@ const endpoints = {
   bidding: {
     settings: '/bidding/settings',
   },
+  search: {
+    users: '/search-users',
+    auctions: '/auctions',
+    products: '/products',
+    shops: '/shops',
+    articles: '/articles',
+    userArticles: '/articles/current-user',
+    blogs: '/blogs',
+    userBlogs: '/blogs/current-user',
+    videos: '/videos',
+    userVideos: '/videos/current-user',
+    chats: '/get-chat-list',
+    shopProducts: '/shop/{shop_id}/products',
+  },
 };
 
 export default endpoints;

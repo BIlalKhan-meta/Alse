@@ -1,4 +1,4 @@
-import React, {useEffect, useLayoutEffect, useState} from 'react';
+import React, {useEffect, useLayoutEffect, useState, useCallback} from 'react';
 import {
   View,
   Text,
@@ -17,14 +17,7 @@ import ReportBlockModal from '../../../components/ReportBlockModal';
 import GeneralModal from '../../../components/GeneralModal';
 import {reportPost} from '../../../api/home';
 import {getMessage, Toast} from '../../../utils/helpers';
-import {
-  MessageCircle,
-  HelpCircle,
-  Mail,
-  Share2,
-  Edit3,
-  MoreVertical,
-} from 'lucide-react-native';
+import {MessageCircle, HelpCircle, Mail, Share2} from 'lucide-react-native';
 import GlobalHeader from '../../../components/GlobalHeader';
 
 const filterItems = [
@@ -37,14 +30,14 @@ const filterItems = [
 const Shop: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  const shopId = route?.params?.shopId;
+  const shopId = (route?.params as any)?.shopId;
 
   const [modalVisible, setModalVisible] = useState(false);
   const [ReportSuccess, setReportSuccess] = useState(false);
   const [shopDetails, setShopDetails] = useState<any>({});
   const [shopProducts, setShopProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [filter, setFilter] = useState('');
+  const [_filter, _setFilter] = useState('');
   const [reportVisible, setReportVisible] = useState({
     visibility: false,
     id: null,
@@ -62,11 +55,7 @@ const Shop: React.FC = () => {
     });
   }, [navigation]);
 
-  useEffect(() => {
-    getData();
-  }, []);
-
-  const getData = async () => {
+  const getData = useCallback(async () => {
     setLoading(true);
     try {
       const res = await shopDetail(shopId);
@@ -83,12 +72,16 @@ const Shop: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [shopId]);
+
+  useEffect(() => {
+    getData();
+  }, [getData]);
 
   const handleReport = async () => {
     setReportLoader(true);
     const data = {
-      reportable_type: `Shop`,
+      reportable_type: 'Shop',
       reportable_id: shopId,
       reason: `${shopId} Store Report`,
     };
@@ -115,7 +108,7 @@ const Shop: React.FC = () => {
         visibility: false,
         id: null,
       });
-      Toast.error(getMessage(err?.message));
+      Toast.error(getMessage((err as any)?.message));
       console.log('Error reporting shop:', err);
     }
   };
@@ -137,7 +130,7 @@ const Shop: React.FC = () => {
     <View style={styles.container}>
       {/* Header */}
 
-      <View style={{paddingHorizontal: 12, paddingTop: 8}}>
+      <View style={styles.headerContainer}>
         <GlobalHeader icon={true} />
       </View>
 
@@ -184,9 +177,13 @@ const Shop: React.FC = () => {
               </Text>
               <Text style={styles.storeCategory}>Tech, Gadgets</Text>
             </View>
-            <TouchableOpacity style={styles.editButton}>
-              <Edit3 size={16} color="#333" />
-            </TouchableOpacity>
+            {/* <TouchableOpacity
+              style={styles.addProductsButton}
+              onPress={() =>
+                (navigation as any).navigate('AddProduct', {shopId: shopId})
+              }>
+              <Text style={styles.addProductsButtonText}>Add Products</Text>
+            </TouchableOpacity> */}
           </View>
 
           {/* Store Stats */}
@@ -290,6 +287,7 @@ const Shop: React.FC = () => {
         isVisible={modalVisible}
         options={options}
         onClose={() => setModalVisible(false)}
+        style={{}}
       />
       <GeneralModal
         visible={reportVisible.visibility}
@@ -302,16 +300,18 @@ const Shop: React.FC = () => {
         icon={images.qmark}
         title="Report Shop"
         message="Are you sure you want to report this shop?"
+        buttonText="Yes"
+        onPress={handleReport}
+        primaryBtn={false}
+        secondaryBtn={true}
         SecondaryText1="Yes"
         SecondaryText2="No"
-        onPress={handleReport}
-        secondaryBtn={true}
         loading={reportLoader}
       />
       <GeneralModal
         visible={ReportSuccess}
         closeModal={() => setReportSuccess(false)}
-        redImage={true}
+        icon={images.checkedIcon}
         title="Report Shop"
         message="Shop has been reported"
         buttonText="Ok"
@@ -319,6 +319,7 @@ const Shop: React.FC = () => {
           setReportSuccess(false);
         }}
         primaryBtn={true}
+        redImage={true}
       />
     </View>
   );
@@ -328,6 +329,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f8f8',
+  },
+  headerContainer: {
+    paddingHorizontal: 12,
+    paddingTop: 8,
   },
   header: {
     flexDirection: 'row',
@@ -402,6 +407,17 @@ const styles = StyleSheet.create({
   },
   editButton: {
     padding: 8,
+  },
+  addProductsButton: {
+    backgroundColor: '#00A19D',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 6,
+  },
+  addProductsButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
   },
   storeStatsContainer: {
     flexDirection: 'row',

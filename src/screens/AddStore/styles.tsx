@@ -162,6 +162,40 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
   },
+  imageUploadButton: {
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderRadius: 8,
+    padding: 16,
+    backgroundColor: 'white',
+    minHeight: 120,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  uploadPlaceholder: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  uploadText: {
+    marginTop: 8,
+    fontSize: 14,
+    color: '#666',
+  },
+  imagePreviewContainer: {
+    width: '100%',
+    alignItems: 'center',
+  },
+  imagePreview: {
+    width: '100%',
+    height: 100,
+    borderRadius: 8,
+    resizeMode: 'cover',
+  },
+  changeImageText: {
+    marginTop: 8,
+    fontSize: 12,
+    color: '#00A19D',
+  },
 });
 
 export default styles;

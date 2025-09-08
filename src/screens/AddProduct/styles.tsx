@@ -4,87 +4,141 @@ import {fontSizes, vh, vw} from '../../constant';
 
 const styles = StyleSheet.create({
   container: {
-    // flexGrow: 1,
-    paddingHorizontal: vw * 4,
-    // paddingTop: vh * 1,
-    backgroundColor: colors.white,
+    flex: 1,
+    backgroundColor: '#f8f8f8',
+  },
+  header: {
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingBottom: vh * 2,
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: 50,
+    paddingBottom: 16,
+    backgroundColor: 'white',
   },
-  contentContainer: {
-    width: vw * 94,
-    marginTop: vw,
-  },
-  row_style: {
-    width: '95%',
-    alignSelf: 'center',
-    backgroundColor: colors.headerColor,
-    padding: vh,
-  },
-  section: {
-    // marginBottom: 24,
-  },
-  sectionTitle: {
+  headerTitle: {
     fontSize: 18,
     fontWeight: 'bold',
+    color: '#333',
+  },
+  scrollView: {
+    flex: 1,
+    backgroundColor: 'white',
+  },
+  scrollContent: {
+    paddingHorizontal: 16,
+    paddingTop: 20,
+    paddingBottom: 100,
+  },
+  formContainer: {
+    flex: 1,
+  },
+  inputContainer: {
     marginBottom: 16,
   },
-  inputStyle: {
-    marginBottom: 16,
-    backgroundColor: colors.inputcolor,
-    paddingLeft: vw * 4,
-    height: vh * 6,
-    justifyContent: 'center',
-    alignItems: 'center',
+  textInput: {
+    backgroundColor: 'white',
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: '#333',
   },
-  inputConatiner: {
+  textArea: {
+    height: 100,
+    textAlignVertical: 'top',
+  },
+  priceContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  inputStyle2: {
-    marginBottom: 16,
-    backgroundColor: colors.inputcolor,
-    // backgroundColor: "yellow",
-    paddingLeft: vw * 4,
-    height: vh * 6,
-    justifyContent: 'center',
     alignItems: 'center',
-    width: vw * 30,
+    backgroundColor: 'white',
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
-  dropdownLabel: {
-    color: colors.black,
-    fontSize: fontSizes.f14,
-    // fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  dropDown: {
-    // marginBottom: 16,
+  priceInput: {
+    flex: 1,
     borderWidth: 0,
-    backgroundColor: colors.inputcolor,
-    // opacity: 4
+    marginLeft: 8,
+    paddingHorizontal: 0,
   },
-  submitButton: {
-    // backgroundColor: colors.primary,
-    // paddingVertical: 12,
-    // alignItems: 'center',
-    // borderRadius: 8,
-    // marginTop: 300,
-    alignSelf: 'center',
-  },
-  uploadBtn: {
+  dropdownContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    backgroundColor: colors.dropdownColor,
     alignItems: 'center',
-    paddingHorizontal: vw * 4,
-    height: vh * 6,
+    justifyContent: 'space-between',
+    backgroundColor: 'white',
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
-  uploadTxt: {
-    fontSize: fontSizes.f12,
+  dropdownText: {
+    fontSize: 16,
+    color: '#999',
   },
-  uploadImg: {
-    width: vw * 6,
-    height: vh * 3,
+  dropdownTextSelected: {
+    color: '#333',
+  },
+  uploadSection: {
+    marginBottom: 24,
+  },
+  uploadArea: {
+    borderWidth: 2,
+    borderColor: '#e0e0e0',
+    borderStyle: 'dashed',
+    borderRadius: 8,
+    paddingVertical: 40,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  uploadText: {
+    fontSize: 16,
+    color: '#999',
+    marginTop: 8,
+  },
+  fileStatusContainer: {
+    backgroundColor: 'white',
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  fileStatusText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  addProductButton: {
+    backgroundColor: '#00A19D',
+    borderRadius: 8,
+    paddingVertical: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 20,
+  },
+  addProductButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 12,
+    marginTop: 4,
+  },
+  dropdownStyle: {
+    backgroundColor: 'white',
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderRadius: 8,
+    minHeight: 48,
   },
 });
 

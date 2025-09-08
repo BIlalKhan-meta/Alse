@@ -1,14 +1,27 @@
 import React, {useLayoutEffect, useState} from 'react';
-import {View, Text, TouchableOpacity, TextInput} from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  TextInput,
+  Image,
+  Alert,
+} from 'react-native';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {Formik} from 'formik';
 import * as yup from 'yup';
+import {
+  launchImageLibrary,
+  ImagePickerResponse,
+  MediaType,
+} from 'react-native-image-picker';
 
 import styles from './styles';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import Toast from 'react-native-toast-message';
-import {ChevronLeft} from 'lucide-react-native';
+import {ChevronLeft, Camera} from 'lucide-react-native';
 import {useTranslation} from 'react-i18next';
+import {createShop} from '../../api/shop';
 
 const initialValues = {
   name: '',
@@ -35,8 +48,28 @@ const AddStore: React.FC = () => {
   const [submitted, setSubmitted] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<any>(null);
 
   const {t} = useTranslation();
+
+  const selectImage = () => {
+    const options = {
+      mediaType: 'photo' as MediaType,
+      includeBase64: false,
+      maxHeight: 2000,
+      maxWidth: 2000,
+    };
+
+    launchImageLibrary(options, (response: ImagePickerResponse) => {
+      if (response.didCancel || response.errorMessage) {
+        return;
+      }
+
+      if (response.assets && response.assets[0]) {
+        setSelectedImage(response.assets[0]);
+      }
+    });
+  };
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -62,23 +95,66 @@ const AddStore: React.FC = () => {
     setSubmitted(true);
 
     try {
-      // Store the form data in navigation params to pass to bank details
-      const storeData = {
-        name: values.name,
-        description: values.description,
-        address: values.address,
-        phoneNumber: values.phoneNumber,
-        country: values.country,
-      };
+      // Create FormData for the API call
+      const formData = new FormData();
+      formData.append('name', values.name);
+      formData.append('description', values.description);
+      formData.append('address', values.address);
+      formData.append('phone_number', values.phoneNumber);
+      formData.append('country', values.country);
+      formData.append('delivery_fees', '0'); // Add required delivery_fees field
 
-      // Navigate to bank details with the store data
-      navigation.navigate('BankDetail', {storeData, isNewStore: true});
-    } catch (error) {
-      console.log('Error saving store details:', error);
+      // Add shop banner image
+      if (selectedImage) {
+        formData.append('shop_banner', {
+          uri: selectedImage.uri,
+          type: selectedImage.type || 'image/jpeg',
+          name: selectedImage.fileName || 'shop_banner.jpg',
+        } as any);
+      }
+
+      console.log('Creating shop with data:', values);
+
+      // Call the createShop API
+      const response = await createShop(formData);
+
+      console.log('Shop creation response:', response);
+
+      if (
+        response?.data?.success ||
+        response?.data?.data ||
+        response?.status === 200
+      ) {
+        Toast.show({
+          type: 'success',
+          text1: 'Success',
+          text2: 'Shop created successfully!',
+        });
+
+        // Store the form data in navigation params to pass to bank details
+        const storeData = {
+          name: values.name,
+          description: values.description,
+          address: values.address,
+          phoneNumber: values.phoneNumber,
+          country: values.country,
+          shopId: response?.data?.data?.id || response?.data?.id,
+        };
+
+        // Navigate to bank details with the store data
+        navigation.navigate('BankDetail', {storeData, isNewStore: true});
+      } else {
+        throw new Error('Failed to create shop');
+      }
+    } catch (error: any) {
+      console.log('Error creating shop:', error);
       Toast.show({
         type: 'error',
         text1: 'Error',
-        text2: 'Failed to save store details',
+        text2:
+          error?.response?.data?.message ||
+          error?.message ||
+          'Failed to create shop',
       });
     } finally {
       setLoading(false);
@@ -226,15 +302,47 @@ const AddStore: React.FC = () => {
                     <Text style={styles.errorText}>{errors.country}</Text>
                   )}
                 </View>
+
+                {/* Shop Banner Upload */}
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>Shop Banner *</Text>
+                  <TouchableOpacity
+                    style={styles.imageUploadButton}
+                    onPress={selectImage}>
+                    {selectedImage ? (
+                      <View style={styles.imagePreviewContainer}>
+                        <Image
+                          source={{uri: selectedImage.uri}}
+                          style={styles.imagePreview}
+                        />
+                        <Text style={styles.changeImageText}>
+                          Tap to change image
+                        </Text>
+                      </View>
+                    ) : (
+                      <View style={styles.uploadPlaceholder}>
+                        <Camera size={24} color="#666" />
+                        <Text style={styles.uploadText}>
+                          Tap to select shop banner
+                        </Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                  {submitted && !selectedImage && (
+                    <Text style={styles.errorText}>
+                      Shop banner is required
+                    </Text>
+                  )}
+                </View>
               </View>
 
               {/* Submit Button */}
               <TouchableOpacity
                 style={styles.submitButton}
-                onPress={() => handleSubmit()}
+                onPress={() => handleStoreDetails(values)}
                 disabled={loading}>
                 <Text style={styles.submitButtonText}>
-                  {t('addStore.submit')}
+                  {loading ? 'Creating Shop...' : t('addStore.submit')}
                 </Text>
               </TouchableOpacity>
             </>

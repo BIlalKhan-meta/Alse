@@ -257,32 +257,8 @@ const ProductView: React.FC = () => {
     {id: 4, color: '#228B22'}, // Green
   ];
 
-  const reviewData = [
-    {
-      id: 1,
-      name: 'Mark McMahon',
-      rating: 5,
-      date: '2 months ago',
-      comment:
-        'I personally really like the comfort of this gaming headset and also very much appreciated the extra bass and good noise cancellation.',
-    },
-    {
-      id: 2,
-      name: 'Mark McMahon',
-      rating: 4,
-      date: '3 months ago',
-      comment:
-        "Really good sound quality. I recommend if you're looking for a very comfortable gaming headset with solid sound.",
-    },
-    {
-      id: 3,
-      name: 'Mark McMahon',
-      rating: 5,
-      date: '4 months ago',
-      comment:
-        'I personally really like the comfort of this gaming headset and also very much appreciated the extra bass.',
-    },
-  ];
+  // Reviews will be fetched from API when available
+  const reviewData = [];
 
   // Fetch product data or use fallback if API fails
   useEffect(() => {
@@ -585,26 +561,35 @@ const ProductView: React.FC = () => {
         <View style={styles.reviewsSection}>
           <Text style={styles.reviewsTitle}>Reviews</Text>
 
-          {reviewData.map(review => (
-            <View key={review.id} style={styles.reviewItem}>
-              <View style={styles.reviewerInfo}>
-                <View style={styles.reviewerAvatar}>
-                  <Text style={styles.reviewerInitials}>M</Text>
-                </View>
-                <View style={styles.reviewerDetails}>
-                  <Text style={styles.reviewerName}>{review.name}</Text>
-                  <View style={styles.reviewerRating}>
-                    <View style={styles.starRow}>
-                      {renderStars(review.rating)}
+          {reviewData.length > 0 ? (
+            reviewData.map(review => (
+              <View key={review.id} style={styles.reviewItem}>
+                <View style={styles.reviewerInfo}>
+                  <View style={styles.reviewerAvatar}>
+                    <Text style={styles.reviewerInitials}>M</Text>
+                  </View>
+                  <View style={styles.reviewerDetails}>
+                    <Text style={styles.reviewerName}>{review.name}</Text>
+                    <View style={styles.reviewerRating}>
+                      <View style={styles.starRow}>
+                        {renderStars(review.rating)}
+                      </View>
+                      <Text style={styles.reviewDate}>{review.date}</Text>
                     </View>
-                    <Text style={styles.reviewDate}>{review.date}</Text>
                   </View>
                 </View>
+                <Text style={styles.reviewComment}>{review.comment}</Text>
+                <View style={styles.reviewDivider} />
               </View>
-              <Text style={styles.reviewComment}>{review.comment}</Text>
-              <View style={styles.reviewDivider} />
+            ))
+          ) : (
+            <View style={styles.noReviewsContainer}>
+              <Text style={styles.noReviewsText}>No reviews yet</Text>
+              <Text style={styles.noReviewsSubtext}>
+                Be the first to review this product!
+              </Text>
             </View>
-          ))}
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -997,6 +982,21 @@ const styles = StyleSheet.create({
   reviewDivider: {
     height: 1,
     backgroundColor: '#eee',
+  },
+  noReviewsContainer: {
+    alignItems: 'center',
+    paddingVertical: 30,
+  },
+  noReviewsText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#666',
+    marginBottom: 8,
+  },
+  noReviewsSubtext: {
+    fontSize: 14,
+    color: '#999',
+    textAlign: 'center',
   },
 });
 

@@ -303,7 +303,7 @@ const AppNavigation = () => {
         <Stack.Screen
           name="AddProduct"
           component={AddProduct}
-          options={NavigationOptions}
+          // options={NavigationOptions}
         />
         <Stack.Screen
           name="MyShop"
