@@ -563,11 +563,11 @@ const Marketplace: React.FC = () => {
       </View>
 
       {/* Add Shop Button (moved to bottom of screen) */}
-      <TouchableOpacity
+      {/* <TouchableOpacity
         style={styles.addButton}
         onPress={() => (navigation as any).navigate('AddStore')}>
         <Text style={styles.addButtonText}>Create Shop/My Shop</Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
     </View>
   );
 };

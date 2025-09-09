@@ -137,6 +137,7 @@ const endpoints = {
   },
   bidding: {
     settings: '/bidding/settings',
+    placeBid: '/bids',
   },
   search: {
     users: '/search-users',

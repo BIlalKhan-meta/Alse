@@ -152,7 +152,7 @@ const AppNavigation = () => {
         <Stack.Screen
           name="ProductDetail"
           component={ProductDetail}
-          options={NavigationOptions}
+          // options={NavigationOptions}
         />
         <Stack.Screen name="Profile" component={ProfileScreen} />
         <Stack.Screen

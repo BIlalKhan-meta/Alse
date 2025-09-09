@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -6,11 +6,16 @@ import {
   TouchableOpacity,
   Image,
   ScrollView,
-  TextInput,
   Alert,
 } from 'react-native';
 import {useNavigation, useRoute} from '@react-navigation/native';
+import {useSelector} from 'react-redux';
 import {productDetail} from '../../api/product';
+import {placeBid, PlaceBidRequest} from '../../api/bidding';
+import {selectBearerToken} from '../../store/slices/authSlice';
+
+// Test import
+console.log('📦 placeBid function imported:', typeof placeBid);
 import Loader from '../../components/Loader';
 import {colors} from '../../utils/theme';
 import {
@@ -21,7 +26,6 @@ import {
   Plus,
   Clock,
 } from 'lucide-react-native';
-
 interface Product {
   id: number;
   title: string;
@@ -61,9 +65,11 @@ const ProductDetail: React.FC = () => {
   const navigation: any = useNavigation();
   const route: any = useRoute();
   const {productId} = route.params;
+  const token = useSelector(selectBearerToken);
 
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
+  const [bidLoading, setBidLoading] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
   const [currentBid, setCurrentBid] = useState(4500);
   const [userBid, setUserBid] = useState(4500);
@@ -73,12 +79,7 @@ const ProductDetail: React.FC = () => {
     seconds: 3,
   });
 
-  useEffect(() => {
-    fetchProductDetails();
-    startTimer();
-  }, [productId]);
-
-  const fetchProductDetails = async () => {
+  const fetchProductDetails = useCallback(async () => {
     try {
       setLoading(true);
       const response = await productDetail(productId);
@@ -95,7 +96,7 @@ const ProductDetail: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [productId]);
 
   const startTimer = () => {
     const interval = setInterval(() => {
@@ -123,6 +124,12 @@ const ProductDetail: React.FC = () => {
     return () => clearInterval(interval);
   };
 
+  useEffect(() => {
+    fetchProductDetails();
+    const stopTimer = startTimer();
+    return stopTimer;
+  }, [fetchProductDetails]);
+
   const handleBidIncrease = () => {
     setUserBid(prev => prev + 100);
   };
@@ -134,12 +141,116 @@ const ProductDetail: React.FC = () => {
   };
 
   const handlePlaceBid = () => {
-    if (userBid > currentBid) {
-      setCurrentBid(userBid);
-      Alert.alert('Success', 'Your bid has been placed successfully!');
-    } else {
+    console.log('🎯 handlePlaceBid called');
+    console.log('🎯 userBid:', userBid);
+    console.log('🎯 currentBid:', currentBid);
+    console.log('🎯 productId:', productId);
+
+    // Validate bid amount
+    if (userBid <= currentBid) {
       Alert.alert('Error', 'Your bid must be higher than the current bid');
+      return;
     }
+
+    // Validate product ID
+    if (!productId || productId <= 0) {
+      Alert.alert('Error', 'Invalid auction. Please refresh and try again.');
+      return;
+    }
+
+    // Check if product exists
+    if (!product) {
+      Alert.alert('Error', 'Product not found. Please refresh and try again.');
+      return;
+    }
+
+    // Check if user is authenticated
+    if (!token) {
+      Alert.alert('Error', 'Please login to place a bid.');
+      return;
+    }
+
+    console.log('🔐 User token:', token ? 'Present' : 'Missing');
+
+    // Show confirmation dialog
+    Alert.alert(
+      'Confirm Bid',
+      `Are you sure you want to place a bid of ${formatPrice(userBid)}?`,
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Place Bid',
+          onPress: async () => {
+            try {
+              setBidLoading(true);
+
+              const bidData: PlaceBidRequest = {
+                auction_id: productId,
+                amount: userBid,
+                is_auto_bid: false,
+              };
+
+              console.log('🚀 Placing bid with data:', bidData);
+              console.log('📡 Making API call to POST /api/bids');
+              console.log(
+                '🔐 Using token:',
+                token ? `${token.substring(0, 20)}...` : 'No token',
+              );
+
+              const response = await placeBid(bidData);
+
+              console.log('✅ Bid API Response:', response);
+              console.log('📊 Response data:', response.data);
+
+              if (response.data?.status) {
+                setCurrentBid(userBid);
+                console.log('🎉 Bid placed successfully!');
+                Alert.alert(
+                  'Success',
+                  'Your bid has been placed successfully!',
+                );
+              } else {
+                console.log('❌ Bid failed:', response.data?.message);
+                Alert.alert(
+                  'Error',
+                  response.data?.message || 'Failed to place bid',
+                );
+              }
+            } catch (error: any) {
+              console.error('💥 Error placing bid:', error);
+              console.error('💥 Error response:', error?.response);
+              console.error('💥 Error data:', error?.response?.data);
+              console.error('💥 Error status:', error?.response?.status);
+
+              let errorMessage = 'Failed to place bid. Please try again.';
+
+              if (error?.response?.status === 403) {
+                errorMessage =
+                  'You are not authorized to place a bid on this auction. Please check if you have the required permissions.';
+              } else if (error?.response?.status === 404) {
+                errorMessage =
+                  'Auction not found. Please refresh and try again.';
+              } else if (error?.response?.status === 422) {
+                errorMessage =
+                  error?.response?.data?.message ||
+                  'Invalid bid data. Please check your bid amount.';
+              } else if (error?.response?.data?.message) {
+                errorMessage = error.response.data.message;
+              } else if (error?.message) {
+                errorMessage = error.message;
+              }
+
+              Alert.alert('Error', errorMessage);
+            } finally {
+              setBidLoading(false);
+            }
+          },
+        },
+      ],
+    );
   };
 
   const handleBuyNow = () => {
@@ -183,7 +294,6 @@ const ProductDetail: React.FC = () => {
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Drawing Detail</Text>
           <View style={styles.headerActions}>
             <TouchableOpacity
               style={styles.headerButton}
@@ -252,9 +362,15 @@ const ProductDetail: React.FC = () => {
           {/* Action Buttons */}
           <View style={styles.actionButtons}>
             <TouchableOpacity
-              style={styles.placeBidButton}
-              onPress={handlePlaceBid}>
-              <Text style={styles.placeBidText}>Place a Bid</Text>
+              style={[
+                styles.placeBidButton,
+                bidLoading && styles.placeBidButtonDisabled,
+              ]}
+              onPress={handlePlaceBid}
+              disabled={bidLoading}>
+              <Text style={styles.placeBidText}>
+                {bidLoading ? 'Placing Bid...' : 'Place a Bid'}
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.buyNowButton}
@@ -308,9 +424,15 @@ const ProductDetail: React.FC = () => {
           </View>
 
           <TouchableOpacity
-            style={styles.placeBidFinalButton}
-            onPress={handlePlaceBid}>
-            <Text style={styles.placeBidFinalText}>Place a Bid</Text>
+            style={[
+              styles.placeBidFinalButton,
+              bidLoading && styles.placeBidFinalButtonDisabled,
+            ]}
+            onPress={handlePlaceBid}
+            disabled={bidLoading}>
+            <Text style={styles.placeBidFinalText}>
+              {bidLoading ? 'Placing Bid...' : 'Place a Bid'}
+            </Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -321,7 +443,7 @@ const ProductDetail: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#2C2C2C',
+    backgroundColor: '#f5f5f5',
   },
   errorContainer: {
     flex: 1,
@@ -338,7 +460,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingTop: 50,
+    paddingTop: 10,
     paddingBottom: 16,
     backgroundColor: '#fff',
   },
@@ -349,7 +471,9 @@ const styles = StyleSheet.create({
   },
   headerActions: {
     flexDirection: 'row',
-    gap: 16,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
   },
   headerButton: {
     padding: 4,
@@ -441,6 +565,10 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 8,
     alignItems: 'center',
+  },
+  placeBidButtonDisabled: {
+    backgroundColor: '#ccc',
+    opacity: 0.6,
   },
   placeBidText: {
     color: '#fff',
@@ -557,6 +685,10 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderRadius: 8,
     alignItems: 'center',
+  },
+  placeBidFinalButtonDisabled: {
+    backgroundColor: '#ccc',
+    opacity: 0.6,
   },
   placeBidFinalText: {
     color: '#fff',

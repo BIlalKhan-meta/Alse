@@ -326,13 +326,13 @@ const AuctionBidding: React.FC = () => {
             placeholderTextColor="#666"
           />
         </View>
-        <TouchableOpacity style={styles.filterButton}>
+        {/* <TouchableOpacity style={styles.filterButton}>
           <View style={styles.filterIconContainer}>
             <View style={styles.filterDot} />
             <View style={styles.filterDot} />
             <View style={styles.filterDot} />
           </View>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
 
       {/* Filter Options */}

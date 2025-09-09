@@ -12,6 +12,8 @@ import {
 import {useNavigation} from '@react-navigation/native';
 import {styles} from './styles';
 import {submitRiderApplication, RiderApplicationData} from '../../api/rider';
+import {signup} from '../../api/auth';
+import Toast from 'react-native-toast-message';
 
 const BecomeRider: React.FC = () => {
   const navigation = useNavigation();
@@ -22,6 +24,7 @@ const BecomeRider: React.FC = () => {
     contactNumber: '',
     email: '',
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -31,6 +34,9 @@ const BecomeRider: React.FC = () => {
   };
 
   const handleSubmit = async () => {
+    // Prevent multiple submissions
+    if (isSubmitting) return;
+
     // Validate form data
     if (!formData.name.trim()) {
       Alert.alert('Error', 'Please enter your name');
@@ -60,31 +66,73 @@ const BecomeRider: React.FC = () => {
       return;
     }
 
+    setIsSubmitting(true);
+
     try {
-      // Submit the form via API
-      // const applicationData: RiderApplicationData = {
-      //   name: formData.name,
-      //   vehicleInfo: formData.vehicleInfo,
-      //   idLicense: formData.idLicense,
-      //   contactNumber: formData.contactNumber,
-      //   email: formData.email,
-      // };
+      // First, create user account via signup API
+      const signupData = {
+        full_name: formData.name,
+        identifier: formData.email, // Using email as identifier
+        password: 'TempPassword123!', // Temporary password for rider signup
+        agree: true, // Assuming they agree to terms for rider application
+      };
 
-      // await submitRiderApplication(applicationData);
+      console.log('Calling signup API with data:', signupData);
+      const signupResponse = await signup(signupData);
 
-      // Navigate to verification pending screen
-      (navigation as any).navigate('VerificationPending', {
-        riderData: {
-          name: formData.name,
-          email: formData.email,
-        },
+      if (signupResponse?.data?.status) {
+        console.log('Signup successful:', signupResponse.data);
+
+        Toast.show({
+          type: 'success',
+          text1: 'Account Created',
+          text2: 'Your account has been created successfully',
+        });
+
+        // Navigate to verification pending screen with rider data
+        (navigation as any).navigate('VerificationPending', {
+          riderData: {
+            name: formData.name,
+            email: formData.email,
+            vehicleInfo: formData.vehicleInfo,
+            idLicense: formData.idLicense,
+            contactNumber: formData.contactNumber,
+            userId: signupResponse.data.data?.id, // Include user ID from signup response
+          },
+        });
+      } else {
+        // Handle signup API error response
+        const errorMessage =
+          signupResponse?.data?.message ||
+          'Failed to create account. Please try again.';
+        Toast.show({
+          type: 'error',
+          text1: 'Signup Failed',
+          text2: errorMessage,
+        });
+      }
+    } catch (error: any) {
+      console.error('Error in rider signup process:', error);
+
+      // Handle different types of errors
+      let errorMessage = 'Failed to submit your application. Please try again.';
+
+      if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error?.response?.data?.errors) {
+        // Handle validation errors
+        const errors = error.response.data.errors;
+        const firstError = Object.values(errors)[0];
+        errorMessage = Array.isArray(firstError) ? firstError[0] : firstError;
+      }
+
+      Toast.show({
+        type: 'error',
+        text1: 'Application Failed',
+        text2: errorMessage,
       });
-    } catch (error) {
-      console.error('Error submitting rider application:', error);
-      Alert.alert(
-        'Error',
-        'Failed to submit your application. Please try again.',
-      );
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -164,8 +212,16 @@ const BecomeRider: React.FC = () => {
           </View>
 
           {/* Submit Button */}
-          <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-            <Text style={styles.submitButtonText}>Submit Details</Text>
+          <TouchableOpacity
+            style={[
+              styles.submitButton,
+              isSubmitting && styles.submitButtonDisabled,
+            ]}
+            onPress={handleSubmit}
+            disabled={isSubmitting}>
+            <Text style={styles.submitButtonText}>
+              {isSubmitting ? 'Creating Account...' : 'Submit Details'}
+            </Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

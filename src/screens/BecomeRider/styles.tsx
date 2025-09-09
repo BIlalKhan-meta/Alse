@@ -60,4 +60,8 @@ export const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
   },
+  submitButtonDisabled: {
+    backgroundColor: '#cccccc',
+    opacity: 0.6,
+  },
 });
