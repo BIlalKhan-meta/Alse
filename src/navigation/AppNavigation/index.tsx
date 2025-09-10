@@ -56,6 +56,8 @@ import DisableDeleteAccount from '../../screens/Settings/DisableDeleteAccount';
 import PurchaseHistory from '../../screens/Settings/PurchaseHistory';
 import SavedAuctions from '../../screens/Settings/SavedAuctions';
 import ShippingAddress from '../../screens/Settings/ShippingAddress';
+import BecomeSeller from '../../screens/BecomeSeller';
+import ExistingSeller from '../../screens/ExistingSeller';
 
 const AppNavigation = () => {
   const Stack = createNativeStackNavigator();
@@ -324,6 +326,16 @@ const AppNavigation = () => {
           name="NetworkLogger"
           component={NetworkLogger}
           options={{headerShown: true}}
+        />
+        <Stack.Screen
+          name="BecomeSeller"
+          component={BecomeSeller}
+          // options={NavigationOptions}
+        />
+        <Stack.Screen
+          name="ExistingSeller"
+          component={ExistingSeller}
+          // options={NavigationOptions}
         />
       </>
     </Stack.Navigator>

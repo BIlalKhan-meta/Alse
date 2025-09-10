@@ -63,3 +63,7 @@ export const updateProduct = (
     },
   );
 };
+
+export const checkIsSeller = () => {
+  return axiosInstance.get(endpoints.shop.isSeller);
+};

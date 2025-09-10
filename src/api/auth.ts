@@ -50,6 +50,30 @@ export const signup = (formData: any) => {
   });
 };
 
+// Seller Signup API call
+export const signupSeller = (data: {
+  full_name: string;
+  bio: string;
+  address: string;
+  phone_number: string;
+  country_id: number;
+  password: string;
+  password_confirmation: string;
+}) => {
+  const formData = new FormData();
+  formData.append('full_name', data.full_name);
+  formData.append('bio', data.bio);
+  formData.append('address', data.address);
+  formData.append('phone_number', data.phone_number);
+  formData.append('country_id', data.country_id.toString());
+  formData.append('password', data.password);
+  formData.append('password_confirmation', data.password_confirmation);
+
+  return axiosInstance.post(endpoints.auth.signupSeller, formData, {
+    formData: true,
+  });
+};
+
 export const forgotPassword = (data: {identifier: string}) => {
   console.log(data, 'ForgetData frommmm authhhh ');
 

@@ -20,7 +20,6 @@ import {
   fetchUserPosts,
   selectUserPosts,
   selectPostsLoading,
-  selectPostsError,
 } from '../../store/slices/profileSlice';
 import {useAppDispatch} from '../../hooks/storeHooks';
 import Loader from '../../components/Loader';
@@ -46,14 +45,12 @@ const MyProfile: React.FC = () => {
   const {t} = useTranslation();
 
   // Local state
-  const [fabMenuVisible, setFabMenuVisible] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [initialLoad, setInitialLoad] = useState(false);
 
   // Redux selectors
   const posts = useSelector(selectUserPosts);
   const postsLoading = useSelector(selectPostsLoading);
-  const postsError = useSelector(selectPostsError);
 
   const [avatarError, setAvatarError] = useState(false);
 
@@ -93,6 +90,13 @@ const MyProfile: React.FC = () => {
 
   // Get current profile info
   const currentProfile = getProfileInfo();
+
+  // Reset avatar error when avatar changes
+  useEffect(() => {
+    if (currentProfile.avatar) {
+      setAvatarError(false);
+    }
+  }, [currentProfile.avatar]);
 
   // Statistics derived from actual data
   const stats = {
@@ -187,20 +191,9 @@ const MyProfile: React.FC = () => {
   }, [isFocused, handleFocusRefetch, initialLoad]);
 
   // Navigation handlers
-  const handleChatNavigation = useCallback(() => {
-    setFabMenuVisible(false);
-    // navigation.navigate('ChatScreen');
-    console.log('Navigate to ChatScreen');
-  }, []);
-
-  const handleSavedNavigation = useCallback(() => {
-    setFabMenuVisible(false);
-    // navigation.navigate('Saved');
-    console.log('Navigate to Saved');
-  }, []);
 
   const handleEditProfile = useCallback(() => {
-    navigation.navigate('Settings', {isEditMode: true});
+    (navigation as any).navigate('Settings', {isEditMode: true});
   }, [navigation]);
 
   const handleShareProfile = useCallback(() => {
@@ -212,11 +205,7 @@ const MyProfile: React.FC = () => {
   const getDisplayAvatar = useCallback(() => {
     const avatar = currentProfile.avatar;
 
-    if (
-      avatarError ||
-      !avatar
-      // avatar.includes('default.png') // more flexible than full equality
-    ) {
+    if (avatarError || !avatar) {
       return images.defaultDp;
     }
 
@@ -267,7 +256,7 @@ const MyProfile: React.FC = () => {
               <Image
                 source={getDisplayAvatar()}
                 style={styles.profileImage}
-                onError={e => setAvatarError(true)}
+                onError={_ => setAvatarError(true)}
               />
             </View>
 

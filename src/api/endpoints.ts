@@ -2,6 +2,7 @@ const endpoints = {
   auth: {
     login: '/login',
     signup: '/signup',
+    signupSeller: '/signup-seller',
     forgotPassword: '/forget-password',
     verifyOtp: '/verify-code',
     resetPassword: '/set-password',

@@ -13,12 +13,16 @@ import {
 import InterLight from '../../components/Text/InterLight';
 import InterBoldLabel from '../../components/Text/InterBoldLabel';
 import {selectUserProfile} from '../../store/slices/authSlice';
+import {selectProfileData} from '../../store/slices/settingsSlice';
 import {images} from '../../utils/images';
 import styles from './styles';
 import {colors} from '../../utils/theme';
 import SettingsItem from './components/settingsItem';
 import {useAppDispatch} from '../../hooks/storeHooks';
-import {fetchAllSettings} from '../../store/slices/settingsSlice';
+import {
+  fetchAllSettings,
+  updateProfile,
+} from '../../store/slices/settingsSlice';
 import {useAppTranslation} from '../../i18n/hooks/useAppTranslation';
 import GlobalHeader from '../../components/GlobalHeader';
 import ProfileForm from './components/profileForm';
@@ -38,6 +42,7 @@ interface RouteParams {
 const Settings = ({navigation}: any) => {
   const dispatch = useAppDispatch();
   const user = useSelector(selectUserProfile);
+  const profileData = useSelector(selectProfileData);
   const {currentLanguage, t} = useAppTranslation();
   const [avatarUri, setAvatarUri] = useState(user?.avatar || null);
 
@@ -49,7 +54,7 @@ const Settings = ({navigation}: any) => {
   const route = useRoute();
   const {isEditMode} = (route.params as RouteParams) ?? {};
   const [isEditing, setIsEditing] = useState(isEditMode || false);
-  const [profileData, setProfileData] = useState({
+  const [localProfileData, setLocalProfileData] = useState({
     firstName: user?.first_name || user?.full_name?.split(' ')[0] || '',
     lastName: user?.last_name || user?.full_name?.split(' ')[1] || '',
     userName: user?.username || user?.full_name || '',
@@ -63,7 +68,7 @@ const Settings = ({navigation}: any) => {
   console.log('User ======>', JSON.stringify(user, null, 2));
 
   const handleProfileUpdate = (field: string, value: string) => {
-    setProfileData(prev => ({
+    setLocalProfileData(prev => ({
       ...prev,
       [field]: value,
     }));
@@ -110,7 +115,9 @@ const Settings = ({navigation}: any) => {
   };
 
   const uploadProfileImage = async (image: Asset) => {
-    if (!image.uri) return;
+    if (!image.uri) {
+      return;
+    }
 
     try {
       const formData = new FormData();
@@ -128,13 +135,21 @@ const Settings = ({navigation}: any) => {
       console.log('Avatar type:', image.type);
       console.log('Avatar name:', image.fileName);
 
+      // Update Redux store with the new avatar
+      const newAvatarUrl = image.uri;
+      dispatch(updateProfile({avatar: newAvatarUrl}));
+      setAvatarUri(newAvatarUrl);
+
+      // Call the API to upload the image
       const response = await editProfile(formData);
 
       if (response.data) {
-        // If your API returns the new avatar URL
-        const newAvatarUrl = response.data.avatar;
-
-        setAvatarUri(newAvatarUrl || image.uri); // fallback to local uri if API doesn't return URL
+        // Update with the server response if available
+        const serverAvatarUrl = response.data.avatar;
+        if (serverAvatarUrl) {
+          dispatch(updateProfile({avatar: serverAvatarUrl}));
+          setAvatarUri(serverAvatarUrl);
+        }
 
         Toast.show({
           type: 'success',
@@ -186,8 +201,11 @@ const Settings = ({navigation}: any) => {
         <View style={styles.profileSection}>
           <View style={styles.profileImageContainer}>
             <Image
-              source={avatarUri ? {uri: avatarUri} : images.profile}
-              // source={user?.avatar ? {uri: user.avatar} : images.profile}
+              source={
+                profileData?.avatar || avatarUri
+                  ? {uri: profileData?.avatar || avatarUri}
+                  : images.profile
+              }
               resizeMode="cover"
               style={styles.profileImage}
             />
@@ -202,7 +220,7 @@ const Settings = ({navigation}: any) => {
           </View>
           <View style={styles.profileInfo}>
             <View>
-              <View style={{flexDirection: 'row', alignItems: 'center'}}>
+              <View style={styles.profileNameContainer}>
                 <InterBoldLabel style={styles.profileName}>
                   {user?.full_name || 'Alse'}
                 </InterBoldLabel>
@@ -226,7 +244,7 @@ const Settings = ({navigation}: any) => {
 
           {isEditing && (
             <ProfileForm
-              profileData={profileData}
+              profileData={localProfileData}
               handleProfileUpdate={handleProfileUpdate}
               setIsEditing={() => {
                 setIsEditing(false);
