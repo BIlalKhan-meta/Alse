@@ -93,6 +93,17 @@ const styles = StyleSheet.create({
   emptyText: {
     marginVertical: vh * 4,
   },
+  mainContainer: {
+    flex: 1,
+  },
+  contentContainer: {
+    paddingHorizontal: vh * 2,
+    flex: 1,
+  },
+  feedContainer: {
+    flex: 1,
+    position: 'relative',
+  },
 });
 
 export default styles;

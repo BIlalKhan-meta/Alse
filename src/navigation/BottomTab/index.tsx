@@ -20,6 +20,8 @@ const TabNavigation = () => {
   const Tab = createBottomTabNavigator();
   const user = useSelector(selectUserProfile);
 
+  console.log('user', user);
+
   return (
     <Tab.Navigator
       screenOptions={{

@@ -41,6 +41,7 @@ import Stories from '../../../components/Stories';
 import {Plus} from 'lucide-react-native';
 import PostSkeleton from '../../../components/SkeletonLoaders';
 import {useTranslation} from 'react-i18next';
+import MediaModal from '../../../components/MediaModal';
 
 const Home: React.FC = () => {
   const flatListRef = useRef<FlatList>(null);
@@ -103,6 +104,20 @@ const Home: React.FC = () => {
   const [isFabOpen, setIsFabOpen] = useState(false);
   const animation = useRef(new Animated.Value(0)).current;
 
+  const [mediaModalVisible, setMediaModalVisible] = useState<{
+    visible: boolean;
+    mediaUrl: string;
+    mediaType: 'image' | 'video';
+    userName: string;
+    postTime: string;
+  }>({
+    visible: false,
+    mediaUrl: '',
+    mediaType: 'image',
+    userName: '',
+    postTime: '',
+  });
+
   const closePaymentProcess = async (remoteMessage: any) => {
     console.log('remoteMesssaadssage ==>', remoteMessage);
     await InAppBrowser.isAvailable();
@@ -160,7 +175,7 @@ const Home: React.FC = () => {
 
   const handleCommentPress = (id: any) => {
     dispatch(getCommentPost(id))
-      .then(res => {
+      .then((res: any) => {
         console.log(
           res?.payload?.data?.data?.data,
           'Commentsss Ressss frommm screennnn ',
@@ -285,6 +300,18 @@ const Home: React.FC = () => {
     setFocusedIndex(newFocusedIndex);
   };
 
+  const handleMediaPress = (item: any) => {
+    if (item?.media?.[0]?.path) {
+      setMediaModalVisible({
+        visible: true,
+        mediaUrl: item.media[0].path,
+        mediaType: item.media[0].type === 'image' ? 'image' : 'video',
+        userName: item.fullname || '',
+        postTime: timeFormat(item.date, true),
+      });
+    }
+  };
+
   const renderPost = ({item, index}: any) => {
     const isFocused = focusedIndex === index;
     return (
@@ -328,6 +355,7 @@ const Home: React.FC = () => {
         }}
         isLiked={item?.is_liked}
         isSaved={item?.is_saved}
+        onMediaPress={() => handleMediaPress(item)}
       />
     );
   };
@@ -347,7 +375,9 @@ const Home: React.FC = () => {
 
   // Render skeleton loaders during initial loading
   const renderSkeletonLoaders = () => {
-    if (!initialLoading) return null;
+    if (!initialLoading) {
+      return null;
+    }
 
     return (
       <View>
@@ -369,11 +399,11 @@ const Home: React.FC = () => {
   );
 
   return (
-    <View style={{flex: 1}}>
-      <View style={{paddingHorizontal: vh * 2, flex: 1}}>
+    <View style={styles.mainContainer}>
+      <View style={styles.contentContainer}>
         <Stories />
 
-        <View style={{flex: 1, position: 'relative'}}>
+        <View style={styles.feedContainer}>
           {initialLoading ? (
             renderSkeletonLoaders()
           ) : (
@@ -537,6 +567,23 @@ const Home: React.FC = () => {
               setReportSuccess(false);
             }}
             primaryBtn={true}
+          />
+
+          <MediaModal
+            visible={mediaModalVisible.visible}
+            onClose={() =>
+              setMediaModalVisible({
+                visible: false,
+                mediaUrl: '',
+                mediaType: 'image',
+                userName: '',
+                postTime: '',
+              })
+            }
+            mediaUrl={mediaModalVisible.mediaUrl}
+            mediaType={mediaModalVisible.mediaType}
+            userName={mediaModalVisible.userName}
+            postTime={mediaModalVisible.postTime}
           />
         </View>
       </View>

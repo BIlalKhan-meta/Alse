@@ -57,6 +57,7 @@ interface PostProps {
   shareLoader: boolean;
   mediaId: boolean;
   isFocused: boolean;
+  onMediaPress?: () => void;
 }
 
 const PostComponent: React.FC<PostProps> = ({
@@ -83,6 +84,7 @@ const PostComponent: React.FC<PostProps> = ({
   sharePost,
   isPaused,
   handleVideoPause,
+  onMediaPress,
 }) => {
   const navigation = useNavigation();
   const user = useSelector(selectUserProfile);
@@ -207,38 +209,43 @@ const PostComponent: React.FC<PostProps> = ({
         {postImage ? (
           <View style={styles.mediaContainer}>
             {/* Image or video content */}
-            {mediaType === 'image' ? (
-              <Image source={{uri: postImage}} style={styles.postImage} />
-            ) : (
-              <View>
-                {videoLoad && (
-                  <ActivityIndicator
-                    size="large"
-                    color="white"
-                    style={styles.videoLoader}
-                  />
-                )}
-                <TouchableOpacity
-                  activeOpacity={0.9}
-                  style={{zIndex: 99}}
-                  onPress={handleVideoPause}>
-                  <Video
-                    onReadyForDisplay={() => setVideoLoad(false)}
-                    source={{uri: postImage}}
-                    style={styles.postImage}
-                    resizeMode="cover"
-                    repeat={true}
-                    paused={isPaused}
-                    onBuffer={res => {
-                      if (res?.isBuffering) {
-                        setVideoLoad(true);
-                      }
-                    }}
-                    ignoreSilentSwitch={'ignore'}
-                  />
-                </TouchableOpacity>
-              </View>
-            )}
+            <TouchableOpacity
+              activeOpacity={0.9}
+              onPress={onMediaPress}
+              style={styles.mediaTouchable}>
+              {mediaType === 'image' ? (
+                <Image source={{uri: postImage}} style={styles.postImage} />
+              ) : (
+                <View>
+                  {videoLoad && (
+                    <ActivityIndicator
+                      size="large"
+                      color="white"
+                      style={styles.videoLoader}
+                    />
+                  )}
+                  <TouchableOpacity
+                    activeOpacity={0.9}
+                    style={{zIndex: 99}}
+                    onPress={handleVideoPause}>
+                    <Video
+                      onReadyForDisplay={() => setVideoLoad(false)}
+                      source={{uri: postImage}}
+                      style={styles.postImage}
+                      resizeMode="cover"
+                      repeat={true}
+                      paused={isPaused}
+                      onBuffer={res => {
+                        if (res?.isBuffering) {
+                          setVideoLoad(true);
+                        }
+                      }}
+                      ignoreSilentSwitch={'ignore'}
+                    />
+                  </TouchableOpacity>
+                </View>
+              )}
+            </TouchableOpacity>
 
             {/* Header overlay for image posts */}
             <View style={styles.headerOverlay}>
@@ -482,6 +489,10 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
+  },
+  mediaTouchable: {
+    width: '100%',
+    height: '100%',
   },
   avatar: {
     width: 40,
