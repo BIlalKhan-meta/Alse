@@ -332,7 +332,7 @@ const Stories = () => {
                 <View>
                   <AddStoryIcon />
                 </View>
-                <Text style={styles.storyName}>{t('addStory')}</Text>
+                <Text style={styles.storyName}>{t('stories.addStory')}</Text>
               </DropdownMenu.Trigger>
               <DropdownMenu.Content>
                 <DropdownMenu.Item

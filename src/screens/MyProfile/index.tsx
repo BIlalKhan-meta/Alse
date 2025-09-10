@@ -55,6 +55,8 @@ const MyProfile: React.FC = () => {
   const postsLoading = useSelector(selectPostsLoading);
   const postsError = useSelector(selectPostsError);
 
+  const [avatarError, setAvatarError] = useState(false);
+
   // Initialize profile data when user is available
   useEffect(() => {
     if (user && !profileData) {
@@ -211,15 +213,15 @@ const MyProfile: React.FC = () => {
     const avatar = currentProfile.avatar;
 
     if (
-      !avatar ||
-      avatar ===
-        'http://aabcndbkji.us-east-1.awsapprunner.com/storage/default.png'
+      avatarError ||
+      !avatar
+      // avatar.includes('default.png') // more flexible than full equality
     ) {
-      return images.profile;
+      return images.defaultDp;
     }
 
     return {uri: avatar};
-  }, [currentProfile.avatar]);
+  }, [currentProfile.avatar, avatarError]);
 
   const renderPostItem = useCallback(
     ({item}: {item: PostItem}) => (
@@ -262,7 +264,11 @@ const MyProfile: React.FC = () => {
         <View style={styles.profileSection}>
           <View style={styles.profileHeader}>
             <View style={styles.profileImageContainer}>
-              <Image source={getDisplayAvatar()} style={styles.profileImage} />
+              <Image
+                source={getDisplayAvatar()}
+                style={styles.profileImage}
+                onError={e => setAvatarError(true)}
+              />
             </View>
 
             <View style={styles.profileInfo}>

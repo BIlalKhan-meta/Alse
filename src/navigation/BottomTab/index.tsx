@@ -192,8 +192,13 @@ const TabNavigation = () => {
         options={{
           tabBarIcon: ({focused}) => (
             <View style={styles.tabButton}>
-              {/* TODO need to place user profile picture, or icon */}
-              {user?.avatar ? (
+              <View style={[styles.tabButton]}>
+                <User
+                  // name="person"
+                  color={focused ? colors.themeColor : colors.lightGrey}
+                />
+              </View>
+              {/* {user?.avatar ? (
                 <Image
                   source={{uri: user.avatar}}
                   style={[
@@ -213,7 +218,7 @@ const TabNavigation = () => {
                     color={focused ? colors.themeColor : colors.lightGrey}
                   />
                 </View>
-              )}
+              )} */}
               {/* <InterBold
                 style={[
                   styles.tabButtonText,

@@ -1,4 +1,5 @@
 export const images = {
+  defaultDp: require('../assets/Icons/avatar_placeholder.png'),
   VisibilityOffIcon: require('../assets/Icons/visibilityofficon.png'),
   EyeIcon: require('../assets/Icons/eyeicon.png'),
   profile: require('../assets/Icons/profile.png'),
@@ -14,7 +15,6 @@ export const images = {
   media: require('../assets/Icons/media.png'),
   video: require('../assets/Icons/video.png'),
   user: require('../assets/Icons/user.png'),
-  user2: require('../assets/Icons/user2.png'),
   postImage1: require('../assets/Icons/postImage1.png'),
   heartIcon: require('../assets/Icons/heartIcon.png'),
   like: require('../assets/Icons/like.png'),

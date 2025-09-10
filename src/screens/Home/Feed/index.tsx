@@ -53,6 +53,7 @@ const Home: React.FC = () => {
   const {t} = useTranslation();
 
   const {posts} = useAppSelector(state => state.home);
+
   const [loader, _setLoader] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true); // New state for initial load
 

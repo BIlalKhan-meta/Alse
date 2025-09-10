@@ -92,6 +92,7 @@ const PostComponent: React.FC<PostProps> = ({
   const [numberLikes, setNumberLikes] = useState(likes);
   const [loading, setLoading] = useState(false);
   const [videoLoad, setVideoLoad] = useState(true);
+  const [error, setError] = useState(false);
   // console.log("isFocusedisFocused ====>",isFocused)
   useEffect(() => {
     setNumberLikes(likes);
@@ -186,8 +187,9 @@ const PostComponent: React.FC<PostProps> = ({
             <View style={styles.userInfo}>
               <TouchableOpacity disabled={myAccount} onPress={goToProfile}>
                 <Image
-                  source={avatar ? {uri: avatar} : images.user}
+                  source={avatar && !error ? {uri: avatar} : images.defaultDp}
                   style={styles.avatar}
+                  onError={() => setError(true)}
                 />
               </TouchableOpacity>
               <View>
