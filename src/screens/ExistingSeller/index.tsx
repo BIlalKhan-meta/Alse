@@ -50,6 +50,7 @@ const ExistingSeller: React.FC = () => {
   const [shops, setShops] = useState<Shop[]>([]);
   const [loading, setLoading] = useState(true);
   const [newStoreAdded, setNewStoreAdded] = useState(false);
+  const [imageErrors, setImageErrors] = useState<{[key: number]: boolean}>({});
   const user = useSelector(selectUserProfile);
 
   // Store creation modal state
@@ -75,6 +76,10 @@ const ExistingSeller: React.FC = () => {
       const response = await checkIsSeller();
       if (response.data?.data?.data) {
         setShops(response.data.data.data);
+        // Debug banner URLs
+        response.data.data.data.forEach((shop: Shop) => {
+          console.log(`Shop "${shop.shop_name}" banner URL:`, shop.banner);
+        });
       }
       console.log('Shops:', response.data.data.data);
     } catch (error) {
@@ -358,10 +363,22 @@ const ExistingSeller: React.FC = () => {
                   style={styles.storeItem}
                   onPress={() => handleShopPress(shop)}>
                   <View style={styles.storeImageContainer}>
-                    {shop.banner ? (
+                    {shop.banner && !imageErrors[shop.id] ? (
                       <Image
                         source={{uri: shop.banner}}
                         style={styles.storeImage}
+                        onError={() => {
+                          console.log(
+                            `Failed to load banner for "${shop.shop_name}":`,
+                            shop.banner,
+                          );
+                          setImageErrors(prev => ({...prev, [shop.id]: true}));
+                        }}
+                        onLoad={() => {
+                          console.log(
+                            `Successfully loaded banner for "${shop.shop_name}"`,
+                          );
+                        }}
                       />
                     ) : (
                       <View style={styles.storeImagePlaceholder}>

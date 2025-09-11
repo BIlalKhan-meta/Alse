@@ -1,4 +1,4 @@
-import React, {useEffect, useLayoutEffect, useState} from 'react';
+import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -13,14 +13,14 @@ import {useIsFocused, useNavigation, useRoute} from '@react-navigation/native';
 import {getProductByShop, shopDetail} from '../../api/shop';
 import CustomButton from '../../components/CustomButton';
 import Loader from '../../components/Loader';
-import DropDownTextInput from '../../components/TextInput/DropDownTextInput';
 import {
   MessageCircle,
   HelpCircle,
   Mail,
   Share2,
-  Edit3,
+  ChevronDown,
 } from 'lucide-react-native';
+import GlobalHeader from '../../components/GlobalHeader';
 
 const filterItems = [
   {label: 'Category', value: 'category'},
@@ -33,12 +33,16 @@ const MyShop: React.FC = () => {
   const navigation = useNavigation();
   const isFocused = useIsFocused();
   const route = useRoute();
-  const shopId = route?.params?.shopId;
+  const shopId = (route?.params as any)?.shopId;
 
   const [shopDetails, setShopDetails] = useState<any>({});
   const [shopProducts, setShopProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [filter, setFilter] = useState('');
+  const [_filter, _setFilter] = useState('');
+  const [bannerError, setBannerError] = useState(false);
+  const [bannerLoaded, setBannerLoaded] = useState(false);
+  const [avatarError, setAvatarError] = useState(false);
+  const [avatarLoaded, setAvatarLoaded] = useState(false);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -46,24 +50,32 @@ const MyShop: React.FC = () => {
     });
   }, [navigation]);
 
-  useEffect(() => {
-    getData();
-  }, [isFocused]);
-
-  const getData = async () => {
+  const getData = useCallback(async () => {
     setLoading(true);
     try {
       const res = await shopDetail(shopId);
       const res2 = await getProductByShop(shopId);
 
+      console.log('Shop details response:', res?.data?.data);
+      console.log('Banner URL:', res?.data?.data?.banner);
+      console.log('Avatar URL:', res?.data?.data?.avatar);
+
       setShopDetails(res?.data?.data || {});
       setShopProducts(res2?.data?.data?.data || []);
+      setBannerError(false); // Reset banner error state
+      setBannerLoaded(false); // Reset banner loaded state
+      setAvatarError(false); // Reset avatar error state
+      setAvatarLoaded(false); // Reset avatar loaded state
     } catch (error) {
       console.error('Error fetching shop data:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [shopId]);
+
+  useEffect(() => {
+    getData();
+  }, [isFocused, getData]);
 
   if (loading) {
     return <Loader />;
@@ -73,7 +85,7 @@ const MyShop: React.FC = () => {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Alse</Text>
+        {/* <Text style={styles.headerTitle}>Alse</Text>
         <View style={styles.headerIcons}>
           <TouchableOpacity style={styles.iconButton}>
             <Image source={images.bellIcon} style={styles.headerIcon} />
@@ -84,7 +96,8 @@ const MyShop: React.FC = () => {
           <TouchableOpacity style={styles.iconButton}>
             <Image source={images.smsIcon} style={styles.headerIcon} />
           </TouchableOpacity>
-        </View>
+        </View> */}
+        <GlobalHeader icon={true} />
       </View>
 
       <ScrollView
@@ -96,9 +109,29 @@ const MyShop: React.FC = () => {
           <View style={styles.bannerContainer}>
             <Image
               source={
-                shopDetails?.banner ? {uri: shopDetails.banner} : images.shop11
+                shopDetails?.banner && !bannerError
+                  ? {uri: shopDetails.banner}
+                  : images.shop11
               }
               style={styles.bannerImage}
+              onError={() => {
+                if (shopDetails?.banner && !bannerLoaded) {
+                  console.log(
+                    'Banner image failed to load:',
+                    shopDetails?.banner,
+                  );
+                  setBannerError(true);
+                }
+              }}
+              onLoad={() => {
+                if (shopDetails?.banner) {
+                  console.log(
+                    'Banner image loaded successfully:',
+                    shopDetails?.banner,
+                  );
+                  setBannerLoaded(true);
+                }
+              }}
             />
 
             {/* Store Avatar */}
@@ -107,11 +140,30 @@ const MyShop: React.FC = () => {
                 source={
                   shopDetails?.avatar &&
                   shopDetails?.avatar !==
-                    'http://aabcndbkji.us-east-1.awsapprunner.com/storage/default.png'
+                    'http://aabcndbkji.us-east-1.awsapprunner.com/storage/default.png' &&
+                  !avatarError
                     ? {uri: shopDetails.avatar}
                     : images.shop11
                 }
                 style={styles.avatarImage}
+                onError={() => {
+                  if (shopDetails?.avatar && !avatarLoaded) {
+                    console.log(
+                      'Avatar image failed to load:',
+                      shopDetails?.avatar,
+                    );
+                    setAvatarError(true);
+                  }
+                }}
+                onLoad={() => {
+                  if (shopDetails?.avatar) {
+                    console.log(
+                      'Avatar image loaded successfully:',
+                      shopDetails?.avatar,
+                    );
+                    setAvatarLoaded(true);
+                  }
+                }}
               />
             </View>
           </View>
@@ -124,15 +176,19 @@ const MyShop: React.FC = () => {
               </Text>
               <Text style={styles.storeCategory}>Tech, Gadgets</Text>
             </View>
-            <TouchableOpacity style={styles.editButton}>
-              <Edit3 size={16} color="#333" />
+            <TouchableOpacity
+              style={styles.addProductButton}
+              onPress={() =>
+                (navigation as any).navigate('AddProduct', {shopId})
+              }>
+              <Text style={styles.addProductButtonText}>Add Product</Text>
             </TouchableOpacity>
           </View>
 
           {/* Store Stats */}
           <View style={styles.storeStatsContainer}>
             <View style={styles.statItem}>
-              <Text style={styles.statNumber}>124</Text>
+              <Text style={styles.statNumber}>{shopDetails?.followers}</Text>
               <Text style={styles.statLabel}>Followers</Text>
             </View>
             <View style={styles.statItem}>
@@ -162,15 +218,10 @@ const MyShop: React.FC = () => {
         {/* Filter Bar */}
         <View style={styles.filterBar}>
           {filterItems.map((item, index) => (
-            <View key={index} style={styles.filterItem}>
-              <DropDownTextInput
-                items={[{label: item.label, value: item.value}]}
-                defaultValue=""
-                placeholder={item.label}
-                onChangeValue={() => {}}
-                style={styles.filterDropdown}
-              />
-            </View>
+            <TouchableOpacity key={index} style={styles.filterButton}>
+              <Text style={styles.filterButtonText}>{item.label}</Text>
+              <ChevronDown size={16} color="#666" />
+            </TouchableOpacity>
           ))}
         </View>
 
@@ -217,13 +268,20 @@ const MyShop: React.FC = () => {
         <View style={styles.bottomButtonsContainer}>
           <CustomButton
             style={styles.addProductButton}
-            onPress={() => navigation.navigate('AddProduct', {shopId})}>
+            onPress={() =>
+              (navigation as any).navigate('AddProduct', {shopId})
+            }>
             Add Product
           </CustomButton>
           <CustomButton
             style={styles.ordersButton}
             txtstyle={{color: colors.themeColor}}
-            onPress={() => navigation.navigate('MyOrders', {MyOrder: true})}>
+            onPress={() =>
+              (navigation as any).navigate('MyOrders', {
+                MyOrder: true,
+                shopId: shopId,
+              })
+            }>
             Orders
           </CustomButton>
         </View>
@@ -238,11 +296,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8f8f8',
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     paddingHorizontal: 16,
-    paddingTop: 50,
     paddingBottom: 16,
     backgroundColor: 'white',
   },
@@ -315,8 +369,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
   },
-  editButton: {
-    padding: 8,
+  addProductButton: {
+    backgroundColor: colors.themeColor,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addProductButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
   },
   storeStatsContainer: {
     flexDirection: 'row',
@@ -366,19 +430,28 @@ const styles = StyleSheet.create({
   filterBar: {
     flexDirection: 'row',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 16,
     backgroundColor: 'white',
     marginBottom: 16,
+    gap: 8,
   },
-  filterItem: {
+  filterButton: {
     flex: 1,
-    marginHorizontal: 4,
-  },
-  filterDropdown: {
-    borderColor: '#ddd',
-    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    backgroundColor: '#f8f9fa',
     borderRadius: 8,
-    backgroundColor: '#f9f9f9',
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+  },
+  filterButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#333',
+    flex: 1,
   },
   productsSection: {
     backgroundColor: 'white',
@@ -447,9 +520,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 20,
     backgroundColor: 'white',
-  },
-  addProductButton: {
-    minWidth: '45%',
   },
   ordersButton: {
     minWidth: '45%',

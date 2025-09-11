@@ -21,6 +21,7 @@ type TOrder = {
 
 interface OrderCardProps {
   item: TOrder;
+  onPress?: () => void;
 }
 
 const OrderCard: React.FC<OrderCardProps> = ({item, onPress}) => {

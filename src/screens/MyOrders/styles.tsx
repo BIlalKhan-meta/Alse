@@ -22,6 +22,10 @@ const styles = StyleSheet.create({
   filterIcon: {
     fontSize: 24,
   },
+  threeDots: {
+    width: 24,
+    height: 24,
+  },
   ordersContainer: {
     padding: vh,
     paddingBottom: vh * 8,

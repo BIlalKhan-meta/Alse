@@ -1,4 +1,4 @@
-import React, {useEffect, useLayoutEffect, useState} from 'react';
+import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
 import {
   View,
   TouchableOpacity,
@@ -7,20 +7,30 @@ import {
   FlatList,
 } from 'react-native';
 import styles from './styles';
-import {useIsFocused, useNavigation} from '@react-navigation/native';
+import {useIsFocused, useNavigation, useRoute} from '@react-navigation/native';
 import {images} from '../../utils/images';
 import TabsComponent from '../../components/TabsComponent';
 import FilterModal from '../../components/FilterModal';
 import {colors} from '../../utils/theme';
-import {getMyOrders, getOrders} from '../../api/product';
+import {getMyOrders, getOrders, getShopOrders} from '../../api/product';
 import OrderCard from '../../components/CardOrder';
-import { EmptyComponent } from '../../components/EmptyComponent';
-import { vw } from '../../constant';
+import {EmptyComponent} from '../../components/EmptyComponent';
+import {vw} from '../../constant';
 
-const MyOrders: React.FC = (props) => {
-  console.log("props =====>",props?.route?.params?.MyOrder);
-  
+const HeaderRight = ({onPress}: {onPress: () => void}) => (
+  <View>
+    <TouchableOpacity onPress={onPress}>
+      <Image source={images.filter} style={styles.threeDots} />
+    </TouchableOpacity>
+  </View>
+);
+
+const EmptyOrders = () => <EmptyComponent text="No orders found" />;
+
+const MyOrders: React.FC = () => {
   const navigation = useNavigation();
+  const route = useRoute();
+  console.log('props =====>', (route?.params as any)?.MyOrder);
   const [selectedTab, setSelectedTab] = useState<
     'All' | 'pending' | 'delivered' | 'cancelled'
   >('All');
@@ -28,46 +38,61 @@ const MyOrders: React.FC = (props) => {
   const [fromDate, setFromDate] = useState<Date | null>(null);
   const [toDate, setToDate] = useState<Date | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string>('All');
-  const [orders, setOrders] = useState([]);
-  const [filteredOrders, setFilteredOrders] = useState([]);
+  const [orders, setOrders] = useState<any[]>([]);
+  const [filteredOrders, setFilteredOrders] = useState<any[]>([]);
   const [loader, setLoader] = useState(false);
 
   useLayoutEffect(() => {
+    const headerRightComponent = () => (
+      <HeaderRight onPress={() => setModalVisible(!modalVisible)} />
+    );
+
     navigation.setOptions({
       headerStyle: {
         backgroundColor: colors.headerColor,
       },
-      headerRight: () => (
-        <View>
-          <TouchableOpacity onPress={() => setModalVisible(!modalVisible)}>
-            <Image source={images.filter} style={styles.threeDots} />
-          </TouchableOpacity>
-        </View>
-      ),
+      headerRight: headerRightComponent,
     });
   }, [navigation, modalVisible]);
 
-  const getData = async () => {
+  const isMyOrder = (route?.params as any)?.MyOrder;
+  const shopId = (route?.params as any)?.shopId;
+
+  const getData = useCallback(async () => {
     setLoader(true);
-    const callback = props?.route?.params?.MyOrder ? getMyOrders :  getOrders
+    let callback;
+
+    if (isMyOrder) {
+      // If it's a shop order, use getShopOrders with shopId
+      if (shopId) {
+        callback = () => getShopOrders(shopId);
+      } else {
+        callback = getMyOrders;
+      }
+    } else {
+      callback = getOrders;
+    }
+
     await callback()
       .then(res => {
         console.log('res from ', res?.data?.data?.data);
-        
+
         if (res?.data) {
           setOrders(res?.data?.data?.data);
         }
-      }).catch(err =>{
+      })
+      .catch(err => {
+        console.log('Error fetching orders:', err);
         setLoader(false);
       })
       .finally(() => {
         setLoader(false);
       });
-  };
-const isFocused =useIsFocused()
+  }, [isMyOrder, shopId]);
+  const isFocused = useIsFocused();
   useEffect(() => {
     getData();
-  }, [isFocused]);
+  }, [isFocused, getData]);
 
   useEffect(() => {
     // Filter orders based on the selected tab
@@ -109,14 +134,14 @@ const isFocused =useIsFocused()
           toDate={toDate}
           onFromDateChange={setFromDate}
           onToDateChange={setToDate}
-          // filterStatus={true}
           selectedStatus={selectedStatus}
           onStatusChange={setSelectedStatus}
+          style={{}}
         />
         <TabsComponent
-          tabs={['All', 'Pending', 'Delivered','Accepted', 'Cancelled']}
+          tabs={['All', 'Pending', 'Delivered', 'Accepted', 'Cancelled']}
           selectedTab={selectedTab}
-          onTabPress={setSelectedTab}
+          onTabPress={(tab: string) => setSelectedTab(tab as any)}
           activeTabStyle={{
             paddingHorizontal: vw * 3,
           }}
@@ -126,14 +151,23 @@ const isFocused =useIsFocused()
           refreshing={loader}
           onRefresh={getData}
           renderItem={({item}: any) => {
-            return(
-            <OrderCard key={item?.order_id} item={item}  onPress={() => navigation.navigate('MyOrderDetail', {id: item?.order_id, StoreOrder: props?.route?.params?.MyOrder})
-            }/>
-          )}}
+            return (
+              <OrderCard
+                key={item?.order_id}
+                item={item}
+                onPress={() =>
+                  (navigation as any).navigate('MyOrderDetail', {
+                    id: item?.order_id,
+                    StoreOrder: (route?.params as any)?.MyOrder,
+                  })
+                }
+              />
+            );
+          }}
           keyExtractor={item => item?.order_id?.toString()}
           contentContainerStyle={styles.ordersContainer}
           showsVerticalScrollIndicator={false}
-          ListEmptyComponent={() => <EmptyComponent text="No orders found"/>}
+          ListEmptyComponent={EmptyOrders}
         />
       </View>
     </TouchableWithoutFeedback>

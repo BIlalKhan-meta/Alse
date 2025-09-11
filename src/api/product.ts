@@ -73,6 +73,22 @@ export const getMyOrders = (params?: {
 }) => {
   return axiosInstance.get(`${endpoints.products.shopOrders}`, {params});
 };
+
+export const getShopOrders = (
+  shopId: number,
+  params?: {
+    page?: number;
+    per_page?: number;
+    status?: string;
+  },
+) => {
+  return axiosInstance.get(`${endpoints.products.shopOrders}`, {
+    params: {
+      ...params,
+      shop_id: shopId,
+    },
+  });
+};
 export const getOrderDetail = (id: number) => {
   return axiosInstance.get(`${endpoints.products.orderDetail}/${id}`);
 };
