@@ -1092,7 +1092,7 @@
 
 "@babel/runtime@^7.27.6":
   version "7.28.3"
-  resolved "https://registry.yarnpkg.com/@babel/runtime/-/runtime-7.28.3.tgz#75c5034b55ba868121668be5d5bb31cc64e6e61a"
+  resolved "https://registry.npmjs.org/@babel/runtime/-/runtime-7.28.3.tgz"
   integrity sha512-9uIQ10o0WGdpP6GDhXcdOJPJuDgFtIDtN/9+ArJQ2NAfAmiuhTQdzkaTGR33v43GYS2UrSA0eX2pPPHoFVvpxA==
 
 "@babel/template@^7.0.0", "@babel/template@^7.25.9", "@babel/template@^7.26.9", "@babel/template@^7.3.3":
@@ -2518,7 +2518,7 @@
 
 "@react-native-community/slider@4.5.5":
   version "4.5.5"
-  resolved "https://registry.yarnpkg.com/@react-native-community/slider/-/slider-4.5.5.tgz#d70fc5870477760033769bbd6625d57e7d7678b2"
+  resolved "https://registry.npmjs.org/@react-native-community/slider/-/slider-4.5.5.tgz"
   integrity sha512-x2N415pg4ZxIltArOKczPwn7JEYh+1OxQ4+hTnafomnMsqs65HZuEWcX+Ch8c5r8V83DiunuQUf5hWGWlw8hQQ==
 
 "@react-native-firebase/app@^21.3.0":
@@ -3668,7 +3668,7 @@ big-integer@1.6.x:
 
 bignumber.js@*:
   version "9.3.1"
-  resolved "https://registry.yarnpkg.com/bignumber.js/-/bignumber.js-9.3.1.tgz#759c5aaddf2ffdc4f154f7b493e1c8770f88c4d7"
+  resolved "https://registry.npmjs.org/bignumber.js/-/bignumber.js-9.3.1.tgz"
   integrity sha512-Ko0uX15oIUS7wJ3Rb30Fs6SkVbLmPBAKdlm7q9+ak9bbIeFf0MwuBsQV6z7+X768/cHsfg+WlysDWJcmthjsjQ==
 
 bignumber.js@^9.0.0:
@@ -4937,7 +4937,7 @@ expect@^29.7.0:
 
 expo-av@~15.0.1:
   version "15.0.2"
-  resolved "https://registry.yarnpkg.com/expo-av/-/expo-av-15.0.2.tgz#65bb08658a7fe3a67aa47da614abbfae9adb684e"
+  resolved "https://registry.npmjs.org/expo-av/-/expo-av-15.0.2.tgz"
   integrity sha512-AHIHXdqLgK1dfHZF0JzX3YSVySGMrWn9QtPzaVjw54FAzvXfMt4sIoq4qRL/9XWCP9+ICcCs/u3EcvmxQjrfcA==
 
 expo-checkbox@^3.0.0:
@@ -5517,7 +5517,7 @@ html-escaper@^2.0.0:
 
 html-parse-stringify@^3.0.1:
   version "3.0.1"
-  resolved "https://registry.yarnpkg.com/html-parse-stringify/-/html-parse-stringify-3.0.1.tgz#dfc1017347ce9f77c8141a507f233040c59c55d2"
+  resolved "https://registry.npmjs.org/html-parse-stringify/-/html-parse-stringify-3.0.1.tgz"
   integrity sha512-KknJ50kTInJ7qIScF3jeaFRpMpE8/lfiTdzf/twXyPBLAGrLRTmkz3AdTnKeh40X8k9L2fdYwEp/42WGXIRGcg==
   dependencies:
     void-elements "3.1.0"
@@ -5552,12 +5552,12 @@ human-signals@^2.1.0:
 
 i18n-js@3.0.11:
   version "3.0.11"
-  resolved "https://registry.yarnpkg.com/i18n-js/-/i18n-js-3.0.11.tgz#f9e96bdb641c5b9d6be12759d7c422089987ef02"
+  resolved "https://registry.npmjs.org/i18n-js/-/i18n-js-3.0.11.tgz"
   integrity sha512-v7dG3kYJTQTyox3NqDabPDE/ZotWntyMI9kh4cYi+XlCSnsIR+KBTS2opPyObL8WndnklcLzbNU92FP/mLge3Q==
 
 i18n-js@^4.5.1:
   version "4.5.1"
-  resolved "https://registry.yarnpkg.com/i18n-js/-/i18n-js-4.5.1.tgz#12ea3d6333552ff75be0904ea50705f5a263d172"
+  resolved "https://registry.npmjs.org/i18n-js/-/i18n-js-4.5.1.tgz"
   integrity sha512-n7jojFj1WC0tztgr0I8jqTXuIlY1xNzXnC3mjKX/YjJhimdM+jXM8vOmn9d3xQFNC6qDHJ4ovhdrGXrRXLIGkA==
   dependencies:
     bignumber.js "*"
@@ -5566,7 +5566,7 @@ i18n-js@^4.5.1:
 
 i18next@^25.4.2:
   version "25.4.2"
-  resolved "https://registry.yarnpkg.com/i18next/-/i18next-25.4.2.tgz#97a2c65d6c633b768b95055928c2f6086a672f08"
+  resolved "https://registry.npmjs.org/i18next/-/i18next-25.4.2.tgz"
   integrity sha512-gD4T25a6ovNXsfXY1TwHXXXLnD/K2t99jyYMCSimSCBnBRJVQr5j+VAaU83RJCPzrTGhVQ6dqIga66xO2rtd5g==
   dependencies:
     "@babel/runtime" "^7.27.6"
@@ -6648,7 +6648,7 @@ lodash.isequal@^4.5.0:
 
 lodash.memoize@^4.1.2:
   version "4.1.2"
-  resolved "https://registry.yarnpkg.com/lodash.memoize/-/lodash.memoize-4.1.2.tgz#bcc6c49a42a2840ed997f323eada5ecd182e0bfe"
+  resolved "https://registry.npmjs.org/lodash.memoize/-/lodash.memoize-4.1.2.tgz"
   integrity sha512-t7j+NzmgnQzTAYXcsHYLgimltOV1MXHtlOWf6GjL9Kj8GK5FInw5JotxvbOs+IvV1/Dzo04/fCGfLVs7aXb4Ag==
 
 lodash.merge@^4.6.2:
@@ -6729,7 +6729,7 @@ make-dir@^4.0.0:
 
 make-plural@*:
   version "7.4.0"
-  resolved "https://registry.yarnpkg.com/make-plural/-/make-plural-7.4.0.tgz#fa6990dd550dea4de6b20163f74e5ed83d8a8d6d"
+  resolved "https://registry.npmjs.org/make-plural/-/make-plural-7.4.0.tgz"
   integrity sha512-4/gC9KVNTV6pvYg2gFeQYTW3mWaoJt7WZE5vrp1KnQDgW92JtYZnzmZT81oj/dUTqAIu0ufI2x3dkgu3bB1tYg==
 
 makeerror@1.0.12:
@@ -7768,7 +7768,7 @@ react-freeze@^1.0.0:
 
 react-i18next@^15.7.3:
   version "15.7.3"
-  resolved "https://registry.yarnpkg.com/react-i18next/-/react-i18next-15.7.3.tgz#2eba235247dff0cbf9f0338e2ab85e10e127aa54"
+  resolved "https://registry.npmjs.org/react-i18next/-/react-i18next-15.7.3.tgz"
   integrity sha512-AANws4tOE+QSq/IeMF/ncoHlMNZaVLxpa5uUGW1wjike68elVYr0018L9xYoqBr1OFO7G7boDPrbn0HpMCJxTw==
   dependencies:
     "@babel/runtime" "^7.27.6"
@@ -7855,7 +7855,7 @@ react-native-event-listeners@^1.0.7:
 
 react-native-geolocation-service@^5.3.1:
   version "5.3.1"
-  resolved "https://registry.yarnpkg.com/react-native-geolocation-service/-/react-native-geolocation-service-5.3.1.tgz#4ce1017789da6fdfcf7576eb6f59435622af4289"
+  resolved "https://registry.npmjs.org/react-native-geolocation-service/-/react-native-geolocation-service-5.3.1.tgz"
   integrity sha512-LTXPtPNmrdhx+yeWG47sAaCgQc3nG1z+HLLHlhK/5YfOgfLcAb9HAkhREPjQKPZOUx8pKZMIpdGFUGfJYtimXQ==
 
 react-native-gesture-handler@^2.23.1:
@@ -7869,7 +7869,7 @@ react-native-gesture-handler@^2.23.1:
 
 react-native-gesture-handler@~2.25.0:
   version "2.25.0"
-  resolved "https://registry.yarnpkg.com/react-native-gesture-handler/-/react-native-gesture-handler-2.25.0.tgz#3a5a8912ea4f5e68ab211a9fa5a191c08ad50883"
+  resolved "https://registry.npmjs.org/react-native-gesture-handler/-/react-native-gesture-handler-2.25.0.tgz"
   integrity sha512-NPjJi6mislXxvjxQPU9IYwBjb1Uejp8GvAbE1Lhh+xMIMEvmgAvVIp5cz1P+xAbV6uYcRRArm278+tEInGOqWg==
   dependencies:
     "@egjs/hammerjs" "^2.0.17"
@@ -7892,7 +7892,7 @@ react-native-gifted-chat@^2.8.1:
 
 react-native-i18n@^2.0.15:
   version "2.0.15"
-  resolved "https://registry.yarnpkg.com/react-native-i18n/-/react-native-i18n-2.0.15.tgz#09b5a9836116fa7dbd0054c46e2d1014c1ef3c65"
+  resolved "https://registry.npmjs.org/react-native-i18n/-/react-native-i18n-2.0.15.tgz"
   integrity sha512-V8VwUP0TLda3oJvgt5tdnFaOV7WXPhTjCTLO7sXI3C2SHggSbD4bCUryMzNJhesimJidH21V2Owvj4zAylHoQQ==
   dependencies:
     i18n-js "3.0.11"
@@ -7959,7 +7959,7 @@ react-native-linear-gradient@^2.8.3:
 
 react-native-localize@^3.5.2:
   version "3.5.2"
-  resolved "https://registry.yarnpkg.com/react-native-localize/-/react-native-localize-3.5.2.tgz#7fcf3e1086ff3c6389359ffed28f6d0947d076f4"
+  resolved "https://registry.npmjs.org/react-native-localize/-/react-native-localize-3.5.2.tgz"
   integrity sha512-HfQdwv5sRjh4AQ8a97OTjXYcxPNRlBxiQb861c7Ob6mRuNYCPtaJ45QTcZxZr31vAM3THvtOBp1soqWlQFxjnA==
 
 react-native-modal-datetime-picker@^18.0.0:
@@ -7990,6 +7990,11 @@ react-native-permissions@^4.1.5:
   version "4.1.5"
   resolved "https://registry.npmjs.org/react-native-permissions/-/react-native-permissions-4.1.5.tgz"
   integrity sha512-r6VMRacASmtRHS+GZ+5HQCp9p9kiE+UU9magHOZCXZLTJitdTuVHWZRrb4v4oqZGU+zAp3mZhTQftuMMv+WLUg==
+
+react-native-phone-call@^1.2.0:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/react-native-phone-call/-/react-native-phone-call-1.2.0.tgz#11c28120f9528647167b58742ebb7225f52d28c1"
+  integrity sha512-M1CiocX8w7YNsh3Cwcnwc3eUkIJOPaBIQji3P9Uv/ZWAwb6XGI2NtV2UBSAa4Prvn6ooXeFPZs/YXmeTHmVHKg==
 
 react-native-phone-number-input@^2.1.0:
   version "2.1.0"
@@ -8028,7 +8033,7 @@ react-native-reanimated@^3.16.7:
 
 react-native-reels-list@^1.0.6:
   version "1.0.6"
-  resolved "https://registry.yarnpkg.com/react-native-reels-list/-/react-native-reels-list-1.0.6.tgz#a6f2cc867fe278a7aed23119198d366262607316"
+  resolved "https://registry.npmjs.org/react-native-reels-list/-/react-native-reels-list-1.0.6.tgz"
   integrity sha512-FAPl/o6G2FNbj9pj/BlZrgFlkv698OalqSgdgl+9UmIxbCb+C9VhwzVf6lkFKHSqoLfz6eQGT3Qzz18+4Xlr6g==
   dependencies:
     "@react-native-community/slider" "4.5.5"
@@ -8079,7 +8084,7 @@ react-native-toast-message@^2.2.1:
 
 react-native-vector-icons@^10.2.0:
   version "10.3.0"
-  resolved "https://registry.yarnpkg.com/react-native-vector-icons/-/react-native-vector-icons-10.3.0.tgz#de440f2627a2ed1079ce3b99d5b9d4f86894df28"
+  resolved "https://registry.npmjs.org/react-native-vector-icons/-/react-native-vector-icons-10.3.0.tgz"
   integrity sha512-IFQ0RE57819hOUdFvgK4FowM5aMXg7C7XKsuGLevqXkkIJatc3QopN0wYrb2IrzUgmdpfP+QVIbI3S6h7M0btw==
   dependencies:
     prop-types "^15.7.2"
@@ -9528,7 +9533,7 @@ vlq@^1.0.0:
 
 void-elements@3.1.0:
   version "3.1.0"
-  resolved "https://registry.yarnpkg.com/void-elements/-/void-elements-3.1.0.tgz#614f7fbf8d801f0bb5f0661f5b2f5785750e4f09"
+  resolved "https://registry.npmjs.org/void-elements/-/void-elements-3.1.0.tgz"
   integrity sha512-Dhxzh5HZuiHQhbvTW9AMetFfBHDMYpo23Uo9btPXgdYP+3T5S+p+jgNy7spra+veYhBP2dCSgxR/i2Y02h5/6w==
 
 walker@^1.0.7, walker@^1.0.8:
@@ -9830,7 +9835,7 @@ yargs@^15.1.0:
 
 yargs@^16.1.1, yargs@^16.2.0:
   version "16.2.0"
-  resolved "https://registry.yarnpkg.com/yargs/-/yargs-16.2.0.tgz#1c82bf0f6b6a66eafce7ef30e376f49a12477f66"
+  resolved "https://registry.npmjs.org/yargs/-/yargs-16.2.0.tgz"
   integrity sha512-D1mvvtDG0L5ft/jGWkLpG1+m0eQxOfaBvTNELraWj22wSVUMWxZUvYgJYcKh6jGGIkJFhH4IZPQhR4TKpc8mBw==
   dependencies:
     cliui "^7.0.2"

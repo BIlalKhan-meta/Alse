@@ -57,6 +57,7 @@ const ExistingSeller: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [createLoading, setCreateLoading] = useState(false);
   const [selectedImage, setSelectedImage] = useState<any>(null);
+  const [selectedAvatar, setSelectedAvatar] = useState<any>(null);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -103,8 +104,9 @@ const ExistingSeller: React.FC = () => {
     const options = {
       mediaType: 'photo' as MediaType,
       includeBase64: false,
-      maxHeight: 2000,
-      maxWidth: 2000,
+      maxHeight: 800,
+      maxWidth: 800,
+      quality: 0.3,
     };
 
     launchImageLibrary(options, (response: ImagePickerResponse) => {
@@ -114,6 +116,26 @@ const ExistingSeller: React.FC = () => {
 
       if (response.assets && response.assets[0]) {
         setSelectedImage(response.assets[0]);
+      }
+    });
+  };
+
+  const selectAvatar = () => {
+    const options = {
+      mediaType: 'photo' as MediaType,
+      includeBase64: false,
+      maxHeight: 400,
+      maxWidth: 400,
+      quality: 0.3,
+    };
+
+    launchImageLibrary(options, (response: ImagePickerResponse) => {
+      if (response.didCancel || response.errorMessage) {
+        return;
+      }
+
+      if (response.assets && response.assets[0]) {
+        setSelectedAvatar(response.assets[0]);
       }
     });
   };
@@ -182,6 +204,14 @@ const ExistingSeller: React.FC = () => {
       });
       return false;
     }
+    if (!selectedAvatar) {
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Shop avatar is required',
+      });
+      return false;
+    }
     return true;
   };
 
@@ -202,10 +232,34 @@ const ExistingSeller: React.FC = () => {
       formDataToSend.append('delivery_fees', formData.deliveryFees);
 
       if (selectedImage) {
+        console.log('Banner image details:', {
+          uri: selectedImage.uri,
+          type: selectedImage.type,
+          fileName: selectedImage.fileName,
+          fileSize: selectedImage.fileSize,
+          width: selectedImage.width,
+          height: selectedImage.height,
+        });
         formDataToSend.append('shop_banner', {
           uri: selectedImage.uri,
           type: selectedImage.type || 'image/jpeg',
           name: selectedImage.fileName || 'banner.jpg',
+        });
+      }
+
+      if (selectedAvatar) {
+        console.log('Avatar image details:', {
+          uri: selectedAvatar.uri,
+          type: selectedAvatar.type,
+          fileName: selectedAvatar.fileName,
+          fileSize: selectedAvatar.fileSize,
+          width: selectedAvatar.width,
+          height: selectedAvatar.height,
+        });
+        formDataToSend.append('avatar', {
+          uri: selectedAvatar.uri,
+          type: selectedAvatar.type || 'image/jpeg',
+          name: selectedAvatar.fileName || 'avatar.jpg',
         });
       }
 
@@ -230,6 +284,7 @@ const ExistingSeller: React.FC = () => {
           deliveryFees: '',
         });
         setSelectedImage(null);
+        setSelectedAvatar(null);
         setShowCreateModal(false);
 
         // Refresh shops list to show the new store
@@ -255,12 +310,23 @@ const ExistingSeller: React.FC = () => {
           text2: response.data?.message || 'Failed to create store',
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.log('Error creating store:', error);
+
+      let errorMessage = 'Failed to create store. Please try again.';
+
+      if (error.response?.status === 413) {
+        errorMessage = 'Images are too large. Please try with smaller images.';
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
       Toast.show({
         type: 'error',
         text1: 'Error',
-        text2: 'Failed to create store. Please try again.',
+        text2: errorMessage,
       });
     } finally {
       setCreateLoading(false);
@@ -278,6 +344,7 @@ const ExistingSeller: React.FC = () => {
       deliveryFees: '',
     });
     setSelectedImage(null);
+    setSelectedAvatar(null);
   };
 
   if (loading) {
@@ -437,6 +504,9 @@ const ExistingSeller: React.FC = () => {
               {/* Store Banner Upload */}
               <View style={styles.imageUploadContainer}>
                 <Text style={styles.label}>Store Banner *</Text>
+                <Text style={styles.imageHintText}>
+                  Recommended: 800x800px or smaller
+                </Text>
                 <TouchableOpacity
                   style={styles.imageUploadButton}
                   onPress={selectImage}>
@@ -450,6 +520,31 @@ const ExistingSeller: React.FC = () => {
                       <Camera size={32} color="#ccc" />
                       <Text style={styles.imagePlaceholderText}>
                         Tap to add banner
+                      </Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              </View>
+
+              {/* Store Avatar Upload */}
+              <View style={styles.imageUploadContainer}>
+                <Text style={styles.label}>Store Avatar *</Text>
+                <Text style={styles.imageHintText}>
+                  Recommended: 400x400px or smaller
+                </Text>
+                <TouchableOpacity
+                  style={styles.avatarUploadButton}
+                  onPress={selectAvatar}>
+                  {selectedAvatar ? (
+                    <Image
+                      source={{uri: selectedAvatar.uri}}
+                      style={styles.uploadedAvatar}
+                    />
+                  ) : (
+                    <View style={styles.avatarPlaceholder}>
+                      <Camera size={24} color="#ccc" />
+                      <Text style={styles.avatarPlaceholderText}>
+                        Tap to add avatar
                       </Text>
                     </View>
                   )}
@@ -808,6 +903,12 @@ const styles = StyleSheet.create({
   imageUploadContainer: {
     marginBottom: 20,
   },
+  imageHintText: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 8,
+    fontStyle: 'italic',
+  },
   imageUploadButton: {
     borderWidth: 1,
     borderColor: '#e0e0e0',
@@ -831,6 +932,33 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     borderRadius: 8,
+  },
+  avatarUploadButton: {
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderRadius: 50,
+    padding: 16,
+    backgroundColor: 'white',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 100,
+    width: 100,
+    alignSelf: 'center',
+  },
+  avatarPlaceholder: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarPlaceholderText: {
+    marginTop: 8,
+    fontSize: 12,
+    color: '#999',
+    textAlign: 'center',
+  },
+  uploadedAvatar: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 50,
   },
   inputContainer: {
     marginBottom: 20,

@@ -276,6 +276,72 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    padding: vw * 6,
+    width: vw * 85,
+    maxWidth: 400,
+  },
+  modalTitle: {
+    fontSize: fontSizes.large,
+    fontWeight: 'bold',
+    color: colors.black,
+    textAlign: 'center',
+    marginBottom: vh * 1,
+  },
+  modalSubtitle: {
+    fontSize: fontSizes.medium,
+    color: colors.gray,
+    textAlign: 'center',
+    marginBottom: vh * 2,
+  },
+  phoneInput: {
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
+    borderRadius: 8,
+    paddingHorizontal: vw * 4,
+    paddingVertical: vh * 1.5,
+    fontSize: fontSizes.medium,
+    marginBottom: vh * 2,
+    backgroundColor: colors.white,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: vh * 1.5,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginHorizontal: vw * 1,
+  },
+  cancelButton: {
+    backgroundColor: '#F5F5F5',
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
+  },
+  callButton: {
+    backgroundColor: '#4CAF50',
+  },
+  cancelButtonText: {
+    color: colors.black,
+    fontSize: fontSizes.medium,
+    fontWeight: '500',
+  },
+  callButtonText: {
+    color: colors.white,
+    fontSize: fontSizes.medium,
+    fontWeight: '600',
+  },
 });
 
 export default styles;

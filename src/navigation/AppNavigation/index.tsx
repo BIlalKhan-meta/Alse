@@ -39,6 +39,8 @@ import AddStory from '../../screens/AddStory';
 import {OutgoingCall} from '../../screens/OutgoingCall';
 import AcknowledgeCall from '../../screens/AcknowledgeCall';
 import IncomingCall from '../../screens/IncomingCall';
+import VideoCall from '../../screens/VideoCall';
+import IncomingVideoCall from '../../screens/IncomingVideoCall';
 import NetworkLogger from 'react-native-network-logger';
 import Groups from '../../screens/Groups';
 import GroupDetailsScreen from '../../screens/Groups/GroupDetailsScreen';
@@ -216,6 +218,16 @@ const AppNavigation = () => {
           name="AcknowledgeCall"
           component={AcknowledgeCall}
           // options={NavigationOptions}
+        />
+        <Stack.Screen
+          name="VideoCall"
+          component={VideoCall}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="IncomingVideoCall"
+          component={IncomingVideoCall}
+          options={{headerShown: false}}
         />
         <Stack.Screen
           name="MyOrderDetail"

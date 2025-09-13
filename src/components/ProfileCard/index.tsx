@@ -30,6 +30,7 @@ interface ProfileCardProps {
   postsCount?: number;
   followersCount?: number;
   followingCount?: number;
+  phoneNumber?: string;
 }
 
 const ProfileCard: React.FC<ProfileCardProps> = ({
@@ -47,6 +48,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
   postsCount,
   followersCount = 582,
   followingCount = 321,
+  phoneNumber,
 }) => {
   const navigation = useNavigation();
   const user = useSelector(selectUserProfile);
@@ -157,6 +159,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
         navigation.navigate('ChatOngoing', {
           id: res?.data?.data?.id,
           name: name,
+          phoneNumber: phoneNumber,
         });
         // console.log('Respose from Create Chat', res?.data?.data);
       })

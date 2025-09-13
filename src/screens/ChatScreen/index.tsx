@@ -30,6 +30,7 @@ interface ChatItem {
   avatar?: string;
   image?: string;
   group?: boolean;
+  phone_number?: string;
   last_message?: {
     message: string;
     created_at: string;
@@ -108,6 +109,7 @@ const ChatScreen: React.FC = () => {
         (navigation as any).navigate('ChatOngoing', {
           id: item?.id,
           name: item?.name,
+          phoneNumber: item?.phone_number || '+1234567890', // Test phone number for debugging
         })
       }>
       <View style={styles.chatItem}>

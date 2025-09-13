@@ -6,6 +6,11 @@ import {
   Image,
   SafeAreaView,
   StatusBar,
+  Alert,
+  PermissionsAndroid,
+  Platform,
+  TextInput,
+  Modal,
 } from 'react-native';
 import {GiftedChat, IMessage} from 'react-native-gifted-chat';
 import {useIsFocused, useNavigation} from '@react-navigation/native';
@@ -25,6 +30,9 @@ import {
   listenMessage,
 } from '../../utils/socket';
 import {EllipsisVertical, Phone, Video} from 'lucide-react-native';
+// @ts-ignore
+import call from 'react-native-phone-call';
+import {createCallSession} from '../../api/calling';
 
 interface Props {
   route?: {
@@ -32,6 +40,7 @@ interface Props {
       id?: string;
       name?: string;
       user?: any;
+      phoneNumber?: string;
     };
   };
 }
@@ -42,8 +51,256 @@ const ChatOngoing: React.FC<Props> = props => {
 
   const [messages, setMessages] = useState<IMessage[]>([]);
   const user = useSelector(selectUserProfile);
+  const [phoneModalVisible, setPhoneModalVisible] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [isCalling, setIsCalling] = useState(false);
+  const [isVideoCalling, setIsVideoCalling] = useState(false);
 
   // console.log("USER++++++++++++++++++",user?.full_name)
+
+  // Request phone call permission for Android
+  const requestPhonePermission = async () => {
+    console.log('=== Permission Check Started ===');
+    console.log('Platform:', Platform.OS);
+
+    if (Platform.OS === 'android') {
+      try {
+        // Check if permission is already granted
+        console.log('Checking existing permission...');
+        const hasPermission = await PermissionsAndroid.check(
+          PermissionsAndroid.PERMISSIONS.CALL_PHONE,
+        );
+
+        console.log('Permission check result:', hasPermission);
+        console.log(
+          'Permission constant:',
+          PermissionsAndroid.PERMISSIONS.CALL_PHONE,
+        );
+
+        if (hasPermission) {
+          console.log('✅ Phone permission already granted');
+          return true;
+        }
+
+        console.log('❌ Permission not granted, requesting...');
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.CALL_PHONE,
+          {
+            title: 'Phone Call Permission',
+            message:
+              'This app needs access to make phone calls to contact users',
+            buttonNeutral: 'Ask Me Later',
+            buttonNegative: 'Cancel',
+            buttonPositive: 'OK',
+          },
+        );
+
+        console.log('Permission request result:', granted);
+        console.log('GRANTED constant:', PermissionsAndroid.RESULTS.GRANTED);
+        console.log('DENIED constant:', PermissionsAndroid.RESULTS.DENIED);
+        console.log(
+          'NEVER_ASK_AGAIN constant:',
+          PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN,
+        );
+
+        const isGranted = granted === PermissionsAndroid.RESULTS.GRANTED;
+        console.log('Final permission status:', isGranted);
+
+        return isGranted;
+      } catch (err) {
+        console.error('❌ Permission error:', err);
+        return false;
+      }
+    }
+
+    console.log('✅ iOS - no permission needed');
+    return true; // iOS doesn't need this permission
+  };
+
+  // Make video call
+  const makeVideoCall = async (callType: 'video' | 'audio' = 'video') => {
+    if (!props?.route?.params?.id) {
+      Alert.alert(
+        'Error',
+        'Unable to make call. User information not available.',
+      );
+      return;
+    }
+
+    try {
+      setIsVideoCalling(true);
+
+      // Create call session
+      const callSession = await createCallSession(
+        props.route.params.id.toString(),
+        callType,
+      );
+
+      if (callSession?.data?.success) {
+        // Generate unique channel name for the call
+        const channel = `call_${props.route.params.id}_${
+          user?.id
+        }_${Date.now()}`;
+
+        // Navigate to video call screen
+        (navigation as any).navigate('VideoCall', {
+          channel: channel,
+          uid: user?.id,
+          receiverName: props.route.params.name || 'Unknown User',
+          receiverAvatar: props.route.params.user?.avatar,
+          callType: callType,
+        });
+      } else {
+        Alert.alert(
+          'Call Failed',
+          'Unable to initiate call. Please try again.',
+        );
+      }
+    } catch (error) {
+      console.error('Video call error:', error);
+      Alert.alert('Call Failed', 'Unable to initiate call. Please try again.');
+    } finally {
+      setIsVideoCalling(false);
+    }
+  };
+
+  // Show call options
+  const showCallOptions = () => {
+    Alert.alert('Call Options', 'Choose how you want to call', [
+      {
+        text: 'Video Call',
+        onPress: () => makeVideoCall('video'),
+      },
+      {
+        text: 'Voice Call',
+        onPress: () => makeVideoCall('audio'),
+      },
+      {
+        text: 'Phone Call',
+        onPress: makePhoneCall,
+      },
+      {
+        text: 'Cancel',
+        style: 'cancel',
+      },
+    ]);
+  };
+
+  // Make phone call
+  const makePhoneCall = async () => {
+    console.log('=== makePhoneCall called ===');
+    console.log('Route params:', props?.route?.params);
+    const phoneNumberFromParams = props?.route?.params?.phoneNumber;
+    console.log('Phone number from params:', phoneNumberFromParams);
+
+    // If no phone number is provided, show modal to enter it manually
+    if (!phoneNumberFromParams) {
+      console.log('No phone number found, showing modal');
+      setPhoneModalVisible(true);
+      return;
+    }
+
+    console.log('Phone number found, initiating call');
+
+    // Show options for calling
+    Alert.alert('Make Phone Call', `Call ${phoneNumberFromParams}?`, [
+      {
+        text: 'Cancel',
+        style: 'cancel',
+      },
+      {
+        text: 'Call with Permission Check',
+        onPress: () => initiateCall(phoneNumberFromParams),
+      },
+      {
+        text: 'Call Directly',
+        onPress: () => attemptCall(phoneNumberFromParams),
+      },
+    ]);
+  };
+
+  // Handle phone number input from modal
+  const handlePhoneNumberSubmit = async () => {
+    if (phoneNumber.trim()) {
+      setPhoneModalVisible(false);
+      await initiateCall(phoneNumber.trim());
+      setPhoneNumber(''); // Clear input
+    } else {
+      Alert.alert('Invalid Number', 'Please enter a valid phone number');
+    }
+  };
+
+  // Helper function to initiate the actual call
+  const initiateCall = async (phoneNumberToCall: string) => {
+    console.log('=== Initiating call to:', phoneNumberToCall, '===');
+    setIsCalling(true);
+
+    try {
+      // Request permission first
+      const hasPermission = await requestPhonePermission();
+      console.log('Permission check result:', hasPermission);
+
+      if (!hasPermission) {
+        // Try to make the call anyway - sometimes permission check is wrong
+        console.log('⚠️ Permission check failed, but trying to call anyway...');
+
+        // Show a warning but still attempt the call
+        Alert.alert(
+          'Permission Warning',
+          'Permission check failed, but attempting to make the call. If it fails, please check your app permissions in Settings.',
+          [
+            {
+              text: 'Cancel',
+              onPress: () => {
+                setIsCalling(false);
+                return;
+              },
+            },
+            {
+              text: 'Try Anyway',
+              onPress: async () => {
+                await attemptCall(phoneNumberToCall);
+              },
+            },
+          ],
+        );
+        return;
+      }
+
+      console.log('✅ Permission granted, making call...');
+      await attemptCall(phoneNumberToCall);
+    } catch (error: any) {
+      console.error('❌ Error in initiateCall:', error);
+      Alert.alert(
+        'Call Failed',
+        `Unable to make the phone call. Error: ${
+          error.message || 'Unknown error'
+        }`,
+        [{text: 'OK'}],
+      );
+      setIsCalling(false);
+    }
+  };
+
+  // Separate function to attempt the actual call
+  const attemptCall = async (phoneNumberToCall: string) => {
+    try {
+      const args = {
+        number: phoneNumberToCall,
+        prompt: true, // Show confirmation dialog
+        skipCanOpen: true, // Skip the canOpenURL check
+      };
+
+      console.log('📞 Call args:', args);
+      await call(args);
+      console.log('✅ Call initiated successfully');
+    } catch (error: any) {
+      console.error('❌ Call attempt failed:', error);
+      throw error; // Re-throw to be handled by parent
+    } finally {
+      setIsCalling(false);
+    }
+  };
 
   useEffect(() => {
     connectSocket();
@@ -181,18 +438,41 @@ const ChatOngoing: React.FC<Props> = props => {
         </View>
         <View style={styles.headerRight}>
           <TouchableOpacity
-            onPress={() =>
-              (navigation as any).navigate('OutgoingCall', {
-                chat_id: props?.route?.params?.id,
-                user: props?.route?.params?.user,
-                role: '1',
-              })
-            }
-            style={styles.iconContainer}>
-            <Phone size={20} color="#666" strokeWidth={2} />
+            onPress={showCallOptions}
+            style={[
+              styles.iconContainer,
+              (isCalling || isVideoCalling) && {opacity: 0.5},
+            ]}
+            disabled={isCalling || isVideoCalling}>
+            <Phone
+              size={20}
+              color={isCalling || isVideoCalling ? '#4CAF50' : '#666'}
+              strokeWidth={2}
+            />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.iconContainer}>
-            <Video size={20} color="#666" strokeWidth={2} />
+          {/* Test button for direct calling */}
+          {/* <TouchableOpacity
+            onPress={() => {
+              console.log('🧪 Test call button pressed');
+              attemptCall('+1234567890');
+            }}
+            style={[
+              styles.iconContainer,
+              {backgroundColor: '#FF9800', marginLeft: 8},
+            ]}>
+            <Text style={{color: 'white', fontSize: 12, fontWeight: 'bold'}}>
+              TEST
+            </Text>
+          </TouchableOpacity> */}
+          <TouchableOpacity
+            style={[styles.iconContainer, isVideoCalling && {opacity: 0.5}]}
+            onPress={() => makeVideoCall('video')}
+            disabled={isVideoCalling}>
+            <Video
+              size={20}
+              color={isVideoCalling ? '#4CAF50' : '#666'}
+              strokeWidth={2}
+            />
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconContainer}>
             <EllipsisVertical size={20} color="#666" strokeWidth={2} />
@@ -217,6 +497,48 @@ const ChatOngoing: React.FC<Props> = props => {
           inverted={true}
         />
       </View>
+
+      {/* Phone Number Input Modal */}
+      <Modal
+        visible={phoneModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setPhoneModalVisible(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Enter Phone Number</Text>
+            <Text style={styles.modalSubtitle}>
+              Enter the phone number for{' '}
+              {props?.route?.params?.name || 'this user'}:
+            </Text>
+            <TextInput
+              style={styles.phoneInput}
+              placeholder="Enter phone number"
+              value={phoneNumber}
+              onChangeText={setPhoneNumber}
+              keyboardType="phone-pad"
+              autoFocus={true}
+            />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => {
+                  setPhoneModalVisible(false);
+                  setPhoneNumber('');
+                }}>
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.callButton]}
+                onPress={handlePhoneNumberSubmit}>
+                <Text style={styles.callButtonText}>
+                  {isCalling ? 'Calling...' : 'Call'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };

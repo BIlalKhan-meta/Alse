@@ -137,11 +137,16 @@ const MyShop: React.FC = () => {
             {/* Store Avatar */}
             <View style={styles.avatarContainer}>
               <Image
+                // source={
+                //   shopDetails?.avatar &&
+                //   shopDetails?.avatar !==
+                //     'http://aabcndbkji.us-east-1.awsapprunner.com/storage/default.png' &&
+                //   !avatarError
+                //     ? {uri: shopDetails.avatar}
+                //     : images.shop11
+                // }
                 source={
-                  shopDetails?.avatar &&
-                  shopDetails?.avatar !==
-                    'http://aabcndbkji.us-east-1.awsapprunner.com/storage/default.png' &&
-                  !avatarError
+                  shopDetails?.avatar
                     ? {uri: shopDetails.avatar}
                     : images.shop11
                 }

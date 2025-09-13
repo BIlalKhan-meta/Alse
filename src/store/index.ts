@@ -23,6 +23,7 @@ import homeReducer from './slices/homeSlice';
 import generalReducer from './slices/generalSlice';
 import profileReducer from './slices/profileSlice';
 import settingsReducer from './slices/settingsSlice';
+import callReducer from './slices/callSlice';
 import storage from 'redux-persist/lib/storage'; // defaults to localStorage for web
 import {persistReducer, persistStore} from 'redux-persist';
 import {FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER} from 'redux-persist';
@@ -42,6 +43,7 @@ const rootReducer = combineReducers({
   general: generalReducer,
   profile: profileReducer,
   settings: settingsReducer,
+  call: callReducer,
 });
 
 // Persist the combined reducers
