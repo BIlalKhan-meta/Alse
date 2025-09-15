@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -22,15 +22,33 @@ const VerificationPending: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const {riderData} = (route.params as RouteParams) || {};
+  const [countdown, setCountdown] = useState(5);
 
   const handleBackPress = () => {
     navigation.goBack();
   };
 
   const handleGoHome = () => {
-    // Navigate to rider dashboard
-    (navigation as any).navigate('RiderDashboard');
+    // Navigate to rider dashboard with rider data
+    (navigation as any).navigate('RiderDashboard', {riderData});
   };
+
+  useEffect(() => {
+    // Start countdown timer
+    const timer = setInterval(() => {
+      setCountdown(prev => {
+        if (prev <= 1) {
+          // Navigate to RiderDashboard when countdown reaches 0
+          (navigation as any).navigate('RiderDashboard', {riderData});
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    // Cleanup timer on component unmount
+    return () => clearInterval(timer);
+  }, [navigation]);
 
   return (
     <View style={styles.container}>
@@ -78,7 +96,9 @@ const VerificationPending: React.FC = () => {
 
         {/* Take me to the home button */}
         <TouchableOpacity style={styles.homeButton} onPress={handleGoHome}>
-          <Text style={styles.homeButtonText}>Take me to the home</Text>
+          <Text style={styles.homeButtonText}>
+            We are taking you to riders dashboard ({countdown}s)
+          </Text>
         </TouchableOpacity>
       </View>
     </View>

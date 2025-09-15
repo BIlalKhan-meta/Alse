@@ -8,9 +8,6 @@ export const styles = StyleSheet.create({
     marginTop: 10,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: 16,
     // paddingVertical: 16,
     backgroundColor: '#ffffff',
@@ -255,5 +252,16 @@ export const styles = StyleSheet.create({
     height: 24,
     borderRadius: 12,
     backgroundColor: '#ff6b6b',
+  },
+  emptyStateContainer: {
+    padding: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyStateText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
 });

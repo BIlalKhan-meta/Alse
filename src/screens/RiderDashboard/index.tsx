@@ -10,14 +10,30 @@ import {
   Switch,
 } from 'react-native';
 import {WebView} from 'react-native-webview';
+import {useRoute} from '@react-navigation/native';
 
 import {Bell, Search, MessageSquare, MoreHorizontal} from 'lucide-react-native';
 import Svg, {Polyline} from 'react-native-svg';
 import {styles} from './styles';
 import {images} from '../../utils/images';
+import GlobalHeader from '../../components/GlobalHeader';
+
+interface RouteParams {
+  riderData?: {
+    name: string;
+    email: string;
+    vehicleInfo: string;
+    idLicense: string;
+    contactNumber: string;
+    userId: number;
+  };
+}
 
 const RiderDashboard: React.FC = () => {
+  const route = useRoute();
+  const {riderData} = (route.params as RouteParams) || {};
   const [isOnline, setIsOnline] = useState(true);
+  const [deliveries] = useState<any[]>([]); // Empty deliveries array by default
 
   // Chart data points for earnings visualization
   const chartPoints =
@@ -35,64 +51,13 @@ const RiderDashboard: React.FC = () => {
     </iframe>
   `;
 
-  const deliveries = [
-    {
-      id: 1,
-      product: 'BlackShark...',
-      orderNumber: '#20025',
-      quantity: '40 PCS',
-      category: 'Tech, Gadget',
-      image: images.avatar, // placeholder image
-    },
-    {
-      id: 2,
-      product: 'BlackShark...',
-      orderNumber: '#20025',
-      quantity: '40 PCS',
-      category: 'Tech, Gadget',
-      image: images.avatar,
-    },
-    {
-      id: 3,
-      product: 'BlackShark...',
-      orderNumber: '#20025',
-      quantity: '40 PCS',
-      category: 'Tech, Gadget',
-      image: images.avatar,
-    },
-    {
-      id: 4,
-      product: 'BlackShark...',
-      orderNumber: '#20025',
-      quantity: '40 PCS',
-      category: 'Tech, Gadget',
-      image: images.avatar,
-    },
-    {
-      id: 5,
-      product: 'BlackShark...',
-      orderNumber: '#20025',
-      quantity: '40 PCS',
-      category: 'Tech, Gadget',
-      image: images.avatar,
-    },
-    {
-      id: 6,
-      product: 'BlackShark...',
-      orderNumber: '#20025',
-      quantity: '40 PCS',
-      category: 'Tech, Gadget',
-      image: images.avatar,
-    },
-  ];
-
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
 
       {/* Header */}
       <View style={styles.header}>
-        <View style={styles.headerLeft}>
+        {/* <View style={styles.headerLeft}>
           <Image source={images.alseLogo} style={styles.title} />
         </View>
         <View style={styles.headerRight}>
@@ -105,7 +70,9 @@ const RiderDashboard: React.FC = () => {
           <TouchableOpacity style={styles.iconButton}>
             <MessageSquare size={24} color="#333" />
           </TouchableOpacity>
-        </View>
+        </View> */}
+
+        <GlobalHeader icon={true} />
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -113,7 +80,7 @@ const RiderDashboard: React.FC = () => {
         <View style={styles.statusContainer}>
           <View style={styles.statusLeft}>
             <View style={styles.statusIndicator} />
-            <Text style={styles.statusText}>Aaron Bernie</Text>
+            <Text style={styles.statusText}>{riderData?.name || 'Rider'}</Text>
           </View>
           <Switch
             value={isOnline}
@@ -209,26 +176,34 @@ const RiderDashboard: React.FC = () => {
         {/* Pending Deliveries */}
         <View style={styles.deliveriesSection}>
           <Text style={styles.sectionTitle}>Pending Deliveries</Text>
-          {deliveries.map(delivery => (
-            <View key={delivery.id} style={styles.deliveryItem}>
-              <View style={styles.deliveryLeft}>
-                <Image source={delivery.image} style={styles.productImage} />
-                <View style={styles.deliveryInfo}>
-                  <Text style={styles.productName}>{delivery.product}</Text>
-                  <Text style={styles.orderNumber}>{delivery.orderNumber}</Text>
+          {deliveries.length > 0 ? (
+            deliveries.map(delivery => (
+              <View key={delivery.id} style={styles.deliveryItem}>
+                <View style={styles.deliveryLeft}>
+                  <Image source={delivery.image} style={styles.productImage} />
+                  <View style={styles.deliveryInfo}>
+                    <Text style={styles.productName}>{delivery.product}</Text>
+                    <Text style={styles.orderNumber}>
+                      {delivery.orderNumber}
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.deliveryCenter}>
+                  <Text style={styles.quantityText}>{delivery.quantity}</Text>
+                </View>
+                <View style={styles.deliveryRight}>
+                  <Text style={styles.categoryText}>{delivery.category}</Text>
+                  <TouchableOpacity style={styles.moreButton}>
+                    <MoreHorizontal size={20} color="#666" />
+                  </TouchableOpacity>
                 </View>
               </View>
-              <View style={styles.deliveryCenter}>
-                <Text style={styles.quantityText}>{delivery.quantity}</Text>
-              </View>
-              <View style={styles.deliveryRight}>
-                <Text style={styles.categoryText}>{delivery.category}</Text>
-                <TouchableOpacity style={styles.moreButton}>
-                  <MoreHorizontal size={20} color="#666" />
-                </TouchableOpacity>
-              </View>
+            ))
+          ) : (
+            <View style={styles.emptyStateContainer}>
+              <Text style={styles.emptyStateText}>No deliveries available</Text>
             </View>
-          ))}
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>
