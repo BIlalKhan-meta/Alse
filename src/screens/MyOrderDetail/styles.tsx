@@ -1,82 +1,266 @@
 import {StyleSheet} from 'react-native';
-import {fontSizes, vh, vw} from '../../constant';
-import {colors} from '../../utils/theme';
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingBottom: vh * 4,
-    padding: vw * 2,
-    borderRadius: vh,
-    marginHorizontal: vw * 4,
-    // padding: vw * 5,
-    backgroundColor: '#fff',
+    backgroundColor: '#f8f8f8',
   },
-
-  orderInfo: {
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f8f8f8',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    backgroundColor: '#20B2AA',
+    // paddingTop: 50, // Account for status bar
+  },
+  backButton: {
+    padding: 8,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: 'white',
+  },
+  headerSpacer: {
+    width: 40,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  orderSummaryCard: {
+    backgroundColor: 'white',
+    margin: 16,
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  productSection: {
+    flexDirection: 'row',
+    marginBottom: 20,
+  },
+  productImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    marginRight: 16,
+  },
+  productInfo: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  productName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 4,
+  },
+  productVariant: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 8,
+  },
+  statusText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  orderDetailsSection: {
+    marginBottom: 20,
+  },
+  chargesSection: {
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+    paddingTop: 16,
+  },
+  detailRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: vh * 2,
-    marginTop: vh * 1,
+    alignItems: 'center',
+    marginBottom: 8,
   },
-  orderId: {
-    fontSize: fontSizes.f14,
-    color: colors.black,
+  detailLabel: {
+    fontSize: 14,
+    color: '#666',
+    flex: 1,
+    fontWeight: '400',
   },
-  orderDate: {
-    fontSize: fontSizes.f14,
-    color: colors.black,
-    marginVertical: vh * 1,
+  detailValue: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#333',
+    textAlign: 'right',
+    flex: 1,
+    marginLeft: 8,
   },
-  statusContainer: {
-    // marginTop: vh * 1,
+  ordersDetailsSection: {
+    backgroundColor: 'white',
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
-  status: {
-    color: 'yellow',
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 16,
+  },
+  detailItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  actionButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingHorizontal: 16,
+    paddingVertical: 20,
+    backgroundColor: 'white',
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  acceptButton: {
+    backgroundColor: '#4CAF50',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+    minWidth: '45%',
+    alignItems: 'center',
+  },
+  acceptButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  rejectButton: {
+    backgroundColor: 'white',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+    minWidth: '45%',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#F44336',
+  },
+  rejectButtonText: {
+    color: '#F44336',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  assignDeliveryButton: {
+    backgroundColor: '#20B2AA',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+    flex: 1,
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  assignDeliveryButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  assignDeliveryContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 20,
+    backgroundColor: 'white',
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  netButton: {
+    backgroundColor: '#F44336',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  netButtonText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  dashboardButtonContainer: {
+    paddingHorizontal: 16,
+    paddingBottom: 20,
+    backgroundColor: '#f8f8f8',
+  },
+  dashboardButton: {
+    backgroundColor: '#20B2AA',
+    paddingVertical: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dashboardButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  totalAmountRow: {
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+    paddingTop: 8,
+    marginTop: 8,
+  },
+  totalAmountLabel: {
     fontWeight: 'bold',
     fontSize: 16,
   },
-  orderList: {
-    marginBottom: vh * 2,
-  },
-  titleStyle: {
-    color: colors.black,
-  },
-  summaryContainer: {
-    // marginVertical: vh * 1
-  },
-  rejectHeading: {
-    fontSize: fontSizes.f24,
-    color: colors.black,
-    marginTop: vh * 3,
+  totalAmountValue: {
     fontWeight: 'bold',
+    fontSize: 16,
   },
-  rejectValue: {
-    fontSize: fontSizes.f13,
-    color: colors.darkGray,
-    marginTop: vh * 0.5,
-    marginBottom: vh * 5
+  discountValue: {
+    color: '#4CAF50',
   },
-  btnConatiner: {
-    flexDirection: 'row',
-    alignSelf: 'center',
-    width: vw * 84,
-    justifyContent: 'space-between',
-    // backgroundColor: "yellow"
+  paymentStatusValue: {
+    // This will be used with dynamic color
   },
-  acceptBtn: {
-    minWidth: vw * 38,
-    // backgroundColor: colors.white,
-    // borderColor: colors.white,
-  },
-  rejectBtn: {
-    minWidth: vw * 38,
-    backgroundColor: colors.white,
-    borderColor: colors.black,
-  },
-  btntxtstyle:{
-    color: colors.black
-  }
 });
 
 export default styles;

@@ -26,8 +26,10 @@ const styles = StyleSheet.create({
   },
   value: {
     fontSize: fontSizes.f14,
-    // color: colors.darkText,
+    color: colors.black,
     marginLeft: vw,
+    flex: 1,
+    textAlign: 'right',
   },
 });
 
