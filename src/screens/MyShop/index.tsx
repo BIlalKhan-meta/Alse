@@ -40,9 +40,16 @@ const MyShop: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [_filter, _setFilter] = useState('');
   const [bannerError, setBannerError] = useState(false);
-  const [bannerLoaded, setBannerLoaded] = useState(false);
+  const [_bannerLoaded, setBannerLoaded] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
-  const [avatarLoaded, setAvatarLoaded] = useState(false);
+  const [_avatarLoaded, setAvatarLoaded] = useState(false);
+
+  const getSecureUrl = (url?: string) => {
+    if (!url) {
+      return url as any;
+    }
+    return url.startsWith('http://') ? url.replace('http://', 'https://') : url;
+  };
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -59,13 +66,18 @@ const MyShop: React.FC = () => {
       console.log('Shop details response:', res?.data?.data);
       console.log('Banner URL:', res?.data?.data?.banner);
       console.log('Avatar URL:', res?.data?.data?.avatar);
+      console.log('Avatar URL type:', typeof res?.data?.data?.avatar);
+      console.log('Avatar URL length:', res?.data?.data?.avatar?.length);
+      console.log('Avatar URL valid:', !!res?.data?.data?.avatar);
+      console.log(
+        'Avatar URL starts with http:',
+        res?.data?.data?.avatar?.startsWith('http'),
+      );
 
       setShopDetails(res?.data?.data || {});
       setShopProducts(res2?.data?.data?.data || []);
-      setBannerError(false); // Reset banner error state
-      setBannerLoaded(false); // Reset banner loaded state
-      setAvatarError(false); // Reset avatar error state
-      setAvatarLoaded(false); // Reset avatar loaded state
+      setBannerError(false);
+      setAvatarError(false);
     } catch (error) {
       console.error('Error fetching shop data:', error);
     } finally {
@@ -114,60 +126,48 @@ const MyShop: React.FC = () => {
                   : images.shop11
               }
               style={styles.bannerImage}
+              resizeMode="cover"
               onError={() => {
-                if (shopDetails?.banner && !bannerLoaded) {
-                  console.log(
-                    'Banner image failed to load:',
-                    shopDetails?.banner,
-                  );
-                  setBannerError(true);
-                }
+                console.log(
+                  'Banner image failed to load:',
+                  shopDetails?.banner,
+                );
+                setBannerError(true);
               }}
               onLoad={() => {
-                if (shopDetails?.banner) {
-                  console.log(
-                    'Banner image loaded successfully:',
-                    shopDetails?.banner,
-                  );
-                  setBannerLoaded(true);
-                }
+                console.log(
+                  'Banner image loaded successfully:',
+                  shopDetails?.banner,
+                );
+                setBannerLoaded(true);
+                setBannerError(false);
               }}
             />
 
             {/* Store Avatar */}
             <View style={styles.avatarContainer}>
               <Image
-                // source={
-                //   shopDetails?.avatar &&
-                //   shopDetails?.avatar !==
-                //     'http://aabcndbkji.us-east-1.awsapprunner.com/storage/default.png' &&
-                //   !avatarError
-                //     ? {uri: shopDetails.avatar}
-                //     : images.shop11
-                // }
                 source={
-                  shopDetails?.avatar
+                  shopDetails?.avatar && shopDetails.avatar.startsWith('http')
                     ? {uri: shopDetails.avatar}
                     : images.shop11
                 }
                 style={styles.avatarImage}
+                resizeMode="cover"
                 onError={() => {
-                  if (shopDetails?.avatar && !avatarLoaded) {
-                    console.log(
-                      'Avatar image failed to load:',
-                      shopDetails?.avatar,
-                    );
-                    setAvatarError(true);
-                  }
+                  console.log(
+                    'Avatar image failed to load:',
+                    shopDetails?.avatar,
+                  );
+                  setAvatarError(true);
                 }}
                 onLoad={() => {
-                  if (shopDetails?.avatar) {
-                    console.log(
-                      'Avatar image loaded successfully:',
-                      shopDetails?.avatar,
-                    );
-                    setAvatarLoaded(true);
-                  }
+                  console.log(
+                    'Avatar image loaded successfully:',
+                    shopDetails?.avatar,
+                  );
+                  setAvatarLoaded(true);
+                  setAvatarError(false);
                 }}
               />
             </View>
@@ -239,13 +239,14 @@ const MyShop: React.FC = () => {
               <View key={index} style={styles.productCard}>
                 <Image
                   source={
-                    product?.images?.length > 0
-                      ? {uri: product.images[0].path}
+                    product?.images?.length > 0 && product.images[0]?.path
+                      ? {uri: getSecureUrl(product.images[0].path)}
                       : product?.banner
-                      ? {uri: product.banner}
+                      ? {uri: getSecureUrl(product.banner)}
                       : images.pro1
                   }
                   style={styles.productImage}
+                  resizeMode="cover"
                 />
                 <View style={styles.productInfo}>
                   <Text style={styles.productName} numberOfLines={1}>

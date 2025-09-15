@@ -2,273 +2,146 @@ import React, {useState} from 'react';
 import {View, Text, TouchableOpacity, StyleSheet, Alert} from 'react-native';
 import {colors} from '../../utils/theme';
 import {fontSizes, vh, vw} from '../../constant';
-import CallButton from '../CallButton';
-import useCallManager from '../../hooks/useCallManager';
+import callManagerService from '../../services/callManagerService';
 
-/**
- * Test component to demonstrate calling functionality
- * This can be used for testing the calling features
- */
-const CallTestComponent: React.FC = () => {
-  const [isTestMode, setIsTestMode] = useState(false);
-  const {
-    callState,
-    initiateCall,
-    endCurrentCall,
-    handleIncomingCall,
-    answerIncomingCall,
-    declineIncomingCall,
-  } = useCallManager();
+interface CallTestComponentProps {
+  onNavigateToCall?: (params: any) => void;
+}
 
-  const testVideoCall = async () => {
+const CallTestComponent: React.FC<CallTestComponentProps> = ({
+  onNavigateToCall,
+}) => {
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Test outgoing call
+  const testOutgoingCall = async () => {
     try {
-      await initiateCall(
+      setIsLoading(true);
+
+      const result = await callManagerService.initiateCall(
+        '123', // Test receiver ID
+        'Test User',
         'video',
-        `test_channel_${Date.now()}`,
-        12345,
-        'Test User',
-        'https://via.placeholder.com/150',
+        'https://example.com/avatar.jpg',
       );
-      Alert.alert('Success', 'Video call initiated');
+
+      if (result.success && result.data && onNavigateToCall) {
+        onNavigateToCall({
+          channel: result.data.channel,
+          uid: 1,
+          receiverName: result.data.receiverName,
+          receiverAvatar: result.data.receiverAvatar,
+          callType: result.data.callType,
+          agoraToken: result.data.agoraToken,
+          sessionId: result.data.sessionId,
+        });
+      } else {
+        Alert.alert('Test Failed', result.error || 'Unknown error');
+      }
     } catch (error) {
-      Alert.alert('Error', 'Failed to start video call');
+      console.error('Test call error:', error);
+      Alert.alert('Test Failed', 'Error initiating test call');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const testVoiceCall = async () => {
-    try {
-      await initiateCall(
-        'audio',
-        `test_channel_${Date.now()}`,
-        12345,
-        'Test User',
-        'https://via.placeholder.com/150',
-      );
-      Alert.alert('Success', 'Voice call initiated');
-    } catch (error) {
-      Alert.alert('Error', 'Failed to start voice call');
-    }
-  };
-
+  // Test incoming call
   const testIncomingCall = () => {
-    handleIncomingCall(
-      'Incoming Test User',
-      'video',
-      `incoming_channel_${Date.now()}`,
-      67890,
-      'https://via.placeholder.com/150',
-    );
-  };
-
-  const answerTestCall = async () => {
-    try {
-      await answerIncomingCall();
-      Alert.alert('Success', 'Call answered');
-    } catch (error) {
-      Alert.alert('Error', 'Failed to answer call');
+    if (onNavigateToCall) {
+      onNavigateToCall({
+        callerName: 'Test Caller',
+        callerAvatar: 'https://example.com/caller.jpg',
+        channel: 'test_channel_123',
+        uid: 2,
+        callType: 'video',
+        agoraToken: 'test_token',
+        sessionId: 'test_session_123',
+      });
     }
   };
 
-  const declineTestCall = () => {
-    declineIncomingCall();
-    Alert.alert('Info', 'Call declined');
-  };
+  // Test call manager status
+  const testCallStatus = () => {
+    const isInCall = callManagerService.isInCall();
+    const currentCall = callManagerService.getCurrentCall();
 
-  if (isTestMode) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.title}>Call Test Component</Text>
-
-        <View style={styles.statusContainer}>
-          <Text style={styles.statusText}>
-            Call Status: {callState.isInCall ? 'In Call' : 'Not in Call'}
-          </Text>
-          {callState.isInCall && (
-            <Text style={styles.statusText}>
-              Duration: {Math.floor(callState.callDuration / 60)}:
-              {(callState.callDuration % 60).toString().padStart(2, '0')}
-            </Text>
-          )}
-          {callState.incomingCall.isActive && (
-            <Text style={styles.statusText}>
-              Incoming Call from: {callState.incomingCall.callerName}
-            </Text>
-          )}
-        </View>
-
-        <View style={styles.buttonContainer}>
-          <CallButton
-            callType="video"
-            onPress={testVideoCall}
-            disabled={callState.isInCall}
-          />
-          <CallButton
-            callType="audio"
-            onPress={testVoiceCall}
-            disabled={callState.isInCall}
-          />
-          <CallButton
-            callType="phone"
-            onPress={testIncomingCall}
-            disabled={callState.incomingCall.isActive}
-          />
-        </View>
-
-        {callState.incomingCall.isActive && (
-          <View style={styles.incomingCallContainer}>
-            <Text style={styles.incomingCallText}>
-              Incoming {callState.incomingCall.callType} call from{' '}
-              {callState.incomingCall.callerName}
-            </Text>
-            <View style={styles.incomingCallButtons}>
-              <TouchableOpacity
-                style={[styles.callActionButton, styles.answerButton]}
-                onPress={answerTestCall}>
-                <Text style={styles.callActionButtonText}>Answer</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.callActionButton, styles.declineButton]}
-                onPress={declineTestCall}>
-                <Text style={styles.callActionButtonText}>Decline</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-
-        {callState.isInCall && (
-          <TouchableOpacity
-            style={styles.endCallButton}
-            onPress={endCurrentCall}>
-            <Text style={styles.endCallButtonText}>End Call</Text>
-          </TouchableOpacity>
-        )}
-
-        <TouchableOpacity
-          style={styles.toggleButton}
-          onPress={() => setIsTestMode(false)}>
-          <Text style={styles.toggleButtonText}>Hide Test Mode</Text>
-        </TouchableOpacity>
-      </View>
+    Alert.alert(
+      'Call Status',
+      `In Call: ${isInCall}\nCurrent Call: ${JSON.stringify(
+        currentCall,
+        null,
+        2,
+      )}`,
     );
-  }
+  };
 
   return (
-    <TouchableOpacity
-      style={styles.showTestButton}
-      onPress={() => setIsTestMode(true)}>
-      <Text style={styles.showTestButtonText}>Show Call Test</Text>
-    </TouchableOpacity>
+    <View style={styles.container}>
+      <Text style={styles.title}>Call Test Component</Text>
+
+      <TouchableOpacity
+        style={[styles.button, isLoading && styles.disabledButton]}
+        onPress={testOutgoingCall}
+        disabled={isLoading}>
+        <Text style={styles.buttonText}>
+          {isLoading ? 'Testing...' : 'Test Outgoing Call'}
+        </Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.button} onPress={testIncomingCall}>
+        <Text style={styles.buttonText}>Test Incoming Call</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.button} onPress={testCallStatus}>
+        <Text style={styles.buttonText}>Check Call Status</Text>
+      </TouchableOpacity>
+
+      <Text style={styles.note}>
+        Note: This component is for testing purposes only. Make sure to provide
+        the onNavigateToCall prop to handle navigation.
+      </Text>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: colors.white,
     padding: vw * 4,
-    margin: vw * 2,
+    backgroundColor: colors.white,
     borderRadius: 8,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.22,
-    shadowRadius: 2.22,
+    margin: vw * 2,
   },
   title: {
     fontSize: fontSizes.large,
     fontWeight: 'bold',
     color: colors.black,
+    marginBottom: vh * 2,
     textAlign: 'center',
-    marginBottom: vh * 2,
   },
-  statusContainer: {
-    marginBottom: vh * 2,
+  button: {
+    backgroundColor: colors.themeColor,
+    paddingVertical: vh * 1.5,
+    paddingHorizontal: vw * 4,
+    borderRadius: 8,
+    marginBottom: vh * 1,
+    alignItems: 'center',
   },
-  statusText: {
+  disabledButton: {
+    backgroundColor: colors.gray,
+    opacity: 0.6,
+  },
+  buttonText: {
+    color: colors.white,
     fontSize: fontSizes.medium,
+    fontWeight: '600',
+  },
+  note: {
+    fontSize: fontSizes.small,
     color: colors.gray,
     textAlign: 'center',
-    marginBottom: vh * 0.5,
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: vh * 2,
-  },
-  incomingCallContainer: {
-    backgroundColor: '#F5F5F5',
-    padding: vw * 4,
-    borderRadius: 8,
-    marginBottom: vh * 2,
-  },
-  incomingCallText: {
-    fontSize: fontSizes.medium,
-    color: colors.black,
-    textAlign: 'center',
-    marginBottom: vh * 2,
-  },
-  incomingCallButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  callActionButton: {
-    paddingHorizontal: vw * 6,
-    paddingVertical: vh * 1.5,
-    borderRadius: 8,
-    minWidth: 100,
-    alignItems: 'center',
-  },
-  answerButton: {
-    backgroundColor: '#4CAF50',
-  },
-  declineButton: {
-    backgroundColor: '#F44336',
-  },
-  callActionButtonText: {
-    color: colors.white,
-    fontSize: fontSizes.medium,
-    fontWeight: '600',
-  },
-  endCallButton: {
-    backgroundColor: '#F44336',
-    paddingHorizontal: vw * 8,
-    paddingVertical: vh * 2,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginBottom: vh * 2,
-  },
-  endCallButtonText: {
-    color: colors.white,
-    fontSize: fontSizes.medium,
-    fontWeight: '600',
-  },
-  toggleButton: {
-    backgroundColor: colors.themeColor,
-    paddingHorizontal: vw * 6,
-    paddingVertical: vh * 1.5,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  toggleButtonText: {
-    color: colors.white,
-    fontSize: fontSizes.medium,
-    fontWeight: '600',
-  },
-  showTestButton: {
-    backgroundColor: colors.themeColor,
-    paddingHorizontal: vw * 4,
-    paddingVertical: vh * 1,
-    borderRadius: 6,
-    alignItems: 'center',
-    margin: vw * 2,
-  },
-  showTestButtonText: {
-    color: colors.white,
-    fontSize: fontSizes.small,
-    fontWeight: '500',
+    marginTop: vh * 1,
+    fontStyle: 'italic',
   },
 });
 

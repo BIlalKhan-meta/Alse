@@ -32,7 +32,7 @@ import {
 import {EllipsisVertical, Phone, Video} from 'lucide-react-native';
 // @ts-ignore
 import call from 'react-native-phone-call';
-import {createCallSession} from '../../api/calling';
+import callManagerService from '../../services/callManagerService';
 
 interface Props {
   route?: {
@@ -130,35 +130,37 @@ const ChatOngoing: React.FC<Props> = props => {
     try {
       setIsVideoCalling(true);
 
-      // Create call session
-      const callSession = await createCallSession(
+      // Use call manager service to initiate call
+      const result = await callManagerService.initiateCall(
         props.route.params.id.toString(),
+        props.route.params.name || 'Unknown User',
         callType,
+        props.route.params.user?.avatar,
       );
 
-      if (callSession?.data?.success) {
-        // Generate unique channel name for the call
-        const channel = `call_${props.route.params.id}_${
-          user?.id
-        }_${Date.now()}`;
-
-        // Navigate to video call screen
+      if (result.success && result.data) {
+        // Navigate to video call screen with proper Agora data
         (navigation as any).navigate('VideoCall', {
-          channel: channel,
+          channel: result.data.channel,
           uid: user?.id,
-          receiverName: props.route.params.name || 'Unknown User',
-          receiverAvatar: props.route.params.user?.avatar,
-          callType: callType,
+          receiverName: result.data.receiverName,
+          receiverAvatar: result.data.receiverAvatar,
+          callType: result.data.callType,
+          agoraToken: result.data.agoraToken,
+          sessionId: result.data.sessionId,
         });
       } else {
         Alert.alert(
           'Call Failed',
-          'Unable to initiate call. Please try again.',
+          result.error || 'Unable to initiate call. Please try again.',
         );
       }
     } catch (error) {
       console.error('Video call error:', error);
-      Alert.alert('Call Failed', 'Unable to initiate call. Please try again.');
+      Alert.alert(
+        'Call Failed',
+        (error as any)?.message || 'Unable to initiate call. Please try again.',
+      );
     } finally {
       setIsVideoCalling(false);
     }
@@ -441,7 +443,7 @@ const ChatOngoing: React.FC<Props> = props => {
             onPress={showCallOptions}
             style={[
               styles.iconContainer,
-              (isCalling || isVideoCalling) && {opacity: 0.5},
+              (isCalling || isVideoCalling) && (styles as any).disabledButton,
             ]}
             disabled={isCalling || isVideoCalling}>
             <Phone
@@ -465,7 +467,10 @@ const ChatOngoing: React.FC<Props> = props => {
             </Text>
           </TouchableOpacity> */}
           <TouchableOpacity
-            style={[styles.iconContainer, isVideoCalling && {opacity: 0.5}]}
+            style={[
+              styles.iconContainer,
+              isVideoCalling && (styles as any).disabledButton,
+            ]}
             onPress={() => makeVideoCall('video')}
             disabled={isVideoCalling}>
             <Video

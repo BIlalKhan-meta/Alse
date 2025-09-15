@@ -16,7 +16,8 @@ import {colors} from '../../utils/theme';
 import {images} from '../../utils/images';
 import {fontSizes, vh, vw} from '../../constant';
 import agoraCallService from '../../services/agoraCallService';
-import {getAgoraToken} from '../../api/calling';
+import {getAgoraToken, endCallSession} from '../../api/calling';
+import callManagerService from '../../services/callManagerService';
 import {selectUserProfile} from '../../store/slices/authSlice';
 import {useSelector} from 'react-redux';
 import {
@@ -37,6 +38,8 @@ interface VideoCallProps {
       receiverAvatar?: string;
       isIncoming?: boolean;
       callType?: 'video' | 'audio';
+      agoraToken?: string;
+      sessionId?: string;
     };
   };
 }
@@ -102,9 +105,12 @@ const VideoCall: React.FC<VideoCallProps> = ({route}) => {
           return;
         }
 
-        // Get Agora token
-        const tokenResponse = await getAgoraToken(params.channel, params.uid);
-        const token = tokenResponse?.data?.data?.signature;
+        // Use provided Agora token or get a new one
+        let token = params.agoraToken;
+        if (!token) {
+          const tokenResponse = await getAgoraToken(params.channel, params.uid);
+          token = tokenResponse?.data?.data?.signature;
+        }
 
         // Join channel
         const success = await agoraCallService.joinChannel(
@@ -153,7 +159,21 @@ const VideoCall: React.FC<VideoCallProps> = ({route}) => {
   const handleEndCall = async () => {
     try {
       stopCallTimer();
-      await agoraCallService.leaveChannel();
+
+      // Use call manager service to end call
+      const result = await callManagerService.endCall();
+
+      if (result.success) {
+        console.log('Call ended successfully');
+        // Show call duration if call was active
+        if (callDuration > 0) {
+          const duration = formatDuration(callDuration);
+          callManagerService.handleCallEnded(duration);
+        }
+      } else {
+        console.error('Error ending call:', result.error);
+      }
+
       navigation.goBack();
     } catch (error) {
       console.error('Error ending call:', error);

@@ -1,47 +1,26 @@
+import {Platform, Alert} from 'react-native';
 import PushNotification from 'react-native-push-notification';
-import {Platform} from 'react-native';
 
 /**
  * Service for handling call notifications
  */
 class CallNotificationService {
-  private notificationId = 'incoming_call';
+  private isInitialized = false;
 
   /**
-   * Initialize push notifications
+   * Initialize the notification service
    */
   initialize() {
+    if (this.isInitialized) return;
+
     PushNotification.configure({
-      onRegister: function (token) {
-        console.log('TOKEN:', token);
-      },
       onNotification: function (notification) {
         console.log('NOTIFICATION:', notification);
       },
-      permissions: {
-        alert: true,
-        badge: true,
-        sound: true,
-      },
-      popInitialNotification: true,
       requestPermissions: Platform.OS === 'ios',
     });
 
-    // Create notification channel for Android
-    if (Platform.OS === 'android') {
-      PushNotification.createChannel(
-        {
-          channelId: 'calls',
-          channelName: 'Call Notifications',
-          channelDescription: 'Notifications for incoming calls',
-          playSound: true,
-          soundName: 'default',
-          importance: 4,
-          vibrate: true,
-        },
-        created => console.log(`createChannel returned '${created}'`),
-      );
-    }
+    this.isInitialized = true;
   }
 
   /**
@@ -54,16 +33,15 @@ class CallNotificationService {
     uid: number,
   ) {
     PushNotification.localNotification({
-      channelId: 'calls',
-      id: this.notificationId,
       title: `Incoming ${callType === 'video' ? 'Video' : 'Voice'} Call`,
       message: `${callerName} is calling you`,
       playSound: true,
       soundName: 'default',
-      importance: 'high',
-      priority: 'high',
       vibrate: true,
       vibration: 300,
+      priority: 'high',
+      importance: 'high',
+      channelId: 'calls',
       actions: ['Answer', 'Decline'],
       userInfo: {
         type: 'incoming_call',
@@ -79,22 +57,7 @@ class CallNotificationService {
    * Cancel incoming call notification
    */
   cancelIncomingCallNotification() {
-    PushNotification.cancelLocalNotifications({id: this.notificationId});
-  }
-
-  /**
-   * Show call ended notification
-   */
-  showCallEndedNotification(callerName: string, duration: number) {
-    const durationText = this.formatDuration(duration);
-    PushNotification.localNotification({
-      channelId: 'calls',
-      title: 'Call Ended',
-      message: `Call with ${callerName} ended (${durationText})`,
-      playSound: false,
-      importance: 'low',
-      priority: 'low',
-    });
+    PushNotification.cancelAllLocalNotifications();
   }
 
   /**
@@ -102,32 +65,29 @@ class CallNotificationService {
    */
   showMissedCallNotification(callerName: string) {
     PushNotification.localNotification({
-      channelId: 'calls',
       title: 'Missed Call',
       message: `You missed a call from ${callerName}`,
-      playSound: true,
-      soundName: 'default',
-      importance: 'high',
-      priority: 'high',
-      vibrate: true,
-      vibration: 300,
+      playSound: false,
+      vibrate: false,
+      priority: 'normal',
+      importance: 'normal',
+      channelId: 'missed_calls',
     });
   }
 
   /**
-   * Format call duration
+   * Show call ended notification
    */
-  private formatDuration(seconds: number): string {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  }
-
-  /**
-   * Clear all notifications
-   */
-  clearAllNotifications() {
-    PushNotification.cancelAllLocalNotifications();
+  showCallEndedNotification(duration: string) {
+    PushNotification.localNotification({
+      title: 'Call Ended',
+      message: `Call duration: ${duration}`,
+      playSound: false,
+      vibrate: false,
+      priority: 'normal',
+      importance: 'normal',
+      channelId: 'call_status',
+    });
   }
 }
 

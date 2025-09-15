@@ -17,6 +17,7 @@ import {
   getAllProducts,
   getRecommendedProducts,
 } from '../../../api/product';
+import {checkIsSeller} from '../../../api/shop';
 import Loader from '../../../components/Loader';
 import {Subscribe} from '../../../components/Subscribe';
 import {
@@ -74,6 +75,7 @@ const Marketplace: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]); // Typed products
   const [loading, setLoading] = useState(false);
   const [productsLoading, setProductsLoading] = useState(false);
+  const [sellerCheckLoading, setSellerCheckLoading] = useState(false);
   const isFocused = useIsFocused();
   const [filteredData, setFilteredData] = useState<any[]>([]);
 
@@ -248,15 +250,35 @@ const Marketplace: React.FC = () => {
     navigation.navigate('Financials');
   };
 
-  const handleBecomeSeller = () => {
+  const handleBecomeSeller = async () => {
     setIsFabOpen(false);
     Animated.spring(fabAnimation, {
       toValue: 0,
       useNativeDriver: true,
     }).start();
 
-    // Navigate to become seller screen
-    navigation.navigate('BecomeSeller');
+    try {
+      setSellerCheckLoading(true);
+
+      // Check if user is already a seller
+      const response = await checkIsSeller();
+
+      if (response.data?.data?.data && response.data.data.data.length > 0) {
+        // User is already a seller, navigate to existing seller dashboard
+        console.log('User is already a seller, navigating to ExistingSeller');
+        navigation.navigate('ExistingSeller');
+      } else {
+        // User is not a seller, navigate to become seller form
+        console.log('User is not a seller, navigating to BecomeSeller form');
+        navigation.navigate('BecomeSeller');
+      }
+    } catch (error) {
+      console.log('Error checking seller status:', error);
+      // On error, default to become seller form
+      navigation.navigate('BecomeSeller');
+    } finally {
+      setSellerCheckLoading(false);
+    }
   };
 
   if (!user?.has_subscription && !user.is_child) {
@@ -567,9 +589,12 @@ const Marketplace: React.FC = () => {
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.fabOption}
-              onPress={handleBecomeSeller}>
+              onPress={handleBecomeSeller}
+              disabled={sellerCheckLoading}>
               <Store size={16} color="white" style={styles.fabOptionIcon} />
-              <Text style={styles.fabOptionText}>Become a Seller</Text>
+              <Text style={styles.fabOptionText}>
+                {sellerCheckLoading ? 'Checking...' : 'Become a Seller'}
+              </Text>
             </TouchableOpacity>
           </View>
         )}

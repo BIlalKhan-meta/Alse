@@ -82,6 +82,7 @@ export const getShopOrders = (
     status?: string;
   },
 ) => {
+  console.log('getShopOrders called with shopId:', shopId, 'params:', params);
   return axiosInstance.get(`${endpoints.products.shopOrders}`, {
     params: {
       ...params,

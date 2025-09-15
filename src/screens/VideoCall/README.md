@@ -1,128 +1,155 @@
-# In-App Video Calling Feature
+# ALSE Video Calling Implementation
 
-This implementation provides a complete in-app video and voice calling solution using Agora SDK, integrated seamlessly with the existing chat functionality.
+This document provides comprehensive information about the video calling implementation in the ALSE app, which integrates with Agora's video calling APIs.
 
-## Features
+## Overview
 
-- **Video Calls**: High-quality video calling with camera switching
-- **Voice Calls**: Audio-only calling option
-- **Real-time Communication**: Low-latency communication using Agora RTC
-- **Call Management**: Incoming/outgoing call handling
-- **Notifications**: Push notifications for incoming calls
-- **State Management**: Redux-based call state management
-- **Permissions**: Automatic camera and microphone permission handling
+The calling system consists of several key components:
+
+1. **API Layer** (`src/api/calling.ts`) - Handles all Agora API interactions
+2. **Services** - Manage call flow and notifications
+3. **Screens** - UI components for different call states
+4. **Agora Integration** - Real-time video/audio communication
 
 ## Architecture
 
-### Core Components
-
-1. **AgoraCallService** (`src/services/agoraCallService.ts`)
-
-   - Singleton service for Agora RTC operations
-   - Handles initialization, channel joining, and cleanup
-   - Manages audio/video controls
-
-2. **Call State Management** (`src/store/slices/callSlice.ts`)
-
-   - Redux slice for call state
-   - Actions for call lifecycle management
-   - Incoming call state handling
-
-3. **Call Manager Hook** (`src/hooks/useCallManager.ts`)
-
-   - Custom hook for call operations
-   - Integrates Agora service with Redux state
-   - Handles notifications and app state changes
-
-4. **Call Screens**
-   - `VideoCall`: Main call interface with controls
-   - `IncomingVideoCall`: Incoming call screen
-   - Integrated into `ChatOngoing` screen
-
 ### API Integration
 
-- **Token Generation**: Uses existing `/get-signature` endpoint
-- **Call Session Management**: New endpoints for call tracking
-- **Backend Integration**: Seamless integration with existing auth system
+The calling system uses the provided Agora backend APIs:
 
-## Usage
+- **Start Live Stream**: Creates a new call session
+- **Get Agora Token**: Retrieves authentication tokens
+- **End Live Stream**: Terminates call sessions
+- **Get Channel Users**: Lists participants in a call
 
-### Starting a Call
+### Key Components
 
-```typescript
-import {useCallManager} from '../hooks/useCallManager';
+#### 1. Call Manager Service (`src/services/callManagerService.ts`)
 
-const {initiateCall} = useCallManager();
-
-// Start a video call
-await initiateCall(
-  'video',
-  'call_channel_123',
-  userId,
-  'John Doe',
-  'https://example.com/avatar.jpg',
-);
-```
-
-### Handling Incoming Calls
+Central service that manages the complete call flow:
 
 ```typescript
-const {handleIncomingCall, answerIncomingCall, declineIncomingCall} =
-  useCallManager();
-
-// Show incoming call
-handleIncomingCall(
-  'Jane Doe',
-  'video',
-  'call_channel_456',
-  callerId,
-  'https://example.com/avatar.jpg',
+// Initiate a call
+const result = await callManagerService.initiateCall(
+  receiverId,
+  receiverName,
+  callType,
+  receiverAvatar,
 );
 
-// Answer call
-await answerIncomingCall();
+// Join an incoming call
+const result = await callManagerService.joinCall(
+  channel,
+  callerName,
+  callType,
+  callerAvatar,
+  sessionId,
+);
 
-// Decline call
-declineIncomingCall();
+// End current call
+const result = await callManagerService.endCall();
 ```
 
-### Call Controls
+#### 2. Agora Call Service (`src/services/agoraCallService.ts`)
 
-```typescript
-const {toggleCallMute, toggleCallVideo, switchCamera} = useCallManager();
+Handles Agora RTC engine operations:
 
-// Toggle mute
-await toggleCallMute();
+- Initialize Agora engine
+- Join/leave channels
+- Toggle audio/video
+- Switch camera
+- Manage permissions
 
-// Toggle video
-await toggleCallVideo();
+#### 3. Call Notification Service (`src/services/callNotificationService.ts`)
 
-// Switch camera
-await switchCamera();
+Manages call-related notifications:
+
+- Incoming call notifications
+- Missed call notifications
+- Call ended notifications
+
+### Screens
+
+#### 1. ChatOngoing Screen (`src/screens/ChatOngoing/index.tsx`)
+
+Main chat interface with calling options:
+
+- **Video Call**: Initiates video calls
+- **Voice Call**: Initiates audio-only calls
+- **Phone Call**: Makes traditional phone calls
+
+#### 2. VideoCall Screen (`src/screens/VideoCall/index.tsx`)
+
+Active call interface with:
+
+- Remote video display
+- Local video preview
+- Call controls (mute, video toggle, camera switch, end call)
+- Call duration timer
+- User information display
+
+#### 3. IncomingVideoCall Screen (`src/screens/IncomingVideoCall/index.tsx`)
+
+Incoming call interface with:
+
+- Caller information display
+- Accept/decline options
+- Call type indication (video/audio)
+- Auto-decline after timeout
+
+## API Endpoints Used
+
+### Live Stream APIs
+
+```bash
+# Start a live stream (create call session)
+POST /api/live-stream/start
+
+# Get Agora token for audience
+GET /api/live-stream/getToken/{channelName}
+
+# End live stream
+GET /api/live-stream/end
+
+# Get users in channel
+GET /api/live-stream/users/{channelName}
 ```
 
-## Integration with Chat
+### Chat APIs
 
-The calling feature is integrated into the existing chat system:
+```bash
+# Get Agora signature for calling
+GET /api/get-signature?session_name={channel}&chat_id={uid}&role={role}
+```
 
-1. **Call Options**: Phone button in chat header shows call options
-2. **Call Types**: Video call, voice call, and phone call options
-3. **User Context**: Automatically uses chat user information
-4. **Seamless Navigation**: Smooth transition between chat and calls
+## Call Flow
 
-## Permissions
+### 1. Outgoing Call
 
-The system automatically handles permissions:
+1. User taps call button in chat
+2. `makeVideoCall()` is called
+3. `callManagerService.initiateCall()` creates call session
+4. API call to `/api/live-stream/start`
+5. Navigate to VideoCall screen with Agora token
+6. Agora engine joins channel
+7. Call is active
 
-- **Android**: Requests CAMERA, RECORD_AUDIO, and READ_PHONE_STATE
-- **iOS**: Permissions are handled automatically
-- **Graceful Fallback**: Shows appropriate error messages if permissions denied
+### 2. Incoming Call
 
-## Notifications
+1. Incoming call notification received
+2. Navigate to IncomingVideoCall screen
+3. User can accept or decline
+4. If accepted: join call as audience
+5. If declined: show missed call notification
 
-- **Incoming Calls**: Push notifications with answer/decline options
-- **Missed Calls**: Notifications for declined calls
-- **Call Ended**: Notifications showing call duration
+### 3. Call End
+
+1. User taps end call button
+2. `callManagerService.endCall()` is called
+3. API call to `/api/live-stream/end`
+4. Agora engine leaves channel
+5. Navigate back to chat
+6. Show call duration notification
 
 ## Configuration
 
@@ -134,51 +161,112 @@ The Agora App ID is configured in `src/services/agoraCallService.ts`:
 private appId: string = 'a0c7366a22ac46b791c69f685591207c';
 ```
 
-### API Endpoints
+### Permissions
 
-Call-related endpoints are defined in `src/api/calling.ts` and use the existing signature endpoint for token generation.
+Required permissions for Android:
+
+```xml
+<uses-permission android:name="android.permission.CAMERA" />
+<uses-permission android:name="android.permission.RECORD_AUDIO" />
+<uses-permission android:name="android.permission.READ_PHONE_STATE" />
+<uses-permission android:name="android.permission.CALL_PHONE" />
+```
 
 ## Error Handling
 
-- **Permission Errors**: Clear error messages for permission issues
-- **Network Errors**: Retry mechanisms for connection failures
-- **Agora Errors**: Comprehensive error handling for RTC operations
-- **Graceful Degradation**: Fallback options when features fail
+The system includes comprehensive error handling:
+
+1. **Permission Errors**: Graceful fallback when permissions are denied
+2. **Network Errors**: Retry mechanisms and user feedback
+3. **Agora Errors**: Proper error messages and fallback options
+4. **API Errors**: Detailed error messages from backend
 
 ## Testing
 
-To test the calling feature:
+### Manual Testing
 
-1. **Start a call** from the chat screen
-2. **Answer incoming calls** when notifications appear
-3. **Test controls** (mute, video toggle, camera switch)
-4. **Test permissions** by denying camera/microphone access
-5. **Test network conditions** with poor connectivity
+1. **Outgoing Calls**:
 
-## Future Enhancements
+   - Tap video call button in chat
+   - Verify call session creation
+   - Check Agora token retrieval
+   - Test call controls
 
-- **Group Calls**: Multi-participant video calls
-- **Screen Sharing**: Share screen during calls
-- **Call Recording**: Record calls for later review
-- **Call History**: Detailed call logs and statistics
-- **Advanced Controls**: More granular audio/video settings
+2. **Incoming Calls**:
 
-## Dependencies
+   - Simulate incoming call
+   - Test accept/decline functionality
+   - Verify call joining
 
-- `react-native-agora`: ^4.5.1
-- `react-native-push-notification`: ^8.1.1
-- `@reduxjs/toolkit`: ^2.2.7
-- `react-redux`: ^9.1.2
+3. **Call Features**:
+   - Mute/unmute audio
+   - Enable/disable video
+   - Switch camera
+   - End call
+
+### Debug Information
+
+Enable debug logging by checking console output:
+
+```typescript
+console.log('Call session created:', callSession);
+console.log('Agora token received:', token);
+console.log('Channel joined successfully');
+```
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **Permission Denied**: Check device settings and restart app
-2. **Token Issues**: Verify API endpoint and authentication
-3. **Connection Failed**: Check network connectivity and Agora configuration
-4. **Audio/Video Issues**: Ensure proper device permissions and hardware
+1. **Call Not Connecting**:
 
-### Debug Mode
+   - Check Agora App ID
+   - Verify network connectivity
+   - Check token validity
 
-Enable debug logging by setting console log levels in the Agora service for detailed troubleshooting information.
+2. **Permissions Denied**:
+
+   - Request permissions manually
+   - Check device settings
+   - Handle permission denial gracefully
+
+3. **Audio/Video Issues**:
+   - Check device permissions
+   - Verify Agora engine initialization
+   - Test with different devices
+
+### Debug Steps
+
+1. Check console logs for errors
+2. Verify API responses
+3. Test with different users
+4. Check network connectivity
+5. Verify Agora token validity
+
+## Future Enhancements
+
+1. **Group Calls**: Support for multiple participants
+2. **Call Recording**: Record and save calls
+3. **Screen Sharing**: Share device screen during calls
+4. **Call History**: Track and display call logs
+5. **Push Notifications**: Real-time incoming call notifications
+
+## Dependencies
+
+- `react-native-agora`: Agora RTC SDK
+- `react-native-push-notification`: Call notifications
+- `react-native-phone-call`: Traditional phone calls
+- `lucide-react-native`: UI icons
+
+## Support
+
+For issues or questions regarding the calling implementation:
+
+1. Check this documentation
+2. Review console logs
+3. Test with different scenarios
+4. Contact development team
+
+---
+
+**Note**: This implementation is designed to work with the provided Agora backend APIs and follows the ALSE app's architecture patterns.

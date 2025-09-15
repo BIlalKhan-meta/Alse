@@ -16,6 +16,8 @@ import {fontSizes, vh, vw} from '../../constant';
 import {Phone, Video, PhoneOff} from 'lucide-react-native';
 import {selectUserProfile} from '../../store/slices/authSlice';
 import {useSelector} from 'react-redux';
+import {getAgoraTokenForAudience} from '../../api/calling';
+import callManagerService from '../../services/callManagerService';
 
 interface IncomingVideoCallProps {
   route: {
@@ -25,6 +27,8 @@ interface IncomingVideoCallProps {
       channel: string;
       uid: number;
       callType?: 'video' | 'audio';
+      agoraToken?: string;
+      sessionId?: string;
     };
   };
 }
@@ -61,26 +65,52 @@ const IncomingVideoCall: React.FC<IncomingVideoCallProps> = ({route}) => {
   }, [isRinging]);
 
   // Handle accept call
-  const handleAcceptCall = () => {
-    setIsRinging(false);
-    navigation.navigate(
-      'VideoCall' as never,
-      {
-        channel: params.channel,
-        uid: params.uid,
-        receiverName: params.callerName,
-        receiverAvatar: params.callerAvatar,
-        isIncoming: true,
-        callType: params.callType || 'video',
-      } as never,
-    );
+  const handleAcceptCall = async () => {
+    try {
+      setIsRinging(false);
+
+      // Use call manager service to join call
+      const result = await callManagerService.joinCall(
+        params.channel,
+        params.callerName,
+        params.callType || 'video',
+        params.callerAvatar,
+        params.sessionId,
+      );
+
+      if (result.success && result.data) {
+        navigation.navigate(
+          'VideoCall' as never,
+          {
+            channel: result.data.channel,
+            uid: user?.id || params.uid,
+            receiverName: result.data.callerName,
+            receiverAvatar: result.data.callerAvatar,
+            isIncoming: true,
+            callType: result.data.callType,
+            agoraToken: result.data.agoraToken,
+            sessionId: result.data.sessionId,
+          } as never,
+        );
+      } else {
+        Alert.alert(
+          'Error',
+          result.error || 'Failed to join call. Please try again.',
+        );
+      }
+    } catch (error) {
+      console.error('Error accepting call:', error);
+      Alert.alert('Error', 'Failed to join call. Please try again.');
+    }
   };
 
   // Handle decline call
   const handleDeclineCall = () => {
     setIsRinging(false);
-    // Here you would typically send a decline signal to the caller
-    // For now, just go back
+    // Handle missed call
+    callManagerService.handleMissedCall(params.callerName);
+    // Cancel any incoming call notifications
+    callManagerService.cancelIncomingCallNotification();
     navigation.goBack();
   };
 
