@@ -10,7 +10,7 @@ import {
   TextInput,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
-import {getAllProducts} from '../../api/product';
+import {getAuctions, Auction} from '../../api/auction';
 import Loader from '../../components/Loader';
 import {
   Search,
@@ -22,114 +22,77 @@ import {
   ChevronDown,
   Plus,
   Lock,
+  X,
 } from 'lucide-react-native';
 import {useTranslation} from 'react-i18next';
+import GlobalHeader from '../../components/GlobalHeader';
+import {useAppDispatch} from '../../hooks/storeHooks';
+import {logout, LogoutUser} from '../../store/slices/authSlice';
 
-interface Product {
-  id: number;
-  title: string;
-  description: string;
-  price: string;
-  images: Array<{
-    id: number;
-    product_id: number;
-    image: string;
-    type: string;
-    path: string;
-    date: string;
-  }>;
-  shop: {
-    id: number;
-    user_id: number;
-    fullname: string;
-    username: string | null;
-    avatar: string;
-    shop_name: string;
-    delivery_fees: string;
-    banner: string;
-    status: number;
-    created_at: string;
-  };
-  category: {
-    id: number;
-    title: string;
-    status: number;
-    created_at: string;
-    updated_at: string;
-    total_videos_count: number;
-  };
-}
+// Using Auction interface from auction.ts
 
 const AuctionBidding: React.FC = () => {
   const navigation: any = useNavigation();
+  const dispatch = useAppDispatch();
 
-  const [products, setProducts] = useState<Product[]>([]);
+  const [auctions, setAuctions] = useState<Auction[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+  const [filteredAuctions, setFilteredAuctions] = useState<Auction[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('');
   const [imageLoadErrors, setImageLoadErrors] = useState<{
     [key: number]: boolean;
   }>({});
+  const [showFabOptions, setShowFabOptions] = useState(false);
 
   const filterOptions = ['Category', 'Price', 'Location', 'Time Left'];
 
   const {t} = useTranslation();
 
+  const handleLogout = () => {
+    console.log('🚪 Logging out user...');
+    dispatch(logout());
+    dispatch(LogoutUser());
+    // navigation.navigate('Login'); // Uncomment if you want to navigate to login
+  };
+
   useEffect(() => {
-    getProducts();
+    fetchAuctions();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    filterProducts();
+    filterAuctions();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [products, searchQuery, selectedFilter]);
+  }, [auctions, searchQuery, selectedFilter]);
 
-  const getProducts = async () => {
+  const fetchAuctions = async () => {
     setLoading(true);
     try {
-      // Get all products with sorting by newest
-      const allProductsRes = await getAllProducts({
-        per_page: 20,
-        sort: 'newest',
-      });
+      // Get all auctions without extra query params
+      const auctionsRes = await getAuctions();
 
-      // console.log(
-      //   'Full API Response:',
-      //   JSON.stringify(allProductsRes, null, 2),
-      // );
+      console.log('Auctions API Response:', JSON.stringify(auctionsRes, null, 2));
 
-      // Check if the response has the expected structure
-      if (
-        allProductsRes.data?.data?.data &&
-        Array.isArray(allProductsRes.data.data.data)
-      ) {
-        setProducts(allProductsRes.data.data.data);
-        // console.log(
-        //   'Products fetched successfully:',
-        //   allProductsRes.data.data.data.length,
-        //   'products',
-        // );
-      } else if (
-        allProductsRes.data?.data &&
-        Array.isArray(allProductsRes.data.data)
-      ) {
-        setProducts(allProductsRes.data.data);
-        // console.log(
-        //   'Products fetched successfully (alternative structure):',
-        //   allProductsRes.data.data.length,
-        //   'products',
-        // );
+      // Handle the actual API response structure from your example
+      if (auctionsRes.data?.data?.data && Array.isArray(auctionsRes.data.data.data)) {
+        setAuctions(auctionsRes.data.data.data);
+        console.log('Auctions fetched successfully:', auctionsRes.data.data.data.length, 'auctions');
+      } else if (auctionsRes.data?.data && Array.isArray(auctionsRes.data.data)) {
+        setAuctions(auctionsRes.data.data);
+        console.log('Auctions fetched successfully (alternative structure):', auctionsRes.data.data.length, 'auctions');
+      } else if (auctionsRes.data && Array.isArray(auctionsRes.data)) {
+        setAuctions(auctionsRes.data);
+        console.log('Auctions fetched successfully (direct array):', auctionsRes.data.length, 'auctions');
       } else {
-        console.log('No products found in API response');
-        // console.log('Response structure:', allProductsRes.data);
-        setProducts([]);
+        console.log('No auctions found in API response');
+        console.log('Response structure:', auctionsRes);
+        setAuctions([]);
       }
     } catch (error) {
-      console.error('Error fetching products:', error);
-      setProducts([]);
+      console.error('Error fetching auctions:', error);
+      setAuctions([]);
     } finally {
       setLoading(false);
     }
@@ -137,40 +100,48 @@ const AuctionBidding: React.FC = () => {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await getProducts();
+    await fetchAuctions();
     setRefreshing(false);
   };
 
-  const filterProducts = () => {
-    let filtered = [...products];
+  const filterAuctions = () => {
+    let filtered = [...auctions];
 
     // Filter by search query
     if (searchQuery) {
       filtered = filtered.filter(
-        product =>
-          product.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          product.description.toLowerCase().includes(searchQuery.toLowerCase()),
+        auction =>
+          auction.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          auction.description.toLowerCase().includes(searchQuery.toLowerCase()),
       );
     }
 
     // Filter by selected filter (simplified for now)
     if (selectedFilter && selectedFilter !== 'Time Left') {
       filtered = filtered.filter(
-        product =>
-          product.title.toLowerCase().includes(selectedFilter.toLowerCase()) ||
-          product.description
+        auction =>
+          auction.title.toLowerCase().includes(selectedFilter.toLowerCase()) ||
+          auction.description
             .toLowerCase()
             .includes(selectedFilter.toLowerCase()) ||
-          product.category.title
+          auction.category
             .toLowerCase()
             .includes(selectedFilter.toLowerCase()),
       );
     }
 
-    setFilteredProducts(filtered);
+    setFilteredAuctions(filtered);
   };
 
-  const formatTimeRemaining = (seconds: number): string => {
+  const calculateTimeRemaining = (endTime: string): number => {
+    const now = new Date().getTime();
+    const end = new Date(endTime).getTime();
+    const diff = Math.max(0, end - now);
+    return Math.floor(diff / 1000); // Return seconds
+  };
+
+  const formatTimeRemaining = (endTime: string): string => {
+    const seconds = calculateTimeRemaining(endTime);
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
@@ -179,9 +150,9 @@ const AuctionBidding: React.FC = () => {
       const days = Math.floor(hours / 24);
       return `${days}d ${hours % 24}h`;
     } else if (hours > 0) {
-      return `${hours}h: ${minutes}m: ${secs}s`;
+      return `${hours}h ${minutes}m ${secs}s`;
     } else if (minutes > 0) {
-      return `${minutes}m: ${secs}s`;
+      return `${minutes}m ${secs}s`;
     } else {
       return `${secs}s`;
     }
@@ -192,26 +163,43 @@ const AuctionBidding: React.FC = () => {
     return `$${numPrice.toLocaleString()}`;
   };
 
-  const renderProductItem = ({item}: {item: Product}) => {
-    // Debug: Log image data for this product
-    console.log(`Product ${item.id} - ${item.title}:`, {
-      hasImages: item.images && item.images.length > 0,
-      imageCount: item.images?.length || 0,
-      firstImagePath: item.images?.[0]?.path,
-      allImages: item.images,
-    });
+  const getStatusColor = (status: string): string => {
+    switch (status) {
+      case 'active':
+        return '#4CAF50';
+      case 'draft':
+        return '#FF9800';
+      case 'ended':
+        return '#F44336';
+      case 'paused':
+        return '#9E9E9E';
+      case 'cancelled':
+        return '#F44336';
+      default:
+        return '#9E9E9E';
+    }
+  };
 
+  const renderAuctionItem = ({item}: {item: Auction}) => {
+    // Calculate if auction can be bid on based on status and time
+    const timeRemaining = calculateTimeRemaining(item.end_time);
+    const canBeBidOn = item.status === 'active' && timeRemaining > 0;
+    
     // Get the first available image or use placeholder
     const imageUri =
-      item.images && item.images.length > 0
-        ? item.images[0].path
+      item.product_images && item.product_images.length > 0
+        ? item.product_images[0]
         : 'https://via.placeholder.com/300x200?text=No+Image';
+
+    // Use starting price as current price if no current price is available
+    const currentPrice = item.current_price || parseFloat(item.starting_price);
+    const minimumBid = item.minimum_next_bid || parseFloat(item.starting_price);
 
     return (
       <TouchableOpacity
         style={styles.productCard}
         onPress={() =>
-          navigation.navigate('ProductDetail', {productId: item.id})
+          navigation.navigate('AuctionDetail', {auctionId: item.id})
         }>
         <View style={styles.imageContainer}>
           <Image
@@ -220,19 +208,24 @@ const AuctionBidding: React.FC = () => {
             resizeMode="cover"
             onError={error => {
               console.log(
-                `Image load error for product ${item.id}:`,
+                `Image load error for auction ${item.id}:`,
                 error.nativeEvent,
               );
               setImageLoadErrors(prev => ({...prev, [item.id]: true}));
             }}
             onLoad={() => {
-              console.log(`Image loaded successfully for product ${item.id}`);
+              console.log(`Image loaded successfully for auction ${item.id}`);
               setImageLoadErrors(prev => ({...prev, [item.id]: false}));
             }}
           />
           <View style={styles.timeBadge}>
             <Text style={styles.timeText}>
-              {formatTimeRemaining(Math.floor(Math.random() * 86400) + 3600)}
+              {formatTimeRemaining(item.end_time)}
+            </Text>
+          </View>
+          <View style={[styles.statusBadge, {backgroundColor: getStatusColor(item.status)}]}>
+            <Text style={styles.statusText}>
+              {item.status.toUpperCase()}
             </Text>
           </View>
         </View>
@@ -244,19 +237,34 @@ const AuctionBidding: React.FC = () => {
 
           <View style={styles.sellerContainer}>
             <Text style={styles.sellerText}>
-              {t('by')} @{item.shop.fullname || item.shop.shop_name || 'seller'}
+              {t('by')} @{item.seller.full_name || item.seller.username || 'seller'}
             </Text>
+            {item.category && (
+              <Text style={styles.categoryText}>
+                {item.category}
+              </Text>
+            )}
+            {item.location && (
+              <Text style={styles.auctionLocationText}>
+                📍 {item.location}
+              </Text>
+            )}
           </View>
 
           <View style={styles.priceContainer}>
             <Text style={styles.currentBid}>
-              {t('auctionBidding.currentBid')}: {formatPrice(item.price)}
+              {t('auctionBidding.currentBid')}: {formatPrice(currentPrice)}
+            </Text>
+            <Text style={styles.minimumBid}>
+              {t('auctionBidding.minimumBid')}: {formatPrice(minimumBid)}
             </Text>
           </View>
 
-          <TouchableOpacity style={styles.bidButton}>
+          <TouchableOpacity 
+            style={[styles.bidButton, !canBeBidOn && styles.disabledBidButton]}
+            disabled={!canBeBidOn}>
             <Text style={styles.bidButtonText}>
-              {t('auctionBidding.placeBid')}
+              {canBeBidOn ? t('auctionBidding.placeBid') : t('auctionBidding.ended')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -293,25 +301,12 @@ const AuctionBidding: React.FC = () => {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <Text style={styles.appName}>Alse</Text>
-          <View style={styles.locationContainer}>
-            <MapPin size={14} color="#666" />
-            <Text style={styles.locationText}>Street, #43 EIL</Text>
-            <Lock size={12} color="#666" style={styles.lockIcon} />
-          </View>
-        </View>
-        <View style={styles.headerRight}>
-          <TouchableOpacity style={styles.headerIcon}>
-            <Bell size={20} color="#999" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.headerIcon}>
-            <Settings size={20} color="#999" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.headerIcon}>
-            <MessageCircle size={20} color="#999" />
-          </TouchableOpacity>
-        </View>
+        <GlobalHeader title="Auctions & Bidding" icon={true} />
+        {/* <TouchableOpacity 
+          style={styles.logoutButton}
+          onPress={handleLogout}>
+          <Text style={styles.logoutButtonText}>Logout</Text>
+        </TouchableOpacity> */}
       </View>
 
       {/* Search Bar */}
@@ -326,13 +321,6 @@ const AuctionBidding: React.FC = () => {
             placeholderTextColor="#666"
           />
         </View>
-        {/* <TouchableOpacity style={styles.filterButton}>
-          <View style={styles.filterIconContainer}>
-            <View style={styles.filterDot} />
-            <View style={styles.filterDot} />
-            <View style={styles.filterDot} />
-          </View>
-        </TouchableOpacity> */}
       </View>
 
       {/* Filter Options */}
@@ -347,10 +335,10 @@ const AuctionBidding: React.FC = () => {
         />
       </View>
 
-      {/* Products List */}
+      {/* Auctions List */}
       <FlatList
-        data={filteredProducts}
-        renderItem={renderProductItem}
+        data={filteredAuctions}
+        renderItem={renderAuctionItem}
         keyExtractor={item => item.id.toString()}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.productsList}
@@ -370,10 +358,42 @@ const AuctionBidding: React.FC = () => {
         }
       />
 
+      {/* FAB Options Menu */}
+      {showFabOptions && (
+        <View style={styles.fabOptionsContainer}>
+          <TouchableOpacity 
+            style={styles.fabOption}
+            onPress={() => {
+              setShowFabOptions(false);
+              navigation.navigate('CreateAuction');
+            }}>
+            <View style={styles.fabOptionContent}>
+              <Gavel size={20} color="#00A19D" />
+              <Text style={styles.fabOptionText}>Create Auction</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+      )}
+
       {/* Floating Action Button */}
-      <TouchableOpacity style={styles.fabButton}>
-        <Plus size={24} color="white" />
+      <TouchableOpacity 
+        style={[styles.fabButton, showFabOptions && styles.fabButtonActive]}
+        onPress={() => setShowFabOptions(!showFabOptions)}>
+        {showFabOptions ? (
+          <X size={24} color="white" />
+        ) : (
+          <Plus size={24} color="white" />
+        )}
       </TouchableOpacity>
+
+      {/* Overlay to close FAB options when tapping outside */}
+      {showFabOptions && (
+        <TouchableOpacity 
+          style={styles.fabOverlay}
+          onPress={() => setShowFabOptions(false)}
+          activeOpacity={1}
+        />
+      )}
     </View>
   );
 };
@@ -385,15 +405,22 @@ const styles = StyleSheet.create({
     marginTop: -40,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 50,
-    paddingBottom: 16,
+    paddingHorizontal: 10,
+    paddingTop: 40,
     backgroundColor: 'white',
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
+  },
+  logoutButton: {
+    backgroundColor: '#ff6b6b',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  logoutButtonText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: '600',
   },
   headerLeft: {
     flex: 1,
@@ -440,7 +467,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f5f5',
     borderRadius: 25,
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 2,
     marginRight: 12,
   },
   searchInput: {
@@ -534,6 +561,19 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
   },
+  statusBadge: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  statusText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: '600',
+  },
   productInfo: {
     padding: 16,
   },
@@ -551,6 +591,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#999',
   },
+  categoryText: {
+    fontSize: 12,
+    color: '#00A19D',
+    fontWeight: '500',
+    marginTop: 4,
+  },
+  auctionLocationText: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 2,
+  },
   priceContainer: {
     marginBottom: 16,
     alignItems: 'flex-end',
@@ -559,6 +610,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
     fontWeight: '500',
+  },
+  minimumBid: {
+    fontSize: 14,
+    color: '#666',
+    fontWeight: '400',
+    marginTop: 4,
+  },
+  disabledBidButton: {
+    backgroundColor: '#ccc',
   },
   bidButton: {
     backgroundColor: '#00A19D',
@@ -607,6 +667,52 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
+    zIndex: 1000,
+  },
+  fabButtonActive: {
+    backgroundColor: '#ff6b6b',
+    transform: [{rotate: '45deg'}],
+  },
+  fabOptionsContainer: {
+    position: 'absolute',
+    bottom: 150,
+    right: 16,
+    backgroundColor: 'white',
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    zIndex: 999,
+  },
+  fabOption: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  fabOptionContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  fabOptionText: {
+    fontSize: 16,
+    color: '#333',
+    fontWeight: '500',
+  },
+  fabOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'transparent',
+    zIndex: 998,
   },
 });
 

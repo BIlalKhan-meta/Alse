@@ -568,7 +568,8 @@ const Marketplace: React.FC = () => {
               onPress={handleTrackOrder}>
               <Package size={16} color="white" style={styles.fabOptionIcon} />
               <Text style={styles.fabOptionText}>
-                Track Order {orders.length > 0 ? `(${orders.length})` : ''}
+                Track Order 
+                {/* {orders.length > 0 ? `(${orders.length})` : ''} */}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity

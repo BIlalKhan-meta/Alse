@@ -122,7 +122,9 @@ const OrderTracking: React.FC = () => {
               );
               setSelectedOrder(specificOrder || fetchedOrders[0]);
             } else {
-              setSelectedOrder(fetchedOrders[0]);
+              // Only set selected order if we have valid orders with product data
+              const validOrder = fetchedOrders.find((order: Order) => order.product);
+              setSelectedOrder(validOrder || null);
             }
           }
         } else {
@@ -157,17 +159,28 @@ const OrderTracking: React.FC = () => {
   // Fetch specific order details if orderId is provided
   const fetchOrderDetail = async (orderId: string) => {
     try {
+      setLoading(true);
       const response = await getOrderDetail(parseInt(orderId));
       console.log('Order detail response:', response?.data);
 
       if (response?.data?.data) {
         const orderDetail = response.data.data;
-        setSelectedOrder(orderDetail);
-        setOrders([orderDetail]); // Set as single order in array
+        // Validate that the order has product data before setting it
+        if (orderDetail.product) {
+          setSelectedOrder(orderDetail);
+          setOrders([orderDetail]); // Set as single order in array
+        } else {
+          console.error('Order detail missing product information');
+          setError('Order data is incomplete - missing product information');
+        }
+      } else {
+        setError('No order details found');
       }
     } catch (err: any) {
       console.error('Error fetching order detail:', err);
-      Alert.alert('Error', 'Failed to fetch order details');
+      setError(err?.response?.data?.message || 'Failed to fetch order details');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -361,6 +374,25 @@ const OrderTracking: React.FC = () => {
     );
   }
 
+  // Additional validation for selectedOrder structure
+  if (!selectedOrder.product) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>Invalid order data</Text>
+          <Text style={styles.emptySubtext}>
+            The selected order is missing product information
+          </Text>
+          <TouchableOpacity
+            style={styles.retryButton}
+            onPress={() => fetchOrders(1, false)}>
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -369,7 +401,7 @@ const OrderTracking: React.FC = () => {
           <View style={styles.productSection}>
             <Image
               source={
-                selectedOrder.product.images?.[0]?.path
+                selectedOrder.product?.images?.[0]?.path
                   ? {uri: selectedOrder.product.images[0].path}
                   : images.avatar
               }
@@ -377,7 +409,7 @@ const OrderTracking: React.FC = () => {
             />
             <View style={styles.productInfo}>
               <Text style={styles.productName}>
-                {selectedOrder.product.title || 'Product Name'}
+                {selectedOrder.product?.title || 'Product Name'}
               </Text>
               <Text style={styles.productVariant}>Brown 1</Text>
               <Text style={styles.orderStatus}>{selectedOrder.status}</Text>
@@ -450,7 +482,7 @@ const OrderTracking: React.FC = () => {
                       selectedOrder?.order_id === order.order_id &&
                         styles.selectedOrderOptionText,
                     ]}>
-                    {order.product.title}
+                    {order.product?.title || 'Product Name'}
                   </Text>
                   <Text
                     style={[
