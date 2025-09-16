@@ -162,7 +162,7 @@ const AppNavigation = () => {
         <Stack.Screen
           name="MyOrders"
           component={MyOrders}
-          options={NavigationOptions}
+          // options={NavigationOptions}
         />
 
         <Stack.Screen

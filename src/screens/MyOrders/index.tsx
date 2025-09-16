@@ -1,4 +1,10 @@
-import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState,
+} from 'react';
 import {
   View,
   TouchableOpacity,
@@ -6,11 +12,11 @@ import {
   TouchableWithoutFeedback,
   FlatList,
   Text,
+  TextInput,
 } from 'react-native';
 import styles from './styles';
 import {useIsFocused, useNavigation, useRoute} from '@react-navigation/native';
 import {images} from '../../utils/images';
-import TabsComponent from '../../components/TabsComponent';
 import FilterModal from '../../components/FilterModal';
 import {colors} from '../../utils/theme';
 import {getMyOrders, getOrders, getShopOrders} from '../../api/product';
@@ -125,18 +131,15 @@ const MyOrders: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute();
   console.log('props =====>', (route?.params as any)?.MyOrder);
-  const [selectedTab, setSelectedTab] = useState<
-    'All' | 'pending' | 'delivered' | 'cancelled'
-  >('All');
   const [modalVisible, setModalVisible] = useState(false);
   const [fromDate, setFromDate] = useState<Date | null>(null);
   const [toDate, setToDate] = useState<Date | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string>('All');
   const [orders, setOrders] = useState<any[]>([]);
-  const [filteredOrders, setFilteredOrders] = useState<any[]>([]);
+  const [searchText, setSearchText] = useState<string>('');
   const [loader, setLoader] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const [_lastRefresh, setLastRefresh] = useState<Date>(new Date());
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -280,35 +283,32 @@ const MyOrders: React.FC = () => {
     }
   }, [loadingMore, hasNextPage, currentPage, getData]);
 
-  useEffect(() => {
-    // Filter orders based on the selected tab
-    const filterOrders = () => {
-      let filtered = [...orders];
-      if (selectedTab !== 'All') {
-        filtered = filtered.filter(
-          order => order?.status === selectedTab.toLowerCase(),
-        );
-      }
-
-      // If you want to apply additional filters (e.g., by date or status)
-      // if (selectedStatus !== 'All') {
-      //   filtered = filtered.filter(order => order?.status === selectedStatus);
-      // }
-
-      // Apply date filters if any (you can extend this part)
-      if (fromDate && toDate) {
-        filtered = filtered.filter(
-          order =>
-            new Date(order?.date) >= fromDate &&
-            new Date(order?.date) <= toDate,
-        );
-      }
-
-      setFilteredOrders(filtered);
-    };
-
-    filterOrders(); // Run the filtering function whenever the orders or selectedTab changes
-  }, [orders, selectedTab, selectedStatus, fromDate, toDate]);
+  const filteredOrders = useMemo(() => {
+    let filtered = [...orders];
+    if (fromDate && toDate) {
+      filtered = filtered.filter(order => {
+        const orderDate = new Date(order?.date || order?.created_at || 0);
+        return orderDate >= fromDate && orderDate <= toDate;
+      });
+    }
+    if (selectedStatus !== 'All') {
+      filtered = filtered.filter(order => {
+        const status = (order?.status || '').toLowerCase();
+        return status === selectedStatus.toLowerCase();
+      });
+    }
+    if (searchText?.trim()) {
+      const term = searchText.trim().toLowerCase();
+      filtered = filtered.filter(o => {
+        const primaryTitle = o?.product?.title;
+        const nestedTitle = o?.order_details?.[0]?.product?.title;
+        const name = primaryTitle || nestedTitle || '';
+        const id = String(o?.order_id || o?.id || '');
+        return name.toLowerCase().includes(term) || id.includes(term);
+      });
+    }
+    return filtered;
+  }, [orders, fromDate, toDate, selectedStatus, searchText]);
 
   return (
     <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
@@ -353,14 +353,51 @@ const MyOrders: React.FC = () => {
           </View>
         )} */}
 
-        <TabsComponent
-          tabs={['All', 'Pending', 'Delivered', 'Accepted', 'Cancelled']}
-          selectedTab={selectedTab}
-          onTabPress={(tab: string) => setSelectedTab(tab as any)}
-          activeTabStyle={{
-            paddingHorizontal: vw * 3,
-          }}
-        />
+        {/* Top search bar */}
+        <View
+          style={{
+            backgroundColor: 'white',
+            borderRadius: 10,
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingHorizontal: 12,
+            height: 40,
+            marginHorizontal: vw * 2,
+            marginBottom: 12,
+          }}>
+          <Image
+            source={images.search}
+            style={{width: 16, height: 16, tintColor: '#8A8A8A'}}
+          />
+          <TextInput
+            placeholder="Search"
+            value={searchText}
+            onChangeText={setSearchText}
+            style={{flex: 1, marginLeft: 8, color: '#111'}}
+            placeholderTextColor="#9AA0A6"
+          />
+        </View>
+
+        {/* Title row */}
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginHorizontal: vw * 2,
+            marginBottom: 6,
+          }}>
+          <Text style={{color: '#6D6D6D'}}>Order Management</Text>
+          <TouchableOpacity
+            onPress={() => setModalVisible(true)}
+            style={{flexDirection: 'row', alignItems: 'center'}}>
+            <Text style={{color: '#6D6D6D', marginRight: 6}}>Filters</Text>
+            <Image
+              source={images.filter}
+              style={{width: 16, height: 16, tintColor: '#6D6D6D'}}
+            />
+          </TouchableOpacity>
+        </View>
         <FlatList
           data={filteredOrders}
           refreshing={loader}

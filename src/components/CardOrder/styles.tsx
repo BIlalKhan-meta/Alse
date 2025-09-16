@@ -6,34 +6,60 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: 'white',
     borderRadius: 10,
-    padding: 15,
-    marginVertical: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    marginVertical: 8,
     marginHorizontal: vw * 2,
   },
-  header: {
+  row: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: vh * 0.5,
+    alignItems: 'center',
   },
-  orderId: {
-    fontWeight: 'bold',
+  thumbWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 8,
+    overflow: 'hidden',
+    backgroundColor: '#eef2f3',
+    marginRight: 10,
+  },
+  thumb: {
+    width: '100%',
+    height: '100%',
+  },
+  thumbPlaceholder: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#e5e7eb',
+  },
+  main: {
+    flex: 1,
+  },
+  title: {
     color: colors.black,
     fontSize: fontSizes.f12,
+    marginBottom: 4,
   },
-  customerName: {
-    marginBottom: vh * 0.5,
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  meta: {
     color: colors.darkGray,
     fontSize: fontSizes.f11,
   },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  status: {
+    fontSize: fontSizes.f11,
   },
-  orderDate: {
-    fontWeight: 'bold',
-  },
-  amountPaid: {
-    fontWeight: 'bold',
+  menuDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#C7C7C7',
+    marginLeft: 8,
+    alignSelf: 'flex-start',
+    marginTop: 8,
   },
 });
 
