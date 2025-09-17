@@ -295,6 +295,14 @@ export default {
     bidConfirmation: 'बोली पुष्टि संकेत',
   },
 
+  auctionBidding: {
+    currentBid: 'वर्तमान मूल्य',
+    minimumBid: 'न्यूनतम बोली',
+    placeBid: 'बोली लगाएं',
+    noResults: 'कोई उत्पाद नहीं मिला',
+    noResultsSubtext: 'अपनी खोज या फिल्टर समायोजित करने का प्रयास करें',
+  },
+
   stories: {
     addStory: 'कहानी जोड़ें',
   },

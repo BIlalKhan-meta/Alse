@@ -4,9 +4,23 @@ import endpoints from './endpoints';
 // Search result types based on API documentation
 export interface SearchUser {
   id: number;
+  username?: string;
   full_name: string;
   email: string;
-  profile_image?: string;
+  dialing_code?: string;
+  phone_number?: string;
+  gender?: string;
+  dob?: string;
+  avatar?: string;
+  cover_photo?: string;
+  age?: number;
+  is_child: number;
+  is_active: number;
+  is_approved: number;
+  is_private: number;
+  has_subscription: number;
+  is_following: boolean;
+  is_follow_requested: boolean;
 }
 
 export interface SearchAuction {

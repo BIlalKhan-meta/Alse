@@ -295,6 +295,14 @@ export default {
     bidConfirmation: 'Confirmaciones de puja',
   },
 
+  auctionBidding: {
+    currentBid: 'Precio Actual',
+    minimumBid: 'Oferta Mínima',
+    placeBid: 'Hacer Oferta',
+    noResults: 'No se encontraron productos',
+    noResultsSubtext: 'Intenta ajustar tu búsqueda o filtros',
+  },
+
   stories: {
     addStory: 'Añadir historia',
   },

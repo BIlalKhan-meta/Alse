@@ -74,7 +74,9 @@ const SearchResultItem: React.FC<SearchResultItemProps> = ({
           {image ? (
             <Image source={{uri: image}} style={styles.image} />
           ) : (
-            getIcon()
+            <View style={styles.defaultImageContainer}>
+              {getIcon()}
+            </View>
           )}
         </View>
 
@@ -95,14 +97,16 @@ const SearchResultItem: React.FC<SearchResultItemProps> = ({
             </Text>
           )}
 
-          <View style={styles.footer}>
-            {price && <Text style={styles.price}>{formatPrice(price)}</Text>}
-            {status && (
-              <View style={[styles.statusBadge, getStatusStyle(status)]}>
-                <Text style={styles.statusText}>{status}</Text>
-              </View>
-            )}
-          </View>
+          {(price || status) && (
+            <View style={styles.footer}>
+              {price && <Text style={styles.price}>{formatPrice(price)}</Text>}
+              {status && (
+                <View style={[styles.statusBadge, getStatusStyle(status)]}>
+                  <Text style={styles.statusText}>{status}</Text>
+                </View>
+              )}
+            </View>
+          )}
         </View>
       </View>
     </TouchableOpacity>
@@ -125,22 +129,15 @@ const getStatusStyle = (status: string) => {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: '#fff',
-    marginHorizontal: 16,
-    marginVertical: 4,
-    borderRadius: 8,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.22,
-    shadowRadius: 2.22,
+    marginHorizontal: 0,
+    marginVertical: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
   },
   content: {
     flexDirection: 'row',
-    padding: 12,
-    alignItems: 'flex-start',
+    padding: 16,
+    alignItems: 'center',
   },
   iconContainer: {
     width: 40,
@@ -155,6 +152,14 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
+  },
+  defaultImageContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F5F5F5',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   textContainer: {
     flex: 1,

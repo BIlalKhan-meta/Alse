@@ -300,6 +300,14 @@ export default {
     bidConfirmation: 'Confirmation des mises',
   },
 
+  auctionBidding: {
+    currentBid: 'Prix Actuel',
+    minimumBid: 'Enchère Minimale',
+    placeBid: 'Placer une Enchère',
+    noResults: 'Aucun produit trouvé',
+    noResultsSubtext: 'Essayez dajuster votre recherche ou vos filtres',
+  },
+
   stories: {
     addStory: 'Ajouter une story',
   },

@@ -293,6 +293,14 @@ export default {
     bidConfirmation: '出价确认',
   },
 
+  auctionBidding: {
+    currentBid: '当前价格',
+    minimumBid: '最低出价',
+    placeBid: '出价',
+    noResults: '未找到产品',
+    noResultsSubtext: '请尝试调整搜索条件或筛选器',
+  },
+
   stories: {
     addStory: '添加动态',
   },

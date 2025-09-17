@@ -29,7 +29,7 @@ const SearchTab = () => {
   const {t} = useTranslation();
   const navigation = useNavigation();
 
-  // Debounced search function
+  // Debounced search function - focus only on users
   const performSearch = useCallback(async (query: string, page: number = 1) => {
     if (!query.trim()) {
       setSearchResults([]);
@@ -41,149 +41,26 @@ const SearchTab = () => {
     setError(null);
 
     try {
-      // Perform multiple searches in parallel
-      const [
-        usersResponse,
-        auctionsResponse,
-        productsResponse,
-        shopsResponse,
-        articlesResponse,
-        blogsResponse,
-        videosResponse,
-      ] = await Promise.allSettled([
-        searchAPI.searchUsers({search: query, page, per_page: 5}),
-        searchAPI.searchAuctions({search: query, page, per_page: 5}),
-        searchAPI.searchProducts({search: query, page, per_page: 5}),
-        searchAPI.searchShops({search: query, page}),
-        searchAPI.searchArticles({search: query, page}),
-        searchAPI.searchBlogs({search: query, page}),
-        searchAPI.searchVideos({search: query, page}),
-      ]);
+      // Search only users
+      const usersResponse = await searchAPI.searchUsers({
+        search: query, 
+        page, 
+        per_page: 15
+      });
 
       const results: SearchResult[] = [];
 
       // Process users
-      if (
-        usersResponse.status === 'fulfilled' &&
-        usersResponse.value.data.success
-      ) {
-        const users = usersResponse.value.data.data.data.map((user: any) => ({
+      if (usersResponse.data.status && usersResponse.data.data?.data) {
+        const users = usersResponse.data.data.data.map((user: any) => ({
           id: user.id,
           type: 'user' as const,
           title: user.full_name,
-          subtitle: user.email,
-          image: user.profile_image,
+          subtitle: user.username ? `@${user.username}` : user.email,
+          image: user.avatar,
           data: user,
         }));
         results.push(...users);
-      }
-
-      // Process auctions
-      if (
-        auctionsResponse.status === 'fulfilled' &&
-        auctionsResponse.value.data.success
-      ) {
-        const auctions = auctionsResponse.value.data.data.data.map(
-          (auction: any) => ({
-            id: auction.id,
-            type: 'auction' as const,
-            title: auction.title,
-            subtitle: auction.seller?.name,
-            description: auction.description,
-            price: auction.current_price,
-            status: auction.status,
-            data: auction,
-          }),
-        );
-        results.push(...auctions);
-      }
-
-      // Process products
-      if (
-        productsResponse.status === 'fulfilled' &&
-        productsResponse.value.data.success
-      ) {
-        const products = productsResponse.value.data.data.data.map(
-          (product: any) => ({
-            id: product.id,
-            type: 'product' as const,
-            title: product.title,
-            subtitle: product.shop?.name,
-            description: product.description,
-            price: product.price,
-            data: product,
-          }),
-        );
-        results.push(...products);
-      }
-
-      // Process shops
-      if (
-        shopsResponse.status === 'fulfilled' &&
-        shopsResponse.value.data.success
-      ) {
-        const shops = shopsResponse.value.data.data.data.map((shop: any) => ({
-          id: shop.id,
-          type: 'shop' as const,
-          title: shop.name,
-          description: shop.description,
-          image: shop.logo,
-          data: shop,
-        }));
-        results.push(...shops);
-      }
-
-      // Process articles
-      if (
-        articlesResponse.status === 'fulfilled' &&
-        articlesResponse.value.data.success
-      ) {
-        const articles = articlesResponse.value.data.data.data.map(
-          (article: any) => ({
-            id: article.id,
-            type: 'article' as const,
-            title: article.title,
-            subtitle: article.author?.name,
-            description: article.content?.substring(0, 100) + '...',
-            data: article,
-          }),
-        );
-        results.push(...articles);
-      }
-
-      // Process blogs
-      if (
-        blogsResponse.status === 'fulfilled' &&
-        blogsResponse.value.data.success
-      ) {
-        const blogs = blogsResponse.value.data.data.data.map((blog: any) => ({
-          id: blog.id,
-          type: 'blog' as const,
-          title: blog.title,
-          subtitle: blog.author?.name,
-          description: blog.content?.substring(0, 100) + '...',
-          data: blog,
-        }));
-        results.push(...blogs);
-      }
-
-      // Process videos
-      if (
-        videosResponse.status === 'fulfilled' &&
-        videosResponse.value.data.success
-      ) {
-        const videos = videosResponse.value.data.data.data.map(
-          (video: any) => ({
-            id: video.id,
-            type: 'video' as const,
-            title: video.title,
-            subtitle: video.author?.name,
-            description: video.description,
-            image: video.thumbnail_url,
-            data: video,
-          }),
-        );
-        results.push(...videos);
       }
 
       if (page === 1) {
@@ -194,7 +71,10 @@ const SearchTab = () => {
 
       setHasSearched(true);
       setCurrentPage(page);
-      setHasMore(results.length > 0);
+      
+      // Check if there are more pages based on the API response
+      const totalPages = usersResponse.data.data?.meta?.last_page || 1;
+      setHasMore(page < totalPages);
     } catch (err: any) {
       setError(err.message || 'Search failed. Please try again.');
       console.error('Search error:', err);
@@ -227,38 +107,9 @@ const SearchTab = () => {
   };
 
   const handleResultPress = (result: SearchResult) => {
-    // Navigate based on result type
-    switch (result.type) {
-      case 'user':
-        // Navigate to user profile
-        (navigation as any).navigate('UserProfile', {userId: result.id});
-        break;
-      case 'auction':
-        // Navigate to auction detail
-        (navigation as any).navigate('AuctionDetail', {auctionId: result.id});
-        break;
-      case 'product':
-        // Navigate to product detail
-        (navigation as any).navigate('ProductDetail', {productId: result.id});
-        break;
-      case 'shop':
-        // Navigate to shop detail
-        (navigation as any).navigate('ShopDetail', {shopId: result.id});
-        break;
-      case 'article':
-        // Navigate to article detail
-        (navigation as any).navigate('ArticleDetail', {articleId: result.id});
-        break;
-      case 'blog':
-        // Navigate to blog detail
-        (navigation as any).navigate('BlogDetail', {blogId: result.id});
-        break;
-      case 'video':
-        // Navigate to video detail
-        (navigation as any).navigate('VideoDetail', {videoId: result.id});
-        break;
-      default:
-        Alert.alert('Navigation', 'Navigation not implemented for this type');
+    // Navigate to user profile since we're only searching users
+    if (result.type === 'user') {
+      (navigation as any).navigate('UserProfile', {userId: result.id});
     }
   };
 
@@ -289,7 +140,7 @@ const SearchTab = () => {
       <ActivityIndicator size="large" color="#007AFF" />
       <Text style={styles.loadingText}>Searching...</Text>
       <Text style={styles.loadingSubtext}>
-        Finding users, auctions, products, and more
+        Finding users
       </Text>
     </View>
   );
@@ -299,7 +150,7 @@ const SearchTab = () => {
       <Search size={48} color="#E0E0E0" />
       <Text style={styles.emptyRecentText}>Start searching</Text>
       <Text style={styles.emptyRecentSubtext}>
-        Search for users, auctions, products, shops, articles, blogs, and videos
+        Search for users
       </Text>
     </View>
   );
@@ -327,6 +178,9 @@ const SearchTab = () => {
           </TouchableOpacity>
         )}
       </View>
+
+      {/* Helper text */}
+      <Text style={styles.helperText}>Please search for any users</Text>
 
       {/* Separator line */}
       <View style={styles.separator} />
@@ -394,6 +248,13 @@ const styles = StyleSheet.create({
   clearButton: {
     padding: 4,
     marginLeft: 8,
+  },
+  helperText: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 8,
+    marginHorizontal: 16,
   },
   separator: {
     height: 1,

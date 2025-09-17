@@ -80,6 +80,15 @@ const SearchResultsList: React.FC<SearchResultsListProps> = ({
 
   return (
     <View style={styles.container}>
+      {results.length > 0 && (
+        <View style={styles.headerContainer}>
+          <Text style={styles.resultsCount}>
+            All Results ({results.length})
+          </Text>
+          {/* <Text style={styles.filtersButton}>🔍 
+          Filters</Text> */}
+        </View>
+      )}
       <FlatList
         data={results}
         renderItem={renderResultItem}
@@ -99,6 +108,25 @@ const SearchResultsList: React.FC<SearchResultsListProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  headerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+    backgroundColor: '#fff',
+  },
+  resultsCount: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+  },
+  filtersButton: {
+    fontSize: 14,
+    color: '#666',
   },
   list: {
     flex: 1,

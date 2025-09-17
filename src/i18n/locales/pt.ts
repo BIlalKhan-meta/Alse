@@ -296,6 +296,14 @@ export default {
     bidConfirmation: 'Confirmação de lance',
   },
 
+  auctionBidding: {
+    currentBid: 'Preço Atual',
+    minimumBid: 'Lance Mínimo',
+    placeBid: 'Fazer Lance',
+    noResults: 'Nenhum produto encontrado',
+    noResultsSubtext: 'Tente ajustar sua busca ou filtros',
+  },
+
   stories: {
     addStory: 'Adicionar história',
   },

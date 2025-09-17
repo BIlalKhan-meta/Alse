@@ -296,6 +296,14 @@ export default {
     bidConfirmation: 'Uthibitisho wa Zabuni',
   },
 
+  auctionBidding: {
+    currentBid: 'Bei ya Sasa',
+    minimumBid: 'Zabuni ya Chini',
+    placeBid: 'Weka Zabuni',
+    noResults: 'Hakuna bidhaa zilizopatikana',
+    noResultsSubtext: 'Jaribu kurekebishia utafutaji au vichujio vyako',
+  },
+
   stories: {
     addStory: 'Ongeza Hadithi',
   },

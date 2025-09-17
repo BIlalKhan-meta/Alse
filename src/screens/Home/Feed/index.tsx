@@ -25,6 +25,8 @@ import InterRegular from '../../../components/Text/InterRegular';
 import {getMessage, Toast} from '../../../utils/helpers';
 import {getCountriesList, reportPost} from '../../../api/home';
 import {removeSavedItem, saveItem} from '../../../api/menu';
+import {getProfile} from '../../../api/profile';
+import {checkIsSeller} from '../../../api/shop';
 import {vh} from '../../../constant';
 import {getCountries} from '../../../store/slices/generalSlice';
 import {timeFormat} from '../../../utils';
@@ -156,6 +158,38 @@ const Home: React.FC = () => {
     }
   }, [dispatch]);
 
+  // Function to get and log user type information
+  const getUserTypeInfo = useCallback(async () => {
+    try {
+      console.log('🔍 Fetching user type information...');
+      
+      // Get user profile (contains user_type field)
+      const profileResponse = await getProfile();
+      console.log('👤 User Profile Response:', JSON.stringify(profileResponse.data, null, 2));
+      
+      if (profileResponse.data?.data?.user_type) {
+        console.log('🏷️ User Type:', profileResponse.data.data.user_type);
+      }
+      
+      // Check if user is a seller
+      const sellerResponse = await checkIsSeller();
+      console.log('🏪 Seller Check Response:', JSON.stringify(sellerResponse.data, null, 2));
+      
+      const hasShops = sellerResponse.data?.data?.data && sellerResponse.data.data.data.length > 0;
+      console.log('🛍️ Is Seller (has shops):', hasShops);
+      
+      if (hasShops) {
+        console.log('🏪 Number of shops:', sellerResponse.data.data.data.length);
+        sellerResponse.data.data.data.forEach((shop: any, index: number) => {
+          console.log(`🏪 Shop ${index + 1}: ${shop.shop_name} (ID: ${shop.id})`);
+        });
+      }
+      
+    } catch (error) {
+      console.log('❌ Error fetching user type info:', error);
+    }
+  }, []);
+
   useEffect(() => {
     notificationListenerInstance.init(closePaymentProcess);
   }, []);
@@ -165,7 +199,9 @@ const Home: React.FC = () => {
       navigation.navigate('SubscriptionPlan');
     }
     getApi();
-  }, [isFoused, getApi, navigation, user?.has_subscription, user?.is_child]);
+    // Call getUserTypeInfo to log user type information
+    getUserTypeInfo();
+  }, [isFoused, getApi, getUserTypeInfo, navigation, user?.has_subscription, user?.is_child]);
 
   const scrollToTop = () => {
     if (flatListRef.current) {

@@ -217,10 +217,36 @@ export default {
   },
 
   auctionBidding: {
-    currentBid: 'Current Bid',
+    currentBid: 'Current Price',
+    minimumBid: 'Minimum Bid',
     placeBid: 'Place Bid',
     noResults: 'No products found',
     noResultsSubtext: 'Try adjusting your search or filters',
+  },
+
+  auctionDetail: {
+    currentBid: 'Current Bid',
+    timeLeftToBid: 'Time Left to Bid',
+    buyNow: 'Buy Now',
+    placeBid: 'Place a Bid',
+    auctionEnded: 'Auction Ended',
+    placeBidModal: {
+      title: 'Place your Bid',
+      timeLeft: 'Time Left to Bid',
+      startingBid: 'Starting Bid',
+      latestBid: 'Latest Bid',
+      yourBid: 'Your Bid',
+      bidIncreased: '*Bid Increased by',
+      submit: 'Place a Bid',
+    },
+    success: {
+      bidPlaced: 'Your bid has been placed successfully!',
+    },
+    error: {
+      failedToLoad: 'Failed to load auction details',
+      failedToBid: 'Failed to place bid. Please try again.',
+      auctionNotFound: 'Auction not found',
+    },
   },
 
   addStore: {

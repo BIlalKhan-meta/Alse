@@ -8,6 +8,7 @@ import {
   FlatList,
   RefreshControl,
   TextInput,
+  ActivityIndicator,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {getAuctions, Auction} from '../../api/auction';
@@ -45,6 +46,12 @@ const AuctionBidding: React.FC = () => {
     [key: number]: boolean;
   }>({});
   const [showFabOptions, setShowFabOptions] = useState(false);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalAuctions, setTotalAuctions] = useState(0);
+  const [paginationLoading, setPaginationLoading] = useState(false);
 
   const filterOptions = ['Category', 'Price', 'Location', 'Time Left'];
 
@@ -67,18 +74,37 @@ const AuctionBidding: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auctions, searchQuery, selectedFilter]);
 
-  const fetchAuctions = async () => {
-    setLoading(true);
+  const fetchAuctions = async (page: number = 1, isRefresh: boolean = false) => {
+    if (isRefresh) {
+      setRefreshing(true);
+    } else if (page === 1) {
+      setLoading(true);
+    } else {
+      setPaginationLoading(true);
+    }
+
     try {
-      // Get all auctions without extra query params
-      const auctionsRes = await getAuctions();
+      // Get auctions with pagination
+      const auctionsRes = await getAuctions({ page, per_page: 15 });
 
       console.log('Auctions API Response:', JSON.stringify(auctionsRes, null, 2));
 
       // Handle the actual API response structure from your example
       if (auctionsRes.data?.data?.data && Array.isArray(auctionsRes.data.data.data)) {
-        setAuctions(auctionsRes.data.data.data);
-        console.log('Auctions fetched successfully:', auctionsRes.data.data.data.length, 'auctions');
+        const auctionData = auctionsRes.data.data.data;
+        const paginationMeta = auctionsRes.data.data.meta;
+        
+        setAuctions(auctionData);
+        setCurrentPage(paginationMeta?.current_page || 1);
+        setTotalPages(paginationMeta?.last_page || 1);
+        setTotalAuctions(paginationMeta?.total || 0);
+        
+        console.log('Auctions fetched successfully:', auctionData.length, 'auctions');
+        console.log('Pagination info:', {
+          currentPage: paginationMeta?.current_page,
+          totalPages: paginationMeta?.last_page,
+          total: paginationMeta?.total
+        });
       } else if (auctionsRes.data?.data && Array.isArray(auctionsRes.data.data)) {
         setAuctions(auctionsRes.data.data);
         console.log('Auctions fetched successfully (alternative structure):', auctionsRes.data.data.length, 'auctions');
@@ -95,13 +121,31 @@ const AuctionBidding: React.FC = () => {
       setAuctions([]);
     } finally {
       setLoading(false);
+      setRefreshing(false);
+      setPaginationLoading(false);
     }
   };
 
   const onRefresh = async () => {
-    setRefreshing(true);
-    await fetchAuctions();
-    setRefreshing(false);
+    await fetchAuctions(currentPage, true);
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      fetchAuctions(currentPage + 1);
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      fetchAuctions(currentPage - 1);
+    }
+  };
+
+  const handlePageSelect = (page: number) => {
+    if (page >= 1 && page <= totalPages && page !== currentPage) {
+      fetchAuctions(page);
+    }
   };
 
   const filterAuctions = () => {
@@ -264,7 +308,7 @@ const AuctionBidding: React.FC = () => {
             style={[styles.bidButton, !canBeBidOn && styles.disabledBidButton]}
             disabled={!canBeBidOn}>
             <Text style={styles.bidButtonText}>
-              {canBeBidOn ? t('auctionBidding.placeBid') : t('auctionBidding.ended')}
+              {canBeBidOn ? t('auctionBidding.placeBid') : "Auction Ended"}
             </Text>
           </TouchableOpacity>
         </View>
@@ -355,6 +399,80 @@ const AuctionBidding: React.FC = () => {
               {t('auctionBidding.noResultsSubtext')}
             </Text>
           </View>
+        }
+        ListFooterComponent={
+          totalPages > 1 ? (
+            <View style={styles.paginationContainer}>
+              {/* Pagination Info */}
+              <Text style={styles.paginationInfo}>
+                Page {currentPage} of {totalPages} ({totalAuctions} total auctions)
+              </Text>
+              
+              {/* Pagination Controls */}
+              <View style={styles.paginationControls}>
+                <TouchableOpacity
+                  style={[styles.paginationButton, currentPage === 1 && styles.paginationButtonDisabled]}
+                  onPress={handlePreviousPage}
+                  disabled={currentPage === 1 || paginationLoading}>
+                  <Text style={[styles.paginationButtonText, currentPage === 1 && styles.paginationButtonTextDisabled]}>
+                    Previous
+                  </Text>
+                </TouchableOpacity>
+
+                {/* Page Numbers */}
+                <View style={styles.pageNumbersContainer}>
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+                    
+                    return (
+                      <TouchableOpacity
+                        key={pageNum}
+                        style={[
+                          styles.pageNumberButton,
+                          currentPage === pageNum && styles.pageNumberButtonActive
+                        ]}
+                        onPress={() => handlePageSelect(pageNum)}
+                        disabled={paginationLoading}>
+                        <Text style={[
+                          styles.pageNumberText,
+                          currentPage === pageNum && styles.pageNumberTextActive
+                        ]}>
+                          {pageNum}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+
+                <TouchableOpacity
+                  style={[styles.paginationButton, currentPage === totalPages && styles.paginationButtonDisabled]}
+                  onPress={handleNextPage}
+                  disabled={currentPage === totalPages || paginationLoading}>
+                  <Text style={[styles.paginationButtonText, currentPage === totalPages && styles.paginationButtonTextDisabled]}>
+                    Next
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Loading indicator for pagination */}
+              {paginationLoading && (
+                <View style={styles.paginationLoading}>
+                  <ActivityIndicator size="small" color="#00A19D" />
+                  <Text style={styles.paginationLoadingText}>Loading page {currentPage}...</Text>
+                </View>
+              )}
+
+            </View>
+          ) : null
         }
       />
 
@@ -713,6 +831,89 @@ const styles = StyleSheet.create({
     bottom: 0,
     backgroundColor: 'transparent',
     zIndex: 998,
+  },
+  // Pagination styles
+  paginationContainer: {
+    backgroundColor: 'white',
+    padding: 16,
+    marginTop: 16,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  paginationInfo: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  paginationControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  paginationButton: {
+    backgroundColor: '#00A19D',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    minWidth: 80,
+    alignItems: 'center',
+  },
+  paginationButtonDisabled: {
+    backgroundColor: '#ccc',
+  },
+  paginationButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  paginationButtonTextDisabled: {
+    color: '#999',
+  },
+  pageNumbersContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  pageNumberButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#f5f5f5',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#eee',
+  },
+  pageNumberButtonActive: {
+    backgroundColor: '#00A19D',
+    borderColor: '#00A19D',
+  },
+  pageNumberText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#666',
+  },
+  pageNumberTextActive: {
+    color: 'white',
+  },
+  paginationLoading: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 12,
+    gap: 8,
+  },
+  paginationLoadingText: {
+    fontSize: 14,
+    color: '#666',
   },
 });
 

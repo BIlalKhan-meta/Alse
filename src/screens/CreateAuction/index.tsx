@@ -369,14 +369,14 @@ const CreateAuction: React.FC = () => {
           </TouchableOpacity>
 
           {/* Debug Test Button */}
-          <TouchableOpacity
+          {/* <TouchableOpacity
             style={[styles.createButton, styles.testButton]}
             onPress={() => {
               console.log('🧪 TEST: Manual API call test');
               handleCreateAuction();
             }}>
             <Text style={styles.createButtonText}>🧪 Test API Call</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
       </ScrollView>
     </View>

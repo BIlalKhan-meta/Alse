@@ -60,6 +60,7 @@ import SavedAuctions from '../../screens/Settings/SavedAuctions';
 import ShippingAddress from '../../screens/Settings/ShippingAddress';
 import BecomeSeller from '../../screens/BecomeSeller';
 import ExistingSeller from '../../screens/ExistingSeller';
+import AuctionDetail from '../../screens/AuctionDetail';
 
 const AppNavigation = () => {
   const Stack = createNativeStackNavigator();
@@ -347,6 +348,11 @@ const AppNavigation = () => {
         <Stack.Screen
           name="ExistingSeller"
           component={ExistingSeller}
+          // options={NavigationOptions}
+        />
+        <Stack.Screen
+          name="AuctionDetail"
+          component={AuctionDetail}
           // options={NavigationOptions}
         />
       </>
