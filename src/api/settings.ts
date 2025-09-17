@@ -65,3 +65,15 @@ export const updateSellerSettings = (formData: FormData, id: number) => {
     },
   );
 };
+
+export const updateUserType = (userType: 'buyer' | 'seller' | 'rider') => {
+  return axiosInstance.post(
+    endpoints.settings.updateUserType,
+    { user_type: userType },
+    {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    }
+  );
+};

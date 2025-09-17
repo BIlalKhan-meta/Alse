@@ -36,15 +36,32 @@ export interface Auction {
 export interface Bid {
   id: number;
   auction_id: number;
-  amount: number;
-  status: 'active' | 'cancelled' | 'won';
+  amount: string;
   is_auto_bid: boolean;
-  max_amount?: number;
-  user: {
-    id: number;
-    username: string;
+  max_amount?: string | null;
+  status: 'active' | 'outbid' | 'won' | 'cancelled';
+  placed_at: string;
+  time_since_placed: string;
+  bidder: {
+    id: number | null;
+    username: string | null;
+    avatar: string | null;
   };
+  auction: {
+    id: number;
+    title: string;
+    current_price: string;
+    status: string;
+    end_time: string;
+  };
+  is_winning: boolean;
+  is_outbid: boolean;
+  is_won: boolean;
+  is_cancelled: boolean;
+  can_auto_bid: boolean;
+  next_auto_bid_amount?: string | null;
   created_at: string;
+  updated_at: string;
 }
 
 export interface CreateAuctionRequest {
@@ -175,17 +192,22 @@ export const createAuctionThroughShop = (shopId: number, auctionData: CreateAuct
 };
 
 export const placeBid = (bidData: PlaceBidRequest) => {
-  const formData = new FormData();
-  formData.append('auction_id', bidData.auction_id.toString());
-  formData.append('amount', bidData.amount.toString());
-  formData.append('is_auto_bid', (bidData.is_auto_bid || false).toString());
-  
+  // Use JSON instead of FormData for proper boolean handling
+  const requestData: any = {
+    auction_id: bidData.auction_id,
+    amount: bidData.amount,
+    is_auto_bid: bidData.is_auto_bid || false,
+  };
+
+  // Add max_amount only if it's provided
   if (bidData.max_amount) {
-    formData.append('max_amount', bidData.max_amount.toString());
+    requestData.max_amount = bidData.max_amount;
   }
 
-  return axiosInstance.post(endpoints.bidding.placeBid, formData, {
-    formData: true,
+  return axiosInstance.post(endpoints.bidding.placeBid, requestData, {
+    headers: {
+      'Content-Type': 'application/json',
+    },
   });
 };
 
@@ -203,4 +225,29 @@ export const getUserWinningBids = () => {
 
 export const cancelBid = (bidId: number) => {
   return axiosInstance.post(`${endpoints.bidding.placeBid}/${bidId}/cancel`);
+};
+
+// Additional API functions based on provided endpoints
+export const getAllBidsForAuction = (auctionId: number) => {
+  return axiosInstance.get(`${endpoints.bidding.placeBid}/auction/${auctionId}`);
+};
+
+export const getSpecificBidDetails = (bidId: number) => {
+  return axiosInstance.get(`${endpoints.bidding.placeBid}/${bidId}`);
+};
+
+export const getMyBids = () => {
+  return axiosInstance.get(`${endpoints.bidding.placeBid}/my/bids`);
+};
+
+export const getMyWinningBids = () => {
+  return axiosInstance.get(`${endpoints.bidding.placeBid}/my/winning`);
+};
+
+export const getMyOutbidBids = () => {
+  return axiosInstance.get(`${endpoints.bidding.placeBid}/my/outbid`);
+};
+
+export const getMyWonBids = () => {
+  return axiosInstance.get(`${endpoints.bidding.placeBid}/my/won`);
 };

@@ -105,21 +105,26 @@ const SettingsItem = ({
 
         {type === 'select' && (
           <View style={styles.selectWrapper}>
-            <Picker
-              selectedValue={value}
-              onValueChange={onValueChange}
-              mode="dropdown"
-              style={styles.picker}
-              itemStyle={styles.pickerItem}
-              dropdownIconColor={colors.lightGrey}>
-              {options.map(opt => (
-                <Picker.Item
-                  key={opt.value}
-                  label={opt.label}
-                  value={opt.value}
-                />
-              ))}
-            </Picker>
+            {loading ? (
+              <ActivityIndicator size="small" color={colors.themeColor} />
+            ) : (
+              <Picker
+                selectedValue={value}
+                onValueChange={onValueChange}
+                mode="dropdown"
+                style={styles.picker}
+                itemStyle={styles.pickerItem}
+                dropdownIconColor={colors.lightGrey}
+                enabled={!loading}>
+                {options.map(opt => (
+                  <Picker.Item
+                    key={opt.value}
+                    label={opt.label}
+                    value={opt.value}
+                  />
+                ))}
+              </Picker>
+            )}
           </View>
         )}
       </View>

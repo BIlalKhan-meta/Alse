@@ -580,6 +580,12 @@ const Marketplace: React.FC = () => {
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.fabOption}
+              onPress={() => navigation.navigate('AuctionDetail', {auctionId: 1})}>
+              <Gavel size={16} color="white" style={styles.fabOptionIcon} />
+              <Text style={styles.fabOptionText}>View Sample Auction</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.fabOption}
               onPress={handleFinancials}>
               <DollarSign
                 size={16}

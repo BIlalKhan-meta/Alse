@@ -135,6 +135,7 @@ const endpoints = {
     sellerSettings: '/seller/settings',
     changePassword: '/change-password',
     deleteAccount: '/delete-my-account',
+    updateUserType: '/user-type',
   },
   bidding: {
     settings: '/bidding/settings',

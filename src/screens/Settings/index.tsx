@@ -33,6 +33,7 @@ import {
 } from 'react-native-image-picker';
 import Toast from 'react-native-toast-message';
 import {editProfile} from '../../api/profile';
+import {updateUserType} from '../../api/settings';
 import {useRoute} from '@react-navigation/native';
 
 interface RouteParams {
@@ -45,10 +46,19 @@ const Settings = ({navigation}: any) => {
   const profileData = useSelector(selectProfileData);
   const {currentLanguage, t} = useAppTranslation();
   const [avatarUri, setAvatarUri] = useState(user?.avatar || null);
+  const [currentUserType, setCurrentUserType] = useState(user?.user_type || 'buyer');
+  const [userTypeLoading, setUserTypeLoading] = useState(false);
 
   useEffect(() => {
     dispatch(fetchAllSettings());
   }, [dispatch]);
+
+  // Update currentUserType when user data changes
+  useEffect(() => {
+    if (user?.user_type && user.user_type !== currentUserType) {
+      setCurrentUserType(user.user_type);
+    }
+  }, [user?.user_type]);
 
   // Profile editing state
   const route = useRoute();
@@ -165,6 +175,45 @@ const Settings = ({navigation}: any) => {
     }
   };
 
+  // Handle user type change
+  const handleUserTypeChange = async (newUserType: string) => {
+    if (newUserType === currentUserType || userTypeLoading) {
+      return;
+    }
+
+    try {
+      setUserTypeLoading(true);
+      console.log('🔄 Updating user type to:', newUserType);
+      
+      const response = await updateUserType(newUserType as 'buyer' | 'seller' | 'rider');
+      
+      console.log('📡 Full API Response:', JSON.stringify(response.data, null, 2));
+      
+      // Check for both 'status' and 'success' fields to handle different API response formats
+      if (response.data?.status === true || response.data?.success === true) {
+        const updatedUserType = response.data?.data?.user_type || newUserType;
+        setCurrentUserType(updatedUserType);
+        Toast.show({
+          type: 'success',
+          text1: 'Success',
+          text2: `User type updated to ${getUserTypeDisplayName(updatedUserType)}`,
+        });
+        console.log('✅ User type updated successfully:', response.data);
+      } else {
+        throw new Error(response.data?.message || 'Failed to update user type');
+      }
+    } catch (error: any) {
+      console.error('❌ Error updating user type:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: error.response?.data?.message || 'Failed to update user type',
+      });
+    } finally {
+      setUserTypeLoading(false);
+    }
+  };
+
   // Get current language display name
   const getCurrentLanguageName = () => {
     switch (currentLanguage) {
@@ -184,6 +233,20 @@ const Settings = ({navigation}: any) => {
         return 'Español';
       default:
         return 'English';
+    }
+  };
+
+  // Get display name for user type
+  const getUserTypeDisplayName = (userType: string) => {
+    switch (userType) {
+      case 'buyer':
+        return 'Buyer';
+      case 'seller':
+        return 'Seller';
+      case 'rider':
+        return 'Rider';
+      default:
+        return 'Buyer';
     }
   };
 
@@ -261,6 +324,22 @@ const Settings = ({navigation}: any) => {
               icon={Users}
               type="navigation"
               onPress={() => navigation.navigate('SocialActivity')}
+            />
+
+            {/* User Type */}
+            <SettingsItem
+              title="User Type"
+              subtitle={getUserTypeDisplayName(currentUserType)}
+              icon={Users}
+              type="select"
+              value={currentUserType}
+              onValueChange={handleUserTypeChange}
+              options={[
+                { label: 'Buyer', value: 'buyer' },
+                { label: 'Seller', value: 'seller' },
+                { label: 'Rider', value: 'rider' },
+              ]}
+              loading={userTypeLoading}
             />
 
             {/* Language */}

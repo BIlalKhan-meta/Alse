@@ -11,8 +11,9 @@ import {
   Alert,
 } from 'react-native';
 import {useNavigation, useRoute} from '@react-navigation/native';
-import {getAuction, placeBid, Auction} from '../../api/auction';
+import {getAuction, placeBid, getAllBidsForAuction, Auction} from '../../api/auction';
 import Loader from '../../components/Loader';
+import AuctionDetails from '../../components/AuctionDetails';
 import {
   X,
   Heart,
@@ -40,6 +41,7 @@ const AuctionDetail: React.FC = () => {
   const [placingBid, setPlacingBid] = useState(false);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [imageLoadError, setImageLoadError] = useState(false);
+  const [latestBidAmount, setLatestBidAmount] = useState<string | null>(null);
 
   useEffect(() => {
     fetchAuctionDetails();
@@ -54,12 +56,31 @@ const AuctionDetail: React.FC = () => {
       // Handle different API response structures
       if (response.data?.data) {
         setAuction(response.data.data);
-        // Set initial bid amount to minimum bid
-        const minBid = response.data.data.minimum_next_bid || parseFloat(response.data.data.starting_price);
+        
+        // Get latest bid amount from bids API
+        const bidsResponse = await getAllBidsForAuction(auctionId);
+        const bidsData = bidsResponse.data?.data?.data || [];
+        const latestBid = bidsData.length > 0 ? bidsData[0] : null;
+        const currentPrice = latestBid ? parseFloat(latestBid.amount) : parseFloat(response.data.data.starting_price);
+        
+        // Store the latest bid amount for display
+        setLatestBidAmount(latestBid?.amount || response.data.data.starting_price);
+        
+        const minBid = response.data.data.minimum_next_bid || (currentPrice + 1);
         setBidAmount(minBid);
       } else if (response.data) {
         setAuction(response.data);
-        const minBid = response.data.minimum_next_bid || parseFloat(response.data.starting_price);
+        
+        // Get latest bid amount from bids API
+        const bidsResponse = await getAllBidsForAuction(auctionId);
+        const bidsData = bidsResponse.data?.data?.data || [];
+        const latestBid = bidsData.length > 0 ? bidsData[0] : null;
+        const currentPrice = latestBid ? parseFloat(latestBid.amount) : parseFloat(response.data.starting_price);
+        
+        // Store the latest bid amount for display
+        setLatestBidAmount(latestBid?.amount || response.data.starting_price);
+        
+        const minBid = response.data.minimum_next_bid || (currentPrice + 1);
         setBidAmount(minBid);
       }
     } catch (error) {
@@ -102,16 +123,18 @@ const AuctionDetail: React.FC = () => {
 
   const handleBidIncrease = () => {
     if (!auction) return;
-    const currentPrice = auction.current_price || parseFloat(auction.starting_price);
-    const incrementAmount = Math.max(currentPrice, 1); // Ensure minimum increment of 1
+    const currentPrice = latestBidAmount ? parseFloat(latestBidAmount) : parseFloat(auction.starting_price);
+    // Use a reasonable increment amount based on current price
+    const incrementAmount = currentPrice < 100 ? 5 : Math.ceil(currentPrice * 0.05);
     setBidAmount(prev => prev + incrementAmount);
   };
 
   const handleBidDecrease = () => {
     if (!auction) return;
-    const minBid = auction.minimum_next_bid || parseFloat(auction.starting_price);
-    const currentPrice = auction.current_price || parseFloat(auction.starting_price);
-    const decrementAmount = Math.max(currentPrice, 1); // Ensure minimum decrement of 1
+    const currentPrice = latestBidAmount ? parseFloat(latestBidAmount) : parseFloat(auction.starting_price);
+    const minBid = auction.minimum_next_bid || (currentPrice + 1);
+    // Use a reasonable decrement amount based on current price
+    const decrementAmount = currentPrice < 100 ? 5 : Math.ceil(currentPrice * 0.05);
     if (bidAmount > minBid) {
       setBidAmount(prev => Math.max(prev - decrementAmount, minBid));
     }
@@ -120,20 +143,48 @@ const AuctionDetail: React.FC = () => {
   const handlePlaceBid = async () => {
     if (!auction) return;
     
+    // Validate minimum bid amount
+    const currentPrice = latestBidAmount ? parseFloat(latestBidAmount) : parseFloat(auction.starting_price);
+    const minBid = auction.minimum_next_bid || (currentPrice + 1);
+    if (bidAmount <= currentPrice) {
+      Alert.alert('Error', `Bid must be higher than current bid of ${formatPrice(currentPrice)}`);
+      return;
+    }
+    
     setPlacingBid(true);
     try {
       await placeBid({
         auction_id: auction.id,
         amount: bidAmount,
+        is_auto_bid: false, // Explicitly set to false for manual bids
       });
       
       Alert.alert('Success', t('auctionDetail.success.bidPlaced'));
       setBidModalVisible(false);
       // Refresh auction details to get updated bid info
       fetchAuctionDetails();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error placing bid:', error);
-      Alert.alert('Error', t('auctionDetail.error.failedToBid'));
+      
+      // Handle API validation errors
+      if (error.response?.data?.errors) {
+        const errors = error.response.data.errors;
+        let errorMessage = '';
+        
+        if (errors.amount) {
+          errorMessage += errors.amount[0] + '\n';
+        }
+        if (errors.is_auto_bid) {
+          errorMessage += errors.is_auto_bid[0] + '\n';
+        }
+        if (errors.max_amount) {
+          errorMessage += errors.max_amount[0] + '\n';
+        }
+        
+        Alert.alert('Error', errorMessage.trim() || t('auctionDetail.error.failedToBid'));
+      } else {
+        Alert.alert('Error', t('auctionDetail.error.failedToBid'));
+      }
     } finally {
       setPlacingBid(false);
     }
@@ -171,8 +222,8 @@ const AuctionDetail: React.FC = () => {
       ? auction.product_images[0]
       : 'https://via.placeholder.com/300x200?text=No+Image';
 
-  // Use current price or starting price
-  const currentPrice = auction.current_price || parseFloat(auction.starting_price);
+  // Use latest bid amount or starting price for display
+  const displayPrice = latestBidAmount || auction.starting_price;
 
   return (
     <View style={styles.container}>
@@ -214,7 +265,9 @@ const AuctionDetail: React.FC = () => {
           </Text>
 
           <View style={styles.priceContainer}>
-            <Text style={styles.currentPrice}>{formatPrice(currentPrice)}</Text>
+            <Text style={styles.currentPrice}>
+              {formatPrice(latestBidAmount || auction.starting_price)}
+            </Text>
             <Text style={styles.currentPriceLabel}>{t('auctionDetail.currentBid')}</Text>
           </View>
 
@@ -236,6 +289,9 @@ const AuctionDetail: React.FC = () => {
             </Text>
             <Text style={styles.sellerSubtext}>He person to stop an auction</Text>
           </View>
+
+          {/* Auction Details Component */}
+          <AuctionDetails auctionId={auction.id} />
         </View>
       </ScrollView>
 
@@ -286,7 +342,7 @@ const AuctionDetail: React.FC = () => {
               <View style={styles.bidInfoItem}>
                 <Text style={styles.bidInfoLabel}>{t('auctionDetail.placeBidModal.latestBid')}</Text>
                 <Text style={styles.bidInfoValue}>
-                  {formatPrice(currentPrice)}
+                  {formatPrice(latestBidAmount || auction.starting_price)}
                 </Text>
               </View>
             </View>
@@ -307,7 +363,7 @@ const AuctionDetail: React.FC = () => {
                 </TouchableOpacity>
               </View>
               <Text style={styles.bidIncreaseText}>
-                {t('auctionDetail.placeBidModal.bidIncreased')} {formatPrice(auction.current_price || parseFloat(auction.starting_price))}
+                {t('auctionDetail.placeBidModal.bidIncreased')} {formatPrice(latestBidAmount || auction.starting_price)}
               </Text>
             </View>
 
