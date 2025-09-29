@@ -162,29 +162,41 @@ const Home: React.FC = () => {
   const getUserTypeInfo = useCallback(async () => {
     try {
       console.log('🔍 Fetching user type information...');
-      
+
       // Get user profile (contains user_type field)
       const profileResponse = await getProfile();
-      console.log('👤 User Profile Response:', JSON.stringify(profileResponse.data, null, 2));
-      
+      console.log(
+        '👤 User Profile Response:',
+        JSON.stringify(profileResponse.data, null, 2),
+      );
+
       if (profileResponse.data?.data?.user_type) {
         console.log('🏷️ User Type:', profileResponse.data.data.user_type);
       }
-      
+
       // Check if user is a seller
       const sellerResponse = await checkIsSeller();
-      console.log('🏪 Seller Check Response:', JSON.stringify(sellerResponse.data, null, 2));
-      
-      const hasShops = sellerResponse.data?.data?.data && sellerResponse.data.data.data.length > 0;
+      console.log(
+        '🏪 Seller Check Response:',
+        JSON.stringify(sellerResponse.data, null, 2),
+      );
+
+      const hasShops =
+        sellerResponse.data?.data?.data &&
+        sellerResponse.data.data.data.length > 0;
       console.log('🛍️ Is Seller (has shops):', hasShops);
-      
+
       if (hasShops) {
-        console.log('🏪 Number of shops:', sellerResponse.data.data.data.length);
+        console.log(
+          '🏪 Number of shops:',
+          sellerResponse.data.data.data.length,
+        );
         sellerResponse.data.data.data.forEach((shop: any, index: number) => {
-          console.log(`🏪 Shop ${index + 1}: ${shop.shop_name} (ID: ${shop.id})`);
+          console.log(
+            `🏪 Shop ${index + 1}: ${shop.shop_name} (ID: ${shop.id})`,
+          );
         });
       }
-      
     } catch (error) {
       console.log('❌ Error fetching user type info:', error);
     }
@@ -201,7 +213,14 @@ const Home: React.FC = () => {
     getApi();
     // Call getUserTypeInfo to log user type information
     getUserTypeInfo();
-  }, [isFoused, getApi, getUserTypeInfo, navigation, user?.has_subscription, user?.is_child]);
+  }, [
+    isFoused,
+    getApi,
+    getUserTypeInfo,
+    navigation,
+    user?.has_subscription,
+    user?.is_child,
+  ]);
 
   const scrollToTop = () => {
     if (flatListRef.current) {
@@ -472,14 +491,14 @@ const Home: React.FC = () => {
                   <InterRegular style={styles.menuItemText}>Chat</InterRegular>
                 </TouchableOpacity>
 
-                <TouchableOpacity
+                {/* <TouchableOpacity
                   style={styles.menuItem}
                   onPress={() => {
                     toggleFab();
                     // Add story functionality
                   }}>
                   <InterRegular style={styles.menuItemText}>Story</InterRegular>
-                </TouchableOpacity>
+                </TouchableOpacity> */}
 
                 <TouchableOpacity
                   style={styles.menuItem}
@@ -494,7 +513,9 @@ const Home: React.FC = () => {
                   style={styles.menuItem}
                   onPress={() => {
                     toggleFab();
+                    // TODO
                     // Add reel functionality
+                    navigation.navigate('CreatePost');
                   }}>
                   <InterRegular style={styles.menuItemText}>Reel</InterRegular>
                 </TouchableOpacity>

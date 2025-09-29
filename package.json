@@ -34,7 +34,7 @@
     "@reduxjs/toolkit": "^2.2.7",
     "@shopify/flash-list": "^1.7.3",
     "@twotalltotems/react-native-otp-input": "^1.3.11",
-    "@zoom/react-native-videosdk": "^1.13.12",
+    "@zoom/react-native-videosdk": "2.2.5",
     "add": "^2.0.6",
     "axios": "^1.10.0",
     "dayjs": "^1.11.13",

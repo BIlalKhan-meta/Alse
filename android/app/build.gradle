@@ -83,10 +83,10 @@ dependencies {
             force "com.google.protobuf:protobuf-javalite:3.24.0"
             force "androidx.browser:browser:1.8.0"
             // Force consistent versions for Google Play Services measurement
-            force "com.google.android.gms:play-services-measurement:22.2.0"
-            force "com.google.android.gms:play-services-measurement-base:22.2.0"
-            force "com.google.android.gms:play-services-measurement-sdk-api:22.2.0"
-            force "com.google.android.gms:play-services-measurement-impl:22.2.0"
+            // force "com.google.android.gms:play-services-measurement:22.2.0"
+            // force "com.google.android.gms:play-services-measurement-base:22.2.0"
+            // force "com.google.android.gms:play-services-measurement-sdk-api:22.2.0"
+            // force "com.google.android.gms:play-services-measurement-impl:22.2.0"
         }
     }
 

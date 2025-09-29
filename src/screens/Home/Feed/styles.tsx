@@ -24,6 +24,9 @@ const styles = StyleSheet.create({
     zIndex: 999,
   },
   fabButton: {
+    position: 'absolute',
+    bottom: 10,
+    right: -32,
     width: 56,
     height: 56,
     borderRadius: 28,
@@ -95,6 +98,7 @@ const styles = StyleSheet.create({
   },
   mainContainer: {
     flex: 1,
+    position: 'relative',
   },
   contentContainer: {
     paddingHorizontal: vh * 2,
@@ -102,7 +106,6 @@ const styles = StyleSheet.create({
   },
   feedContainer: {
     flex: 1,
-    position: 'relative',
   },
 });
 
