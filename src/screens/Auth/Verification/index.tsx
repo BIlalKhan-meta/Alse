@@ -107,7 +107,12 @@ const Verification: React.FC = () => {
           resetForm,
         }) => (
           <>
-            <KeyboardAwareScrollView style={styles.scrollview}>
+            <KeyboardAwareScrollView
+              style={styles.scrollview}
+              enableOnAndroid={true}
+              extraScrollHeight={20}
+              enableAutomaticScroll={true}
+              keyboardShouldPersistTaps="handled">
               <View style={styles.container}>
                 <Card style={styles.cardStyle}>
                   <InterBold style={styles.heading}>Forgot Password</InterBold>

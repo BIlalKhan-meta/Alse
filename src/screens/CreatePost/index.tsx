@@ -4,10 +4,9 @@ import {
   View,
   ScrollView,
   Image,
+  TextInput,
   TouchableOpacity,
   Text,
-  FlatList,
-  TextInput,
 } from 'react-native';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import styles from './styles';
@@ -15,33 +14,35 @@ import useImagePicker from '../../hooks/useImagePicker';
 import {ensurePhotoPermission, getMessage, Toast} from '../../utils/helpers';
 import {useAppDispatch} from '../../hooks/storeHooks';
 import {postCreate} from '../../store/slices/homeSlice';
-import GlobalHeader from '../../components/GlobalHeader';
-import {CameraRoll} from '@react-native-camera-roll/camera-roll';
-import {ArrowRight, ChevronRight, MapPin, UserPlus} from 'lucide-react-native';
+import CustomButton from '../../components/CustomButton';
+import {colors} from '../../utils/theme';
+import {images} from '../../utils/images';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 
 const CreatePost: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const dispatch = useAppDispatch();
 
-  const [step, setStep] = useState<'select' | 'details'>('select');
-  const [selectedImage, setSelectedImage] = useState<any>(null);
-  const [recentImages, setRecentImages] = useState<any[]>([]);
-  const [description, setDescription] = useState<string>('');
+  const title = (route?.params as any)?.title || 'Create Post';
+  const [privacy, setPrivacy] = useState(
+    (route?.params as any)?.data?.privacy || ListOptions[0].value,
+  );
+  const [comment, setComment] = useState<string>(
+    (route?.params as any)?.data?.content || '',
+  );
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const {imageData, chooseImageFromLibrary} = useImagePicker();
-
-  useEffect(() => {
-    loadRecentImages();
-  }, []);
+  const {image, imageData, captureImage, chooseImageFromLibrary} =
+    useImagePicker();
+  const [media, setMedia] = useState<any>(null);
 
   useEffect(() => {
     if (imageData) {
-      setSelectedImage({
-        uri: imageData?.uri,
-        name: imageData?.fileName,
-        type: imageData?.type,
+      setMedia({
+        uri: (imageData as any)?.uri,
+        name: (imageData as any)?.fileName,
+        type: (imageData as any)?.type,
       });
     }
   }, [imageData]);
@@ -77,8 +78,8 @@ const CreatePost: React.FC = () => {
   };
 
   const handlePost = async () => {
-    if (!selectedImage) {
-      Toast.error('Please select an image');
+    if (!comment || comment.trim() === '') {
+      Toast.error('Please enter content');
       return;
     }
 
@@ -102,127 +103,58 @@ const CreatePost: React.FC = () => {
       });
   };
 
-  const handleBack = () => {
-    if (step === 'details') {
-      setStep('select');
-    } else {
-      navigation.goBack();
-    }
-  };
-
-  const renderRecentItem = ({item}: {item: any}) => (
-    <TouchableOpacity
-      style={styles.recentImageContainer}
-      onPress={() => setSelectedImage(item)}>
-      <Image source={{uri: item.uri}} style={styles.recentImage} />
-    </TouchableOpacity>
-  );
-
-  // Step 1: Image Selection
-  const renderSelectStep = () => (
-    <>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <View style={styles.mainImageContainer}>
-          {selectedImage ? (
-            <Image
-              resizeMode="contain"
-              source={{uri: selectedImage.uri}}
-              style={styles.mainImage}
-            />
+  return (
+    <KeyboardAwareScrollView
+      style={styles.scrollContainer}
+      enableOnAndroid={true}
+      extraScrollHeight={20}
+      enableAutomaticScroll={true}
+      keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator={false}>
+      <View style={styles.container}>
+        {/* Image Section */}
+        <View style={styles.imageSection}>
+          {media ? (
+            <View style={styles.imageWrapper}>
+              <Image
+                source={{uri: media?.uri}}
+                style={styles.selectedImage}
+                resizeMode="cover"
+              />
+              <TouchableOpacity
+                style={styles.removeImageButton}
+                onPress={() => setMedia(null)}>
+                <Image source={images.cross} style={styles.removeIcon} />
+              </TouchableOpacity>
+            </View>
           ) : (
             <TouchableOpacity
-              style={styles.placeholderContainer}
+              style={styles.addImageButton}
               onPress={chooseImageFromLibrary}>
-              <Text style={styles.placeholderText}>Tap to select image</Text>
+              <Image
+                source={images.media}
+                style={styles.addImageIcon}
+                resizeMode="contain"
+              />
+              <Text style={styles.addImageText}>Add Image</Text>
             </TouchableOpacity>
           )}
         </View>
 
-        <View style={styles.recentsSection}>
-          <View style={styles.recentsHeader}>
-            <Text style={styles.recentsTitle}>Recents</Text>
-          </View>
-
-          <FlatList
-            data={recentImages}
-            renderItem={renderRecentItem}
-            keyExtractor={item => item.id}
-            numColumns={2}
-            scrollEnabled={false}
-            columnWrapperStyle={styles.recentRow}
-            contentContainerStyle={styles.recentsList}
+        {/* Description Section */}
+        <View style={styles.descriptionSection}>
+          <TextInput
+            style={styles.descriptionInput}
+            placeholder="Add a description..."
+            placeholderTextColor="#999999"
+            multiline
+            value={comment}
+            onChangeText={setComment}
+            textAlignVertical="top"
           />
         </View>
-      </ScrollView>
-
-      {selectedImage && (
-        <TouchableOpacity onPress={handleNext} style={styles.fabButton}>
-          <ArrowRight color="white" size={24} />
-        </TouchableOpacity>
-      )}
-    </>
-  );
-
-  // Step 2: Add Details
-  const renderDetailsStep = () => (
-    <>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <View style={styles.detailsContainer}>
-          <View style={styles.imagePreviewContainer}>
-            <Image
-              source={{uri: selectedImage.uri}}
-              style={styles.imagePreview}
-              resizeMode="cover"
-            />
-            <View style={styles.descriptionInputContainer}>
-              <TextInput
-                style={styles.descriptionInput}
-                placeholder="Add a description..."
-                placeholderTextColor="#999999"
-                multiline
-                value={description}
-                onChangeText={setDescription}
-                autoFocus
-              />
-            </View>
-          </View>
-
-          <View style={styles.optionsContainer}>
-            <TouchableOpacity style={styles.optionItem}>
-              <View style={styles.optionLeft}>
-                <UserPlus color="#666666" size={20} />
-                <Text style={styles.optionText}>Tag People</Text>
-              </View>
-              <ChevronRight color="#CCCCCC" size={20} />
-            </TouchableOpacity>
-
-            <View style={styles.divider} />
-
-            <TouchableOpacity style={styles.optionItem}>
-              <View style={styles.optionLeft}>
-                <MapPin color="#666666" size={20} />
-                <Text style={styles.optionText}>Add Location</Text>
-              </View>
-              <ChevronRight color="#CCCCCC" size={20} />
-            </TouchableOpacity>
-          </View>
-        </View>
-      </ScrollView>
-
-      <TouchableOpacity
-        onPress={handlePost}
-        style={[styles.fabButton, isLoading && styles.fabButtonDisabled]}
-        disabled={isLoading}>
-        <ArrowRight color="white" size={24} />
-      </TouchableOpacity>
-    </>
-  );
-
-  return (
-    <View style={styles.container}>
-      <GlobalHeader />
-      {step === 'select' ? renderSelectStep() : renderDetailsStep()}
-    </View>
+      </View>
+    </KeyboardAwareScrollView>
   );
 };
 

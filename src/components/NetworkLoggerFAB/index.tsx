@@ -44,7 +44,7 @@ const styles = StyleSheet.create({
   root: {
     position: 'absolute',
     bottom: height * 0.15,
-    right: 20,
+    right: 50,
     zIndex: 9999,
     elevation: 8,
   },

@@ -18,8 +18,8 @@ const styles = StyleSheet.create({
 
   fabMenuContainer: {
     position: 'absolute',
-    bottom: 0,
-    right: vh * 8, //  change to vh * 10 after removing network logger fab
+    bottom: vh * 1,
+    right: vw * 10, // TODO change to vh * 10 after removing network logger fab
     alignItems: 'center',
     zIndex: 999,
   },
@@ -45,6 +45,7 @@ const styles = StyleSheet.create({
   menuContainer: {
     position: 'absolute',
     bottom: 65, // Position above the FAB
+    left: -80,
     backgroundColor: '#009688', // Teal color matching screenshot
     borderRadius: 4,
     width: 120,

@@ -255,7 +255,12 @@ const LoginScreen: React.FC = () => {
           errors,
         }) => (
           <>
-            <KeyboardAwareScrollView showsVerticalScrollIndicator={false}>
+            <KeyboardAwareScrollView
+              showsVerticalScrollIndicator={false}
+              enableOnAndroid={true}
+              extraScrollHeight={20}
+              enableAutomaticScroll={true}
+              keyboardShouldPersistTaps="handled">
               <View style={styles.container}>
                 <View style={styles.imageContainer}>
                   <Image

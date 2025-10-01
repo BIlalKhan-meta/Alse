@@ -69,7 +69,12 @@ const ForgetPassword: React.FC = ({navigation}) => {
           resetForm,
         }) => (
           <>
-            <KeyboardAwareScrollView style={styles.scrollview}>
+            <KeyboardAwareScrollView
+              style={styles.scrollview}
+              enableOnAndroid={true}
+              extraScrollHeight={20}
+              enableAutomaticScroll={true}
+              keyboardShouldPersistTaps="handled">
               <View style={styles.container}>
                 <Card style={styles.cardStyle}>
                   <InterBoldLabel style={styles.heading}>
