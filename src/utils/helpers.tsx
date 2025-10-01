@@ -1,9 +1,11 @@
 import moment from 'moment';
+import {Platform} from 'react-native';
 import {
   check,
   request,
   RESULTS,
   requestMultiple,
+  PERMISSIONS,
 } from 'react-native-permissions';
 import ReactNativeToastMessage from 'react-native-toast-message';
 
@@ -33,24 +35,27 @@ export async function checkMultiplePermissions(permissions) {
 }
 
 // In case you want to check a single permission
-export async function checkPermission(permission) {
-  var isPermissionGranted = false;
-  const result = await check(permission);
-  switch (result) {
-    case RESULTS.GRANTED:
-      isPermissionGranted = true;
-      break;
-    case RESULTS.DENIED:
-      isPermissionGranted = false;
-      break;
-    case RESULTS.BLOCKED:
-      isPermissionGranted = false;
-      break;
-    case RESULTS.UNAVAILABLE:
-      isPermissionGranted = false;
-      break;
+export async function ensurePhotoPermission() {
+  const isAndroid13OrAbove =
+    Platform.OS === 'android' &&
+    typeof Platform.Version === 'number' &&
+    Platform.Version >= 33;
+
+  const permission =
+    Platform.OS === 'ios'
+      ? PERMISSIONS.IOS.PHOTO_LIBRARY
+      : isAndroid13OrAbove
+      ? PERMISSIONS.ANDROID.READ_MEDIA_IMAGES
+      : PERMISSIONS.ANDROID.READ_EXTERNAL_STORAGE;
+
+  let result = await check(permission);
+
+  if (result === RESULTS.DENIED) {
+    // 👇 This will show the permission popup
+    result = await request(permission);
   }
-  return isPermissionGranted;
+
+  return result === RESULTS.GRANTED;
 }
 
 type Message = string | object;

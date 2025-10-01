@@ -515,7 +515,7 @@ const Home: React.FC = () => {
                     toggleFab();
                     // TODO
                     // Add reel functionality
-                    navigation.navigate('CreatePost');
+                    navigation.navigate('CreateReel');
                   }}>
                   <InterRegular style={styles.menuItemText}>Reel</InterRegular>
                 </TouchableOpacity>

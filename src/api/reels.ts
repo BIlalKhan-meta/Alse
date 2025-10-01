@@ -7,6 +7,16 @@ export const getVideos = (page = 1, limit = 10) => {
 
   // Try the education videos endpoint first
   return axiosInstance.get(
-    `${endpoints.education.getVideos}?page=${page}&limit=${limit}`,
+    `${endpoints.search.videos}?page=${page}&limit=${limit}`,
+  );
+};
+
+export const uploadVideo = (formData: FormData, categoryId: number) => {
+  return axiosInstance.post(
+    endpoints.search.videos + `/${categoryId}`,
+    formData,
+    {
+      formData: true,
+    },
   );
 };

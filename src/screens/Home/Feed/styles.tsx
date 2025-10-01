@@ -18,15 +18,15 @@ const styles = StyleSheet.create({
 
   fabMenuContainer: {
     position: 'absolute',
-    bottom: vh * 8,
-    right: vw * 14, // TODO change to vh * 10 after removing network logger fab
+    bottom: 0,
+    right: vh * 8, //  change to vh * 10 after removing network logger fab
     alignItems: 'center',
     zIndex: 999,
   },
   fabButton: {
     position: 'absolute',
-    bottom: 10,
-    right: -32,
+    bottom: 16,
+    right: -vh * 8,
     width: 56,
     height: 56,
     borderRadius: 28,

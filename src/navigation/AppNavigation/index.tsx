@@ -61,6 +61,7 @@ import ShippingAddress from '../../screens/Settings/ShippingAddress';
 import BecomeSeller from '../../screens/BecomeSeller';
 import ExistingSeller from '../../screens/ExistingSeller';
 import AuctionDetail from '../../screens/AuctionDetail';
+import CreateReel from '../../screens/CreateReel';
 
 const AppNavigation = () => {
   const Stack = createNativeStackNavigator();
@@ -169,7 +170,12 @@ const AppNavigation = () => {
         <Stack.Screen
           name="CreatePost"
           component={CreatePost}
-          options={NavigationOptions}
+          // options={NavigationOptions}
+        />
+        <Stack.Screen
+          name="CreateReel"
+          component={CreateReel}
+          // options={NavigationOptions}
         />
         <Stack.Screen
           name="Groups"
