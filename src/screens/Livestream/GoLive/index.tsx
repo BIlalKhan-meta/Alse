@@ -46,6 +46,7 @@ import {
   updateViewerActivity,
 } from '../../../services/viewerService';
 import {useTranslation} from 'react-i18next';
+import {images} from '../../../utils/images';
 
 const appId = 'a0c7366a22ac46b791c69f685591207c';
 
@@ -673,11 +674,20 @@ const LiveStreamScreen = () => {
             <TouchableOpacity
               style={styles.endLiveButton}
               onPress={handleEndLiveAndGoBack}>
-              <FontAwesome6
+              {/* <FontAwesome6
                 name="xmark"
                 size={18}
                 color="#fff"
                 iconStyle="solid"
+              /> */}
+              <Image
+                source={images.cross}
+                style={{
+                  height: 10,
+                  width: 10,
+                  tintColor: 'white',
+                  resizeMode: 'contain',
+                }}
               />
             </TouchableOpacity>
           )}
@@ -744,11 +754,20 @@ const LiveStreamScreen = () => {
           <TouchableOpacity
             style={styles.reverseCameraButton}
             onPress={handleSwitchCamera}>
-            <FontAwesome6
+            {/* <FontAwesome6
               name="camera-rotate"
               size={24}
               color="#fff"
               iconStyle="solid"
+            /> */}
+            <Image
+              source={images.rotate}
+              style={{
+                height: 20,
+                width: 20,
+                tintColor: 'white',
+                resizeMode: 'contain',
+              }}
             />
           </TouchableOpacity>
         ) : null}
@@ -903,9 +922,9 @@ const styles = StyleSheet.create({
   },
   endLiveButton: {
     backgroundColor: 'rgba(255,0,0,0.6)',
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 43,
+    height: 43,
+    borderRadius: 100,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -919,8 +938,8 @@ const styles = StyleSheet.create({
   },
   reverseCameraButton: {
     position: 'absolute',
-    top: 60,
-    right: 20,
+    top: 70,
+    right: 15,
     backgroundColor: 'rgba(0,0,0,0.6)',
     padding: 10,
     borderRadius: 25,
@@ -933,7 +952,7 @@ const styles = StyleSheet.create({
     width: '100%',
     padding: 10,
     rowGap: 12,
-    paddingHorizontal: 40,
+    paddingHorizontal: 43,
   },
   control: {
     backgroundColor: colors.themeColor,

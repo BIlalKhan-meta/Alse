@@ -1,9 +1,10 @@
 import React, {useState, useEffect, useRef} from 'react';
-import {View, Text, StyleSheet, ActivityIndicator} from 'react-native';
+import {View, Text, StyleSheet, ActivityIndicator, Image} from 'react-native';
 import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
 import firestore from '@react-native-firebase/firestore';
 import {useSelector} from 'react-redux';
 import {selectUserProfile} from '../../store/slices/authSlice';
+import {images} from '../../utils/images';
 
 /**
  * ViewerCounter component that displays real-time viewer count
@@ -163,7 +164,17 @@ const ViewerCounter = ({
 
   return (
     <View style={[styles.container, style]}>
-      <FontAwesome6 name="eye" size={12} color="#fff" iconStyle="solid" />
+      {/* <FontAwesome6 name="eye" size={12} color="#fff" iconStyle="solid" /> */}
+
+      <Image
+        source={images.EyeIcon}
+        style={{
+          width: 15,
+          height: 15,
+          resizeMode: 'contain',
+          tintColor: 'white',
+        }}
+      />
 
       {isLoading ? (
         <ActivityIndicator size="small" color="#fff" style={styles.loader} />

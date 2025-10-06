@@ -72,6 +72,8 @@ export const images = {
   shareIcon: require('../assets/Icons/shareIcon.png'),
   heartLikeIcon: require('../assets/Icons/likeIcon.png'),
   shoppingBag: require('../assets/Icons/shopping.png'),
+  rotate: require('../assets/Icons/rotate.png'),
+
   //Imagesssss/////
   shop1: require('../assets/images/shop1.png'),
   shop11: require('../assets/images/shop11.png'),

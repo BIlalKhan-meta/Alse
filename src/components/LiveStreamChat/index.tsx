@@ -16,6 +16,7 @@ import firestore from '@react-native-firebase/firestore';
 import {useSelector} from 'react-redux';
 import {selectUserProfile} from '../../store/slices/authSlice';
 import {useTranslation} from 'react-i18next';
+import {images} from '../../utils/images';
 
 const ChatComponent = ({
   channelId,
@@ -231,12 +232,20 @@ const ChatComponent = ({
           <TouchableOpacity
             onPress={sendMessage}
             disabled={!messageText.trim()}>
-            <FontAwesome6
+            <Image
+              source={images.send}
+              style={{
+                width: 25,
+                height: 25,
+                opacity: !messageText.trim() ? 0.5 : 1,
+              }}
+            />
+            {/* <FontAwesome6
               name="paper-plane"
               size={20}
               color={messageText.trim() ? '#38b6ff' : 'rgba(56,182,255,0.5)'}
               iconStyle="solid"
-            />
+            /> */}
           </TouchableOpacity>
         </View>
       </View>
@@ -325,7 +334,9 @@ const styles = StyleSheet.create({
   inputIcons: {
     flexDirection: 'row',
     width: 60,
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
+    // backgroundColor: 'red',
+    paddingRight: 5,
   },
 });
 
