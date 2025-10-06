@@ -2,14 +2,14 @@ import {useState} from 'react';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 
 const useImagePicker = () => {
-  const [image, setImage] = useState(null); // State to store the selected image URI
-  const [imageData, setImageData] = useState(null);
-  const [previewMode, setPreviewMode] = useState(false);
-  const [pendingMedia, setPendingMedia] = useState(null);
+  const [image, setImage] = useState<any>(null); // State to store the selected image URI
+  const [imageData, setImageData] = useState<any>(null);
+  const [previewMode, setPreviewMode] = useState<any>(false);
+  const [pendingMedia, setPendingMedia] = useState<any>(null);
 
   // Function to handle image selection from gallery
   const chooseImageFromLibrary = (mediaType = 'photo', showPreview = false) => {
-    let options = {
+    let options: any = {
       mediaType: mediaType, // 'photo' or 'video' or 'mixed'
       maxWidth: 300,
       maxHeight: 550,
@@ -82,17 +82,17 @@ const useImagePicker = () => {
   };
 
   return {
-    image, 
-    imageData, 
-    captureImage, 
-    chooseImageFromLibrary, 
-    setImageData, 
+    image,
+    imageData,
+    captureImage,
+    chooseImageFromLibrary,
+    setImageData,
     setImage,
     // Preview related
     previewMode,
     pendingMedia,
     confirmMedia,
-    cancelMedia
+    cancelMedia,
   };
 };
 

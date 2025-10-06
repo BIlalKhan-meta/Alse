@@ -1,26 +1,23 @@
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
+import {Search, User} from 'lucide-react-native';
 import React from 'react';
 import {Image, View} from 'react-native';
-import {colors} from '../../utils/theme';
-import styles from './styles';
-import HomeNavigation from '../HomeNavigation';
-import {images} from '../../utils/images';
-import NavigationOptions from '../NavigationOptions';
-import MarketPlaceNavigation from '../MarketPlaceNavigator';
 import LiveStreamScreen from '../../screens/Livestream/GoLive';
-import SearchTab from '../SearchTab';
-import {Search} from 'lucide-react-native';
-import VideosTab from '../VideosTab/Index';
 import MyProfile from '../../screens/MyProfile';
-import {useSelector} from 'react-redux';
-import {selectUserProfile} from '../../store/slices/authSlice';
-import {User} from 'lucide-react-native';
+import {images} from '../../utils/images';
+import {colors} from '../../utils/theme';
+import HomeNavigation from '../HomeNavigation';
+import MarketPlaceNavigation from '../MarketPlaceNavigator';
+import NavigationOptions from '../NavigationOptions';
+import SearchTab from '../SearchTab';
+import VideosTab from '../VideosTab/Index';
+import styles from './styles';
 
 const TabNavigation = () => {
   const Tab = createBottomTabNavigator();
-  const user = useSelector(selectUserProfile);
 
-  console.log('user', user);
+  // const user = useSelector(selectUserProfile);
+  // console.log('user', user);
 
   return (
     <Tab.Navigator
@@ -30,7 +27,7 @@ const TabNavigation = () => {
         tabBarHideOnKeyboard: true,
         tabBarStyle: styles.tabStyle,
       }}
-      initialRouteName="Home">
+      initialRouteName="HomeNavigation">
       <Tab.Screen
         name="HomeNavigation"
         component={HomeNavigation}

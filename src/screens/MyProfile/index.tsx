@@ -11,7 +11,12 @@ import {
 import {useIsFocused, useNavigation} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
 import {images} from '../../utils/images';
-import {selectUserProfile, GetUserProfile} from '../../store/slices/authSlice';
+import {
+  selectUserProfile,
+  GetUserProfile,
+  logout,
+  LogoutUser,
+} from '../../store/slices/authSlice';
 import {
   selectProfileData,
   initializeProfile,
@@ -28,6 +33,9 @@ import GlobalHeader from '../../components/GlobalHeader';
 import styles from './styles';
 import {colors} from '../../utils/theme';
 import {useTranslation} from 'react-i18next';
+import Card from '../../components/Card';
+import InterMedium from '../../components/Text/InterMedium';
+import {vw} from '../../constant';
 
 interface PostItem {
   id: string;
@@ -227,6 +235,12 @@ const MyProfile: React.FC = () => {
 
   const keyExtractor = useCallback((item: PostItem) => item.id, []);
 
+  const handleLogout = () => {
+    dispatch(logout());
+    dispatch(LogoutUser());
+    // navigation.navigate('Login');
+  };
+
   // Show loader only on initial load, rather than focus
   if (!initialLoad && (postsLoading || !user)) {
     return <Loader />;
@@ -267,6 +281,15 @@ const MyProfile: React.FC = () => {
                 <Text style={styles.location}>{currentProfile.location}</Text>
               ) : null}
             </View>
+
+            <TouchableOpacity onPress={handleLogout} style={{marginTop: 10}}>
+              <View style={styles.cardContent5}>
+                <View style={[styles.notifiCon, {width: vw * 8}]}>
+                  <Image source={images.logout} style={styles.imageStyle} />
+                </View>
+                {/* <InterMedium style={styles.cardHeading}>Log out</InterMedium> */}
+              </View>
+            </TouchableOpacity>
           </View>
 
           <View style={styles.bioSection}>

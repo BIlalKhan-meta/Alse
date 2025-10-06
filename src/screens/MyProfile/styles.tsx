@@ -1,4 +1,6 @@
 import {StyleSheet} from 'react-native';
+import {fontSizes, vh, vw} from '../../constant';
+import {colors} from '../../utils/theme';
 
 const styles = StyleSheet.create({
   container: {
@@ -199,6 +201,34 @@ const styles = StyleSheet.create({
     color: '#333',
     marginLeft: 12,
     fontWeight: '500',
+  },
+  cardContainer2: {
+    width: vw * 43,
+    marginTop: vh * 2,
+  },
+  cardContent5: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  notifiCon: {
+    width: vw * 7,
+    height: vh * 4,
+    marginRight: vw * 4,
+  },
+  bottomCon: {
+    flexDirection: 'row',
+    alignSelf: 'center',
+    width: vw * 90,
+    justifyContent: 'space-between',
+  },
+  imageStyle: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'contain',
+  },
+  cardHeading: {
+    fontSize: fontSizes.f14,
+    color: colors.black,
   },
 });
 

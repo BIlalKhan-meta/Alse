@@ -11,7 +11,7 @@ const styles = StyleSheet.create({
   mainVideoContainer: {
     width: '100%',
     height: 400,
-    backgroundColor: '#000000',
+    // backgroundColor: '#000000',
     marginTop: 16,
   },
   videoPreviewWrapper: {

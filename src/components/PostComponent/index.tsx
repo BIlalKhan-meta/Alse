@@ -560,6 +560,7 @@ const styles = StyleSheet.create({
   sideIcon: {
     width: 29,
     height: 28,
+    resizeMode: 'contain',
   },
   sideCount: {
     color: '#fff',

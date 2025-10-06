@@ -1,27 +1,29 @@
 // CreateReel.tsx
+import {CameraRoll} from '@react-native-camera-roll/camera-roll';
+import {useNavigation} from '@react-navigation/native';
+import {ArrowRight, Video as VideoIcon} from 'lucide-react-native';
 import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {
-  View,
-  ScrollView,
-  TouchableOpacity,
-  Text,
+  ActivityIndicator,
   FlatList,
-  TextInput,
   Image,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import {useNavigation} from '@react-navigation/native';
-import styles from './styles';
-import {ensurePhotoPermission, getMessage, Toast} from '../../utils/helpers';
+import Video from 'react-native-video';
+import GlobalHeader from '../../components/GlobalHeader';
 import {useAppDispatch} from '../../hooks/storeHooks';
 import {videoCreate} from '../../store/slices/videoSlice'; // You'll create this
-import GlobalHeader from '../../components/GlobalHeader';
-import {CameraRoll} from '@react-native-camera-roll/camera-roll';
-import {
-  ArrowRight,
-  ChevronRight,
-  Video as VideoIcon,
-} from 'lucide-react-native';
-import Video from 'react-native-video';
+import {ensurePhotoPermission, getMessage, Toast} from '../../utils/helpers';
+import styles from './styles';
+import * as imageStyles from '../CreatePost/styles';
+import {timeHelper} from '../../utils';
+import useImagePicker from '../../hooks/useImagePicker-story';
+import {images} from '../../utils/images';
+import moment from 'moment';
 
 const PRIVACY_OPTIONS = [
   {label: 'Public', value: 'public'},
@@ -38,9 +40,27 @@ const CreateReel: React.FC = () => {
   const [recentVideos, setRecentVideos] = useState<any[]>([]);
   const [title, setTitle] = useState<string>('');
   const [content, setContent] = useState<string>('');
-  const [selectedCategory, setSelectedCategory] = useState<number>(1);
+
   const [privacy, setPrivacy] = useState<string>('public');
   const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  const {imageData, chooseImageFromLibrary} = useImagePicker();
+
+  // console.log('=-=-=', selectedVideo);
+  // console.log('=-=-=', imageData);
+  useEffect(() => {
+    if (imageData) {
+      setSelectedVideo({
+        id: 1, // Unique ID
+        uri: imageData.uri,
+        thumbnail: imageData.uri,
+        // duration: timeHelper(
+        //   new Date((imageData.bitrate || 0) * 1000),
+        // ).toString(),
+        filename: imageData.fileName || 'video.mp4',
+      });
+    }
+  }, [imageData]);
 
   useEffect(() => {
     loadRecentVideos();
@@ -61,17 +81,20 @@ const CreateReel: React.FC = () => {
 
     try {
       const videos = await CameraRoll.getPhotos({
-        first: 20,
+        first: 6,
         assetType: 'Videos',
       });
-      console.log('Videos loaded:', videos.edges.length);
+      // console.log('Videos loaded:', JSON.stringify(videos.edges));
 
       setRecentVideos(
         videos.edges.map((edge, index) => ({
           id: edge.node.timestamp + '_' + index, // Unique ID
           uri: edge.node.image.uri,
           thumbnail: edge.node.image.uri,
-          duration: edge.node.image.playableDuration || 0,
+          // duration: '00000',
+          // duration: timeHelper(
+          //   moment(edge.node.timestamp || 0).format('YYYY-MM-DD HH:mm:ss'),
+          // ).toString(),
           filename: edge.node.image.filename || 'video.mp4',
         })),
       );
@@ -120,12 +143,14 @@ const CreateReel: React.FC = () => {
         navigation.goBack();
       })
       .catch(err => {
+        // console.log('=-=-=', err);
         setIsLoading(false);
         Toast.error(getMessage(err?.message));
       });
   };
 
   const handleBack = () => {
+    setSelectedVideo(null);
     if (step === 'details') {
       setStep('select');
     } else {
@@ -133,33 +158,48 @@ const CreateReel: React.FC = () => {
     }
   };
 
-  const formatDuration = (seconds: number) => {
+  const [durations, setDurations] = useState<any>({});
+
+  const handleLoad = (id: any, data: any) => {
+    setDurations((prev: any) => ({
+      ...prev,
+      [id]: data.duration, // duration in seconds
+    }));
+  };
+
+  const formatDuration = (seconds: any) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const renderVideoItem = ({item}: {item: any}) => (
-    <TouchableOpacity
-      style={styles.videoContainer}
-      onPress={() => setSelectedVideo(item)}>
-      {/* Using Video component for thumbnail preview */}
-      <Video
-        source={{uri: item.uri}}
-        style={styles.videoThumbnail}
-        paused={true}
-        resizeMode="cover"
-      />
-      <View style={styles.durationBadge}>
-        <Text style={styles.durationText}>{formatDuration(item.duration)}</Text>
-      </View>
-      {selectedVideo?.id === item.id && (
-        <View style={styles.selectedOverlay}>
-          <View style={styles.checkmark} />
+  const renderVideoItem = ({item}: {item: any}) => {
+    const id = item.id;
+    const duration = durations[id] || 0;
+
+    return (
+      <TouchableOpacity
+        style={styles.videoContainer}
+        onPress={() => setSelectedVideo(item)}>
+        {/* Using Video component for thumbnail preview */}
+        <Video
+          source={{uri: item.uri}}
+          style={styles.videoThumbnail}
+          paused={true}
+          resizeMode="cover"
+          onLoad={data => handleLoad(id, data)}
+        />
+        <View style={styles.durationBadge}>
+          <Text style={styles.durationText}>{formatDuration(duration)}</Text>
         </View>
-      )}
-    </TouchableOpacity>
-  );
+        {selectedVideo?.id === item.id && (
+          <View style={styles.selectedOverlay}>
+            <View style={styles.checkmark} />
+          </View>
+        )}
+      </TouchableOpacity>
+    );
+  };
 
   // Step 1: Video Selection
   const renderSelectStep = () => (
@@ -176,14 +216,24 @@ const CreateReel: React.FC = () => {
                 repeat
                 muted
               />
+              <TouchableOpacity
+                style={imageStyles.default.removeImageButton}
+                onPress={() => setSelectedVideo(null)}>
+                <Image
+                  source={images.cross}
+                  style={imageStyles.default.removeIcon}
+                />
+              </TouchableOpacity>
             </View>
           ) : (
-            <View style={styles.placeholderContainer}>
+            <TouchableOpacity
+              style={styles.placeholderContainer}
+              onPress={() => chooseImageFromLibrary('video')}>
               <VideoIcon size={48} color="#999999" />
               <Text style={styles.placeholderText}>
                 Select a video to upload
               </Text>
-            </View>
+            </TouchableOpacity>
           )}
         </View>
 
@@ -320,14 +370,32 @@ const CreateReel: React.FC = () => {
         onPress={handleUpload}
         style={[styles.fabButton, isLoading && styles.fabButtonDisabled]}
         disabled={isLoading}>
-        <ArrowRight color="white" size={24} />
+        {!isLoading ? (
+          <ArrowRight color="white" size={24} />
+        ) : (
+          <ActivityIndicator size={24} color={'white'} />
+        )}
       </TouchableOpacity>
     </>
   );
 
   return (
     <View style={styles.container}>
-      <GlobalHeader showBack={step === 'details'} onBackPress={handleBack} />
+      <GlobalHeader />
+      <View
+        style={{
+          flexDirection: 'row',
+          width: '100%',
+          justifyContent: 'space-between',
+          paddingHorizontal: 10,
+        }}>
+        <Text style={{color: '#000000C7', fontWeight: 'bold', fontSize: 16}}>
+          Upload a Reel
+        </Text>
+        <TouchableOpacity onPress={handleBack}>
+          <Text style={{color: '#000000C7', fontSize: 16}}>Cancel</Text>
+        </TouchableOpacity>
+      </View>
       {step === 'select' ? renderSelectStep() : renderDetailsStep()}
     </View>
   );
