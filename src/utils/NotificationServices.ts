@@ -130,7 +130,7 @@ const createNotificationChannel = () => {
       channelId: 'channel-id2',
       channelName: 'My Channel',
     },
-    created => console.log(`createChannel returned '${created}'`),
+    created => console.log(`createChannelxxx returned '${created}'`),
   );
 };
 
