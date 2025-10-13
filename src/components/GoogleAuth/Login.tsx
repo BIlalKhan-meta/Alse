@@ -1,16 +1,10 @@
-import {
-  ActivityIndicator,
-  Image,
-  StyleSheet,
-  TouchableOpacity,
-} from 'react-native';
-import CustomButton from '../CustomButton';
-import styles from './styles';
-import {signInWithGoogle} from './GoogleService';
+import React, {useEffect} from 'react';
+import {useTranslation} from 'react-i18next';
+import {ActivityIndicator, Image, TouchableOpacity} from 'react-native';
 import Toast from 'react-native-toast-message';
 import {colors} from '../../utils/theme';
-import {useTranslation} from 'react-i18next';
-import React from 'react';
+import {configureGoogleSignin, signInWithGoogle} from './GoogleService';
+import styles from './styles';
 
 export default function GoogleLogin({
   onSuccess,
@@ -19,9 +13,14 @@ export default function GoogleLogin({
   onSuccess: (user: any) => void;
   loading: boolean;
 }) {
+  useEffect(() => {
+    configureGoogleSignin();
+  }, []);
+
+  const {t} = useTranslation();
   const handleGoogleLogin = async () => {
-    const userInfo = await signInWithGoogle();
-    const {t} = useTranslation();
+    const {userInfo}: any = await signInWithGoogle();
+    // console.log('=-=-=', userInfo.data?.idToken);
 
     if (!userInfo) {
       console.log('GOOGLE ERROR', userInfo);

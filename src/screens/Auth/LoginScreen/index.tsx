@@ -175,6 +175,7 @@ const LoginScreen: React.FC = () => {
   };
 
   const onGoogleLoginSuccess = (user: any) => {
+    console.log('=-=-=-=> got it');
     if (googleSubmitted) {
       return;
     }

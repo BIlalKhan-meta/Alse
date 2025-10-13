@@ -7,9 +7,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:507515511521:android:f8219751a94af599dbcda0",
+        "mobilesdk_app_id": "1:507515511521:android:c851c543cd4c4ee0dbcda0",
         "android_client_info": {
-          "package_name": "com.blitzapp.alenga"
+          "package_name": "com.blitzapp.alenga.alse"
         }
       },
       "oauth_client": [],

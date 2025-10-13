@@ -17,7 +17,7 @@ android {
     compileSdk rootProject.ext.compileSdkVersion
 
     defaultConfig {
-        applicationId "com.blitzapp.alenga"
+        applicationId "com.blitzapp.alenga.alse"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 23
