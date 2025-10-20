@@ -20,8 +20,8 @@ android {
         applicationId "com.blitzapp.alenga.alse"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 23
-        versionName "0.3.1"
+        versionCode 2
+        versionName "1.0"
 
         javaCompileOptions {
             annotationProcessorOptions {
@@ -58,7 +58,7 @@ android {
         }
         release {
             signingConfig signingConfigs.release
-            shrinkResources true
+            // shrinkResources true
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }
