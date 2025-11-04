@@ -21,6 +21,8 @@ export const colors = {
   green: '#0C959B',
   midGray: '#EFEFEF',
   midDark: '#8E8E8E',
+  gray: 'gray',
+  lightGray: 'gray',
 };
 
 export const appShadow: Record<string, any> = {

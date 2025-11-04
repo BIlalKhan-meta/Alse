@@ -17,7 +17,7 @@ export interface AgoraTokenResponse {
 }
 
 export interface LiveStreamResponse {
-  status: boolean;
+  status: number;
   message: string;
   code: number;
   data: {
@@ -121,7 +121,10 @@ export const createCallSession = async (
     // Start a live stream for the call
     const liveStreamResponse = await startLiveStream();
 
-    if (liveStreamResponse.data.status) {
+    if (
+      liveStreamResponse?.data?.live_stream?.status &&
+      liveStreamResponse?.status === 200
+    ) {
       return {
         status: true,
         message: 'Call session created successfully',

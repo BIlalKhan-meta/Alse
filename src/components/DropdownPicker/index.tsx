@@ -9,6 +9,7 @@ import {fontSizes, vh, vw} from '../../constant';
 import fonts from '../../assets/fonts';
 import InterBoldLabel from '../Text/InterBoldLabel';
 import InterRegularSmall from '../Text/InterRegularSmall';
+import React from 'react';
 
 interface DropdownPickerProps {
   placeholder: string;
@@ -72,7 +73,7 @@ const styles = StyleSheet.create({
   container: {marginTop: vh * 4},
   pickercontainer: {
     fontFamily: fonts.Inter.Bold,
-    color: colors.grayText,
+    color: colors.gray,
     fontSize: fontSizes.f11,
     height: vh * 6,
     marginTop: vh * 2,

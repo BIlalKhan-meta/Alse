@@ -22,6 +22,7 @@ import moment from 'moment';
 import Loader from '../../components/Loader';
 import {EmptyComponent} from '../../components/EmptyComponent';
 import SearchComponent from '../../components/SearchComponent';
+import CustomeImage from '../../components/CustomeImage';
 interface ChatItem {
   id: number;
   name: string;
@@ -114,10 +115,7 @@ const ChatScreen: React.FC = () => {
       }>
       <View style={styles.chatItem}>
         <View style={styles.avatarContainer}>
-          <Image
-            source={item?.image ? {uri: item?.image} : images.profile}
-            style={styles.avatar}
-          />
+          <CustomeImage source={{uri: item?.image}} style={styles.avatar} />
           <View style={styles.onlineIndicator} />
         </View>
         <View style={styles.chatInfo}>

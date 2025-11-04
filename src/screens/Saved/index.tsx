@@ -1,50 +1,42 @@
 // Home.tsx
-import React, {act, useEffect, useLayoutEffect, useRef, useState} from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Image,
-  TouchableOpacity,
-  ScrollView,
-  FlatList,
-} from 'react-native';
-import {images} from '../../utils/images';
-import {colors} from '../../utils/theme';
-import {fontSizes, vh, vw} from '../../constant';
-import Card from '../../components/Card';
-import PostComponent from '../../components/PostComponent';
-import InterBold from '../../components/Text/InterBold';
-import CommentsModal from '../../components/CommentsModal';
-import styles from './styles';
-import HeaderComponent from '../../components/HeaderComponent';
 import {useNavigation} from '@react-navigation/native';
+import React, {useEffect, useLayoutEffect, useRef, useState} from 'react';
+import {
+  FlatList,
+  Image,
+  ScrollView,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import Toast from 'react-native-toast-message';
+import {useSelector} from 'react-redux';
+import {createPost, reportPost} from '../../api/home';
+import {getSavedItems, removeSavedItem, saveItem} from '../../api/menu';
+import Card from '../../components/Card';
+import CommentsModal from '../../components/CommentsModal';
+import ContentSavedScreen from '../../components/ContentSaved';
+import {EmptyComponent} from '../../components/EmptyComponent';
+import GeneralModal from '../../components/GeneralModal';
+import LikesModal from '../../components/LikesModal';
+import Loader from '../../components/Loader';
+import MediaCard from '../../components/MediaCard';
+import PostComponent from '../../components/PostComponent';
+import ReactModal from '../../components/ReactModal';
 import InterRegular from '../../components/Text/InterRegular';
 import WishlistScreen from '../../components/WishList';
-import ContentSavedScreen from '../../components/ContentSaved';
-import {Picker} from '@react-native-picker/picker';
-import ReactModal from '../../components/ReactModal';
 import {reactions} from '../../dummyData';
-import {getSavedItems, removeSavedItem, saveItem} from '../../api/menu';
-import dayjs from 'dayjs';
+import {useAppDispatch} from '../../hooks/storeHooks';
+import {selectUserProfile} from '../../store/slices/authSlice';
 import {
   getCommentPost,
   likePost,
   PostDelete,
-  updateLike,
 } from '../../store/slices/homeSlice';
-import {useAppDispatch} from '../../hooks/storeHooks';
-import {createPost, reportPost, savePost} from '../../api/home';
-import GeneralModal from '../../components/GeneralModal';
-import {getMessage} from '../../utils/helpers';
-import Toast from 'react-native-toast-message';
-import Loader from '../../components/Loader';
-import {EmptyComponent} from '../../components/EmptyComponent';
 import {timeFormat} from '../../utils';
-import MediaCard from '../../components/MediaCard';
-import LikesModal from '../../components/LikesModal';
-import {useSelector} from 'react-redux';
-import {selectUserProfile} from '../../store/slices/authSlice';
+import {getMessage} from '../../utils/helpers';
+import {images} from '../../utils/images';
+import {colors} from '../../utils/theme';
+import styles from './styles';
 
 const productFilter = [
   {name: 'a', id: 1},

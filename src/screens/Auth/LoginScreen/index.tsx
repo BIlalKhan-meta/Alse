@@ -26,7 +26,7 @@ interface FormValues {
   password: string;
 }
 async function storeUserSession(identifier: string, password: string) {
-  console.log('email ===>', identifier, 'Password= ===>', password);
+  // console.log('email ===>', identifier, 'Password= ===>', password);
   await EncryptedStorage.setItem(
     'user_session',
     JSON.stringify({
@@ -64,8 +64,8 @@ const LoginScreen: React.FC = () => {
   const [isSelected, setIsSelected] = useState<boolean>(false);
   const [deviceToken, setDeviceToken] = useState<string | undefined>('');
   const [initialValues, setInitialValues] = useState({
-    identifier: '',
-    password: '',
+    identifier: __DEV__ ? 'kendricklazarus2@gmail.com' : '',
+    password: __DEV__ ? 'Iphone@9876' : '',
   });
 
   const {t} = useTranslation();

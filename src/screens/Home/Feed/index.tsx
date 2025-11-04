@@ -27,7 +27,7 @@ import {getCountriesList, reportPost} from '../../../api/home';
 import {removeSavedItem, saveItem} from '../../../api/menu';
 import {getProfile} from '../../../api/profile';
 import {checkIsSeller} from '../../../api/shop';
-import {vh} from '../../../constant';
+import {vh, vw} from '../../../constant';
 import {getCountries} from '../../../store/slices/generalSlice';
 import {timeFormat} from '../../../utils';
 import InAppBrowser from 'react-native-inappbrowser-reborn';
@@ -44,6 +44,8 @@ import {Plus} from 'lucide-react-native';
 import PostSkeleton from '../../../components/SkeletonLoaders';
 import {useTranslation} from 'react-i18next';
 import MediaModal from '../../../components/MediaModal';
+import {Picker} from '@react-native-picker/picker';
+import {values} from 'lodash';
 
 const Home: React.FC = () => {
   const flatListRef = useRef<FlatList>(null);
@@ -264,7 +266,7 @@ const Home: React.FC = () => {
   };
 
   const handleDotPress = (postId: number | null) => {
-    setActivePostId(activePostId == null ? postId : null);
+    setActivePostId(activePostId === null ? postId : null);
   };
 
   const handleDelete = () => {
@@ -400,6 +402,7 @@ const Home: React.FC = () => {
         }}
         handleReportPost={() => {
           setReportVisible({visibility: true, id: item?.id});
+          handleDotPress(null);
         }}
         handleReportPress={() => {
           setActivePostId(null);
@@ -410,7 +413,10 @@ const Home: React.FC = () => {
         }}
         isLiked={item?.is_liked}
         isSaved={item?.is_saved}
-        onMediaPress={() => handleMediaPress(item)}
+        onMediaPress={() => {
+          handleMediaPress(item);
+          handleDotPress(null);
+        }}
       />
     );
   };

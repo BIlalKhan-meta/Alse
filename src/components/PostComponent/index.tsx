@@ -1,32 +1,114 @@
 // PostComponent.tsx
-import React, {useEffect, useState} from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Image,
-  TouchableOpacity,
-  Share,
-  Pressable,
-  ActivityIndicator,
-} from 'react-native';
-import {images} from '../../utils/images';
-import Card from '../Card';
-import {fontSizes, vh} from '../../constant';
-import InterMedium from '../Text/InterMedium';
-import {colors} from '../../utils/theme';
-import InterBold from '../Text/InterBold';
-import InterLight from '../Text/InterLight';
-import InterRegular from '../Text/InterRegular';
 import {useNavigation} from '@react-navigation/native';
-import ReportBlockModal from '../ReportBlockModal';
-import {useSelector} from 'react-redux';
-import {selectUserProfile} from '../../store/slices/authSlice';
-import {createPost} from '../../api/home';
-import Video from 'react-native-video';
-import {getTimeOffset} from '../../utils/index';
-import {HeartIcon} from 'lucide-react-native';
+import React, {useEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  Linking,
+  PermissionsAndroid,
+  Pressable,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  Platform,
+} from 'react-native';
+import RNFS from 'react-native-fs';
+import Video from 'react-native-video';
+import {useSelector} from 'react-redux';
+import {fontSizes, vh} from '../../constant';
+import {selectUserProfile} from '../../store/slices/authSlice';
+import {images} from '../../utils/images';
+import {colors} from '../../utils/theme';
+import Card from '../Card';
+import CustomImage from '../CustomeImage';
+import ReportBlockModal from '../ReportBlockModal';
+import InterBold from '../Text/InterBold';
+import InterRegular from '../Text/InterRegular';
+import {CameraRoll} from '@react-native-camera-roll/camera-roll';
+
+const requestStoragePermission = async () => {
+  try {
+    if (Platform.OS !== 'android') return true; // iOS doesn't need it
+
+    let permission = PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE;
+
+    if (Platform.Version >= 33) {
+      // Android 13+ (API 33)
+      permission = PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES;
+    }
+
+    const granted = await PermissionsAndroid.request(permission, {
+      title: 'Storage Permission Required',
+      message: 'This app needs access to your storage to download images.',
+      buttonNeutral: 'Ask Me Later',
+      buttonNegative: 'Cancel',
+      buttonPositive: 'OK',
+    });
+
+    if (granted === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN) {
+      Alert.alert(
+        'Permission Blocked',
+        'Storage permission is permanently denied. Please enable it from settings.',
+        [
+          {text: 'Cancel', style: 'cancel'},
+          {text: 'Open Settings', onPress: () => Linking.openSettings()},
+        ],
+      );
+      return false;
+    }
+
+    return granted === PermissionsAndroid.RESULTS.GRANTED;
+  } catch (err) {
+    console.warn(err);
+    return false;
+  }
+};
+
+const saveToGallery = async (filePath: any) => {
+  try {
+    const hasPermission = await requestStoragePermission();
+    if (!hasPermission) return;
+
+    const savedUri = await CameraRoll.save(filePath, {
+      type: 'photo',
+      album: 'Alenga App', // optional custom album name
+    });
+
+    console.log('✅ Saved to gallery:', savedUri);
+    Alert.alert('Success', 'Image saved to gallery!');
+  } catch (error) {
+    console.error('Save error:', error);
+    Alert.alert('Error', 'Failed to save image to gallery.');
+  }
+};
+
+const downloadImage = async (imageUrl: any) => {
+  try {
+    // Define the local path where you want to save the image
+    const fileName = imageUrl.split('/').pop(); // extract file name from URL
+    const downloadDest = `${RNFS.DocumentDirectoryPath}/${fileName}`;
+
+    // Start downloading
+    const result = await RNFS.downloadFile({
+      fromUrl: imageUrl,
+      toFile: downloadDest,
+    }).promise;
+
+    if (result.statusCode === 200) {
+      console.log('Image downloaded successfully:', downloadDest);
+      return downloadDest;
+    } else {
+      console.log('Download failed with status code:', result.statusCode);
+      return null;
+    }
+  } catch (error) {
+    console.error('Error downloading image:', error);
+    return null;
+  }
+};
 
 interface PostProps {
   id?: number;
@@ -122,12 +204,30 @@ const PostComponent: React.FC<PostProps> = ({
     // navigation.navigate('Profile', {account, id});
   };
 
+  const handleDownload = async () => {
+    onDotPress();
+    const hasPermission = await requestStoragePermission();
+
+    if (hasPermission) {
+      const filePath = await downloadImage(postImage);
+      if (filePath) {
+        saveToGallery(filePath);
+        console.log('Saved to:', filePath);
+      }
+    }
+  };
+
   const options = myAccount
     ? [
         {text: 'Edit', onPress: () => handleReportPress()},
         {text: 'Delete', onPress: () => handleBlockPress()},
       ]
-    : [{text: 'Report', onPress: () => handleReportPost()}];
+    : [
+        {text: 'Report', onPress: () => handleReportPost()},
+        ...(postImage && mediaType === 'image'
+          ? [{text: 'Download', onPress: handleDownload}]
+          : []),
+      ];
 
   const handleReadMoreToggle = () => {
     setShowFullText(!showFullText);
@@ -251,8 +351,9 @@ const PostComponent: React.FC<PostProps> = ({
             <View style={styles.headerOverlay}>
               <View style={styles.userInfo}>
                 <TouchableOpacity disabled={myAccount} onPress={goToProfile}>
-                  <Image
-                    source={avatar ? {uri: avatar} : images.user}
+                  <CustomImage
+                    dummyImage={images.user}
+                    source={{uri: avatar}}
                     style={styles.avatar}
                   />
                 </TouchableOpacity>
