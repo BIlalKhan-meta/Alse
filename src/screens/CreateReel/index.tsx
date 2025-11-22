@@ -24,6 +24,7 @@ import {timeHelper} from '../../utils';
 import useImagePicker from '../../hooks/useImagePicker-story';
 import {images} from '../../utils/images';
 import moment from 'moment';
+import {createVideo} from '../../api/reels';
 
 const PRIVACY_OPTIONS = [
   {label: 'Public', value: 'public'},
@@ -124,7 +125,7 @@ const CreateReel: React.FC = () => {
 
     const formData = new FormData();
     formData.append('title', title);
-    formData.append('category_id', 1); // Fixed category ID for reels
+    formData.append('category_id', 6); // Fixed category ID for reels
     formData.append('content', content);
     formData.append('privacy', privacy);
     formData.append('video_file', {
@@ -135,18 +136,31 @@ const CreateReel: React.FC = () => {
 
     setIsLoading(true);
 
-    dispatch(videoCreate({formData, categoryId: 1}))
-      .unwrap()
+    createVideo(formData)
       .then(res => {
+        console.log('=-=-=>>>', JSON.stringify(res));
         setIsLoading(false);
         Toast.success('Video uploaded successfully');
         navigation.goBack();
       })
       .catch(err => {
-        // console.log('=-=-=', err);
+        console.log('=-=-= error: ', err);
         setIsLoading(false);
         Toast.error(getMessage(err?.message));
       });
+
+    // dispatch(videoCreate({formData, categoryId: 1}))
+    //   .unwrap()
+    //   .then(res => {
+    //     setIsLoading(false);
+    //     Toast.success('Video uploaded successfully');
+    //     navigation.goBack();
+    //   })
+    //   .catch(err => {
+    //     console.log('=-=-=', err);
+    //     setIsLoading(false);
+    //     Toast.error(getMessage(err?.message));
+    //   });
   };
 
   const handleBack = () => {

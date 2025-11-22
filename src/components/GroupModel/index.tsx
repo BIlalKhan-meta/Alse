@@ -1,7 +1,7 @@
 import {BlurView} from '@react-native-community/blur';
 import {useNavigation} from '@react-navigation/native';
 import Checkbox from 'expo-checkbox';
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -18,12 +18,15 @@ import {colors} from '../../utils/theme';
 import GeneralModal from '../GeneralModal';
 import HorizontalSeparator from '../HorizontalSeparator';
 import styles from './styles'; // Assuming you have styles in a separate file
-import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
+// import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 
 import {vh, vw} from '../../constant';
 import Toast from 'react-native-toast-message';
 import {useDispatch} from 'react-redux';
 import {useTranslation} from 'react-i18next';
+import useImagePicker from '../../hooks/useImagePicker-story';
+import {changeUrlForData} from '../../utils/helpers';
+import CustomeImage from '../CustomeImage';
 
 interface User {
   id: number;
@@ -59,29 +62,14 @@ const NewGroupModal: React.FC<NewGroupModalProps> = props => {
 
   const {t} = useTranslation();
 
+  const {chooseImageFromLibrary, pendingMedia} = useImagePicker();
+
+  useEffect(() => {
+    if (pendingMedia?.uri) setImage(pendingMedia?.uri);
+  }, [pendingMedia]);
+
   const Camera = () => {
-    let options = {
-      mediaType: 'photo', // 'photo' or 'video'
-      maxWidth: 300,
-      maxHeight: 550,
-      quality: 1,
-    };
-    launchCamera(options, response => {
-      if (response.didCancel) {
-        console.log('User cancelled camera picker');
-      } else if (response.errorCode == 'camera_unavailable') {
-        console.log('Camera not available on device');
-      } else if (response.errorCode == 'permission') {
-        console.log('Permission not satisfied');
-      } else {
-        console.log('response ===>', response);
-
-        setImage(response?.assets[0]?.uri);
-
-        // Set the captured image URI
-        // Handle further processing if needed (e.g., setting file type)
-      }
-    });
+    chooseImageFromLibrary('mixed', true);
   };
   const renderUserItem = ({item}: {item: User}) => {
     // console.log('item ====>', item);
@@ -90,16 +78,14 @@ const NewGroupModal: React.FC<NewGroupModalProps> = props => {
         <TouchableOpacity
           style={styles.userItem}
           onPress={() => toggleSelectUser(item.id)}>
-          <Image
-            source={
-              item?.image ? {uri: item?.image} : images.placeholderProfile
-            }
+          <CustomeImage
+            source={{uri: changeUrlForData(item?.avatar)}}
             style={styles.userAvatar}
           />
-          <Text style={styles.userName}>{item?.full_name}</Text>
+          <Text style={styles.userName}>{item?.name}</Text>
 
           <Checkbox
-            style={styles.checkbox}
+            // style={styles.checkbox}
             value={selectedUsers.includes(item?.id)}
             onValueChange={() => toggleSelectUser(item?.id)}
             color={selectedUsers.includes(item.id) ? colors.blue : undefined}

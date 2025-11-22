@@ -28,6 +28,7 @@ import ReportBlockModal from '../ReportBlockModal';
 import InterBold from '../Text/InterBold';
 import InterRegular from '../Text/InterRegular';
 import {CameraRoll} from '@react-native-camera-roll/camera-roll';
+import {changeUrlForData} from '../../utils/helpers';
 
 const requestStoragePermission = async () => {
   try {
@@ -272,6 +273,9 @@ const PostComponent: React.FC<PostProps> = ({
     sharePost(form);
   };
 
+  // console.log('=-=-=', changeUrlForData(postImage));
+  // console.log('=-=-=', postImage);
+
   return (
     <Pressable onPress={onCardPress}>
       <Card style={styles.card}>
@@ -289,7 +293,11 @@ const PostComponent: React.FC<PostProps> = ({
             <View style={styles.userInfo}>
               <TouchableOpacity disabled={myAccount} onPress={goToProfile}>
                 <Image
-                  source={avatar && !error ? {uri: avatar} : images.defaultDp}
+                  source={
+                    avatar && !error
+                      ? {uri: changeUrlForData(avatar)}
+                      : images.defaultDp
+                  }
                   style={styles.avatar}
                   onError={() => setError(true)}
                 />
@@ -314,7 +322,10 @@ const PostComponent: React.FC<PostProps> = ({
               onPress={onMediaPress}
               style={styles.mediaTouchable}>
               {mediaType === 'image' ? (
-                <Image source={{uri: postImage}} style={styles.postImage} />
+                <Image
+                  source={{uri: changeUrlForData(postImage)}}
+                  style={styles.postImage}
+                />
               ) : (
                 <View>
                   {videoLoad && (
@@ -330,7 +341,7 @@ const PostComponent: React.FC<PostProps> = ({
                     onPress={handleVideoPause}>
                     <Video
                       onReadyForDisplay={() => setVideoLoad(false)}
-                      source={{uri: postImage}}
+                      source={{uri: changeUrlForData(postImage)}}
                       style={styles.postImage}
                       resizeMode="cover"
                       repeat={true}
@@ -353,7 +364,7 @@ const PostComponent: React.FC<PostProps> = ({
                 <TouchableOpacity disabled={myAccount} onPress={goToProfile}>
                   <CustomImage
                     dummyImage={images.user}
-                    source={{uri: avatar}}
+                    source={{uri: changeUrlForData(avatar)}}
                     style={styles.avatar}
                   />
                 </TouchableOpacity>

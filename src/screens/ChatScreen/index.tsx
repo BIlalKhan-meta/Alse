@@ -17,12 +17,20 @@ import InterRegular from '../../components/Text/InterRegular';
 import GeneralModal from '../../components/GeneralModal';
 import NewGroupModal from '../../components/GroupModel';
 import _ from 'lodash';
-import {getConversations} from '../../api/home';
+import {
+  createChat,
+  getAllLogs,
+  getAllUsers,
+  getConversations,
+  getFollowersList,
+  getFollowingList,
+} from '../../api/home';
 import moment from 'moment';
 import Loader from '../../components/Loader';
 import {EmptyComponent} from '../../components/EmptyComponent';
 import SearchComponent from '../../components/SearchComponent';
 import CustomeImage from '../../components/CustomeImage';
+import SelectUserModal from './SelectUserModal';
 interface ChatItem {
   id: number;
   name: string;
@@ -40,6 +48,7 @@ interface ChatItem {
 
 const ChatScreen: React.FC = () => {
   const [modalVisible, setModalVisible] = useState(false);
+  const [createChatModal, setCreateChatModal] = useState(false);
   const [reportVisible, setReportVisible] = useState(false);
   const [ReportSuccess, setReportSuccess] = useState(false);
   const [blockVisible, setBlockVisible] = useState(false);
@@ -49,6 +58,7 @@ const ChatScreen: React.FC = () => {
   const [activeTab, setActiveTab] = useState('Chats');
 
   const [data, setData] = useState([]);
+  const [logsData, setLogsData] = useState([]);
 
   const IsFocused = useIsFocused();
   const navigation = useNavigation();
@@ -67,8 +77,23 @@ const ChatScreen: React.FC = () => {
       });
   };
 
+  const getLogsData = () => {
+    setLoader(true);
+    getAllLogs()
+      .then(res => {
+        // console.log('-------', JSON.stringify(res));
+        setLogsData(res?.data?.data || []);
+        setLoader(false);
+      })
+      .catch(Err => {
+        setLoader(false);
+
+        console.log('Error from get Conversation ', Err);
+      });
+  };
+
   const handleSearchTxt = _.debounce(val => {
-    console.log('val ==>', val);
+    // console.log('val ==>', val);
     const searchData = {
       search: val,
     };
@@ -88,6 +113,7 @@ const ChatScreen: React.FC = () => {
 
   useEffect(() => {
     getData();
+    getLogsData();
   }, [IsFocused]);
 
   const closeModal = () => {
@@ -176,29 +202,90 @@ const ChatScreen: React.FC = () => {
       <View style={styles.tabContainer}>
         {renderTabButton('Chats')}
         {renderTabButton('Groups')}
-        {renderTabButton('Favourite')}
+        {renderTabButton('Call Logs')}
       </View>
 
       {/* Chat List */}
-      <View style={styles.chatListContainer}>
-        <FlatList
-          showsVerticalScrollIndicator={false}
-          data={data}
-          renderItem={renderItem}
-          keyExtractor={(item, index) =>
-            item?.id?.toString() || index.toString()
-          }
-          contentContainerStyle={styles.chatList}
-          ListEmptyComponent={() => <EmptyComponent text={'No chat found'} />}
-        />
-      </View>
+      {activeTab === 'Chats' && (
+        <View style={styles.chatListContainer}>
+          <FlatList
+            showsVerticalScrollIndicator={false}
+            data={data}
+            renderItem={renderItem}
+            keyExtractor={(item, index) =>
+              item?.id?.toString() || index.toString()
+            }
+            contentContainerStyle={styles.chatList}
+            ListEmptyComponent={() => <EmptyComponent text={'No chat found'} />}
+          />
+        </View>
+      )}
+
+      {/* Logs */}
+      {activeTab === 'Call Logs' && (
+        <View style={styles.chatListContainer}>
+          <FlatList
+            showsVerticalScrollIndicator={false}
+            data={logsData}
+            renderItem={({item}: {item: ChatItem}) => (
+              <TouchableOpacity
+                style={styles.chatContainer}
+                // onPress={() =>
+                //   (navigation as any).navigate('ChatOngoing', {
+                //     id: item?.id,
+                //     name: item?.name,
+                //     phoneNumber: item?.phone_number || '+1234567890', // Test phone number for debugging
+                //   })
+                // }
+              >
+                <View style={styles.chatItem}>
+                  <View style={styles.avatarContainer}>
+                    <CustomeImage
+                      source={{uri: item?.image}}
+                      style={styles.avatar}
+                    />
+                    <View style={styles.onlineIndicator} />
+                  </View>
+                  <View style={styles.chatInfo}>
+                    <View style={styles.chatHeader}>
+                      <InterMedium style={styles.name}>{item.name}</InterMedium>
+                      <InterRegular style={styles.time}>
+                        {moment(item?.last_message?.created_at)
+                          .local()
+                          .fromNow()}
+                      </InterRegular>
+                    </View>
+                    <InterRegular style={styles.lastMessage}>
+                      {item.last_message?.message
+                        ? item.last_message?.message
+                        : 'No messages yet'}
+                    </InterRegular>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            )}
+            keyExtractor={(item, index) =>
+              item?.id?.toString() || index.toString()
+            }
+            contentContainerStyle={styles.chatList}
+            ListEmptyComponent={() => <EmptyComponent text={'No Logs found'} />}
+          />
+        </View>
+      )}
 
       {/* Floating Action Button */}
       <TouchableOpacity
         style={styles.fab}
-        onPress={() => setModalVisible(true)}>
+        onPress={() => setCreateChatModal(!createChatModal)}>
         <Image source={images.chatIcon} style={styles.fabIcon} />
       </TouchableOpacity>
+
+      {/* Floating Action Button for group chat */}
+      {/* <TouchableOpacity
+        style={styles.fab}
+        onPress={() => setModalVisible(true)}>
+        <Image source={images.chatIcon} style={styles.fabIcon} />
+      </TouchableOpacity> */}
 
       <GeneralModal
         visible={reportVisible}
@@ -215,6 +302,35 @@ const ChatScreen: React.FC = () => {
         }}
         secondaryBtn={true}
         primaryBtn={false}
+      />
+
+      <SelectUserModal
+        visible={createChatModal}
+        onClose={() => setCreateChatModal(false)}
+        onSelect={user => {
+          setLoader(true);
+          const form = new FormData();
+          form.append('user_id', user?.id);
+          console.log('formformformformform ====>', form);
+          createChat({user_id: user?.id})
+            .then(res => {
+              console.log('======>>>>', res);
+              setLoader(false);
+              getData();
+
+              (navigation as any).navigate('ChatOngoing', {
+                id: res?.data?.data?.id,
+                name: res?.data?.data?.name,
+                phoneNumber: res?.data?.data?.phoneNumber,
+              });
+
+              // console.log('Respose from Create Chat', res?.data?.data);
+            })
+            .catch(err => {
+              setLoader(false);
+              console.log('Error from Create Chat -----', err);
+            });
+        }}
       />
 
       <NewGroupModal

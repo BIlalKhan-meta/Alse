@@ -180,3 +180,9 @@ export const getDateSection = date => {
     return itemDate.format('MMM DD, YYYY');
   }
 };
+
+export const changeUrlForData = (url: string) =>
+  (url || '')?.replaceAll(
+    'https://elombelo-bucket.s3.us-west-1.amazonaws.com',
+    'https://alse-backend-bucket.s3.ap-southeast-2.amazonaws.com',
+  );

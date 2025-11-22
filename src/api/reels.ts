@@ -20,3 +20,8 @@ export const uploadVideo = (formData: FormData, categoryId: number) => {
     },
   );
 };
+export const createVideo = (formData: FormData) => {
+  return axiosInstance.post('/video/create', formData, {
+    formData: true,
+  });
+};

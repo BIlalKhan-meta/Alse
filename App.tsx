@@ -89,7 +89,7 @@ function App(): React.JSX.Element {
 
             <NavigationContainer theme={theme}>
               <MainNavigation />
-              {/* {__DEV__ && <NetworkLoggerFAB />} */}
+              {__DEV__ && <NetworkLoggerFAB />}
             </NavigationContainer>
 
             <Toast />

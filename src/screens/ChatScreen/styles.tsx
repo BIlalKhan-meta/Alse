@@ -73,6 +73,8 @@ const styles = StyleSheet.create({
     paddingVertical: vh * 2,
     paddingHorizontal: vw * 6,
     marginRight: vw * 4,
+    // backgroundColor: 'red',
+    // width: '33%',
   },
   activeTabButton: {
     borderBottomWidth: 2,

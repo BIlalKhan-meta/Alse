@@ -54,6 +54,7 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
   },
   input: {
+    color: 'black',
     flex: 1,
     height: 40,
     fontSize: 16,

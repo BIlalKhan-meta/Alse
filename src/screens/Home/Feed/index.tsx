@@ -59,6 +59,8 @@ const Home: React.FC = () => {
 
   const {posts} = useAppSelector(state => state.home);
 
+  // console.log('=-=-=', JSON.stringify(posts));
+
   const [loader, _setLoader] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true); // New state for initial load
 
@@ -371,6 +373,7 @@ const Home: React.FC = () => {
 
   const renderPost = ({item, index}: any) => {
     const isFocused = focusedIndex === index;
+    // if (index !== 0) return <></>;
     return (
       <PostComponent
         isFocused={isFocused}

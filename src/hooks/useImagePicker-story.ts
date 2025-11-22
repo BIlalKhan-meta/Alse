@@ -28,8 +28,8 @@ const useImagePicker = () => {
           setPreviewMode(true);
         } else {
           // Direct upload without preview
-          setImage(response.assets[0].uri);
-          setImageData(response.assets[0]);
+          setImage(response?.assets[0]?.uri);
+          setImageData(response?.assets[0]);
         }
       }
     });

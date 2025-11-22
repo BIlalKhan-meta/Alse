@@ -161,3 +161,7 @@ export const markRead = (id: string) => {
 export const markAllRead = () => {
   return axiosInstance.post(`${endpoints.home.markAllRead}`);
 };
+
+export const getAllLogs = () => {
+  return axiosInstance.get('/call-history');
+};
