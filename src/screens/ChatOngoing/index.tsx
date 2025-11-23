@@ -1,38 +1,48 @@
-import React, {useState, useEffect, useLayoutEffect, useCallback} from 'react';
+import {useIsFocused, useNavigation} from '@react-navigation/native';
+import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
 import {
-  View,
-  Text,
-  TouchableOpacity,
-  Image,
-  SafeAreaView,
-  StatusBar,
   Alert,
+  Image,
+  Keyboard,
+  Modal,
   PermissionsAndroid,
   Platform,
+  SafeAreaView,
+  StatusBar,
+  Text,
   TextInput,
-  Modal,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import {GiftedChat, IMessage} from 'react-native-gifted-chat';
-import {useIsFocused, useNavigation} from '@react-navigation/native';
+import {GiftedChat, IMessage, InputToolbar} from 'react-native-gifted-chat';
 import {images} from '../../utils/images';
 import {colors} from '../../utils/theme';
 import {renderBubble, renderMessageText} from './MessageContainer';
 import styles from './styles';
 
-import {renderInputToolbar} from './InputToolbar';
-import {getChat, createMessage} from '../../api/home';
-import {selectUserProfile} from '../../store/slices/authSlice';
+import {EllipsisVertical, Phone, Video} from 'lucide-react-native';
 import {useSelector} from 'react-redux';
+import {
+  createMessage,
+  getChat,
+  uploadImages,
+  uploadVideo,
+} from '../../api/home';
+import {selectUserProfile} from '../../store/slices/authSlice';
 import {
   connectSocket,
   disconnectSocket,
   emitMessage,
   listenMessage,
 } from '../../utils/socket';
-import {EllipsisVertical, Phone, Video} from 'lucide-react-native';
+import {renderComposer, renderSend} from './InputToolbar';
 // @ts-ignore
 import call from 'react-native-phone-call';
 import callManagerService from '../../services/callManagerService';
+import ReportBlockModal from '../../components/ReportBlockModal';
+import {DEVICE_HEIGHT} from '../../constant';
+import useImagePicker from '../../hooks/useImagePicker-story';
+import {createFile} from '../../utils/helpers';
 
 interface Props {
   route?: {
@@ -55,6 +65,9 @@ const ChatOngoing: React.FC<Props> = props => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isCalling, setIsCalling] = useState(false);
   const [isVideoCalling, setIsVideoCalling] = useState(false);
+  const [optionVisibal, setOptionVisible] = useState(false);
+
+  const toggleOption = () => setOptionVisible(!optionVisibal);
 
   // console.log("USER++++++++++++++++++",user?.full_name)
 
@@ -319,6 +332,7 @@ const ChatOngoing: React.FC<Props> = props => {
     getChat(props?.route?.params?.id)
       .then((res: any) => {
         const messagesData = res?.data?.data || [];
+        // console.log('----', JSON.stringify(messagesData));
         const formattedMessages = messagesData.map((item: any) => ({
           _id: item?.id || Math.random(),
           chat_id: item?.chat_id,
@@ -416,6 +430,73 @@ const ChatOngoing: React.FC<Props> = props => {
     });
   }, [navigation]);
 
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener('keyboardDidShow', () => {
+      setKeyboardVisible(true);
+    });
+    const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
+      setKeyboardVisible(false);
+    });
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
+
+  const {chooseFromLibrary} = useImagePicker();
+  // console.log('---->>', imageData?.type?.includes('image'));
+
+  const onSendImage = async () => {
+    const asset = await chooseFromLibrary();
+    // console.log('=-=-=', asset);
+
+    if (asset?.uri) {
+      const formData = new FormData();
+      formData.append('chat_id', props?.route?.params?.id);
+      formData.append('image', createFile(asset?.uri));
+      // formData.append('message', '0');
+
+      uploadImages(formData)
+        .then((_res: any) => {
+          if (_res?.data?.status) {
+            getData();
+            console.log('image saved successfully');
+          }
+        })
+        .catch((Err: any) => {
+          console.log('Error saving message:', Err);
+          // TODO: Implement retry logic or show error to user
+        });
+    }
+  };
+
+  const onSendVideo = async () => {
+    const asset = await chooseFromLibrary('video');
+    // console.log('=-=-=', asset);
+
+    if (asset?.uri) {
+      const formData = new FormData();
+      formData.append('chat_id', props?.route?.params?.id);
+      formData.append('video', createFile(asset?.uri));
+      // formData.append('message', 'k');
+
+      uploadVideo(formData)
+        .then((_res: any) => {
+          if (_res?.data?.status) {
+            getData();
+            console.log('video saved successfully');
+          }
+        })
+        .catch((Err: any) => {
+          console.log('Error saving message:', Err);
+          // TODO: Implement retry logic or show error to user
+        });
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor={colors.white} barStyle="dark-content" />
@@ -485,6 +566,31 @@ const ChatOngoing: React.FC<Props> = props => {
         </View>
       </View>
 
+      <ReportBlockModal
+        isVisible={optionVisibal}
+        options={[
+          {
+            text: 'Send Image',
+            onPress: () => {
+              onSendImage();
+              toggleOption();
+            },
+          },
+          {
+            text: 'Send Video',
+            onPress: () => {
+              onSendVideo();
+              toggleOption();
+            },
+          },
+        ]}
+        onClose={toggleOption}
+        style={{
+          bottom: keyboardVisible ? DEVICE_HEIGHT / 2.2 : 85,
+          left: 20,
+        }}
+      />
+
       {/* Chat Messages */}
       <View style={styles.chatContainer}>
         <GiftedChat
@@ -494,7 +600,27 @@ const ChatOngoing: React.FC<Props> = props => {
           renderMessageText={renderMessageText}
           messagesContainerStyle={styles.messagesContainer}
           renderBubble={renderBubble}
-          renderInputToolbar={renderInputToolbar}
+          renderInputToolbar={props => (
+            <View style={styles.inputContainer}>
+              <View style={styles.inputBox}>
+                <TouchableOpacity
+                  style={styles.attachButton}
+                  onPress={toggleOption}>
+                  <Image source={images.upload} style={styles.attachIcon} />
+                </TouchableOpacity>
+                <InputToolbar
+                  {...props}
+                  containerStyle={styles.inputToolbarStyle}
+                  primaryStyle={styles.primaryStyle}
+                  renderComposer={renderComposer}
+                  renderSend={renderSend}
+                />
+                {/* <TouchableOpacity style={styles.micButton}>
+                  <Image source={images.recordingIcon} style={styles.micIcon} />
+                </TouchableOpacity> */}
+              </View>
+            </View>
+          )}
           minInputToolbarHeight={60}
           maxInputLength={1000}
           keyboardShouldPersistTaps="never"

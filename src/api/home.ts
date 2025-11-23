@@ -165,3 +165,15 @@ export const markAllRead = () => {
 export const getAllLogs = () => {
   return axiosInstance.get('/call-history');
 };
+
+export const uploadImages = (body: any) => {
+  // return axiosInstance.post(`${endpoints.chat.send_image_message}`, body);
+  return axiosInstance.post(`${endpoints.chat.send_image_message}`, body, {
+    formData: true,
+  });
+};
+export const uploadVideo = (body: any) => {
+  return axiosInstance.post(`${endpoints.chat.send_video_message}`, body, {
+    formData: true,
+  });
+};

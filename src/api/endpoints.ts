@@ -103,6 +103,8 @@ const endpoints = {
     fetchChat: '/get-chat',
     send: '/send-message',
     getSignature: '/get-signature',
+    send_image_message: '/send-image-message',
+    send_video_message: '/send-video-message',
   },
   menu: {
     getSavedItems: '/get-saved-items',

@@ -7,13 +7,18 @@ const useImagePicker = () => {
   const [previewMode, setPreviewMode] = useState<any>(false);
   const [pendingMedia, setPendingMedia] = useState<any>(null);
 
+  let globalOptions = {
+    mediaType: 'photo', // 'photo' or 'video' or 'mixed'
+    maxWidth: 300,
+    maxHeight: 550,
+    quality: 0.2,
+  };
+
   // Function to handle image selection from gallery
   const chooseImageFromLibrary = (mediaType = 'photo', showPreview = false) => {
     let options: any = {
+      ...globalOptions,
       mediaType: mediaType, // 'photo' or 'video' or 'mixed'
-      maxWidth: 300,
-      maxHeight: 550,
-      quality: 0.2,
     };
 
     launchImageLibrary(options, response => {
@@ -33,6 +38,46 @@ const useImagePicker = () => {
         }
       }
     });
+  };
+
+  const chooseFromLibrary = async (
+    mediaType = 'photo',
+    showPreview = false,
+  ) => {
+    let options: any = {
+      ...globalOptions,
+      mediaType: mediaType,
+    };
+
+    try {
+      const response: any = await new Promise((resolve, reject) => {
+        launchImageLibrary(options, res => {
+          if (res.didCancel) return resolve(null);
+          if (res.errorCode)
+            return reject(res.errorMessage || 'Image picker error');
+          resolve(res);
+        });
+      });
+
+      if (!response || !response.assets?.[0]) {
+        return null;
+      }
+
+      const asset = response.assets[0];
+
+      if (showPreview) {
+        setPendingMedia(asset);
+        setPreviewMode(true);
+      } else {
+        setImage(asset.uri);
+        setImageData(asset);
+      }
+
+      return asset; // return selected media
+    } catch (error) {
+      console.log('Image picker error:', error);
+      return null;
+    }
   };
 
   // Function to capture image using the camera
@@ -93,6 +138,7 @@ const useImagePicker = () => {
     pendingMedia,
     confirmMedia,
     cancelMedia,
+    chooseFromLibrary,
   };
 };
 

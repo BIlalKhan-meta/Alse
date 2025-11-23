@@ -186,3 +186,17 @@ export const changeUrlForData = (url: string) =>
     'https://elombelo-bucket.s3.us-west-1.amazonaws.com',
     'https://alse-backend-bucket.s3.ap-southeast-2.amazonaws.com',
   );
+
+export const createFile = (img: string) => {
+  let localUri = img;
+  let filename: any = localUri.split('/').pop();
+  let match: any = /\.(\w+)$/.exec(filename);
+  let type = match ? `image/${match[1]}` : `image`;
+  var image = img;
+  let obj = {
+    name: 'img' + new Date().getTime() + '.' + match[1],
+    type: type,
+    uri: Platform.OS === 'android' ? image : image.replace('file://', ''),
+  };
+  return obj;
+};

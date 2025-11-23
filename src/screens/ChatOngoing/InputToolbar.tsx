@@ -12,7 +12,7 @@ import styles from './styles';
 import {images} from '../../utils/images';
 import {vw} from '../../constant';
 
-export const renderInputToolbar: React.FC<InputToolbarProps> = props => (
+export const renderInputToolbar: React.FC<InputToolbarProps<any>> = props => (
   <View style={styles.inputContainer}>
     <View style={styles.inputBox}>
       <TouchableOpacity style={styles.attachButton}>
@@ -42,7 +42,7 @@ export const renderComposer: React.FC<ComposerProps> = props => (
   />
 );
 
-export const renderSend: React.FC<SendProps> = props => (
+export const renderSend: React.FC<SendProps<any>> = props => (
   <Send
     {...props}
     alwaysShowSend
