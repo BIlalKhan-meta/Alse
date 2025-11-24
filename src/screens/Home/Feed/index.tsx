@@ -373,6 +373,8 @@ const Home: React.FC = () => {
 
   const renderPost = ({item, index}: any) => {
     const isFocused = focusedIndex === index;
+    // console.log('---', item);
+
     // if (index !== 0) return <></>;
     return (
       <PostComponent

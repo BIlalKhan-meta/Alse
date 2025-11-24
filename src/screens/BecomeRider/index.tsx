@@ -77,8 +77,10 @@ const BecomeRider: React.FC = () => {
         agree: true, // Assuming they agree to terms for rider application
       };
 
-      console.log('Calling signup API with data:', signupData);
+      // console.log('Calling signup API with data:', signupData);
       const signupResponse = await signup(signupData);
+
+      console.log('---->>>>>>', signupResponse);
 
       if (signupResponse?.data?.status) {
         console.log('Signup successful:', signupResponse.data);
@@ -115,7 +117,9 @@ const BecomeRider: React.FC = () => {
       console.error('Error in rider signup process:', error);
 
       // Handle different types of errors
-      let errorMessage = 'Failed to submit your application. Please try again.';
+      let errorMessage =
+        error?.message ||
+        'Failed to submit your application. Please try again.';
 
       if (error?.response?.data?.message) {
         errorMessage = error.response.data.message;

@@ -70,7 +70,7 @@ const ProfileScreen: React.FC = ({navigation}) => {
     id: null,
   });
   const [activePostId, setActivePostId] = useState<number | null>(null);
-  const [data, setData] = useState({});
+  const [data, setData] = useState<any>({});
   const [loading, setLoading] = useState(true);
   const [blockUserLoader, setBlockUserLoader] = useState(false);
   const [reportLoader, setReportLoader] = useState(false);
@@ -481,7 +481,9 @@ const ProfileScreen: React.FC = ({navigation}) => {
     return <Loader />;
   }
 
-  console.log('DATAAAAAAA', data?.posts.length);
+  // console.log('DATAAAAAAA', data?.posts.length);
+
+  // console.log('-------', data);
 
   return (
     <View style={styles.container}>

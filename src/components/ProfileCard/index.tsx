@@ -14,6 +14,7 @@ import Toast from 'react-native-toast-message';
 import {vw} from '../../constant';
 import InterRegular from '../Text/InterRegular';
 import {useTranslation} from 'react-i18next';
+import CustomImage from '../CustomeImage';
 
 interface ProfileCardProps {
   name: string;
@@ -248,8 +249,9 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
       {/* Header with profile info */}
       <View style={styles.headerContainer}>
         <View style={styles.profileImageContainer}>
-          <Image
-            source={avatar ? {uri: avatar} : images.user}
+          <CustomImage
+            // source={avatar ? {uri: avatar} : images.user}
+            source={{uri: avatar}}
             style={styles.profileImage}
           />
         </View>

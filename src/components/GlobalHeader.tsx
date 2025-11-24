@@ -41,7 +41,9 @@ const GlobalHeader: React.FC<GlobalHeaderProps> = ({title = 'Alse', icon}) => {
             />
           </View>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.iconButton}>
+        <TouchableOpacity
+          style={styles.iconButton}
+          onPress={() => navigation.navigate('ChatScreen')}>
           <View style={styles.notificationcontainer}>
             <Image source={images.smsIcon} style={styles.notificationicon} />
           </View>

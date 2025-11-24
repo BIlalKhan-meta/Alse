@@ -43,9 +43,9 @@ const SearchTab = () => {
     try {
       // Search only users
       const usersResponse = await searchAPI.searchUsers({
-        search: query, 
-        page, 
-        per_page: 15
+        search: query,
+        page,
+        per_page: 15,
       });
 
       const results: SearchResult[] = [];
@@ -71,7 +71,7 @@ const SearchTab = () => {
 
       setHasSearched(true);
       setCurrentPage(page);
-      
+
       // Check if there are more pages based on the API response
       const totalPages = usersResponse.data.data?.meta?.last_page || 1;
       setHasMore(page < totalPages);
@@ -109,7 +109,9 @@ const SearchTab = () => {
   const handleResultPress = (result: SearchResult) => {
     // Navigate to user profile since we're only searching users
     if (result.type === 'user') {
-      (navigation as any).navigate('UserProfile', {userId: result.id});
+      (navigation as any).navigate('Profile', {
+        id: result?.id,
+      });
     }
   };
 
@@ -139,9 +141,7 @@ const SearchTab = () => {
     <View style={styles.loadingContainer}>
       <ActivityIndicator size="large" color="#007AFF" />
       <Text style={styles.loadingText}>Searching...</Text>
-      <Text style={styles.loadingSubtext}>
-        Finding users
-      </Text>
+      <Text style={styles.loadingSubtext}>Finding users</Text>
     </View>
   );
 
@@ -149,9 +149,7 @@ const SearchTab = () => {
     <View style={styles.emptyRecentContainer}>
       <Search size={48} color="#E0E0E0" />
       <Text style={styles.emptyRecentText}>Start searching</Text>
-      <Text style={styles.emptyRecentSubtext}>
-        Search for users
-      </Text>
+      <Text style={styles.emptyRecentSubtext}>Search for users</Text>
     </View>
   );
 

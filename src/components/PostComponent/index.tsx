@@ -292,7 +292,7 @@ const PostComponent: React.FC<PostProps> = ({
             ]}>
             <View style={styles.userInfo}>
               <TouchableOpacity disabled={myAccount} onPress={goToProfile}>
-                <Image
+                <CustomImage
                   source={
                     avatar && !error
                       ? {uri: changeUrlForData(avatar)}
@@ -322,7 +322,7 @@ const PostComponent: React.FC<PostProps> = ({
               onPress={onMediaPress}
               style={styles.mediaTouchable}>
               {mediaType === 'image' ? (
-                <Image
+                <CustomImage
                   source={{uri: changeUrlForData(postImage)}}
                   style={styles.postImage}
                 />
@@ -363,7 +363,6 @@ const PostComponent: React.FC<PostProps> = ({
               <View style={styles.userInfo}>
                 <TouchableOpacity disabled={myAccount} onPress={goToProfile}>
                   <CustomImage
-                    dummyImage={images.user}
                     source={{uri: changeUrlForData(avatar)}}
                     style={styles.avatar}
                   />

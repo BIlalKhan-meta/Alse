@@ -303,16 +303,22 @@ const Marketplace: React.FC = () => {
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Alse</Text>
           <View style={styles.headerIcons}>
-            <TouchableOpacity style={styles.iconButton}>
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={() => navigation.navigate('Notifications')}>
               <Image source={images.bellIcon} style={styles.notificationicon} />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.iconButton}>
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={() => navigation.navigate('Settings')}>
               <Image
                 source={images.settingsIcon}
                 style={styles.notificationicon}
               />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.iconButton}>
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={() => navigation.navigate('ChatScreen')}>
               <Image source={images.smsIcon} style={styles.notificationicon} />
             </TouchableOpacity>
           </View>
@@ -568,7 +574,7 @@ const Marketplace: React.FC = () => {
               onPress={handleTrackOrder}>
               <Package size={16} color="white" style={styles.fabOptionIcon} />
               <Text style={styles.fabOptionText}>
-                Track Order 
+                Track Order
                 {/* {orders.length > 0 ? `(${orders.length})` : ''} */}
               </Text>
             </TouchableOpacity>
@@ -580,7 +586,9 @@ const Marketplace: React.FC = () => {
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.fabOption}
-              onPress={() => navigation.navigate('AuctionDetail', {auctionId: 1})}>
+              onPress={() =>
+                navigation.navigate('AuctionDetail', {auctionId: 1})
+              }>
               <Gavel size={16} color="white" style={styles.fabOptionIcon} />
               <Text style={styles.fabOptionText}>View Sample Auction</Text>
             </TouchableOpacity>
@@ -949,7 +957,7 @@ const styles = StyleSheet.create({
   // FAB Styles
   fabContainer: {
     position: 'absolute',
-    bottom: 100,
+    bottom: 20,
     right: 20,
     alignItems: 'flex-end',
   },

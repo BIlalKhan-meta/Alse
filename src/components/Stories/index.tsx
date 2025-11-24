@@ -84,6 +84,7 @@ const Stories = () => {
       if (data?.data?.stories) {
         // Only reset and update stories after we have the new data
         const {stories} = data.data;
+        // console.log('---->>>>>', JSON.stringify(stories));
         const formattedStories = formatStories(stories);
 
         // Now reset and update with the new data
@@ -429,8 +430,11 @@ const Stories = () => {
         acc[userId] = {
           id: userId,
           name: story.user.full_name || 'Unknown User',
+          // avatarSource: {
+          //   uri: `https://randomuser.me/api/portraits/men/${story.user.id}.jpg`,
+          // },
           avatarSource: {
-            uri: `https://randomuser.me/api/portraits/men/${story.user.id}.jpg`,
+            uri: story?.user?.avatar,
           },
           stories: [],
         };
