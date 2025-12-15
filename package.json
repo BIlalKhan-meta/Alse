@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "start": "react-native start",
     "test": "jest",
-    "android:debug": "cd android; ./gradlew clean && ./gradlew assembleDebug; cd ..; open android/app/build/outputs/"
+    "android:debug": "cd android; ./gradlew clean && ./gradlew assembleDebug; cd ..; open android/app/build/outputs/",
+    "bundle": "npx react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res"
   },
   "dependencies": {
     "@birdwingo/react-native-instagram-stories": "^1.3.12",
