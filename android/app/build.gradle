@@ -23,9 +23,9 @@ android {
         versionCode 4
         versionName "4.0.2"
 
-         ndk {
-            abiFilters "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
-        }
+        //  ndk {
+            // abiFilters "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
+        // }
 
         javaCompileOptions {
             annotationProcessorOptions {
@@ -35,12 +35,18 @@ android {
     }
 
      // Add splits configuration
-    splits {
-        abi {
-            reset()
-            enable true
-            universalApk true  // Generate universal APK
-            include "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
+    // splits {
+    //     abi {
+    //         reset()
+    //         enable true
+    //         universalApk true  // Generate universal APK
+    //         include "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
+    //     }
+    // }
+
+     packaging {
+        jniLibs {
+            useLegacyPackaging = false
         }
     }
 
