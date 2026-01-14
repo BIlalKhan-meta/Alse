@@ -14,59 +14,49 @@ platform :ios, min_ios_version_supported
 prepare_react_native_project!
 
 setup_permissions([
-  # 'AppTrackingTransparency',
-  # 'Bluetooth',
-  # 'Calendars',
-  # 'CalendarsWriteOnly',
   'Camera',
-  # 'Contacts',
-  # 'FaceID',
-  # 'LocationAccuracy',
-  # 'LocationAlways',
- # 'LocationWhenInUse',
-  # 'MediaLibrary',
-  # 'Microphone',
-  # 'Motion',
   'Notifications',
   'PhotoLibrary',
-  # 'PhotoLibraryAddOnly',
-  # 'Reminders',
-  # 'Siri',
-  # 'SpeechRecognition',
-  # 'StoreKit',
 ])
 
-linkage = ENV['USE_FRAMEWORKS']
-if linkage != nil
-  Pod::UI.puts "Configuring Pod with #{linkage}ally linked Frameworks".green
-  use_frameworks! :linkage => linkage.to_sym
-end
+# Remove this block or use it consistently
+# linkage = ENV['USE_FRAMEWORKS']
+# if linkage != nil
+#   Pod::UI.puts "Configuring Pod with #{linkage}ally linked Frameworks".green
+#   use_frameworks! :linkage => linkage.to_sym
+# end
 
 target 'Alenga' do
-  pod 'RNSVG', :path => '../node_modules/react-native-svg'
   config = use_native_modules!
 
+  # Keep only ONE use_frameworks! declaration
   use_frameworks! :linkage => :static
   $RNFirebaseAsStaticFramework = true
 
+  # pod 'ZoomVideoSDK'
+
   use_react_native!(
     :path => config[:reactNativePath],
-    # An absolute path to your application root.
-    :app_path => "#{Pod::Config.instance.installation_root}/.."
+    :app_path => "#{Pod::Config.instance.installation_root}/..",
+    # Add Hermes configuration explicitly
+    :hermes_enabled => true
   )
 
-  target 'AlengaTests' do
-    inherit! :complete
-    # Pods for testing
-  end
+  # Remove this - react-native-svg should be auto-linked
+  # pod 'RNSVG', :path => '../node_modules/react-native-svg'
 
   post_install do |installer|
-    # https://github.com/facebook/react-native/blob/main/packages/react-native/scripts/react_native_pods.rb#L197-L202
     react_native_post_install(
       installer,
       config[:reactNativePath],
-      :mac_catalyst_enabled => false,
-      # :ccache_enabled => true
+      :mac_catalyst_enabled => false
     )
+    
+    # Add this to fix common build issues
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |config|
+        config.build_settings['BUILD_LIBRARY_FOR_DISTRIBUTION'] = 'YES'
+      end
+    end
   end
 end

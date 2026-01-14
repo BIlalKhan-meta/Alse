@@ -1,0 +1,13 @@
+diff --git a/node_modules/@zoom/react-native-videosdk/react-native-zoom-video-sdk.podspec b/node_modules/@zoom/react-native-videosdk/react-native-zoom-video-sdk.podspec
+index 9a40b1a..0a2fa64 100644
+--- a/node_modules/@zoom/react-native-videosdk/react-native-zoom-video-sdk.podspec
++++ b/node_modules/@zoom/react-native-videosdk/react-native-zoom-video-sdk.podspec
+@@ -22,7 +22,7 @@ Pod::Spec.new do |s|
+   s.dependency 'ZoomVideoSDK/zm_annoter_dynamic', '2.4.5'
+   s.dependency 'ZoomVideoSDK/ZoomTask', '2.4.5'
+ 
+-  s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES', 'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'i386 arm64' }
++  s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES', 'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'i386' }
+   s.preserve_paths = ['ZoomVideoSDK.xcframework/**/*', 'zoomcml.xcframework/**/*', 'CptShare.xcframework/**/*', 'zm_annoter_dynamic.xcframework/**/*', 'ZoomTask.xcframework/**/*']
+ 
+ end
