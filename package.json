@@ -5,6 +5,7 @@
   "scripts": {
     "postinstall": "patch-package",
     "android": "react-native run-android",
+    "android:device": "react-native run-android --device $(adb devices | grep -w device | head -1 | awk '{print $1}')",
     "ios": "react-native run-ios",
     "lint": "eslint .",
     "start": "react-native start",

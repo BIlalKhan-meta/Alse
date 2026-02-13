@@ -2,38 +2,39 @@ import {Platform, StyleSheet} from 'react-native';
 import {fontSizes, vh, vw} from '../../constant';
 import {colors} from '../../utils/theme';
 
+// Native stack header (RNSScreenStackHeaderConfig) requires integer dimensions to avoid "Loss of precision" on Android
 const styles = StyleSheet.create({
   header: {
     backgroundColor: colors.headerColor,
-    width: vw * 100,
+    width: Math.round(vw * 100),
   },
 
   headerTitle: {
     color: colors.black,
-    fontSize: fontSizes.f20,
+    fontSize: Math.round(fontSizes.f20),
     fontWeight: 'bold',
-    width: vw * 80,
+    width: Math.round(vw * 80),
   },
   headerTitleWhite: {
     color: colors.white,
-    fontSize: fontSizes.f16,
-    width: vw * 80,
+    fontSize: Math.round(fontSizes.f16),
+    width: Math.round(vw * 80),
   },
   homeTitle: {
     color: '#0C959B',
-    fontSize: fontSizes.f26,
+    fontSize: Math.round(fontSizes.f26),
     fontWeight: '600',
-    width: vw * 80,
+    width: Math.round(vw * 80),
   },
   headericonStyle: {
-    width: vw * 5,
-    height: vh * 3,
+    width: Math.round(vw * 5),
+    height: Math.round(vh * 3),
   },
   headericonButton: {
-    marginRight: vw * 2.1,
-    marginTop: Platform.OS === 'ios' ? vh * 1 : vh * 2,
-    width: vw * 5.5,
-    height: vh * 5,
+    marginRight: Math.round(vw * 2.1),
+    marginTop: Platform.OS === 'ios' ? Math.round(vh * 1) : Math.round(vh * 2),
+    width: Math.round(vw * 5.5),
+    height: Math.round(vh * 5),
   },
   iconContainer: {
     height: vw * 10,

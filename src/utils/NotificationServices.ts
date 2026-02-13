@@ -4,15 +4,19 @@ import messaging from '@react-native-firebase/messaging';
 import navigationRef from '../../App';
 
 export const requestUserPermission = async () => {
-  const authStatus = await messaging().requestPermission();
+  try {
+    const authStatus = await messaging().requestPermission();
 
-  const enabled =
-    authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-    authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+    const enabled =
+      authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+      authStatus === messaging.AuthorizationStatus.PROVISIONAL;
 
-  if (enabled) {
-    // console.log('Authorization status:', authStatus);
-    return getFcmToken();
+    if (enabled) {
+      // console.log('Authorization status:', authStatus);
+      return getFcmToken();
+    }
+  } catch (error) {
+    console.error('Error requesting notification permission:', error);
   }
 };
 

@@ -40,6 +40,10 @@ function App(): React.JSX.Element {
 
   const checkNotificationPermission = async () => {
     try {
+      const permission = PERMISSIONS.ANDROID?.POST_NOTIFICATIONS;
+      if (!permission) {
+        return;
+      }
       const res = await checkNotifications();
       if (
         res?.status === 'denied' ||
@@ -47,9 +51,7 @@ function App(): React.JSX.Element {
         res?.status === 'unavailable' ||
         res?.status === 'limited'
       ) {
-        const requestResult = await request(
-          PERMISSIONS.ANDROID.POST_NOTIFICATIONS,
-        );
+        await request(permission);
       }
     } catch (error) {
       console.error('Error checking notification permission:', error);

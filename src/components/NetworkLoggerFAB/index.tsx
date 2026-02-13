@@ -24,7 +24,8 @@ export default function NetworkLoggerFAB() {
 
   const handlePress = () => {
     console.log('NetworkLoggerFAB pressed, navigating to NetworkLogger');
-    navigation.navigate('NetworkLogger');
+    // `NetworkLogger` is registered as a top-level screen in `MainNavigation`
+    navigation.navigate('NetworkLogger' as never);
   };
 
   return (
