@@ -74,11 +74,10 @@ export const signupSeller = (data: {
   });
 };
 
-export const forgotPassword = (data: {identifier: string}) => {
-  console.log(data, 'ForgetData frommmm authhhh ');
-
+export const forgotPassword = (data: {email: string}) => {
   const formData = new FormData();
-  formData.append('identifier', data.identifier);
+  // Backend expects "identifier" (email or phone number)
+  formData.append('identifier', data.email);
 
   return axiosInstance.post(endpoints.auth.forgotPassword, formData, {
     formData: true,
