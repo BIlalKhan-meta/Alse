@@ -52,11 +52,112 @@ target 'Alenga' do
       :mac_catalyst_enabled => false
     )
     
-    # Add this to fix common build issues
+    # Fix for Android headers being included in iOS builds
+    # Fix FLT_MAX/FLT_MIN for UIKit (iOS 18.5+ SDK - UIStackView.h uses these without including float.h)
     installer.pods_project.targets.each do |target|
       target.build_configurations.each do |config|
         config.build_settings['BUILD_LIBRARY_FOR_DISTRIBUTION'] = 'YES'
+        
+        # Add -include FLTMinMax.h so FLT_MAX/FLT_MIN are defined before UIKit (fixes "could not build module 'UIKit'")
+        # Uses minimal header (not full float.h) - safe for assembly files, avoids C typedefs that break .S compilation
+        flags = config.build_settings['OTHER_CFLAGS'] || '$(inherited)'
+        flags = [flags] if flags.is_a?(String)
+        unless flags.any? { |f| f.to_s.include?('FLTMinMax') }
+          config.build_settings['OTHER_CFLAGS'] = flags + ['-include $(PODS_ROOT)/../Alenga/FLTMinMax.h']
+        end
+        
+        # GCC_PREPROCESSOR_DEFINITIONS fallback for FLT_MAX/FLT_MIN (UIKit/UIStackView.h in iOS 18.5+/26 SDK)
+        defs = config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] || '$(inherited)'
+        defs = [defs] if defs.is_a?(String)
+        flt_defs = ['FLT_MAX=3.40282346638528859811704183484516925e+38F', 'FLT_MIN=1.17549435082228750796873653722224568e-38F']
+        unless flt_defs.all? { |d| defs.any? { |f| f.to_s.include?(d.split('=').first) } }
+          config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] = defs + flt_defs
+        end
+        
+        # Exclude Android-specific headers from iOS builds
+        ['HEADER_SEARCH_PATHS', 'USER_HEADER_SEARCH_PATHS'].each do |setting|
+          if config.build_settings[setting]
+            paths = config.build_settings[setting]
+            if paths.is_a?(Array)
+              config.build_settings[setting] = paths.reject do |path|
+                path.is_a?(String) && (path.include?('platform/android') || path.include?('/android/'))
+              end
+            elsif paths.is_a?(String)
+              # Handle space-separated paths
+              filtered_paths = paths.split(' ').reject do |path|
+                path.include?('platform/android') || path.include?('/android/')
+              end
+              config.build_settings[setting] = filtered_paths.join(' ')
+            end
+          end
+        end
+        
+        # Exclude Android paths from other compiler flags
+        ['OTHER_CFLAGS', 'OTHER_CPLUSPLUSFLAGS'].each do |setting|
+          if config.build_settings[setting]
+            flags = config.build_settings[setting]
+            if flags.is_a?(Array)
+              config.build_settings[setting] = flags.reject do |flag|
+                flag.is_a?(String) && (flag.include?('platform/android') || flag.include?('/android/'))
+              end
+            end
+          end
+        end
+        
+        # Ensure standard C headers are available - UIKit needs FLT_MIN/FLT_MAX
+        # Don't force include, but ensure header search paths don't interfere
+        config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++20'
+        config.build_settings['CLANG_CXX_LIBRARY'] = 'libc++'
+        
+        # Add explicit exclusion for Android headers in module maps
+        config.build_settings['CLANG_ENABLE_MODULES'] = 'YES'
+        config.build_settings['DEFINES_MODULE'] = 'YES'
+        
+        # Fix RCTProfileTrampoline: exclude wrong-architecture assembly when building for device (arm64)
+        if target.name == 'React-Core'
+          config.build_settings['EXCLUDED_SOURCE_FILE_NAMES[sdk=iphoneos*]'] = 'RCTProfileTrampoline-x86_64.S RCTProfileTrampoline-i386.S'
+          config.build_settings['EXCLUDED_SOURCE_FILE_NAMES[sdk=iphonesimulator*]'] = 'RCTProfileTrampoline-arm.S'
+        end
+      end
+      
+      # Remove Android header files from the target's file references (only for native targets)
+      if target.respond_to?(:source_build_phase) && target.source_build_phase
+        target.source_build_phase.files.each do |file|
+          if file.file_ref && file.file_ref.path && file.file_ref.path.include?('platform/android')
+            file.remove_from_project
+          end
+        end
       end
     end
+
+    # Fix FLT_MAX/FLT_MIN for main app target (UIKit/UIStackView.h in iOS 18.5+ SDK)
+    installer.aggregate_targets.each do |aggregate_target|
+      aggregate_target.user_project.targets.each do |target|
+        if target.name == 'Alenga'
+          target.build_configurations.each do |config|
+            flags = config.build_settings['OTHER_CFLAGS'] || '$(inherited)'
+            flags = [flags] if flags.is_a?(String)
+            unless flags.any? { |f| f.to_s.include?('FLTMinMax') }
+              config.build_settings['OTHER_CFLAGS'] = flags + ['-include $(PODS_ROOT)/../Alenga/FLTMinMax.h']
+            end
+          end
+        end
+      end
+    end
+
+    # Fix FLT_MAX/FLT_MIN for UIKit (Xcode 26 / iOS 26 SDK - UIStackView.h)
+    installer.aggregate_targets.each do |aggregate_target|
+      aggregate_target.xcconfigs.each do |config_name, config_file|
+        xcconfig_path = aggregate_target.xcconfig_path(config_name)
+        if File.exist?(xcconfig_path)
+          xcconfig_content = File.read(xcconfig_path)
+          unless xcconfig_content.include?('FLTMinMax')
+            xcconfig_content = xcconfig_content.gsub(/^(OTHER_CFLAGS = .+)$/) { |m| "#{m} -include $(PODS_ROOT)/../Alenga/FLTMinMax.h" }
+            File.write(xcconfig_path, xcconfig_content)
+          end
+        end
+      end
+    end
+
   end
 end

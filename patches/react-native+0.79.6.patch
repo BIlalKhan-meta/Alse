@@ -1,0 +1,1216 @@
+diff --git a/node_modules/react-native/ReactCommon/jserrorhandler/JsErrorHandler.cpp b/node_modules/react-native/ReactCommon/jserrorhandler/JsErrorHandler.cpp
+index 752397f..62fb4e9 100644
+--- a/node_modules/react-native/ReactCommon/jserrorhandler/JsErrorHandler.cpp
++++ b/node_modules/react-native/ReactCommon/jserrorhandler/JsErrorHandler.cpp
+@@ -272,8 +272,12 @@ void JsErrorHandler::handleErrorWithCppPipeline(
+       ? std::nullopt
+       : std::optional(stringifyToCpp(runtime, nameValue));
+ 
+-  if (name && !message.starts_with(*name + ": ")) {
+-    message = *name + ": " + message;
++  if (name) {
++    const std::string prefix = *name + ": ";
++    if (message.length() < prefix.length() ||
++        message.compare(0, prefix.length(), prefix) != 0) {
++      message = prefix + message;
++    }
+   }
+ 
+   auto jsEngineValue = errorObj.getProperty(runtime, "jsEngine");
+diff --git a/node_modules/react-native/ReactCommon/jsinspector-modern/InspectorFlags.cpp b/node_modules/react-native/ReactCommon/jsinspector-modern/InspectorFlags.cpp
+index 3f5a049..1b029e0 100644
+--- a/node_modules/react-native/ReactCommon/jsinspector-modern/InspectorFlags.cpp
++++ b/node_modules/react-native/ReactCommon/jsinspector-modern/InspectorFlags.cpp
+@@ -67,7 +67,7 @@ const InspectorFlags::Values& InspectorFlags::loadFlagsAndAssertUnchanged()
+   };
+ 
+   if (cachedValues_.has_value() && !inconsistentFlagsStateLogged_) {
+-    if (cachedValues_ != newValues) {
++    if (!(*cachedValues_ == newValues)) {
+       LOG(ERROR)
+           << "[InspectorFlags] Error: One or more ReactNativeFeatureFlags values "
+           << "have changed during the global app lifetime. This may lead to "
+diff --git a/node_modules/react-native/ReactCommon/jsinspector-modern/NetworkIOAgent.cpp b/node_modules/react-native/ReactCommon/jsinspector-modern/NetworkIOAgent.cpp
+index d470f8c..0de3718 100644
+--- a/node_modules/react-native/ReactCommon/jsinspector-modern/NetworkIOAgent.cpp
++++ b/node_modules/react-native/ReactCommon/jsinspector-modern/NetworkIOAgent.cpp
+@@ -233,7 +233,10 @@ class Stream : public NetworkRequestListener,
+   // https://github.com/chromium/chromium/blob/128.0.6593.1/content/browser/devtools/devtools_io_context.cc#L70-L80
+   static bool isTextMimeType(const std::string& mimeType) {
+     for (auto& kTextMIMETypePrefix : kTextMIMETypePrefixes) {
+-      if (mimeType.starts_with(kTextMIMETypePrefix)) {
++      std::string prefix(kTextMIMETypePrefix);
++      size_t prefixLen = prefix.length();
++      if (mimeType.length() >= prefixLen && 
++          mimeType.compare(0, prefixLen, prefix) == 0) {
+         return true;
+       }
+     }
+diff --git a/node_modules/react-native/ReactCommon/jsinspector-modern/RuntimeTargetConsole.cpp b/node_modules/react-native/ReactCommon/jsinspector-modern/RuntimeTargetConsole.cpp
+index a129d66..bf2269c 100644
+--- a/node_modules/react-native/ReactCommon/jsinspector-modern/RuntimeTargetConsole.cpp
++++ b/node_modules/react-native/ReactCommon/jsinspector-modern/RuntimeTargetConsole.cpp
+@@ -7,9 +7,9 @@
+ 
+ #include <jsinspector-modern/RuntimeTarget.h>
+ 
+-#include <concepts>
+ #include <deque>
+ #include <string>
++#include <type_traits>
+ 
+ using namespace facebook::jsi;
+ using namespace std::string_literals;
+@@ -79,24 +79,29 @@ double getTimestampMs() {
+       .count();
+ }
+ 
++// C++17-compatible replacement for concepts
+ template <typename T>
+-concept ConsoleMethodBody = std::invocable<
+-    T,
+-    jsi::Runtime& /*runtime*/,
+-    const jsi::Value* /*args*/,
+-    size_t /*count*/,
+-    RuntimeTargetDelegate& /*runtimeTargetDelegate*/,
+-    ConsoleState& /*state*/,
+-    double /*timestampMs*/,
+-    std::unique_ptr<StackTrace> /*stackTrace*/>;
++using ConsoleMethodBodyHelper = decltype(std::declval<T>()(
++    std::declval<jsi::Runtime&>(),
++    std::declval<const jsi::Value*>(),
++    std::declval<size_t>(),
++    std::declval<RuntimeTargetDelegate&>(),
++    std::declval<ConsoleState&>(),
++    std::declval<double>(),
++    std::declval<std::unique_ptr<StackTrace>>()));
++
++template <typename T>
++using CallableAsHostFunctionHelper = decltype(std::declval<T>()(
++    std::declval<jsi::Runtime&>(),
++    std::declval<const jsi::Value&>(),
++    std::declval<const jsi::Value*>(),
++    std::declval<size_t>()));
++
++template <typename T>
++using IsConsoleMethodBody = std::void_t<ConsoleMethodBodyHelper<T>>;
+ 
+ template <typename T>
+-concept CallableAsHostFunction = std::invocable<
+-    T,
+-    jsi::Runtime& /*runtime*/,
+-    const jsi::Value& /*thisVal*/,
+-    const jsi::Value* /*args*/,
+-    size_t /*count*/>;
++using IsCallableAsHostFunction = std::void_t<CallableAsHostFunctionHelper<T>>;
+ 
+ void consoleCount(
+     jsi::Runtime& runtime,
+@@ -354,7 +359,7 @@ void RuntimeTarget::installConsoleHandler() {
+      */
+     auto delegateExecutorSync =
+         [selfWeak,
+-         selfExecutor](std::invocable<RuntimeTargetDelegate&> auto func) {
++         selfExecutor](const std::function<void(RuntimeTargetDelegate&)>& func) {
+           if (auto self = selfWeak.lock()) {
+             // Q: Why is it safe to use self->delegate_ here?
+             // A: Because the caller of InspectorTarget::registerRuntime
+@@ -374,8 +379,8 @@ void RuntimeTarget::installConsoleHandler() {
+      */
+     auto forwardToOriginalConsole = [originalConsole](
+                                         const char* methodName,
+-                                        CallableAsHostFunction auto innerFn) {
+-      return [originalConsole, innerFn = std::move(innerFn), methodName](
++                                        const std::function<jsi::Value(jsi::Runtime&, const jsi::Value&, const jsi::Value*, size_t)>& innerFn) {
++      return [originalConsole, innerFn, methodName](
+                  jsi::Runtime& runtime,
+                  const jsi::Value& thisVal,
+                  const jsi::Value* args,
+@@ -404,7 +409,28 @@ void RuntimeTarget::installConsoleHandler() {
+      * is also called on originalConsole (if it exists).
+      */
+     auto installConsoleMethod = [&](const char* methodName,
+-                                    ConsoleMethodBody auto body) {
++                                    const std::function<void(jsi::Runtime&, const jsi::Value*, size_t, RuntimeTargetDelegate&, ConsoleState&, double, std::unique_ptr<StackTrace>)>& body) {
++      std::function<jsi::Value(jsi::Runtime&, const jsi::Value&, const jsi::Value*, size_t)> hostFn = 
++          [body, state, delegateExecutorSync](
++              jsi::Runtime& runtime,
++              const jsi::Value& /*thisVal*/,
++              const jsi::Value* args,
++              size_t count) -> jsi::Value {
++            auto timestampMs = getTimestampMs();
++            delegateExecutorSync([&runtime, args, count, body, state, timestampMs](RuntimeTargetDelegate& runtimeTargetDelegate) {
++              auto stackTrace = runtimeTargetDelegate.captureStackTrace(
++                  runtime, /* framesToSkip */ 1);
++              body(
++                  runtime,
++                  args,
++                  count,
++                  runtimeTargetDelegate,
++                  *state,
++                  timestampMs,
++                  std::move(stackTrace));
++            });
++            return jsi::Value::undefined();
++          };
+       console.setProperty(
+           runtime,
+           methodName,
+@@ -412,28 +438,7 @@ void RuntimeTarget::installConsoleHandler() {
+               runtime,
+               jsi::PropNameID::forAscii(runtime, methodName),
+               0,
+-              forwardToOriginalConsole(
+-                  methodName,
+-                  [body = std::move(body), state, delegateExecutorSync](
+-                      jsi::Runtime& runtime,
+-                      const jsi::Value& /*thisVal*/,
+-                      const jsi::Value* args,
+-                      size_t count) {
+-                    auto timestampMs = getTimestampMs();
+-                    delegateExecutorSync([&](auto& runtimeTargetDelegate) {
+-                      auto stackTrace = runtimeTargetDelegate.captureStackTrace(
+-                          runtime, /* framesToSkip */ 1);
+-                      body(
+-                          runtime,
+-                          args,
+-                          count,
+-                          runtimeTargetDelegate,
+-                          *state,
+-                          timestampMs,
+-                          std::move(stackTrace));
+-                    });
+-                    return jsi::Value::undefined();
+-                  })));
++              forwardToOriginalConsole(methodName, hostFn)));
+     };
+ 
+     /**
+diff --git a/node_modules/react-native/ReactCommon/react/performance/timeline/PerformanceEntryReporter.cpp b/node_modules/react-native/ReactCommon/react/performance/timeline/PerformanceEntryReporter.cpp
+index f0e9d47..ac4d519 100644
+--- a/node_modules/react-native/ReactCommon/react/performance/timeline/PerformanceEntryReporter.cpp
++++ b/node_modules/react-native/ReactCommon/react/performance/timeline/PerformanceEntryReporter.cpp
+@@ -53,7 +53,8 @@ std::tuple<std::optional<std::string>, std::string_view> parseTrackName(
+   // https://github.com/w3c/user-timing/issues/109
+   std::optional<std::string> trackName;
+   std::string_view eventName(name);
+-  if (name.starts_with(TRACK_PREFIX)) {
++  if (name.length() >= TRACK_PREFIX.length() &&
++      name.compare(0, TRACK_PREFIX.length(), TRACK_PREFIX) == 0) {
+     const auto trackNameDelimiter = name.find(':', TRACK_PREFIX.length());
+     if (trackNameDelimiter != std::string::npos) {
+       trackName = name.substr(
+diff --git a/node_modules/react-native/ReactCommon/react/performance/timeline/PerformanceObserver.cpp b/node_modules/react-native/ReactCommon/react/performance/timeline/PerformanceObserver.cpp
+index f36f870..9158fcf 100644
+--- a/node_modules/react-native/ReactCommon/react/performance/timeline/PerformanceObserver.cpp
++++ b/node_modules/react-native/ReactCommon/react/performance/timeline/PerformanceObserver.cpp
+@@ -11,7 +11,7 @@
+ namespace facebook::react {
+ 
+ void PerformanceObserver::handleEntry(const PerformanceEntry& entry) {
+-  if (observedTypes_.contains(entry.entryType)) {
++  if (observedTypes_.find(entry.entryType) != observedTypes_.end()) {
+     // https://www.w3.org/TR/event-timing/#should-add-performanceeventtiming
+     if (entry.entryType == PerformanceEntryType::EVENT &&
+         entry.duration < durationThreshold_) {
+diff --git a/node_modules/react-native/ReactCommon/react/renderer/components/view/YogaLayoutableShadowNode.cpp b/node_modules/react-native/ReactCommon/react/renderer/components/view/YogaLayoutableShadowNode.cpp
+index cc3234e..4c3c95d 100644
+--- a/node_modules/react-native/ReactCommon/react/renderer/components/view/YogaLayoutableShadowNode.cpp
++++ b/node_modules/react-native/ReactCommon/react/renderer/components/view/YogaLayoutableShadowNode.cpp
+@@ -25,7 +25,7 @@
+ 
+ namespace facebook::react {
+ 
+-static_assert(RawPropsFilterable<YogaLayoutableShadowNode>);
++static_assert(RawPropsFilterable<YogaLayoutableShadowNode>::value);
+ 
+ static int FabricDefaultYogaLog(
+     const YGConfigConstRef /*unused*/,
+diff --git a/node_modules/react-native/ReactCommon/react/renderer/core/ConcreteComponentDescriptor.h b/node_modules/react-native/ReactCommon/react/renderer/core/ConcreteComponentDescriptor.h
+index 4f61219..c25ae30 100644
+--- a/node_modules/react-native/ReactCommon/react/renderer/core/ConcreteComponentDescriptor.h
++++ b/node_modules/react-native/ReactCommon/react/renderer/core/ConcreteComponentDescriptor.h
+@@ -108,7 +108,7 @@ class ConcreteComponentDescriptor : public ComponentDescriptor {
+       return ShadowNodeT::defaultSharedProps();
+     }
+ 
+-    if constexpr (RawPropsFilterable<ShadowNodeT>) {
++    if constexpr (RawPropsFilterable<ShadowNodeT>::value) {
+       ShadowNodeT::filterRawProps(rawProps);
+     }
+ 
+diff --git a/node_modules/react-native/ReactCommon/react/renderer/core/RawProps.h b/node_modules/react-native/ReactCommon/react/renderer/core/RawProps.h
+index efe63e9..5e3708f 100644
+--- a/node_modules/react-native/ReactCommon/react/renderer/core/RawProps.h
++++ b/node_modules/react-native/ReactCommon/react/renderer/core/RawProps.h
+@@ -9,6 +9,7 @@
+ 
+ #include <limits>
+ #include <optional>
++#include <type_traits>
+ 
+ #include <folly/dynamic.h>
+ #include <jsi/JSIDynamic.h>
+@@ -146,9 +147,15 @@ class RawProps final {
+  * This is a performance optimisation to minimise traffic between C++ and
+  * Java.
+  */
++template <typename T, typename = void>
++struct RawPropsFilterable : std::false_type {};
++
+ template <typename T>
+-concept RawPropsFilterable = requires(RawProps& rawProps) {
+-  { T::filterRawProps(rawProps) } -> std::same_as<void>;
+-};
++struct RawPropsFilterable<
++    T,
++    std::void_t<decltype(T::filterRawProps(std::declval<RawProps&>()))>>
++    : std::integral_constant<
++          bool,
++          std::is_same_v<void, decltype(T::filterRawProps(std::declval<RawProps&>()))>> {};
+ 
+ } // namespace facebook::react
+diff --git a/node_modules/react-native/ReactCommon/react/renderer/graphics/Transform.cpp b/node_modules/react-native/ReactCommon/react/renderer/graphics/Transform.cpp
+index f0c6c3f..657a9c5 100644
+--- a/node_modules/react-native/ReactCommon/react/renderer/graphics/Transform.cpp
++++ b/node_modules/react-native/ReactCommon/react/renderer/graphics/Transform.cpp
+@@ -255,7 +255,7 @@ Transform Transform::Interpolate(
+     if ((haveLHS &&
+          lhs.operations[i].type == TransformOperationType::Arbitrary) ||
+         (haveRHS &&
+-         rhs.operations[i].type == TransformOperationType::Arbitrary)) {
++         rhs.operations[j].type == TransformOperationType::Arbitrary)) {
+       return result;
+     }
+     if (haveLHS && lhs.operations[i].type == TransformOperationType::Identity) {
+diff --git a/node_modules/react-native/ReactCommon/react/renderer/graphics/Transform.h b/node_modules/react-native/ReactCommon/react/renderer/graphics/Transform.h
+index 911774d..c016caa 100644
+--- a/node_modules/react-native/ReactCommon/react/renderer/graphics/Transform.h
++++ b/node_modules/react-native/ReactCommon/react/renderer/graphics/Transform.h
+@@ -52,7 +52,12 @@ struct TransformOperation {
+   ValueUnit x;
+   ValueUnit y;
+   ValueUnit z;
+-  bool operator==(const TransformOperation& other) const = default;
++  bool operator==(const TransformOperation& other) const {
++    return type == other.type && x == other.x && y == other.y && z == other.z;
++  }
++  bool operator!=(const TransformOperation& other) const {
++    return !(*this == other);
++  }
+ };
+ 
+ struct TransformOrigin {
+diff --git a/node_modules/react-native/ReactCommon/react/renderer/graphics/platform/android/react/renderer/graphics/Float.h b/node_modules/react-native/ReactCommon/react/renderer/graphics/platform/android/react/renderer/graphics/Float.h
+index ee0ee3e..0772c54 100644
+--- a/node_modules/react-native/ReactCommon/react/renderer/graphics/platform/android/react/renderer/graphics/Float.h
++++ b/node_modules/react-native/ReactCommon/react/renderer/graphics/platform/android/react/renderer/graphics/Float.h
+@@ -7,8 +7,16 @@
+ 
+ #pragma once
+ 
+-#include <limits>
++/* 
++ * This is an Android-specific header file.
++ * For iOS builds, this file should not be included.
++ * If it is included, ensure standard C headers are available.
++ */
++
++/* Include standard float.h to ensure FLT_MIN/FLT_MAX are available */
++#include <float.h>
+ 
++#ifdef __cplusplus
+ namespace facebook::react {
+ 
+ /*
+@@ -18,3 +26,7 @@ namespace facebook::react {
+ using Float = float;
+ 
+ } // namespace facebook::react
++#else
++/* C compatibility - this file should not be included in C code for iOS builds */
++typedef float Float;
++#endif
+diff --git a/node_modules/react-native/ReactCommon/react/renderer/graphics/platform/ios/react/renderer/graphics/Float.h b/node_modules/react-native/ReactCommon/react/renderer/graphics/platform/ios/react/renderer/graphics/Float.h
+index ef09235..a9e7248 100644
+--- a/node_modules/react-native/ReactCommon/react/renderer/graphics/platform/ios/react/renderer/graphics/Float.h
++++ b/node_modules/react-native/ReactCommon/react/renderer/graphics/platform/ios/react/renderer/graphics/Float.h
+@@ -8,8 +8,8 @@
+ #pragma once
+ 
+ #include <CoreGraphics/CoreGraphics.h>
+-#include <limits>
+ 
++#ifdef __cplusplus
+ namespace facebook::react {
+ 
+ /*
+@@ -19,3 +19,7 @@ namespace facebook::react {
+ using Float = CGFloat;
+ 
+ } // namespace facebook::react
++#else
++/* C/Objective-C compatibility - when included from non-C++ context (e.g. bridging header) */
++typedef CGFloat Float;
++#endif
+diff --git a/node_modules/react-native/ReactCommon/react/renderer/observers/events/EventPerformanceLogger.cpp b/node_modules/react-native/ReactCommon/react/renderer/observers/events/EventPerformanceLogger.cpp
+index 7318477..4449fb9 100644
+--- a/node_modules/react-native/ReactCommon/react/renderer/observers/events/EventPerformanceLogger.cpp
++++ b/node_modules/react-native/ReactCommon/react/renderer/observers/events/EventPerformanceLogger.cpp
+@@ -27,7 +27,8 @@ bool hasPendingRenderingUpdates(
+     const std::unordered_set<SurfaceId>&
+         surfaceIdsWithPendingRenderingUpdates) {
+   return target != nullptr &&
+-      surfaceIdsWithPendingRenderingUpdates.contains(target->getSurfaceId());
++      surfaceIdsWithPendingRenderingUpdates.find(target->getSurfaceId()) !=
++          surfaceIdsWithPendingRenderingUpdates.end();
+ }
+ 
+ struct StrKey {
+diff --git a/node_modules/react-native/ReactCommon/react/renderer/scheduler/SurfaceManager.cpp b/node_modules/react-native/ReactCommon/react/renderer/scheduler/SurfaceManager.cpp
+index 81f7d67..b660d98 100644
+--- a/node_modules/react-native/ReactCommon/react/renderer/scheduler/SurfaceManager.cpp
++++ b/node_modules/react-native/ReactCommon/react/renderer/scheduler/SurfaceManager.cpp
+@@ -74,7 +74,7 @@ void SurfaceManager::stopAllSurfaces() noexcept {
+ 
+ bool SurfaceManager::isSurfaceRunning(SurfaceId surfaceId) const noexcept {
+   std::shared_lock lock(mutex_);
+-  return registry_.contains(surfaceId);
++  return registry_.find(surfaceId) != registry_.end();
+ }
+ 
+ std::unordered_set<SurfaceId> SurfaceManager::getRunningSurfaces()
+diff --git a/node_modules/react-native/ReactCommon/react/utils/fnv1a.h b/node_modules/react-native/ReactCommon/react/utils/fnv1a.h
+index 4a945d9..6977b33 100644
+--- a/node_modules/react-native/ReactCommon/react/utils/fnv1a.h
++++ b/node_modules/react-native/ReactCommon/react/utils/fnv1a.h
+@@ -15,6 +15,10 @@
+ 
+ namespace facebook::react {
+ 
++struct IdentityTransform {
++  constexpr char operator()(char c) const { return c; }
++};
++
+ /**
+  * FNV-1a hash function implementation.
+  * Implemented as described in http://www.isthe.com/chongo/tech/comp/fnv/.
+@@ -23,7 +27,7 @@ namespace facebook::react {
+  * when std::hash does not provide the needed functionality. For example,
+  * constexpr.
+  */
+-template <typename CharTransformT = std::identity>
++template <typename CharTransformT = IdentityTransform>
+ constexpr uint32_t fnv1a(std::string_view string) noexcept {
+   constexpr uint32_t offset_basis = 2166136261;
+ 
+diff --git a/node_modules/react-native/ReactCommon/react/utils/hash_combine.h b/node_modules/react-native/ReactCommon/react/utils/hash_combine.h
+index dab82ca..78970de 100644
+--- a/node_modules/react-native/ReactCommon/react/utils/hash_combine.h
++++ b/node_modules/react-native/ReactCommon/react/utils/hash_combine.h
+@@ -12,21 +12,23 @@
+ 
+ namespace facebook::react {
+ 
++// C++17-compatible implementation (concepts require C++20)
++
+ template <typename T>
+-concept Hashable = !std::is_same_v<T, const char*> && (requires(T a) {
+-  { std::hash<T>{}(a) } -> std::convertible_to<std::size_t>;
+-});
++void hash_combine(std::size_t& seed, const T& v) {
++  seed ^= std::hash<T>{}(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
++}
+ 
+-template <Hashable T, Hashable... Rest>
++template <typename T, typename... Rest>
+ void hash_combine(std::size_t& seed, const T& v, const Rest&... rest) {
+-  seed ^= std::hash<T>{}(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+-  (hash_combine(seed, rest), ...);
++  hash_combine(seed, v);
++  hash_combine(seed, rest...);
+ }
+ 
+-template <Hashable T, Hashable... Args>
++template <typename T, typename... Args>
+ std::size_t hash_combine(const T& v, const Args&... args) {
+   std::size_t seed = 0;
+-  hash_combine<T, Args...>(seed, v, args...);
++  hash_combine(seed, v, args...);
+   return seed;
+ }
+ 
+diff --git a/node_modules/react-native/ReactCommon/reactperflogger/fusebox/FuseboxTracer.cpp b/node_modules/react-native/ReactCommon/reactperflogger/fusebox/FuseboxTracer.cpp
+index 3d52288..6854759 100644
+--- a/node_modules/react-native/ReactCommon/reactperflogger/fusebox/FuseboxTracer.cpp
++++ b/node_modules/react-native/ReactCommon/reactperflogger/fusebox/FuseboxTracer.cpp
+@@ -70,7 +70,7 @@ bool FuseboxTracer::stopTracing(
+ 
+   for (auto& event : savedBuffer) {
+     // For events with a custom track name, register track
+-    if (event.track.length() && !trackIdMap.contains(event.track)) {
++    if (event.track.length() && trackIdMap.find(event.track) == trackIdMap.end()) {
+       auto trackId = nextTrack++;
+       trackIdMap[event.track] = trackId;
+       traceEvents.push_back(folly::dynamic::object(
+@@ -79,8 +79,8 @@ bool FuseboxTracer::stopTracing(
+           "tid", trackId)("ts", 0));
+     }
+ 
+-    auto trackId =
+-        trackIdMap.contains(event.track) ? trackIdMap[event.track] : 1000;
++    auto it = trackIdMap.find(event.track);
++    auto trackId = (it != trackIdMap.end()) ? it->second : 1000;
+ 
+     // Emit "blink.user_timing" trace event
+     traceEvents.push_back(folly::dynamic::object(
+diff --git a/node_modules/react-native/ReactCommon/yoga/yoga/YGNodeStyle.cpp b/node_modules/react-native/ReactCommon/yoga/yoga/YGNodeStyle.cpp
+index 4e77405..12b3892 100644
+--- a/node_modules/react-native/ReactCommon/yoga/yoga/YGNodeStyle.cpp
++++ b/node_modules/react-native/ReactCommon/yoga/yoga/YGNodeStyle.cpp
+@@ -9,9 +9,11 @@
+ #include <yoga/debug/AssertFatal.h>
+ #include <yoga/node/Node.h>
+ 
+-using namespace facebook;
+ using namespace facebook::yoga;
+ 
++// Use fully qualified name to avoid ambiguity with Style from CoreGraphics/SDK
++#define YOGA_STYLE facebook::yoga::Style
++
+ namespace {
+ 
+ template <auto GetterT, auto SetterT, typename ValueT>
+@@ -45,7 +47,7 @@ void YGNodeCopyStyle(YGNodeRef dstNode, YGNodeConstRef srcNode) {
+ }
+ 
+ void YGNodeStyleSetDirection(const YGNodeRef node, const YGDirection value) {
+-  updateStyle<&Style::direction, &Style::setDirection>(node, scopedEnum(value));
++  updateStyle<&YOGA_STYLE::direction, &YOGA_STYLE::setDirection>(node, scopedEnum(value));
+ }
+ 
+ YGDirection YGNodeStyleGetDirection(const YGNodeConstRef node) {
+@@ -55,7 +57,7 @@ YGDirection YGNodeStyleGetDirection(const YGNodeConstRef node) {
+ void YGNodeStyleSetFlexDirection(
+     const YGNodeRef node,
+     const YGFlexDirection flexDirection) {
+-  updateStyle<&Style::flexDirection, &Style::setFlexDirection>(
++  updateStyle<&YOGA_STYLE::flexDirection, &YOGA_STYLE::setFlexDirection>(
+       node, scopedEnum(flexDirection));
+ }
+ 
+@@ -66,7 +68,7 @@ YGFlexDirection YGNodeStyleGetFlexDirection(const YGNodeConstRef node) {
+ void YGNodeStyleSetJustifyContent(
+     const YGNodeRef node,
+     const YGJustify justifyContent) {
+-  updateStyle<&Style::justifyContent, &Style::setJustifyContent>(
++  updateStyle<&YOGA_STYLE::justifyContent, &YOGA_STYLE::setJustifyContent>(
+       node, scopedEnum(justifyContent));
+ }
+ 
+@@ -77,7 +79,7 @@ YGJustify YGNodeStyleGetJustifyContent(const YGNodeConstRef node) {
+ void YGNodeStyleSetAlignContent(
+     const YGNodeRef node,
+     const YGAlign alignContent) {
+-  updateStyle<&Style::alignContent, &Style::setAlignContent>(
++  updateStyle<&YOGA_STYLE::alignContent, &YOGA_STYLE::setAlignContent>(
+       node, scopedEnum(alignContent));
+ }
+ 
+@@ -86,7 +88,7 @@ YGAlign YGNodeStyleGetAlignContent(const YGNodeConstRef node) {
+ }
+ 
+ void YGNodeStyleSetAlignItems(const YGNodeRef node, const YGAlign alignItems) {
+-  updateStyle<&Style::alignItems, &Style::setAlignItems>(
++  updateStyle<&YOGA_STYLE::alignItems, &YOGA_STYLE::setAlignItems>(
+       node, scopedEnum(alignItems));
+ }
+ 
+@@ -95,7 +97,7 @@ YGAlign YGNodeStyleGetAlignItems(const YGNodeConstRef node) {
+ }
+ 
+ void YGNodeStyleSetAlignSelf(const YGNodeRef node, const YGAlign alignSelf) {
+-  updateStyle<&Style::alignSelf, &Style::setAlignSelf>(
++  updateStyle<&YOGA_STYLE::alignSelf, &YOGA_STYLE::setAlignSelf>(
+       node, scopedEnum(alignSelf));
+ }
+ 
+@@ -106,7 +108,7 @@ YGAlign YGNodeStyleGetAlignSelf(const YGNodeConstRef node) {
+ void YGNodeStyleSetPositionType(
+     const YGNodeRef node,
+     const YGPositionType positionType) {
+-  updateStyle<&Style::positionType, &Style::setPositionType>(
++  updateStyle<&YOGA_STYLE::positionType, &YOGA_STYLE::setPositionType>(
+       node, scopedEnum(positionType));
+ }
+ 
+@@ -115,7 +117,7 @@ YGPositionType YGNodeStyleGetPositionType(const YGNodeConstRef node) {
+ }
+ 
+ void YGNodeStyleSetFlexWrap(const YGNodeRef node, const YGWrap flexWrap) {
+-  updateStyle<&Style::flexWrap, &Style::setFlexWrap>(
++  updateStyle<&YOGA_STYLE::flexWrap, &YOGA_STYLE::setFlexWrap>(
+       node, scopedEnum(flexWrap));
+ }
+ 
+@@ -124,7 +126,7 @@ YGWrap YGNodeStyleGetFlexWrap(const YGNodeConstRef node) {
+ }
+ 
+ void YGNodeStyleSetOverflow(const YGNodeRef node, const YGOverflow overflow) {
+-  updateStyle<&Style::overflow, &Style::setOverflow>(
++  updateStyle<&YOGA_STYLE::overflow, &YOGA_STYLE::setOverflow>(
+       node, scopedEnum(overflow));
+ }
+ 
+@@ -133,7 +135,7 @@ YGOverflow YGNodeStyleGetOverflow(const YGNodeConstRef node) {
+ }
+ 
+ void YGNodeStyleSetDisplay(const YGNodeRef node, const YGDisplay display) {
+-  updateStyle<&Style::display, &Style::setDisplay>(node, scopedEnum(display));
++  updateStyle<&YOGA_STYLE::display, &YOGA_STYLE::setDisplay>(node, scopedEnum(display));
+ }
+ 
+ YGDisplay YGNodeStyleGetDisplay(const YGNodeConstRef node) {
+@@ -141,7 +143,7 @@ YGDisplay YGNodeStyleGetDisplay(const YGNodeConstRef node) {
+ }
+ 
+ void YGNodeStyleSetFlex(const YGNodeRef node, const float flex) {
+-  updateStyle<&Style::flex, &Style::setFlex>(node, FloatOptional{flex});
++  updateStyle<&YOGA_STYLE::flex, &YOGA_STYLE::setFlex>(node, FloatOptional{flex});
+ }
+ 
+ float YGNodeStyleGetFlex(const YGNodeConstRef nodeRef) {
+@@ -151,59 +153,59 @@ float YGNodeStyleGetFlex(const YGNodeConstRef nodeRef) {
+ }
+ 
+ void YGNodeStyleSetFlexGrow(const YGNodeRef node, const float flexGrow) {
+-  updateStyle<&Style::flexGrow, &Style::setFlexGrow>(
++  updateStyle<&YOGA_STYLE::flexGrow, &YOGA_STYLE::setFlexGrow>(
+       node, FloatOptional{flexGrow});
+ }
+ 
+ float YGNodeStyleGetFlexGrow(const YGNodeConstRef nodeRef) {
+   const auto node = resolveRef(nodeRef);
+   return node->style().flexGrow().isUndefined()
+-      ? Style::DefaultFlexGrow
++      ? YOGA_STYLE::DefaultFlexGrow
+       : node->style().flexGrow().unwrap();
+ }
+ 
+ void YGNodeStyleSetFlexShrink(const YGNodeRef node, const float flexShrink) {
+-  updateStyle<&Style::flexShrink, &Style::setFlexShrink>(
++  updateStyle<&YOGA_STYLE::flexShrink, &YOGA_STYLE::setFlexShrink>(
+       node, FloatOptional{flexShrink});
+ }
+ 
+ float YGNodeStyleGetFlexShrink(const YGNodeConstRef nodeRef) {
+   const auto node = resolveRef(nodeRef);
+   return node->style().flexShrink().isUndefined()
+-      ? (node->getConfig()->useWebDefaults() ? Style::WebDefaultFlexShrink
+-                                             : Style::DefaultFlexShrink)
++      ? (node->getConfig()->useWebDefaults() ? YOGA_STYLE::WebDefaultFlexShrink
++                                             : YOGA_STYLE::DefaultFlexShrink)
+       : node->style().flexShrink().unwrap();
+ }
+ 
+ void YGNodeStyleSetFlexBasis(const YGNodeRef node, const float flexBasis) {
+-  updateStyle<&Style::flexBasis, &Style::setFlexBasis>(
++  updateStyle<&YOGA_STYLE::flexBasis, &YOGA_STYLE::setFlexBasis>(
+       node, StyleSizeLength::points(flexBasis));
+ }
+ 
+ void YGNodeStyleSetFlexBasisPercent(
+     const YGNodeRef node,
+     const float flexBasisPercent) {
+-  updateStyle<&Style::flexBasis, &Style::setFlexBasis>(
++  updateStyle<&YOGA_STYLE::flexBasis, &YOGA_STYLE::setFlexBasis>(
+       node, StyleSizeLength::percent(flexBasisPercent));
+ }
+ 
+ void YGNodeStyleSetFlexBasisAuto(const YGNodeRef node) {
+-  updateStyle<&Style::flexBasis, &Style::setFlexBasis>(
++  updateStyle<&YOGA_STYLE::flexBasis, &YOGA_STYLE::setFlexBasis>(
+       node, StyleSizeLength::ofAuto());
+ }
+ 
+ void YGNodeStyleSetFlexBasisMaxContent(const YGNodeRef node) {
+-  updateStyle<&Style::flexBasis, &Style::setFlexBasis>(
++  updateStyle<&YOGA_STYLE::flexBasis, &YOGA_STYLE::setFlexBasis>(
+       node, StyleSizeLength::ofMaxContent());
+ }
+ 
+ void YGNodeStyleSetFlexBasisFitContent(const YGNodeRef node) {
+-  updateStyle<&Style::flexBasis, &Style::setFlexBasis>(
++  updateStyle<&YOGA_STYLE::flexBasis, &YOGA_STYLE::setFlexBasis>(
+       node, StyleSizeLength::ofFitContent());
+ }
+ 
+ void YGNodeStyleSetFlexBasisStretch(const YGNodeRef node) {
+-  updateStyle<&Style::flexBasis, &Style::setFlexBasis>(
++  updateStyle<&YOGA_STYLE::flexBasis, &YOGA_STYLE::setFlexBasis>(
+       node, StyleSizeLength::ofStretch());
+ }
+ 
+@@ -212,17 +214,17 @@ YGValue YGNodeStyleGetFlexBasis(const YGNodeConstRef node) {
+ }
+ 
+ void YGNodeStyleSetPosition(YGNodeRef node, YGEdge edge, float points) {
+-  updateStyle<&Style::position, &Style::setPosition>(
++  updateStyle<&YOGA_STYLE::position, &YOGA_STYLE::setPosition>(
+       node, scopedEnum(edge), StyleLength::points(points));
+ }
+ 
+ void YGNodeStyleSetPositionPercent(YGNodeRef node, YGEdge edge, float percent) {
+-  updateStyle<&Style::position, &Style::setPosition>(
++  updateStyle<&YOGA_STYLE::position, &YOGA_STYLE::setPosition>(
+       node, scopedEnum(edge), StyleLength::percent(percent));
+ }
+ 
+ void YGNodeStyleSetPositionAuto(YGNodeRef node, YGEdge edge) {
+-  updateStyle<&Style::position, &Style::setPosition>(
++  updateStyle<&YOGA_STYLE::position, &YOGA_STYLE::setPosition>(
+       node, scopedEnum(edge), StyleLength::ofAuto());
+ }
+ 
+@@ -231,17 +233,17 @@ YGValue YGNodeStyleGetPosition(YGNodeConstRef node, YGEdge edge) {
+ }
+ 
+ void YGNodeStyleSetMargin(YGNodeRef node, YGEdge edge, float points) {
+-  updateStyle<&Style::margin, &Style::setMargin>(
++  updateStyle<&YOGA_STYLE::margin, &YOGA_STYLE::setMargin>(
+       node, scopedEnum(edge), StyleLength::points(points));
+ }
+ 
+ void YGNodeStyleSetMarginPercent(YGNodeRef node, YGEdge edge, float percent) {
+-  updateStyle<&Style::margin, &Style::setMargin>(
++  updateStyle<&YOGA_STYLE::margin, &YOGA_STYLE::setMargin>(
+       node, scopedEnum(edge), StyleLength::percent(percent));
+ }
+ 
+ void YGNodeStyleSetMarginAuto(YGNodeRef node, YGEdge edge) {
+-  updateStyle<&Style::margin, &Style::setMargin>(
++  updateStyle<&YOGA_STYLE::margin, &YOGA_STYLE::setMargin>(
+       node, scopedEnum(edge), StyleLength::ofAuto());
+ }
+ 
+@@ -250,12 +252,12 @@ YGValue YGNodeStyleGetMargin(YGNodeConstRef node, YGEdge edge) {
+ }
+ 
+ void YGNodeStyleSetPadding(YGNodeRef node, YGEdge edge, float points) {
+-  updateStyle<&Style::padding, &Style::setPadding>(
++  updateStyle<&YOGA_STYLE::padding, &YOGA_STYLE::setPadding>(
+       node, scopedEnum(edge), StyleLength::points(points));
+ }
+ 
+ void YGNodeStyleSetPaddingPercent(YGNodeRef node, YGEdge edge, float percent) {
+-  updateStyle<&Style::padding, &Style::setPadding>(
++  updateStyle<&YOGA_STYLE::padding, &YOGA_STYLE::setPadding>(
+       node, scopedEnum(edge), StyleLength::percent(percent));
+ }
+ 
+@@ -267,7 +269,7 @@ void YGNodeStyleSetBorder(
+     const YGNodeRef node,
+     const YGEdge edge,
+     const float border) {
+-  updateStyle<&Style::border, &Style::setBorder>(
++  updateStyle<&YOGA_STYLE::border, &YOGA_STYLE::setBorder>(
+       node, scopedEnum(edge), StyleLength::points(border));
+ }
+ 
+@@ -284,12 +286,12 @@ void YGNodeStyleSetGap(
+     const YGNodeRef node,
+     const YGGutter gutter,
+     const float gapLength) {
+-  updateStyle<&Style::gap, &Style::setGap>(
++  updateStyle<&YOGA_STYLE::gap, &YOGA_STYLE::setGap>(
+       node, scopedEnum(gutter), StyleLength::points(gapLength));
+ }
+ 
+ void YGNodeStyleSetGapPercent(YGNodeRef node, YGGutter gutter, float percent) {
+-  updateStyle<&Style::gap, &Style::setGap>(
++  updateStyle<&YOGA_STYLE::gap, &YOGA_STYLE::setGap>(
+       node, scopedEnum(gutter), StyleLength::percent(percent));
+ }
+ 
+@@ -298,7 +300,7 @@ YGValue YGNodeStyleGetGap(const YGNodeConstRef node, const YGGutter gutter) {
+ }
+ 
+ void YGNodeStyleSetAspectRatio(const YGNodeRef node, const float aspectRatio) {
+-  updateStyle<&Style::aspectRatio, &Style::setAspectRatio>(
++  updateStyle<&YOGA_STYLE::aspectRatio, &YOGA_STYLE::setAspectRatio>(
+       node, FloatOptional{aspectRatio});
+ }
+ 
+@@ -308,7 +310,7 @@ float YGNodeStyleGetAspectRatio(const YGNodeConstRef node) {
+ }
+ 
+ void YGNodeStyleSetBoxSizing(YGNodeRef node, YGBoxSizing boxSizing) {
+-  updateStyle<&Style::boxSizing, &Style::setBoxSizing>(
++  updateStyle<&YOGA_STYLE::boxSizing, &YOGA_STYLE::setBoxSizing>(
+       node, scopedEnum(boxSizing));
+ }
+ 
+@@ -317,32 +319,32 @@ YGBoxSizing YGNodeStyleGetBoxSizing(const YGNodeConstRef node) {
+ }
+ 
+ void YGNodeStyleSetWidth(YGNodeRef node, float points) {
+-  updateStyle<&Style::dimension, &Style::setDimension>(
++  updateStyle<&YOGA_STYLE::dimension, &YOGA_STYLE::setDimension>(
+       node, Dimension::Width, StyleSizeLength::points(points));
+ }
+ 
+ void YGNodeStyleSetWidthPercent(YGNodeRef node, float percent) {
+-  updateStyle<&Style::dimension, &Style::setDimension>(
++  updateStyle<&YOGA_STYLE::dimension, &YOGA_STYLE::setDimension>(
+       node, Dimension::Width, StyleSizeLength::percent(percent));
+ }
+ 
+ void YGNodeStyleSetWidthAuto(YGNodeRef node) {
+-  updateStyle<&Style::dimension, &Style::setDimension>(
++  updateStyle<&YOGA_STYLE::dimension, &YOGA_STYLE::setDimension>(
+       node, Dimension::Width, StyleSizeLength::ofAuto());
+ }
+ 
+ void YGNodeStyleSetWidthMaxContent(YGNodeRef node) {
+-  updateStyle<&Style::dimension, &Style::setDimension>(
++  updateStyle<&YOGA_STYLE::dimension, &YOGA_STYLE::setDimension>(
+       node, Dimension::Width, StyleSizeLength::ofMaxContent());
+ }
+ 
+ void YGNodeStyleSetWidthFitContent(YGNodeRef node) {
+-  updateStyle<&Style::dimension, &Style::setDimension>(
++  updateStyle<&YOGA_STYLE::dimension, &YOGA_STYLE::setDimension>(
+       node, Dimension::Width, StyleSizeLength::ofFitContent());
+ }
+ 
+ void YGNodeStyleSetWidthStretch(YGNodeRef node) {
+-  updateStyle<&Style::dimension, &Style::setDimension>(
++  updateStyle<&YOGA_STYLE::dimension, &YOGA_STYLE::setDimension>(
+       node, Dimension::Width, StyleSizeLength::ofStretch());
+ }
+ 
+@@ -351,32 +353,32 @@ YGValue YGNodeStyleGetWidth(YGNodeConstRef node) {
+ }
+ 
+ void YGNodeStyleSetHeight(YGNodeRef node, float points) {
+-  updateStyle<&Style::dimension, &Style::setDimension>(
++  updateStyle<&YOGA_STYLE::dimension, &YOGA_STYLE::setDimension>(
+       node, Dimension::Height, StyleSizeLength::points(points));
+ }
+ 
+ void YGNodeStyleSetHeightPercent(YGNodeRef node, float percent) {
+-  updateStyle<&Style::dimension, &Style::setDimension>(
++  updateStyle<&YOGA_STYLE::dimension, &YOGA_STYLE::setDimension>(
+       node, Dimension::Height, StyleSizeLength::percent(percent));
+ }
+ 
+ void YGNodeStyleSetHeightAuto(YGNodeRef node) {
+-  updateStyle<&Style::dimension, &Style::setDimension>(
++  updateStyle<&YOGA_STYLE::dimension, &YOGA_STYLE::setDimension>(
+       node, Dimension::Height, StyleSizeLength::ofAuto());
+ }
+ 
+ void YGNodeStyleSetHeightMaxContent(YGNodeRef node) {
+-  updateStyle<&Style::dimension, &Style::setDimension>(
++  updateStyle<&YOGA_STYLE::dimension, &YOGA_STYLE::setDimension>(
+       node, Dimension::Height, StyleSizeLength::ofMaxContent());
+ }
+ 
+ void YGNodeStyleSetHeightFitContent(YGNodeRef node) {
+-  updateStyle<&Style::dimension, &Style::setDimension>(
++  updateStyle<&YOGA_STYLE::dimension, &YOGA_STYLE::setDimension>(
+       node, Dimension::Height, StyleSizeLength::ofFitContent());
+ }
+ 
+ void YGNodeStyleSetHeightStretch(YGNodeRef node) {
+-  updateStyle<&Style::dimension, &Style::setDimension>(
++  updateStyle<&YOGA_STYLE::dimension, &YOGA_STYLE::setDimension>(
+       node, Dimension::Height, StyleSizeLength::ofStretch());
+ }
+ 
+@@ -385,27 +387,27 @@ YGValue YGNodeStyleGetHeight(YGNodeConstRef node) {
+ }
+ 
+ void YGNodeStyleSetMinWidth(const YGNodeRef node, const float minWidth) {
+-  updateStyle<&Style::minDimension, &Style::setMinDimension>(
++  updateStyle<&YOGA_STYLE::minDimension, &YOGA_STYLE::setMinDimension>(
+       node, Dimension::Width, StyleSizeLength::points(minWidth));
+ }
+ 
+ void YGNodeStyleSetMinWidthPercent(const YGNodeRef node, const float minWidth) {
+-  updateStyle<&Style::minDimension, &Style::setMinDimension>(
++  updateStyle<&YOGA_STYLE::minDimension, &YOGA_STYLE::setMinDimension>(
+       node, Dimension::Width, StyleSizeLength::percent(minWidth));
+ }
+ 
+ void YGNodeStyleSetMinWidthMaxContent(const YGNodeRef node) {
+-  updateStyle<&Style::minDimension, &Style::setMinDimension>(
++  updateStyle<&YOGA_STYLE::minDimension, &YOGA_STYLE::setMinDimension>(
+       node, Dimension::Width, StyleSizeLength::ofMaxContent());
+ }
+ 
+ void YGNodeStyleSetMinWidthFitContent(const YGNodeRef node) {
+-  updateStyle<&Style::minDimension, &Style::setMinDimension>(
++  updateStyle<&YOGA_STYLE::minDimension, &YOGA_STYLE::setMinDimension>(
+       node, Dimension::Width, StyleSizeLength::ofFitContent());
+ }
+ 
+ void YGNodeStyleSetMinWidthStretch(const YGNodeRef node) {
+-  updateStyle<&Style::minDimension, &Style::setMinDimension>(
++  updateStyle<&YOGA_STYLE::minDimension, &YOGA_STYLE::setMinDimension>(
+       node, Dimension::Width, StyleSizeLength::ofStretch());
+ }
+ 
+@@ -414,29 +416,29 @@ YGValue YGNodeStyleGetMinWidth(const YGNodeConstRef node) {
+ }
+ 
+ void YGNodeStyleSetMinHeight(const YGNodeRef node, const float minHeight) {
+-  updateStyle<&Style::minDimension, &Style::setMinDimension>(
++  updateStyle<&YOGA_STYLE::minDimension, &YOGA_STYLE::setMinDimension>(
+       node, Dimension::Height, StyleSizeLength::points(minHeight));
+ }
+ 
+ void YGNodeStyleSetMinHeightPercent(
+     const YGNodeRef node,
+     const float minHeight) {
+-  updateStyle<&Style::minDimension, &Style::setMinDimension>(
++  updateStyle<&YOGA_STYLE::minDimension, &YOGA_STYLE::setMinDimension>(
+       node, Dimension::Height, StyleSizeLength::percent(minHeight));
+ }
+ 
+ void YGNodeStyleSetMinHeightMaxContent(const YGNodeRef node) {
+-  updateStyle<&Style::minDimension, &Style::setMinDimension>(
++  updateStyle<&YOGA_STYLE::minDimension, &YOGA_STYLE::setMinDimension>(
+       node, Dimension::Height, StyleSizeLength::ofMaxContent());
+ }
+ 
+ void YGNodeStyleSetMinHeightFitContent(const YGNodeRef node) {
+-  updateStyle<&Style::minDimension, &Style::setMinDimension>(
++  updateStyle<&YOGA_STYLE::minDimension, &YOGA_STYLE::setMinDimension>(
+       node, Dimension::Height, StyleSizeLength::ofFitContent());
+ }
+ 
+ void YGNodeStyleSetMinHeightStretch(const YGNodeRef node) {
+-  updateStyle<&Style::minDimension, &Style::setMinDimension>(
++  updateStyle<&YOGA_STYLE::minDimension, &YOGA_STYLE::setMinDimension>(
+       node, Dimension::Height, StyleSizeLength::ofStretch());
+ }
+ 
+@@ -445,27 +447,27 @@ YGValue YGNodeStyleGetMinHeight(const YGNodeConstRef node) {
+ }
+ 
+ void YGNodeStyleSetMaxWidth(const YGNodeRef node, const float maxWidth) {
+-  updateStyle<&Style::maxDimension, &Style::setMaxDimension>(
++  updateStyle<&YOGA_STYLE::maxDimension, &YOGA_STYLE::setMaxDimension>(
+       node, Dimension::Width, StyleSizeLength::points(maxWidth));
+ }
+ 
+ void YGNodeStyleSetMaxWidthPercent(const YGNodeRef node, const float maxWidth) {
+-  updateStyle<&Style::maxDimension, &Style::setMaxDimension>(
++  updateStyle<&YOGA_STYLE::maxDimension, &YOGA_STYLE::setMaxDimension>(
+       node, Dimension::Width, StyleSizeLength::percent(maxWidth));
+ }
+ 
+ void YGNodeStyleSetMaxWidthMaxContent(const YGNodeRef node) {
+-  updateStyle<&Style::maxDimension, &Style::setMaxDimension>(
++  updateStyle<&YOGA_STYLE::maxDimension, &YOGA_STYLE::setMaxDimension>(
+       node, Dimension::Width, StyleSizeLength::ofMaxContent());
+ }
+ 
+ void YGNodeStyleSetMaxWidthFitContent(const YGNodeRef node) {
+-  updateStyle<&Style::maxDimension, &Style::setMaxDimension>(
++  updateStyle<&YOGA_STYLE::maxDimension, &YOGA_STYLE::setMaxDimension>(
+       node, Dimension::Width, StyleSizeLength::ofFitContent());
+ }
+ 
+ void YGNodeStyleSetMaxWidthStretch(const YGNodeRef node) {
+-  updateStyle<&Style::maxDimension, &Style::setMaxDimension>(
++  updateStyle<&YOGA_STYLE::maxDimension, &YOGA_STYLE::setMaxDimension>(
+       node, Dimension::Width, StyleSizeLength::ofStretch());
+ }
+ 
+@@ -474,29 +476,29 @@ YGValue YGNodeStyleGetMaxWidth(const YGNodeConstRef node) {
+ }
+ 
+ void YGNodeStyleSetMaxHeight(const YGNodeRef node, const float maxHeight) {
+-  updateStyle<&Style::maxDimension, &Style::setMaxDimension>(
++  updateStyle<&YOGA_STYLE::maxDimension, &YOGA_STYLE::setMaxDimension>(
+       node, Dimension::Height, StyleSizeLength::points(maxHeight));
+ }
+ 
+ void YGNodeStyleSetMaxHeightPercent(
+     const YGNodeRef node,
+     const float maxHeight) {
+-  updateStyle<&Style::maxDimension, &Style::setMaxDimension>(
++  updateStyle<&YOGA_STYLE::maxDimension, &YOGA_STYLE::setMaxDimension>(
+       node, Dimension::Height, StyleSizeLength::percent(maxHeight));
+ }
+ 
+ void YGNodeStyleSetMaxHeightMaxContent(const YGNodeRef node) {
+-  updateStyle<&Style::maxDimension, &Style::setMaxDimension>(
++  updateStyle<&YOGA_STYLE::maxDimension, &YOGA_STYLE::setMaxDimension>(
+       node, Dimension::Height, StyleSizeLength::ofMaxContent());
+ }
+ 
+ void YGNodeStyleSetMaxHeightFitContent(const YGNodeRef node) {
+-  updateStyle<&Style::maxDimension, &Style::setMaxDimension>(
++  updateStyle<&YOGA_STYLE::maxDimension, &YOGA_STYLE::setMaxDimension>(
+       node, Dimension::Height, StyleSizeLength::ofFitContent());
+ }
+ 
+ void YGNodeStyleSetMaxHeightStretch(const YGNodeRef node) {
+-  updateStyle<&Style::maxDimension, &Style::setMaxDimension>(
++  updateStyle<&YOGA_STYLE::maxDimension, &YOGA_STYLE::setMaxDimension>(
+       node, Dimension::Height, StyleSizeLength::ofStretch());
+ }
+ 
+diff --git a/node_modules/react-native/ReactCommon/yoga/yoga/enums/YogaEnums.h b/node_modules/react-native/ReactCommon/yoga/yoga/enums/YogaEnums.h
+index de44662..a64bc10 100644
+--- a/node_modules/react-native/ReactCommon/yoga/yoga/enums/YogaEnums.h
++++ b/node_modules/react-native/ReactCommon/yoga/yoga/enums/YogaEnums.h
+@@ -7,36 +7,37 @@
+ 
+ #pragma once
+ 
+-#include <bit>
+ #include <iterator>
+ #include <type_traits>
+ 
+ namespace facebook::yoga {
+ 
+ /**
+- * Concept for any enum/enum class
++ * C++17-compatible replacement for std::bit_width (C++20)
+  */
+-template <typename EnumT>
+-concept Enumeration = std::is_enum_v<EnumT>;
++template <typename T>
++constexpr int bit_width_fallback(T n) {
++  if (n == 0) return 0;
++  int bits = 0;
++  while (n) {
++    bits++;
++    n >>= 1;
++  }
++  return bits;
++}
+ 
+ /**
+  * Count of ordinals in a Yoga enum which is sequential
+  */
+-template <Enumeration EnumT>
+-constexpr int32_t ordinalCount();
+-
+-/**
+- * Concept for a yoga enum which is sequential
+- */
+ template <typename EnumT>
+-concept HasOrdinality = (ordinalCount<EnumT>() > 0);
++constexpr int32_t ordinalCount();
+ 
+ /**
+  * Count of bits needed to represent every ordinal
+  */
+-template <HasOrdinality EnumT>
++template <typename EnumT>
+ constexpr int32_t bitCount() {
+-  return std::bit_width(
++  return bit_width_fallback(
+       static_cast<std::underlying_type_t<EnumT>>(ordinalCount<EnumT>() - 1));
+ }
+ 
+@@ -44,15 +45,18 @@ constexpr int32_t bitCount() {
+  * Polyfill of C++ 23 to_underlying()
+  * https://en.cppreference.com/w/cpp/utility/to_underlying
+  */
+-constexpr auto to_underlying(Enumeration auto e) noexcept {
+-  return static_cast<std::underlying_type_t<decltype(e)>>(e);
++template <typename EnumT>
++constexpr auto to_underlying(EnumT e) noexcept
++    -> std::enable_if_t<std::is_enum_v<EnumT>,
++                        std::underlying_type_t<EnumT>> {
++  return static_cast<std::underlying_type_t<EnumT>>(e);
+ }
+ 
+ /**
+  * Convenience function to iterate through every value in a Yoga enum as part of
+  * a range-based for loop.
+  */
+-template <HasOrdinality EnumT>
++template <typename EnumT>
+ auto ordinals() {
+   struct Iterator {
+     EnumT e{};
+@@ -66,8 +70,12 @@ auto ordinals() {
+       return *this;
+     }
+ 
+-    bool operator==(const Iterator& other) const = default;
+-    bool operator!=(const Iterator& other) const = default;
++    bool operator==(const Iterator& other) const {
++      return e == other.e;
++    }
++    bool operator!=(const Iterator& other) const {
++      return e != other.e;
++    }
+   };
+ 
+   struct Range {
+diff --git a/node_modules/react-native/ReactCommon/yoga/yoga/node/LayoutableChildren.h b/node_modules/react-native/ReactCommon/yoga/yoga/node/LayoutableChildren.h
+index b158a6a..c2aa251 100644
+--- a/node_modules/react-native/ReactCommon/yoga/yoga/node/LayoutableChildren.h
++++ b/node_modules/react-native/ReactCommon/yoga/yoga/node/LayoutableChildren.h
+@@ -9,6 +9,8 @@
+ 
+ #include <cstdint>
+ #include <forward_list>
++#include <iterator>
++#include <type_traits>
+ #include <utility>
+ 
+ #include <yoga/enums/Display.h>
+@@ -118,7 +120,10 @@ class LayoutableChildren {
+   };
+ 
+   explicit LayoutableChildren(const T* node) : node_(node) {
+-    static_assert(std::input_iterator<LayoutableChildren<T>::Iterator>);
++    static_assert(
++        std::is_same_v<typename std::iterator_traits<Iterator>::iterator_category,
++                       std::input_iterator_tag>,
++        "LayoutableChildren::Iterator must be an input iterator");
+     static_assert(
+         std::is_base_of<Node, T>::value,
+         "Type parameter of LayoutableChildren must derive from yoga::Node");
+diff --git a/node_modules/react-native/ReactCommon/yoga/yoga/numeric/Comparison.h b/node_modules/react-native/ReactCommon/yoga/yoga/numeric/Comparison.h
+index 0e23a83..c3c331e 100644
+--- a/node_modules/react-native/ReactCommon/yoga/yoga/numeric/Comparison.h
++++ b/node_modules/react-native/ReactCommon/yoga/yoga/numeric/Comparison.h
+@@ -10,44 +10,46 @@
+ #include <algorithm>
+ #include <array>
+ #include <cmath>
+-#include <concepts>
++#include <limits>
++#include <type_traits>
+ 
+ #include <yoga/Yoga.h>
+ 
+ namespace facebook::yoga {
+ 
+-constexpr bool isUndefined(std::floating_point auto value) {
++// C++17-compatible: std::floating_point is C++20
++template <typename T>
++constexpr bool isUndefined(T value) {
+   return value != value;
+ }
+ 
+-constexpr bool isDefined(std::floating_point auto value) {
++template <typename T>
++constexpr bool isDefined(T value) {
+   return !isUndefined(value);
+ }
+ 
+ /**
+  * Constexpr version of `std::isinf` before C++ 23
+  */
+-constexpr bool isinf(auto value) {
+-  return value == +std::numeric_limits<decltype(value)>::infinity() ||
+-      value == -std::numeric_limits<decltype(value)>::infinity();
++template <typename T>
++constexpr bool isinf(T value) {
++  return value == +std::numeric_limits<T>::infinity() ||
++      value == -std::numeric_limits<T>::infinity();
+ }
+ 
+-constexpr auto maxOrDefined(
+-    std::floating_point auto a,
+-    std::floating_point auto b) {
++template <typename T>
++constexpr T maxOrDefined(T a, T b) {
+   if (yoga::isDefined(a) && yoga::isDefined(b)) {
+     return std::max(a, b);
+   }
+   return yoga::isUndefined(a) ? b : a;
+ }
+ 
+-constexpr auto minOrDefined(
+-    std::floating_point auto a,
+-    std::floating_point auto b) {
++template <typename T>
++constexpr T minOrDefined(T a, T b) {
+   if (yoga::isDefined(a) && yoga::isDefined(b)) {
+     return std::min(a, b);
+   }
+-
+   return yoga::isUndefined(a) ? b : a;
+ }
+ 
+diff --git a/node_modules/react-native/ReactCommon/yoga/yoga/style/StyleValuePool.h b/node_modules/react-native/ReactCommon/yoga/yoga/style/StyleValuePool.h
+index dfee30a..7b6cd5d 100644
+--- a/node_modules/react-native/ReactCommon/yoga/yoga/style/StyleValuePool.h
++++ b/node_modules/react-native/ReactCommon/yoga/yoga/style/StyleValuePool.h
+@@ -9,6 +9,7 @@
+ 
+ #include <cassert>
+ #include <cstdint>
++#include <cstring>
+ 
+ #include <yoga/numeric/FloatOptional.h>
+ #include <yoga/style/SmallValueBuffer.h>
+@@ -18,6 +19,14 @@
+ 
+ namespace facebook::yoga {
+ 
++// C++17 polyfill for bit_cast (C++20)
++template <typename To, typename From>
++To bit_cast(const From& from) {
++  To to;
++  std::memcpy(&to, &from, sizeof(To));
++  return to;
++}
++
+ /**
+  * StyleValuePool allows compact storage for a sparse collection of assigned
+  * lengths and numbers. Values are referred to using StyleValueHandle. In most
+@@ -75,7 +84,7 @@ class StyleValuePool {
+           handle.type() == StyleValueHandle::Type::Point ||
+           handle.type() == StyleValueHandle::Type::Percent);
+       float value = (handle.isValueIndexed())
+-          ? std::bit_cast<float>(buffer_.get32(handle.value()))
++          ? bit_cast<float>(buffer_.get32(handle.value()))
+           : unpackInlineInteger(handle.value());
+ 
+       return handle.type() == StyleValueHandle::Type::Point
+@@ -100,7 +109,7 @@ class StyleValuePool {
+           handle.type() == StyleValueHandle::Type::Point ||
+           handle.type() == StyleValueHandle::Type::Percent);
+       float value = (handle.isValueIndexed())
+-          ? std::bit_cast<float>(buffer_.get32(handle.value()))
++          ? bit_cast<float>(buffer_.get32(handle.value()))
+           : unpackInlineInteger(handle.value());
+ 
+       return handle.type() == StyleValueHandle::Type::Point
+@@ -115,7 +124,7 @@ class StyleValuePool {
+     } else {
+       assert(handle.type() == StyleValueHandle::Type::Number);
+       float value = (handle.isValueIndexed())
+-          ? std::bit_cast<float>(buffer_.get32(handle.value()))
++          ? bit_cast<float>(buffer_.get32(handle.value()))
+           : unpackInlineInteger(handle.value());
+       return FloatOptional{value};
+     }
+@@ -130,12 +139,12 @@ class StyleValuePool {
+ 
+     if (handle.isValueIndexed()) {
+       auto newIndex =
+-          buffer_.replace(handle.value(), std::bit_cast<uint32_t>(value));
++          buffer_.replace(handle.value(), bit_cast<uint32_t>(value));
+       handle.setValue(newIndex);
+     } else if (isIntegerPackable(value)) {
+       handle.setValue(packInlineInteger(value));
+     } else {
+-      auto newIndex = buffer_.push(std::bit_cast<uint32_t>(value));
++      auto newIndex = buffer_.push(bit_cast<uint32_t>(value));
+       handle.setValue(newIndex);
+       handle.setValueIsIndexed();
+     }
