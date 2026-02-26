@@ -353,7 +353,6 @@ const styles = StyleSheet.create({
   saveButton: {
     alignSelf: 'flex-end',
     backgroundColor: colors.themeColor,
-    marginTop: 8,
     paddingVertical: 14,
     marginTop: 16,
     width: '100%',
@@ -874,7 +873,46 @@ const styles = StyleSheet.create({
 
   phoneInputContainer: {
     flexDirection: 'row',
-    marginBottom: 20,
+    marginBottom: 0,
+    minHeight: 50,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.lightGrey,
+    borderRadius: 8,
+    backgroundColor: colors.white,
+    overflow: 'hidden',
+    width: '100%',
+    paddingLeft: 12,
+  },
+
+  phoneInputFlagRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 72,
+    gap: 6,
+  },
+
+  phoneInputFlag: {
+    width: 28,
+    height: 20,
+    borderWidth: 0,
+    borderRadius: 2,
+  },
+
+  phoneInputDialCode: {
+    fontSize: 16,
+    color: colors.themeColor,
+    fontWeight: '500',
+  },
+
+  phoneInputText: {
+    fontSize: 16,
+    color: colors.themeColor,
+    paddingVertical: 14,
+    paddingHorizontal: 8,
+    flex: 1,
+    minHeight: 48,
   },
 
   countryCodeContainer: {

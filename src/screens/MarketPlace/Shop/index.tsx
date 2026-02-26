@@ -6,6 +6,11 @@ import {
   Image,
   TouchableOpacity,
   ScrollView,
+  Linking,
+  Modal,
+  ActivityIndicator,
+  Dimensions,
+  Platform,
 } from 'react-native';
 import {images} from '../../../utils/images';
 import {colors} from '../../../utils/theme';
@@ -15,16 +20,52 @@ import Loader from '../../../components/Loader';
 import DropDownTextInput from '../../../components/TextInput/DropDownTextInput';
 import ReportBlockModal from '../../../components/ReportBlockModal';
 import GeneralModal from '../../../components/GeneralModal';
-import {reportPost} from '../../../api/home';
+import {createChat, reportPost} from '../../../api/home';
 import {getMessage, Toast} from '../../../utils/helpers';
-import {MessageCircle, HelpCircle, Mail, Share2} from 'lucide-react-native';
+import {MessageCircle, HelpCircle, Mail, Share2, X} from 'lucide-react-native';
 import GlobalHeader from '../../../components/GlobalHeader';
 
-const filterItems = [
-  {label: 'Categories', value: 'category'},
-  {label: 'Prices', value: 'price'},
-  {label: 'Locations', value: 'location'},
-  {label: 'Ratings', value: 'rating'},
+const {width: SCREEN_WIDTH, height: SCREEN_HEIGHT} = Dimensions.get('window');
+
+const filterCategories = [
+  {label: 'All categories', value: 'all'},
+  {label: 'Tech & Gadgets', value: 'tech'},
+  {label: 'Fashion', value: 'fashion'},
+  {label: 'Home & Garden', value: 'home'},
+  {label: 'Sports', value: 'sports'},
+  {label: 'Books & Media', value: 'books'},
+  {label: 'Electronics', value: 'electronics'},
+  {label: 'Other', value: 'other'},
+];
+
+const filterPrices = [
+  {label: 'Any price', value: 'any'},
+  {label: 'Under $25', value: 'under_25'},
+  {label: '$25 – $50', value: '25_50'},
+  {label: '$50 – $100', value: '50_100'},
+  {label: '$100 – $250', value: '100_250'},
+  {label: 'Over $250', value: 'over_250'},
+];
+
+const filterLocations = [
+  {label: 'Any location', value: 'any'},
+  {label: 'Local', value: 'local'},
+  {label: 'National', value: 'national'},
+  {label: 'International', value: 'international'},
+];
+
+const filterRatings = [
+  {label: 'Any rating', value: 'any'},
+  {label: '4+ stars', value: '4'},
+  {label: '3+ stars', value: '3'},
+  {label: '2+ stars', value: '2'},
+];
+
+const filterConfig = [
+  {key: 'category', placeholder: 'Categories', items: filterCategories},
+  {key: 'price', placeholder: 'Prices', items: filterPrices},
+  {key: 'location', placeholder: 'Locations', items: filterLocations},
+  {key: 'rating', placeholder: 'Ratings', items: filterRatings},
 ];
 
 const Shop: React.FC = () => {
@@ -43,6 +84,54 @@ const Shop: React.FC = () => {
     id: null,
   });
   const [reportLoader, setReportLoader] = useState(false);
+  const [storeInfoVisible, setStoreInfoVisible] = useState(false);
+  const [chatLoader, setChatLoader] = useState(false);
+
+  const sellerId = shopDetails?.user_id ?? shopDetails?.user?.id;
+  const sellerName =
+    shopDetails?.user?.full_name ??
+    shopDetails?.user?.name ??
+    shopDetails?.shop_name ??
+    'Store';
+  const sellerPhone =
+    shopDetails?.user?.phone_number ?? shopDetails?.phone_number ?? '';
+  const sellerEmail =
+    shopDetails?.user?.email ?? shopDetails?.email ?? '';
+
+  const handleChatPress = useCallback(async () => {
+    if (!sellerId) {
+      Toast.error('Unable to start chat with this store.');
+      return;
+    }
+    setChatLoader(true);
+    try {
+      const res = await createChat({user_id: sellerId});
+      setChatLoader(false);
+      (navigation as any).navigate('ChatOngoing', {
+        id: res?.data?.data?.id,
+        name: sellerName,
+        phoneNumber: sellerPhone,
+      });
+    } catch (err) {
+      setChatLoader(false);
+      Toast.error(getMessage((err as any)?.message));
+    }
+  }, [sellerId, sellerName, sellerPhone, navigation]);
+
+  const handleStoreInfoPress = useCallback(() => {
+    setStoreInfoVisible(true);
+  }, []);
+
+  const handleMailPress = useCallback(() => {
+    const email = sellerEmail?.trim();
+    if (email) {
+      Linking.openURL(`mailto:${email}`).catch(() => {
+        Toast.error('Could not open mail app.');
+      });
+    } else {
+      Toast.error('No email provided from store owner');
+    }
+  }, [sellerEmail]);
 
   const handleReportPress = () => {
     setModalVisible(false);
@@ -205,27 +294,49 @@ const Shop: React.FC = () => {
 
         {/* Action Buttons */}
         <View style={styles.actionButtonsContainer}>
-          <TouchableOpacity style={styles.actionButton}>
-            <MessageCircle size={24} color={colors.themeColor} />
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={handleChatPress}
+            disabled={chatLoader}>
+            {chatLoader ? (
+              <ActivityIndicator size="small" color={colors.themeColor} />
+            ) : (
+              <MessageCircle size={24} color={colors.themeColor} />
+            )}
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={handleStoreInfoPress}>
             <HelpCircle size={24} color={colors.themeColor} />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={handleMailPress}>
             <Mail size={24} color={colors.themeColor} />
           </TouchableOpacity>
         </View>
 
         {/* Filter Bar */}
         <View style={styles.filterBar}>
-          {filterItems.map((item, index) => (
-            <View key={index} style={styles.filterItem}>
+          {filterConfig.map((filter) => (
+            <View key={filter.key} style={styles.filterItem}>
               <DropDownTextInput
-                items={[{label: item.label, value: item.value}]}
+                listMode="MODAL"
+                items={filter.items}
                 defaultValue=""
-                placeholder={item.label}
+                placeholder={filter.placeholder}
                 onChangeValue={() => {}}
                 style={styles.filterDropdown}
+                modalProps={{
+                  transparent: true,
+                  animationType: 'fade',
+                }}
+                modalContentContainerStyle={styles.filterModalOverlay}
+                modalTitle={`Select ${filter.placeholder.toLowerCase()}`}
+                modalTitleStyle={styles.filterModalTitle}
+                dropDownContainerStyle={styles.filterModalCard}
+                listItemContainerStyle={styles.filterModalListItem}
+                listItemLabelStyle={styles.filterModalListItemLabel}
               />
             </View>
           ))}
@@ -321,6 +432,58 @@ const Shop: React.FC = () => {
         primaryBtn={true}
         redImage={true}
       />
+
+      {/* Store Info Modal */}
+      <Modal
+        visible={storeInfoVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setStoreInfoVisible(false)}>
+        <TouchableOpacity
+          style={styles.storeInfoOverlay}
+          activeOpacity={1}
+          onPress={() => setStoreInfoVisible(false)}>
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={() => {}}
+            style={styles.storeInfoModal}>
+            <View style={styles.storeInfoHeader}>
+              <Text style={styles.storeInfoTitle}>Store info</Text>
+              <TouchableOpacity
+                onPress={() => setStoreInfoVisible(false)}
+                hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+                <X size={24} color="#333" />
+              </TouchableOpacity>
+            </View>
+            <ScrollView
+              style={styles.storeInfoScroll}
+              showsVerticalScrollIndicator={false}>
+              <Text style={styles.storeInfoLabel}>Store name</Text>
+              <Text style={styles.storeInfoValue}>
+                {shopDetails?.shop_name || '—'}
+              </Text>
+              <Text style={styles.storeInfoLabel}>Category</Text>
+              <Text style={styles.storeInfoValue}>
+                {shopDetails?.category || '—'}
+              </Text>
+              {(shopDetails?.description || shopDetails?.bio) && (
+                <>
+                  <Text style={styles.storeInfoLabel}>Description</Text>
+                  <Text style={styles.storeInfoValue}>
+                    {shopDetails?.description || shopDetails?.bio || '—'}
+                  </Text>
+                </>
+              )}
+              {sellerName && sellerName !== 'Store' && (
+                <>
+                  <Text style={styles.storeInfoLabel}>Seller</Text>
+                  <Text style={styles.storeInfoValue}>{sellerName}</Text>
+                </>
+              )}
+            </ScrollView>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 };
@@ -547,6 +710,87 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 16,
     color: '#666',
+  },
+  storeInfoOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  storeInfoModal: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    maxHeight: '70%',
+  },
+  storeInfoHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  storeInfoTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  storeInfoScroll: {
+    padding: 16,
+  },
+  storeInfoLabel: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 4,
+    marginTop: 12,
+  },
+  storeInfoValue: {
+    fontSize: 15,
+    color: '#333',
+  },
+  // Filter dropdown modal – dark overlay + centered content
+  filterModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 48,
+  },
+  filterModalTitle: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: '#1a1a1a',
+  },
+  filterModalCard: {
+    width: '100%',
+    maxWidth: SCREEN_WIDTH * 0.88,
+    maxHeight: SCREEN_HEIGHT * 0.55,
+    backgroundColor: 'white',
+    borderRadius: 16,
+    overflow: 'hidden',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: {width: 0, height: 4},
+        shadowOpacity: 0.15,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
+  },
+  filterModalListItem: {
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#eee',
+  },
+  filterModalListItemLabel: {
+    fontSize: 15,
+    color: '#333',
   },
 });
 

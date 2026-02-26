@@ -23,7 +23,7 @@ const SecurityPrivacy = ({navigation}: any) => {
         {/* Security & Privacy Header */}
         <View style={styles.languageHeader}>
           <InterLightAverage style={styles.languageTitle}>
-            {t('securityPrivacy.title')}
+            Security & Privacy
           </InterLightAverage>
         </View>
 
@@ -34,7 +34,7 @@ const SecurityPrivacy = ({navigation}: any) => {
             style={styles.navigationItem}
             onPress={() => navigation.navigate('ChangePassword')}>
             <InterLightAverage style={styles.navigationItemText}>
-              {t('securityPrivacy.changePassword')}
+              Change password
             </InterLightAverage>
             <View style={styles.navigationArrow}>
               <ChevronRight size={20} color={colors.lightGrey} />
@@ -42,21 +42,21 @@ const SecurityPrivacy = ({navigation}: any) => {
           </TouchableOpacity>
 
           {/* Device & Login Activity */}
-          <TouchableOpacity style={styles.navigationItem}>
+          {/* <TouchableOpacity style={styles.navigationItem}>
             <InterLightAverage style={styles.navigationItemText}>
               {t('securityPrivacy.deviceInfo')}
             </InterLightAverage>
             <View style={styles.navigationArrow}>
               <ChevronRight size={20} color={colors.lightGrey} />
             </View>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
 
           {/* Disable or Delete Account */}
           <TouchableOpacity
             style={styles.navigationItem}
             onPress={() => navigation.navigate('DisableDeleteAccount')}>
             <InterLightAverage style={styles.navigationItemText}>
-              {t('securityPrivacy.deleteAccount')}
+              Delete Account
             </InterLightAverage>
             <View style={styles.navigationArrow}>
               <ChevronRight size={20} color={colors.lightGrey} />

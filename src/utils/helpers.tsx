@@ -194,9 +194,22 @@ export const createFile = (img: string) => {
   let type = match ? `image/${match[1]}` : `image`;
   var image = img;
   let obj = {
-    name: 'img' + new Date().getTime() + '.' + match[1],
+    name: 'img' + new Date().getTime() + '.' + (match?.[1] ?? 'jpg'),
     type: type,
     uri: Platform.OS === 'android' ? image : image.replace('file://', ''),
   };
   return obj;
+};
+
+/** Use for chat video uploads so the correct video/* MIME type is set. */
+export const createVideoFile = (uri: string) => {
+  const filename = uri.split('/').pop() ?? 'video';
+  const match = /\.(\w+)$/.exec(filename);
+  const ext = match?.[1] ?? 'mp4';
+  const type = `video/${ext}`;
+  return {
+    name: `video_${new Date().getTime()}.${ext}`,
+    type,
+    uri: Platform.OS === 'android' ? uri : uri.replace('file://', ''),
+  };
 };

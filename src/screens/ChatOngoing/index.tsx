@@ -42,7 +42,7 @@ import callManagerService from '../../services/callManagerService';
 import ReportBlockModal from '../../components/ReportBlockModal';
 import {DEVICE_HEIGHT} from '../../constant';
 import useImagePicker from '../../hooks/useImagePicker-story';
-import {createFile} from '../../utils/helpers';
+import {createFile, createVideoFile} from '../../utils/helpers';
 
 interface Props {
   route?: {
@@ -480,7 +480,7 @@ const ChatOngoing: React.FC<Props> = props => {
     if (asset?.uri) {
       const formData = new FormData();
       formData.append('chat_id', props?.route?.params?.id);
-      formData.append('video', createFile(asset?.uri));
+      formData.append('video', createVideoFile(asset?.uri));
       // formData.append('message', 'k');
 
       uploadVideo(formData)
@@ -560,9 +560,9 @@ const ChatOngoing: React.FC<Props> = props => {
               strokeWidth={2}
             />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.iconContainer}>
+          {/* <TouchableOpacity style={styles.iconContainer}>
             <EllipsisVertical size={20} color="#666" strokeWidth={2} />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
       </View>
 

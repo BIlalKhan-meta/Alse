@@ -2,7 +2,14 @@
 import React, {useEffect, useState} from 'react';
 import DropDownPicker from 'react-native-dropdown-picker';
 // import styles from './styles'
-import {StyleProp, StyleSheet, View, ViewStyle} from 'react-native';
+import {
+  ModalProps,
+  StyleProp,
+  StyleSheet,
+  View,
+  ViewStyle,
+  TextStyle,
+} from 'react-native';
 import {colors} from '../../../utils/theme';
 import InterRegularSmallest from '../../Text/InterRegularSmallest';
 import {vh, vw} from '../../../constant';
@@ -21,6 +28,13 @@ interface DropdownComponentProps {
   idRequired?: boolean;
   label?: string;
   error?: string;
+  modalProps?: ModalProps;
+  modalContentContainerStyle?: StyleProp<ViewStyle>;
+  modalTitle?: string;
+  modalTitleStyle?: StyleProp<TextStyle>;
+  dropDownContainerStyle?: StyleProp<ViewStyle>;
+  listItemContainerStyle?: StyleProp<ViewStyle>;
+  listItemLabelStyle?: StyleProp<TextStyle>;
 }
 
 const DropDownTextInput: React.FC<DropdownComponentProps> = ({
@@ -32,6 +46,13 @@ const DropDownTextInput: React.FC<DropdownComponentProps> = ({
   listMode,
   idRequired,
   error,
+  modalProps,
+  modalContentContainerStyle,
+  modalTitle,
+  modalTitleStyle,
+  dropDownContainerStyle,
+  listItemContainerStyle,
+  listItemLabelStyle,
 }) => {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState<string | null>(defaultValue);
@@ -64,6 +85,13 @@ const DropDownTextInput: React.FC<DropdownComponentProps> = ({
         textStyle={styles.dropdownText}
         placeholderStyle={styles.placeholderText}
         arrowIconContainerStyle={styles.iconContainer}
+        modalProps={modalProps}
+        modalContentContainerStyle={modalContentContainerStyle}
+        modalTitle={modalTitle}
+        modalTitleStyle={modalTitleStyle}
+        dropDownContainerStyle={dropDownContainerStyle}
+        listItemContainerStyle={listItemContainerStyle}
+        listItemLabelStyle={listItemLabelStyle}
       />
       {error && (
         <InterRegularSmallest style={styles.error}>

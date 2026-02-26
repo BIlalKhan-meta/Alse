@@ -1,9 +1,11 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import {
   View,
   TouchableOpacity,
   TextInput,
   ActivityIndicator,
+  Image,
+  Text,
 } from 'react-native';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {Formik} from 'formik';
@@ -18,6 +20,7 @@ import {colors} from '../../utils/theme';
 import {getCountriesList, getState, getCity} from '../../api/home';
 import Toast from 'react-native-toast-message';
 import {useTranslation} from 'react-i18next';
+import PhoneInput from 'react-native-phone-input';
 
 interface Country {
   id: number;
@@ -71,13 +74,15 @@ const ShippingAddress = () => {
   const [showCountryPicker, setShowCountryPicker] = useState(false);
   const [showStatePicker, setShowStatePicker] = useState(false);
   const [showCityPicker, setShowCityPicker] = useState(false);
+  const phoneInputRef = useRef<InstanceType<typeof PhoneInput>>(null);
+  const [dialCodeDisplay, setDialCodeDisplay] = useState('+1');
 
   const {t} = useTranslation();
 
   const initialValues: ShippingAddressForm = {
     fullName: '',
     address: '',
-    countryCode: 'USA',
+    countryCode: 'US',
     phoneNumber: '',
     country: '',
     postalCode: '',
@@ -273,7 +278,7 @@ const ShippingAddress = () => {
                 </View>
 
                 {/* Phone Number Input */}
-                <View style={styles.phoneInputContainer}>
+                {/* <View style={styles.phoneInputContainer}>
                   <View style={styles.countryCodeContainer}>
                     <Picker
                       selectedValue={values.countryCode}
@@ -302,6 +307,44 @@ const ShippingAddress = () => {
                       keyboardType="phone-pad"
                     />
                   </View>
+                </View> */}
+                <View style={styles.shippingInputContainer}>
+                  <PhoneInput
+                    ref={phoneInputRef}
+                    initialCountry="us"
+                    initialValue={values.phoneNumber}
+                    onChangePhoneNumber={(displayValue, iso2) => {
+                      setFieldValue('phoneNumber', displayValue);
+                      setFieldValue('countryCode', iso2?.toUpperCase() ?? 'US');
+                      const code = phoneInputRef.current?.getCountryCode?.();
+                      if (code != null) setDialCodeDisplay(`+${code}`);
+                    }}
+                    onSelectCountry={() => {
+                      const code = phoneInputRef.current?.getCountryCode?.();
+                      if (code != null) setDialCodeDisplay(`+${code}`);
+                    }}
+                    renderFlag={({imageSource}) => (
+                      <View style={styles.phoneInputFlagRow}>
+                        {imageSource != null && (
+                          <Image
+                            source={imageSource}
+                            style={styles.phoneInputFlag}
+                            resizeMode="contain"
+                          />
+                        )}
+                        <Text style={styles.phoneInputDialCode}>
+                          {dialCodeDisplay}
+                        </Text>
+                      </View>
+                    )}
+                    style={styles.phoneInputContainer}
+                    textStyle={styles.phoneInputText}
+                    textProps={{
+                      placeholder: t('shippingAddress.phoneNumber'),
+                      placeholderTextColor: colors.lightGrey,
+                    }}
+                    offset={12}
+                  />
                 </View>
                 {errors.phoneNumber && (
                   <InterRegular style={styles.shippingErrorText}>
