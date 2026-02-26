@@ -131,7 +131,7 @@ const Stories = () => {
     try {
       const {data} = await GetLiveStreams();
 
-      const streams = data?.live_streams?.map(stream => ({
+      const streams = data?.live_streams?.map((stream: {stream_key: string; user_id: number; user: {full_name: string}}) => ({
         stream_key: stream.stream_key,
         user_id: stream.user_id,
         user_name: stream.user.full_name,
@@ -430,11 +430,8 @@ const Stories = () => {
         acc[userId] = {
           id: userId,
           name: story.user.full_name || 'Unknown User',
-          // avatarSource: {
-          //   uri: `https://randomuser.me/api/portraits/men/${story.user.id}.jpg`,
-          // },
           avatarSource: {
-            uri: story?.user?.avatar,
+            uri: story?.user?.avatar && story.user.avatar !== 'null' ? story.user.avatar : '',
           },
           stories: [],
         };
@@ -469,7 +466,7 @@ const Stories = () => {
   };
 
   const onPressLive = (stream: LiveStream) => {
-    return navigation.navigate('LiveStreamScreen', {
+    return (navigation as any).navigate('LiveStreamScreen', {
       isHost: false,
       channel: `agora.${stream.stream_key}`,
       streamerName: stream.user_name,
@@ -581,14 +578,11 @@ const Stories = () => {
         avatarBorderColors={['#FF7A51', '#FFDB5C']}
         saveProgress
         avatarListContainerStyle={{
-          marginHorizontal: 5,
-          marginVertical: 5,
-          gap: 10,
+          paddingHorizontal: 5,
+          paddingVertical: 5,
         }}
+        avatarListContainerProps={{estimatedItemSize: 84}}
         avatarSize={65}
-        avatarWrapperStyle={styles.squareAvatarWrapper}
-        avatarContainerStyle={styles.squareAvatarContainer}
-        avatarStyle={styles.squareAvatarImage} // Make sure to add this prop
         showName={true}
         nameTextStyle={{
           fontSize: 12,

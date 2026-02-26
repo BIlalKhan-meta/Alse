@@ -25,6 +25,8 @@ import {BASE_URL} from '../../utils/baseurl';
 import {useTranslation} from 'react-i18next';
 
 const {height: screenHeight} = Dimensions.get('window');
+// Slightly shorter than full screen so the video area doesn't feel oversized
+const reelHeight = screenHeight * 0.88;
 
 interface ReelItemProps {
   item: any;
@@ -49,6 +51,7 @@ const ReelItem: React.FC<ReelItemProps> = ({
   const [videoLoad, setVideoLoad] = useState(true);
   const [videoError, setVideoError] = useState(false);
   const [showFullText, setShowFullText] = useState(false);
+  const [retryKey, setRetryKey] = useState(0);
   const maxTextLength = 100;
   const {t} = useTranslation();
 
@@ -63,55 +66,35 @@ const ReelItem: React.FC<ReelItemProps> = ({
 
     // If it's a relative path, make it absolute
     if (url.startsWith('/')) {
-      return `${BASE_URL.replace('/api/', '')}${url}`;
+      return `${BASE_URL.replace(/\/api\/?$/, '')}${url}`;
     }
 
-    // If it's just a filename, construct the full path
-    return `${BASE_URL.replace('/api/', '')}/storage/videos/${url}`;
+    // If it's just a filename or path, construct the full URL
+    const base = BASE_URL.replace(/\/api\/?$/, '');
+    const path = url.startsWith('storage/') ? `/${url}` : `/storage/videos/${url}`;
+    return `${base}${path}`;
   };
 
   const videoUrl = processVideoUrl(item.video);
   const token = store.getState().auth.token;
-  console.log('Original video URL:', item.video);
-  console.log('Processed video URL:', videoUrl);
-  console.log('Auth token available:', !!token);
-
-  // Function to test video URL accessibility
-  const testVideoUrl = useCallback(
-    async (url: string) => {
-      try {
-        const response = await fetch(url, {
-          method: 'HEAD',
-          headers: {
-            Authorization: `Bearer ${token || ''}`,
-            Accept: 'video/*',
-          },
-        });
-        return response.ok;
-      } catch (error) {
-        console.log('Video URL test failed:', error);
-        return false;
-      }
-    },
-    [token],
-  );
 
   useEffect(() => {
     setIsPaused(!isVisible);
   }, [isVisible]);
 
+  // Reset error when URL or visibility changes
   useEffect(() => {
     if (videoUrl && isVisible) {
-      // Test video URL accessibility
-      testVideoUrl(videoUrl).then(isAccessible => {
-        console.log('Video URL accessible:', isAccessible);
-        if (!isAccessible) {
-          setVideoError(true);
-          setVideoLoad(false);
-        }
-      });
+      setVideoError(false);
     }
-  }, [videoUrl, isVisible, testVideoUrl]);
+  }, [videoUrl, isVisible]);
+
+  // Stop showing loader after a while so UI (overlays) stay visible even if video is buffering
+  useEffect(() => {
+    if (!videoUrl || !isVisible) return;
+    const t = setTimeout(() => setVideoLoad(false), 3000);
+    return () => clearTimeout(t);
+  }, [videoUrl, isVisible]);
 
   const myAccount = user?.id == item.user?.id;
 
@@ -136,8 +119,6 @@ const ReelItem: React.FC<ReelItemProps> = ({
 
   const renderPostText = () => {
     if (!item.content) return null;
-    const {t} = useTranslation();
-
     return (
       <Text
         style={styles.postText}
@@ -154,10 +135,10 @@ const ReelItem: React.FC<ReelItemProps> = ({
   };
 
   return (
-    <View style={styles.reelContainer}>
+    <View style={[styles.reelContainer, {height: reelHeight}]}>
       {/* Video Container */}
       <View style={styles.videoContainer}>
-        {videoLoad && (
+        {videoLoad && !videoError && (
           <ActivityIndicator
             size="large"
             color="white"
@@ -172,14 +153,7 @@ const ReelItem: React.FC<ReelItemProps> = ({
               onPress={() => {
                 setVideoError(false);
                 setVideoLoad(true);
-                // Retry loading the video
-                if (videoUrl) {
-                  testVideoUrl(videoUrl).then(isAccessible => {
-                    if (isAccessible) {
-                      setVideoError(false);
-                    }
-                  });
-                }
+                setRetryKey(k => k + 1);
               }}>
               <Text style={styles.retryButtonText}>{t('retry')}</Text>
             </TouchableOpacity>
@@ -191,42 +165,33 @@ const ReelItem: React.FC<ReelItemProps> = ({
           onPress={handleVideoPause}>
           {videoUrl ? (
             <Video
+              key={retryKey}
               onReadyForDisplay={() => {
-                console.log('Video ready for display:', videoUrl);
                 setVideoLoad(false);
                 setVideoError(false);
               }}
               onLoad={() => {
-                console.log('Video loaded successfully:', videoUrl);
                 setVideoLoad(false);
                 setVideoError(false);
               }}
-              onError={error => {
-                console.log('Video error:', error);
-                console.log('Failed video URL:', videoUrl);
+              onError={() => {
                 setVideoLoad(false);
                 setVideoError(true);
               }}
               source={{
                 uri: videoUrl,
-                headers: {
-                  Authorization: `Bearer ${token || ''}`,
-                  Accept: 'video/*',
-                },
+                headers: token
+                  ? { Authorization: `Bearer ${token}`, Accept: 'video/*' }
+                  : { Accept: 'video/*' },
               }}
               style={styles.video}
               resizeMode="cover"
               repeat={true}
               paused={isPaused}
-              onBuffer={res => {
-                console.log('Video buffer event:', res);
-                if (res?.isBuffering) {
-                  setVideoLoad(true);
-                } else {
-                  setVideoLoad(false);
-                }
+              onBuffer={({isBuffering}) => {
+                setVideoLoad(!!isBuffering);
               }}
-              ignoreSilentSwitch={'ignore'}
+              ignoreSilentSwitch="ignore"
             />
           ) : (
             <View style={styles.videoErrorContainer}>
@@ -488,13 +453,16 @@ const VideosTab = () => {
     // Add your share functionality here
   };
 
-  const onViewRef = useRef(({viewableItems}: {viewableItems: any[]}) => {
-    if (viewableItems.length > 0) {
-      setCurrentIndex(viewableItems[0].index || 0);
-    }
-  });
+  const onViewableItemsChanged = useCallback(
+    ({viewableItems}: {viewableItems: Array<{index: number | null}>}) => {
+      if (viewableItems.length > 0 && viewableItems[0].index !== null) {
+        setCurrentIndex(viewableItems[0].index);
+      }
+    },
+    [],
+  );
 
-  const viewConfigRef = useRef({viewAreaCoveragePercentThreshold: 50});
+  const viewabilityConfig = useRef({viewAreaCoveragePercentThreshold: 50});
 
   const renderReel = ({item, index}: {item: VideoItem; index: number}) => (
     <ReelItem
@@ -537,11 +505,11 @@ const VideosTab = () => {
         showsVerticalScrollIndicator={false}
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.5}
-        onViewableItemsChanged={onViewRef.current}
-        viewabilityConfig={viewConfigRef.current}
-        getItemLayout={(data, index) => ({
-          length: screenHeight,
-          offset: screenHeight * index,
+        onViewableItemsChanged={onViewableItemsChanged}
+        viewabilityConfig={viewabilityConfig.current}
+        getItemLayout={(_data, index) => ({
+          length: reelHeight,
+          offset: reelHeight * index,
           index,
         })}
       />
@@ -590,28 +558,30 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   reelContainer: {
-    flex: 1,
-    position: 'relative',
     width: '100%',
+    position: 'relative',
     backgroundColor: '#000',
   },
 
   videoContainer: {
     flex: 1,
+    width: '100%',
   },
   videoTouchable: {
     flex: 1,
+    width: '100%',
     zIndex: 1,
   },
   video: {
     width: '100%',
-    aspectRatio: 9 / 16,
-    // height: '100%',
+    height: '100%',
   },
   videoLoader: {
     position: 'absolute',
     left: '50%',
     top: '50%',
+    marginLeft: -18,
+    marginTop: -18,
     zIndex: 100,
   },
   videoErrorContainer: {
