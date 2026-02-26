@@ -75,7 +75,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
               console.log('REQUESTINGGGGGGGGGGGGGGGGGGGGGGGG================');
               setFollow('requested');
               Toast.show({
-                type: t('success'),
+                type: 'success',
                 text1: t('toast.followRequestSent'),
                 text2: res?.data?.message,
               });

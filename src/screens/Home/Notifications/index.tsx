@@ -264,6 +264,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 8,
     marginBottom: 4,
+    marginTop: vh * 3,
   },
   notificationCounter: {
     paddingHorizontal: 16,

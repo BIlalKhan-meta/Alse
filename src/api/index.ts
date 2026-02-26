@@ -16,12 +16,12 @@ axiosInstance.interceptors.request.use(
       config.headers = {};
     }
 
-    // If formData flag is true, set Content-Type to multipart/form-data
+    // If formData flag is true, do NOT set Content-Type so the runtime can set
+    // multipart/form-data with the correct boundary (required for file uploads).
     if (config.formData) {
-      (config.headers['Accept'] = 'application/json'),
-        (config.headers['Content-Type'] = 'multipart/form-data');
+      config.headers['Accept'] = 'application/json';
+      delete config.headers['Content-Type'];
     } else {
-      // config.headers['Content-Type'] = 'multipart/form-data';
       config.headers['Content-Type'] = 'application/json';
     }
 

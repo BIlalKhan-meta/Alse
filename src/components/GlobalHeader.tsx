@@ -59,7 +59,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 6,
-    paddingTop: vh * 1,
+    paddingTop: vh * 2,
     paddingBottom: 10,
     backgroundColor: '#fff',
   },

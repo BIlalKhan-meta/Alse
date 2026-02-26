@@ -6,8 +6,9 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import styles from '../styles';
-import {editProfile} from '../../../api/profile';
+import {editProfileWithJson} from '../../../api/profile';
 import {colors} from '../../../utils/theme';
+import {getMessage} from '../../../utils/helpers';
 import InterRegular from '../../../components/Text/InterRegular';
 import {useAppTranslation} from '../../../i18n/hooks/useAppTranslation';
 import Toast from 'react-native-toast-message';
@@ -26,12 +27,14 @@ interface ProfileFormProps {
   profileData: ProfileData;
   handleProfileUpdate: (field: keyof ProfileData, value: string) => void;
   setIsEditing: () => void;
+  onProfileUpdateSuccess?: () => void;
 }
 
 const ProfileForm = ({
   profileData,
   handleProfileUpdate,
   setIsEditing,
+  onProfileUpdateSuccess,
 }: ProfileFormProps) => {
   const [uploading, setUploading] = useState(false);
   const {t} = useAppTranslation();
@@ -125,30 +128,7 @@ const ProfileForm = ({
         onPress={async () => {
           try {
             setUploading(true);
-            const formData = new FormData();
 
-            // Map profile data to API fields according to the curl example
-            if (profileData.description && profileData.description.trim()) {
-              formData.append('bio', profileData.description.trim());
-            }
-            if (profileData.location && profileData.location.trim()) {
-              formData.append('location_name', profileData.location.trim());
-            }
-            // Add other fields as needed
-            if (profileData.firstName && profileData.firstName.trim()) {
-              formData.append('first_name', profileData.firstName.trim());
-            }
-            if (profileData.lastName && profileData.lastName.trim()) {
-              formData.append('last_name', profileData.lastName.trim());
-            }
-            if (profileData.userName && profileData.userName.trim()) {
-              formData.append('username', profileData.userName.trim());
-            }
-            if (profileData.pronouns && profileData.pronouns.trim()) {
-              formData.append('pronouns', profileData.pronouns.trim());
-            }
-
-            // Check if FormData has any content
             let hasContent = false;
             if (profileData.description && profileData.description.trim()) {
               hasContent = true;
@@ -178,49 +158,57 @@ const ProfileForm = ({
               return;
             }
 
-            // Test FormData creation
-            console.log('Testing FormData creation...');
-            const testFormData = new FormData();
-            testFormData.append('test', 'test_value');
-            console.log('Test FormData created successfully:', testFormData);
+            const payload = {
+              ...(profileData.firstName?.trim() && {
+                first_name: profileData.firstName.trim(),
+              }),
+              ...(profileData.lastName?.trim() && {
+                last_name: profileData.lastName.trim(),
+              }),
+              ...(profileData.userName?.trim() && {
+                username: profileData.userName.trim(),
+              }),
+              ...(profileData.location?.trim() && {
+                location_name: profileData.location.trim(),
+              }),
+              ...(profileData.description?.trim() && {
+                bio: profileData.description.trim(),
+              }),
+              ...(profileData.pronouns?.trim() && {
+                pronouns: profileData.pronouns.trim(),
+              }),
+            };
 
-            console.log('About to call editProfile API with FormData');
-            console.log('FormData object:', formData);
+            const response = await editProfileWithJson(payload);
 
-            // Try to inspect FormData contents in a different way
-            try {
-              // @ts-ignore - React Native FormData might have different methods
-              if ((formData as any).getParts) {
-                console.log(
-                  'FormData getParts():',
-                  (formData as any).getParts(),
-                );
-              }
-            } catch (e) {
-              console.log('Could not inspect FormData contents:', e);
-            }
+            const isSuccess =
+              (response.status >= 200 && response.status < 300) ||
+              response.data?.success === true ||
+              (response.data && !response.data?.errors);
 
-            const response = await editProfile(formData);
-
-            console.log('API Response:', response);
-            console.log('Response data:', response.data);
-
-            if (response.data) {
+            if (isSuccess) {
               Toast.show({
                 type: 'success',
                 text1: 'Success',
                 text2: 'Profile updated successfully!',
               });
+              onProfileUpdateSuccess?.();
               setIsEditing();
+            } else {
+              Toast.show({
+                type: 'error',
+                text1: t('error'),
+                text2: getMessage(response.data) || t('toast.failedProfileUpdate'),
+              });
             }
           } catch (error: any) {
-            console.error('Upload error:', error);
-            console.error('Error response:', error.response);
-            console.error('Error data:', error.response?.data);
+            const errorBody = error.response?.data ?? error;
+            const message = getMessage(errorBody) || t('toast.failedProfileUpdate');
+            console.error('Profile update error:', error?.response?.data ?? error);
             Toast.show({
               type: 'error',
               text1: t('error'),
-              text2: t('toast.failedProfileUpdate'),
+              text2: message,
             });
           } finally {
             setUploading(false);

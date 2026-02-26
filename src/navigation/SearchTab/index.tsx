@@ -15,6 +15,7 @@ import {useTranslation} from 'react-i18next';
 import {SearchResultsList, SearchResult} from '../../components/SearchResults';
 import searchAPI from '../../api/search';
 import {useNavigation} from '@react-navigation/native';
+import { vh } from '../../constant';
 
 const SearchTab = () => {
   const [searchText, setSearchText] = useState('');
@@ -155,7 +156,9 @@ const SearchTab = () => {
 
   return (
     <View style={styles.container}>
+      <View style={styles.headerContainer}>
       <GlobalHeader />
+      </View>
 
       <View style={styles.searchInputContainer}>
         <Search style={styles.searchIcon} />
@@ -253,6 +256,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 8,
     marginHorizontal: 16,
+  },
+  headerContainer: {
+    marginTop: vh * 3,
   },
   separator: {
     height: 1,

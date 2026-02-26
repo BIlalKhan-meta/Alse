@@ -97,9 +97,17 @@ export const commentPost = createAsyncThunk(
 
 export const postCreate = createAsyncThunk(
   'user/postCreate',
-  async (data: FormData) => {
-    const response = await createPost(data);
-    return response;
+  async (formData: FormData, {rejectWithValue}) => {
+    try {
+      const response = await createPost(formData);
+      return response;
+    } catch (error: any) {
+      const payload =
+        error?.response != null ? error.response.data : error;
+      return rejectWithValue(
+        payload ?? {message: error?.message || 'Failed to create post'},
+      );
+    }
   },
 );
 

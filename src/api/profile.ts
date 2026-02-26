@@ -5,16 +5,30 @@ export const getProfile = () => {
   return axiosInstance.get(`${endpoints.profile.getProfile}`);
 };
 
+export interface EditProfilePayload {
+  first_name?: string;
+  last_name?: string;
+  username?: string;
+  bio?: string;
+  location_name?: string;
+  pronouns?: string;
+  avatar?: string;
+  name?: string;
+  email?: string;
+}
+
+/** Edit profile with JSON body (including avatar as URL string). */
+export const editProfileWithJson = (payload: EditProfilePayload) => {
+  return axiosInstance.post(endpoints.profile.editProfile, payload, {
+    headers: { 'Content-Type': 'application/json' },
+  });
+};
+
 export const editProfile = (formData: FormData) => {
-  console.log('editProfile called with FormData:', formData);
-
-  // Log FormData contents for debugging
-  if (formData && typeof formData.getParts === 'function') {
-    console.log('FormData parts:', formData.getParts());
-  }
-
   return axiosInstance.post(endpoints.profile.editProfile, formData, {
     formData: true,
+    // Leave FormData unchanged so the file is sent in the multipart payload
+    transformRequest: [(data, headers) => data],
   } as any);
 };
 

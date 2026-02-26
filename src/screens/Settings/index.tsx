@@ -1,5 +1,14 @@
 import React, {useEffect, useState} from 'react';
-import {View, ScrollView, TouchableOpacity, Image} from 'react-native';
+import {
+  View,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+  Platform,
+  Modal,
+  ActivityIndicator,
+  StyleSheet,
+} from 'react-native';
 import {useSelector} from 'react-redux';
 import {
   PencilLine,
@@ -12,7 +21,7 @@ import {
 } from 'lucide-react-native';
 import InterLight from '../../components/Text/InterLight';
 import InterBoldLabel from '../../components/Text/InterBoldLabel';
-import {selectUserProfile} from '../../store/slices/authSlice';
+import {GetUserProfile, selectUserProfile} from '../../store/slices/authSlice';
 import {selectProfileData} from '../../store/slices/settingsSlice';
 import {images} from '../../utils/images';
 import styles from './styles';
@@ -32,13 +41,37 @@ import {
   Asset,
 } from 'react-native-image-picker';
 import Toast from 'react-native-toast-message';
-import {editProfile} from '../../api/profile';
 import {updateUserType} from '../../api/settings';
 import {useRoute} from '@react-navigation/native';
+import store from '../../store';
+import {BASE_URL} from '../../utils/baseurl';
+import endpoints from '../../api/endpoints';
 
 interface RouteParams {
   isEditMode?: boolean;
 }
+
+const avatarUploadingStyles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  box: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    paddingVertical: 24,
+    paddingHorizontal: 32,
+    alignItems: 'center',
+    minWidth: 200,
+  },
+  text: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#666',
+  },
+});
 
 const Settings = ({navigation}: any) => {
   const dispatch = useAppDispatch();
@@ -46,6 +79,7 @@ const Settings = ({navigation}: any) => {
   const profileData = useSelector(selectProfileData);
   const {currentLanguage, t} = useAppTranslation();
   const [avatarUri, setAvatarUri] = useState(user?.avatar || null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
   const [currentUserType, setCurrentUserType] = useState(user?.user_type || 'buyer');
   const [userTypeLoading, setUserTypeLoading] = useState(false);
 
@@ -59,6 +93,25 @@ const Settings = ({navigation}: any) => {
       setCurrentUserType(user.user_type);
     }
   }, [user?.user_type]);
+
+  // Sync local profile data and avatar when user is updated (e.g. after profile save + refetch)
+  useEffect(() => {
+    if (user) {
+      setLocalProfileData({
+        firstName: user?.first_name || user?.full_name?.split(' ')[0] || '',
+        lastName: user?.last_name || user?.full_name?.split(' ')[1] || '',
+        userName: user?.username || user?.full_name || '',
+        location: user?.location || user?.location_name || '',
+        description: user?.bio || '',
+        pronouns: user?.pronouns || '',
+        storeName: user?.store_name || '',
+        storeDescription: user?.store_description || '',
+      });
+      if (user?.avatar) {
+        setAvatarUri(user.avatar);
+      }
+    }
+  }, [user?.id, user?.first_name, user?.last_name, user?.username, user?.location, user?.location_name, user?.bio, user?.pronouns, user?.store_name, user?.store_description, user?.avatar]);
 
   // Profile editing state
   const route = useRoute();
@@ -125,54 +178,67 @@ const Settings = ({navigation}: any) => {
   };
 
   const uploadProfileImage = async (image: Asset) => {
-    if (!image.uri) {
-      return;
-    }
+    if (!image.uri) return;
 
-    try {
-      const formData = new FormData();
+    setAvatarUploading(true);
+    setAvatarUri(image.uri);
 
-      // Append the image file
-      formData.append('avatar', {
-        uri: image.uri,
-        type: image.type || 'image/jpeg',
-        name: image.fileName || `profile-${Date.now()}.jpg`,
-      } as any);
+    const fileUri = Platform.OS === 'android' ? image.uri : image.uri.replace('file://', '');
+    const formData = new FormData();
+    const file = {
+      uri: fileUri,
+      type: image.type || 'image/jpeg',
+      name: image.fileName || `profile-${Date.now()}.jpg`,
+    };
+    formData.append('image', file);
 
-      // Log the FormData contents for debugging
-      console.log('Image FormData contents:');
-      console.log('Avatar URI:', image.uri);
-      console.log('Avatar type:', image.type);
-      console.log('Avatar name:', image.fileName);
+    const token = store.getState().auth.token;
+    const url = `${BASE_URL.replace(/\/$/, '')}${endpoints.profile.editProfile}`;
 
-      // Update Redux store with the new avatar
-      const newAvatarUrl = image.uri;
-      dispatch(updateProfile({avatar: newAvatarUrl}));
-      setAvatarUri(newAvatarUrl);
+    return new Promise<void>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
 
-      // Call the API to upload the image
-      const response = await editProfile(formData);
+      xhr.onload = async () => {
+        try {
+          const data = JSON.parse(xhr.responseText || '{}');
+          const serverAvatarUrl = data?.data?.avatar ?? data?.avatar;
 
-      if (response.data) {
-        // Update with the server response if available
-        const serverAvatarUrl = response.data.avatar;
-        if (serverAvatarUrl) {
-          dispatch(updateProfile({avatar: serverAvatarUrl}));
-          setAvatarUri(serverAvatarUrl);
+          if (xhr.status >= 200 && xhr.status < 300) {
+            if (serverAvatarUrl) {
+              dispatch(updateProfile({ avatar: serverAvatarUrl }));
+              setAvatarUri(serverAvatarUrl);
+            }
+            await dispatch(GetUserProfile());
+            Toast.show({
+              type: 'success',
+              text1: 'Profile image uploaded successfully',
+            });
+          } else {
+            const msg = data?.message || data?.errors || `Request failed (${xhr.status})`;
+            Toast.show({
+              type: 'error',
+              text1: 'Error',
+              text2: typeof msg === 'string' ? msg : 'Failed to upload profile image',
+            });
+          }
+        } catch (e) {
+          Toast.show({ type: 'error', text1: 'Error', text2: 'Failed to upload profile image' });
         }
+        setAvatarUploading(false);
+        resolve();
+      };
 
-        Toast.show({
-          type: 'success',
-          text1: 'Profile image uploaded successfully',
-        });
-      }
-    } catch (error) {
-      console.error('Upload error:', error);
-      Toast.show({
-        type: 'error',
-        text1: 'Failed to upload profile image',
-      });
-    }
+      xhr.onerror = () => {
+        Toast.show({ type: 'error', text1: 'Error', text2: 'Network error' });
+        setAvatarUploading(false);
+        reject(new Error('Network error'));
+      };
+
+      xhr.open('POST', url);
+      xhr.setRequestHeader('Accept', 'application/json');
+      if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+      xhr.send(formData);
+    });
   };
 
   // Handle user type change
@@ -252,6 +318,14 @@ const Settings = ({navigation}: any) => {
 
   return (
     <View style={styles.container}>
+      <Modal visible={avatarUploading} transparent>
+        <View style={avatarUploadingStyles.overlay}>
+          <View style={avatarUploadingStyles.box}>
+            <ActivityIndicator size="large" color={colors.themeColor} />
+            <InterLight style={avatarUploadingStyles.text}>Uploading profile image...</InterLight>
+          </View>
+        </View>
+      </Modal>
       {/* Header */}
       <View style={styles.header}>
         <GlobalHeader icon={true} />
@@ -264,10 +338,12 @@ const Settings = ({navigation}: any) => {
         <View style={styles.profileSection}>
           <View style={styles.profileImageContainer}>
             <Image
+              key={profileData?.avatar || avatarUri || 'default'}
               source={
-                profileData?.avatar || avatarUri
-                  ? {uri: profileData?.avatar || avatarUri}
-                  : images.profile
+                (() => {
+                  const u = profileData?.avatar || avatarUri;
+                  return u && u !== 'null' ? { uri: u } : images.profile;
+                })()
               }
               resizeMode="cover"
               style={styles.profileImage}
@@ -285,11 +361,12 @@ const Settings = ({navigation}: any) => {
             <View>
               <View style={styles.profileNameContainer}>
                 <InterBoldLabel style={styles.profileName}>
-                  {user?.full_name || 'Alse'}
+                  {user?.first_name || user?.last_name
+                    ? [user?.first_name, user?.last_name].filter(Boolean).join(' ')
+                    : user?.full_name || 'Alse'}
                 </InterBoldLabel>
                 <InterLight style={styles.profileUsername}>
-                  _{user?.username || user?.email?.split('@')[0]}
-                  {user?.email?.split('@')[0]}
+                  @{user?.username || user?.email?.split('@')[0]}
                 </InterLight>
               </View>
               <InterLight style={styles.profileLocation}>
@@ -311,6 +388,9 @@ const Settings = ({navigation}: any) => {
               handleProfileUpdate={handleProfileUpdate}
               setIsEditing={() => {
                 setIsEditing(false);
+              }}
+              onProfileUpdateSuccess={() => {
+                dispatch(GetUserProfile());
               }}
             />
           )}

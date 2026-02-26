@@ -74,23 +74,21 @@ const CreatePost: React.FC = () => {
   }, [navigation]);
 
   const handleNext = () => {
-    if (!selectedImage) {
-      Toast.error('Please select an image');
-      return;
-    }
     setStep('details');
   };
 
   const handlePost = async () => {
-    if (!selectedImage) {
-      Toast.error('Please select an image');
-      return;
-    }
-
     const body = new FormData();
-    body.append('description', description);
-    body.append('privacy', 2);
-    body.append('file[0]', selectedImage);
+    body.append('content', description.trim());
+    body.append('privacy', '2');
+
+    if (selectedImage?.uri) {
+      body.append('file[0]', {
+        uri: selectedImage.uri,
+        name: selectedImage.name || 'image.jpg',
+        type: selectedImage.type || 'image/jpeg',
+      } as any);
+    }
 
     setIsLoading(true);
 
@@ -103,7 +101,11 @@ const CreatePost: React.FC = () => {
       })
       .catch(err => {
         setIsLoading(false);
-        Toast.error(getMessage(err?.message));
+        const message =
+          err?.message === 'Network Error'
+            ? 'Please check your internet connection and try again.'
+            : getMessage(err);
+        Toast.error(message);
       });
   };
 
@@ -174,15 +176,13 @@ const CreatePost: React.FC = () => {
         </View>
       </ScrollView>
 
-      {selectedImage && (
-        <TouchableOpacity onPress={handleNext} style={styles.fabButton}>
-          {!isLoading ? (
-            <ArrowRight color="white" size={24} />
-          ) : (
-            <ActivityIndicator size={24} color={'white'} />
-          )}
-        </TouchableOpacity>
-      )}
+      <TouchableOpacity onPress={handleNext} style={styles.fabButton}>
+        {!isLoading ? (
+          <ArrowRight color="white" size={24} />
+        ) : (
+          <ActivityIndicator size={24} color={'white'} />
+        )}
+      </TouchableOpacity>
     </>
   );
 
@@ -196,16 +196,18 @@ const CreatePost: React.FC = () => {
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}>
       <View style={styles.container}>
-        {/* Image Section */}
-        <View style={styles.imageSection}>
-          <View style={styles.imageWrapper}>
-            <Image
-              source={{uri: selectedImage?.uri}}
-              style={styles.selectedImage}
-              resizeMode="cover"
-            />
+        {/* Image Section - only when user added an image */}
+        {selectedImage?.uri && (
+          <View style={styles.imageSection}>
+            <View style={styles.imageWrapper}>
+              <Image
+                source={{uri: selectedImage.uri}}
+                style={styles.selectedImage}
+                resizeMode="cover"
+              />
+            </View>
           </View>
-        </View>
+        )}
 
         {/* Description Section */}
         <View style={styles.descriptionSection}>

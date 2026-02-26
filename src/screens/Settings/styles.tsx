@@ -62,6 +62,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     width: '100%',
     paddingHorizontal: 16,
+    marginTop: 12,
   },
 
   profileImage: {
