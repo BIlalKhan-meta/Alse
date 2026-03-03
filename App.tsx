@@ -1,9 +1,8 @@
 import 'react-native-gesture-handler';
 import React, {useEffect} from 'react';
-import {Platform, StyleSheet} from 'react-native';
+import {NativeModules, Platform, StyleSheet} from 'react-native';
 import {DefaultTheme, NavigationContainer} from '@react-navigation/native';
 import {colors} from './src/utils/theme';
-import BootSplash from 'react-native-bootsplash';
 import {Provider} from 'react-redux';
 import store, {persistor} from './src/store';
 import Toast from 'react-native-toast-message';
@@ -59,7 +58,12 @@ function App(): React.JSX.Element {
   };
 
   useEffect(() => {
-    BootSplash.hide();
+    // Use NativeModules to avoid TurboModule HostFunction "expected 0 arguments, got 1" error
+    // when new architecture is disabled (react-native-bootsplash 5.x + RN 0.79)
+    const RNBootSplash = NativeModules.RNBootSplash;
+    if (RNBootSplash?.hide) {
+      RNBootSplash.hide(false);
+    }
     if (Platform.OS === 'android') {
       checkNotificationPermission();
     }
