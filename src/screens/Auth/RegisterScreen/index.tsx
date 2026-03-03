@@ -129,30 +129,34 @@ const SignupScreen: React.FC = () => {
     }
   };
 
-  const onGoogleLoginSuccess = (user: any) => {
+  const onGoogleLoginSuccess = (idToken: string) => {
     if (isGoogleSubmitted) return;
 
     setIsGoogleSubmitted(true);
 
-    console.log(user, 'User');
-    const apiData = {
-      token: user,
-    };
+    const apiData = {token: idToken};
 
     googleLogin(apiData)
       .then(res => {
-        console.log(res.data, 'Res');
-        navigation.navigate('Onboarding', {
-          user: res?.data?.data,
-        });
+        if (res?.data?.status) {
+          navigation.navigate('Onboarding', {
+            user: res?.data?.data,
+          });
+        } else {
+          Toast.show({
+            type: 'error',
+            text1: t('error'),
+            text2: res?.data?.message || t('toast.failedGoogleAuth'),
+          });
+        }
       })
       .catch(err => {
-        console.log(err, 'Err');
-
+        const errorMessage =
+          err?.message || err?.data?.message || t('toast.failedGoogleAuth');
         Toast.show({
           type: 'error',
-          text1: 'Invalid',
-          text2: err?.message,
+          text1: t('error'),
+          text2: errorMessage,
         });
       })
       .finally(() => {

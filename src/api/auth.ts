@@ -31,15 +31,12 @@ export const login = (data: {
   password: string;
   token: string;
 }) => {
-  // Initialize FormData
-  const formData = new FormData();
-  formData.append('identifier', data.identifier);
-  formData.append('password', data.password);
-  formData.append('device_id', data.token);
-  formData.append('device_type', Platform.OS === 'ios' ? 'ios' : 'android');
-  // Make API request with FormData
-  return axiosInstance.post(endpoints.auth.login, formData, {
-    formData: true, // This triggers the form-data handling in the interceptor
+  // API expects JSON body per docs - FormData can cause 422/rejection
+  return axiosInstance.post(endpoints.auth.login, {
+    identifier: data.identifier,
+    password: data.password,
+    device_id: data.token || undefined,
+    device_type: Platform.OS === 'ios' ? 'ios' : 'android',
   });
 };
 

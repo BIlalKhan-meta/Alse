@@ -131,41 +131,39 @@ const LoginScreen: React.FC = () => {
 
     login(apiData)
       .then(res => {
-        console.log('Login Response:', res?.data);
-        if (res?.data?.status) {
+        const resData = res?.data;
+        const payload = resData?.data ?? resData;
+        const user = payload?.user ?? resData?.user;
+        const token =
+          payload?.access_token ?? payload?.token ?? resData?.access_token ?? resData?.token;
+        const hasAuthData = user && token;
+        const isSuccess =
+          resData?.success === true ||
+          resData?.status === true ||
+          (res?.status === 200 && hasAuthData);
+
+        if (isSuccess && hasAuthData) {
           if (isSelected) {
             storeUserSession(values?.identifier, values?.password);
           } else {
             removeUserSession();
           }
-          console.log('Login Success, setting user data:', res?.data?.data);
-
-          dispatch(setUser(res?.data?.data));
-          // navigation.navigate('TabNavigation');
+          dispatch(setUser({user, access_token: token}));
         } else {
-          console.log('Login failed with message:', res?.data?.message);
           Toast.show({
             type: 'error',
             text1: 'Login Failed',
-            text2: res?.data?.message || 'Invalid credentials',
+            text2: resData?.message || 'Invalid credentials',
           });
         }
       })
       .catch(err => {
-        console.log('Login Error Details:', {
-          error: err,
-          message: err?.message,
-          response: err?.response?.data,
-          status: err?.response?.status,
-        });
-
+        const errData = err?.response?.data ?? err;
         const errorMessage =
-          err?.response?.data?.message ||
-          err?.message ||
-          'Login failed. Please try again.';
+          errData?.message || err?.message || 'Login failed. Please try again.';
         Toast.show({
           type: 'error',
-          text1: 'Login Error',
+          text1: 'Login Failed',
           text2: errorMessage,
         });
       })
@@ -174,31 +172,36 @@ const LoginScreen: React.FC = () => {
       });
   };
 
-  const onGoogleLoginSuccess = (user: any) => {
-    console.log('=-=-=-=> got it');
+  const onGoogleLoginSuccess = (idToken: string) => {
     if (googleSubmitted) {
       return;
     }
 
     setGoogleSubmitted(true);
 
-    console.log(user, 'User');
-    const apiData = {
-      token: user,
-    };
+    const apiData = {token: idToken};
 
     googleLogin(apiData)
       .then(res => {
-        console.log(res.data, 'Res');
-        dispatch(setUser(res?.data?.data));
+        if (res?.data?.status) {
+          dispatch(setUser(res?.data?.data));
+        } else {
+          Toast.show({
+            type: 'error',
+            text1: t('error'),
+            text2: res?.data?.message || t('toast.failedGoogleAuth'),
+          });
+        }
       })
       .catch(err => {
-        console.log(err, 'Err');
-
+        const errorMessage =
+          err?.message ||
+          err?.data?.message ||
+          t('toast.failedGoogleAuth');
         Toast.show({
           type: 'error',
-          text1: 'Invalid',
-          text2: err?.message,
+          text1: t('error'),
+          text2: errorMessage,
         });
       })
       .finally(() => {

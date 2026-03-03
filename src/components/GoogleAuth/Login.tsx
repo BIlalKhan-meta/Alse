@@ -19,21 +19,33 @@ export default function GoogleLogin({
 
   const {t} = useTranslation();
   const handleGoogleLogin = async () => {
-    const {userInfo}: any = await signInWithGoogle();
-    // console.log('=-=-=', userInfo.data?.idToken);
+    try {
+      const result = await signInWithGoogle();
+      if (!result) {
+        // User cancelled sign-in
+        return;
+      }
 
-    if (!userInfo) {
-      console.log('GOOGLE ERROR', userInfo);
+      const {userInfo, tokens} = result;
+      const idToken = tokens?.idToken;
 
+      if (!idToken) {
+        Toast.show({
+          type: 'error',
+          text1: t('error'),
+          text2: t('toast.failedGoogleAuth'),
+        });
+        return;
+      }
+
+      return onSuccess(idToken);
+    } catch (error) {
       Toast.show({
         type: 'error',
         text1: t('error'),
         text2: t('toast.failedGoogleAuth'),
       });
-      return;
     }
-
-    return onSuccess(userInfo.data?.idToken);
   };
 
   return (
