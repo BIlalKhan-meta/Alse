@@ -70,6 +70,7 @@ const styles = StyleSheet.create({
   imageContainer: {
     alignItems: 'center',
     marginBottom: 20,
+    marginTop: vh * 10,
   },
   loginImage: {
     width: 90,
