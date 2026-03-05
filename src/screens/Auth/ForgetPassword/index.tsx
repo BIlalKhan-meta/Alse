@@ -39,7 +39,7 @@ const ForgetPassword: React.FC = ({navigation}) => {
 
   const handleSubmit = (values: FormValues) => {
     const apiData = {
-      email: values?.email,
+      identifier: values?.email,
     };
     forgotPassword(apiData)
       .then(res => {

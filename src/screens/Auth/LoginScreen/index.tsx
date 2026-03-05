@@ -135,7 +135,10 @@ const LoginScreen: React.FC = () => {
         const payload = resData?.data ?? resData;
         const user = payload?.user ?? resData?.user;
         const token =
-          payload?.access_token ?? payload?.token ?? resData?.access_token ?? resData?.token;
+          payload?.access_token ??
+          payload?.token ??
+          resData?.access_token ??
+          resData?.token;
         const hasAuthData = user && token;
         const isSuccess =
           resData?.success === true ||
@@ -195,9 +198,7 @@ const LoginScreen: React.FC = () => {
       })
       .catch(err => {
         const errorMessage =
-          err?.message ||
-          err?.data?.message ||
-          t('toast.failedGoogleAuth');
+          err?.message || err?.data?.message || t('toast.failedGoogleAuth');
         Toast.show({
           type: 'error',
           text1: t('error'),
@@ -297,7 +298,7 @@ const LoginScreen: React.FC = () => {
                 </View>
 
                 <RegularTextInput
-                  placeholder={t('email')}
+                  placeholder={t('Enter Email')}
                   placeholderTextColor={colors.darkGray}
                   onChangeText={handleChange('identifier')}
                   onBlur={handleBlur('identifier')}

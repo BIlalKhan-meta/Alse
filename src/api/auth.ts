@@ -1,8 +1,8 @@
-import {Platform} from 'react-native';
+import { Platform } from 'react-native';
 import axiosInstance from '.';
 import endpoints from './endpoints';
 
-export const googleLogin = (data: {token: string}) => {
+export const googleLogin = (data: { token: string }) => {
   const formData = new FormData();
   formData.append('token', data.token);
   return axiosInstance.post(endpoints.auth.login, formData, {
@@ -71,24 +71,27 @@ export const signupSeller = (data: {
   });
 };
 
-export const forgotPassword = (data: {email: string}) => {
+export const forgotPassword = (data: { identifier: string }) => {
   const formData = new FormData();
   // Backend expects "identifier" (email or phone number)
-  formData.append('identifier', data.email);
+  formData.append('identifier', data.identifier);
 
-  return axiosInstance.post(endpoints.auth.forgotPassword, formData, {
-    formData: true,
+  console.log('FormData being sent:', {
+    identifier: data.identifier
+  });
+
+  return axiosInstance.post(endpoints.auth.forgotPassword, {
+    identifier: data.identifier,
   });
 };
 
-export const verifyOtp = (data: {email: string; code: number}) => {
+export const verifyOtp = (data: { email: string; code: number }) => {
   console.log(data, 'ForgetData frommmm authhhh ');
 
-  const formData = new FormData();
-  formData.append('email', data.email);
-  formData.append('code', data.code);
-  return axiosInstance.post(endpoints.auth.verifyOtp, formData, {
-    formData: true,
+
+  return axiosInstance.post(endpoints.auth.verifyOtp, {
+    email: data.email,
+    code: data.code,
   });
 };
 
@@ -97,13 +100,12 @@ export const resetPassword = (data: {
   password: string;
   confirmPassword: string;
 }) => {
-  const formData = new FormData();
-  formData.append('email', data.email);
-  formData.append('password', data.password);
-  formData.append('confirm_password', data.confirmPassword);
 
-  return axiosInstance.post(endpoints.auth.resetPassword, formData, {
-    formData: true,
+
+  return axiosInstance.post(endpoints.auth.resetPassword, {
+    email: data.email,
+    password: data.password,
+    confirm_password: data.confirmPassword
   });
 };
 

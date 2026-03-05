@@ -59,7 +59,7 @@ const Home: React.FC = () => {
 
   const {posts} = useAppSelector(state => state.home);
 
-  // console.log('=-=-=', JSON.stringify(posts));
+  console.log('=-=-=', JSON.stringify(posts));
 
   const [loader, _setLoader] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true); // New state for initial load
