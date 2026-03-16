@@ -43,9 +43,12 @@ import {
 import Toast from 'react-native-toast-message';
 import {updateUserType} from '../../api/settings';
 import {useRoute} from '@react-navigation/native';
-import store from '../../store';
+import RNFS from 'react-native-fs';
+import ReactNativeBlobUtil from 'react-native-blob-util';
+import {getAbsoluteAvatarUrl} from '../../utils/helpers';
 import {BASE_URL} from '../../utils/baseurl';
 import endpoints from '../../api/endpoints';
+import store from '../../store';
 
 interface RouteParams {
   isEditMode?: boolean;
@@ -79,6 +82,7 @@ const Settings = ({navigation}: any) => {
   const profileData = useSelector(selectProfileData);
   const {currentLanguage, t} = useAppTranslation();
   const [avatarUri, setAvatarUri] = useState(user?.avatar || null);
+  const [avatarKey, setAvatarKey] = useState(0); // Force Image remount after upload
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [currentUserType, setCurrentUserType] = useState(user?.user_type || 'buyer');
   const [userTypeLoading, setUserTypeLoading] = useState(false);
@@ -141,9 +145,10 @@ const Settings = ({navigation}: any) => {
   const handleImagePick = async () => {
     const options: ImageLibraryOptions = {
       mediaType: 'photo',
-      quality: 0.8,
+      quality: 0.6,
       maxWidth: 800,
       maxHeight: 800,
+      ...(Platform.OS === 'android' && {assetRepresentationMode: 'compatible'}),
     };
 
     try {
@@ -183,62 +188,79 @@ const Settings = ({navigation}: any) => {
     setAvatarUploading(true);
     setAvatarUri(image.uri);
 
-    const fileUri = Platform.OS === 'android' ? image.uri : image.uri.replace('file://', '');
-    const formData = new FormData();
-    const file = {
-      uri: fileUri,
-      type: image.type || 'image/jpeg',
-      name: image.fileName || `profile-${Date.now()}.jpg`,
-    };
-    formData.append('image', file);
+    const fileName = image.fileName || `profile-${Date.now()}.jpg`;
+    const fileType = image.type || 'image/jpeg';
 
-    const token = store.getState().auth.token;
+    let filePath: string;
+    let isTempFile = false;
+
+    if (Platform.OS === 'android' && image.uri.startsWith('content://')) {
+      try {
+        filePath = `${RNFS.DocumentDirectoryPath}/${fileName}`;
+        await RNFS.copyFile(image.uri, filePath);
+        isTempFile = true;
+      } catch {
+        Toast.show({type: 'error', text1: 'Error', text2: 'Could not prepare image'});
+        setAvatarUploading(false);
+        return;
+      }
+    } else {
+      filePath = image.originalPath?.startsWith('/')
+        ? image.originalPath
+        : image.uri.replace(/^file:\/\//, '');
+    }
+
     const url = `${BASE_URL.replace(/\/$/, '')}${endpoints.profile.editProfile}`;
+    const token = store.getState().auth.token;
 
-    return new Promise<void>((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
+    try {
+      const response = await ReactNativeBlobUtil.fetch(
+        'POST',
+        url,
+        {
+          Accept: 'application/json',
+          'Content-Type': 'multipart/form-data',
+          ...(token && {Authorization: `Bearer ${token}`}),
+        },
+        [{name: 'image', filename: fileName, type: fileType, data: ReactNativeBlobUtil.wrap(filePath)}],
+      );
 
-      xhr.onload = async () => {
+      const status = response.respInfo?.status ?? 0;
+      const text = await Promise.resolve(response.text?.() ?? '{}');
+      const data = (() => {
         try {
-          const data = JSON.parse(xhr.responseText || '{}');
-          const serverAvatarUrl = data?.data?.avatar ?? data?.avatar;
-
-          if (xhr.status >= 200 && xhr.status < 300) {
-            if (serverAvatarUrl) {
-              dispatch(updateProfile({ avatar: serverAvatarUrl }));
-              setAvatarUri(serverAvatarUrl);
-            }
-            await dispatch(GetUserProfile());
-            Toast.show({
-              type: 'success',
-              text1: 'Profile image uploaded successfully',
-            });
-          } else {
-            const msg = data?.message || data?.errors || `Request failed (${xhr.status})`;
-            Toast.show({
-              type: 'error',
-              text1: 'Error',
-              text2: typeof msg === 'string' ? msg : 'Failed to upload profile image',
-            });
-          }
-        } catch (e) {
-          Toast.show({ type: 'error', text1: 'Error', text2: 'Failed to upload profile image' });
+          return JSON.parse(typeof text === 'string' ? text : '{}');
+        } catch {
+          return {};
         }
-        setAvatarUploading(false);
-        resolve();
-      };
+      })();
 
-      xhr.onerror = () => {
-        Toast.show({ type: 'error', text1: 'Error', text2: 'Network error' });
-        setAvatarUploading(false);
-        reject(new Error('Network error'));
-      };
+      const avatarUrl =
+        data?.data?.avatar ?? data?.data?.image ?? data?.avatar ?? data?.image;
 
-      xhr.open('POST', url);
-      xhr.setRequestHeader('Accept', 'application/json');
-      if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
-      xhr.send(formData);
-    });
+      if (status >= 200 && status < 300 && avatarUrl) {
+        dispatch(updateProfile({avatar: avatarUrl}));
+        setAvatarUri(avatarUrl);
+        setAvatarKey(k => k + 1);
+        await dispatch(GetUserProfile());
+        Toast.show({type: 'success', text1: 'Profile image uploaded successfully'});
+      } else {
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: data?.message || `Upload failed (${status})`,
+        });
+      }
+    } catch (error: any) {
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: error?.message || 'Failed to upload',
+      });
+    } finally {
+      if (isTempFile) RNFS.unlink(filePath).catch(() => {});
+      setAvatarUploading(false);
+    }
   };
 
   // Handle user type change
@@ -338,11 +360,17 @@ const Settings = ({navigation}: any) => {
         <View style={styles.profileSection}>
           <View style={styles.profileImageContainer}>
             <Image
-              key={profileData?.avatar || avatarUri || 'default'}
+              key={`avatar-${avatarKey}-${profileData?.avatar || avatarUri || user?.avatar || 'default'}`}
               source={
                 (() => {
-                  const u = profileData?.avatar || avatarUri;
-                  return u && u !== 'null' ? { uri: u } : images.profile;
+                  const u =
+                    profileData?.avatar || avatarUri || user?.avatar;
+                  const uri = getAbsoluteAvatarUrl(u);
+                  // Add cache-bust when avatarKey > 0 (after upload) to force reload
+                  const finalUri = uri && avatarKey > 0
+                    ? `${uri}${uri.includes('?') ? '&' : '?'}v=${avatarKey}`
+                    : uri;
+                  return finalUri ? {uri: finalUri} : images.profile;
                 })()
               }
               resizeMode="cover"

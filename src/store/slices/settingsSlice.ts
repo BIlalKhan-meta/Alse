@@ -240,7 +240,18 @@ export const settingsSlice = createSlice({
     });
 
     builder.addCase(GetUserProfile.fulfilled, (state, action) => {
-      state.profile = action.payload?.data; // full backend profile
+      const apiData = action.payload?.data;
+      const avatar =
+        apiData?.avatar ??
+        apiData?.profile_picture ??
+        apiData?.profile_image ??
+        apiData?.user?.avatar ??
+        state.profile?.avatar;
+      state.profile = {
+        ...state.profile,
+        ...apiData,
+        avatar: avatar ?? state.profile?.avatar,
+      };
     });
     // Profile update cases
     builder.addCase(updateUserProfile.pending, state => {

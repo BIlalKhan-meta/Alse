@@ -1,5 +1,6 @@
 import moment from 'moment';
 import {Platform} from 'react-native';
+import {BASE_URL} from './baseurl';
 import {
   check,
   request,
@@ -186,6 +187,25 @@ export const changeUrlForData = (url: string) =>
     'https://elombelo-bucket.s3.us-west-1.amazonaws.com',
     'https://alse-backend-bucket.s3.ap-southeast-2.amazonaws.com',
   );
+
+/** Ensures avatar URL is absolute. Handles relative paths and S3 bucket URLs. */
+export const getAbsoluteAvatarUrl = (
+  url: string | null | undefined,
+  cacheBust?: boolean,
+): string | null => {
+  if (!url || url === 'null') return null;
+  const normalized = changeUrlForData(url);
+  let absolute = normalized;
+  if (!normalized.startsWith('http://') && !normalized.startsWith('https://')) {
+    const base = BASE_URL.replace(/\/api\/?$/, '');
+    absolute = normalized.startsWith('/') ? `${base}${normalized}` : `${base}/${normalized}`;
+  }
+  if (cacheBust) {
+    const sep = absolute.includes('?') ? '&' : '?';
+    return `${absolute}${sep}t=${Date.now()}`;
+  }
+  return absolute;
+};
 
 export const createFile = (img: string) => {
   let localUri = img;

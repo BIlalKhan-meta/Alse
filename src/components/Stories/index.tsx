@@ -13,7 +13,8 @@ import {
 import InstagramStories, {
   InstagramStoriesProps,
 } from '@birdwingo/react-native-instagram-stories';
-import AddStoryIcon from './AddStoryIcon';
+import {images} from '../../utils/images';
+import {getAbsoluteAvatarUrl} from '../../utils/helpers';
 import {AddStory, GetStories, DeleteStory} from '../../api/stories';
 import * as DropdownMenu from 'zeego/dropdown-menu';
 import Toast from 'react-native-toast-message';
@@ -64,8 +65,10 @@ const Stories = () => {
 
   const navigation = useNavigation();
 
-  // Add current user info
+  // Add current user info (ref ensures renderAvatar always reads latest avatar after profile update)
   const currentUser = useSelector(selectUserProfile);
+  const currentUserRef = useRef(currentUser);
+  currentUserRef.current = currentUser;
 
   const {t} = useTranslation();
 
@@ -327,11 +330,23 @@ const Stories = () => {
             return <Loader />;
           }
 
+          const avatarUri = getAbsoluteAvatarUrl(currentUserRef.current?.avatar);
+          const avatarSource = avatarUri ? {uri: avatarUri} : images.profile;
+
           return (
             <DropdownMenu.Root>
               <DropdownMenu.Trigger>
-                <View>
-                  <AddStoryIcon />
+                <View style={styles.avatarCenter}>
+                  <GradientBorderView
+                    gradientProps={{
+                      colors: ['#FF7A51', '#FFDB5C'],
+                    }}
+                    style={styles.addStoryAvatarContainer}>
+                    <Image
+                      source={avatarSource}
+                      style={styles.addStoryAvatar}
+                    />
+                  </GradientBorderView>
                 </View>
                 <Text style={styles.storyName}>{t('stories.addStory')}</Text>
               </DropdownMenu.Trigger>
@@ -574,6 +589,7 @@ const Stories = () => {
       {renderMediaPreview()}
 
       <InstagramStories
+        key={currentUser?.avatar || 'stories'}
         stories={stories}
         avatarBorderColors={['#FF7A51', '#FFDB5C']}
         saveProgress
@@ -636,6 +652,18 @@ const styles = StyleSheet.create({
     height: 60,
     width: 60,
     overflow: 'hidden',
+  },
+  addStoryAvatarContainer: {
+    borderWidth: 3,
+    borderRadius: 35,
+    height: 65,
+    width: 65,
+    overflow: 'hidden',
+  },
+  addStoryAvatar: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 32,
   },
   squareImage: {
     width: 64,

@@ -22,7 +22,7 @@ import {
   updateLike,
 } from '../../../store/slices/homeSlice';
 import InterRegular from '../../../components/Text/InterRegular';
-import {getMessage, Toast} from '../../../utils/helpers';
+import {getMessage, Toast, getAbsoluteAvatarUrl} from '../../../utils/helpers';
 import {getCountriesList, reportPost} from '../../../api/home';
 import {removeSavedItem, saveItem} from '../../../api/menu';
 import {getProfile} from '../../../api/profile';
@@ -251,11 +251,12 @@ const Home: React.FC = () => {
   };
 
   const handleLikePress = (id: number) => {
+    const avatarUrl = getAbsoluteAvatarUrl(user?.avatar);
     const tempData = {
       id: Math.random(),
       user: {
         id: user?.id,
-        avatar: user?.avatar ? user?.avatar : images.profile,
+        avatar: avatarUrl || images.profile,
         full_name: user?.full_name ? user?.full_name : '',
       },
     };

@@ -101,7 +101,7 @@ const MyProfileUpdate: React.FC = () => {
       console.log('uploadedImage= ==>', uploadedImage);
       // console.log('uploadedCover= ==>', uploadedCover);
 
-      data['image'] = uploadedImage;
+      data['avatar'] = uploadedImage;
     }
 
     if (bannerImage && updatingBanner) {

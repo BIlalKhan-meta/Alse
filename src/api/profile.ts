@@ -24,9 +24,10 @@ export const editProfileWithJson = (payload: EditProfilePayload) => {
   });
 };
 
-export const editProfile = (formData: FormData) => {
+export const editProfile = (formData: FormData, config?: {timeout?: number}) => {
   return axiosInstance.post(endpoints.profile.editProfile, formData, {
     formData: true,
+    timeout: config?.timeout ?? 60000, // 60s for file uploads
     // Leave FormData unchanged so the file is sent in the multipart payload
     transformRequest: [(data, headers) => data],
   } as any);
