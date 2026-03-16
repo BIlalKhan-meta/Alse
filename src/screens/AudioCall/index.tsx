@@ -12,10 +12,10 @@ import {
   StyleSheet,
   Text,
   View,
-  ActivityIndicator,
+  Modal,
+  TouchableOpacity,
   PermissionsAndroid,
   Platform,
-  TouchableOpacity,
   Image,
 } from 'react-native';
 import {useNavigation, useRoute} from '@react-navigation/native';
@@ -118,11 +118,10 @@ const AudioCall: React.FC = () => {
   const params = (route.params || {}) as AudioCallRouteParams;
 
   const [hasPermission, setHasPermission] = useState(Platform.OS !== 'android');
-  const [isConnecting, setIsConnecting] = useState(true);
-  const [rtcToken, setRtcToken] = useState<string | undefined>(undefined);
-  const [tokenReady, setTokenReady] = useState(false);
+  const [rtcToken, setRtcToken] = useState<string | undefined>(params.agoraToken);
   const [callDuration, setCallDuration] = useState(0);
   const [remoteUserJoined, setRemoteUserJoined] = useState(false);
+  const [showNoAnswerModal, setShowNoAnswerModal] = useState(false);
   const callDurationRef = useRef(0);
 
   const channel = params.channel;
@@ -130,13 +129,10 @@ const AudioCall: React.FC = () => {
   const displayName = params.receiverName || 'Calling...';
   const avatar = params.receiverAvatar;
 
+  // Fetch RTC token in background. Use params.agoraToken if present. On API failure, join without token.
   useEffect(() => {
+    if (params.agoraToken || !channel) return;
     const fetchToken = async () => {
-      if (params.agoraToken) {
-        setRtcToken(params.agoraToken);
-        setTokenReady(true);
-        return;
-      }
       try {
         const res = await getAgoraTokenForAudience(channel);
         const data = (res as any)?.data;
@@ -151,14 +147,11 @@ const AudioCall: React.FC = () => {
             fd?.data?.signature ?? fd?.data?.agora_token ?? fd?.agora_token,
           );
         }
-        setTokenReady(true);
       } catch (e) {
-        console.warn('[AudioCall] Token fetch failed - trying without token:', e);
         setRtcToken(undefined);
-        setTokenReady(true);
       }
     };
-    if (channel) fetchToken();
+    fetchToken();
   }, [channel, uid, params.agoraToken]);
 
   useEffect(() => {
@@ -194,6 +187,7 @@ const AudioCall: React.FC = () => {
       role: ClientRoleType.ClientRoleBroadcaster,
       activeSpeaker: true,
       disableRtm: true,
+      callActive: true,
     }),
     [channel, rtcToken, params.agoraToken, uid],
   );
@@ -201,7 +195,6 @@ const AudioCall: React.FC = () => {
   const callbacks = useMemo(
     () => ({
       EndCall: handleEndCall,
-      JoinChannelSuccess: () => setIsConnecting(false),
       UserJoined: () => {
         setRemoteUserJoined(true);
       },
@@ -213,17 +206,20 @@ const AudioCall: React.FC = () => {
     [handleEndCall, navigation],
   );
 
-  // Fallback: hide connecting overlay after 3s if JoinChannelSuccess never fires (e.g. SDK quirk)
-  useEffect(() => {
-    if (!channel || !tokenReady) return;
-    const t = setTimeout(() => setIsConnecting(false), 3000);
-    return () => clearTimeout(t);
-  }, [channel, tokenReady]);
-
   const agoraProps = useMemo(
     () => ({rtcProps, callbacks}),
     [rtcProps, callbacks],
   );
+
+  // Auto-end call if other user doesn't pick up within 10 seconds (outgoing calls only)
+  useEffect(() => {
+    if (params.isIncoming || remoteUserJoined || !channel) return;
+    const timer = setTimeout(async () => {
+      await callManagerService.endCall();
+      setShowNoAnswerModal(true);
+    }, 10000);
+    return () => clearTimeout(timer);
+  }, [params.isIncoming, remoteUserJoined, channel]);
 
   // Call duration timer (starts only when remote user joins)
   useEffect(() => {
@@ -244,6 +240,11 @@ const AudioCall: React.FC = () => {
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
+  const dismissNoAnswerModal = useCallback(() => {
+    setShowNoAnswerModal(false);
+    navigation.goBack();
+  }, [navigation]);
+
   if (!hasPermission && Platform.OS === 'android') {
     return (
       <SafeAreaView style={styles.container}>
@@ -255,13 +256,12 @@ const AudioCall: React.FC = () => {
     );
   }
 
-  if (!channel || !tokenReady) {
+  if (!channel) {
     return (
       <SafeAreaView style={styles.container}>
         <StatusBar barStyle="light-content" backgroundColor="#000" />
         <View style={styles.center}>
-          <ActivityIndicator size="large" color="#fff" />
-          <Text style={styles.connectingText}>Connecting...</Text>
+          <Text style={styles.connectingText}>No channel</Text>
         </View>
       </SafeAreaView>
     );
@@ -270,15 +270,28 @@ const AudioCall: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#000" />
-      {!isConnecting && remoteUserJoined && (
+      <Modal
+        visible={showNoAnswerModal}
+        transparent
+        animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Call Ended</Text>
+            <Text style={styles.modalMessage}>
+              The other user is busy or didn't pick up the call.
+            </Text>
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={dismissNoAnswerModal}
+              activeOpacity={0.8}>
+              <Text style={styles.modalButtonText}>OK</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+      {remoteUserJoined && (
         <View style={styles.timestampOverlay}>
           <Text style={styles.timestampText}>{formatDuration(callDuration)}</Text>
-        </View>
-      )}
-      {isConnecting && (
-        <View style={styles.connectingOverlay}>
-          <ActivityIndicator size="large" color="#fff" />
-          <Text style={styles.connectingText}>Connecting...</Text>
         </View>
       )}
       <PropsProvider value={agoraProps}>
@@ -297,9 +310,7 @@ const AudioCall: React.FC = () => {
                     </View>
                   )}
                   <Text style={styles.nameText}>{displayName}</Text>
-                  <Text style={styles.statusText}>
-                    {isConnecting ? 'Connecting...' : 'Voice Call'}
-                  </Text>
+                  <Text style={styles.statusText}>Voice Call</Text>
                 </View>
               </View>
               <View style={styles.controls}>
@@ -431,6 +442,47 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 8,
     textAlign: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalContent: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 16,
+    padding: 24,
+    width: '100%',
+    maxWidth: 320,
+    alignItems: 'center',
+  },
+  modalTitle: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: '600',
+    marginBottom: 12,
+  },
+  modalMessage: {
+    color: '#999',
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 22,
+  },
+  modalButton: {
+    backgroundColor: '#4CAF50',
+    paddingVertical: 12,
+    paddingHorizontal: 32,
+    borderRadius: 8,
+    minWidth: 120,
+    alignItems: 'center',
+  },
+  modalButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 
