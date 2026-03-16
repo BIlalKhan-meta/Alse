@@ -51,6 +51,22 @@ export interface ChannelUsersResponse {
 }
 
 /**
+ * Get RTM token for Agora signaling (call invitations).
+ * Only returns rtm_token - never use signature (RTC token) as fallback, it causes LOGIN_ERR_REJECTED.
+ */
+export const getRtmToken = async (userId: string | number): Promise<string | null> => {
+  try {
+    const res = await axiosInstance.get(
+      `${endpoints.chat.getSignature}?session_name=rtm&chat_id=${userId}&role=1`,
+    );
+    const data = (res as any)?.data;
+    return data?.data?.rtm_token ?? data?.rtm_token ?? null;
+  } catch {
+    return null;
+  }
+};
+
+/**
  * Get Agora token for video calling using the provided API
  * @param channel - Channel name for the call
  * @param uid - User ID for the call

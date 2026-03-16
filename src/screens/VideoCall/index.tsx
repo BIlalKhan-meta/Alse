@@ -1,238 +1,157 @@
-import React, {useEffect, useState, useRef} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {
-  View,
-  Text,
-  TouchableOpacity,
-  Image,
   SafeAreaView,
   StatusBar,
-  Alert,
-  ActivityIndicator,
   StyleSheet,
+  Text,
+  View,
+  ActivityIndicator,
+  PermissionsAndroid,
+  Platform,
 } from 'react-native';
 import {useNavigation, useRoute} from '@react-navigation/native';
-import {RtcSurfaceView} from 'react-native-agora';
-import {colors} from '../../utils/theme';
-import {images} from '../../utils/images';
-import {fontSizes, vh, vw} from '../../constant';
-import agoraCallService from '../../services/agoraCallService';
-import {getAgoraToken, endCallSession} from '../../api/calling';
+import AgoraUIKit, {
+  ChannelProfileType,
+  ClientRoleType,
+  Layout,
+} from 'agora-rn-uikit';
+import {AGORA_APP_ID} from '../../config/agora';
+import {getAgoraToken, getAgoraTokenForAudience} from '../../api/calling';
 import callManagerService from '../../services/callManagerService';
-import {selectUserProfile} from '../../store/slices/authSlice';
-import {useSelector} from 'react-redux';
-import {
-  Phone,
-  Video,
-  Mic,
-  MicOff,
-  VideoOff,
-  RotateCcw,
-} from 'lucide-react-native';
 
-interface VideoCallProps {
-  route: {
-    params: {
-      channel: string;
-      uid: number;
-      receiverName: string;
-      receiverAvatar?: string;
-      isIncoming?: boolean;
-      callType?: 'video' | 'audio';
-      agoraToken?: string;
-      sessionId?: string;
-    };
-  };
+interface VideoCallRouteParams {
+  channel: string;
+  uid: number;
+  receiverName?: string;
+  receiverAvatar?: string;
+  isIncoming?: boolean;
+  callType?: 'video' | 'audio';
+  agoraToken?: string;
+  sessionId?: string;
 }
 
-const VideoCall: React.FC<VideoCallProps> = ({route}) => {
+const VideoCall: React.FC = () => {
+  const route = useRoute();
   const navigation = useNavigation();
-  const user = useSelector(selectUserProfile);
-  const {params} = route;
+  const params = (route.params || {}) as VideoCallRouteParams;
 
-  const [isConnected, setIsConnected] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isMuted, setIsMuted] = useState(false);
-  const [isVideoEnabled, setIsVideoEnabled] = useState(
-    params.callType !== 'audio',
-  );
-  const [remoteUsers, setRemoteUsers] = useState<number[]>([]);
-  const [callDuration, setCallDuration] = useState(0);
-  const [error, setError] = useState<string | null>(null);
+  const [hasPermission, setHasPermission] = useState(Platform.OS !== 'android');
+  const [isConnecting, setIsConnecting] = useState(true);
+  const [rtcToken, setRtcToken] = useState<string | undefined>(undefined);
+  const [tokenReady, setTokenReady] = useState(false);
+  const callDurationRef = React.useRef(0);
 
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const startTimeRef = useRef<number>(0);
+  const channel = params.channel;
+  const uid = params.uid ?? 0;
 
-  // Start call duration timer
-  const startCallTimer = () => {
-    startTimeRef.current = Date.now();
-    intervalRef.current = setInterval(() => {
-      const duration = Math.floor((Date.now() - startTimeRef.current) / 1000);
-      setCallDuration(duration);
-    }, 1000);
-  };
-
-  // Stop call duration timer
-  const stopCallTimer = () => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-  };
-
-  // Format call duration
-  const formatDuration = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs
-      .toString()
-      .padStart(2, '0')}`;
-  };
-
-  // Initialize call
+  // Fetch RTC token (or use params.agoraToken). On API failure, try without token (works for unsecured Agora projects).
   useEffect(() => {
-    const initializeCall = async () => {
+    const fetchToken = async () => {
+      if (params.agoraToken) {
+        setRtcToken(params.agoraToken);
+        setTokenReady(true);
+        return;
+      }
       try {
-        setIsLoading(true);
-        setError(null);
-
-        // Request permissions
-        const hasPermissions = await agoraCallService.requestPermissions();
-        if (!hasPermissions) {
-          setError(
-            'Camera and microphone permissions are required for calling',
-          );
-          setIsLoading(false);
-          return;
-        }
-
-        // Use provided Agora token or get a new one
-        let token = params.agoraToken;
-        if (!token) {
-          const tokenResponse = await getAgoraToken(params.channel, params.uid);
-          token = tokenResponse?.data?.data?.signature;
-        }
-
-        // Join channel
-        const success = await agoraCallService.joinChannel(
-          params.channel,
-          params.uid,
-          token,
-          uid => {
-            console.log('Remote user joined:', uid);
-            setRemoteUsers(prev => [...prev, uid]);
-          },
-          uid => {
-            console.log('Remote user left:', uid);
-            setRemoteUsers(prev => prev.filter(id => id !== uid));
-          },
-          error => {
-            console.error('Agora error:', error);
-            setError('Call connection failed. Please try again.');
-          },
-        );
-
-        if (success) {
-          setIsConnected(true);
-          setIsLoading(false);
-          startCallTimer();
+        const res = await getAgoraTokenForAudience(channel);
+        const data = (res as any)?.data;
+        const token =
+          data?.data?.agora_token ?? data?.agora_token ?? data?.data?.signature;
+        if (token) {
+          setRtcToken(token);
         } else {
-          setError('Failed to join call. Please try again.');
-          setIsLoading(false);
+          const fallback = await getAgoraToken(channel, uid);
+          const fd = (fallback as any)?.data;
+          setRtcToken(fd?.data?.signature ?? fd?.data?.agora_token ?? fd?.agora_token);
         }
-      } catch (err) {
-        console.error('Call initialization error:', err);
-        setError('Failed to start call. Please try again.');
-        setIsLoading(false);
+        setTokenReady(true);
+      } catch (e) {
+        console.warn('[VideoCall] Token fetch failed (500 or network) - trying without token (unsecured project):', e);
+        setRtcToken(undefined);
+        setTokenReady(true);
       }
     };
+    if (channel) fetchToken();
+  }, [channel, uid, params.agoraToken]);
 
-    initializeCall();
+  // Android permissions
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
+    PermissionsAndroid.requestMultiple([
+      PermissionsAndroid.PERMISSIONS.CAMERA,
+      PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
+    ]).then(granted => {
+      const ok =
+        granted['android.permission.CAMERA'] === PermissionsAndroid.RESULTS.GRANTED &&
+        granted['android.permission.RECORD_AUDIO'] === PermissionsAndroid.RESULTS.GRANTED;
+      setHasPermission(ok);
+    }).catch(() => setHasPermission(false));
+  }, []);
 
-    // Cleanup on unmount
-    return () => {
-      stopCallTimer();
-      agoraCallService.leaveChannel();
-    };
-  }, [params.channel, params.uid]);
-
-  // Handle call end
-  const handleEndCall = async () => {
-    try {
-      stopCallTimer();
-
-      // Use call manager service to end call
-      const result = await callManagerService.endCall();
-
-      if (result.success) {
-        console.log('Call ended successfully');
-        // Show call duration if call was active
-        if (callDuration > 0) {
-          const duration = formatDuration(callDuration);
-          callManagerService.handleCallEnded(duration);
-        }
-      } else {
-        console.error('Error ending call:', result.error);
-      }
-
-      navigation.goBack();
-    } catch (error) {
-      console.error('Error ending call:', error);
-      navigation.goBack();
+  const handleEndCall = useCallback(async () => {
+    const result = await callManagerService.endCall();
+    if (result.success && callDurationRef.current > 0) {
+      const mins = Math.floor(callDurationRef.current / 60);
+      const secs = callDurationRef.current % 60;
+      const duration = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+      callManagerService.handleCallEnded(duration);
     }
-  };
+    navigation.goBack();
+  }, [navigation]);
 
-  // Toggle audio mute
-  const handleToggleMute = async () => {
-    try {
-      const newMuteState = await agoraCallService.toggleAudioMute();
-      setIsMuted(newMuteState);
-    } catch (error) {
-      console.error('Error toggling mute:', error);
-    }
-  };
+  const connectionData = useMemo(
+    () => ({
+      appId: AGORA_APP_ID,
+      channel,
+      rtcToken: rtcToken ?? params.agoraToken ?? undefined,
+      rtcUid: uid || 0,
+    }),
+    [channel, rtcToken, params.agoraToken, uid],
+  );
 
-  // Toggle video
-  const handleToggleVideo = async () => {
-    try {
-      const newVideoState = await agoraCallService.toggleVideoEnabled();
-      setIsVideoEnabled(!newVideoState);
-    } catch (error) {
-      console.error('Error toggling video:', error);
-    }
-  };
+  const settings = useMemo(
+    () => ({
+      layout: Layout.Pin,
+      mode: ChannelProfileType.ChannelProfileCommunication,
+      role: ClientRoleType.ClientRoleBroadcaster,
+      activeSpeaker: true,
+      disableRtm: true,
+    }),
+    [],
+  );
 
-  // Switch camera
-  const handleSwitchCamera = async () => {
-    try {
-      await agoraCallService.switchCamera();
-    } catch (error) {
-      console.error('Error switching camera:', error);
-    }
-  };
+  const rtcCallbacks = useMemo(
+    () => ({
+      EndCall: handleEndCall,
+      JoinChannelSuccess: () => {
+        setIsConnecting(false);
+      },
+      UserJoined: () => {},
+      UserOffline: (_: any, __: number, reason: number) => {
+        if (reason === 0) navigation.goBack();
+      },
+    }),
+    [handleEndCall, navigation],
+  );
 
-  if (isLoading) {
+  if (!hasPermission && Platform.OS === 'android') {
     return (
       <SafeAreaView style={styles.container}>
-        <StatusBar backgroundColor={colors.black} barStyle="light-content" />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.white} />
-          <Text style={styles.loadingText}>Connecting...</Text>
-        </View>
+        <StatusBar barStyle="light-content" backgroundColor="#000" />
+        <Text style={styles.permissionText}>
+          Camera & microphone permissions are required to start the call.
+        </Text>
       </SafeAreaView>
     );
   }
 
-  if (error) {
+  if (!channel || !tokenReady) {
     return (
       <SafeAreaView style={styles.container}>
-        <StatusBar backgroundColor={colors.black} barStyle="light-content" />
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity
-            style={styles.retryButton}
-            onPress={() => navigation.goBack()}>
-            <Text style={styles.retryButtonText}>Go Back</Text>
-          </TouchableOpacity>
+        <StatusBar barStyle="light-content" backgroundColor="#000" />
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color="#fff" />
+          <Text style={styles.connectingText}>Connecting...</Text>
         </View>
       </SafeAreaView>
     );
@@ -240,100 +159,18 @@ const VideoCall: React.FC<VideoCallProps> = ({route}) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor={colors.black} barStyle="light-content" />
-
-      {/* Remote video view */}
-      <View style={styles.remoteVideoContainer}>
-        {remoteUsers.length > 0 ? (
-          remoteUsers.map(uid => (
-            <RtcSurfaceView
-              key={uid}
-              style={styles.remoteVideo}
-              canvas={{uid}}
-            />
-          ))
-        ) : (
-          <View style={styles.noVideoContainer}>
-            <Image
-              source={
-                params.receiverAvatar
-                  ? {uri: params.receiverAvatar}
-                  : images.profile
-              }
-              style={styles.avatarImage}
-            />
-            <Text style={styles.userName}>{params.receiverName}</Text>
-            <Text style={styles.callStatus}>
-              {isConnected ? 'Connected' : 'Connecting...'}
-            </Text>
-          </View>
-        )}
-      </View>
-
-      {/* Local video view */}
-      {isVideoEnabled && (
-        <View style={styles.localVideoContainer}>
-          <RtcSurfaceView style={styles.localVideo} canvas={{uid: 0}} />
+      <StatusBar barStyle="light-content" backgroundColor="#000" />
+      {isConnecting && (
+        <View style={styles.connectingOverlay}>
+          <ActivityIndicator size="large" color="#fff" />
+          <Text style={styles.connectingText}>Connecting...</Text>
         </View>
       )}
-
-      {/* Call duration */}
-      {isConnected && callDuration > 0 && (
-        <View style={styles.durationContainer}>
-          <Text style={styles.durationText}>
-            {formatDuration(callDuration)}
-          </Text>
-        </View>
-      )}
-
-      {/* Call controls */}
-      <View style={styles.controlsContainer}>
-        <View style={styles.controlRow}>
-          {/* Mute button */}
-          <TouchableOpacity
-            style={[
-              styles.controlButton,
-              isMuted && styles.controlButtonActive,
-            ]}
-            onPress={handleToggleMute}>
-            {isMuted ? (
-              <MicOff size={24} color={colors.white} />
-            ) : (
-              <Mic size={24} color={colors.white} />
-            )}
-          </TouchableOpacity>
-
-          {/* Video toggle button */}
-          <TouchableOpacity
-            style={[
-              styles.controlButton,
-              !isVideoEnabled && styles.controlButtonActive,
-            ]}
-            onPress={handleToggleVideo}>
-            {isVideoEnabled ? (
-              <Video size={24} color={colors.white} />
-            ) : (
-              <VideoOff size={24} color={colors.white} />
-            )}
-          </TouchableOpacity>
-
-          {/* Switch camera button */}
-          {isVideoEnabled && (
-            <TouchableOpacity
-              style={styles.controlButton}
-              onPress={handleSwitchCamera}>
-              <RotateCcw size={24} color={colors.white} />
-            </TouchableOpacity>
-          )}
-
-          {/* End call button */}
-          <TouchableOpacity
-            style={[styles.controlButton, styles.endCallButton]}
-            onPress={handleEndCall}>
-            <Phone size={24} color={colors.white} />
-          </TouchableOpacity>
-        </View>
-      </View>
+      <AgoraUIKit
+        connectionData={connectionData}
+        settings={settings}
+        rtcCallbacks={rtcCallbacks}
+      />
     </SafeAreaView>
   );
 };
@@ -341,126 +178,36 @@ const VideoCall: React.FC<VideoCallProps> = ({route}) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.black,
+    backgroundColor: '#000',
   },
-  loadingContainer: {
+  center: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  loadingText: {
-    color: colors.white,
-    fontSize: fontSizes.medium,
-    marginTop: vh * 2,
-  },
-  errorContainer: {
+  permissionText: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: vw * 8,
-  },
-  errorText: {
-    color: colors.white,
-    fontSize: fontSizes.medium,
+    color: '#fff',
     textAlign: 'center',
-    marginBottom: vh * 4,
+    textAlignVertical: 'center',
+    paddingHorizontal: 16,
+    fontSize: 16,
   },
-  retryButton: {
-    backgroundColor: colors.themeColor,
-    paddingHorizontal: vw * 8,
-    paddingVertical: vh * 2,
-    borderRadius: 8,
+  connectingText: {
+    color: '#fff',
+    marginTop: 16,
+    fontSize: 18,
   },
-  retryButtonText: {
-    color: colors.white,
-    fontSize: fontSizes.medium,
-    fontWeight: '600',
-  },
-  remoteVideoContainer: {
-    flex: 1,
-    backgroundColor: colors.black,
-  },
-  remoteVideo: {
-    flex: 1,
-  },
-  noVideoContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  avatarImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    marginBottom: vh * 2,
-  },
-  userName: {
-    color: colors.white,
-    fontSize: fontSizes.large,
-    fontWeight: 'bold',
-    marginBottom: vh * 1,
-  },
-  callStatus: {
-    color: colors.white,
-    fontSize: fontSizes.medium,
-    opacity: 0.8,
-  },
-  localVideoContainer: {
+  connectingOverlay: {
     position: 'absolute',
-    top: vh * 4,
-    right: vw * 4,
-    width: 120,
-    height: 160,
-    borderRadius: 12,
-    overflow: 'hidden',
-    borderWidth: 2,
-    borderColor: colors.white,
-  },
-  localVideo: {
-    flex: 1,
-  },
-  durationContainer: {
-    position: 'absolute',
-    top: vh * 6,
+    top: 0,
     left: 0,
     right: 0,
-    alignItems: 'center',
-  },
-  durationText: {
-    color: colors.white,
-    fontSize: fontSizes.medium,
-    fontWeight: '600',
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    paddingHorizontal: vw * 4,
-    paddingVertical: vh * 1,
-    borderRadius: 20,
-  },
-  controlsContainer: {
-    position: 'absolute',
-    bottom: vh * 6,
-    left: 0,
-    right: 0,
-    paddingHorizontal: vw * 8,
-  },
-  controlRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-  },
-  controlButton: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
-    marginHorizontal: vw * 2,
-  },
-  controlButtonActive: {
-    backgroundColor: colors.themeColor,
-  },
-  endCallButton: {
-    backgroundColor: '#FF4444',
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    zIndex: 10,
   },
 });
 

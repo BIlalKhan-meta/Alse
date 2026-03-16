@@ -14,6 +14,8 @@ import {
 } from 'react-native-permissions';
 import {requestUserPermission} from './src/utils/NotificationServices';
 import MainNavigation from './src/navigation';
+import IncomingCallHandler from './src/components/IncomingCallHandler';
+import {navigationRef} from './src/utils/navigationRef';
 import {
   configureReanimatedLogger,
   ReanimatedLogLevel,
@@ -93,8 +95,9 @@ function App(): React.JSX.Element {
           <LanguageProvider>
             {/* <SafeAreaView style={styles.container}> */}
 
-            <NavigationContainer theme={theme}>
+            <NavigationContainer ref={navigationRef} theme={theme}>
               <MainNavigation />
+              <IncomingCallHandler />
               {__DEV__ && <NetworkLoggerFAB />}
             </NavigationContainer>
 

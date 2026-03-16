@@ -18,6 +18,7 @@ import {selectUserProfile} from '../../store/slices/authSlice';
 import {useSelector} from 'react-redux';
 import {getAgoraTokenForAudience} from '../../api/calling';
 import callManagerService from '../../services/callManagerService';
+import agoraRtmService from '../../services/agoraRtmService';
 
 interface IncomingVideoCallProps {
   route: {
@@ -69,6 +70,9 @@ const IncomingVideoCall: React.FC<IncomingVideoCallProps> = ({route}) => {
     try {
       setIsRinging(false);
 
+      // Accept RTM invitation to complete signaling
+      await agoraRtmService.acceptPendingInvitation();
+
       // Use call manager service to join call
       const result = await callManagerService.joinCall(
         params.channel,
@@ -105,8 +109,9 @@ const IncomingVideoCall: React.FC<IncomingVideoCallProps> = ({route}) => {
   };
 
   // Handle decline call
-  const handleDeclineCall = () => {
+  const handleDeclineCall = async () => {
     setIsRinging(false);
+    await agoraRtmService.refusePendingInvitation();
     // Handle missed call
     callManagerService.handleMissedCall(params.callerName);
     // Cancel any incoming call notifications

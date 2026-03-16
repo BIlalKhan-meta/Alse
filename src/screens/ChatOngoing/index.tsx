@@ -158,6 +158,9 @@ const ChatOngoing: React.FC<Props> = props => {
         props.route.params.name || 'Unknown User',
         callType,
         props.route.params.user?.avatar,
+        user?.full_name || user?.name || 'Unknown',
+        user?.image || user?.avatar,
+        user?.id,
       );
 
       if (result.success && result.data) {

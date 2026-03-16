@@ -3211,6 +3211,16 @@ aggregate-error@^3.0.0:
     clean-stack "^2.0.0"
     indent-string "^4.0.0"
 
+agora-react-native-rtm@1.5.1:
+  version "1.5.1"
+  resolved "https://registry.yarnpkg.com/agora-react-native-rtm/-/agora-react-native-rtm-1.5.1.tgz#e1c1cb3ba330b0f4d553859eb30758874763ee76"
+  integrity sha512-docAyX6O5J0eX8RCRAjtn7wUcks/Fq1v3S0w40fR9zf9k3mm+GLCP5kYiCy16p4h2o6v9JUaDQgUsTP/wv/s4g==
+
+agora-rn-uikit@^5.0.2:
+  version "5.0.2"
+  resolved "https://registry.yarnpkg.com/agora-rn-uikit/-/agora-rn-uikit-5.0.2.tgz#02e9681cfde4d3909302b8c15312bcb1c975d820"
+  integrity sha512-r1jKK7/Q4fXaPr4lItZo1OSIc2SmHan2KdeKYyMNi51nhAWciZWLKls5UHCj7anUI0NdBS7fudRyDxtOAy3brQ==
+
 ajv@^6.12.4:
   version "6.14.0"
   resolved "https://registry.yarnpkg.com/ajv/-/ajv-6.14.0.tgz#fd067713e228210636ebb08c60bd3765d6dbe73a"

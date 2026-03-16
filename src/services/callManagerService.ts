@@ -1,4 +1,3 @@
-import {Alert} from 'react-native';
 import {
   createCallSession,
   endCallSession,
@@ -7,6 +6,7 @@ import {
 } from '../api/calling';
 import agoraCallService from './agoraCallService';
 import callNotificationService from './callNotificationService';
+import agoraRtmService from './agoraRtmService';
 
 /**
  * Service for managing complete call flow
@@ -28,6 +28,9 @@ class CallManagerService {
     receiverName: string,
     callType: 'video' | 'audio' = 'video',
     receiverAvatar?: string,
+    callerName?: string,
+    callerAvatar?: string,
+    callerId?: string | number,
   ) {
     try {
       // Create call session
@@ -35,10 +38,24 @@ class CallManagerService {
 
       if (callSession?.status && callSession?.data) {
         this.currentCall = {
-          sessionId: callSession.data.session_id,
+          sessionId: String(callSession.data.session_id ?? ''),
           channel: callSession.data.channel,
           isActive: true,
         };
+
+        // Send Agora RTM invitation to receiver for incoming call modal (optional - may fail if RTM not logged in)
+        try {
+          await agoraRtmService.sendInvitation(receiverId, {
+            channel: callSession.data.channel,
+            callType,
+            callerName: callerName || 'Unknown',
+            callerAvatar,
+            sessionId: String(callSession.data.session_id ?? ''),
+            callerId: callerId?.toString(),
+          });
+        } catch (rtmErr) {
+          console.warn('[CallManager] RTM invitation failed (call will still proceed):', rtmErr);
+        }
 
         return {
           success: true,
@@ -60,7 +77,7 @@ class CallManagerService {
       console.error('Error initiating call:', error);
       return {
         success: false,
-        error: error?.message || 'Failed to initiate call',
+        error: (error as Error)?.message || 'Failed to initiate call',
       };
     }
   }
@@ -78,7 +95,8 @@ class CallManagerService {
     try {
       // Get Agora token for joining as audience
       const tokenResponse = await getAgoraTokenForAudience(channel);
-      const agoraToken = tokenResponse?.data?.data?.agora_token;
+      const resData = (tokenResponse as any)?.data;
+      const agoraToken = resData?.data?.agora_token ?? resData?.agora_token;
 
       if (!agoraToken) {
         throw new Error('Failed to get Agora token for joining call');
@@ -105,7 +123,7 @@ class CallManagerService {
       console.error('Error joining call:', error);
       return {
         success: false,
-        error: error?.message || 'Failed to join call',
+        error: (error as Error)?.message || 'Failed to join call',
       };
     }
   }
@@ -115,8 +133,11 @@ class CallManagerService {
    */
   async endCall() {
     try {
+      // Cancel RTM invitation if receiver hasn't answered yet
+      await agoraRtmService.cancelInvitation();
+
       if (this.currentCall.isActive && this.currentCall.sessionId) {
-        await endCallSession(this.currentCall.sessionId);
+        await endCallSession(String(this.currentCall.sessionId));
       }
 
       await agoraCallService.leaveChannel();
@@ -127,7 +148,7 @@ class CallManagerService {
       console.error('Error ending call:', error);
       return {
         success: false,
-        error: error?.message || 'Failed to end call',
+        error: (error as Error)?.message || 'Failed to end call',
       };
     }
   }
@@ -146,7 +167,7 @@ class CallManagerService {
       console.error('Error getting call users:', error);
       return {
         success: false,
-        error: error?.message || 'Failed to get call users',
+        error: (error as Error)?.message || 'Failed to get call users',
       };
     }
   }
