@@ -3,6 +3,7 @@ import {useSelector} from 'react-redux';
 import {selectUserProfile, selectBearerToken} from '../../store/slices/authSlice';
 import agoraRtmService from '../../services/agoraRtmService';
 import {getRtmToken} from '../../api/calling';
+import {AGORA_RTM_TOKEN} from '../../config/agora';
 import {navigateToIncomingVideoCall} from '../../utils/navigationRef';
 
 /**
@@ -25,10 +26,10 @@ const IncomingCallHandler: React.FC = () => {
 
     const initRtm = async () => {
       console.log('[IncomingCallHandler] Initializing RTM for user:', user.id);
-      const rtmToken = await getRtmToken(user.id);
-      // Only pass token if valid - empty string or RTC token causes LOGIN_ERR_REJECTED
-      const token = rtmToken?.trim() || undefined;
-      const success = await agoraRtmService.login(user.id, token);
+      const apiToken = await getRtmToken(user.id);
+      // Use API token, or fallback to config RTM token for incoming call modal
+      const rtmToken = apiToken?.trim() || AGORA_RTM_TOKEN || undefined;
+      const success = await agoraRtmService.login(user.id, rtmToken);
       if (success) {
         hasInitialized.current = true;
         agoraRtmService.setIncomingCallCallback(payload => {

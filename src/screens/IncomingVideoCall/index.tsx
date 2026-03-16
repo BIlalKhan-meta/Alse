@@ -83,8 +83,9 @@ const IncomingVideoCall: React.FC<IncomingVideoCallProps> = ({route}) => {
       );
 
       if (result.success && result.data) {
+        const screen = result.data.callType === 'audio' ? 'AudioCall' : 'VideoCall';
         navigation.navigate(
-          'VideoCall' as never,
+          screen as never,
           {
             channel: result.data.channel,
             uid: user?.id || params.uid,

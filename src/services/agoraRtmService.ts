@@ -28,7 +28,7 @@ class AgoraRtmService {
 
   /**
    * Initialize and login to RTM with user ID.
-   * For unsecured projects: pass no token. For secured: pass valid rtmToken only (never RTC token).
+   * Tries with token first; if rejected, retries without token (unsecured project).
    */
   async login(userId: string | number, rtmToken?: string): Promise<boolean> {
     const uid = String(userId);
@@ -39,17 +39,23 @@ class AgoraRtmService {
 
     await this.cleanup();
 
-    console.log('[Agora RTM] Initializing appId:', AGORA_APP_ID, 'user:', uid, 'token:', rtmToken ? 'yes' : 'no');
+    const tryLogin = async (token: string | undefined): Promise<void> => {
+      const engine = new RtmEngine();
+      await engine.createInstance(AGORA_APP_ID);
+      this.engine = engine;
+      try {
+        await engine.loginV2(uid, token);
+      } catch (e) {
+        this.engine = null;
+        try {
+          await engine.release();
+        } catch (_) {}
+        throw e;
+      }
+    };
 
-    try {
-      this.engine = new RtmEngine();
-      await this.engine.createInstance(AGORA_APP_ID);
-      await this.engine.loginV2(uid, rtmToken);
-
-      this.currentUserId = uid;
-      this.isLoggedIn = true;
-
-      this.remoteInvitationSubscription = this.engine.addListener(
+    const setupListeners = () => {
+      this.remoteInvitationSubscription = this.engine!.addListener(
         'RemoteInvitationReceived',
         (remoteInvitation: any) => {
           try {
@@ -67,14 +73,35 @@ class AgoraRtmService {
           }
         },
       );
+    };
 
+    // Try with token first; if rejected (e.g. wrong token type), retry without token (unsecured)
+    const attemptLogin = async (token: string | undefined) => {
+      await tryLogin(token);
+      this.currentUserId = uid;
+      this.isLoggedIn = true;
+      setupListeners();
+    };
+
+    try {
+      console.log('[Agora RTM] Initializing appId:', AGORA_APP_ID, 'user:', uid, 'token:', rtmToken ? 'yes' : 'no');
+      await attemptLogin(rtmToken);
       console.log('[Agora RTM] Logged in successfully for user:', uid);
       return true;
     } catch (error) {
       const errMsg = (error as Error)?.message || String(error);
+      const isRejected = errMsg.includes('REJECTED') || errMsg.includes('LOGIN_ERR');
       console.warn('[Agora RTM] Login failed:', errMsg);
-      if (errMsg.includes('REJECTED') || errMsg.includes('LOGIN_ERR')) {
-        console.warn('[Agora RTM] Check: 1) App ID matches Agora Console 2) Do NOT pass RTC token as RTM token');
+
+      if (isRejected && rtmToken) {
+        console.log('[Agora RTM] Retrying without token (unsecured project)...');
+        try {
+          await attemptLogin(undefined);
+          console.log('[Agora RTM] Logged in without token for user:', uid);
+          return true;
+        } catch (retryErr) {
+          console.warn('[Agora RTM] Retry without token failed:', retryErr);
+        }
       }
       await this.cleanup();
       return false;

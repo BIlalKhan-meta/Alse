@@ -164,8 +164,8 @@ const ChatOngoing: React.FC<Props> = props => {
       );
 
       if (result.success && result.data) {
-        // Navigate to video call screen with proper Agora data
-        (navigation as any).navigate('VideoCall', {
+        const screen = result.data.callType === 'audio' ? 'AudioCall' : 'VideoCall';
+        (navigation as any).navigate(screen, {
           channel: result.data.channel,
           uid: user?.id,
           receiverName: result.data.receiverName,

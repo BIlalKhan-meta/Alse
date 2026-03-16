@@ -39,6 +39,8 @@ const VideoCall: React.FC = () => {
   const [isConnecting, setIsConnecting] = useState(true);
   const [rtcToken, setRtcToken] = useState<string | undefined>(undefined);
   const [tokenReady, setTokenReady] = useState(false);
+  const [callDuration, setCallDuration] = useState(0);
+  const [remoteUserJoined, setRemoteUserJoined] = useState(false);
   const callDurationRef = React.useRef(0);
 
   const channel = params.channel;
@@ -126,13 +128,36 @@ const VideoCall: React.FC = () => {
       JoinChannelSuccess: () => {
         setIsConnecting(false);
       },
-      UserJoined: () => {},
+      UserJoined: () => {
+        setRemoteUserJoined(true);
+      },
       UserOffline: (_: any, __: number, reason: number) => {
+        setRemoteUserJoined(false);
         if (reason === 0) navigation.goBack();
       },
     }),
     [handleEndCall, navigation],
   );
+
+  // Fallback: hide connecting overlay after 3s if JoinChannelSuccess never fires (e.g. SDK quirk)
+  useEffect(() => {
+    if (!channel || !tokenReady) return;
+    const t = setTimeout(() => setIsConnecting(false), 3000);
+    return () => clearTimeout(t);
+  }, [channel, tokenReady]);
+
+  // Call duration timer (starts only when remote user joins)
+  useEffect(() => {
+    if (!remoteUserJoined) return;
+    const interval = setInterval(() => {
+      setCallDuration(prev => {
+        const next = prev + 1;
+        callDurationRef.current = next;
+        return next;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [remoteUserJoined]);
 
   if (!hasPermission && Platform.OS === 'android') {
     return (
@@ -157,9 +182,20 @@ const VideoCall: React.FC = () => {
     );
   }
 
+  const formatDuration = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#000" />
+      {!isConnecting && remoteUserJoined && (
+        <View style={styles.timestampOverlay}>
+          <Text style={styles.timestampText}>{formatDuration(callDuration)}</Text>
+        </View>
+      )}
       {isConnecting && (
         <View style={styles.connectingOverlay}>
           <ActivityIndicator size="large" color="#fff" />
@@ -208,6 +244,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'rgba(0,0,0,0.7)',
     zIndex: 10,
+  },
+  timestampOverlay: {
+    position: 'absolute',
+    top: 50,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 5,
+  },
+  timestampText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '600',
   },
 });
 

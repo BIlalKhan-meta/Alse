@@ -40,6 +40,7 @@ import {OutgoingCall} from '../../screens/OutgoingCall';
 import AcknowledgeCall from '../../screens/AcknowledgeCall';
 import IncomingCall from '../../screens/IncomingCall';
 import VideoCall from '../../screens/VideoCall';
+import AudioCall from '../../screens/AudioCall';
 import IncomingVideoCall from '../../screens/IncomingVideoCall';
 import NetworkLogger from 'react-native-network-logger';
 import Groups from '../../screens/Groups';
@@ -229,6 +230,11 @@ const AppNavigation = () => {
         <Stack.Screen
           name="VideoCall"
           component={VideoCall}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="AudioCall"
+          component={AudioCall}
           options={{headerShown: false}}
         />
         <Stack.Screen

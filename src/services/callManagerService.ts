@@ -93,13 +93,13 @@ class CallManagerService {
     sessionId?: string,
   ) {
     try {
-      // Get Agora token for joining as audience
-      const tokenResponse = await getAgoraTokenForAudience(channel);
-      const resData = (tokenResponse as any)?.data;
-      const agoraToken = resData?.data?.agora_token ?? resData?.agora_token;
-
-      if (!agoraToken) {
-        throw new Error('Failed to get Agora token for joining call');
+      let agoraToken: string | undefined;
+      try {
+        const tokenResponse = await getAgoraTokenForAudience(channel);
+        const resData = (tokenResponse as any)?.data;
+        agoraToken = resData?.data?.agora_token ?? resData?.agora_token;
+      } catch (e) {
+        console.warn('[CallManager] Token fetch failed - joining without token (unsecured):', e);
       }
 
       this.currentCall = {
