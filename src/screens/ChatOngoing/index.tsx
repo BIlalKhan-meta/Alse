@@ -17,7 +17,12 @@ import {
 import {GiftedChat, IMessage, InputToolbar} from 'react-native-gifted-chat';
 import {images} from '../../utils/images';
 import {colors} from '../../utils/theme';
-import {renderBubble, renderMessageText} from './MessageContainer';
+import {
+  renderBubble,
+  renderMessageImage,
+  renderMessageText,
+  renderMessageVideo,
+} from './MessageContainer';
 import styles from './styles';
 
 import {EllipsisVertical, Phone, Video} from 'lucide-react-native';
@@ -42,7 +47,11 @@ import callManagerService from '../../services/callManagerService';
 import ReportBlockModal from '../../components/ReportBlockModal';
 import {DEVICE_HEIGHT} from '../../constant';
 import useImagePicker from '../../hooks/useImagePicker-story';
-import {createFile, createVideoFile} from '../../utils/helpers';
+import {
+  createFile,
+  createVideoFile,
+  getAbsoluteAvatarUrl,
+} from '../../utils/helpers';
 
 interface Props {
   route?: {
@@ -332,17 +341,40 @@ const ChatOngoing: React.FC<Props> = props => {
     getChat(props?.route?.params?.id)
       .then((res: any) => {
         const messagesData = res?.data?.data || [];
-        // console.log('----', JSON.stringify(messagesData));
-        const formattedMessages = messagesData.map((item: any) => ({
-          _id: item?.id || Math.random(),
-          chat_id: item?.chat_id,
-          text: item?.message || '',
-          createdAt: new Date(item?.created_at || Date.now()),
-          user: {
-            _id: item?.user_id,
-            avatar: item?.image || images.profile,
-          },
-        }));
+        const formattedMessages = messagesData.map((item: any) => {
+          const rawImage =
+            item?.image ||
+            item?.image_url ||
+            item?.message_image ||
+            item?.message?.image ||
+            (typeof item?.media === 'string' ? item.media : null);
+          const imageUrl = rawImage
+            ? getAbsoluteAvatarUrl(rawImage) || rawImage
+            : undefined;
+          const rawVideo =
+            item?.video ||
+            item?.video_url ||
+            item?.message_video ||
+            (typeof item?.media === 'string' ? item.media : null);
+          const videoUrl = rawVideo
+            ? getAbsoluteAvatarUrl(rawVideo) || rawVideo
+            : undefined;
+          return {
+            _id: item?.id || Math.random(),
+            chat_id: item?.chat_id,
+            text: item?.message || '',
+            image: imageUrl,
+            video: videoUrl,
+            createdAt: new Date(item?.created_at || Date.now()),
+            user: {
+              _id: item?.user_id,
+              avatar:
+                getAbsoluteAvatarUrl(
+                  item?.user_image || item?.avatar || item?.sender_image,
+                ) || images.profile,
+            },
+          };
+        });
         setMessages(formattedMessages);
       })
       .catch((Err: any) => {
@@ -357,29 +389,34 @@ const ChatOngoing: React.FC<Props> = props => {
   }, [isFocused, getData]);
 
   useEffect(() => {
-    if (props?.route?.params?.id) {
-      listenMessage(props?.route?.params?.id, (res: any) => {
-        console.log('Response from socket ==>', res);
-
-        // Only add message if it's from another user (not current user)
-        if (res?.user?._id !== user?.id) {
-          const newMessage = {
-            _id: Math.random(),
-            chat_id: res?.chat_id,
-            text: res?.message,
-            createdAt: new Date(),
-            user: {
-              _id: res?.user?._id,
-              avatar: res?.user?.avatar,
-            },
-          };
-
-          setMessages(previousMessages =>
-            GiftedChat.append(previousMessages, [newMessage]),
-          );
-        }
-      });
-    }
+    if (!props?.route?.params?.id) return;
+    const cleanup = listenMessage(props.route.params.id, (res: any) => {
+      // Only add message if it's from another user (not current user)
+      if (res?.user?._id !== user?.id) {
+        const imageUrl = res?.image
+          ? getAbsoluteAvatarUrl(res.image) || res.image
+          : undefined;
+        const videoUrl = res?.video
+          ? getAbsoluteAvatarUrl(res.video) || res.video
+          : undefined;
+        const newMessage = {
+          _id: res?.id || Math.random(),
+          chat_id: res?.chat_id,
+          text: res?.message || '',
+          image: imageUrl,
+          video: videoUrl,
+          createdAt: new Date(res?.created_at || Date.now()),
+          user: {
+            _id: res?.user?._id,
+            avatar: res?.user?.avatar,
+          },
+        };
+        setMessages(previousMessages =>
+          GiftedChat.append(previousMessages, [newMessage]),
+        );
+      }
+    });
+    return cleanup;
   }, [props?.route?.params?.id, user?.id]);
 
   const onSend = useCallback(
@@ -390,24 +427,24 @@ const ChatOngoing: React.FC<Props> = props => {
       );
 
       const message = newMessages?.[0];
-      if (!message?.text) {
+      if (!message?.text || !user?.id || !props?.route?.params?.id) {
         return;
       }
 
       const data = {
-        chat_id: props?.route?.params?.id,
+        chat_id: props.route.params.id,
         message: message.text,
         created_at: Date.now(),
       };
 
       // Send to socket for real-time updates to other users
       emitMessage({
-        chat_id: props?.route?.params?.id,
+        chat_id: props.route.params.id,
         message: message.text,
         created_at: Date.now(),
         user: {
-          _id: user?.id,
-          avatar: user?.avatar ? user?.avatar : images.profile,
+          _id: user.id,
+          avatar: user?.avatar ? user.avatar : images.profile,
         },
       });
 
@@ -451,49 +488,101 @@ const ChatOngoing: React.FC<Props> = props => {
 
   const onSendImage = async () => {
     const asset = await chooseFromLibrary();
-    // console.log('=-=-=', asset);
+    if (!asset?.uri || !props?.route?.params?.id || !user?.id) return;
 
-    if (asset?.uri) {
-      const formData = new FormData();
-      formData.append('chat_id', props?.route?.params?.id);
-      formData.append('image', createFile(asset?.uri));
-      // formData.append('message', '0');
+    const tempId = `img-${Date.now()}`;
+    const optimisticMessage: IMessage = {
+      _id: tempId,
+      text: '',
+      image: asset.uri,
+      createdAt: new Date(),
+      user: {
+        _id: user.id,
+        avatar: user?.avatar || user?.image || images.profile,
+      },
+    };
+    setMessages(prev => GiftedChat.append(prev, [optimisticMessage]));
 
-      uploadImages(formData)
-        .then((_res: any) => {
-          if (_res?.data?.status) {
-            getData();
-            console.log('image saved successfully');
-          }
-        })
-        .catch((Err: any) => {
-          console.log('Error saving message:', Err);
-          // TODO: Implement retry logic or show error to user
-        });
+    const formData = new FormData();
+    formData.append('chat_id', props.route.params.id);
+    formData.append('image', createFile(asset.uri));
+
+    try {
+      const res: any = await uploadImages(formData);
+      const imageUrl =
+        res?.data?.data?.image ||
+        res?.data?.image ||
+        res?.data?.data?.message?.image;
+      const serverImageUrl = imageUrl
+        ? getAbsoluteAvatarUrl(imageUrl) || imageUrl
+        : asset.uri;
+
+      emitMessage({
+        chat_id: props.route.params.id,
+        message: '',
+        image: serverImageUrl,
+        message_type: 'image',
+        created_at: Date.now(),
+        user: {
+          _id: user.id,
+          avatar: user?.avatar || user?.image || images.profile,
+        },
+      });
+      setTimeout(() => getData(), 800);
+    } catch (Err) {
+      console.log('Error saving image:', Err);
+      setMessages(prev => prev.filter(m => m._id !== tempId));
+      Alert.alert('Error', 'Failed to send image. Please try again.');
     }
   };
 
   const onSendVideo = async () => {
     const asset = await chooseFromLibrary('video');
-    // console.log('=-=-=', asset);
+    if (!asset?.uri || !props?.route?.params?.id || !user?.id) return;
 
-    if (asset?.uri) {
-      const formData = new FormData();
-      formData.append('chat_id', props?.route?.params?.id);
-      formData.append('video', createVideoFile(asset?.uri));
-      // formData.append('message', 'k');
+    const tempId = `vid-${Date.now()}`;
+    const optimisticMessage: IMessage = {
+      _id: tempId,
+      text: '',
+      video: asset.uri,
+      createdAt: new Date(),
+      user: {
+        _id: user.id,
+        avatar: user?.avatar || user?.image || images.profile,
+      },
+    };
+    setMessages(prev => GiftedChat.append(prev, [optimisticMessage]));
 
-      uploadVideo(formData)
-        .then((_res: any) => {
-          if (_res?.data?.status) {
-            getData();
-            console.log('video saved successfully');
-          }
-        })
-        .catch((Err: any) => {
-          console.log('Error saving message:', Err);
-          // TODO: Implement retry logic or show error to user
-        });
+    const formData = new FormData();
+    formData.append('chat_id', props.route.params.id);
+    formData.append('video', createVideoFile(asset.uri));
+
+    try {
+      const res: any = await uploadVideo(formData);
+      const videoUrl =
+        res?.data?.data?.video ||
+        res?.data?.video ||
+        res?.data?.data?.message?.video;
+      const serverVideoUrl = videoUrl
+        ? getAbsoluteAvatarUrl(videoUrl) || videoUrl
+        : asset.uri;
+
+      emitMessage({
+        chat_id: props.route.params.id,
+        message: '',
+        video: serverVideoUrl,
+        message_type: 'video',
+        created_at: Date.now(),
+        user: {
+          _id: user.id,
+          avatar: user?.avatar || user?.image || images.profile,
+        },
+      });
+      setTimeout(() => getData(), 800);
+    } catch (Err) {
+      console.log('Error saving video:', Err);
+      setMessages(prev => prev.filter(m => m._id !== tempId));
+      Alert.alert('Error', 'Failed to send video. Please try again.');
     }
   };
 
@@ -510,7 +599,14 @@ const ChatOngoing: React.FC<Props> = props => {
             <Image source={images.backicon} style={styles.backIcon} />
           </TouchableOpacity>
           <View style={styles.userInfo}>
-            <Image source={images.profile} style={styles.profileImage} />
+            <Image
+              source={
+                props?.route?.params?.user?.avatar
+                  ? {uri: props.route.params.user.avatar}
+                  : images.profile
+              }
+              style={styles.profileImage}
+            />
             <View style={styles.userDetails}>
               <Text style={styles.userName}>
                 {props?.route?.params?.name || 'Mad'}
@@ -596,10 +692,15 @@ const ChatOngoing: React.FC<Props> = props => {
         <GiftedChat
           messages={messages}
           onSend={onSend}
-          user={{_id: user?.id, avatar: user?.image}}
-          renderMessageText={renderMessageText}
+          user={{
+            _id: user?.id,
+            avatar: user?.avatar || user?.image || images.profile,
+          }}
+          renderMessageText={renderMessageText as any}
+          renderMessageImage={renderMessageImage as any}
+          renderMessageVideo={renderMessageVideo as any}
           messagesContainerStyle={styles.messagesContainer}
-          renderBubble={renderBubble}
+          renderBubble={renderBubble as any}
           renderInputToolbar={props => (
             <View style={styles.inputContainer}>
               <View style={styles.inputBox}>
@@ -612,8 +713,8 @@ const ChatOngoing: React.FC<Props> = props => {
                   {...props}
                   containerStyle={styles.inputToolbarStyle}
                   primaryStyle={styles.primaryStyle}
-                  renderComposer={renderComposer}
-                  renderSend={renderSend}
+                  renderComposer={renderComposer as any}
+                  renderSend={renderSend as any}
                 />
                 {/* <TouchableOpacity style={styles.micButton}>
                   <Image source={images.recordingIcon} style={styles.micIcon} />

@@ -1,5 +1,6 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
+import {Image, Linking, TouchableOpacity} from 'react-native';
 import {
   Bubble,
   MessageText,
@@ -7,10 +8,72 @@ import {
   BubbleProps,
   MessageTextProps,
   SystemMessageProps,
+  RenderMessageImageProps,
+  RenderMessageVideoProps,
 } from 'react-native-gifted-chat';
+import {Play} from 'lucide-react-native';
 import styles from './styles';
 import {colors} from '../../utils/theme';
 import {vh} from '../../constant';
+import {getAbsoluteAvatarUrl} from '../../utils/helpers';
+
+/** Custom image message renderer - ensures URLs are resolved for display */
+export const renderMessageImage: React.FC<RenderMessageImageProps<any>> = ({
+  currentMessage,
+  imageStyle,
+  ...rest
+}) => {
+  const uri = currentMessage?.image;
+  if (!uri) return null;
+  const resolvedUri =
+    uri.startsWith('http://') ||
+    uri.startsWith('https://') ||
+    uri.startsWith('file://') ||
+    uri.startsWith('content://')
+      ? uri
+      : getAbsoluteAvatarUrl(uri) || uri;
+  return (
+    <Image
+      source={{uri: resolvedUri}}
+      style={[
+        {
+          width: 200,
+          height: 150,
+          borderRadius: 12,
+          margin: 3,
+        },
+        imageStyle,
+      ]}
+      resizeMode="cover"
+    />
+  );
+};
+
+/** Custom video message renderer - GiftedChat default doesn't implement video */
+export const renderMessageVideo: React.FC<RenderMessageVideoProps<any>> = ({
+  currentMessage,
+  ...rest
+}) => {
+  const videoUrl = currentMessage?.video;
+  if (!videoUrl) return null;
+  const absoluteUrl = getAbsoluteAvatarUrl(videoUrl) || videoUrl;
+  return (
+    <TouchableOpacity
+      onPress={() => Linking.openURL(absoluteUrl)}
+      style={{
+        width: 200,
+        height: 150,
+        backgroundColor: '#333',
+        borderRadius: 12,
+        justifyContent: 'center',
+        alignItems: 'center',
+        overflow: 'hidden',
+      }}
+      {...rest}>
+      <Play size={48} color="#fff" fill="#fff" />
+    </TouchableOpacity>
+  );
+};
 
 export const renderBubble: React.FC<BubbleProps> = props => (
   <Bubble
