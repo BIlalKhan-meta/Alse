@@ -1,5 +1,54 @@
 import axiosInstance from '.';
 import endpoints from './endpoints';
+import store from '../store';
+import {BASE_URL} from '../utils/baseurl';
+
+/**
+ * POST FormData via fetch. Avoids axios FormData/Android Network Error issues.
+ * Returns { data } to match axios response shape for existing callers.
+ */
+async function postFormDataWithFetch(
+  path: string,
+  body: FormData,
+): Promise<{data: any}> {
+  const token = store.getState().auth.token;
+  const url = `${BASE_URL.replace(/\/$/, '')}${path}`;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+  const headers: Record<string, string> = {
+    Accept: 'application/json',
+  };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers,
+      body,
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const err: any = new Error(response.statusText || 'Request failed');
+      err.response = {status: response.status, data};
+      throw err;
+    }
+    return {data};
+  } catch (e: any) {
+    clearTimeout(timeoutId);
+    if (e.name === 'AbortError') {
+      const err: any = new Error('Network request timeout');
+      err.code = 'ECONNABORTED';
+      throw err;
+    }
+    throw e;
+  }
+}
 
 export const productDetail = (id: number) => {
   return axiosInstance.get(`${endpoints.products.productDetail}/${id}`);
@@ -28,10 +77,7 @@ export const getCategories = () => {
 };
 
 export const addProductToCart = (id: number, formData: FormData) => {
-  // console.log('addcartttt ', `${endpoints.products.cart}/${id}`);
-  return axiosInstance.post(`${endpoints.products.cart}/${id}`, formData, {
-    formData: true,
-  });
+  return postFormDataWithFetch(`${endpoints.products.cart}/${id}`, formData);
 };
 export const removeCartItem = (id: number) => {
   return axiosInstance.post(`${endpoints.products.removeCartItem}/${id}`);

@@ -35,6 +35,10 @@ interface DropdownComponentProps {
   dropDownContainerStyle?: StyleProp<ViewStyle>;
   listItemContainerStyle?: StyleProp<ViewStyle>;
   listItemLabelStyle?: StyleProp<TextStyle>;
+  listMessageContainerStyle?: StyleProp<ViewStyle>;
+  listMessageTextStyle?: StyleProp<TextStyle>;
+  zIndex?: number;
+  theme?: 'DEFAULT' | 'LIGHT' | 'DARK';
 }
 
 const DropDownTextInput: React.FC<DropdownComponentProps> = ({
@@ -53,21 +57,32 @@ const DropDownTextInput: React.FC<DropdownComponentProps> = ({
   dropDownContainerStyle,
   listItemContainerStyle,
   listItemLabelStyle,
+  listMessageContainerStyle,
+  listMessageTextStyle,
+  zIndex: zIndexProp,
+  theme = 'LIGHT',
 }) => {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState<string | null>(defaultValue);
+  const [dropdownItems, setDropdownItems] = useState(items);
+  const zIndex = zIndexProp ?? 100;
 
   useEffect(() => {
     setValue(defaultValue);
   }, [defaultValue]);
 
+  useEffect(() => {
+    setDropdownItems(items);
+  }, [items]);
+
   return (
-    <View style={{zIndex: 100, marginBottom: vh}}>
+    <View style={{zIndex, marginBottom: vh}}>
       <DropDownPicker
         open={open}
         listMode={listMode}
         value={value}
-        items={items}
+        items={dropdownItems}
+        setItems={setDropdownItems}
         setOpen={setOpen}
         setValue={setValue}
         onSelectItem={e => {
@@ -77,7 +92,8 @@ const DropDownTextInput: React.FC<DropdownComponentProps> = ({
             onChangeValue(e?.value || '');
           }
         }}
-        zIndex={100}
+        zIndex={zIndex}
+        zIndexInverse={zIndex}
         placeholder={placeholder}
         style={[styles.dropdown, style]}
         containerStyle={{backgroundColor: 'white'}}
@@ -92,6 +108,9 @@ const DropDownTextInput: React.FC<DropdownComponentProps> = ({
         dropDownContainerStyle={dropDownContainerStyle}
         listItemContainerStyle={listItemContainerStyle}
         listItemLabelStyle={listItemLabelStyle}
+        listMessageContainerStyle={listMessageContainerStyle}
+        listMessageTextStyle={listMessageTextStyle}
+        theme={theme}
       />
       {error && (
         <InterRegularSmallest style={styles.error}>

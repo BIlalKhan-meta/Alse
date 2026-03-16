@@ -9,15 +9,13 @@ import {
   Linking,
   Modal,
   ActivityIndicator,
-  Dimensions,
-  Platform,
 } from 'react-native';
 import {images} from '../../../utils/images';
 import {colors} from '../../../utils/theme';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {getProductByShop, shopDetail} from '../../../api/shop';
 import Loader from '../../../components/Loader';
-import DropDownTextInput from '../../../components/TextInput/DropDownTextInput';
+import FilterSelectModal from '../../../components/FilterSelectModal';
 import ReportBlockModal from '../../../components/ReportBlockModal';
 import GeneralModal from '../../../components/GeneralModal';
 import {createChat, reportPost} from '../../../api/home';
@@ -25,16 +23,20 @@ import {getMessage, Toast} from '../../../utils/helpers';
 import {MessageCircle, HelpCircle, Mail, Share2, X} from 'lucide-react-native';
 import GlobalHeader from '../../../components/GlobalHeader';
 
-const {width: SCREEN_WIDTH, height: SCREEN_HEIGHT} = Dimensions.get('window');
 
 const filterCategories = [
   {label: 'All categories', value: 'all'},
   {label: 'Tech & Gadgets', value: 'tech'},
-  {label: 'Fashion', value: 'fashion'},
+  {label: 'Fashion & Apparel', value: 'fashion'},
   {label: 'Home & Garden', value: 'home'},
-  {label: 'Sports', value: 'sports'},
+  {label: 'Sports & Outdoors', value: 'sports'},
   {label: 'Books & Media', value: 'books'},
   {label: 'Electronics', value: 'electronics'},
+  {label: 'Health & Beauty', value: 'health'},
+  {label: 'Toys & Games', value: 'toys'},
+  {label: 'Automotive', value: 'automotive'},
+  {label: 'Food & Beverages', value: 'food'},
+  {label: 'Office Supplies', value: 'office'},
   {label: 'Other', value: 'other'},
 ];
 
@@ -44,7 +46,8 @@ const filterPrices = [
   {label: '$25 – $50', value: '25_50'},
   {label: '$50 – $100', value: '50_100'},
   {label: '$100 – $250', value: '100_250'},
-  {label: 'Over $250', value: 'over_250'},
+  {label: '$250 – $500', value: '250_500'},
+  {label: 'Over $500', value: 'over_500'},
 ];
 
 const filterLocations = [
@@ -52,13 +55,18 @@ const filterLocations = [
   {label: 'Local', value: 'local'},
   {label: 'National', value: 'national'},
   {label: 'International', value: 'international'},
+  {label: 'Same city', value: 'same_city'},
+  {label: 'Same state', value: 'same_state'},
+  {label: 'Worldwide', value: 'worldwide'},
 ];
 
 const filterRatings = [
   {label: 'Any rating', value: 'any'},
+  {label: '5 stars', value: '5'},
   {label: '4+ stars', value: '4'},
   {label: '3+ stars', value: '3'},
   {label: '2+ stars', value: '2'},
+  {label: '1+ stars', value: '1'},
 ];
 
 const filterConfig = [
@@ -86,6 +94,13 @@ const Shop: React.FC = () => {
   const [reportLoader, setReportLoader] = useState(false);
   const [storeInfoVisible, setStoreInfoVisible] = useState(false);
   const [chatLoader, setChatLoader] = useState(false);
+  const [filterModalOpen, setFilterModalOpen] = useState<string | null>(null);
+  const [filterValues, setFilterValues] = useState<Record<string, string>>({
+    category: 'all',
+    price: 'any',
+    location: 'any',
+    rating: 'any',
+  });
 
   const sellerId = shopDetails?.user_id ?? shopDetails?.user?.id;
   const sellerName =
@@ -318,29 +333,38 @@ const Shop: React.FC = () => {
 
         {/* Filter Bar */}
         <View style={styles.filterBar}>
-          {filterConfig.map((filter) => (
-            <View key={filter.key} style={styles.filterItem}>
-              <DropDownTextInput
-                listMode="MODAL"
-                items={filter.items}
-                defaultValue=""
-                placeholder={filter.placeholder}
-                onChangeValue={() => {}}
-                style={styles.filterDropdown}
-                modalProps={{
-                  transparent: true,
-                  animationType: 'fade',
-                }}
-                modalContentContainerStyle={styles.filterModalOverlay}
-                modalTitle={`Select ${filter.placeholder.toLowerCase()}`}
-                modalTitleStyle={styles.filterModalTitle}
-                dropDownContainerStyle={styles.filterModalCard}
-                listItemContainerStyle={styles.filterModalListItem}
-                listItemLabelStyle={styles.filterModalListItemLabel}
-              />
-            </View>
-          ))}
+          {filterConfig.map(filter => {
+            const selectedItem = filter.items.find(
+              i => i.value === filterValues[filter.key],
+            ) || filter.items[0];
+            return (
+              <TouchableOpacity
+                key={filter.key}
+                style={styles.filterItem}
+                onPress={() => setFilterModalOpen(filter.key)}>
+                <Text style={styles.filterDropdownText} numberOfLines={1}>
+                  {selectedItem?.label || filter.placeholder}
+                </Text>
+                <Text style={styles.filterDropdownArrow}>▼</Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
+
+        {/* Filter Modals */}
+        {filterConfig.map(filter => (
+          <FilterSelectModal
+            key={filter.key}
+            visible={filterModalOpen === filter.key}
+            onClose={() => setFilterModalOpen(null)}
+            title={`Select ${filter.placeholder.toLowerCase()}`}
+            items={filter.items}
+            selectedValue={filterValues[filter.key] ?? filter.items[0]?.value}
+            onSelect={value =>
+              setFilterValues(prev => ({...prev, [filter.key]: value}))
+            }
+          />
+        ))}
 
         {/* Products Section */}
         <View style={styles.productsSection}>
@@ -637,8 +661,16 @@ const styles = StyleSheet.create({
   },
   filterItem: {
     flex: 1,
-    minWidth: 0, // Ensures flex items can shrink below their content size
-    fontSize: 8,
+    minWidth: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderColor: '#ddd',
+    borderWidth: 1,
+    borderRadius: 8,
+    backgroundColor: 'white',
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+    minHeight: 40,
   },
   filterDropdown: {
     borderColor: '#ddd',
@@ -649,6 +681,16 @@ const styles = StyleSheet.create({
     paddingVertical: 1,
     minHeight: 40,
     justifyContent: 'center',
+  },
+  filterDropdownText: {
+    fontSize: 12,
+    color: '#333',
+    flex: 1,
+  },
+  filterDropdownArrow: {
+    fontSize: 8,
+    color: '#666',
+    marginLeft: 4,
   },
   productsSection: {
     backgroundColor: 'white',
@@ -746,49 +788,6 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   storeInfoValue: {
-    fontSize: 15,
-    color: '#333',
-  },
-  // Filter dropdown modal – dark overlay + centered content
-  filterModalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 48,
-  },
-  filterModalTitle: {
-    fontSize: 17,
-    fontWeight: '600',
-    color: '#1a1a1a',
-  },
-  filterModalCard: {
-    width: '100%',
-    maxWidth: SCREEN_WIDTH * 0.88,
-    maxHeight: SCREEN_HEIGHT * 0.55,
-    backgroundColor: 'white',
-    borderRadius: 16,
-    overflow: 'hidden',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: {width: 0, height: 4},
-        shadowOpacity: 0.15,
-        shadowRadius: 12,
-      },
-      android: {
-        elevation: 8,
-      },
-    }),
-  },
-  filterModalListItem: {
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#eee',
-  },
-  filterModalListItemLabel: {
     fontSize: 15,
     color: '#333',
   },
