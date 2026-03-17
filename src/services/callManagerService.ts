@@ -37,6 +37,7 @@ class CallManagerService {
       const callSession = await createCallSession(receiverId, callType);
 
       if (callSession?.status && callSession?.data) {
+        const fallbackCallerUid = Number(callerId ?? 0);
         this.currentCall = {
           sessionId: String(callSession.data.session_id ?? ''),
           channel: callSession.data.channel,
@@ -62,6 +63,12 @@ class CallManagerService {
           data: {
             channel: callSession.data.channel,
             agoraToken: callSession.data.agora_token,
+            rtcUid:
+              Number(callSession.data.uid ?? 0) > 0
+                ? Number(callSession.data.uid)
+                : fallbackCallerUid > 0
+                ? fallbackCallerUid
+                : Math.floor(Math.random() * 1000000) + 1,
             sessionId: callSession.data.session_id,
             receiverName,
             receiverAvatar,
@@ -91,15 +98,25 @@ class CallManagerService {
     callType: 'video' | 'audio' = 'video',
     callerAvatar?: string,
     sessionId?: string,
+    currentUserId?: string | number,
   ) {
     try {
       let agoraToken: string | undefined;
+      let rtcUid = Number(currentUserId ?? 0);
       try {
         const tokenResponse = await getAgoraTokenForAudience(channel);
         const resData = (tokenResponse as any)?.data;
         agoraToken = resData?.data?.agora_token ?? resData?.agora_token;
+        const apiUid = Number(resData?.data?.uid ?? resData?.uid ?? 0);
+        if (apiUid > 0) {
+          rtcUid = apiUid;
+        }
       } catch (e) {
         console.warn('[CallManager] Token fetch failed - joining without token (unsecured):', e);
+      }
+
+      if (rtcUid <= 0) {
+        rtcUid = Math.floor(Math.random() * 1000000) + 1;
       }
 
       this.currentCall = {
@@ -113,6 +130,7 @@ class CallManagerService {
         data: {
           channel,
           agoraToken,
+          rtcUid,
           sessionId,
           callerName,
           callerAvatar,

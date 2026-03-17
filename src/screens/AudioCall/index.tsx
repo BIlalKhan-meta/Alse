@@ -1,6 +1,5 @@
 import React, {
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useState,
@@ -16,29 +15,21 @@ import {
   TouchableOpacity,
   PermissionsAndroid,
   Platform,
-  Image,
 } from 'react-native';
 import {useNavigation, useRoute} from '@react-navigation/native';
-import {
+import AgoraUIKit, {
   ChannelProfileType,
   ClientRoleType,
   Layout,
 } from 'agora-rn-uikit';
-import {PropsProvider} from 'agora-rn-uikit/src/Contexts/PropsContext';
-import RtcConfigure from 'agora-rn-uikit/src/RtcConfigure';
-import RtcContext from 'agora-rn-uikit/src/Contexts/RtcContext';
-import LocalUserContext from 'agora-rn-uikit/src/Contexts/LocalUserContext';
-import EndCall from 'agora-rn-uikit/src/Controls/Local/EndCall';
-import LocalAudioMute from 'agora-rn-uikit/src/Controls/Local/LocalAudioMute';
 import {AGORA_APP_ID} from '../../config/agora';
-import {getAgoraToken, getAgoraTokenForAudience} from '../../api/calling';
 import callManagerService from '../../services/callManagerService';
 import agoraRtmService from '../../services/agoraRtmService';
-import {Volume2, VolumeX} from 'lucide-react-native';
 
 interface AudioCallRouteParams {
   channel: string;
   uid: number;
+  rtcUid?: number;
   receiverName?: string;
   receiverAvatar?: string;
   isIncoming?: boolean;
@@ -46,116 +37,23 @@ interface AudioCallRouteParams {
   sessionId?: string;
 }
 
-// Disables camera for audio-only calls
-const VideoDisabler: React.FC<{children: React.ReactNode}> = ({children}) => {
-  const rtcContext = useContext(RtcContext);
-  const hasDisabledRef = useRef(false);
-
-  useEffect(() => {
-    const disableVideo = async () => {
-      if (rtcContext?.RtcEngine && !hasDisabledRef.current) {
-        try {
-          await rtcContext.RtcEngine.enableLocalVideo(false);
-          rtcContext.RtcEngine.muteLocalVideoStream(true);
-          hasDisabledRef.current = true;
-          return true;
-        } catch {
-          return false;
-        }
-      }
-      return false;
-    };
-    disableVideo().then(success => {
-      if (!success) {
-        const id = setInterval(() => {
-          disableVideo().then(s => s && clearInterval(id));
-        }, 200);
-        return () => clearInterval(id);
-      }
-    });
-  }, [rtcContext?.RtcEngine]);
-
-  return <>{children}</>;
-};
-
-// Speaker toggle: loud speaker vs ear speaker
-const SpeakerToggle: React.FC = () => {
-  const {RtcEngine} = useContext(RtcContext);
-  const [isSpeaker, setIsSpeaker] = useState(true);
-
-  const toggle = useCallback(async () => {
-    if (!RtcEngine) return;
-    try {
-      const next = !isSpeaker;
-      RtcEngine.setEnableSpeakerphone(next);
-      setIsSpeaker(next);
-    } catch (e) {
-      console.warn('[AudioCall] Speaker toggle failed:', e);
-    }
-  }, [RtcEngine, isSpeaker]);
-
-  return (
-    <View style={styles.controlButtonContainer}>
-      <TouchableOpacity
-        style={[styles.controlButton, isSpeaker && styles.controlButtonActive]}
-        onPress={toggle}
-        activeOpacity={0.7}>
-        {isSpeaker ? (
-          <Volume2 size={24} color="#fff" />
-        ) : (
-          <VolumeX size={24} color="#fff" />
-        )}
-      </TouchableOpacity>
-      <Text style={styles.controlButtonLabel}>
-        {isSpeaker ? 'Speaker' : 'Earpiece'}
-      </Text>
-    </View>
-  );
-};
-
 const AudioCall: React.FC = () => {
   const route = useRoute();
   const navigation = useNavigation();
   const params = (route.params || {}) as AudioCallRouteParams;
 
   const [hasPermission, setHasPermission] = useState(Platform.OS !== 'android');
-  const [rtcToken, setRtcToken] = useState<string | undefined>(params.agoraToken);
   const [callDuration, setCallDuration] = useState(0);
   const [remoteUserJoined, setRemoteUserJoined] = useState(false);
   const [showNoAnswerModal, setShowNoAnswerModal] = useState(false);
   const [isInvitationAccepted, setIsInvitationAccepted] = useState(false);
   const [showDeclinedModal, setShowDeclinedModal] = useState(false);
   const callDurationRef = useRef(0);
+  const endedByRemoteRef = useRef(false);
+  const remoteEverJoinedRef = useRef(false);
 
   const channel = params.channel;
-  const uid = params.uid ?? 0;
-  const displayName = params.receiverName || 'Calling...';
-  const avatar = params.receiverAvatar;
-
-  // Fetch RTC token in background. Use params.agoraToken if present. On API failure, join without token.
-  useEffect(() => {
-    if (params.agoraToken || !channel) return;
-    const fetchToken = async () => {
-      try {
-        const res = await getAgoraTokenForAudience(channel);
-        const data = (res as any)?.data;
-        const token =
-          data?.data?.agora_token ?? data?.agora_token ?? data?.data?.signature;
-        if (token) {
-          setRtcToken(token);
-        } else {
-          const fallback = await getAgoraToken(channel, uid);
-          const fd = (fallback as any)?.data;
-          setRtcToken(
-            fd?.data?.signature ?? fd?.data?.agora_token ?? fd?.agora_token,
-          );
-        }
-      } catch (e) {
-        setRtcToken(undefined);
-      }
-    };
-    fetchToken();
-  }, [channel, uid, params.agoraToken]);
+  const token = params.agoraToken || undefined;
 
   useEffect(() => {
     if (Platform.OS !== 'android') return;
@@ -173,45 +71,59 @@ const AudioCall: React.FC = () => {
     if (result.success && callDurationRef.current > 0) {
       const mins = Math.floor(callDurationRef.current / 60);
       const secs = callDurationRef.current % 60;
-      const duration = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+      const duration = `${mins.toString().padStart(2, '0')}:${secs
+        .toString()
+        .padStart(2, '0')}`;
       callManagerService.handleCallEnded(duration);
     }
     navigation.goBack();
   }, [navigation]);
 
-  const rtcProps = useMemo(
+  const connectionData = useMemo(
     () => ({
       appId: AGORA_APP_ID,
       channel,
-      token: rtcToken ?? params.agoraToken ?? undefined,
-      uid: uid || 0,
+      rtcToken: token,
+      rtcUid: 0,
+    }),
+    [channel, token],
+  );
+
+  const settings = useMemo(
+    () => ({
       layout: Layout.Pin,
       mode: ChannelProfileType.ChannelProfileCommunication,
       role: ClientRoleType.ClientRoleBroadcaster,
       activeSpeaker: true,
       disableRtm: true,
-      callActive: true,
     }),
-    [channel, rtcToken, params.agoraToken, uid],
+    [],
   );
 
-  const callbacks = useMemo(
+  const rtcCallbacks = useMemo(
     () => ({
       EndCall: handleEndCall,
-      UserJoined: () => {
+      JoinChannelSuccess: (_connection: any, _elapsed: number) => {
+        console.log('[AudioCall] Joined channel:', channel);
+      },
+      UserJoined: (_connection: any, remoteUid: number) => {
+        console.log('[AudioCall] Remote user joined:', remoteUid);
+        remoteEverJoinedRef.current = true;
         setRemoteUserJoined(true);
       },
-      UserOffline: (_: any, __: number, reason: number) => {
+      UserOffline: (_connection: any, remoteUid: number) => {
+        console.log('[AudioCall] Remote user offline:', remoteUid);
+        if (!remoteEverJoinedRef.current || endedByRemoteRef.current) {
+          return;
+        }
+        endedByRemoteRef.current = true;
         setRemoteUserJoined(false);
-        if (reason === 0) navigation.goBack();
+        callManagerService.endCall().finally(() => {
+          navigation.goBack();
+        });
       },
     }),
-    [handleEndCall, navigation],
-  );
-
-  const agoraProps = useMemo(
-    () => ({rtcProps, callbacks}),
-    [rtcProps, callbacks],
+    [handleEndCall, navigation, channel],
   );
 
   useEffect(() => {
@@ -234,17 +146,16 @@ const AudioCall: React.FC = () => {
     };
   }, [params.isIncoming]);
 
-  // Auto-end call if other user doesn't pick up within 10 seconds (outgoing calls only)
   useEffect(() => {
-    if (params.isIncoming || remoteUserJoined || !channel || isInvitationAccepted) return;
+    if (params.isIncoming || remoteUserJoined || !channel || isInvitationAccepted)
+      return;
     const timer = setTimeout(async () => {
       await callManagerService.endCall();
       setShowNoAnswerModal(true);
-    }, 10000);
+    }, 30000);
     return () => clearTimeout(timer);
   }, [params.isIncoming, remoteUserJoined, channel, isInvitationAccepted]);
 
-  // Call duration timer (starts only when remote user joins)
   useEffect(() => {
     if (!remoteUserJoined) return;
     const interval = setInterval(() => {
@@ -294,10 +205,7 @@ const AudioCall: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#000" />
-      <Modal
-        visible={showNoAnswerModal}
-        transparent
-        animationType="fade">
+      <Modal visible={showNoAnswerModal} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Call Ended</Text>
@@ -313,10 +221,7 @@ const AudioCall: React.FC = () => {
           </View>
         </View>
       </Modal>
-      <Modal
-        visible={showDeclinedModal}
-        transparent
-        animationType="fade">
+      <Modal visible={showDeclinedModal} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Call Declined</Text>
@@ -334,37 +239,16 @@ const AudioCall: React.FC = () => {
       </Modal>
       {remoteUserJoined && (
         <View style={styles.timestampOverlay}>
-          <Text style={styles.timestampText}>{formatDuration(callDuration)}</Text>
+          <Text style={styles.timestampText}>
+            {formatDuration(callDuration)}
+          </Text>
         </View>
       )}
-      <PropsProvider value={agoraProps}>
-        <RtcConfigure key={channel}>
-          <LocalUserContext>
-            <VideoDisabler>
-              <View style={styles.contentContainer}>
-                <View style={styles.avatarContainer}>
-                  {avatar ? (
-                    <Image source={{uri: avatar}} style={styles.avatar} />
-                  ) : (
-                    <View style={[styles.avatar, styles.avatarPlaceholder]}>
-                      <Text style={styles.avatarText}>
-                        {displayName.charAt(0).toUpperCase() || '?'}
-                      </Text>
-                    </View>
-                  )}
-                  <Text style={styles.nameText}>{displayName}</Text>
-                  <Text style={styles.statusText}>Voice Call</Text>
-                </View>
-              </View>
-              <View style={styles.controls}>
-                <LocalAudioMute />
-                <SpeakerToggle />
-                <EndCall />
-              </View>
-            </VideoDisabler>
-          </LocalUserContext>
-        </RtcConfigure>
-      </PropsProvider>
+      <AgoraUIKit
+        connectionData={connectionData}
+        settings={settings}
+        rtcCallbacks={rtcCallbacks}
+      />
     </SafeAreaView>
   );
 };
@@ -403,42 +287,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.7)',
     zIndex: 10,
   },
-  contentContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-  },
-  avatarContainer: {
-    alignItems: 'center',
-    marginBottom: 40,
-  },
-  avatar: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    marginBottom: 20,
-  },
-  avatarPlaceholder: {
-    backgroundColor: '#333',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  avatarText: {
-    fontSize: 48,
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  nameText: {
-    fontSize: 24,
-    color: '#fff',
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  statusText: {
-    fontSize: 16,
-    color: '#999',
-  },
   timestampOverlay: {
     position: 'absolute',
     top: 50,
@@ -451,40 +299,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontWeight: '600',
-  },
-  controls: {
-    position: 'absolute',
-    bottom: 40,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    justifyContent: 'space-evenly',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-  },
-  controlButtonContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  controlButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#333',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#555',
-  },
-  controlButtonActive: {
-    backgroundColor: '#4CAF50',
-    borderColor: '#66BB6A',
-  },
-  controlButtonLabel: {
-    color: '#fff',
-    fontSize: 12,
-    marginTop: 8,
-    textAlign: 'center',
   },
   modalOverlay: {
     flex: 1,

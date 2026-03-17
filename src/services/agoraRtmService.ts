@@ -542,6 +542,10 @@ class AgoraRtmService {
   getCurrentUserId(): string | null {
     return this.currentUserId;
   }
+
+  hasPendingInvitation(): boolean {
+    return Boolean(this.pendingRemoteInvitation);
+  }
 }
 
 export const agoraRtmService = new AgoraRtmService();

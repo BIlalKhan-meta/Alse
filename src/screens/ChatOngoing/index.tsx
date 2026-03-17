@@ -205,7 +205,7 @@ const ChatOngoing: React.FC<Props> = props => {
         const screen = result.data.callType === 'audio' ? 'AudioCall' : 'VideoCall';
         (navigation as any).navigate(screen, {
           channel: result.data.channel,
-          uid: user?.id,
+          uid: result.data.rtcUid || Number(user?.id || 0),
           receiverName: result.data.receiverName,
           receiverAvatar: result.data.receiverAvatar,
           callType: result.data.callType,

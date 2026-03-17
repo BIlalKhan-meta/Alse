@@ -8,6 +8,7 @@ import {
   StatusBar,
   StyleSheet,
   Alert,
+  Vibration,
 } from 'react-native';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {colors} from '../../utils/theme';
@@ -16,7 +17,6 @@ import {fontSizes, vh, vw} from '../../constant';
 import {Phone, Video, PhoneOff} from 'lucide-react-native';
 import {selectUserProfile} from '../../store/slices/authSlice';
 import {useSelector} from 'react-redux';
-import {getAgoraTokenForAudience} from '../../api/calling';
 import callManagerService from '../../services/callManagerService';
 import agoraRtmService from '../../services/agoraRtmService';
 
@@ -42,6 +42,12 @@ const IncomingVideoCall: React.FC<IncomingVideoCallProps> = ({route}) => {
   const [callDuration, setCallDuration] = useState(0);
   const [isRinging, setIsRinging] = useState(true);
 
+  useEffect(() => {
+    if (!agoraRtmService.hasPendingInvitation()) {
+      navigation.goBack();
+    }
+  }, [navigation]);
+
   // Simulate incoming call ring
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -66,6 +72,17 @@ const IncomingVideoCall: React.FC<IncomingVideoCallProps> = ({route}) => {
   }, [isRinging]);
 
   useEffect(() => {
+    if (!isRinging) {
+      Vibration.cancel();
+      return;
+    }
+    Vibration.vibrate([0, 700, 500], true);
+    return () => {
+      Vibration.cancel();
+    };
+  }, [isRinging]);
+
+  useEffect(() => {
     agoraRtmService.setIncomingInvitationEndedCallback(() => {
       setIsRinging(false);
       navigation.goBack();
@@ -80,6 +97,7 @@ const IncomingVideoCall: React.FC<IncomingVideoCallProps> = ({route}) => {
   const handleAcceptCall = async () => {
     try {
       setIsRinging(false);
+      Vibration.cancel();
       agoraRtmService.setIncomingInvitationEndedCallback(null);
 
       // Accept RTM invitation to complete signaling
@@ -92,15 +110,16 @@ const IncomingVideoCall: React.FC<IncomingVideoCallProps> = ({route}) => {
         params.callType || 'video',
         params.callerAvatar,
         params.sessionId,
+        user?.id,
       );
 
       if (result.success && result.data) {
         const screen = result.data.callType === 'audio' ? 'AudioCall' : 'VideoCall';
-        navigation.navigate(
+        (navigation as any).replace(
           screen as never,
           {
             channel: result.data.channel,
-            uid: user?.id || params.uid,
+            uid: result.data.rtcUid || Number(user?.id || params.uid || 0),
             receiverName: result.data.callerName,
             receiverAvatar: result.data.callerAvatar,
             isIncoming: true,
@@ -124,6 +143,7 @@ const IncomingVideoCall: React.FC<IncomingVideoCallProps> = ({route}) => {
   // Handle decline call
   const handleDeclineCall = async () => {
     setIsRinging(false);
+    Vibration.cancel();
     agoraRtmService.setIncomingInvitationEndedCallback(null);
     await agoraRtmService.refusePendingInvitation();
     // Handle missed call
