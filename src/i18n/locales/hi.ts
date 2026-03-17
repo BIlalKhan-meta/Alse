@@ -114,6 +114,7 @@ export default {
     storyRefreshFailed: 'कहानी को ताज़ा करने में विफल',
     livestreamRefreshFailed: 'लाइवस्ट्रीम को ताज़ा करने में विफल',
     storyUploadFailed: 'कहानी अपलोड करने में विफल',
+    storyVideoTooLong: 'स्टोरी वीडियो 15 सेकंड या उससे कम होने चाहिए',
     passwordChanged: 'पासवर्ड सफलतापूर्वक बदल दिया गया!',
     biddingSettingsChanged: 'बोली सेटिंग्स सफलतापूर्वक अपडेट हुई!',
     followReqSencc: 'अनुसरण अनुरोध भेजा गया',

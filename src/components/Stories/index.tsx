@@ -250,19 +250,20 @@ const Stories = () => {
 
       // Refresh stories after successful upload
       await getStories(false);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Upload error:', err);
-      if (isAxiosError(err)) {
-        Toast.show({
-          type: 'error',
-          text1: err.response?.data.message || t('toast.storyUploadFailed'),
-        });
-      } else {
-        Toast.show({
-          type: 'error',
-          text1: t('checkInternet'),
-        });
-      }
+      const serverMessage = err?.response?.data?.message;
+      const isNetworkError =
+        err?.code === 'ECONNABORTED' ||
+        err?.message === 'Network request timeout' ||
+        (isAxiosError(err) && err?.message === 'Network Error');
+      const message =
+        serverMessage ||
+        (isNetworkError ? t('checkInternet') : t('toast.storyUploadFailed'));
+      Toast.show({
+        type: 'error',
+        text1: message,
+      });
     } finally {
       setIsUploading(false);
     }
@@ -270,11 +271,12 @@ const Stories = () => {
 
   useEffect(() => {
     if (imageData) {
-      uploadFile({
+      const file = {
         uri: imageData?.uri,
-        name: imageData?.fileName,
-        type: imageData?.type,
-      });
+        name: imageData?.fileName || (imageData?.type?.startsWith('video/') ? 'video.mp4' : 'image.jpg'),
+        type: imageData?.type || 'image/jpeg',
+      };
+      uploadFile(file);
     }
   }, [imageData]);
 
@@ -313,8 +315,22 @@ const Stories = () => {
     return captureImage('mixed', true); // Enable preview
   };
 
+  const MAX_STORY_VIDEO_DURATION = 15; // seconds
+
   // Handle confirmation of media after preview
   const handleConfirmMedia = () => {
+    if (pendingMedia) {
+      const isVideo = pendingMedia.type?.startsWith('video/');
+      const duration = pendingMedia.duration ?? 0;
+      if (isVideo && duration > MAX_STORY_VIDEO_DURATION) {
+        Toast.show({
+          type: 'error',
+          text1: t('toast.storyVideoTooLong'),
+        });
+        cancelMedia();
+        return;
+      }
+    }
     confirmMedia(); // This will trigger the useEffect with imageData
   };
 

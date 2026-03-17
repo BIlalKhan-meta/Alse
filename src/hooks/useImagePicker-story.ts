@@ -82,12 +82,17 @@ const useImagePicker = () => {
 
   // Function to capture image using the camera
   const captureImage = (mediaType = 'photo', showPreview = false) => {
-    let options = {
+    const isVideoOrMixed =
+      mediaType === 'video' || mediaType === 'mixed';
+    let options: any = {
       mediaType: mediaType, // 'photo' or 'video' or 'mixed'
       maxWidth: 300,
       maxHeight: 550,
       quality: 0.2,
     };
+    if (isVideoOrMixed) {
+      options.durationLimit = 15; // Limit story videos to 15 seconds
+    }
 
     launchCamera(options, response => {
       if (response.didCancel) {

@@ -115,6 +115,7 @@ export default {
     storyRefreshFailed: 'Falha ao atualizar a história',
     livestreamRefreshFailed: 'Falha ao atualizar a transmissão ao vivo',
     storyUploadFailed: 'Falha ao enviar a história',
+    storyVideoTooLong: 'Os vídeos de história devem ter 15 segundos ou menos',
     passwordChanged: 'Senha alterada com sucesso!',
     biddingSettingsChanged: 'Configurações de leilão atualizadas com sucesso!',
     followReqSencc: 'Solicitação de seguir enviada',

@@ -115,6 +115,7 @@ export default {
     livestreamRefreshFailed:
       'Imeshindikana kusasisha matangazo ya moja kwa moja',
     storyUploadFailed: 'Imeshindikana kupakia hadithi',
+    storyVideoTooLong: 'Video za hadithi lazima ziwe sekunde 15 au chini',
     passwordChanged: 'Nenosiri limebadilishwa kwa mafanikio!',
     biddingSettingsChanged: 'Mipangilio ya mnada imesasishwa kwa mafanikio!',
     followReqSencc: 'Ombi la kufuata limetumwa',
