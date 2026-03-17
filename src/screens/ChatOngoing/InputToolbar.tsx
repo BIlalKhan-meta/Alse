@@ -1,5 +1,5 @@
 import React from 'react';
-import {Image, Text, TouchableOpacity, View} from 'react-native';
+import {ActivityIndicator, Image, Text, TouchableOpacity, View} from 'react-native';
 import {
   InputToolbar,
   Composer,
@@ -42,12 +42,30 @@ export const renderComposer: React.FC<ComposerProps> = props => (
   />
 );
 
-export const renderSend: React.FC<SendProps<any>> = props => (
-  <Send
-    {...props}
-    alwaysShowSend
-    disabled={!props.text || (props.text && props.text.trim().length === 0)}
-    containerStyle={styles.sendContainerStyle}>
-    <Image style={styles.sendIcon} source={images.send} />
-  </Send>
+type SendWithLoaderProps = SendProps<any> & {
+  isSending?: boolean;
+};
+
+export const SendWithLoader: React.FC<SendWithLoaderProps> = props => {
+  const isSending = Boolean(props.isSending);
+  const isDisabled =
+    isSending || !props.text || (props.text && props.text.trim().length === 0);
+
+  return (
+    <Send
+      {...props}
+      alwaysShowSend
+      disabled={isDisabled}
+      containerStyle={styles.sendContainerStyle}>
+      {isSending ? (
+        <ActivityIndicator size="small" color="#4CAF50" />
+      ) : (
+        <Image style={styles.sendIcon} source={images.send} />
+      )}
+    </Send>
+  );
+};
+
+export const renderSend: React.FC<SendWithLoaderProps> = props => (
+  <SendWithLoader {...props} />
 );

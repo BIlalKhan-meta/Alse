@@ -20,10 +20,16 @@ import {
   configureReanimatedLogger,
   ReanimatedLogLevel,
 } from 'react-native-reanimated';
-import {ZoomVideoSdkProvider} from '@zoom/react-native-videosdk';
+import DeviceInfo from 'react-native-device-info';
 import {LanguageProvider} from './src/i18n/LanguageContext';
 import './src/i18n';
 import NetworkLoggerFAB from './src/components/NetworkLoggerFAB';
+
+// Zoom SDK has known crashes on Android emulators - skip loading entirely when on emulator
+const isEmulator = Platform.OS === 'android' && DeviceInfo.isEmulatorSync();
+const ZoomVideoSdkProvider = isEmulator
+  ? ({children}: {children: React.ReactNode}) => <>{children}</>
+  : require('@zoom/react-native-videosdk').ZoomVideoSdkProvider;
 
 const theme = {
   ...DefaultTheme,
@@ -87,25 +93,27 @@ function App(): React.JSX.Element {
   //   // RNRestart.restart();
   // }
 
-  return (
+  const appContent = (
+    <PersistGate loading={null} persistor={persistor}>
+      <Provider store={store}>
+        <LanguageProvider>
+          <NavigationContainer ref={navigationRef} theme={theme}>
+            <MainNavigation />
+            <IncomingCallHandler />
+            {__DEV__ && <NetworkLoggerFAB />}
+          </NavigationContainer>
+          <Toast />
+        </LanguageProvider>
+      </Provider>
+    </PersistGate>
+  );
+
+  return isEmulator ? (
+    appContent
+  ) : (
     <ZoomVideoSdkProvider
       config={{appGroupId: 'test', domain: 'zoom.us', enableLog: true}}>
-      <PersistGate loading={null} persistor={persistor}>
-        <Provider store={store}>
-          <LanguageProvider>
-            {/* <SafeAreaView style={styles.container}> */}
-
-            <NavigationContainer ref={navigationRef} theme={theme}>
-              <MainNavigation />
-              <IncomingCallHandler />
-              {__DEV__ && <NetworkLoggerFAB />}
-            </NavigationContainer>
-
-            <Toast />
-            {/* </SafeAreaView> */}
-          </LanguageProvider>
-        </Provider>
-      </PersistGate>
+      {appContent}
     </ZoomVideoSdkProvider>
   );
 }

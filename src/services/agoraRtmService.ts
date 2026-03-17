@@ -11,6 +11,7 @@ export interface CallInvitationPayload {
 }
 
 export type IncomingCallCallback = (payload: CallInvitationPayload) => void;
+export type IncomingChatCallback = (payload: any) => void;
 
 /**
  * Agora RTM Service for call signaling using call invitation API.
@@ -21,16 +22,37 @@ class AgoraRtmService {
   private engine: RtmEngine | null = null;
   private currentUserId: string | null = null;
   private incomingCallCallback: IncomingCallCallback | null = null;
+  private incomingChatCallback: IncomingChatCallback | null = null;
   private isLoggedIn = false;
   private remoteInvitationSubscription: {remove: () => void} | null = null;
+  private channelMessageSubscription: {remove: () => void} | null = null;
+  private channelMessageSubscriptionLower: {remove: () => void} | null = null;
   private currentLocalInvitation: any = null;
   private pendingRemoteInvitation: any = null;
+  private joinedChannels = new Set<string>();
+  private loginPromise: Promise<boolean> | null = null;
 
   /**
    * Initialize and login to RTM with user ID.
    * Tries with token first; if rejected, retries without token (unsecured project).
    */
   async login(userId: string | number, rtmToken?: string): Promise<boolean> {
+    if (this.loginPromise) {
+      return this.loginPromise;
+    }
+
+    this.loginPromise = this.loginInternal(userId, rtmToken);
+    try {
+      return await this.loginPromise;
+    } finally {
+      this.loginPromise = null;
+    }
+  }
+
+  private async loginInternal(
+    userId: string | number,
+    rtmToken?: string,
+  ): Promise<boolean> {
     const uid = String(userId);
     if (this.isLoggedIn && this.currentUserId === uid) {
       console.log('[Agora RTM] Already logged in for user:', uid);
@@ -73,9 +95,22 @@ class AgoraRtmService {
           }
         },
       );
+
+      this.channelMessageSubscription = this.engine!.addListener(
+        'ChannelMessageReceived',
+        (evt: any) => {
+          this.handleIncomingChannelMessage(evt);
+        },
+      );
+
+      this.channelMessageSubscriptionLower = (this.engine as any).addListener(
+        'channelMessageReceived',
+        (evt: any) => {
+          this.handleIncomingChannelMessage(evt);
+        },
+      );
     };
 
-    // Try with token first; if rejected (e.g. wrong token type), retry without token (unsecured)
     const attemptLogin = async (token: string | undefined) => {
       await tryLogin(token);
       this.currentUserId = uid;
@@ -90,19 +125,7 @@ class AgoraRtmService {
       return true;
     } catch (error) {
       const errMsg = (error as Error)?.message || String(error);
-      const isRejected = errMsg.includes('REJECTED') || errMsg.includes('LOGIN_ERR');
       console.warn('[Agora RTM] Login failed:', errMsg);
-
-      if (isRejected && rtmToken) {
-        console.log('[Agora RTM] Retrying without token (unsecured project)...');
-        try {
-          await attemptLogin(undefined);
-          console.log('[Agora RTM] Logged in without token for user:', uid);
-          return true;
-        } catch (retryErr) {
-          console.warn('[Agora RTM] Retry without token failed:', retryErr);
-        }
-      }
       await this.cleanup();
       return false;
     }
@@ -115,10 +138,16 @@ class AgoraRtmService {
     const wasLoggedIn = this.isLoggedIn;
     this.remoteInvitationSubscription?.remove();
     this.remoteInvitationSubscription = null;
+    this.channelMessageSubscription?.remove();
+    this.channelMessageSubscription = null;
+    this.channelMessageSubscriptionLower?.remove();
+    this.channelMessageSubscriptionLower = null;
     this.currentLocalInvitation = null;
     this.pendingRemoteInvitation = null;
+    this.joinedChannels.clear();
     this.currentUserId = null;
     this.incomingCallCallback = null;
+    this.incomingChatCallback = null;
     this.isLoggedIn = false;
 
     if (this.engine) {
@@ -160,6 +189,119 @@ class AgoraRtmService {
    */
   setIncomingCallCallback(callback: IncomingCallCallback | null): void {
     this.incomingCallCallback = callback;
+  }
+
+  setIncomingChatCallback(callback: IncomingChatCallback | null): void {
+    this.incomingChatCallback = callback;
+  }
+
+  private getChatChannelId(chatId: string | number): string {
+    return `chat_${String(chatId)}`;
+  }
+
+  private parseEventPayload(rawPayload: any): any {
+    if (!rawPayload) return null;
+    if (typeof rawPayload === 'string') {
+      try {
+        return JSON.parse(rawPayload);
+      } catch {
+        return null;
+      }
+    }
+    if (typeof rawPayload?.text === 'string') {
+      try {
+        return JSON.parse(rawPayload.text);
+      } catch {
+        return null;
+      }
+    }
+    return rawPayload;
+  }
+
+  private handleIncomingChannelMessage(evt: any) {
+    try {
+      const parsed = this.parseEventPayload(evt);
+      const payload = parsed?.payload || parsed;
+      if (payload) {
+        this.incomingChatCallback?.(payload);
+      }
+    } catch (error) {
+      console.warn('[Agora RTM] Failed to handle channel message:', error);
+    }
+  }
+
+  async ensureLogin(userId: string | number, rtmToken?: string): Promise<boolean> {
+    const uid = String(userId);
+    if (this.isLoggedIn && this.currentUserId === uid) {
+      return true;
+    }
+    return this.login(uid, rtmToken);
+  }
+
+  async joinChatChannel(chatId: string | number): Promise<boolean> {
+    try {
+      if (!this.engine || !this.isLoggedIn) {
+        return false;
+      }
+
+      const channelId = this.getChatChannelId(chatId);
+      if (this.joinedChannels.has(channelId)) {
+        return true;
+      }
+
+      await (this.engine as any).joinChannel(channelId);
+      this.joinedChannels.add(channelId);
+      return true;
+    } catch (error) {
+      console.warn('[Agora RTM] Failed to join chat channel:', error);
+      return false;
+    }
+  }
+
+  async leaveChatChannel(chatId: string | number): Promise<boolean> {
+    try {
+      if (!this.engine || !this.isLoggedIn) {
+        return false;
+      }
+
+      const channelId = this.getChatChannelId(chatId);
+      if (!this.joinedChannels.has(channelId)) {
+        return true;
+      }
+
+      await (this.engine as any).leaveChannel(channelId);
+      this.joinedChannels.delete(channelId);
+      return true;
+    } catch (error) {
+      console.warn('[Agora RTM] Failed to leave chat channel:', error);
+      return false;
+    }
+  }
+
+  async sendChatMessage(chatId: string | number, payload: any): Promise<boolean> {
+    try {
+      if (!this.engine || !this.isLoggedIn) {
+        return false;
+      }
+
+      const channelId = this.getChatChannelId(chatId);
+      if (!this.joinedChannels.has(channelId)) {
+        const joined = await this.joinChatChannel(chatId);
+        if (!joined) {
+          return false;
+        }
+      }
+
+      const message = JSON.stringify({
+        chat_id: String(chatId),
+        payload,
+      });
+      await (this.engine as any).sendMessageByChannelId(channelId, message);
+      return true;
+    } catch (error) {
+      console.warn('[Agora RTM] Failed to send chat message:', error);
+      return false;
+    }
   }
 
   /**

@@ -2,32 +2,50 @@ import { io } from 'socket.io-client';
 
 export const socket = io('https://custom-dev.onlinetestingserver.com:3030/', {
   transports: ['websocket', 'polling'],
+  autoConnect: true,
 });
 
 export const connectSocket = () => {
   if (socket && !socket?.connected) {
     socket.connect();
-    socket.on('connect', () => {
+    socket.once('connect', () => {
       console.log('Socket Connected :: ', socket.id);
     });
   }
 };
 
+export const joinChatRoom = (chat_id: string | number | undefined) => {
+  // Backend doesn't support rooms currently. Keep as no-op for compatibility.
+  void chat_id;
+};
+
+export const leaveChatRoom = (chat_id: string | number | undefined) => {
+  // Backend doesn't support rooms currently. Keep as no-op for compatibility.
+  void chat_id;
+};
+
 /**
- * Listen for incoming messages in a chat room.
- * chat_id is normalized to string for socket room consistency.
- * Returns cleanup function to remove the listener.
+ * Listen for incoming messages. Server does io.emit(data.chat_id, data),
+ * so event name = chat_id. Listen for that event.
  */
 export const listenMessage = (
   chat_id: string | number | undefined,
   callback: (res: any) => void,
 ): (() => void) => {
   if (!chat_id) return () => {};
-  const roomId = String(chat_id);
-  const handler = (res: any) => callback(res);
-  socket.on(roomId, handler);
+  const eventName = String(chat_id);
+  const handler = (res: any) => {
+    const payload = res?.data || res;
+    // Since event name itself is chat_id on backend, accept payload even when chat_id is missing.
+    if (!payload?.chat_id || String(payload?.chat_id) === eventName) {
+      callback(payload);
+    }
+  };
+
+  socket.on(eventName, handler);
+
   return () => {
-    socket.off(roomId, handler);
+    socket.off(eventName, handler);
   };
 };
 
@@ -48,13 +66,20 @@ export const emitMessage = (payload: {
     ...payload,
     chat_id: String(payload.chat_id),
   };
-  socket.emit('sendMessage', normalized);
+
+  if (socket.connected) {
+    socket.emit('sendMessage', normalized);
+    return;
+  }
+
+  connectSocket();
+  socket.once('connect', () => {
+    socket.emit('sendMessage', normalized);
+  });
 };
 
 export const disconnectSocket = () => {
   if (socket?.connected) {
-    socket.on('disconnect', () => {
-      console.log('Socket Disconnected');
-    });
+    socket.disconnect();
   }
 };

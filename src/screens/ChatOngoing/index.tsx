@@ -34,13 +34,8 @@ import {
   uploadVideo,
 } from '../../api/home';
 import {selectUserProfile} from '../../store/slices/authSlice';
-import {
-  connectSocket,
-  disconnectSocket,
-  emitMessage,
-  listenMessage,
-} from '../../utils/socket';
-import {renderComposer, renderSend} from './InputToolbar';
+import {connectSocket, emitMessage, listenMessage} from '../../utils/socket';
+import {renderComposer, SendWithLoader} from './InputToolbar';
 // @ts-ignore
 import call from 'react-native-phone-call';
 import callManagerService from '../../services/callManagerService';
@@ -69,6 +64,7 @@ const ChatOngoing: React.FC<Props> = props => {
   const isFocused = useIsFocused();
 
   const [messages, setMessages] = useState<IMessage[]>([]);
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
   const user = useSelector(selectUserProfile);
   const [phoneModalVisible, setPhoneModalVisible] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -329,11 +325,52 @@ const ChatOngoing: React.FC<Props> = props => {
     }
   };
 
+  const appendIncomingMessage = useCallback(
+    (res: any) => {
+      if (res?.chat_id && String(res.chat_id) !== String(props?.route?.params?.id)) {
+        return;
+      }
+
+      if (String(res?.user?._id) === String(user?.id)) {
+        return;
+      }
+
+      const imageUrl = res?.image
+        ? getAbsoluteAvatarUrl(res.image) || res.image
+        : undefined;
+      const videoUrl = res?.video
+        ? getAbsoluteAvatarUrl(res.video) || res.video
+        : undefined;
+      const newMessage = {
+        _id: res?.id || `sock-${Date.now()}-${Math.random()}`,
+        chat_id: res?.chat_id || props?.route?.params?.id,
+        text: res?.message || '',
+        image: imageUrl,
+        video: videoUrl,
+        createdAt: new Date(res?.created_at || Date.now()),
+        user: {
+          _id: res?.user?._id,
+          avatar: res?.user?.avatar,
+        },
+      };
+
+      setMessages(previousMessages => {
+        const alreadyExists = previousMessages.some(
+          msg => String(msg._id) === String(newMessage._id),
+        );
+
+        if (alreadyExists) {
+          return previousMessages;
+        }
+
+        return GiftedChat.append(previousMessages, [newMessage]);
+      });
+    },
+    [props?.route?.params?.id, user?.id],
+  );
+
   useEffect(() => {
     connectSocket();
-    return () => {
-      disconnectSocket();
-    };
   }, []);
 
   const getData = useCallback(() => {
@@ -392,35 +429,25 @@ const ChatOngoing: React.FC<Props> = props => {
   }, [isFocused, getData]);
 
   useEffect(() => {
-    if (!props?.route?.params?.id) return;
-    const cleanup = listenMessage(props.route.params.id, (res: any) => {
-      // Only add message if it's from another user (not current user)
-      if (res?.user?._id !== user?.id) {
-        const imageUrl = res?.image
-          ? getAbsoluteAvatarUrl(res.image) || res.image
-          : undefined;
-        const videoUrl = res?.video
-          ? getAbsoluteAvatarUrl(res.video) || res.video
-          : undefined;
-        const newMessage = {
-          _id: res?.id || Math.random(),
-          chat_id: res?.chat_id,
-          text: res?.message || '',
-          image: imageUrl,
-          video: videoUrl,
-          createdAt: new Date(res?.created_at || Date.now()),
-          user: {
-            _id: res?.user?._id,
-            avatar: res?.user?.avatar,
-          },
-        };
-        setMessages(previousMessages =>
-          GiftedChat.append(previousMessages, [newMessage]),
-        );
-      }
-    });
+    const currentChatId = props?.route?.params?.id;
+    if (!currentChatId || !isFocused) return;
+
+    const intervalId = setInterval(() => {
+      getData();
+    }, 3000);
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [props?.route?.params?.id, isFocused, getData]);
+
+  useEffect(() => {
+    const currentChatId = props?.route?.params?.id;
+    if (!currentChatId) return;
+
+    const cleanup = listenMessage(currentChatId, appendIncomingMessage);
     return cleanup;
-  }, [props?.route?.params?.id, user?.id]);
+  }, [props?.route?.params?.id, appendIncomingMessage]);
 
   const onSend = useCallback(
     (newMessages: IMessage[] = []) => {
@@ -433,6 +460,7 @@ const ChatOngoing: React.FC<Props> = props => {
       if (!message?.text || !user?.id || !props?.route?.params?.id) {
         return;
       }
+      setIsSendingMessage(true);
 
       const data = {
         chat_id: props.route.params.id,
@@ -440,7 +468,6 @@ const ChatOngoing: React.FC<Props> = props => {
         created_at: Date.now(),
       };
 
-      // Send to socket for real-time updates to other users
       emitMessage({
         chat_id: props.route.params.id,
         message: message.text,
@@ -459,6 +486,9 @@ const ChatOngoing: React.FC<Props> = props => {
         .catch((Err: any) => {
           console.log('Error saving message:', Err);
           // TODO: Implement retry logic or show error to user
+        })
+        .finally(() => {
+          setIsSendingMessage(false);
         });
     },
     [props?.route?.params?.id, user?.id, user?.avatar],
@@ -717,7 +747,12 @@ const ChatOngoing: React.FC<Props> = props => {
                   containerStyle={styles.inputToolbarStyle}
                   primaryStyle={styles.primaryStyle}
                   renderComposer={renderComposer as any}
-                  renderSend={renderSend as any}
+                  renderSend={toolbarProps => (
+                    <SendWithLoader
+                      {...(toolbarProps as any)}
+                      isSending={isSendingMessage}
+                    />
+                  )}
                 />
                 {/* <TouchableOpacity style={styles.micButton}>
                   <Image source={images.recordingIcon} style={styles.micIcon} />
