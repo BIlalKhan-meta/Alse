@@ -25,7 +25,6 @@ import profileReducer from './slices/profileSlice';
 import settingsReducer from './slices/settingsSlice';
 import callReducer from './slices/callSlice';
 import videoReducer from './slices/videoSlice';
-import storage from 'redux-persist/lib/storage'; // defaults to localStorage for web
 import {persistReducer, persistStore} from 'redux-persist';
 import {FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER} from 'redux-persist';
 import AsyncStorage from '@react-native-async-storage/async-storage';

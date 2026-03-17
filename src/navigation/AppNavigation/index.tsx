@@ -63,6 +63,10 @@ import BecomeSeller from '../../screens/BecomeSeller';
 import ExistingSeller from '../../screens/ExistingSeller';
 import AuctionDetail from '../../screens/AuctionDetail';
 import CreateReel from '../../screens/CreateReel';
+import {
+  ZegoUIKitPrebuiltCallWaitingScreen,
+  ZegoUIKitPrebuiltCallInCallScreen,
+} from '@zegocloud/zego-uikit-prebuilt-call-rn';
 
 const AppNavigation = () => {
   const Stack = createNativeStackNavigator();
@@ -240,6 +244,16 @@ const AppNavigation = () => {
         <Stack.Screen
           name="IncomingVideoCall"
           component={IncomingVideoCall}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="ZegoUIKitPrebuiltCallWaitingScreen"
+          component={ZegoUIKitPrebuiltCallWaitingScreen}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="ZegoUIKitPrebuiltCallInCallScreen"
+          component={ZegoUIKitPrebuiltCallInCallScreen}
           options={{headerShown: false}}
         />
         <Stack.Screen

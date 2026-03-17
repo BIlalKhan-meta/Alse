@@ -5,10 +5,10 @@ export const navigationRef = createNavigationContainerRef();
 export function navigateToIncomingVideoCall(params: {
   callerName: string;
   callerAvatar?: string;
+  chatId: string;
   channel: string;
   uid: number;
   callType?: 'video' | 'audio';
-  sessionId?: string;
 }) {
   if (navigationRef.isReady()) {
     navigationRef.navigate('AppNavigation' as never, {

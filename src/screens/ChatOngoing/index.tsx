@@ -38,7 +38,7 @@ import {connectSocket, emitMessage, listenMessage} from '../../utils/socket';
 import {renderComposer, SendWithLoader} from './InputToolbar';
 // @ts-ignore
 import call from 'react-native-phone-call';
-import callManagerService from '../../services/callManagerService';
+import ZegoUIKitPrebuiltCallService from '@zegocloud/zego-uikit-prebuilt-call-rn';
 import ReportBlockModal from '../../components/ReportBlockModal';
 import {DEVICE_HEIGHT} from '../../constant';
 import useImagePicker from '../../hooks/useImagePicker-story';
@@ -180,7 +180,7 @@ const ChatOngoing: React.FC<Props> = props => {
       return;
     }
 
-    console.log('[ChatOngoing] Calling receiver RTM uid:', receiverId, {
+    console.log('[ChatOngoing] Calling receiver:', receiverId, {
       currentUserId,
       routeChatId: props?.route?.params?.id,
       explicitCandidates,
@@ -190,34 +190,28 @@ const ChatOngoing: React.FC<Props> = props => {
     try {
       setIsVideoCalling(true);
 
-      // Use call manager service to initiate call
-      const result = await callManagerService.initiateCall(
-        String(receiverId),
-        props?.route?.params?.name || 'Unknown User',
-        callType,
-        props?.route?.params?.user?.avatar,
-        user?.full_name || user?.name || 'Unknown',
-        user?.image || user?.avatar,
-        user?.id,
-      );
+      const chatId = props?.route?.params?.id;
+      const channel = chatId ? `chat_${chatId}` : `call_${Date.now()}`;
+      const receiverName =
+        props?.route?.params?.name ||
+        props?.route?.params?.user?.full_name ||
+        props?.route?.params?.user?.name ||
+        'Unknown User';
 
-      if (result.success && result.data) {
-        const screen = result.data.callType === 'audio' ? 'AudioCall' : 'VideoCall';
-        (navigation as any).navigate(screen, {
-          channel: result.data.channel,
-          uid: result.data.rtcUid || Number(user?.id || 0),
-          receiverName: result.data.receiverName,
-          receiverAvatar: result.data.receiverAvatar,
-          callType: result.data.callType,
-          agoraToken: result.data.agoraToken,
-          sessionId: result.data.sessionId,
-        });
-      } else {
-        Alert.alert(
-          'Call Failed',
-          result.error || 'Unable to initiate call. Please try again.',
-        );
-      }
+      console.log('[ChatOngoing] Initiating ZEGOCLOUD call:', {
+        chatId,
+        channel,
+        callType,
+        receiverId,
+        receiverName,
+      });
+
+      await ZegoUIKitPrebuiltCallService.sendCallInvitation(
+        [{userID: receiverId, userName: receiverName}],
+        callType === 'video',
+        navigation as any,
+        {callID: channel},
+      );
     } catch (error) {
       console.error('Video call error:', error);
       Alert.alert(

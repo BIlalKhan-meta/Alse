@@ -21,7 +21,9 @@ class CallManagerService {
   };
 
   /**
-   * Initiate a call to another user
+   * Initiate a call to another user.
+   * Channel name is deterministic: chat_${chatId} so both parties always join
+   * the same Agora RTC channel (same pattern as letsPlanADate).
    */
   async initiateCall(
     receiverId: string,
@@ -31,55 +33,55 @@ class CallManagerService {
     callerName?: string,
     callerAvatar?: string,
     callerId?: string | number,
+    chatId?: string | number,
   ) {
     try {
-      // Create call session
-      const callSession = await createCallSession(receiverId, callType);
+      const channel = chatId ? `chat_${chatId}` : `call_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-      if (callSession?.status && callSession?.data) {
-        const fallbackCallerUid = Number(callerId ?? 0);
-        this.currentCall = {
-          sessionId: String(callSession.data.session_id ?? ''),
-          channel: callSession.data.channel,
-          isActive: true,
-        };
+      let sessionId: string | undefined;
+      let agoraToken: string | undefined;
 
-        // Send Agora RTM invitation to receiver for incoming call modal (optional - may fail if RTM not logged in)
-        try {
-          await agoraRtmService.sendInvitation(receiverId, {
-            channel: callSession.data.channel,
-            callType,
-            callerName: callerName || 'Unknown',
-            callerAvatar,
-            sessionId: String(callSession.data.session_id ?? ''),
-            callerId: callerId?.toString(),
-          });
-        } catch (rtmErr) {
-          console.warn('[CallManager] RTM invitation failed (call will still proceed):', rtmErr);
+      try {
+        const callSession = await createCallSession(receiverId, callType);
+        if (callSession?.status && callSession?.data) {
+          sessionId = String(callSession.data.session_id ?? '');
+          agoraToken = callSession.data.agora_token;
         }
-
-        return {
-          success: true,
-          data: {
-            channel: callSession.data.channel,
-            agoraToken: callSession.data.agora_token,
-            rtcUid:
-              Number(callSession.data.uid ?? 0) > 0
-                ? Number(callSession.data.uid)
-                : fallbackCallerUid > 0
-                ? fallbackCallerUid
-                : Math.floor(Math.random() * 1000000) + 1,
-            sessionId: callSession.data.session_id,
-            receiverName,
-            receiverAvatar,
-            callType,
-          },
-        };
-      } else {
-        throw new Error(
-          callSession?.message || 'Failed to create call session',
-        );
+      } catch (sessionErr) {
+        console.warn('[CallManager] Session creation failed (call will still proceed):', sessionErr);
       }
+
+      this.currentCall = {
+        sessionId,
+        channel,
+        isActive: true,
+      };
+
+      try {
+        await agoraRtmService.sendInvitation(receiverId, {
+          channel,
+          callType,
+          callerName: callerName || 'Unknown',
+          callerAvatar,
+          sessionId: sessionId ?? '',
+          callerId: callerId?.toString(),
+        });
+      } catch (rtmErr) {
+        console.warn('[CallManager] RTM invitation failed (call will still proceed):', rtmErr);
+      }
+
+      return {
+        success: true,
+        data: {
+          channel,
+          agoraToken,
+          rtcUid: 0,
+          sessionId,
+          receiverName,
+          receiverAvatar,
+          callType,
+        },
+      };
     } catch (error) {
       console.error('Error initiating call:', error);
       return {
@@ -90,7 +92,8 @@ class CallManagerService {
   }
 
   /**
-   * Join an incoming call
+   * Join an incoming call.
+   * The channel name is received from the RTM invitation (already deterministic).
    */
   async joinCall(
     channel: string,
@@ -98,25 +101,16 @@ class CallManagerService {
     callType: 'video' | 'audio' = 'video',
     callerAvatar?: string,
     sessionId?: string,
-    currentUserId?: string | number,
+    _currentUserId?: string | number,
   ) {
     try {
       let agoraToken: string | undefined;
-      let rtcUid = Number(currentUserId ?? 0);
       try {
         const tokenResponse = await getAgoraTokenForAudience(channel);
         const resData = (tokenResponse as any)?.data;
         agoraToken = resData?.data?.agora_token ?? resData?.agora_token;
-        const apiUid = Number(resData?.data?.uid ?? resData?.uid ?? 0);
-        if (apiUid > 0) {
-          rtcUid = apiUid;
-        }
       } catch (e) {
         console.warn('[CallManager] Token fetch failed - joining without token (unsecured):', e);
-      }
-
-      if (rtcUid <= 0) {
-        rtcUid = Math.floor(Math.random() * 1000000) + 1;
       }
 
       this.currentCall = {
@@ -130,7 +124,7 @@ class CallManagerService {
         data: {
           channel,
           agoraToken,
-          rtcUid,
+          rtcUid: 0,
           sessionId,
           callerName,
           callerAvatar,

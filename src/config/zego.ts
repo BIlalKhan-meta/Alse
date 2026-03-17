@@ -1,0 +1,3 @@
+export const ZEGO_APP_ID = 943936123;
+export const ZEGO_APP_SIGN =
+  '8ab8a82694ffe6157cf63dcc8b076278929e798b6e53561e9037e65f11637b6e';

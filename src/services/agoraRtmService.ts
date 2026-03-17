@@ -3,6 +3,7 @@ import {AGORA_APP_ID} from '../config/agora';
 
 export interface CallInvitationPayload {
   channel: string;
+  chatId?: string;
   callType: 'video' | 'audio';
   callerName: string;
   callerAvatar?: string;

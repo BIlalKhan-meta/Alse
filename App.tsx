@@ -16,6 +16,7 @@ import {requestUserPermission} from './src/utils/NotificationServices';
 import MainNavigation from './src/navigation';
 import IncomingCallHandler from './src/components/IncomingCallHandler';
 import {navigationRef} from './src/utils/navigationRef';
+import {ZegoCallInvitationDialog} from '@zegocloud/zego-uikit-prebuilt-call-rn';
 import {
   configureReanimatedLogger,
   ReanimatedLogLevel,
@@ -27,9 +28,19 @@ import NetworkLoggerFAB from './src/components/NetworkLoggerFAB';
 
 // Zoom SDK has known crashes on Android emulators - skip loading entirely when on emulator
 const isEmulator = Platform.OS === 'android' && DeviceInfo.isEmulatorSync();
-const ZoomVideoSdkProvider = isEmulator
-  ? ({children}: {children: React.ReactNode}) => <>{children}</>
-  : require('@zoom/react-native-videosdk').ZoomVideoSdkProvider;
+let ZoomVideoSdkProvider: React.ComponentType<{children: React.ReactNode; config: object}>;
+try {
+  if (isEmulator) {
+    ZoomVideoSdkProvider = ({children}: {children: React.ReactNode}) => <>{children}</>;
+  } else {
+    const ZoomModule = require('@zoom/react-native-videosdk');
+    ZoomVideoSdkProvider =
+      ZoomModule?.ZoomVideoSdkProvider ||
+      (({children}: {children: React.ReactNode}) => <>{children}</>);
+  }
+} catch {
+  ZoomVideoSdkProvider = ({children}: {children: React.ReactNode}) => <>{children}</>;
+}
 
 const theme = {
   ...DefaultTheme,
@@ -99,6 +110,7 @@ function App(): React.JSX.Element {
         <LanguageProvider>
           <NavigationContainer ref={navigationRef} theme={theme}>
             <MainNavigation />
+            <ZegoCallInvitationDialog />
             <IncomingCallHandler />
             {__DEV__ && <NetworkLoggerFAB />}
           </NavigationContainer>
