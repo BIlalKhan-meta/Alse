@@ -284,5 +284,35 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderWidth: 1,
   },
+  fabMenuOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+    paddingBottom: vh * 12,
+    paddingHorizontal: vw * 4,
+  },
+  fabMenuContainer: {
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    paddingVertical: vh * 1,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+  },
+  fabMenuOption: {
+    paddingVertical: vh * 2,
+    paddingHorizontal: vw * 4,
+  },
+  fabMenuOptionFirst: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  fabMenuOptionText: {
+    fontSize: 16,
+    color: colors.black,
+    fontWeight: '500',
+  },
 });
 export default styles;

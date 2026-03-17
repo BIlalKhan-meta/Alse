@@ -120,10 +120,8 @@ export const createMessage = formData => {
     formData: true,
   });
 };
-export const createGroup = formData => {
-  return axiosInstance.post(endpoints.chat.createGroup, formData, {
-    formData: true,
-  });
+export const createGroup = (formData: FormData) => {
+  return uploadWithFetch(endpoints.chat.createGroup, formData);
 };
 // export const signup = (formData: any) => {
 //   return axiosInstance.post(endpoints.auth.signup, formData, {

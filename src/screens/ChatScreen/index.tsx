@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   SafeAreaView,
   StatusBar,
+  Modal,
 } from 'react-native';
 import {useIsFocused, useNavigation} from '@react-navigation/native';
 import {images} from '../../utils/images';
@@ -15,15 +16,10 @@ import styles from './styles';
 import InterMedium from '../../components/Text/InterMedium';
 import InterRegular from '../../components/Text/InterRegular';
 import GeneralModal from '../../components/GeneralModal';
-import NewGroupModal from '../../components/GroupModel';
 import _ from 'lodash';
 import {
   createChat,
-  getAllLogs,
-  getAllUsers,
   getConversations,
-  getFollowersList,
-  getFollowingList,
 } from '../../api/home';
 import moment from 'moment';
 import Loader from '../../components/Loader';
@@ -31,6 +27,7 @@ import {EmptyComponent} from '../../components/EmptyComponent';
 import SearchComponent from '../../components/SearchComponent';
 import CustomeImage from '../../components/CustomeImage';
 import SelectUserModal from './SelectUserModal';
+import CreateGroupSheet from './CreateGroupSheet';
 interface ChatItem {
   id: number;
   name: string;
@@ -47,8 +44,9 @@ interface ChatItem {
 }
 
 const ChatScreen: React.FC = () => {
-  const [modalVisible, setModalVisible] = useState(false);
+  const [fabMenuVisible, setFabMenuVisible] = useState(false);
   const [createChatModal, setCreateChatModal] = useState(false);
+  const [createGroupModalVisible, setCreateGroupModalVisible] = useState(false);
   const [reportVisible, setReportVisible] = useState(false);
   const [ReportSuccess, setReportSuccess] = useState(false);
   const [blockVisible, setBlockVisible] = useState(false);
@@ -58,7 +56,6 @@ const ChatScreen: React.FC = () => {
   const [activeTab, setActiveTab] = useState('Chats');
 
   const [data, setData] = useState([]);
-  const [logsData, setLogsData] = useState([]);
 
   const IsFocused = useIsFocused();
   const navigation = useNavigation();
@@ -68,21 +65,6 @@ const ChatScreen: React.FC = () => {
     getConversations({})
       .then(res => {
         setData(res?.data?.data);
-        setLoader(false);
-      })
-      .catch(Err => {
-        setLoader(false);
-
-        console.log('Error from get Conversation ', Err);
-      });
-  };
-
-  const getLogsData = () => {
-    setLoader(true);
-    getAllLogs()
-      .then(res => {
-        // console.log('-------', JSON.stringify(res));
-        setLogsData(res?.data?.data || []);
         setLoader(false);
       })
       .catch(Err => {
@@ -113,12 +95,7 @@ const ChatScreen: React.FC = () => {
 
   useEffect(() => {
     getData();
-    getLogsData();
   }, [IsFocused]);
-
-  const closeModal = () => {
-    setModalVisible(false);
-  };
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -129,18 +106,24 @@ const ChatScreen: React.FC = () => {
   if (loader) {
     return <Loader />;
   }
-  const renderItem = ({item}: {item: ChatItem}) => (
-    <TouchableOpacity
-      style={styles.chatContainer}
-      onPress={() =>
-        (navigation as any).navigate('ChatOngoing', {
-          id: item?.id,
-          receiverId: (item as any)?.user_id,
-          name: item?.name,
-          phoneNumber: item?.phone_number || '+1234567890',
-          user: {id: (item as any)?.user_id, avatar: item?.image},
-        })
-      }>
+  const renderItem = ({item}: {item: ChatItem}) => {
+    const isGroup =
+      (item as any)?.group === true ||
+      (item as any)?.is_group === true ||
+      (item as any)?.type === 'group';
+    return (
+      <TouchableOpacity
+        style={styles.chatContainer}
+        onPress={() =>
+          (navigation as any).navigate('ChatOngoing', {
+            id: item?.id,
+            receiverId: (item as any)?.user_id,
+            name: item?.name,
+            phoneNumber: item?.phone_number || '+1234567890',
+            user: {id: (item as any)?.user_id, avatar: item?.image},
+            isGroup: isGroup || undefined,
+          })
+        }>
       <View style={styles.chatItem}>
         <View style={styles.avatarContainer}>
           <CustomeImage source={{uri: item?.image}} style={styles.avatar} />
@@ -161,7 +144,8 @@ const ChatScreen: React.FC = () => {
         </View>
       </View>
     </TouchableOpacity>
-  );
+    );
+  };
 
   const renderTabButton = (tabName: string) => (
     <TouchableOpacity
@@ -204,7 +188,6 @@ const ChatScreen: React.FC = () => {
       <View style={styles.tabContainer}>
         {renderTabButton('Chats')}
         {renderTabButton('Groups')}
-        {renderTabButton('Call Logs')}
       </View>
 
       {/* Chat List */}
@@ -223,54 +206,20 @@ const ChatScreen: React.FC = () => {
         </View>
       )}
 
-      {/* Logs */}
-      {activeTab === 'Call Logs' && (
+      {/* Groups List */}
+      {activeTab === 'Groups' && (
         <View style={styles.chatListContainer}>
           <FlatList
             showsVerticalScrollIndicator={false}
-            data={logsData}
-            renderItem={({item}: {item: ChatItem}) => (
-              <TouchableOpacity
-                style={styles.chatContainer}
-                // onPress={() =>
-                //   (navigation as any).navigate('ChatOngoing', {
-                //     id: item?.id,
-                //     name: item?.name,
-                //     phoneNumber: item?.phone_number || '+1234567890', // Test phone number for debugging
-                //   })
-                // }
-              >
-                <View style={styles.chatItem}>
-                  <View style={styles.avatarContainer}>
-                    <CustomeImage
-                      source={{uri: item?.image}}
-                      style={styles.avatar}
-                    />
-                    <View style={styles.onlineIndicator} />
-                  </View>
-                  <View style={styles.chatInfo}>
-                    <View style={styles.chatHeader}>
-                      <InterMedium style={styles.name}>{item.name}</InterMedium>
-                      <InterRegular style={styles.time}>
-                        {moment(item?.last_message?.created_at)
-                          .local()
-                          .fromNow()}
-                      </InterRegular>
-                    </View>
-                    <InterRegular style={styles.lastMessage}>
-                      {item.last_message?.message
-                        ? item.last_message?.message
-                        : 'No messages yet'}
-                    </InterRegular>
-                  </View>
-                </View>
-              </TouchableOpacity>
+            data={data.filter(
+              (item: any) => item?.group === true || item?.is_group === true || item?.type === 'group',
             )}
+            renderItem={renderItem}
             keyExtractor={(item, index) =>
               item?.id?.toString() || index.toString()
             }
             contentContainerStyle={styles.chatList}
-            ListEmptyComponent={() => <EmptyComponent text={'No Logs found'} />}
+            ListEmptyComponent={() => <EmptyComponent text={'No groups found'} />}
           />
         </View>
       )}
@@ -278,16 +227,40 @@ const ChatScreen: React.FC = () => {
       {/* Floating Action Button */}
       <TouchableOpacity
         style={styles.fab}
-        onPress={() => setCreateChatModal(!createChatModal)}>
+        onPress={() => setFabMenuVisible(!fabMenuVisible)}>
         <Image source={images.chatIcon} style={styles.fabIcon} />
       </TouchableOpacity>
 
-      {/* Floating Action Button for group chat */}
-      {/* <TouchableOpacity
-        style={styles.fab}
-        onPress={() => setModalVisible(true)}>
-        <Image source={images.chatIcon} style={styles.fabIcon} />
-      </TouchableOpacity> */}
+      {/* FAB Action Menu */}
+      <Modal
+        visible={fabMenuVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setFabMenuVisible(false)}>
+        <TouchableOpacity
+          style={styles.fabMenuOverlay}
+          activeOpacity={1}
+          onPress={() => setFabMenuVisible(false)}>
+          <View style={styles.fabMenuContainer}>
+            <TouchableOpacity
+              style={[styles.fabMenuOption, styles.fabMenuOptionFirst]}
+              onPress={() => {
+                setFabMenuVisible(false);
+                setCreateChatModal(true);
+              }}>
+              <Text style={styles.fabMenuOptionText}>Start chat</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.fabMenuOption}
+              onPress={() => {
+                setFabMenuVisible(false);
+                setCreateGroupModalVisible(true);
+              }}>
+              <Text style={styles.fabMenuOptionText}>Create group</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
 
       <GeneralModal
         visible={reportVisible}
@@ -337,12 +310,20 @@ const ChatScreen: React.FC = () => {
         }}
       />
 
-      <NewGroupModal
-        visible={modalVisible}
-        closeModal={closeModal}
-        users={[]}
-        handleGroupCreationbtn={() => ({})}
-        loader={false}
+      <CreateGroupSheet
+        visible={createGroupModalVisible}
+        onClose={() => setCreateGroupModalVisible(false)}
+        onSuccess={groupData => {
+          getData();
+          (navigation as any).navigate('ChatOngoing', {
+            id: groupData?.id,
+            receiverId: null,
+            name: groupData?.name,
+            phoneNumber: '',
+            user: {id: null, avatar: groupData?.image},
+            isGroup: true,
+          });
+        }}
       />
 
       <GeneralModal
