@@ -124,8 +124,10 @@ const Shop: React.FC = () => {
       setChatLoader(false);
       (navigation as any).navigate('ChatOngoing', {
         id: res?.data?.data?.id,
+        receiverId: sellerId,
         name: sellerName,
         phoneNumber: sellerPhone,
+        user: {id: sellerId, avatar: shopDetails?.image},
       });
     } catch (err) {
       setChatLoader(false);

@@ -135,9 +135,10 @@ const ChatScreen: React.FC = () => {
       onPress={() =>
         (navigation as any).navigate('ChatOngoing', {
           id: item?.id,
+          receiverId: (item as any)?.user_id,
           name: item?.name,
           phoneNumber: item?.phone_number || '+1234567890',
-          user: {avatar: item?.image},
+          user: {id: (item as any)?.user_id, avatar: item?.image},
         })
       }>
       <View style={styles.chatItem}>
@@ -321,9 +322,10 @@ const ChatScreen: React.FC = () => {
 
               (navigation as any).navigate('ChatOngoing', {
                 id: res?.data?.data?.id,
+                receiverId: user?.id,
                 name: res?.data?.data?.name,
                 phoneNumber: res?.data?.data?.phoneNumber,
-                user: {avatar: res?.data?.data?.image},
+                user: {id: user?.id, avatar: res?.data?.data?.image},
               });
 
               // console.log('Respose from Create Chat', res?.data?.data);

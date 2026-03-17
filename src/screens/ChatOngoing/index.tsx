@@ -52,6 +52,8 @@ interface Props {
   route?: {
     params?: {
       id?: string;
+      receiverId?: string | number;
+      user_id?: string | number;
       name?: string;
       user?: any;
       phoneNumber?: string;
@@ -137,23 +139,63 @@ const ChatOngoing: React.FC<Props> = props => {
 
   // Make video call
   const makeVideoCall = async (callType: 'video' | 'audio' = 'video') => {
-    if (!props?.route?.params?.id) {
+    const currentUserId = user?.id != null ? String(user.id) : null;
+    const explicitCandidates = [
+      props?.route?.params?.receiverId,
+      props?.route?.params?.user_id,
+      props?.route?.params?.user?.id,
+    ]
+      .filter(v => v != null && String(v).trim() !== '')
+      .map(v => String(v));
+
+    const messageUserCandidates = Array.from(
+      new Set(
+        (messages || [])
+          .map(m => m?.user?._id)
+          .filter(v => v != null && String(v).trim() !== '')
+          .map(v => String(v)),
+      ),
+    );
+
+    const nonSelfExplicit = explicitCandidates.find(
+      id => !currentUserId || id !== currentUserId,
+    );
+    const nonSelfFromMessages = messageUserCandidates.find(
+      id => !currentUserId || id !== currentUserId,
+    );
+
+    const routeId =
+      props?.route?.params?.id != null ? String(props.route.params.id) : null;
+    const routeIdAsReceiver =
+      routeId && (!currentUserId || routeId !== currentUserId) ? routeId : null;
+
+    const receiverId =
+      nonSelfExplicit ?? nonSelfFromMessages ?? routeIdAsReceiver ?? null;
+
+    if (!receiverId) {
       Alert.alert(
         'Error',
-        'Unable to make call. User information not available.',
+        'Unable to make call. Receiver information not available.',
       );
       return;
     }
+
+    console.log('[ChatOngoing] Calling receiver RTM uid:', receiverId, {
+      currentUserId,
+      routeChatId: props?.route?.params?.id,
+      explicitCandidates,
+      messageUserCandidates,
+    });
 
     try {
       setIsVideoCalling(true);
 
       // Use call manager service to initiate call
       const result = await callManagerService.initiateCall(
-        props.route.params.id.toString(),
-        props.route.params.name || 'Unknown User',
+        String(receiverId),
+        props?.route?.params?.name || 'Unknown User',
         callType,
-        props.route.params.user?.avatar,
+        props?.route?.params?.user?.avatar,
         user?.full_name || user?.name || 'Unknown',
         user?.image || user?.avatar,
         user?.id,

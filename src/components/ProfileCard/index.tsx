@@ -159,8 +159,10 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
 
         navigation.navigate('ChatOngoing', {
           id: res?.data?.data?.id,
+          receiverId: id,
           name: name,
           phoneNumber: phoneNumber,
+          user: {id, avatar},
         });
         // console.log('Respose from Create Chat', res?.data?.data);
       })
