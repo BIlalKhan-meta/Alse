@@ -1,7 +1,31 @@
 import * as ZIM from 'zego-zim-react-native';
 import ZegoUIKitPrebuiltCallService from '@zegocloud/zego-uikit-prebuilt-call-rn';
+import {StackActions} from '@react-navigation/native';
 import {ZEGO_APP_ID, ZEGO_APP_SIGN} from '../config/zego';
 import {navigationRef} from '../utils/navigationRef';
+
+/**
+ * When call ends, pop back past ZegoUIKitPrebuiltCallWaitingScreen (caller flow)
+ * so we don't show the unwanted "waiting" screen with decline/hangup button.
+ */
+function navigateBackAfterCallEnd() {
+  if (!navigationRef.isReady()) return;
+  try {
+    const state = navigationRef.getState();
+    const appNav = state?.routes?.find((r: any) => r.name === 'AppNavigation');
+    const appState = appNav?.state as {routes?: {name: string}[]; index?: number} | undefined;
+    const routes = appState?.routes ?? [];
+    const currentIndex = appState?.index ?? routes.length - 1;
+    const prevRoute = routes[currentIndex - 1];
+    if (prevRoute?.name === 'ZegoUIKitPrebuiltCallWaitingScreen') {
+      navigationRef.dispatch(StackActions.pop(2));
+    } else {
+      navigationRef.goBack();
+    }
+  } catch {
+    navigationRef.goBack();
+  }
+}
 
 /**
  * ZEGOCLOUD Call Service - wraps init/uninit for call invitation flow.
@@ -34,9 +58,7 @@ class ZegoCallService {
           requireConfig: (callInvitationData: any) => ({
             onCallEnd: (callID: string, reason: number, duration: number) => {
               console.log('[ZegoCallService] Call ended:', callID, reason, duration);
-              if (navigationRef.isReady()) {
-                navigationRef.goBack();
-              }
+              navigateBackAfterCallEnd();
             },
           }),
         },
