@@ -26,7 +26,13 @@ const AcknowledgeCall = ({navigation, route}) => {
           <Image source={images.cancelCall} style={styles.endCallIcon} />
         </TouchableOpacity>
         <TouchableOpacity
-          onPress={() => navigation.navigate('IncomingCall', {chat_id, role})}
+          onPress={() =>
+            navigation.navigate('ChatOngoing', {
+              id: chat_id,
+              receiverId: chat_id,
+              name,
+            })
+          }
           style={styles.circle}>
           <Image source={images.endCall} style={styles.endCallIcon} />
         </TouchableOpacity>

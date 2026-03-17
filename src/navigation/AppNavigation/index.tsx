@@ -36,12 +36,9 @@ import {EditShop} from '../../screens/MarketPlace/EditShop';
 import MyOrders from '../../screens/MyOrders';
 import ProfileScreen from '../../screens/Menu/ProfileScreen';
 import AddStory from '../../screens/AddStory';
-import {OutgoingCall} from '../../screens/OutgoingCall';
 import AcknowledgeCall from '../../screens/AcknowledgeCall';
-import IncomingCall from '../../screens/IncomingCall';
 import VideoCall from '../../screens/VideoCall';
 import AudioCall from '../../screens/AudioCall';
-import IncomingVideoCall from '../../screens/IncomingVideoCall';
 import NetworkLogger from 'react-native-network-logger';
 import Groups from '../../screens/Groups';
 import GroupDetailsScreen from '../../screens/Groups/GroupDetailsScreen';
@@ -217,16 +214,6 @@ const AppNavigation = () => {
           options={NavigationOptions}
         />
         <Stack.Screen
-          name="OutgoingCall"
-          component={OutgoingCall}
-          // options={NavigationOptions}
-        />
-        <Stack.Screen
-          name="IncomingCall"
-          component={IncomingCall}
-          // options={NavigationOptions}
-        />
-        <Stack.Screen
           name="AcknowledgeCall"
           component={AcknowledgeCall}
           // options={NavigationOptions}
@@ -239,11 +226,6 @@ const AppNavigation = () => {
         <Stack.Screen
           name="AudioCall"
           component={AudioCall}
-          options={{headerShown: false}}
-        />
-        <Stack.Screen
-          name="IncomingVideoCall"
-          component={IncomingVideoCall}
           options={{headerShown: false}}
         />
         <Stack.Screen

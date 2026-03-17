@@ -21,26 +21,9 @@ import {
   configureReanimatedLogger,
   ReanimatedLogLevel,
 } from 'react-native-reanimated';
-import DeviceInfo from 'react-native-device-info';
 import {LanguageProvider} from './src/i18n/LanguageContext';
 import './src/i18n';
 import NetworkLoggerFAB from './src/components/NetworkLoggerFAB';
-
-// Zoom SDK has known crashes on Android emulators - skip loading entirely when on emulator
-const isEmulator = Platform.OS === 'android' && DeviceInfo.isEmulatorSync();
-let ZoomVideoSdkProvider: React.ComponentType<{children: React.ReactNode; config: object}>;
-try {
-  if (isEmulator) {
-    ZoomVideoSdkProvider = ({children}: {children: React.ReactNode}) => <>{children}</>;
-  } else {
-    const ZoomModule = require('@zoom/react-native-videosdk');
-    ZoomVideoSdkProvider =
-      ZoomModule?.ZoomVideoSdkProvider ||
-      (({children}: {children: React.ReactNode}) => <>{children}</>);
-  }
-} catch {
-  ZoomVideoSdkProvider = ({children}: {children: React.ReactNode}) => <>{children}</>;
-}
 
 const theme = {
   ...DefaultTheme,
@@ -120,14 +103,7 @@ function App(): React.JSX.Element {
     </PersistGate>
   );
 
-  return isEmulator ? (
-    appContent
-  ) : (
-    <ZoomVideoSdkProvider
-      config={{appGroupId: 'test', domain: 'zoom.us', enableLog: true}}>
-      {appContent}
-    </ZoomVideoSdkProvider>
-  );
+  return appContent;
 }
 
 const styles = StyleSheet.create({

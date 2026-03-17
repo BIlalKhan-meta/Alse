@@ -2,19 +2,9 @@ import axiosInstance from '.';
 import endpoints from './endpoints';
 
 /**
- * API functions for Agora calling functionality
- * Updated to work with the provided Agora backend APIs
+ * API functions for calling - uses backend live stream APIs.
+ * Zego Cloud handles call signaling and media.
  */
-
-export interface AgoraTokenResponse {
-  status: boolean;
-  message: string;
-  code: number;
-  data: {
-    agora_token: string;
-    uid: number;
-  };
-}
 
 export interface LiveStreamResponse {
   status: number;
@@ -51,61 +41,10 @@ export interface ChannelUsersResponse {
 }
 
 /**
- * Get RTM token for Agora signaling (call invitations).
- * Backend responses vary by project, so we read common token keys.
- */
-export const getRtmToken = async (userId: string | number): Promise<string | null> => {
-  try {
-    const res = await axiosInstance.get(
-      `${endpoints.chat.getSignature}?session_name=rtm&chat_id=${userId}&role=1`,
-    );
-    const data = (res as any)?.data;
-    const token =
-      data?.data?.rtm_token ??
-      data?.rtm_token ??
-      data?.data?.token ??
-      data?.token ??
-      data?.data?.signature ??
-      data?.signature ??
-      null;
-    return token ? String(token) : null;
-  } catch {
-    return null;
-  }
-};
-
-/**
- * Get Agora token for video calling using the provided API
- * @param channel - Channel name for the call
- * @param uid - User ID for the call
- * @param role - Role type (1 for caller, 2 for receiver)
- */
-export const getAgoraToken = async (
-  channel: string,
-  uid: number,
-  role: number = 1,
-): Promise<AgoraTokenResponse> => {
-  return axiosInstance.get(
-    `${endpoints.chat.getSignature}?session_name=${channel}&chat_id=${uid}&role=${role}`,
-  );
-};
-
-/**
- * Start a live stream and get Agora token for broadcasting
- * This creates a new live stream session for video calling
+ * Start a live stream - creates a new live stream session
  */
 export const startLiveStream = async (): Promise<LiveStreamResponse> => {
   return axiosInstance.post(endpoints.liveStream.createLiveStreams);
-};
-
-/**
- * Get Agora token for joining a live stream as audience
- * @param channelName - The channel name to join
- */
-export const getAgoraTokenForAudience = async (
-  channelName: string,
-): Promise<AgoraTokenResponse> => {
-  return axiosInstance.get(`${endpoints.liveStream.getToken}/${channelName}`);
 };
 
 /**
@@ -116,7 +55,7 @@ export const endLiveStream = async () => {
 };
 
 /**
- * Get users currently in a specific Agora channel
+ * Get users currently in a channel
  * @param channelName - The channel name to get users for
  */
 export const getChannelUsers = async (

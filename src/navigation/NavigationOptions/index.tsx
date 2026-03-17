@@ -16,8 +16,6 @@ interface NavigationOptionsProps {
 const titles: {[key: string]: string} = {
   ChatScreen: 'Chat Screen',
   ChatOngoing: 'Group 1',
-  IncomingCall: 'Incoming Call',
-  OutgoingCall: 'Outgoing Call',
   MyPosts: 'My Post',
   CreatePost: 'Create Post',
   Cart: 'My Cart',
@@ -67,8 +65,6 @@ const titles: {[key: string]: string} = {
 };
 const backButtonRoutes: {[key: string]: boolean} = {
   ChatOngoing: true,
-  IncomingCall: true,
-  OutgoingCall: true,
   CreatePost: true,
   Shop: true,
   ProductView: true,

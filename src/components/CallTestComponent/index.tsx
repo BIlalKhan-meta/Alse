@@ -32,7 +32,6 @@ const CallTestComponent: React.FC<CallTestComponentProps> = ({
           receiverName: result.data.receiverName,
           receiverAvatar: result.data.receiverAvatar,
           callType: result.data.callType,
-          agoraToken: result.data.agoraToken,
           sessionId: result.data.sessionId,
         });
       } else {
@@ -55,7 +54,6 @@ const CallTestComponent: React.FC<CallTestComponentProps> = ({
         channel: 'test_channel_123',
         uid: 2,
         callType: 'video',
-        agoraToken: 'test_token',
         sessionId: 'test_session_123',
       });
     }
