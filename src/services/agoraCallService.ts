@@ -1,12 +1,13 @@
 import {createAgoraRtcEngine, IRtcEngine} from 'react-native-agora';
 import {Platform, PermissionsAndroid} from 'react-native';
+import {AGORA_APP_ID} from '../config/agora';
 
 /**
  * Agora Call Service for in-app video/voice calling
  */
 class AgoraCallService {
   private engine: IRtcEngine | null = null;
-  private appId: string = 'a0c7366a22ac46b791c69f685591207c'; // Same as livestream
+  private appId: string = AGORA_APP_ID;
   private isInitialized: boolean = false;
   private currentChannel: string | null = null;
   private currentUid: number | null = null;

@@ -23,10 +23,21 @@ class AgoraRtmService {
   private currentUserId: string | null = null;
   private incomingCallCallback: IncomingCallCallback | null = null;
   private incomingChatCallback: IncomingChatCallback | null = null;
+  private incomingInvitationEndedCallback: (() => void) | null = null;
+  private localInvitationAcceptedCallback: (() => void) | null = null;
+  private localInvitationRefusedCallback: (() => void) | null = null;
   private isLoggedIn = false;
   private remoteInvitationSubscription: {remove: () => void} | null = null;
+  private remoteInvitationAcceptedSubscription: {remove: () => void} | null = null;
+  private remoteInvitationRefusedSubscription: {remove: () => void} | null = null;
+  private remoteInvitationCanceledSubscription: {remove: () => void} | null = null;
+  private remoteInvitationFailureSubscription: {remove: () => void} | null = null;
   private channelMessageSubscription: {remove: () => void} | null = null;
   private channelMessageSubscriptionLower: {remove: () => void} | null = null;
+  private localInvitationAcceptedSubscription: {remove: () => void} | null = null;
+  private localInvitationRefusedSubscription: {remove: () => void} | null = null;
+  private localInvitationCanceledSubscription: {remove: () => void} | null = null;
+  private localInvitationFailureSubscription: {remove: () => void} | null = null;
   private currentLocalInvitation: any = null;
   private pendingRemoteInvitation: any = null;
   private joinedChannels = new Set<string>();
@@ -66,7 +77,9 @@ class AgoraRtmService {
       await engine.createInstance(AGORA_APP_ID);
       this.engine = engine;
       try {
-        await engine.loginV2(uid, token);
+        // Some RTM SDK builds treat undefined token as invalid.
+        // Pass empty string explicitly for unsecured projects.
+        await engine.loginV2(uid, token ?? '');
       } catch (e) {
         this.engine = null;
         try {
@@ -93,6 +106,67 @@ class AgoraRtmService {
           } catch (e) {
             console.warn('[Agora RTM] Failed to parse call invitation:', e);
           }
+        },
+      );
+
+      this.remoteInvitationAcceptedSubscription = this.engine!.addListener(
+        'RemoteInvitationAccepted',
+        () => {
+          this.pendingRemoteInvitation = null;
+        },
+      );
+
+      this.remoteInvitationRefusedSubscription = this.engine!.addListener(
+        'RemoteInvitationRefused',
+        () => {
+          this.pendingRemoteInvitation = null;
+          this.incomingInvitationEndedCallback?.();
+        },
+      );
+
+      this.remoteInvitationCanceledSubscription = this.engine!.addListener(
+        'RemoteInvitationCanceled',
+        () => {
+          this.pendingRemoteInvitation = null;
+          this.incomingInvitationEndedCallback?.();
+        },
+      );
+
+      this.remoteInvitationFailureSubscription = this.engine!.addListener(
+        'RemoteInvitationFailure',
+        () => {
+          this.pendingRemoteInvitation = null;
+          this.incomingInvitationEndedCallback?.();
+        },
+      );
+
+      this.localInvitationAcceptedSubscription = this.engine!.addListener(
+        'LocalInvitationAccepted',
+        () => {
+          this.currentLocalInvitation = null;
+          this.localInvitationAcceptedCallback?.();
+        },
+      );
+
+      this.localInvitationRefusedSubscription = this.engine!.addListener(
+        'LocalInvitationRefused',
+        () => {
+          this.currentLocalInvitation = null;
+          this.localInvitationRefusedCallback?.();
+        },
+      );
+
+      this.localInvitationCanceledSubscription = this.engine!.addListener(
+        'LocalInvitationCanceled',
+        () => {
+          this.currentLocalInvitation = null;
+        },
+      );
+
+      this.localInvitationFailureSubscription = this.engine!.addListener(
+        'LocalInvitationFailure',
+        () => {
+          this.currentLocalInvitation = null;
         },
       );
 
@@ -125,7 +199,19 @@ class AgoraRtmService {
       return true;
     } catch (error) {
       const errMsg = (error as Error)?.message || String(error);
+      const isRejected = errMsg.includes('REJECTED') || errMsg.includes('LOGIN_ERR');
       console.warn('[Agora RTM] Login failed:', errMsg);
+
+      if (isRejected && rtmToken) {
+        console.log('[Agora RTM] Retrying without token (unsecured project)...');
+        try {
+          await attemptLogin('');
+          console.log('[Agora RTM] Logged in without token for user:', uid);
+          return true;
+        } catch (retryErr) {
+          console.warn('[Agora RTM] Retry without token failed:', retryErr);
+        }
+      }
       await this.cleanup();
       return false;
     }
@@ -138,16 +224,35 @@ class AgoraRtmService {
     const wasLoggedIn = this.isLoggedIn;
     this.remoteInvitationSubscription?.remove();
     this.remoteInvitationSubscription = null;
+    this.remoteInvitationAcceptedSubscription?.remove();
+    this.remoteInvitationAcceptedSubscription = null;
+    this.remoteInvitationRefusedSubscription?.remove();
+    this.remoteInvitationRefusedSubscription = null;
+    this.remoteInvitationCanceledSubscription?.remove();
+    this.remoteInvitationCanceledSubscription = null;
+    this.remoteInvitationFailureSubscription?.remove();
+    this.remoteInvitationFailureSubscription = null;
     this.channelMessageSubscription?.remove();
     this.channelMessageSubscription = null;
     this.channelMessageSubscriptionLower?.remove();
     this.channelMessageSubscriptionLower = null;
+    this.localInvitationAcceptedSubscription?.remove();
+    this.localInvitationAcceptedSubscription = null;
+    this.localInvitationRefusedSubscription?.remove();
+    this.localInvitationRefusedSubscription = null;
+    this.localInvitationCanceledSubscription?.remove();
+    this.localInvitationCanceledSubscription = null;
+    this.localInvitationFailureSubscription?.remove();
+    this.localInvitationFailureSubscription = null;
     this.currentLocalInvitation = null;
     this.pendingRemoteInvitation = null;
     this.joinedChannels.clear();
     this.currentUserId = null;
     this.incomingCallCallback = null;
     this.incomingChatCallback = null;
+    this.incomingInvitationEndedCallback = null;
+    this.localInvitationAcceptedCallback = null;
+    this.localInvitationRefusedCallback = null;
     this.isLoggedIn = false;
 
     if (this.engine) {
@@ -193,6 +298,18 @@ class AgoraRtmService {
 
   setIncomingChatCallback(callback: IncomingChatCallback | null): void {
     this.incomingChatCallback = callback;
+  }
+
+  setIncomingInvitationEndedCallback(callback: (() => void) | null): void {
+    this.incomingInvitationEndedCallback = callback;
+  }
+
+  setLocalInvitationAcceptedCallback(callback: (() => void) | null): void {
+    this.localInvitationAcceptedCallback = callback;
+  }
+
+  setLocalInvitationRefusedCallback(callback: (() => void) | null): void {
+    this.localInvitationRefusedCallback = callback;
   }
 
   private getChatChannelId(chatId: string | number): string {

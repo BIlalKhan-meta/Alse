@@ -65,10 +65,22 @@ const IncomingVideoCall: React.FC<IncomingVideoCallProps> = ({route}) => {
     };
   }, [isRinging]);
 
+  useEffect(() => {
+    agoraRtmService.setIncomingInvitationEndedCallback(() => {
+      setIsRinging(false);
+      navigation.goBack();
+    });
+
+    return () => {
+      agoraRtmService.setIncomingInvitationEndedCallback(null);
+    };
+  }, [navigation]);
+
   // Handle accept call
   const handleAcceptCall = async () => {
     try {
       setIsRinging(false);
+      agoraRtmService.setIncomingInvitationEndedCallback(null);
 
       // Accept RTM invitation to complete signaling
       await agoraRtmService.acceptPendingInvitation();
@@ -112,6 +124,7 @@ const IncomingVideoCall: React.FC<IncomingVideoCallProps> = ({route}) => {
   // Handle decline call
   const handleDeclineCall = async () => {
     setIsRinging(false);
+    agoraRtmService.setIncomingInvitationEndedCallback(null);
     await agoraRtmService.refusePendingInvitation();
     // Handle missed call
     callManagerService.handleMissedCall(params.callerName);

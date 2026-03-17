@@ -24,6 +24,7 @@ import LocalControls from 'agora-rn-uikit/src/Controls/LocalControls';
 import {AGORA_APP_ID} from '../../config/agora';
 import {getAgoraToken, getAgoraTokenForAudience} from '../../api/calling';
 import callManagerService from '../../services/callManagerService';
+import agoraRtmService from '../../services/agoraRtmService';
 
 interface VideoCallRouteParams {
   channel: string;
@@ -46,6 +47,8 @@ const VideoCall: React.FC = () => {
   const [callDuration, setCallDuration] = useState(0);
   const [remoteUserJoined, setRemoteUserJoined] = useState(false);
   const [showNoAnswerModal, setShowNoAnswerModal] = useState(false);
+  const [isInvitationAccepted, setIsInvitationAccepted] = useState(false);
+  const [showDeclinedModal, setShowDeclinedModal] = useState(false);
   const callDurationRef = React.useRef(0);
 
   const channel = params.channel;
@@ -135,15 +138,35 @@ const VideoCall: React.FC = () => {
     [rtcProps, callbacks],
   );
 
+  useEffect(() => {
+    if (params.isIncoming) {
+      return;
+    }
+
+    agoraRtmService.setLocalInvitationAcceptedCallback(() => {
+      setIsInvitationAccepted(true);
+    });
+
+    agoraRtmService.setLocalInvitationRefusedCallback(async () => {
+      await callManagerService.endCall();
+      setShowDeclinedModal(true);
+    });
+
+    return () => {
+      agoraRtmService.setLocalInvitationAcceptedCallback(null);
+      agoraRtmService.setLocalInvitationRefusedCallback(null);
+    };
+  }, [params.isIncoming]);
+
   // Auto-end call if other user doesn't pick up within 10 seconds (outgoing calls only)
   useEffect(() => {
-    if (params.isIncoming || remoteUserJoined || !channel) return;
+    if (params.isIncoming || remoteUserJoined || !channel || isInvitationAccepted) return;
     const timer = setTimeout(async () => {
       await callManagerService.endCall();
       setShowNoAnswerModal(true);
     }, 10000);
     return () => clearTimeout(timer);
-  }, [params.isIncoming, remoteUserJoined, channel]);
+  }, [params.isIncoming, remoteUserJoined, channel, isInvitationAccepted]);
 
   // Call duration timer (starts only when remote user joins)
   useEffect(() => {
@@ -160,6 +183,7 @@ const VideoCall: React.FC = () => {
 
   const dismissNoAnswerModal = useCallback(() => {
     setShowNoAnswerModal(false);
+    setShowDeclinedModal(false);
     navigation.goBack();
   }, [navigation]);
 
@@ -203,6 +227,25 @@ const VideoCall: React.FC = () => {
             <Text style={styles.modalTitle}>Call Ended</Text>
             <Text style={styles.modalMessage}>
               The other user is busy or didn't pick up the call.
+            </Text>
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={dismissNoAnswerModal}
+              activeOpacity={0.8}>
+              <Text style={styles.modalButtonText}>OK</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+      <Modal
+        visible={showDeclinedModal}
+        transparent
+        animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Call Declined</Text>
+            <Text style={styles.modalMessage}>
+              The other user declined your call.
             </Text>
             <TouchableOpacity
               style={styles.modalButton}

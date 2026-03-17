@@ -3,7 +3,6 @@ import {useSelector} from 'react-redux';
 import {selectUserProfile, selectBearerToken} from '../../store/slices/authSlice';
 import agoraRtmService from '../../services/agoraRtmService';
 import {getRtmToken} from '../../api/calling';
-import {AGORA_RTM_TOKEN} from '../../config/agora';
 import {navigateToIncomingVideoCall} from '../../utils/navigationRef';
 
 /**
@@ -27,8 +26,7 @@ const IncomingCallHandler: React.FC = () => {
     const initRtm = async () => {
       console.log('[IncomingCallHandler] Initializing RTM for user:', user.id);
       const apiToken = await getRtmToken(user.id);
-      // Use API token, or fallback to config RTM token for incoming call modal
-      const rtmToken = apiToken?.trim() || AGORA_RTM_TOKEN || undefined;
+      const rtmToken = apiToken?.trim() || undefined;
       const success = await agoraRtmService.login(user.id, rtmToken);
       if (success) {
         hasInitialized.current = true;
@@ -44,7 +42,9 @@ const IncomingCallHandler: React.FC = () => {
         });
         console.log('[IncomingCallHandler] RTM ready: incoming call modal will work');
       } else {
-        console.log('[IncomingCallHandler] RTM not available: incoming call modal disabled, outgoing calls still work');
+        console.log(
+          '[IncomingCallHandler] RTM not available: backend RTM token is missing/invalid for this user or app certificate is enabled without a valid RTM token.',
+        );
       }
     };
 

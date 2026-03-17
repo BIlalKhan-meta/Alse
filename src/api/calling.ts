@@ -52,7 +52,7 @@ export interface ChannelUsersResponse {
 
 /**
  * Get RTM token for Agora signaling (call invitations).
- * Only returns rtm_token - never use signature (RTC token) as fallback, it causes LOGIN_ERR_REJECTED.
+ * Backend responses vary by project, so we read common token keys.
  */
 export const getRtmToken = async (userId: string | number): Promise<string | null> => {
   try {
@@ -60,7 +60,15 @@ export const getRtmToken = async (userId: string | number): Promise<string | nul
       `${endpoints.chat.getSignature}?session_name=rtm&chat_id=${userId}&role=1`,
     );
     const data = (res as any)?.data;
-    return data?.data?.rtm_token ?? data?.rtm_token ?? null;
+    const token =
+      data?.data?.rtm_token ??
+      data?.rtm_token ??
+      data?.data?.token ??
+      data?.token ??
+      data?.data?.signature ??
+      data?.signature ??
+      null;
+    return token ? String(token) : null;
   } catch {
     return null;
   }
