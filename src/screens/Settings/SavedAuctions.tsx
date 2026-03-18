@@ -207,7 +207,15 @@ const SavedAuctions = () => {
 
       <ScrollView
         style={styles.scrollContainer}
-        showsVerticalScrollIndicator={false}>
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[colors.themeColor]}
+            tintColor={colors.themeColor}
+          />
+        }>
         {/* Saved Auctions Header */}
         <View style={styles.languageHeader}>
           <InterLightAverage style={styles.languageTitle}>
@@ -226,14 +234,6 @@ const SavedAuctions = () => {
               }
               scrollEnabled={false}
               showsVerticalScrollIndicator={false}
-              refreshControl={
-                <RefreshControl
-                  refreshing={refreshing}
-                  onRefresh={onRefresh}
-                  colors={[colors.themeColor]}
-                  tintColor={colors.themeColor}
-                />
-              }
             />
           </View>
         ) : (
@@ -241,13 +241,6 @@ const SavedAuctions = () => {
             <InterRegular style={styles.emptyText}>
               {t('savedAuctions.noData')}
             </InterRegular>
-            <TouchableOpacity
-              style={styles.retryButton}
-              onPress={() => fetchSavedItems()}>
-              <InterRegular style={styles.retryButtonText}>
-                {t('retry')}
-              </InterRegular>
-            </TouchableOpacity>
           </View>
         )}
       </ScrollView>
