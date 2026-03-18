@@ -21,9 +21,7 @@ import Toast from 'react-native-toast-message';
 import useImagePicker from '../../hooks/useImagePicker-story';
 import {isAxiosError} from 'axios';
 import Loader from '../Loader';
-import {GetLiveStreams} from '../../api/liveStream';
 import {GradientBorderView} from '@good-react-native/gradient-border';
-import {useNavigation} from '@react-navigation/native';
 import Video from 'react-native-video';
 import {useSelector} from 'react-redux';
 import {selectUserProfile} from '../../store/slices/authSlice';
@@ -43,12 +41,6 @@ const getStoryMediaType = (story: any): 'image' | 'video' => {
   return VIDEO_EXTENSIONS.some(ext => url.includes(ext)) ? 'video' : 'image';
 };
 
-interface LiveStream {
-  user_id: number;
-  stream_key: string;
-  user_name: string;
-}
-
 export interface StoriesRef {
   refresh: () => Promise<void>;
 }
@@ -58,7 +50,6 @@ const Stories = forwardRef<StoriesRef>((_, ref) => {
   const [isInitialLoading, setIsInitialLoading] = useState<boolean>(true);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [stories, setStories] = useState<InstagramStoriesProps['stories']>([]);
-  const [liveStreams, setLiveStreams] = useState<LiveStream[]>([]);
   const {
     imageData,
     captureImage,
@@ -83,8 +74,6 @@ const Stories = forwardRef<StoriesRef>((_, ref) => {
   });
 
   const retryCountRef = useRef<number>(0);
-
-  const navigation = useNavigation();
 
   // Add current user info (ref ensures renderAvatar always reads latest avatar after profile update)
   const currentUser = useSelector(selectUserProfile);
@@ -142,48 +131,16 @@ const Stories = forwardRef<StoriesRef>((_, ref) => {
     }
   }, []);
 
-  // Fetch live streams with ability to control loading indicator
-  const getLiveStreams = useCallback(async (showLoadingIndicator = true) => {
-    try {
-      const {data} = await GetLiveStreams();
-
-      const streams = data?.live_streams?.map((stream: {stream_key: string; user_id: number; user: {full_name: string}}) => ({
-        stream_key: stream.stream_key,
-        user_id: stream.user_id,
-        user_name: stream.user.full_name,
-      }));
-
-      setLiveStreams(streams);
-
-      // Reset retry count on success
-      retryCountRef.current = 0;
-    } catch (err) {
-      console.error('ERROR:: LIVE STREAMS', err);
-      retryCountRef.current += 1;
-
-      if (retryCountRef.current >= MAX_RETRY_COUNT) {
-        Toast.show({
-          type: 'error',
-          text1: t('toast.livestreamRefreshFailed'),
-          text2: t('checkInternet'),
-        });
-      }
-    }
-  }, []);
-
   // Combined data fetching function
   const fetchData = useCallback(
     async (showLoadingIndicator = true) => {
       try {
-        // First get stories
         await getStories(showLoadingIndicator);
-        // Then get live streams after stories are loaded
-        await getLiveStreams(showLoadingIndicator);
       } catch (error) {
         console.error('Error in fetchData:', error);
       }
     },
-    [getStories, getLiveStreams],
+    [getStories],
   );
 
   // Expose refresh to parent (e.g. for pull-to-refresh)
@@ -195,27 +152,6 @@ const Stories = forwardRef<StoriesRef>((_, ref) => {
   useEffect(() => {
     fetchData(true);
   }, []);
-
-  // Update stories when live streams change
-  useEffect(() => {
-    if (liveStreams.length > 0) {
-      // Check if we already have live streams in the stories to prevent duplicates during polling
-      const existingLiveIds = new Set(
-        stories
-          .filter(story => story.stories.length === 0 && story.id !== '0') // Likely live streams
-          .map(story => story.id),
-      );
-
-      // Only add new live streams that aren't already in the stories
-      const newLiveStreams = formattedLives().filter(
-        liveStory => !existingLiveIds.has(liveStory.id),
-      );
-
-      if (newLiveStreams.length > 0) {
-        setStories(prevStories => [...prevStories, ...newLiveStreams]);
-      }
-    }
-  }, [liveStreams, stories]);
 
   const uploadFile = async (file: any) => {
     setIsUploading(true);
@@ -536,48 +472,6 @@ const Stories = forwardRef<StoriesRef>((_, ref) => {
       }
       return group;
     });
-  };
-
-  const onPressLive = (stream: LiveStream) => {
-    return (navigation as any).navigate('LiveStreamScreen', {
-      isHost: false,
-      stream_key: stream.stream_key,
-      channel: `live.${stream.stream_key}`,
-      streamerName: stream.user_name,
-      streamerAvatar: `https://randomuser.me/api/portraits/men/${stream.user_id}.jpg`,
-    });
-  };
-
-  const formattedLives = (): InstagramStoriesProps['stories'] => {
-    return liveStreams.map(stream => ({
-      id: `live-${stream.stream_key}`, // Prefix with 'live-' to make it unique from regular stories
-      avatarSource: {
-        uri: `https://randomuser.me/api/portraits/men/${stream.user_id}.jpg`,
-      },
-      renderAvatar: () => (
-        <TouchableOpacity
-          style={styles.avatarCenter}
-          onPress={() => onPressLive(stream)}>
-          <GradientBorderView
-            gradientProps={{
-              colors: ['white', 'red'],
-            }}
-            style={styles.squareGradientContainer}>
-            <Image
-              source={{
-                uri: `https://randomuser.me/api/portraits/men/${stream.user_id}.jpg`,
-              }}
-              style={styles.squareImage}
-            />
-          </GradientBorderView>
-          <View style={styles.liveLabelContainer}>
-            <Text style={styles.userName}>{stream.user_name} </Text>
-            <Text style={styles.liveText}>Live</Text>
-          </View>
-        </TouchableOpacity>
-      ),
-      stories: [],
-    }));
   };
 
   // Render the media preview UI

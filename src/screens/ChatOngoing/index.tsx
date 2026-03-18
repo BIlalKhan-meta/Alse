@@ -254,9 +254,9 @@ const ChatOngoing: React.FC<Props> = props => {
         typeof error === 'object' && error?.message
           ? String(error.message)
           : code === -1 || code === '-1'
-            ? 'The receiver may be offline or not have the app open. Please try again when they are available.'
+            ? 'The receiver may be offline. Please try again when they are available.'
             : 'Unable to initiate call. Please try again.';
-      Alert.alert('Call Failed', msg);
+      Alert.alert('Call Failed', msg || 'Unable to initiate call. Please try again.');
     } finally {
       setIsVideoCalling(false);
     }
