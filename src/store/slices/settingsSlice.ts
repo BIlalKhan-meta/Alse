@@ -5,7 +5,7 @@ import {
   getSellerSettings,
   updatePrivacySettings,
   updateNotificationSettings,
-  updateSellerSettings,
+  updateNotificationToggle,
 } from '../../api/settings';
 import {editProfile} from '../../api/profile';
 import {GetUserProfile} from './authSlice';
@@ -82,6 +82,7 @@ interface SettingsState {
   universalSettings: UniversalSettings;
   loading: boolean;
   profileUpdateLoading: boolean; // Separate loading state for profile updates
+  notificationToggleLoading: boolean;
   error: string | null;
 }
 
@@ -103,6 +104,7 @@ const initialState: SettingsState = {
   },
   loading: false,
   profileUpdateLoading: false,
+  notificationToggleLoading: false,
   error: null,
 };
 
@@ -122,7 +124,7 @@ export const fetchAllSettings = createAsyncThunk(
 
     return {
       security: privacyRes.data,
-      notifications: notifRes.data,
+      notifications: notifRes.data?.data ?? notifRes.data,
       seller: sellerRes.data,
     };
   },
@@ -168,6 +170,23 @@ export const saveNotificationSettings = createAsyncThunk(
   async ({formData, id}: {formData: FormData; id: number}) => {
     const res = await updateNotificationSettings(formData, id);
     return res.data;
+  },
+);
+
+export const saveNotificationToggle = createAsyncThunk(
+  'settings/saveNotificationToggle',
+  async (
+    {typeKey, value}: {typeKey: string; value: boolean},
+    {rejectWithValue},
+  ) => {
+    try {
+      const res = await updateNotificationToggle(typeKey as any, value);
+      return {typeKey, value, data: res.data?.data ?? res.data};
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data || error.message || 'Failed to update toggle',
+      );
+    }
   },
 );
 
@@ -282,6 +301,29 @@ export const settingsSlice = createSlice({
     builder.addCase(saveNotificationSettings.fulfilled, (state, action) => {
       state.notifications = action.payload;
     });
+    builder.addCase(saveNotificationToggle.pending, state => {
+      state.notificationToggleLoading = true;
+    });
+    builder.addCase(saveNotificationToggle.fulfilled, (state, action) => {
+      state.notificationToggleLoading = false;
+      const {typeKey, value} = action.payload || {};
+      if (typeKey) {
+        if (!state.notifications) {
+          state.notifications = {
+            push_enabled: true,
+            email_enabled: true,
+            types: {} as NotificationTypes,
+          };
+        }
+        if (!state.notifications.types) {
+          state.notifications.types = {} as NotificationTypes;
+        }
+        state.notifications.types[typeKey as keyof NotificationTypes] = value;
+      }
+    });
+    builder.addCase(saveNotificationToggle.rejected, state => {
+      state.notificationToggleLoading = false;
+    });
     builder.addCase(saveSellerSettings.fulfilled, (state, action) => {
       state.seller = action.payload;
     });
@@ -302,5 +344,9 @@ export const {
 export const selectProfileData = (state: any) => state.settings.profile;
 export const selectProfileUpdateLoading = (state: any) =>
   state.settings.profileUpdateLoading;
+export const selectNotificationSettings = (state: any) =>
+  state.settings.notifications;
+export const selectNotificationToggleLoading = (state: any) =>
+  state.settings.notificationToggleLoading;
 
 export default settingsSlice.reducer;

@@ -1,25 +1,78 @@
-import React, {useState} from 'react';
-import {View, ScrollView, Text, Switch} from 'react-native';
+import React, {useEffect, useCallback} from 'react';
+import {View, ScrollView, Text, Switch, Modal, ActivityIndicator} from 'react-native';
 import styles from './styles';
 import {useSelector} from 'react-redux';
-import {selectUserProfile} from '../../store/slices/authSlice';
+import {useAppDispatch} from '../../hooks/storeHooks';
+import {
+  selectNotificationSettings,
+  selectNotificationToggleLoading,
+  fetchAllSettings,
+  saveNotificationToggle,
+  updateNotifications,
+} from '../../store/slices/settingsSlice';
 import {useAppTranslation} from '../../i18n/hooks/useAppTranslation';
 import GlobalHeader from '../../components/GlobalHeader';
 import {colors} from '../../utils/theme';
 
+// Map UI toggles to API types
+const TOGGLE_MAP = {
+  like: 'social_likes',
+  comment: 'social_comments',
+  follows: 'social_follows',
+  newPosts: 'seller_new_orders',
+  auctionUpdates: 'marketplace_orders',
+} as const;
+
 const NotificationsSettings = () => {
-  // TODO need to fetch Social activity settings from slice and display
-  const user = useSelector(selectUserProfile);
+  const dispatch = useAppDispatch();
+  const notifications = useSelector(selectNotificationSettings);
   const {t} = useAppTranslation();
 
-  const [like, setLike] = useState(true);
-  const [comment, setComment] = useState(true);
-  const [follows, setFollows] = useState(true);
-  const [newPosts, setNewPosts] = useState(true);
-  const [auctionUpdates, setAuctionUpdates] = useState(true);
+  // Use API values; default to false when not yet loaded (avoids assuming "on")
+  // Coerce to boolean - API returns 0/1 or true/false
+  const toBool = (v: unknown) => v === true || v === 1 || v === '1';
+  const like = toBool(notifications?.types?.social_likes);
+  const toggleLoading = useSelector(selectNotificationToggleLoading);
+  const comment = toBool(notifications?.types?.social_comments);
+  const follows = toBool(notifications?.types?.social_follows);
+  const newPosts = toBool(notifications?.types?.seller_new_orders);
+  const auctionUpdates = toBool(notifications?.types?.marketplace_orders);
+
+  useEffect(() => {
+    dispatch(fetchAllSettings());
+  }, [dispatch]);
+
+  const handleToggle = useCallback(
+    (key: keyof typeof TOGGLE_MAP, value: boolean) => {
+      const apiKey = TOGGLE_MAP[key];
+      // Optimistic update: flip switch immediately
+      dispatch(
+        updateNotifications({
+          types: {
+            ...(notifications?.types ?? {}),
+            [apiKey]: value,
+          },
+        }),
+      );
+      // POST only the updated toggle to API
+      dispatch(saveNotificationToggle({typeKey: apiKey, value}));
+    },
+    [dispatch, notifications],
+  );
 
   return (
     <View style={styles.container}>
+      <Modal visible={toggleLoading} transparent>
+        <View
+          style={{
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: 'rgba(0,0,0,0.3)',
+          }}>
+          <ActivityIndicator size="large" color={colors.themeColor} />
+        </View>
+      </Modal>
       {/* Header */}
       <View style={styles.header}>
         <GlobalHeader icon={true} />
@@ -42,7 +95,7 @@ const NotificationsSettings = () => {
             <View style={styles.switchContainer}>
               <Switch
                 value={like}
-                onValueChange={setLike}
+                onValueChange={v => handleToggle('like', v)}
                 trackColor={{false: '#E5E7EB', true: colors.themeColor}}
                 thumbColor={'#FFFFFF'}
                 ios_backgroundColor={'#E5E7EB'}
@@ -57,7 +110,7 @@ const NotificationsSettings = () => {
             <View style={styles.switchContainer}>
               <Switch
                 value={comment}
-                onValueChange={setComment}
+                onValueChange={v => handleToggle('comment', v)}
                 trackColor={{false: '#E5E7EB', true: colors.themeColor}}
                 thumbColor={'#FFFFFF'}
                 ios_backgroundColor={'#E5E7EB'}
@@ -72,7 +125,7 @@ const NotificationsSettings = () => {
             <View style={styles.switchContainer}>
               <Switch
                 value={follows}
-                onValueChange={setFollows}
+                onValueChange={v => handleToggle('follows', v)}
                 trackColor={{false: '#E5E7EB', true: colors.themeColor}}
                 thumbColor={'#FFFFFF'}
                 ios_backgroundColor={'#E5E7EB'}
@@ -89,7 +142,7 @@ const NotificationsSettings = () => {
             <View style={styles.switchContainer}>
               <Switch
                 value={newPosts}
-                onValueChange={setNewPosts}
+                onValueChange={v => handleToggle('newPosts', v)}
                 trackColor={{false: '#E5E7EB', true: colors.themeColor}}
                 thumbColor={'#FFFFFF'}
                 ios_backgroundColor={'#E5E7EB'}
@@ -104,7 +157,7 @@ const NotificationsSettings = () => {
             <View style={styles.switchContainer}>
               <Switch
                 value={auctionUpdates}
-                onValueChange={setAuctionUpdates}
+                onValueChange={v => handleToggle('auctionUpdates', v)}
                 trackColor={{false: '#E5E7EB', true: colors.themeColor}}
                 thumbColor={'#FFFFFF'}
                 ios_backgroundColor={'#E5E7EB'}
