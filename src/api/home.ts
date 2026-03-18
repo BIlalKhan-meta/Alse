@@ -31,9 +31,7 @@ export const postComment = (formData: FormData, id: number) => {
 };
 
 export const createPost = (formData: FormData) => {
-  return axiosInstance.post(endpoints.home.createPost, formData, {
-    formData: true,
-  });
+  return uploadWithFetch(endpoints.home.createPost, formData);
 };
 
 export const editPost = (formData: FormData, id: number) => {

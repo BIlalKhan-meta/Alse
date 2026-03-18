@@ -29,10 +29,20 @@ import {useSelector} from 'react-redux';
 import {selectUserProfile} from '../../store/slices/authSlice';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useTranslation} from 'react-i18next';
+import MediaModal from '../MediaModal';
 
 // Constants
 const POLLING_INTERVAL = 30000; // 30 seconds
 const MAX_RETRY_COUNT = 3;
+
+const VIDEO_EXTENSIONS = ['.mp4', '.mov', '.webm', '.m4v', '.avi', '.3gp'];
+
+const getStoryMediaType = (story: any): 'image' | 'video' => {
+  const type = story?.media_type || story?.type;
+  if (type === 'video' || type === 'image') return type;
+  const url = (story?.media_url || '').toLowerCase();
+  return VIDEO_EXTENSIONS.some(ext => url.includes(ext)) ? 'video' : 'image';
+};
 
 interface LiveStream {
   user_id: number;
@@ -58,6 +68,17 @@ const Stories = () => {
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [pollingEnabled, setPollingEnabled] = useState<boolean>(true);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
+  const [storyMediaModal, setStoryMediaModal] = useState<{
+    visible: boolean;
+    mediaUrl: string;
+    mediaType: 'image' | 'video';
+    userName: string;
+  }>({
+    visible: false,
+    mediaUrl: '',
+    mediaType: 'image',
+    userName: '',
+  });
 
   // Refs for polling management
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -342,10 +363,6 @@ const Stories = () => {
         avatarSource: {uri: ''},
         stories: [],
         renderAvatar: () => {
-          if (isUploading) {
-            return <Loader />;
-          }
-
           const avatarUri = getAbsoluteAvatarUrl(currentUserRef.current?.avatar);
           const avatarSource = avatarUri ? {uri: avatarUri} : images.profile;
 
@@ -456,13 +473,18 @@ const Stories = () => {
     const groupedStories = stories.reduce((acc, story) => {
       const userId = String(story.user.id);
       const isCurrentUserStory = userId === String(currentUser.id);
+      const avatarUri =
+        story?.user?.avatar && story.user.avatar !== 'null'
+          ? getAbsoluteAvatarUrl(story.user.avatar)
+          : '';
+      const avatarSource = avatarUri ? {uri: avatarUri} : images.profile;
 
       if (!acc[userId]) {
         acc[userId] = {
           id: userId,
           name: story.user.full_name || 'Unknown User',
           avatarSource: {
-            uri: story?.user?.avatar && story.user.avatar !== 'null' ? story.user.avatar : '',
+            uri: avatarUri || '',
           },
           stories: [],
         };
@@ -471,6 +493,8 @@ const Stories = () => {
       const storyItem = {
         id: String(story.id),
         source: {uri: story.media_url},
+        mediaType: getStoryMediaType(story),
+        mediaUrl: getAbsoluteAvatarUrl(story.media_url) || story.media_url,
         // Use renderFooter instead of renderStoryHeader
         renderFooter: isCurrentUserStory
           ? () => (
@@ -492,8 +516,58 @@ const Stories = () => {
       return acc;
     }, {});
 
-    // Convert the grouped object to array
-    return Object.values(groupedStories);
+    // Convert to array and add custom renderAvatar for current user (opens MediaModal on tap)
+    const result = Object.values(
+      groupedStories,
+    ) as InstagramStoriesProps['stories'];
+    return result.map(group => {
+      if (group.id === String(currentUser.id) && group.stories.length > 0) {
+        const firstStory = group.stories[0] as any;
+        const mediaUrl = firstStory.mediaUrl || firstStory.source?.uri || '';
+        const mediaType =
+          (firstStory.mediaType as 'image' | 'video') ||
+          getStoryMediaType({media_url: mediaUrl});
+        return {
+          ...group,
+          // Pass empty stories so library doesn't open its viewer; we use MediaModal instead
+          stories: [],
+          renderAvatar: () => (
+            <TouchableOpacity
+              style={styles.avatarCenter}
+              activeOpacity={0.8}
+              onPress={() =>
+                setStoryMediaModal({
+                  visible: true,
+                  mediaUrl,
+                  mediaType,
+                  userName: group.name || '',
+                })
+              }>
+              <GradientBorderView
+                gradientProps={{
+                  colors: ['#FF7A51', '#FFDB5C'],
+                }}
+                style={styles.addStoryAvatarContainer}>
+                <Image
+                  source={
+                    (group.avatarSource as {uri?: string})?.uri
+                      ? {
+                          uri: getAbsoluteAvatarUrl(
+                            (group.avatarSource as {uri: string}).uri,
+                          ),
+                        }
+                      : images.profile
+                  }
+                  style={styles.addStoryAvatar}
+                />
+              </GradientBorderView>
+              <Text style={styles.storyName}>{group.name}</Text>
+            </TouchableOpacity>
+          ),
+        };
+      }
+      return group;
+    });
   };
 
   const onPressLive = (stream: LiveStream) => {
@@ -623,6 +697,21 @@ const Stories = () => {
           textAlign: 'center',
         }}
       />
+
+      <MediaModal
+        visible={storyMediaModal.visible}
+        onClose={() =>
+          setStoryMediaModal({
+            visible: false,
+            mediaUrl: '',
+            mediaType: 'image',
+            userName: '',
+          })
+        }
+        mediaUrl={storyMediaModal.mediaUrl}
+        mediaType={storyMediaModal.mediaType}
+        userName={storyMediaModal.userName}
+      />
     </View>
   );
 };
@@ -690,6 +779,7 @@ const styles = StyleSheet.create({
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
+    marginHorizontal: 4,
   },
   liveLabelContainer: {
     display: 'flex',

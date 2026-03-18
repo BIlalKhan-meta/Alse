@@ -230,6 +230,26 @@ const styles = StyleSheet.create({
     backgroundColor: '#F0F0F0',
     marginHorizontal: 16,
   },
+  loaderOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  loaderContent: {
+    backgroundColor: colors.white,
+    paddingHorizontal: 32,
+    paddingVertical: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    minWidth: 160,
+  },
+  loaderText: {
+    marginTop: 12,
+    fontSize: fontSizes.f14,
+    color: colors.black,
+    fontWeight: '500',
+  },
 });
 
 export default styles;

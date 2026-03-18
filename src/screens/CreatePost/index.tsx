@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   FlatList,
   Image,
+  Modal,
   ScrollView,
   Text,
   TextInput,
@@ -19,6 +20,7 @@ import useImagePicker from '../../hooks/useImagePicker';
 import {postCreate} from '../../store/slices/homeSlice';
 import {ensurePhotoPermission, getMessage, Toast} from '../../utils/helpers';
 import {images} from '../../utils/images';
+import {colors} from '../../utils/theme';
 import styles from './styles';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 
@@ -233,6 +235,14 @@ const CreatePost: React.FC = () => {
 
   return (
     <View style={styles.container}>
+      <Modal visible={isLoading} transparent animationType="fade">
+        <View style={styles.loaderOverlay}>
+          <View style={styles.loaderContent}>
+            <ActivityIndicator size="large" color={colors.themeColor} />
+            <Text style={styles.loaderText}>Creating post...</Text>
+          </View>
+        </View>
+      </Modal>
       <GlobalHeader />
       <View
         style={{
