@@ -20,14 +20,16 @@ export const commentLike = (id: number, commentId: number) => {
   return axiosInstance.post(`/post/${id}/comment/${commentId}/like`);
 };
 
+export const getCommentLikes = (postId: number, commentId: number) => {
+  return axiosInstance.get(`/post/${postId}/comment/${commentId}/likes`);
+};
+
 export const getPostComment = (id: number) => {
   return axiosInstance.get(`/post/${id}/comments`);
 };
 
 export const postComment = (formData: FormData, id: number) => {
-  return axiosInstance.post(`/post/${id}/comment`, formData, {
-    formData: true,
-  });
+  return uploadWithFetch(`/post/${id}/comment`, formData);
 };
 
 export const createPost = (formData: FormData) => {

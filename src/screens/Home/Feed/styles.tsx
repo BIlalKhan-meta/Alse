@@ -1,6 +1,6 @@
 import {StyleSheet} from 'react-native';
 import {colors} from '../../../utils/theme';
-import {DEVICE_WIDTH, vh, vw} from '../../../constant';
+import {DEVICE_WIDTH, fontSizes, vh, vw} from '../../../constant';
 
 const styles = StyleSheet.create({
   container: {
@@ -108,6 +108,26 @@ const styles = StyleSheet.create({
   },
   feedContainer: {
     flex: 1,
+  },
+  loaderOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  loaderContent: {
+    backgroundColor: colors.white,
+    paddingHorizontal: 32,
+    paddingVertical: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    minWidth: 160,
+  },
+  loaderText: {
+    marginTop: 12,
+    fontSize: fontSizes.f14,
+    color: colors.black,
+    fontWeight: '500',
   },
 });
 

@@ -7,6 +7,7 @@ import {
   fetchMyPost,
   fetchProfileById,
   getBlockedUsers,
+  getCommentLikes,
   getFollowersList,
   getFollowingList,
   getPostComment,
@@ -65,9 +66,17 @@ export const likePost = createAsyncThunk(
 );
 
 export const likeComment = createAsyncThunk(
-  'post/likePost',
+  'post/likeComment',
   async ({id, commentId}: {id: number; commentId: number}) => {
     const response = await commentLike(id, commentId);
+    return response;
+  },
+);
+
+export const getCommentLikesThunk = createAsyncThunk(
+  'post/getCommentLikes',
+  async ({postId, commentId}: {postId: number; commentId: number}) => {
+    const response = await getCommentLikes(postId, commentId);
     return response;
   },
 );

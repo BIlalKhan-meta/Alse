@@ -1,18 +1,15 @@
 import {
+  ActivityIndicator,
   FlatList,
   Image,
   ImageSourcePropType,
   KeyboardAvoidingView,
   Modal,
   Platform,
-  StyleProp,
-  StyleSheet,
   Text,
   TextInput,
-  TextStyle,
   TouchableOpacity,
   View,
-  ViewStyle,
 } from 'react-native';
 
 import {colors} from '../../utils/theme';
@@ -27,14 +24,19 @@ import {images} from '../../utils/images';
 import InterMedium from '../Text/InterMedium';
 import InterRegular from '../Text/InterRegular';
 import RegularTextInput from '../TextInput/RegularTextInput';
-import {commentPost, likeComment} from '../../store/slices/homeSlice';
+import {
+  getCommentLikesThunk,
+  likeComment,
+} from '../../store/slices/homeSlice';
 import {useAppDispatch} from '../../hooks/storeHooks';
 import {selectUserProfile} from '../../store/slices/authSlice';
 import {useSelector} from 'react-redux';
 import {capitalize} from '../../utils';
 import {postComment} from '../../api/home';
+import {getMessage, Toast} from '../../utils/helpers';
 import {vh, vw} from '../../constant';
 import {EmptyComponent} from '../EmptyComponent';
+import LikesModal from '../LikesModal';
 import {useNavigation} from '@react-navigation/native';
 import React from 'react';
 
@@ -64,6 +66,12 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
   const {visible, closeModal, comments, postId} = props;
   const [newComment, setNewComment] = useState('');
   const [commentsData, setCommentsData] = useState(comments);
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const [commentLikesVisible, setCommentLikesVisible] = useState<{
+    visible: boolean;
+    likes: any[];
+  }>({visible: false, likes: []});
+  const [isFetchingCommentLikes, setIsFetchingCommentLikes] = useState(false);
   const navigation = useNavigation();
 
   useEffect(() => {
@@ -76,27 +84,38 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
     if (newComment.length == 0) {
       return;
     }
-    let form = new FormData();
-    form.append('comment', newComment.trim());
+    const commentText = newComment.trim();
+    const form = new FormData();
+    form.append('comment', commentText);
 
-    console.log(JSON.stringify(form, null, 4));
-
-    const comment: Comment = {
+    const optimisticComment: Comment = {
       id: Date.now(),
       user: {
         avatar: user?.avatar,
         full_name: user?.full_name || user?.first_name + ' ' + user?.last_name,
       },
-      comment: newComment.trim(),
+      comment: commentText,
       is_liked: false,
       total_likes: 0,
     };
 
-    setCommentsData([...commentsData, comment]);
+    const previousComments = commentsData;
+    setCommentsData([...commentsData, optimisticComment]);
     setNewComment('');
-    await postComment(form, postId)
-      .then(res => console.log('RESSSSSSSSSSSSSS', res))
-      .catch(err => console.log('ERROOOOOOOOOORRRRRRRRRRRR', err));
+    setIsSubmittingComment(true);
+
+    try {
+      await postComment(form, postId);
+    } catch (err: any) {
+      setCommentsData(previousComments);
+      const message =
+        err?.message === 'Network Error'
+          ? 'Please check your internet connection and try again.'
+          : getMessage(err);
+      Toast.error(message);
+    } finally {
+      setIsSubmittingComment(false);
+    }
   };
 
   const handleLikePress = (id: number) => {
@@ -123,6 +142,28 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
     if (user.id != id) {
       navigation.navigate('Profile', {privacy, id});
     }
+  };
+
+  const handleCommentLikesPress = (commentId: number, totalLikes: number) => {
+    if (totalLikes === 0) {
+      setCommentLikesVisible({visible: true, likes: []});
+      return;
+    }
+    setIsFetchingCommentLikes(true);
+    dispatch(getCommentLikesThunk({postId, commentId}))
+      .unwrap()
+      .then((res: any) => {
+        const likes =
+          res?.data?.data?.data ?? res?.data?.data ?? res?.data ?? [];
+        setCommentLikesVisible({visible: true, likes});
+      })
+      .catch(err => {
+        console.log('error fetching comment likes', err);
+        Toast.error(getMessage(err?.message));
+      })
+      .finally(() => {
+        setIsFetchingCommentLikes(false);
+      });
   };
 
   return (
@@ -198,14 +239,18 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
                     </TouchableOpacity>
                   </View>
 
-                  <View style={styles.postActions}>
+                  <TouchableOpacity
+                    style={styles.postActions}
+                    onPress={() =>
+                      handleCommentLikesPress(item?.id, item?.total_likes ?? 0)
+                    }>
                     <View style={styles.leftActions}>
                       <Image source={images.like} style={styles.icon} />
                       <InterRegular style={styles.actionText}>
                         {item?.total_likes}
                       </InterRegular>
                     </View>
-                  </View>
+                  </TouchableOpacity>
                   <View style={styles.separator} />
                 </View>
               );
@@ -222,13 +267,36 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
                 onChangeText={setNewComment}
               />
             </View>
-            <TouchableOpacity style={styles.send} onPress={handleCommentSubmit}>
+            <TouchableOpacity
+              style={styles.send}
+              onPress={handleCommentSubmit}
+              disabled={isSubmittingComment}>
               <Image source={images.send} style={styles.icon} />
             </TouchableOpacity>
           </View>
           {/* </View> */}
         </KeyboardAvoidingView>
       </Modal>
+      <Modal
+        visible={isSubmittingComment || isFetchingCommentLikes}
+        transparent
+        animationType="fade">
+        <View style={styles.loaderOverlay}>
+          <View style={styles.loaderContent}>
+            <ActivityIndicator size="large" color={colors.themeColor} />
+            <Text style={styles.loaderText}>
+              {isSubmittingComment ? 'Posting comment...' : 'Loading likes...'}
+            </Text>
+          </View>
+        </View>
+      </Modal>
+      <LikesModal
+        visible={commentLikesVisible.visible}
+        closeModal={() =>
+          setCommentLikesVisible({visible: false, likes: []})
+        }
+        likes={commentLikesVisible.likes}
+      />
     </>
   );
 };

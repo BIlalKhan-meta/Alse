@@ -1,4 +1,4 @@
-import React, {useEffect, useState, useRef, useCallback} from 'react';
+import React, {useEffect, useState, useRef, useCallback, forwardRef, useImperativeHandle} from 'react';
 import {
   Image,
   PermissionsAndroid,
@@ -32,7 +32,6 @@ import {useTranslation} from 'react-i18next';
 import MediaModal from '../MediaModal';
 
 // Constants
-const POLLING_INTERVAL = 30000; // 30 seconds
 const MAX_RETRY_COUNT = 3;
 
 const VIDEO_EXTENSIONS = ['.mp4', '.mov', '.webm', '.m4v', '.avi', '.3gp'];
@@ -50,7 +49,11 @@ interface LiveStream {
   user_name: string;
 }
 
-const Stories = () => {
+export interface StoriesRef {
+  refresh: () => Promise<void>;
+}
+
+const Stories = forwardRef<StoriesRef>((_, ref) => {
   // State management
   const [isInitialLoading, setIsInitialLoading] = useState<boolean>(true);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
@@ -66,7 +69,6 @@ const Stories = () => {
     cancelMedia,
   } = useImagePicker();
   const [isUploading, setIsUploading] = useState<boolean>(false);
-  const [pollingEnabled, setPollingEnabled] = useState<boolean>(true);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
   const [storyMediaModal, setStoryMediaModal] = useState<{
     visible: boolean;
@@ -80,8 +82,6 @@ const Stories = () => {
     userName: '',
   });
 
-  // Refs for polling management
-  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const retryCountRef = useRef<number>(0);
 
   const navigation = useNavigation();
@@ -132,14 +132,6 @@ const Stories = () => {
           text1: t('toast.storyRefreshFailed'),
           text2: t('checkInternet'),
         });
-
-        // Temporarily disable polling on excessive failures
-        if (pollingEnabled) {
-          stopPolling();
-          setTimeout(() => {
-            startPolling();
-          }, POLLING_INTERVAL * 2); // Retry after double the interval
-        }
       }
     } finally {
       if (showLoadingIndicator) {
@@ -194,38 +186,14 @@ const Stories = () => {
     [getStories, getLiveStreams],
   );
 
-  // Start polling mechanism
-  const startPolling = useCallback(() => {
-    if (pollingIntervalRef.current) {
-      clearInterval(pollingIntervalRef.current);
-    }
+  // Expose refresh to parent (e.g. for pull-to-refresh)
+  useImperativeHandle(ref, () => ({
+    refresh: () => fetchData(false),
+  }), [fetchData]);
 
-    pollingIntervalRef.current = setInterval(() => {
-      fetchData(false); // Don't show loading indicator during refresh
-    }, POLLING_INTERVAL);
-
-    setPollingEnabled(true);
-  }, [fetchData]);
-
-  // Stop polling mechanism
-  const stopPolling = useCallback(() => {
-    if (pollingIntervalRef.current) {
-      clearInterval(pollingIntervalRef.current);
-      pollingIntervalRef.current = null;
-    }
-
-    setPollingEnabled(false);
-  }, []);
-
-  // Initialize data fetch and polling
+  // Initial data fetch only (no polling)
   useEffect(() => {
-    fetchData(true); // Initial load with loading indicator
-    startPolling();
-
-    // Cleanup on unmount
-    return () => {
-      stopPolling();
-    };
+    fetchData(true);
   }, []);
 
   // Update stories when live streams change
@@ -714,7 +682,7 @@ const Stories = () => {
       />
     </View>
   );
-};
+});
 
 // Styles for the preview modal
 const styles = StyleSheet.create({

@@ -1,11 +1,15 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
-import {View, FlatList, TouchableOpacity, Animated} from 'react-native';
-import {images} from '../../../utils/images';
 import {
-  useFocusEffect,
-  useIsFocused,
-  useNavigation,
-} from '@react-navigation/native';
+  View,
+  FlatList,
+  TouchableOpacity,
+  Animated,
+  Modal,
+  ActivityIndicator,
+  Text,
+} from 'react-native';
+import {images} from '../../../utils/images';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import styles from './styles';
 import PostComponent from '../../../components/PostComponent';
 import CommentsModal from '../../../components/CommentsModal';
@@ -22,10 +26,14 @@ import {
   updateLike,
 } from '../../../store/slices/homeSlice';
 import InterRegular from '../../../components/Text/InterRegular';
-import {getMessage, Toast, getAbsoluteAvatarUrl} from '../../../utils/helpers';
+import {
+  getMessage,
+  Toast,
+  getAbsoluteAvatarUrl,
+} from '../../../utils/helpers';
+import {colors} from '../../../utils/theme';
 import {getCountriesList, reportPost} from '../../../api/home';
 import {removeSavedItem, saveItem} from '../../../api/menu';
-import {getProfile} from '../../../api/profile';
 import {checkIsSeller} from '../../../api/shop';
 import {vh, vw} from '../../../constant';
 import {getCountries} from '../../../store/slices/generalSlice';
@@ -39,7 +47,7 @@ import {
 } from '../../../store/slices/authSlice';
 import eventEmitter, {EVENT_TYPES} from '../../../utils/EventEmitter';
 import LikesModal from '../../../components/LikesModal';
-import Stories from '../../../components/Stories';
+import Stories, {StoriesRef} from '../../../components/Stories';
 import {Plus} from 'lucide-react-native';
 import PostSkeleton from '../../../components/SkeletonLoaders';
 import {useTranslation} from 'react-i18next';
@@ -49,20 +57,18 @@ import {values} from 'lodash';
 
 const Home: React.FC = () => {
   const flatListRef = useRef<FlatList>(null);
+  const storiesRef = useRef<StoriesRef>(null);
   const [focusedIndex, setFocusedIndex] = useState<number | null>(0);
   const navigation = useNavigation<any>();
   const dispatch = useAppDispatch();
-  const isFoused = useIsFocused();
   const user = useSelector(selectUserProfile);
 
   const {t} = useTranslation();
 
   const {posts} = useAppSelector(state => state.home);
 
-  console.log('=-=-=', JSON.stringify(posts));
-
-  const [loader, _setLoader] = useState(false);
-  const [initialLoading, setInitialLoading] = useState(true); // New state for initial load
+  const [refreshing, setRefreshing] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
 
   const [commentsVisible, setCommentsVisible] = useState<{
     visiblity: boolean;
@@ -106,6 +112,7 @@ const Home: React.FC = () => {
   const [reportSuccess, setReportSuccess] = useState(false);
 
   const [shareLoader, _setShareLoader] = useState(false);
+  const [commentsLoading, setCommentsLoading] = useState(false);
 
   const [isFabOpen, setIsFabOpen] = useState(false);
   const animation = useRef(new Animated.Value(0)).current;
@@ -145,66 +152,36 @@ const Home: React.FC = () => {
     setIsFabOpen(!isFabOpen);
   };
 
-  const getApi = useCallback(async () => {
-    try {
-      setInitialLoading(true);
-      await dispatch(GetNewsFeed());
-      await dispatch(GetUserProfile());
-      await getCountriesList().then(res => {
-        if (res?.data) {
-          dispatch(getCountries(res?.data?.data));
+  // Fetch all home data: feed, profile, countries, user/shops, stories, live-streams
+  const fetchAllData = useCallback(
+    async (showInitialLoading = false) => {
+      try {
+        if (showInitialLoading) {
+          setInitialLoading(true);
         }
-      });
-    } catch (error) {
-      console.log('Error fetching data:', error);
-    } finally {
-      setInitialLoading(false);
-    }
-  }, [dispatch]);
-
-  // Function to get and log user type information
-  const getUserTypeInfo = useCallback(async () => {
-    try {
-      console.log('🔍 Fetching user type information...');
-
-      // Get user profile (contains user_type field)
-      const profileResponse = await getProfile();
-      console.log(
-        '👤 User Profile Response:',
-        JSON.stringify(profileResponse.data, null, 2),
-      );
-
-      if (profileResponse.data?.data?.user_type) {
-        console.log('🏷️ User Type:', profileResponse.data.data.user_type);
-      }
-
-      // Check if user is a seller
-      const sellerResponse = await checkIsSeller();
-      console.log(
-        '🏪 Seller Check Response:',
-        JSON.stringify(sellerResponse.data, null, 2),
-      );
-
-      const hasShops =
-        sellerResponse.data?.data?.data &&
-        sellerResponse.data.data.data.length > 0;
-      console.log('🛍️ Is Seller (has shops):', hasShops);
-
-      if (hasShops) {
-        console.log(
-          '🏪 Number of shops:',
-          sellerResponse.data.data.data.length,
-        );
-        sellerResponse.data.data.data.forEach((shop: any, index: number) => {
-          console.log(
-            `🏪 Shop ${index + 1}: ${shop.shop_name} (ID: ${shop.id})`,
-          );
+        await dispatch(GetNewsFeed());
+        await dispatch(GetUserProfile());
+        await getCountriesList().then(res => {
+          if (res?.data) {
+            dispatch(getCountries(res?.data?.data));
+          }
         });
+        await checkIsSeller();
+        await storiesRef.current?.refresh();
+      } catch (error) {
+        console.log('Error fetching data:', error);
+      } finally {
+        setInitialLoading(false);
+        setRefreshing(false);
       }
-    } catch (error) {
-      console.log('❌ Error fetching user type info:', error);
-    }
-  }, []);
+    },
+    [dispatch],
+  );
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchAllData(false);
+  }, [fetchAllData]);
 
   useEffect(() => {
     notificationListenerInstance.init(closePaymentProcess);
@@ -214,17 +191,8 @@ const Home: React.FC = () => {
     if (!user?.has_subscription && !user?.is_child) {
       navigation.navigate('SubscriptionPlan');
     }
-    getApi();
-    // Call getUserTypeInfo to log user type information
-    getUserTypeInfo();
-  }, [
-    isFoused,
-    getApi,
-    getUserTypeInfo,
-    navigation,
-    user?.has_subscription,
-    user?.is_child,
-  ]);
+    fetchAllData(true);
+  }, [navigation, user?.has_subscription, user?.is_child]);
 
   const scrollToTop = () => {
     if (flatListRef.current) {
@@ -233,20 +201,21 @@ const Home: React.FC = () => {
   };
 
   const handleCommentPress = (id: any) => {
+    setCommentsLoading(true);
     dispatch(getCommentPost(id))
       .then((res: any) => {
-        console.log(
-          res?.payload?.data?.data?.data,
-          'Commentsss Ressss frommm screennnn ',
-        );
         setCommentsVisible({
           visiblity: true,
-          comments: res?.payload?.data?.data?.data,
+          comments: res?.payload?.data?.data?.data ?? [],
           id: id,
         });
       })
       .catch(err => {
-        console.log('error from like post', err);
+        console.log('error from fetch comments', err);
+        Toast.error(getMessage(err?.message));
+      })
+      .finally(() => {
+        setCommentsLoading(false);
       });
   };
 
@@ -282,7 +251,7 @@ const Home: React.FC = () => {
           id: null,
         });
         setReportLoader(false);
-        getApi();
+        fetchAllData(false);
         setDeleteSuccess(true);
         handleDotPress(null);
       })
@@ -318,7 +287,7 @@ const Home: React.FC = () => {
           id: null,
         });
         setReportLoader(false);
-        getApi();
+        fetchAllData(false);
         setReportSuccess(true);
         handleDotPress(null);
       })
@@ -467,8 +436,16 @@ const Home: React.FC = () => {
 
   return (
     <View style={styles.mainContainer}>
+      <Modal visible={commentsLoading} transparent animationType="fade">
+        <View style={styles.loaderOverlay}>
+          <View style={styles.loaderContent}>
+            <ActivityIndicator size="large" color={colors.themeColor} />
+            <Text style={styles.loaderText}>Loading comments...</Text>
+          </View>
+        </View>
+      </Modal>
       <View style={styles.contentContainer}>
-        <Stories />
+        <Stories ref={storiesRef} />
 
         <View style={styles.feedContainer}>
           {initialLoading ? (
@@ -479,8 +456,8 @@ const Home: React.FC = () => {
               onViewableItemsChanged={onViewableItemsChanged}
               viewabilityConfig={{itemVisiblePercentThreshold: 50}}
               data={posts}
-              onRefresh={getApi}
-              refreshing={loader}
+              onRefresh={handleRefresh}
+              refreshing={refreshing}
               renderItem={renderPost}
               contentContainerStyle={{paddingBottom: vh * 10}}
               keyExtractor={item => item.id.toString()}
@@ -547,7 +524,7 @@ const Home: React.FC = () => {
             visible={commentsVisible.visiblity}
             closeModal={() => {
               setCommentsVisible({visiblity: false, comments: [], id: null});
-              getApi();
+              fetchAllData(false);
             }}
             icon={images.checkedIcon}
             title="Successfully"
@@ -562,7 +539,7 @@ const Home: React.FC = () => {
             likes={likesVisible.likes as any}
             closeModal={() => {
               setLikesVisible({visiblity: false, likes: [], id: null});
-              getApi();
+              fetchAllData(false);
             }}
           />
 
