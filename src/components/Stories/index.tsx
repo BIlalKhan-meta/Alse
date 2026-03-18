@@ -541,6 +541,7 @@ const Stories = forwardRef<StoriesRef>((_, ref) => {
   const onPressLive = (stream: LiveStream) => {
     return (navigation as any).navigate('LiveStreamScreen', {
       isHost: false,
+      stream_key: stream.stream_key,
       channel: `live.${stream.stream_key}`,
       streamerName: stream.user_name,
       streamerAvatar: `https://randomuser.me/api/portraits/men/${stream.user_id}.jpg`,

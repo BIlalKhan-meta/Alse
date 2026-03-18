@@ -1,0 +1,38 @@
+diff --git a/node_modules/@zegocloud/zego-uikit-prebuilt-call-rn/lib/module/services/invitation.js b/node_modules/@zegocloud/zego-uikit-prebuilt-call-rn/lib/module/services/invitation.js
+index c4e39d7..ebcad67 100644
+--- a/node_modules/@zegocloud/zego-uikit-prebuilt-call-rn/lib/module/services/invitation.js
++++ b/node_modules/@zegocloud/zego-uikit-prebuilt-call-rn/lib/module/services/invitation.js
+@@ -72,22 +72,25 @@ export default class ZegoUIKitPrebuiltCallInvitation {
+           'source': 'sendCallInvitation'
+         });
+         zloginfo(`[CallInvitation]Send invitation success, code: ${code}, message: ${message}, errorInvitees: ${errorInvitees}`);
+-        if (inviteeIDs.length > errorInvitees.length) {
++        const errInvitees = Array.isArray(errorInvitees) ? errorInvitees : [];
++        if (inviteeIDs.length > errInvitees.length) {
+           const successfulInvitees = JSON.parse(JSON.stringify(inviteeIDs));
+-          errorInvitees.forEach(errorInviteeID => {
++          errInvitees.forEach(errorInviteeID => {
+             const index = successfulInvitees.findIndex(inviteeID => errorInviteeID === inviteeID);
+             index !== -1 && successfulInvitees.splice(index, 1);
+           });
+           this.onInvitationSent(navigation, callID, invitees, successfulInvitees, roomID, isVideoCall, callName, showWaitingPageWhenGroupCall);
+           resolve();
+         } else {
+-          reject(-1, 'All invitees failed.');
++          // Still show waiting screen when receiver is offline - call proceeds, receiver can get push when online
++          this.onInvitationSent(navigation, callID || roomID, invitees, [], roomID, isVideoCall, callName, showWaitingPageWhenGroupCall);
++          resolve();
+         }
+-      }).catch(({
+-        code,
+-        message
+-      }) => {
+-        reject(code, message);
++      }).catch((err) => {
++        // When ZIM rejects (e.g. receiver offline), still show waiting screen so call proceeds
++        zloginfo(`[CallInvitation]Send invitation failed, showing waiting screen anyway:`, err);
++        this.onInvitationSent(navigation, roomID, invitees, [], roomID, isVideoCall, callName, showWaitingPageWhenGroupCall);
++        resolve();
+       });
+     });
+   }

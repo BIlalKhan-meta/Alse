@@ -33,13 +33,15 @@ import {
   uploadImages,
   uploadVideo,
 } from '../../api/home';
-import {selectUserProfile} from '../../store/slices/authSlice';
+import {selectUserProfile, selectBearerToken} from '../../store/slices/authSlice';
 import {connectSocket, emitMessage, listenMessage} from '../../utils/socket';
 import {renderComposer, SendWithLoader} from './InputToolbar';
 // @ts-ignore
 import call from 'react-native-phone-call';
 import ZegoUIKitPrebuiltCallService from '@zegocloud/zego-uikit-prebuilt-call-rn';
 import ReportBlockModal from '../../components/ReportBlockModal';
+import zegoCallService from '../../services/zegoCallService';
+import {navigationRef} from '../../utils/navigationRef';
 import {DEVICE_HEIGHT} from '../../constant';
 import useImagePicker from '../../hooks/useImagePicker-story';
 import {
@@ -68,6 +70,7 @@ const ChatOngoing: React.FC<Props> = props => {
   const [messages, setMessages] = useState<IMessage[]>([]);
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const user = useSelector(selectUserProfile);
+  const token = useSelector(selectBearerToken);
   const [phoneModalVisible, setPhoneModalVisible] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isCalling, setIsCalling] = useState(false);
@@ -190,6 +193,31 @@ const ChatOngoing: React.FC<Props> = props => {
     try {
       setIsVideoCalling(true);
 
+      // Ensure ZEGOCLOUD is initialized (may take a moment after login)
+      if (!zegoCallService.isLoggedIn()) {
+        if (token && user?.id) {
+          console.log('[ChatOngoing] ZEGOCLOUD not ready, attempting init...');
+          await zegoCallService.init(
+            user.id,
+            user.full_name || user.name || `user_${user.id}`,
+          );
+        }
+        if (!zegoCallService.isLoggedIn()) {
+          console.log('[ChatOngoing] ZEGOCLOUD not ready, waiting up to 3s...');
+          for (let i = 0; i < 6; i++) {
+            await new Promise(r => setTimeout(r, 500));
+            if (zegoCallService.isLoggedIn()) break;
+          }
+        }
+        if (!zegoCallService.isLoggedIn()) {
+          Alert.alert(
+            'Call Unavailable',
+            'Call service is still initializing. Please wait a moment and try again.',
+          );
+          return;
+        }
+      }
+
       const chatId = props?.route?.params?.id;
       const channel = chatId ? `chat_${chatId}` : `call_${Date.now()}`;
       const receiverName =
@@ -206,18 +234,29 @@ const ChatOngoing: React.FC<Props> = props => {
         receiverName,
       });
 
+      // Use navigationRef for reliable navigation to call screens
+      const nav = navigationRef.isReady() ? navigationRef : (navigation as any);
+      if (!nav?.navigate) {
+        Alert.alert('Call Failed', 'Navigation not ready. Please try again.');
+        return;
+      }
+
       await ZegoUIKitPrebuiltCallService.sendCallInvitation(
         [{userID: receiverId, userName: receiverName}],
         callType === 'video',
-        navigation as any,
+        nav,
         {callID: channel},
       );
-    } catch (error) {
-      console.error('Video call error:', error);
-      Alert.alert(
-        'Call Failed',
-        (error as any)?.message || 'Unable to initiate call. Please try again.',
-      );
+    } catch (error: any) {
+      console.error('[ChatOngoing] Video call error:', error);
+      const code = error?.code ?? error;
+      const msg =
+        typeof error === 'object' && error?.message
+          ? String(error.message)
+          : code === -1 || code === '-1'
+            ? 'The receiver may be offline or not have the app open. Please try again when they are available.'
+            : 'Unable to initiate call. Please try again.';
+      Alert.alert('Call Failed', msg);
     } finally {
       setIsVideoCalling(false);
     }

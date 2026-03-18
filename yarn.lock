@@ -3170,6 +3170,11 @@
   resolved "https://registry.yarnpkg.com/@zegocloud/zego-uikit-prebuilt-call-rn/-/zego-uikit-prebuilt-call-rn-6.6.9.tgz#772e1d6d278c0a90e16615c29a72fbb4bde06857"
   integrity sha512-TEuZ8X2ql+tNvOp7wtaK+WfPuPbt+AvqN2CEIGS5dggTzgG0Km6W90uRdwzQq1KBcWnn8XSRDY4mTQPUH1aF6Q==
 
+"@zegocloud/zego-uikit-prebuilt-live-streaming-rn@^2.9.0":
+  version "2.9.0"
+  resolved "https://registry.yarnpkg.com/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/-/zego-uikit-prebuilt-live-streaming-rn-2.9.0.tgz#145a82d7c0580c7a7e0d743aa1f507fdb958e826"
+  integrity sha512-TM9NxEK4oRo64s/BGluKFsp6hKYND6WGH6o4InUFzz0dqPh6GAJCWBoBwn1XHvLatJttuEhTo61Z2Lg1vP7QYQ==
+
 "@zegocloud/zego-uikit-rn@^2.19.2":
   version "2.19.2"
   resolved "https://registry.yarnpkg.com/@zegocloud/zego-uikit-rn/-/zego-uikit-rn-2.19.2.tgz#34c7777a7bb59aa5f6dc8f8027ab33bf1f9406fb"
@@ -8050,6 +8055,11 @@ react-native-network-logger@^2.0.0:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/react-native-network-logger/-/react-native-network-logger-2.0.1.tgz#d365d9af0b68fe5ebbb5f80580d4c757558ca23b"
   integrity sha512-qR03Uvk2ihmII0hX128UOu+ykl7QH2XOqbj3YEcV4pMxj2JA7CvfuasAoLl8FZe0C8JQFHCHX0zo00/RcJdk0g==
+
+react-native-orientation-locker@^1.7.0:
+  version "1.7.0"
+  resolved "https://registry.yarnpkg.com/react-native-orientation-locker/-/react-native-orientation-locker-1.7.0.tgz#47ef2b9c24618e40f0a521f184b51270e576b028"
+  integrity sha512-2PhG4UyRJktb3KCTISStuu8/q+Q3q3oPesGg9DhdY0b6Cu/ZzxkCvkbJte2TPWRYkS0JpClimvqVaonulGvDrA==
 
 react-native-pager-view@^6.3.3:
   version "6.9.1"
