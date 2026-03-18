@@ -177,6 +177,8 @@ export default {
     noPosts: 'Aucune publication à afficher',
     edit: 'Modifier le profil',
     share: 'Partager le profil',
+    linkCopied: 'Lien du profil copié dans le presse-papiers. Vous pouvez le partager avec n\'importe qui.',
+    getShareLink: 'Obtention du lien de partage...',
     loading: 'Chargement des publications...',
   },
 

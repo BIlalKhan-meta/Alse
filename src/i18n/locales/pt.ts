@@ -173,6 +173,8 @@ export default {
     noPosts: 'Nenhuma publicação para mostrar',
     edit: 'Editar perfil',
     share: 'Compartilhar perfil',
+    linkCopied: 'Link do perfil copiado para a área de transferência. Você pode compartilhá-lo com qualquer pessoa.',
+    getShareLink: 'Obtendo link para compartilhar...',
     loading: 'Carregando publicações...',
   },
 

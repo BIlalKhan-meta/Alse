@@ -7,7 +7,12 @@ import {
   ScrollView,
   FlatList,
   RefreshControl,
+  Modal,
+  StyleSheet,
+  Platform,
 } from 'react-native';
+import {BlurView} from '@react-native-community/blur';
+import Clipboard from '@react-native-clipboard/clipboard';
 import {useIsFocused, useNavigation} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
 import {images} from '../../utils/images';
@@ -29,13 +34,16 @@ import {
 import {useAppDispatch} from '../../hooks/storeHooks';
 import Loader from '../../components/Loader';
 import GlobalHeader from '../../components/GlobalHeader';
+import GeneralModal from '../../components/GeneralModal';
+import {shareProfile} from '../../api/profile';
+import Toast from 'react-native-toast-message';
 
 import styles from './styles';
 import {colors} from '../../utils/theme';
 import {useTranslation} from 'react-i18next';
 import Card from '../../components/Card';
 import InterMedium from '../../components/Text/InterMedium';
-import {vw} from '../../constant';
+import {vw, vh} from '../../constant';
 
 interface PostItem {
   id: string;
@@ -61,6 +69,8 @@ const MyProfile: React.FC = () => {
   const postsLoading = useSelector(selectPostsLoading);
 
   const [avatarError, setAvatarError] = useState(false);
+  const [shareLoading, setShareLoading] = useState(false);
+  const [shareSuccessModal, setShareSuccessModal] = useState(false);
 
   // Initialize profile data when user is available
   useEffect(() => {
@@ -204,10 +214,34 @@ const MyProfile: React.FC = () => {
     (navigation as any).navigate('Settings', {isEditMode: true});
   }, [navigation]);
 
-  const handleShareProfile = useCallback(() => {
-    // Implement share functionality
-    console.log('Share Profile');
-  }, []);
+  const handleShareProfile = useCallback(async () => {
+    setShareLoading(true);
+    try {
+      const response = await shareProfile();
+      const data = response?.data?.data ?? response?.data ?? response;
+      const link =
+        data?.link ?? data?.share_url ?? data?.url ?? data?.share_link ?? '';
+      if (link) {
+        Clipboard.setString(link);
+        setShareSuccessModal(true);
+      } else {
+        Toast.show({
+          type: 'error',
+          text1: t('profileScr.share'),
+          text2: 'No share link received',
+        });
+      }
+    } catch (error) {
+      console.error('Error sharing profile:', error);
+      Toast.show({
+        type: 'error',
+        text1: t('profileScr.share'),
+        text2: 'Failed to get share link',
+      });
+    } finally {
+      setShareLoading(false);
+    }
+  }, [t]);
 
   // Helper function to get display avatar
   const getDisplayAvatar = useCallback(() => {
@@ -350,8 +384,72 @@ const MyProfile: React.FC = () => {
           />
         </View>
       </ScrollView>
+
+      {/* Share loading overlay */}
+      <Modal visible={shareLoading} transparent animationType="fade">
+        <BlurView
+          style={shareModalStyles.blur}
+          blurType="dark"
+          blurAmount={8}
+          reducedTransparencyFallbackColor="rgba(0,0,0,0.6)"
+        />
+        <View style={shareModalStyles.overlay}>
+          <View style={shareModalStyles.loaderCard}>
+            <Loader size="large" />
+            <Text style={shareModalStyles.loaderText}>
+              {t('profileScr.getShareLink')}
+            </Text>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Profile link copied success modal */}
+      <GeneralModal
+        visible={shareSuccessModal}
+        closeModal={() => setShareSuccessModal(false)}
+        icon={images.checkedIcon}
+        title={t('profileScr.share')}
+        message={t('profileScr.linkCopied')}
+        buttonText={t('ok')}
+        onPress={() => setShareSuccessModal(false)}
+        primaryBtn={true}
+      />
     </View>
   );
 };
+
+const shareModalStyles = StyleSheet.create({
+  blur: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loaderCard: {
+    width: vw * 70,
+    minHeight: vh * 18,
+    backgroundColor: colors.white,
+    borderRadius: 16,
+    paddingVertical: vh * 3,
+    paddingHorizontal: vw * 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...(Platform.OS === 'ios'
+      ? {
+          shadowColor: '#000',
+          shadowOffset: {width: 0, height: 4},
+          shadowOpacity: 0.15,
+          shadowRadius: 12,
+        }
+      : {elevation: 8}),
+  },
+  loaderText: {
+    marginTop: vh * 2,
+    fontSize: 15,
+    color: colors.inputText,
+  },
+});
 
 export default MyProfile;

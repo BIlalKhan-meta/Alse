@@ -171,6 +171,8 @@ export default {
     noPosts: '暂无帖子',
     edit: '编辑资料',
     share: '分享个人资料',
+    linkCopied: '个人资料链接已复制到剪贴板。您可以与任何人分享。',
+    getShareLink: '正在获取分享链接...',
     loading: '正在加载帖子...',
   },
 

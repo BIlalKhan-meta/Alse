@@ -173,6 +173,8 @@ export default {
     noPosts: 'Hakuna machapisho ya kuonyesha',
     edit: 'Hariri Profaili',
     share: 'Shiriki Profaili',
+    linkCopied: 'Kiungo cha profaili kimeigwa kwenye ubao wa kunakili. Unaweza kushiriki na mtu yeyote.',
+    getShareLink: 'Inapata kiungo cha kushiriki...',
     loading: 'Inapakia machapisho...',
   },
 

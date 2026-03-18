@@ -197,6 +197,8 @@ export default {
     noPosts: 'No posts to show',
     edit: 'Edit Profile',
     share: 'Share Profile',
+    linkCopied: 'Profile link copied to clipboard. You can share it with anyone.',
+    getShareLink: 'Getting share link...',
     loading: 'Loading posts...',
   },
 

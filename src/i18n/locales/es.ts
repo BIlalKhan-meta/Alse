@@ -172,6 +172,8 @@ export default {
     noPosts: 'No hay publicaciones para mostrar',
     edit: 'Editar perfil',
     share: 'Compartir perfil',
+    linkCopied: 'Enlace del perfil copiado al portapapeles. Puedes compartirlo con cualquiera.',
+    getShareLink: 'Obteniendo enlace para compartir...',
     loading: 'Cargando publicaciones...',
   },
 

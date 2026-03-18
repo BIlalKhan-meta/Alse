@@ -48,3 +48,7 @@ export const getUserPosts = (userId: string) => {
 export const deleteAccount = () => {
   return axiosInstance.post(endpoints.profile.deleteAccount);
 };
+
+export const shareProfile = () => {
+  return axiosInstance.get(endpoints.profile.share);
+};
