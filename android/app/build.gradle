@@ -63,8 +63,8 @@ android {
         applicationId "com.blitzapp.alenga.alse"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 12
-        versionName "12.0"
+        versionCode 13
+        versionName "13.0"
 
         //  ndk {
             // abiFilters "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
