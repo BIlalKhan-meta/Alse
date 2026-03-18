@@ -13,6 +13,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import DropDownTextInput from '../../components/TextInput/DropDownTextInput';
 import Video from 'react-native-video';
 import GlobalHeader from '../../components/GlobalHeader';
 import {useAppDispatch} from '../../hooks/storeHooks';
@@ -24,7 +25,7 @@ import {timeHelper} from '../../utils';
 import useImagePicker from '../../hooks/useImagePicker-story';
 import {images} from '../../utils/images';
 import moment from 'moment';
-import {createVideo} from '../../api/reels';
+import {createVideo, getVideoCategories} from '../../api/reels';
 
 const PRIVACY_OPTIONS = [
   {label: 'Public', value: 'public'},
@@ -44,6 +45,8 @@ const CreateReel: React.FC = () => {
 
   const [privacy, setPrivacy] = useState<string>('public');
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [categories, setCategories] = useState<{id: number; title: string}[]>([]);
+  const [categoryId, setCategoryId] = useState<number | null>(null);
 
   const {imageData, chooseImageFromLibrary} = useImagePicker();
 
@@ -65,6 +68,18 @@ const CreateReel: React.FC = () => {
 
   useEffect(() => {
     loadRecentVideos();
+  }, []);
+
+  useEffect(() => {
+    getVideoCategories()
+      .then(res => {
+        const list = res?.data?.data ?? res?.data ?? [];
+        if (Array.isArray(list) && list.length > 0) {
+          setCategories(list);
+          setCategoryId(list[0].id);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   useLayoutEffect(() => {
@@ -123,9 +138,14 @@ const CreateReel: React.FC = () => {
       return;
     }
 
+    if (!categoryId) {
+      Toast.error('Please select a category');
+      return;
+    }
+
     const formData = new FormData();
     formData.append('title', title);
-    formData.append('category_id', 6); // Fixed category ID for reels
+    formData.append('category_id', categoryId.toString());
     formData.append('content', content);
     formData.append('privacy', privacy);
     formData.append('video_file', {
@@ -146,7 +166,8 @@ const CreateReel: React.FC = () => {
       .catch(err => {
         console.log('=-=-= error: ', err);
         setIsLoading(false);
-        Toast.error(getMessage(err?.message));
+        const errorBody = err?.response?.data ?? err?.message ?? err;
+        Toast.error(getMessage(errorBody));
       });
 
     // dispatch(videoCreate({formData, categoryId: 1}))
@@ -308,33 +329,16 @@ const CreateReel: React.FC = () => {
           </View>
 
           {/* Category Selection */}
-          {/* <View style={styles.inputSection}>
+          <View style={[styles.inputSection, {zIndex: 1000}]}>
             <Text style={styles.label}>Category *</Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.categoryScroll}>
-              {CATEGORIES.map(category => (
-                <TouchableOpacity
-                  key={category.id}
-                  style={[
-                    styles.categoryChip,
-                    selectedCategory === category.id &&
-                      styles.categoryChipSelected,
-                  ]}
-                  onPress={() => setSelectedCategory(category.id)}>
-                  <Text
-                    style={[
-                      styles.categoryText,
-                      selectedCategory === category.id &&
-                        styles.categoryTextSelected,
-                    ]}>
-                    {category.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View> */}
+            <DropDownTextInput
+              items={categories.map(c => ({label: c.title, value: c.id.toString()}))}
+              placeholder="Select a category"
+              defaultValue={categoryId?.toString()}
+              onChangeValue={v => setCategoryId(v ? parseInt(v, 10) : null)}
+              style={styles.textInput}
+            />
+          </View>
 
           {/* Privacy Selection */}
           <View style={styles.inputSection}>

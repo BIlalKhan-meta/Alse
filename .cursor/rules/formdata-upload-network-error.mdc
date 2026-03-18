@@ -1,0 +1,74 @@
+---
+description: Fix FormData/Network Error when uploading files in React Native
+globs: src/api/**/*.ts, src/screens/**/*.tsx
+alwaysApply: false
+---
+
+# FormData Upload Network Error Fix
+
+## Problem
+
+When uploading files (images, videos) via `FormData` using **axios** in React Native, you may see a generic "Network Error" in the toaster. This is a known issue with axios + FormData on React Native (especially Android).
+
+## Solution
+
+Use native `fetch()` instead of axios for FormData uploads. Do **not** set `Content-Type` header—let fetch set `multipart/form-data` with the correct boundary automatically.
+
+## Implementation Pattern
+
+Create an `uploadWithFetch` helper and use it for any FormData upload:
+
+```typescript
+import store from '../store';
+import {BASE_URL} from '../utils/baseurl';
+
+const UPLOAD_TIMEOUT_MS = 60000; // 60s for images, 120000 for videos
+
+async function uploadWithFetch(path: string, body: FormData): Promise<{data: any}> {
+  const token = store.getState().auth.token;
+  const url = `${BASE_URL.replace(/\/$/, '')}${path}`;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), UPLOAD_TIMEOUT_MS);
+
+  const headers: Record<string, string> = { Accept: 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  // Do NOT set Content-Type – fetch sets multipart/form-data with boundary
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers,
+      body,
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const err: any = new Error(response.statusText || 'Upload failed');
+      err.response = { status: response.status, data };
+      throw err;
+    }
+    return { data };
+  } catch (e: any) {
+    clearTimeout(timeoutId);
+    if (e.name === 'AbortError') {
+      const err: any = new Error('Network request timeout');
+      err.code = 'ECONNABORTED';
+      throw err;
+    }
+    throw e;
+  }
+}
+```
+
+## Existing Usage
+
+This pattern is already used in:
+- `src/api/home.ts` – `uploadImages`, `uploadVideo`, `createGroup`
+- `src/api/stories.ts` – `AddStory`
+- `src/api/reels.ts` – `createVideo`
+- `src/api/product.ts` – `postFormDataWithFetch` for cart
+
+## When to Apply
+
+If you encounter a "Network Error" when uploading files (FormData) anywhere in the app, switch that API call from `axiosInstance.post(..., formData, { formData: true })` to `uploadWithFetch(endpoint, formData)`.

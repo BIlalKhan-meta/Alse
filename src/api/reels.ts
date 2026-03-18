@@ -1,5 +1,63 @@
 import axiosInstance from '.';
 import endpoints from './endpoints';
+import store from '../store';
+import {BASE_URL} from '../utils/baseurl';
+
+const UPLOAD_TIMEOUT_MS = 120000; // 2 min for video uploads
+
+/**
+ * Upload FormData via fetch. Avoids axios FormData/Android Network Error issues.
+ */
+async function uploadWithFetch(
+  path: string,
+  body: FormData,
+): Promise<{data: any}> {
+  const token = store.getState().auth.token;
+  const url = `${BASE_URL.replace(/\/$/, '')}${path}`;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), UPLOAD_TIMEOUT_MS);
+
+  const headers: Record<string, string> = {
+    Accept: 'application/json',
+  };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers,
+      body,
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const err: any = new Error(response.statusText || 'Upload failed');
+      err.response = {status: response.status, data};
+      throw err;
+    }
+    return {data};
+  } catch (e: any) {
+    clearTimeout(timeoutId);
+    if (e.name === 'AbortError') {
+      const err: any = new Error('Network request timeout');
+      err.code = 'ECONNABORTED';
+      throw err;
+    }
+    throw e;
+  }
+}
+
+/**
+ * Fetch video categories. Uses same /categories endpoint as blogs/products.
+ * Backend validates category_id against the categories table.
+ */
+export const getVideoCategories = () => {
+  return axiosInstance.get(endpoints.products.category);
+};
 
 export const getVideos = (page = 1, limit = 10) => {
   console.log('Fetching videos with page:', page, 'limit:', limit);
@@ -20,8 +78,7 @@ export const uploadVideo = (formData: FormData, categoryId: number) => {
     },
   );
 };
+
 export const createVideo = (formData: FormData) => {
-  return axiosInstance.post('/video/create', formData, {
-    formData: true,
-  });
+  return uploadWithFetch('/video/create', formData);
 };
