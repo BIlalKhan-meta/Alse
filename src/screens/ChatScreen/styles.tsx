@@ -19,6 +19,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: vw * 4,
     paddingVertical: vh * 2,
+    marginTop: vh * 4,
     backgroundColor: colors.white,
     elevation: 2,
     shadowColor: '#000',
