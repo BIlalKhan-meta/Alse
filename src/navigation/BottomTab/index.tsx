@@ -31,6 +31,15 @@ const TabNavigation = () => {
       <Tab.Screen
         name="HomeNavigation"
         component={HomeNavigation}
+        listeners={({navigation}) => ({
+          tabPress: () => {
+            // After visiting Chat (or other stack screens) from Home FAB, switching
+            // away and back must show the news feed, not the preserved stack top.
+            navigation.navigate('HomeNavigation', {
+              screen: 'Home',
+            });
+          },
+        })}
         options={{
           tabBarIcon: ({focused}) => (
             <View style={styles.tabButton}>
