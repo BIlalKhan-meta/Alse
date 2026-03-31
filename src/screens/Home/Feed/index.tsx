@@ -30,6 +30,7 @@ import {
   getMessage,
   Toast,
   getAbsoluteAvatarUrl,
+  getPrimaryNewsfeedMedia,
 } from '../../../utils/helpers';
 import {colors} from '../../../utils/theme';
 import {getCountriesList, reportPost} from '../../../api/home';
@@ -330,11 +331,12 @@ const Home: React.FC = () => {
   };
 
   const handleMediaPress = (item: any) => {
-    if (item?.media?.[0]?.path) {
+    const primary = getPrimaryNewsfeedMedia(item?.media);
+    if (primary?.path) {
       setMediaModalVisible({
         visible: true,
-        mediaUrl: item.media[0].path,
-        mediaType: item.media[0].type === 'image' ? 'image' : 'video',
+        mediaUrl: primary.path,
+        mediaType: primary.type === 'video' ? 'video' : 'image',
         userName: item.fullname || '',
         postTime: timeFormat(item.date, true),
       });
@@ -343,6 +345,7 @@ const Home: React.FC = () => {
 
   const renderPost = ({item, index}: any) => {
     const isFocused = focusedIndex === index;
+    const primaryMedia = getPrimaryNewsfeedMedia(item?.media);
     // console.log('---', item);
 
     // if (index !== 0) return <></>;
@@ -356,8 +359,8 @@ const Home: React.FC = () => {
         country={item?.country ? item?.country : ''}
         time={timeFormat(item?.date, true)}
         postText={item?.description}
-        postImage={item?.media[0]?.path}
-        mediaType={item?.media[0]?.type}
+        postImage={primaryMedia?.path ?? ''}
+        mediaType={primaryMedia?.type ?? 'image'}
         likes={item?.likes?.length}
         comments={item?.total_comments}
         share={item?.share}

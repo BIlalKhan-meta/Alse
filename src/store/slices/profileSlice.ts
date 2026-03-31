@@ -1,5 +1,6 @@
 import {createSlice, createAsyncThunk} from '@reduxjs/toolkit';
 import {editProfile, getUserPosts} from '../../api/profile';
+import {getPrimaryNewsfeedMedia} from '../../utils/helpers';
 
 interface PostItem {
   id: string;
@@ -68,7 +69,8 @@ export const fetchUserPosts = createAsyncThunk(
         .filter((post: ApiPost) => post.media && post.media.length > 0)
         .map((post: ApiPost) => ({
           id: post.id.toString(),
-          uri: post.media[0].path, // Use first media item's path for grid display
+          uri:
+            getPrimaryNewsfeedMedia(post.media)?.path ?? post.media[0].path,
           title: post.description,
         }));
 

@@ -38,7 +38,7 @@ import {
 import InterRegular from '../../components/Text/InterRegular';
 import dayjs from 'dayjs';
 import Loader from '../../components/Loader';
-import {getMessage, Toast} from '../../utils/helpers';
+import {getMessage, Toast, getPrimaryNewsfeedMedia} from '../../utils/helpers';
 import {timeFormat, timeHelper} from '../../utils';
 import {removeSavedItem, saveItem} from '../../api/menu';
 import LikesModal from '../../components/LikesModal';
@@ -246,11 +246,12 @@ const MyPosts: React.FC = () => {
   const renderPost = ({item, index}) => {
     console.log('Item from render Post ====>', item?.media);
     const isFocused = focusedIndex === index;
+    const primaryMedia = getPrimaryNewsfeedMedia(item?.media);
     return (
       <PostComponent
         isFocused={isFocused}
         id={item?.user_id}
-        postID={item?.media[0]?.post_id}
+        postID={primaryMedia?.post_id ?? item?.media?.[0]?.post_id}
         avatar={item?.avatar}
         name={item?.fullname}
         country={item.country ? item.country : ''}
@@ -258,9 +259,9 @@ const MyPosts: React.FC = () => {
         postText={item?.description}
         isPaused={pause && currendId == item?.id}
         handleVideoPause={() => handleVideoPause(item?.id)}
-        postImage={item?.media[0]?.path}
-        mediaType={item?.media[0]?.type}
-        mediaId={item?.media[0]?.id}
+        postImage={primaryMedia?.path}
+        mediaType={primaryMedia?.type ?? 'image'}
+        mediaId={primaryMedia?.id ?? item?.media?.[0]?.id}
         likes={item?.total_likes}
         comments={item?.total_comments}
         share={item.share}

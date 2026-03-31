@@ -1,15 +1,19 @@
 import React, {useEffect, useState} from 'react';
-import {
-  View,
-  Image,
-  ActivityIndicator,
-  StyleSheet,
-  ImageProps,
-} from 'react-native';
+import {Image, ImageProps} from 'react-native';
 import {images} from '../utils/images';
 
 interface CustomeImageInterface extends ImageProps {
   dummyImage?: any;
+}
+
+function isRemoteHttpUri(source: ImageProps['source']): boolean {
+  return (
+    !!source &&
+    typeof source === 'object' &&
+    'uri' in source &&
+    typeof (source as {uri: string}).uri === 'string' &&
+    /^https?:\/\//.test((source as {uri: string}).uri)
+  );
 }
 
 const CustomImage = ({
@@ -17,63 +21,39 @@ const CustomImage = ({
   resizeMode = 'cover',
   style,
   dummyImage = images.profile,
+  onError,
   ...props
 }: CustomeImageInterface) => {
-  const [validUrl, setValidUrl] = useState(false);
-  const [checking, setChecking] = useState(true);
+  const [failed, setFailed] = useState(false);
+  const remote = isRemoteHttpUri(source);
 
   useEffect(() => {
-    const checkImage = async () => {
-      try {
-        // Only check if it's a URI source
-        if (source && typeof source === 'object' && source.uri) {
-          const response = await fetch(source.uri, {method: 'HEAD'});
-          // If status is 200 and content-type starts with "image/", it's valid
-          if (
-            response.ok &&
-            response.headers.get('Content-Type')?.startsWith('image/')
-          ) {
-            setValidUrl(true);
-          } else {
-            setValidUrl(false);
-          }
-        } else {
-          setValidUrl(false);
-        }
-      } catch (error) {
-        setValidUrl(false);
-      } finally {
-        setChecking(false);
-      }
-    };
-
-    checkImage();
+    setFailed(false);
   }, [source]);
 
-  if (checking) {
-    return (
-      <View style={[style, styles.center]}>
-        <ActivityIndicator size="small" color="#888" />
-      </View>
-    );
-  }
+  const resolvedSource =
+    !source
+      ? dummyImage
+      : typeof source === 'number'
+        ? source
+        : remote && failed
+          ? dummyImage
+          : source;
 
   return (
     <Image
       {...props}
-      source={validUrl ? source : dummyImage}
+      source={resolvedSource}
+      onError={e => {
+        if (remote) {
+          setFailed(true);
+        }
+        onError?.(e);
+      }}
       resizeMode={resizeMode}
       style={style}
     />
   );
 };
-
-const styles = StyleSheet.create({
-  center: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#eee',
-  },
-});
 
 export default CustomImage;

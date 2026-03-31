@@ -207,6 +207,61 @@ export const getAbsoluteAvatarUrl = (
   return absolute;
 };
 
+export type NewsfeedMediaItem = {
+  id?: number;
+  post_id?: number;
+  path?: string;
+  type?: string;
+  file?: string;
+  date?: string;
+};
+
+function mediaBasename(fileOrPath?: string | null): string {
+  if (!fileOrPath) {
+    return '';
+  }
+  const segment = fileOrPath.split('/').pop() ?? fileOrPath;
+  return segment.toLowerCase();
+}
+
+/** Story assets use a separate API; newsfeed should never display `Story_*` files. */
+function isStoryMediaItem(m: NewsfeedMediaItem): boolean {
+  return (
+    mediaBasename(m.file).startsWith('story_') ||
+    mediaBasename(m.path).startsWith('story_')
+  );
+}
+
+/**
+ * Picks newsfeed post media only: drops story attachments (`Story_*`), then prefers
+ * `Post_*` uploads, else newest image/video by `date`.
+ */
+export function getPrimaryNewsfeedMedia(
+  media: NewsfeedMediaItem[] | undefined | null,
+): NewsfeedMediaItem | undefined {
+  if (!media?.length) {
+    return undefined;
+  }
+  const postOnly = media.filter(
+    m => m?.path && !isStoryMediaItem(m),
+  );
+  if (!postOnly.length) {
+    return undefined;
+  }
+
+  const images = postOnly.filter(m => m.type === 'image' || m.type == null);
+  const candidates = images.length ? images : postOnly;
+
+  const postUpload = candidates.find(m => mediaBasename(m.file).startsWith('post_'));
+  if (postUpload) {
+    return postUpload;
+  }
+
+  return [...candidates].sort((a, b) =>
+    (b.date || '').localeCompare(a.date || ''),
+  )[0];
+}
+
 export const createFile = (img: string) => {
   let localUri = img;
   let filename: any = localUri.split('/').pop();
