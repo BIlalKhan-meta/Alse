@@ -1,12 +1,20 @@
 import {useIsFocused, useNavigation} from '@react-navigation/native';
-import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState,
+} from 'react';
 import {
+  ActivityIndicator,
   Alert,
   Image,
   Keyboard,
   Modal,
   PermissionsAndroid,
   Platform,
+  Pressable,
   SafeAreaView,
   StatusBar,
   Text,
@@ -18,14 +26,15 @@ import {GiftedChat, IMessage, InputToolbar} from 'react-native-gifted-chat';
 import {images} from '../../utils/images';
 import {colors} from '../../utils/theme';
 import {
+  createRenderMessageImage,
   renderBubble,
-  renderMessageImage,
   renderMessageText,
   renderMessageVideo,
 } from './MessageContainer';
 import styles from './styles';
 
-import {EllipsisVertical, Phone, Video} from 'lucide-react-native';
+import {Phone, Video, X} from 'lucide-react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useSelector} from 'react-redux';
 import {
   createMessage,
@@ -50,6 +59,56 @@ import {
   getAbsoluteAvatarUrl,
 } from '../../utils/helpers';
 
+/**
+ * get-chat (and socket) use `medias: string[]` + `message_type`; legacy fields used `image` / `video`.
+ */
+function resolveChatAttachmentUrls(item: any): {
+  imageUrl?: string;
+  videoUrl?: string;
+} {
+  const medias = Array.isArray(item?.medias)
+    ? item.medias.filter((m: any) => m != null && String(m).trim() !== '')
+    : [];
+  const firstMedia = medias[0] as string | undefined;
+  const mt = String(item?.message_type || '').toLowerCase();
+
+  let rawImage: string | undefined =
+    item?.image ||
+    item?.image_url ||
+    item?.message_image ||
+    item?.message?.image ||
+    (typeof item?.media === 'string' && mt !== 'video' ? item.media : undefined);
+  let rawVideo: string | undefined =
+    item?.video ||
+    item?.video_url ||
+    item?.message_video ||
+    (typeof item?.media === 'string' && mt === 'video' ? item.media : undefined);
+
+  if (!rawImage && !rawVideo && firstMedia) {
+    if (mt === 'video') {
+      rawVideo = firstMedia;
+    } else if (mt === 'image') {
+      rawImage = firstMedia;
+    } else {
+      const lower = firstMedia.toLowerCase();
+      if (/\.(mp4|mov|webm|m4v)(\?|#|$)/i.test(lower)) {
+        rawVideo = firstMedia;
+      } else {
+        rawImage = firstMedia;
+      }
+    }
+  }
+
+  const imageUrl = rawImage
+    ? getAbsoluteAvatarUrl(rawImage) || rawImage
+    : undefined;
+  const videoUrl = rawVideo
+    ? getAbsoluteAvatarUrl(rawVideo) || rawVideo
+    : undefined;
+
+  return {imageUrl, videoUrl};
+}
+
 interface Props {
   route?: {
     params?: {
@@ -66,6 +125,7 @@ interface Props {
 const ChatOngoing: React.FC<Props> = props => {
   const navigation = useNavigation();
   const isFocused = useIsFocused();
+  const insets = useSafeAreaInsets();
 
   const [messages, setMessages] = useState<IMessage[]>([]);
   const [isSendingMessage, setIsSendingMessage] = useState(false);
@@ -76,6 +136,15 @@ const ChatOngoing: React.FC<Props> = props => {
   const [isCalling, setIsCalling] = useState(false);
   const [isVideoCalling, setIsVideoCalling] = useState(false);
   const [optionVisibal, setOptionVisible] = useState(false);
+  const [fullscreenImageUri, setFullscreenImageUri] = useState<string | null>(
+    null,
+  );
+  const [imageSendLoading, setImageSendLoading] = useState(false);
+
+  const renderMessageImageFullscreen = useMemo(
+    () => createRenderMessageImage(uri => setFullscreenImageUri(uri)),
+    [],
+  );
 
   const toggleOption = () => setOptionVisible(!optionVisibal);
 
@@ -410,12 +479,7 @@ const ChatOngoing: React.FC<Props> = props => {
         return;
       }
 
-      const imageUrl = res?.image
-        ? getAbsoluteAvatarUrl(res.image) || res.image
-        : undefined;
-      const videoUrl = res?.video
-        ? getAbsoluteAvatarUrl(res.video) || res.video
-        : undefined;
+      const {imageUrl, videoUrl} = resolveChatAttachmentUrls(res);
       const newMessage = {
         _id: res?.id || `sock-${Date.now()}-${Math.random()}`,
         chat_id: res?.chat_id || props?.route?.params?.id,
@@ -457,27 +521,11 @@ const ChatOngoing: React.FC<Props> = props => {
       .then((res: any) => {
         const messagesData = res?.data?.data || [];
         const formattedMessages = messagesData.map((item: any) => {
-          const rawImage =
-            item?.image ||
-            item?.image_url ||
-            item?.message_image ||
-            item?.message?.image ||
-            (typeof item?.media === 'string' ? item.media : null);
-          const imageUrl = rawImage
-            ? getAbsoluteAvatarUrl(rawImage) || rawImage
-            : undefined;
-          const rawVideo =
-            item?.video ||
-            item?.video_url ||
-            item?.message_video ||
-            (typeof item?.media === 'string' ? item.media : null);
-          const videoUrl = rawVideo
-            ? getAbsoluteAvatarUrl(rawVideo) || rawVideo
-            : undefined;
+          const {imageUrl, videoUrl} = resolveChatAttachmentUrls(item);
           return {
             _id: item?.id || Math.random(),
             chat_id: item?.chat_id,
-            text: item?.message || '',
+            text: item?.message ?? '',
             image: imageUrl,
             video: videoUrl,
             createdAt: new Date(item?.created_at || Date.now()),
@@ -615,6 +663,7 @@ const ChatOngoing: React.FC<Props> = props => {
     formData.append('chat_id', props.route.params.id);
     formData.append('image', createFile(asset.uri));
 
+    setImageSendLoading(true);
     try {
       const res: any = await uploadImages(formData);
       const imageUrl =
@@ -641,6 +690,8 @@ const ChatOngoing: React.FC<Props> = props => {
       console.log('Error saving image:', Err);
       setMessages(prev => prev.filter(m => m._id !== tempId));
       Alert.alert('Error', 'Failed to send image. Please try again.');
+    } finally {
+      setImageSendLoading(false);
     }
   };
 
@@ -805,7 +856,7 @@ const ChatOngoing: React.FC<Props> = props => {
             avatar: user?.avatar || user?.image || images.profile,
           }}
           renderMessageText={renderMessageText as any}
-          renderMessageImage={renderMessageImage as any}
+          renderMessageImage={renderMessageImageFullscreen as any}
           renderMessageVideo={renderMessageVideo as any}
           messagesContainerStyle={styles.messagesContainer}
           renderBubble={renderBubble as any}
@@ -842,6 +893,49 @@ const ChatOngoing: React.FC<Props> = props => {
           inverted={true}
         />
       </View>
+
+      <Modal
+        visible={imageSendLoading}
+        transparent
+        animationType="fade"
+        statusBarTranslucent>
+        <View style={styles.uploadLoaderOverlay} pointerEvents="box-none">
+          <View style={styles.uploadLoaderCard}>
+            <ActivityIndicator size="large" color={colors.themeColor} />
+            <Text style={styles.uploadLoaderLabel}>Sending image…</Text>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={!!fullscreenImageUri}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        presentationStyle="fullScreen"
+        onRequestClose={() => setFullscreenImageUri(null)}>
+        <View style={styles.fullscreenModalRoot}>
+          <StatusBar barStyle="light-content" backgroundColor="#000" />
+          <Pressable
+            style={{flex: 1, justifyContent: 'center'}}
+            onPress={() => setFullscreenImageUri(null)}>
+            {fullscreenImageUri ? (
+              <Image
+                source={{uri: fullscreenImageUri}}
+                style={styles.fullscreenImage}
+                resizeMode="contain"
+              />
+            ) : null}
+          </Pressable>
+          <TouchableOpacity
+            style={[styles.fullscreenCloseBtn, {top: insets.top + 8}]}
+            onPress={() => setFullscreenImageUri(null)}
+            accessibilityLabel="Close full screen image"
+            hitSlop={{top: 12, bottom: 12, left: 12, right: 12}}>
+            <X size={22} color="#fff" strokeWidth={2} />
+          </TouchableOpacity>
+        </View>
+      </Modal>
 
       {/* Phone Number Input Modal */}
       <Modal

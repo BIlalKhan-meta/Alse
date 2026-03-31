@@ -345,6 +345,48 @@ const styles = StyleSheet.create({
   disabledButton: {
     opacity: 0.5,
   },
+  fullscreenModalRoot: {
+    flex: 1,
+    backgroundColor: '#000',
+    justifyContent: 'center',
+  },
+  fullscreenImage: {
+    width: '100%',
+    flex: 1,
+  },
+  fullscreenCloseBtn: {
+    position: 'absolute',
+    right: vw * 4,
+    zIndex: 20,
+    padding: 10,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+  },
+  uploadLoaderOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  uploadLoaderCard: {
+    backgroundColor: colors.white,
+    paddingVertical: vh * 2.5,
+    paddingHorizontal: vw * 10,
+    borderRadius: 14,
+    alignItems: 'center',
+    minWidth: vw * 55,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  uploadLoaderLabel: {
+    marginTop: vh * 1.5,
+    fontSize: fontSizes.medium,
+    color: colors.gray,
+    fontWeight: '500',
+  },
 });
 
 export default styles;

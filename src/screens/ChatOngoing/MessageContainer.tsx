@@ -17,37 +17,54 @@ import {colors} from '../../utils/theme';
 import {vh} from '../../constant';
 import {getAbsoluteAvatarUrl} from '../../utils/helpers';
 
-/** Custom image message renderer - ensures URLs are resolved for display */
-export const renderMessageImage: React.FC<RenderMessageImageProps<any>> = ({
-  currentMessage,
-  imageStyle,
-  ...rest
-}) => {
-  const uri = currentMessage?.image;
-  if (!uri) return null;
-  const resolvedUri =
-    uri.startsWith('http://') ||
+function resolveMessageImageUri(uri: string): string {
+  return uri.startsWith('http://') ||
     uri.startsWith('https://') ||
     uri.startsWith('file://') ||
     uri.startsWith('content://')
-      ? uri
-      : getAbsoluteAvatarUrl(uri) || uri;
-  return (
-    <Image
-      source={{uri: resolvedUri}}
-      style={[
-        {
-          width: 200,
-          height: 150,
-          borderRadius: 12,
-          margin: 3,
-        },
-        imageStyle,
-      ]}
-      resizeMode="cover"
-    />
-  );
-};
+    ? uri
+    : getAbsoluteAvatarUrl(uri) || uri;
+}
+
+/** Pass `onOpenFullscreen` to open the image full screen when the user taps it. */
+export function createRenderMessageImage(
+  onOpenFullscreen: (uri: string) => void,
+): React.FC<RenderMessageImageProps<any>> {
+  const ChatMessageImage = ({
+    currentMessage,
+    imageStyle,
+  }: RenderMessageImageProps<any>) => {
+    const uri = currentMessage?.image;
+    if (!uri) return null;
+    const resolvedUri = resolveMessageImageUri(uri);
+    return (
+      <TouchableOpacity
+        activeOpacity={0.85}
+        onPress={() => onOpenFullscreen(resolvedUri)}
+        accessibilityRole="button"
+        accessibilityLabel="View image full screen">
+        <Image
+          source={{uri: resolvedUri}}
+          style={[
+            {
+              width: 200,
+              height: 150,
+              borderRadius: 12,
+              margin: 3,
+            },
+            imageStyle,
+          ]}
+          resizeMode="cover"
+        />
+      </TouchableOpacity>
+    );
+  };
+  ChatMessageImage.displayName = 'ChatMessageImage';
+  return ChatMessageImage;
+}
+
+/** Default renderer without fullscreen (tap does nothing). */
+export const renderMessageImage = createRenderMessageImage(() => {});
 
 /** Custom video message renderer - GiftedChat default doesn't implement video */
 export const renderMessageVideo: React.FC<RenderMessageVideoProps<any>> = ({
