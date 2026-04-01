@@ -1,0 +1,456 @@
+diff --git a/node_modules/react-native-instagram-reels/src/Reels/components/ReelCard.jsx b/node_modules/react-native-instagram-reels/src/Reels/components/ReelCard.jsx
+index db5b9e4..9a5cc6e 100644
+--- a/node_modules/react-native-instagram-reels/src/Reels/components/ReelCard.jsx
++++ b/node_modules/react-native-instagram-reels/src/Reels/components/ReelCard.jsx
+@@ -50,9 +50,22 @@ function ReelCard({
+   // Time Props
+   timeElapsedColor = 'white',
+   totalTimeColor = 'white',
++
++  // Alse extensions: custom UI, RN Video source shape, pause without IG-style control sheet
++  tapToToggleControls = true,
++  enableSeekZones = true,
++  videoHeaders,
++  overlayData,
++  renderPersistentOverlay,
++  itemHeight = ScreenHeight,
++  showPlayPauseOnTap = false,
++  /** Cap video height inside full-screen row (letterboxing). Defaults to full itemHeight. */
++  videoDisplayMaxHeight,
+ }) {
++  const maxVideoH = videoDisplayMaxHeight ?? itemHeight;
+   // ref for Video Player
+   const VideoPlayer = useRef(null);
++  const playPauseHintTimerRef = useRef(null);
+ 
+   // States
+   const [VideoDimensions, SetVideoDimensions] = useState({
+@@ -63,12 +76,24 @@ function ReelCard({
+   const [Duration, SetDuration] = useState(0);
+   const [Paused, SetPaused] = useState(false);
+   const [ShowOptions, SetShowOptions] = useState(false);
++  const [playPauseHint, setPlayPauseHint] = useState(null); // 'play' | 'pause' | null
+ 
+   // Play/Pause video according to viisibility
+   useEffect(() => {
+     if (ViewableItem === _id) SetPaused(false);
+-    else SetPaused(true);
+-  }, [ViewableItem]);
++    else {
++      SetPaused(true);
++      setPlayPauseHint(null);
++    }
++  }, [ViewableItem, _id]);
++
++  useEffect(() => {
++    return () => {
++      if (playPauseHintTimerRef.current) {
++        clearTimeout(playPauseHintTimerRef.current);
++      }
++    };
++  }, []);
+ 
+   // Pause when use toggle options to True
+   useEffect(() => {
+@@ -107,24 +132,40 @@ function ReelCard({
+       const naturalWidth = naturalSize.width;
+       const naturalHeight = naturalSize.height;
+       if (naturalWidth > naturalHeight) {
++        const h = ScreenWidth * (naturalHeight / naturalWidth);
+         SetVideoDimensions({
+           width: ScreenWidth,
+-          height: ScreenWidth * (naturalHeight / naturalWidth),
++          height: Math.min(h, maxVideoH),
+         });
+       } else {
+         SetVideoDimensions({
+-          width: ScreenHeight * (naturalWidth / naturalHeight),
+-          height: ScreenHeight,
++          width: maxVideoH * (naturalWidth / naturalHeight),
++          height: maxVideoH,
+         });
+       }
+       SetDuration(event.duration * 1000);
+     } catch (error) {}
+   };
+ 
+-  // function for showing options
++  // function for showing options (or only play/pause when tapToToggleControls is false)
+   const onMiddlePress = async () => {
+     try {
+-      SetShowOptions(!ShowOptions);
++      if (tapToToggleControls === false) {
++        const willBePaused = !Paused;
++        SetPaused(p => !p);
++        if (showPlayPauseOnTap) {
++          setPlayPauseHint(willBePaused ? 'play' : 'pause');
++          if (playPauseHintTimerRef.current) {
++            clearTimeout(playPauseHintTimerRef.current);
++          }
++          playPauseHintTimerRef.current = setTimeout(() => {
++            setPlayPauseHint(null);
++            playPauseHintTimerRef.current = null;
++          }, 900);
++        }
++      } else {
++        SetShowOptions(!ShowOptions);
++      }
+     } catch (error) {}
+   };
+ 
+@@ -212,52 +253,71 @@ function ReelCard({
+     ],
+   );
+ 
+-  // useMemo for Options
++  // useMemo for Options (default AntDesign buttons — only when no custom optionsComponent)
+   const GetButtons = useMemo(
+     () => (
+       <View style={styles.OptionsContainer}>
+-        {optionsComponent ? null : (
+-          <>
+-            <Buttons
+-              name={liked ? 'like1' : 'like2'}
+-              text="like"
+-              color={liked ? 'dodgerblue' : 'white'}
+-              onPress={() => onLikePress(_id)}
+-            />
+-            <Buttons
+-              name={disliked ? 'dislike1' : 'dislike2'}
+-              text="like"
+-              color={disliked ? 'dodgerblue' : 'white'}
+-              onPress={() => onDislikePress(_id)}
+-            />
+-            <Buttons
+-              name="message1"
+-              text="comment"
+-              onPress={() => onCommentPress(_id)}
+-            />
+-            <Buttons
+-              name="sharealt"
+-              text="share"
+-              onPress={() => onSharePress(_id)}
+-            />
+-          </>
+-        )}
++        <Buttons
++          name={liked ? 'like1' : 'like2'}
++          text="like"
++          color={liked ? 'dodgerblue' : 'white'}
++          onPress={() => onLikePress(_id)}
++        />
++        <Buttons
++          name={disliked ? 'dislike1' : 'dislike2'}
++          text="like"
++          color={disliked ? 'dodgerblue' : 'white'}
++          onPress={() => onDislikePress(_id)}
++        />
++        <Buttons
++          name="message1"
++          text="comment"
++          onPress={() => onCommentPress(_id)}
++        />
++        <Buttons
++          name="sharealt"
++          text="share"
++          onPress={() => onSharePress(_id)}
++        />
+       </View>
+     ),
+-    [ShowOptions, optionsComponent, liked, disliked],
++    [liked, disliked, _id, onLikePress, onDislikePress, onCommentPress, onSharePress],
+   );
+ 
++  const videoSource =
++    typeof uri === 'string'
++      ? videoHeaders
++        ? {uri, headers: videoHeaders}
++        : {uri}
++      : uri || {uri: ''};
++
++  const customOptions =
++    typeof optionsComponent === 'function'
++      ? optionsComponent({_id, liked, disliked, uri, overlayData})
++      : optionsComponent;
++
+   return (
+-    <Pressable
+-      style={[styles.container, {backgroundColor: backgroundColor}]}
+-      onPress={onMiddlePress}>
+-      <Pressable style={styles.FirstHalf} onPress={onFirstHalfPress} />
+-      <Pressable style={styles.SecondHalf} onPress={onSecondHalfPress} />
++    <View
++      style={[styles.container, {backgroundColor, height: itemHeight}]}
++      collapsable={false}>
++      {enableSeekZones ? (
++        <>
++          <Pressable
++            style={[styles.FirstHalf, {height: itemHeight}]}
++            onPress={onFirstHalfPress}
++          />
++          <Pressable
++            style={[styles.SecondHalf, {height: itemHeight}]}
++            onPress={onSecondHalfPress}
++          />
++        </>
++      ) : null}
+       <Video
+         ref={VideoPlayer}
+-        source={uri}
++        source={videoSource}
+         style={VideoDimensions}
+-        resizeMode="contain"
++        resizeMode="cover"
++        pointerEvents="none"
+         onError={videoError}
+         playInBackground={false}
+         progressUpdateInterval={1000}
+@@ -269,14 +329,66 @@ function ReelCard({
+         onEnd={() => onFinishPlaying(index)}
+       />
+ 
+-      {ShowOptions ? (
++      {/* Above video, under overlay (z 50): overlay uses box-none so taps on empty video hit here */}
++      <Pressable
++        style={[styles.videoTouchLayer, {zIndex: 40}]}
++        onPress={onMiddlePress}
++        android_ripple={{color: 'rgba(255,255,255,0.06)', borderless: true}}
++      />
++
++      {typeof renderPersistentOverlay === 'function' ? (
++        <View
++          pointerEvents="box-none"
++          style={[
++            StyleSheet.absoluteFillObject,
++            {zIndex: 50, overflow: 'hidden'},
++          ]}>
++          <React.Fragment key={`overlay-${String(_id)}`}>
++            {renderPersistentOverlay({
++              _id,
++              uri,
++              liked,
++              disliked,
++              index,
++              overlayData,
++            })}
++          </React.Fragment>
++        </View>
++      ) : null}
++
++      {showPlayPauseOnTap && playPauseHint != null ? (
++        <View
++          pointerEvents="none"
++          style={[styles.playPauseHintWrap, {zIndex: 60}]}>
++          <View style={styles.playPauseHintCircle}>
++            {playPauseHint === 'play' ? (
++              <Text style={[styles.playPauseHintText, styles.playPauseHintPlay]}>
++                ▶
++              </Text>
++            ) : (
++              <View style={styles.pauseBarsRow}>
++                <View style={styles.pauseBar} />
++                <View style={[styles.pauseBar, styles.pauseBarGap]} />
++              </View>
++            )}
++          </View>
++        </View>
++      ) : null}
++
++      {customOptions != null && customOptions !== false ? (
++        <View style={[styles.OptionsContainer, {zIndex: 101}]}>
++          {customOptions}
++        </View>
++      ) : null}
++
++      {ShowOptions && tapToToggleControls ? (
+         <>
+           {GetHeader}
+-          {GetButtons}
++          {customOptions == null ? GetButtons : null}
+           {GetSlider}
+         </>
+       ) : null}
+-    </Pressable>
++    </View>
+   );
+ }
+ 
+@@ -287,8 +399,55 @@ export default ReelCard;
+ const styles = StyleSheet.create({
+   container: {
+     width: ScreenWidth,
+-    height: ScreenHeight,
+     justifyContent: 'center',
++    alignItems: 'center',
++    overflow: 'hidden',
++  },
++  videoTouchLayer: {
++    ...StyleSheet.absoluteFillObject,
++  },
++  playPauseHintWrap: {
++    ...StyleSheet.absoluteFillObject,
++    justifyContent: 'center',
++    alignItems: 'center',
++  },
++  playPauseHintCircle: {
++    width: 80,
++    height: 80,
++    borderRadius: 40,
++    backgroundColor: 'rgba(20,20,22,0.72)',
++    borderWidth: StyleSheet.hairlineWidth,
++    borderColor: 'rgba(255,255,255,0.22)',
++    justifyContent: 'center',
++    alignItems: 'center',
++    shadowColor: '#000',
++    shadowOffset: {width: 0, height: 4},
++    shadowOpacity: 0.35,
++    shadowRadius: 8,
++    elevation: 6,
++  },
++  playPauseHintText: {
++    color: '#FFFFFF',
++    fontSize: 34,
++    fontWeight: '700',
++    includeFontPadding: false,
++  },
++  playPauseHintPlay: {
++    marginLeft: 6,
++  },
++  pauseBarsRow: {
++    flexDirection: 'row',
++    alignItems: 'center',
++    justifyContent: 'center',
++  },
++  pauseBar: {
++    width: 5,
++    height: 26,
++    borderRadius: 2,
++    backgroundColor: '#FFFFFF',
++  },
++  pauseBarGap: {
++    marginLeft: 8,
+   },
+   SliderContainer: {
+     position: 'absolute',
+diff --git a/node_modules/react-native-instagram-reels/src/Reels/components/Reels.jsx b/node_modules/react-native-instagram-reels/src/Reels/components/Reels.jsx
+index ddafa7a..5a2c892 100644
+--- a/node_modules/react-native-instagram-reels/src/Reels/components/Reels.jsx
++++ b/node_modules/react-native-instagram-reels/src/Reels/components/Reels.jsx
+@@ -1,5 +1,5 @@
+-import React, {useRef, useState} from 'react';
+-import {Dimensions, FlatList} from 'react-native';
++import React, {useEffect, useRef, useState} from 'react';
++import {Dimensions, FlatList, View} from 'react-native';
+ 
+ import ReelCard from './ReelCard';
+ const ScreenHeight = Dimensions.get('window').height;
+@@ -26,10 +26,31 @@ function Reels({
+   thumbTintColor,
+   timeElapsedColor,
+   totalTimeColor,
++  tapToToggleControls,
++  enableSeekZones,
++  renderPersistentOverlay,
++  onEndReached,
++  onEndReachedThreshold,
++  ListFooterComponent,
++  /** @deprecated use videoDisplayMaxHeight — list rows are always full screen for paging */
++  reelItemHeight,
++  /** Max height of the video inside each full-screen row (letterboxing). Omit for full bleed. */
++  videoDisplayMaxHeight,
++  showPlayPauseOnTap,
+ }) {
++  // One list row = full window height so only one reel shows and paging/snap is correct.
++  const itemLayoutHeight = ScreenHeight;
+   const FlatlistRef = useRef(null);
+-  const [ViewableItem, SetViewableItem] = useState('');
++  const [ViewableItem, SetViewableItem] = useState(
++    () => videos?.[0]?._id ?? '',
++  );
+   const viewConfigRef = useRef({viewAreaCoveragePercentThreshold: 70});
++
++  useEffect(() => {
++    if (videos?.length && (ViewableItem === '' || ViewableItem == null)) {
++      SetViewableItem(videos[0]._id);
++    }
++  }, [videos, ViewableItem]);
+   const applyProps = {
+     backgroundColor: backgroundColor,
+     headerTitle: headerTitle,
+@@ -51,6 +72,16 @@ function Reels({
+     thumbTintColor: thumbTintColor,
+     timeElapsedColor: timeElapsedColor,
+     totalTimeColor: totalTimeColor,
++    tapToToggleControls: tapToToggleControls,
++    enableSeekZones: enableSeekZones,
++    renderPersistentOverlay: renderPersistentOverlay,
++    itemHeight: itemLayoutHeight,
++    videoDisplayMaxHeight:
++      videoDisplayMaxHeight ??
++      (reelItemHeight != null && reelItemHeight < ScreenHeight
++        ? reelItemHeight
++        : undefined),
++    showPlayPauseOnTap: showPlayPauseOnTap,
+   };
+ 
+   // Viewable configuration
+@@ -62,33 +93,42 @@ function Reels({
+   return (
+     <FlatList
+       ref={FlatlistRef}
++      style={{flex: 1}}
+       data={videos}
+       keyExtractor={item => item._id.toString()}
+       renderItem={({item, index}) => (
+-        <ReelCard
+-          {...item}
+-          index={index}
+-          ViewableItem={ViewableItem}
+-          onFinishPlaying={index => {
+-            if (index !== videos.length - 1) {
+-              // @ts-ignore: Object is possibly 'null'.
+-              FlatlistRef.current.scrollToIndex({
+-                index: index + 1,
+-              });
+-            }
+-          }}
+-          {...applyProps}
+-        />
++        <View
++          style={{height: itemLayoutHeight, overflow: 'hidden'}}
++          collapsable={false}>
++          <ReelCard
++            {...item}
++            index={index}
++            ViewableItem={ViewableItem}
++            onFinishPlaying={index => {
++              if (index !== videos.length - 1) {
++                // @ts-ignore: Object is possibly 'null'.
++                FlatlistRef.current.scrollToIndex({
++                  index: index + 1,
++                });
++              }
++            }}
++            {...applyProps}
++          />
++        </View>
+       )}
++      removeClippedSubviews={false}
+       getItemLayout={(_data, index) => ({
+-        length: ScreenHeight,
+-        offset: ScreenHeight * index,
++        length: itemLayoutHeight,
++        offset: itemLayoutHeight * index,
+         index,
+       })}
+       pagingEnabled
+-      decelerationRate={0.9}
++      decelerationRate="fast"
+       onViewableItemsChanged={onViewRef.current}
+       viewabilityConfig={viewConfigRef.current}
++      onEndReached={onEndReached}
++      onEndReachedThreshold={onEndReachedThreshold ?? 0.5}
++      ListFooterComponent={ListFooterComponent}
+     />
+   );
+ }

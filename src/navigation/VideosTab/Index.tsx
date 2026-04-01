@@ -1,16 +1,15 @@
-import React, {useEffect, useState, useRef, useCallback} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ActivityIndicator,
   Alert,
-  FlatList,
-  Dimensions,
   Image,
   TouchableOpacity,
+  Dimensions,
 } from 'react-native';
-import Video from 'react-native-video';
+import Reels from 'react-native-instagram-reels';
 import {getVideos} from '../../api/reels';
 import {images} from '../../utils/images';
 import axiosInstance from '../../api';
@@ -24,261 +23,14 @@ import store from '../../store';
 import {BASE_URL} from '../../utils/baseurl';
 import {useTranslation} from 'react-i18next';
 
-const {height: screenHeight} = Dimensions.get('window');
-// Slightly shorter than full screen so the video area doesn't feel oversized
-const reelHeight = screenHeight * 0.88;
+const REEL_VIDEO_MAX_HEIGHT = Dimensions.get('window').height * 0.86;
 
-interface ReelItemProps {
-  item: any;
+type OverlayCtx = {
+  _id: string | number;
+  liked: boolean;
+  disliked: boolean;
   index: number;
-  isVisible: boolean;
-  onLike: (id: number) => void;
-  onComment: (id: number) => void;
-  onShare: (id: number) => void;
-}
-
-const ReelItem: React.FC<ReelItemProps> = ({
-  item,
-  index: _index,
-  isVisible,
-  onLike,
-  onComment,
-  onShare,
-}) => {
-  const navigation = useNavigation();
-  const user = useSelector(selectUserProfile);
-  const [isPaused, setIsPaused] = useState(!isVisible);
-  const [videoLoad, setVideoLoad] = useState(true);
-  const [videoError, setVideoError] = useState(false);
-  const [showFullText, setShowFullText] = useState(false);
-  const [retryKey, setRetryKey] = useState(0);
-  const maxTextLength = 100;
-  const {t} = useTranslation();
-
-  // Function to process video URL
-  const processVideoUrl = (url: string) => {
-    if (!url) return null;
-
-    // If it's already a full URL, return as is
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      return url;
-    }
-
-    // If it's a relative path, make it absolute
-    if (url.startsWith('/')) {
-      return `${BASE_URL.replace(/\/api\/?$/, '')}${url}`;
-    }
-
-    // If it's just a filename or path, construct the full URL
-    const base = BASE_URL.replace(/\/api\/?$/, '');
-    const path = url.startsWith('storage/') ? `/${url}` : `/storage/videos/${url}`;
-    return `${base}${path}`;
-  };
-
-  const videoUrl = processVideoUrl(item.video);
-  const token = store.getState().auth.token;
-
-  useEffect(() => {
-    setIsPaused(!isVisible);
-  }, [isVisible]);
-
-  // Reset error when URL or visibility changes
-  useEffect(() => {
-    if (videoUrl && isVisible) {
-      setVideoError(false);
-    }
-  }, [videoUrl, isVisible]);
-
-  // Stop showing loader after a while so UI (overlays) stay visible even if video is buffering
-  useEffect(() => {
-    if (!videoUrl || !isVisible) return;
-    const t = setTimeout(() => setVideoLoad(false), 3000);
-    return () => clearTimeout(t);
-  }, [videoUrl, isVisible]);
-
-  const myAccount = user?.id == item.user?.id;
-
-  const goToProfile = () => {
-    if (myAccount) {
-      (navigation as any).navigate('MyProfile', {account: item.privacy});
-    } else if (item.user?.id) {
-      (navigation as any).navigate('Profile', {
-        account: item.privacy,
-        id: item.user.id,
-      });
-    }
-  };
-
-  const handleVideoPause = () => {
-    setIsPaused(!isPaused);
-  };
-
-  const handleReadMoreToggle = () => {
-    setShowFullText(!showFullText);
-  };
-
-  const renderPostText = () => {
-    if (!item.content) return null;
-    return (
-      <Text
-        style={styles.postText}
-        numberOfLines={showFullText ? undefined : 2}>
-        {item.content}
-        {item.content.length > maxTextLength && !showFullText && (
-          <Text style={styles.readMoreText} onPress={handleReadMoreToggle}>
-            {' '}
-            {t('more')}
-          </Text>
-        )}
-      </Text>
-    );
-  };
-
-  return (
-    <View style={[styles.reelContainer, {height: reelHeight}]}>
-      {/* Video Container */}
-      <View style={styles.videoContainer}>
-        {videoLoad && !videoError && (
-          <ActivityIndicator
-            size="large"
-            color="white"
-            style={styles.videoLoader}
-          />
-        )}
-        {videoError && (
-          <View style={styles.videoErrorContainer}>
-            <Text style={styles.videoErrorText}>{t('videoUnavailable')}</Text>
-            <TouchableOpacity
-              style={styles.retryButton}
-              onPress={() => {
-                setVideoError(false);
-                setVideoLoad(true);
-                setRetryKey(k => k + 1);
-              }}>
-              <Text style={styles.retryButtonText}>{t('retry')}</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-        <TouchableOpacity
-          activeOpacity={0.9}
-          style={styles.videoTouchable}
-          onPress={handleVideoPause}>
-          {videoUrl ? (
-            <Video
-              key={retryKey}
-              onReadyForDisplay={() => {
-                setVideoLoad(false);
-                setVideoError(false);
-              }}
-              onLoad={() => {
-                setVideoLoad(false);
-                setVideoError(false);
-              }}
-              onError={() => {
-                setVideoLoad(false);
-                setVideoError(true);
-              }}
-              source={{
-                uri: videoUrl,
-                headers: token
-                  ? { Authorization: `Bearer ${token}`, Accept: 'video/*' }
-                  : { Accept: 'video/*' },
-              }}
-              style={styles.video}
-              resizeMode="cover"
-              repeat={true}
-              paused={isPaused}
-              onBuffer={({isBuffering}) => {
-                setVideoLoad(!!isBuffering);
-              }}
-              ignoreSilentSwitch="ignore"
-            />
-          ) : (
-            <View style={styles.videoErrorContainer}>
-              <Text style={styles.videoErrorText}>{t('reels.noReels')}</Text>
-            </View>
-          )}
-        </TouchableOpacity>
-
-        {/* Header overlay */}
-        <View style={styles.headerOverlay}>
-          <View style={styles.userInfo}>
-            <TouchableOpacity disabled={myAccount} onPress={goToProfile}>
-              <Image
-                source={
-                  item.user?.avatar ? {uri: item.user.avatar} : images.user
-                }
-                style={styles.avatar}
-              />
-            </TouchableOpacity>
-            <View>
-              <Text style={styles.nameOverlay}>
-                {item.user?.name || 'User'}
-              </Text>
-              <Text style={styles.timeOverlay}>{item.date || 'Just now'}</Text>
-            </View>
-          </View>
-          <TouchableOpacity style={styles.moreButton}>
-            <Image
-              source={images.saveIcon}
-              style={[styles.threeDots, {tintColor: '#fff'}]}
-            />
-          </TouchableOpacity>
-        </View>
-
-        {/* App logo overlay */}
-        <View style={styles.logoOverlay}>
-          <Image
-            source={images.alseLogo}
-            style={styles.centerLogo}
-            tintColor={colors.themeColor}
-          />
-        </View>
-
-        {/* Right side interaction indicators */}
-        <View style={styles.sideInteractions}>
-          <TouchableOpacity
-            style={styles.sideButton}
-            onPress={() => onLike(item.id)}>
-            <Image
-              source={images.heartLikeIcon}
-              style={styles.sideIcon}
-              tintColor={item.isLiked ? colors.blue : colors.white}
-            />
-            <Text style={styles.sideCount}>{item.likes || 0}</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.sideButton}
-            onPress={() => onComment(item.id)}>
-            <Image
-              source={images.commentIcon}
-              style={styles.sideIcon}
-              tintColor="#fff"
-            />
-            <Text style={styles.sideCount}>{item.comments || 0}</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.sideButton}
-            onPress={() => onShare(item.id)}>
-            <Image
-              source={images.shareIcon}
-              style={styles.sideIcon}
-              tintColor="#fff"
-            />
-          </TouchableOpacity>
-        </View>
-
-        {/* Bottom content overlay */}
-        {item.content && (
-          <View style={styles.bottomContent}>
-            <View style={styles.postContent}>{renderPostText()}</View>
-          </View>
-        )}
-      </View>
-    </View>
-  );
+  overlayData?: VideoItem;
 };
 
 interface VideoItem {
@@ -298,13 +50,147 @@ interface VideoItem {
   privacy?: string;
 }
 
+function processVideoUrl(url: string) {
+  if (!url) return '';
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  if (url.startsWith('/')) {
+    return `${BASE_URL.replace(/\/api\/?$/, '')}${url}`;
+  }
+  const base = BASE_URL.replace(/\/api\/?$/, '');
+  const path = url.startsWith('storage/') ? `/${url}` : `/storage/videos/${url}`;
+  return `${base}${path}`;
+}
+
+/** Same chrome as before (header, actions, caption) — video is driven by react-native-instagram-reels. */
+const VideosReelOverlay: React.FC<{
+  ctx: OverlayCtx;
+  onLike: (id: number) => void;
+  onComment: (id: number) => void;
+  onShare: (id: number) => void;
+}> = ({ctx, onLike, onComment, onShare}) => {
+  const navigation = useNavigation();
+  const user = useSelector(selectUserProfile);
+  const item = ctx.overlayData;
+  const {t} = useTranslation();
+  const [showFullText, setShowFullText] = useState(false);
+  const maxTextLength = 100;
+
+  useEffect(() => {
+    setShowFullText(false);
+  }, [item?.id]);
+
+  if (!item) return null;
+
+  const myAccount = user?.id == item.user?.id;
+
+  const goToProfile = () => {
+    if (myAccount) {
+      (navigation as any).navigate('MyProfile', {account: item.privacy});
+    } else if (item.user?.id) {
+      (navigation as any).navigate('Profile', {
+        account: item.privacy,
+        id: item.user.id,
+      });
+    }
+  };
+
+  const handleReadMoreToggle = () => setShowFullText(!showFullText);
+
+  const renderPostText = () => {
+    if (!item.content) return null;
+    return (
+      <Text
+        style={styles.postText}
+        numberOfLines={showFullText ? undefined : 2}>
+        {item.content}
+        {item.content.length > maxTextLength && !showFullText && (
+          <Text style={styles.readMoreText} onPress={handleReadMoreToggle}>
+            {' '}
+            {t('more')}
+          </Text>
+        )}
+      </Text>
+    );
+  };
+
+  return (
+    <>
+      <View style={styles.headerOverlay} pointerEvents="box-none">
+        <View style={styles.userInfo}>
+          <TouchableOpacity disabled={myAccount} onPress={goToProfile}>
+            <Image
+              source={
+                item.user?.avatar ? {uri: item.user.avatar} : images.user
+              }
+              style={styles.avatar}
+            />
+          </TouchableOpacity>
+          <View>
+            <Text style={styles.nameOverlay}>
+              {item.user?.name || 'User'}
+            </Text>
+            <Text style={styles.timeOverlay}>{item.date || 'Just now'}</Text>
+          </View>
+        </View>
+        <TouchableOpacity style={styles.moreButton}>
+          <Image
+            source={images.saveIcon}
+            style={[styles.threeDots, {tintColor: '#fff'}]}
+          />
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.sideInteractions} pointerEvents="box-none">
+        <TouchableOpacity
+          style={styles.sideButton}
+          onPress={() => onLike(item.id)}>
+          <Image
+            source={images.heartLikeIcon}
+            style={styles.sideIcon}
+            tintColor={item.isLiked ? colors.blue : colors.white}
+          />
+          <Text style={styles.sideCount}>{item.likes || 0}</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.sideButton}
+          onPress={() => onComment(item.id)}>
+          <Image
+            source={images.commentIcon}
+            style={styles.sideIcon}
+            tintColor="#fff"
+          />
+          <Text style={styles.sideCount}>{item.comments || 0}</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.sideButton}
+          onPress={() => onShare(item.id)}>
+          <Image
+            source={images.shareIcon}
+            style={styles.sideIcon}
+            tintColor="#fff"
+          />
+        </TouchableOpacity>
+      </View>
+
+      {item.content ? (
+        <View style={styles.bottomContent} pointerEvents="box-none">
+          <View style={styles.postContent}>{renderPostText()}</View>
+        </View>
+      ) : null}
+    </>
+  );
+};
+
 const VideosTab = () => {
   const [reels, setReels] = useState<VideoItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const flatListRef = useRef<FlatList<VideoItem> | null>(null);
   const {t} = useTranslation();
 
   useEffect(() => {
@@ -313,85 +199,60 @@ const VideosTab = () => {
 
   const fetchVideos = async (page = 1, append = false) => {
     try {
-      setLoading(!append);
+      if (append) {
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
+      }
       let response;
 
       try {
-        // Try education endpoint first
         response = await getVideos(page);
-        console.log('Education API Response:', response);
-      } catch (error) {
-        console.log('Education endpoint failed, trying home endpoint...');
-        // Fallback to home endpoint
+      } catch (_error) {
         response = await axiosInstance.get(
           `${endpoints.home.videos}?page=${page}&limit=10`,
         );
-        console.log('Home API Response:', response);
       }
 
-      console.log('Final API Response:', response);
-
-      // Handle different response structures
       let apiData;
       if (response?.data?.data?.data) {
-        // Handle nested structure: response.data.data.data
         apiData = response.data.data;
       } else if (response?.data?.data) {
-        // Handle structure: response.data.data
         apiData = response.data;
       } else if (response?.data) {
-        // Handle structure: response.data
         apiData = response;
       } else {
-        console.log('Unexpected response structure:', response);
         apiData = {data: [], total: 0};
       }
 
       const videoData = apiData.data || [];
-      console.log('Video data array:', videoData);
-      console.log('Video data length:', videoData.length);
-
-      // Log the first video item to see its structure
-      if (videoData.length > 0) {
-        console.log('First video item:', JSON.stringify(videoData[0], null, 2));
-        console.log('Video URL:', videoData[0].video);
-        console.log('Video URL type:', typeof videoData[0].video);
-      }
 
       if (videoData.length > 0) {
-        // Transform data to include like state and other interactive properties
         const transformedReels = videoData.map((video: any) => {
-          // Try different possible video URL field names
           const videoUrl =
             video.video ||
             video.video_url ||
             video.url ||
             video.media_url ||
             video.file;
-          console.log('Video URL found:', videoUrl);
-
-          // If no video URL found, use a test video URL for debugging
           const finalVideoUrl =
             videoUrl ||
             'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
-          console.log('Final video URL:', finalVideoUrl);
 
           return {
             ...video,
-            video: finalVideoUrl, // Ensure video field is set
-            isLiked: false, // You can set this based on user's like status from API
-            likes: video.likes || Math.floor(Math.random() * 1000), // Use actual likes from API if available
-            comments: video.comments || Math.floor(Math.random() * 100), // Use actual comments from API if available
-            // Create user object from user_id if user object doesn't exist
+            id: video.id,
+            video: finalVideoUrl,
+            isLiked: video.is_liked ?? false,
+            likes: video.likes ?? 0,
+            comments: video.comments ?? 0,
             user: video.user || {
               id: video.user_id,
               name: video.user_name || `User ${video.user_id}`,
               avatar: video.user_avatar || null,
             },
-          };
+          } as VideoItem;
         });
-
-        console.log('Transformed reels:', transformedReels);
 
         if (append) {
           setReels(prevReels => [...prevReels, ...transformedReels]);
@@ -399,14 +260,12 @@ const VideosTab = () => {
           setReels(transformedReels);
         }
 
-        // Calculate if there are more pages
-        const itemsPerPage = 10; // Default limit
+        const itemsPerPage = 10;
         const totalItems = apiData.total || videoData.length;
         const totalPages = Math.ceil(totalItems / itemsPerPage);
         setHasMore(page < totalPages);
         setCurrentPage(page);
       } else {
-        console.log('No video data found in response');
         if (!append) {
           setReels([]);
         }
@@ -417,17 +276,17 @@ const VideosTab = () => {
       Alert.alert('Error', 'Failed to load videos. Please try again.');
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
-  const handleLoadMore = () => {
-    if (hasMore && !loading) {
-      fetchVideos(currentPage + 1, true);
+  const handleLoadMore = useCallback(() => {
+    if (hasMore && !loading && !loadingMore) {
+      void fetchVideos(currentPage + 1, true);
     }
-  };
+  }, [hasMore, loading, loadingMore, currentPage]);
 
-  const handleLike = (videoId: number) => {
-    console.log('Like pressed for video:', videoId);
+  const handleLike = useCallback((videoId: number) => {
     setReels(prevReels =>
       prevReels.map(reel =>
         reel.id === videoId
@@ -439,40 +298,45 @@ const VideosTab = () => {
           : reel,
       ),
     );
-    // Add your like API call here
-  };
+  }, []);
 
-  const handleComment = (videoId: number) => {
-    console.log('Comment pressed for video:', videoId);
-    // Navigate to comments screen or open comment modal
-    // navigation.navigate('Comments', { postId: videoId });
-  };
+  const handleComment = useCallback((_videoId: number) => {}, []);
 
-  const handleShare = (videoId: number) => {
-    console.log('Share pressed for video:', videoId);
-    // Add your share functionality here
-  };
+  const handleShare = useCallback((_videoId: number) => {}, []);
 
-  const onViewableItemsChanged = useCallback(
-    ({viewableItems}: {viewableItems: Array<{index: number | null}>}) => {
-      if (viewableItems.length > 0 && viewableItems[0].index !== null) {
-        setCurrentIndex(viewableItems[0].index);
-      }
-    },
-    [],
+  const token = store.getState().auth.token;
+  const videoHeaders = useMemo(
+    () =>
+      token
+        ? {Authorization: `Bearer ${token}`, Accept: 'video/*'}
+        : {Accept: 'video/*'},
+    [token],
   );
 
-  const viewabilityConfig = useRef({viewAreaCoveragePercentThreshold: 50});
+  const reelsPayload = useMemo(() => {
+    return reels.map(r => {
+      const uri = processVideoUrl(r.video);
+      return {
+        _id: r.id,
+        uri,
+        liked: r.isLiked,
+        disliked: false,
+        videoHeaders,
+        overlayData: r,
+      };
+    });
+  }, [reels, videoHeaders]);
 
-  const renderReel = ({item, index}: {item: VideoItem; index: number}) => (
-    <ReelItem
-      item={item}
-      index={index}
-      isVisible={index === currentIndex}
-      onLike={handleLike}
-      onComment={handleComment}
-      onShare={handleShare}
-    />
+  const renderPersistentOverlay = useCallback(
+    (ctx: Record<string, unknown>) => (
+      <VideosReelOverlay
+        ctx={ctx as unknown as OverlayCtx}
+        onLike={handleLike}
+        onComment={handleComment}
+        onShare={handleShare}
+      />
+    ),
+    [handleLike, handleComment, handleShare],
   );
 
   if (loading && reels.length === 0) {
@@ -496,22 +360,24 @@ const VideosTab = () => {
 
   return (
     <View style={styles.container}>
-      <FlatList
-        ref={flatListRef}
-        data={reels}
-        renderItem={renderReel}
-        keyExtractor={item => item.id.toString()}
-        pagingEnabled
-        showsVerticalScrollIndicator={false}
+      <Reels
+        videos={reelsPayload}
+        backgroundColor="#000"
+        videoDisplayMaxHeight={REEL_VIDEO_MAX_HEIGHT}
+        tapToToggleControls={false}
+        showPlayPauseOnTap
+        enableSeekZones={false}
+        pauseOnOptionsShow={false}
+        renderPersistentOverlay={renderPersistentOverlay}
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.5}
-        onViewableItemsChanged={onViewableItemsChanged}
-        viewabilityConfig={viewabilityConfig.current}
-        getItemLayout={(_data, index) => ({
-          length: reelHeight,
-          offset: reelHeight * index,
-          index,
-        })}
+        ListFooterComponent={
+          loadingMore ? (
+            <View style={styles.footerLoader}>
+              <ActivityIndicator color="#fff" />
+            </View>
+          ) : null
+        }
       />
     </View>
   );
@@ -532,6 +398,11 @@ const styles = StyleSheet.create({
     color: '#fff',
     marginTop: 10,
     fontSize: 16,
+  },
+  footerLoader: {
+    paddingVertical: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   emptyContainer: {
     flex: 1,
@@ -556,61 +427,6 @@ const styles = StyleSheet.create({
     height: 80,
     tintColor: '#666',
     marginBottom: 10,
-  },
-  reelContainer: {
-    width: '100%',
-    position: 'relative',
-    backgroundColor: '#000',
-  },
-
-  videoContainer: {
-    flex: 1,
-    width: '100%',
-  },
-  videoTouchable: {
-    flex: 1,
-    width: '100%',
-    zIndex: 1,
-  },
-  video: {
-    width: '100%',
-    height: '100%',
-  },
-  videoLoader: {
-    position: 'absolute',
-    left: '50%',
-    top: '50%',
-    marginLeft: -18,
-    marginTop: -18,
-    zIndex: 100,
-  },
-  videoErrorContainer: {
-    position: 'absolute',
-    left: '50%',
-    top: '50%',
-    transform: [{translateX: -50}, {translateY: -50}],
-    zIndex: 100,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    padding: 10,
-    borderRadius: 5,
-  },
-  videoErrorText: {
-    color: '#fff',
-    fontSize: 14,
-    textAlign: 'center',
-  },
-  retryButton: {
-    backgroundColor: '#06B6D4',
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    borderRadius: 5,
-    marginTop: 10,
-  },
-  retryButtonText: {
-    color: '#fff',
-    fontSize: 12,
-    textAlign: 'center',
-    fontWeight: 'bold',
   },
   headerOverlay: {
     position: 'absolute',
@@ -654,18 +470,6 @@ const styles = StyleSheet.create({
   threeDots: {
     width: 16,
     height: 16,
-    resizeMode: 'contain',
-  },
-  logoOverlay: {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: [{translateX: -15}, {translateY: -15}],
-    zIndex: 5,
-  },
-  centerLogo: {
-    width: 30,
-    height: 30,
     resizeMode: 'contain',
   },
   sideInteractions: {
