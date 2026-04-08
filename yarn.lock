@@ -2482,11 +2482,6 @@
   resolved "https://registry.yarnpkg.com/@react-native-community/slider/-/slider-4.5.5.tgz#d70fc5870477760033769bbd6625d57e7d7678b2"
   integrity sha512-x2N415pg4ZxIltArOKczPwn7JEYh+1OxQ4+hTnafomnMsqs65HZuEWcX+Ch8c5r8V83DiunuQUf5hWGWlw8hQQ==
 
-"@react-native-community/slider@^4.1.12":
-  version "4.5.7"
-  resolved "https://registry.yarnpkg.com/@react-native-community/slider/-/slider-4.5.7.tgz#523178779f302aa162b0d57211842f81522e8ece"
-  integrity sha512-WMDDZjNF2Bd8M8TrSqKf5xhM9ikdfCHtSPur64Ow3bB/OVrKufUQZ59NmYdNZNeGPvcHHTsafuYTY8zfZfbchQ==
-
 "@react-native-firebase/app@21.3.0":
   version "21.3.0"
   resolved "https://registry.yarnpkg.com/@react-native-firebase/app/-/app-21.3.0.tgz#0dce61af8bf9bcb17085e6000c0683990c493072"
@@ -7987,15 +7982,6 @@ react-native-inappbrowser-reborn@^3.7.0:
     invariant "^2.2.4"
     opencollective-postinstall "^2.0.3"
 
-react-native-instagram-reels@1.0.1:
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/react-native-instagram-reels/-/react-native-instagram-reels-1.0.1.tgz#dc2bc12fb5031ad5080f12b17657a2922cec2872"
-  integrity sha512-PIATlElwVhvg8G14odW8D+FNwAIAuS/1OvRJ5UK2RfUgIItC8LMyxmCEVuJeQCQsnkdZB2gS33cCGLTXw3MEQA==
-  dependencies:
-    "@react-native-community/slider" "^4.1.12"
-    react-native-vector-icons "^9.0.0"
-    react-native-video "^5.2.0"
-
 react-native-ios-context-menu@^3.1.0:
   version "3.2.1"
   resolved "https://registry.yarnpkg.com/react-native-ios-context-menu/-/react-native-ios-context-menu-3.2.1.tgz#52465fd5cf225e48745c12beee6ebff26b499394"
@@ -8210,14 +8196,6 @@ react-native-vector-icons@^10.2.0:
     prop-types "^15.7.2"
     yargs "^16.1.1"
 
-react-native-vector-icons@^9.0.0:
-  version "9.2.0"
-  resolved "https://registry.yarnpkg.com/react-native-vector-icons/-/react-native-vector-icons-9.2.0.tgz#3c0c82e95defd274d56363cbe8fead8d53167ebd"
-  integrity sha512-wKYLaFuQST/chH3AJRjmOLoLy3JEs1JR6zMNgTaemFpNoXs0ztRnTxcxFD9xhX7cJe1/zoN5BpQYe7kL0m5yyA==
-  dependencies:
-    prop-types "^15.7.2"
-    yargs "^16.1.1"
-
 react-native-vector-image@^0.4.5:
   version "0.4.5"
   resolved "https://registry.yarnpkg.com/react-native-vector-image/-/react-native-vector-image-0.4.5.tgz#910a6e537d180c2082c85d91951aea6ba87e6d2f"
@@ -8239,7 +8217,7 @@ react-native-video-player@^0.14.0:
   dependencies:
     deprecated-react-native-prop-types "^2.3.0"
 
-react-native-video@6.19.1, react-native-video@^5.2.0, react-native-video@^6.18.0:
+react-native-video@6.19.1, react-native-video@^6.18.0:
   version "6.19.1"
   resolved "https://registry.yarnpkg.com/react-native-video/-/react-native-video-6.19.1.tgz#0f404f8d483252c5d3b353940d48513ca920e6d3"
   integrity sha512-Tbiyt0JMirVHc4XzGIANjs3SaNjFXQO2qe+buvY7xMJjlyCekkDjJqD9YtlaEloJD2PGWhoPytEXB6gVT7T6lw==

@@ -7,9 +7,10 @@ import {
   Alert,
   Image,
   TouchableOpacity,
-  Dimensions,
+  Pressable,
 } from 'react-native';
-import Reels from 'react-native-instagram-reels';
+import PagerView from 'react-native-pager-view';
+import Video from 'react-native-video';
 import {getVideos} from '../../api/reels';
 import {images} from '../../utils/images';
 import axiosInstance from '../../api';
@@ -22,8 +23,6 @@ import {selectUserProfile} from '../../store/slices/authSlice';
 import store from '../../store';
 import {BASE_URL} from '../../utils/baseurl';
 import {useTranslation} from 'react-i18next';
-
-const REEL_VIDEO_MAX_HEIGHT = Dimensions.get('window').height * 0.86;
 
 type OverlayCtx = {
   _id: string | number;
@@ -63,7 +62,6 @@ function processVideoUrl(url: string) {
   return `${base}${path}`;
 }
 
-/** Same chrome as before (header, actions, caption) — video is driven by react-native-instagram-reels. */
 const VideosReelOverlay: React.FC<{
   ctx: OverlayCtx;
   onLike: (id: number) => void;
@@ -185,12 +183,91 @@ const VideosReelOverlay: React.FC<{
   );
 };
 
+type VideoHeaders = {Authorization: string; Accept: string} | {Accept: string};
+
+const VideosReelPage: React.FC<{
+  item: VideoItem;
+  uri: string;
+  isActive: boolean;
+  index: number;
+  videoHeaders: VideoHeaders;
+  onLike: (id: number) => void;
+  onComment: (id: number) => void;
+  onShare: (id: number) => void;
+}> = ({
+  item,
+  uri,
+  isActive,
+  index,
+  videoHeaders,
+  onLike,
+  onComment,
+  onShare,
+}) => {
+  const [userPaused, setUserPaused] = useState(false);
+
+  useEffect(() => {
+    if (isActive) {
+      setUserPaused(false);
+    }
+  }, [isActive]);
+
+  const paused = !isActive || userPaused;
+  const source =
+    typeof uri === 'string' && 'Authorization' in videoHeaders
+      ? {uri, headers: videoHeaders}
+      : {uri};
+
+  const overlayCtx: OverlayCtx = {
+    _id: item.id,
+    liked: item.isLiked,
+    disliked: false,
+    index,
+    overlayData: item,
+  };
+
+  return (
+    <View style={styles.reelPage} collapsable={false}>
+      <Video
+        source={source}
+        style={StyleSheet.absoluteFillObject}
+        resizeMode="cover"
+        repeat
+        paused={paused}
+        muted={false}
+        playInBackground={false}
+        ignoreSilentSwitch="ignore"
+        pointerEvents="none"
+      />
+      <Pressable
+        style={StyleSheet.absoluteFillObject}
+        onPress={() => {
+          if (isActive) {
+            setUserPaused(p => !p);
+          }
+        }}
+      />
+      <View
+        pointerEvents="box-none"
+        style={[StyleSheet.absoluteFillObject, styles.overlayLayer]}>
+        <VideosReelOverlay
+          ctx={overlayCtx}
+          onLike={onLike}
+          onComment={onComment}
+          onShare={onShare}
+        />
+      </View>
+    </View>
+  );
+};
+
 const VideosTab = () => {
   const [reels, setReels] = useState<VideoItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [activeIndex, setActiveIndex] = useState(0);
   const {t} = useTranslation();
 
   useEffect(() => {
@@ -258,6 +335,7 @@ const VideosTab = () => {
           setReels(prevReels => [...prevReels, ...transformedReels]);
         } else {
           setReels(transformedReels);
+          setActiveIndex(0);
         }
 
         const itemsPerPage = 10;
@@ -305,7 +383,7 @@ const VideosTab = () => {
   const handleShare = useCallback((_videoId: number) => {}, []);
 
   const token = store.getState().auth.token;
-  const videoHeaders = useMemo(
+  const videoHeaders = useMemo<VideoHeaders>(
     () =>
       token
         ? {Authorization: `Bearer ${token}`, Accept: 'video/*'}
@@ -313,30 +391,15 @@ const VideosTab = () => {
     [token],
   );
 
-  const reelsPayload = useMemo(() => {
-    return reels.map(r => {
-      const uri = processVideoUrl(r.video);
-      return {
-        _id: r.id,
-        uri,
-        liked: r.isLiked,
-        disliked: false,
-        videoHeaders,
-        overlayData: r,
-      };
-    });
-  }, [reels, videoHeaders]);
-
-  const renderPersistentOverlay = useCallback(
-    (ctx: Record<string, unknown>) => (
-      <VideosReelOverlay
-        ctx={ctx as unknown as OverlayCtx}
-        onLike={handleLike}
-        onComment={handleComment}
-        onShare={handleShare}
-      />
-    ),
-    [handleLike, handleComment, handleShare],
+  const onPageSelected = useCallback(
+    (e: {nativeEvent: {position: number}}) => {
+      const pos = Math.round(e.nativeEvent.position);
+      setActiveIndex(pos);
+      if (pos >= reels.length - 2) {
+        handleLoadMore();
+      }
+    },
+    [reels.length, handleLoadMore],
   );
 
   if (loading && reels.length === 0) {
@@ -360,25 +423,35 @@ const VideosTab = () => {
 
   return (
     <View style={styles.container}>
-      <Reels
-        videos={reelsPayload}
-        backgroundColor="#000"
-        videoDisplayMaxHeight={REEL_VIDEO_MAX_HEIGHT}
-        tapToToggleControls={false}
-        showPlayPauseOnTap
-        enableSeekZones={false}
-        pauseOnOptionsShow={false}
-        renderPersistentOverlay={renderPersistentOverlay}
-        onEndReached={handleLoadMore}
-        onEndReachedThreshold={0.5}
-        ListFooterComponent={
-          loadingMore ? (
-            <View style={styles.footerLoader}>
-              <ActivityIndicator color="#fff" />
-            </View>
-          ) : null
-        }
-      />
+      <PagerView
+        style={styles.pager}
+        initialPage={0}
+        orientation="vertical"
+        offscreenPageLimit={1}
+        onPageSelected={onPageSelected}>
+        {reels.map((item, index) => (
+          <View
+            key={`reel-${item.id}-${index}`}
+            style={styles.pageShell}
+            collapsable={false}>
+            <VideosReelPage
+              item={item}
+              uri={processVideoUrl(item.video)}
+              isActive={index === activeIndex}
+              index={index}
+              videoHeaders={videoHeaders}
+              onLike={handleLike}
+              onComment={handleComment}
+              onShare={handleShare}
+            />
+          </View>
+        ))}
+      </PagerView>
+      {loadingMore ? (
+        <View style={styles.loadMoreBadge} pointerEvents="none">
+          <ActivityIndicator color="#fff" size="small" />
+        </View>
+      ) : null}
     </View>
   );
 };
@@ -387,6 +460,26 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000',
+  },
+  pager: {
+    flex: 1,
+  },
+  pageShell: {
+    flex: 1,
+  },
+  reelPage: {
+    flex: 1,
+    backgroundColor: '#000',
+    overflow: 'hidden',
+  },
+  overlayLayer: {
+    zIndex: 10,
+  },
+  loadMoreBadge: {
+    position: 'absolute',
+    bottom: 24,
+    alignSelf: 'center',
+    padding: 8,
   },
   loadingContainer: {
     flex: 1,
@@ -398,11 +491,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     marginTop: 10,
     fontSize: 16,
-  },
-  footerLoader: {
-    paddingVertical: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   emptyContainer: {
     flex: 1,
