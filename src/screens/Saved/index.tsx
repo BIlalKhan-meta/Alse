@@ -503,6 +503,7 @@ const Saved: React.FC = () => {
               onViewableItemsChanged={onViewableItemsChanged}
               //   keyExtractor={item => item?.id.toString()}
               showsVerticalScrollIndicator={false}
+              removeClippedSubviews={false}
               ListEmptyComponent={() => (
                 <EmptyComponent text={'No Posts Saved'} />
               )}

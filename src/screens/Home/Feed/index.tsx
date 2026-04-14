@@ -501,6 +501,7 @@ const Home: React.FC = () => {
               keyExtractor={item => item.id.toString()}
               showsVerticalScrollIndicator={false}
               ListEmptyComponent={renderEmpty}
+              removeClippedSubviews={true}
             />
           )}
 

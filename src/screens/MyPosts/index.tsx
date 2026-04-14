@@ -340,6 +340,7 @@ const MyPosts: React.FC = () => {
           renderItem={renderPost}
           keyExtractor={item => item.id.toString()}
           showsVerticalScrollIndicator={false}
+          removeClippedSubviews={false}
           ListEmptyComponent={renderEmpty}
           ListHeaderComponent={() => (
             <TouchableOpacity

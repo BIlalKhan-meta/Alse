@@ -8,6 +8,7 @@ import {
   Image,
   Linking,
   PermissionsAndroid,
+  PixelRatio,
   Pressable,
   StyleSheet,
   Text,
@@ -18,7 +19,7 @@ import {
 import RNFS from 'react-native-fs';
 import Video from 'react-native-video';
 import {useSelector} from 'react-redux';
-import {fontSizes, vh} from '../../constant';
+import {DEVICE_WIDTH, fontSizes, vh} from '../../constant';
 import {selectUserProfile} from '../../store/slices/authSlice';
 import {images} from '../../utils/images';
 import {colors} from '../../utils/theme';
@@ -34,6 +35,14 @@ import {
   createVideoFile,
   parseSharedFrom,
 } from '../../utils/helpers';
+
+/**
+ * Insets the native video view so scaled frames don’t draw past the layout box.
+ * Bottom is worst for list bleed → use a larger bottom inset than sides.
+ */
+const VIDEO_INSET_X = Math.max(3, Math.round(4 / PixelRatio.get()));
+const VIDEO_INSET_TOP = Math.max(2, Math.round(3 / PixelRatio.get()));
+const VIDEO_INSET_BOTTOM = Math.max(8, Math.round(12 / PixelRatio.get()));
 
 const requestStoragePermission = async () => {
   try {
@@ -153,6 +162,7 @@ interface PostProps {
 
 const PostComponent: React.FC<PostProps> = ({
   id,
+  mediaId,
   avatar,
   name,
   time,
@@ -191,6 +201,12 @@ const PostComponent: React.FC<PostProps> = ({
   useEffect(() => {
     setNumberLikes(likes);
   }, [likes]);
+
+  useEffect(() => {
+    if (mediaType === 'video' && postImage) {
+      setVideoLoad(true);
+    }
+  }, [postImage, mediaType]);
 
   const {t} = useTranslation();
 
@@ -277,7 +293,19 @@ const PostComponent: React.FC<PostProps> = ({
 
   return (
     <Pressable onPress={onCardPress}>
-      <Card style={styles.card}>
+      <Card
+        style={[
+          styles.card,
+          postImage && mediaType === 'video' && styles.cardVideoSpacing,
+        ]}>
+        <View
+          style={styles.cardCompositingLayer}
+          collapsable={false}
+          {...(postImage && mediaType === 'video'
+            ? Platform.OS === 'android'
+              ? {renderToHardwareTextureAndroid: true}
+              : {needsOffscreenAlphaCompositing: true}
+            : {})}>
         {/* Header section - only for text posts */}
         {!postImage && (
           <View
@@ -314,33 +342,40 @@ const PostComponent: React.FC<PostProps> = ({
 
         {/* Post image section with overlaid header and interactions */}
         {postImage ? (
-          <View style={styles.mediaContainer}>
+          <View style={styles.mediaContainer} collapsable={false}>
             {/* Image or video content */}
-            <TouchableOpacity
-              activeOpacity={0.9}
-              onPress={onMediaPress}
-              style={styles.mediaTouchable}>
+            <View style={styles.mediaTouchable} collapsable={false}>
               {mediaType === 'image' ? (
-                <CustomImage
-                  source={{uri: changeUrlForData(postImage)}}
-                  style={styles.postImage}
-                />
-              ) : (
-                <View style={styles.videoInlineWrap}>
-                  {videoLoad && (
-                    <ActivityIndicator
-                      size="large"
-                      color="white"
-                      style={styles.videoLoader}
-                    />
-                  )}
-                  <Video
-                    onReadyForDisplay={() => setVideoLoad(false)}
+                <Pressable style={styles.mediaInnerFill} onPress={onMediaPress}>
+                  <CustomImage
                     source={{uri: changeUrlForData(postImage)}}
                     style={styles.postImage}
+                  />
+                </Pressable>
+              ) : (
+                <View style={styles.videoInlineWrap} collapsable={false}>
+                  {videoLoad ? (
+                    <View style={styles.videoLoaderWrap} pointerEvents="none">
+                      <ActivityIndicator size="large" color="white" />
+                    </View>
+                  ) : null}
+                  <Video
+                    key={`${String(mediaId ?? id ?? '')}-${changeUrlForData(postImage)}`}
+                    onReadyForDisplay={() => setVideoLoad(false)}
+                    source={{uri: changeUrlForData(postImage)}}
+                    style={[
+                      styles.postVideo,
+                      {
+                        top: VIDEO_INSET_TOP,
+                        left: VIDEO_INSET_X,
+                        right: VIDEO_INSET_X,
+                        bottom: VIDEO_INSET_BOTTOM,
+                      },
+                    ]}
                     resizeMode="cover"
                     repeat={true}
                     paused={isPaused}
+                    useTextureView={Platform.OS === 'android'}
                     onBuffer={res => {
                       if (res?.isBuffering) {
                         setVideoLoad(true);
@@ -348,9 +383,9 @@ const PostComponent: React.FC<PostProps> = ({
                     }}
                     ignoreSilentSwitch={'ignore'}
                   />
-                                   {(onMediaPress || handleVideoPause) && (
+                  {(onMediaPress || handleVideoPause) && (
                     <Pressable
-                      style={StyleSheet.absoluteFill}
+                      style={styles.videoTouchOverlay}
                       onPress={onMediaPress ?? handleVideoPause}
                       accessibilityRole="button"
                       accessibilityLabel={
@@ -362,7 +397,14 @@ const PostComponent: React.FC<PostProps> = ({
                   )}
                 </View>
               )}
-            </TouchableOpacity>
+            </View>
+
+            {mediaType === 'video' ? (
+              <View
+                pointerEvents="none"
+                style={styles.mediaBottomBleedMask}
+              />
+            ) : null}
 
             {/* Header overlay for image posts */}
             <View style={styles.headerOverlay}>
@@ -428,6 +470,12 @@ const PostComponent: React.FC<PostProps> = ({
                 </TouchableOpacity>
               )}
             </View>
+            {mediaType === 'video' ? (
+              <View
+                pointerEvents="none"
+                style={styles.mediaTopBleedMask}
+              />
+            ) : null}
           </View>
         ) : null}
 
@@ -504,6 +552,7 @@ const PostComponent: React.FC<PostProps> = ({
           onClose={onDotPress}
           style={{top: 55}}
         />
+        </View>
       </Card>
     </Pressable>
   );
@@ -511,10 +560,12 @@ const PostComponent: React.FC<PostProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    marginVertical: vh * 1,
+    marginTop: vh * 1,
+    marginBottom: vh * 1,
     borderRadius: 16,
     backgroundColor: '#fff',
     overflow: 'hidden',
+    padding: 0,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -523,6 +574,14 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 3.84,
     elevation: 5,
+  },
+  /** Extra gap after video posts — native layers can still “peek” at row boundaries. */
+  cardVideoSpacing: {
+    marginBottom: vh * 3.5,
+  },
+  cardCompositingLayer: {
+    overflow: 'hidden',
+    borderRadius: 16,
   },
   header: {
     flexDirection: 'row',
@@ -613,16 +672,42 @@ const styles = StyleSheet.create({
 
   // You can keep the existing avatar style or adjust as needed
 
-  // Update mediaContainer to not have padding at the top
+  // Taller than before (~1.2× screen width) so each clip has a dedicated box; overflow clips native video.
   mediaContainer: {
     position: 'relative',
     width: '100%',
-    height: vh * 40,
+    height: Math.min(vh * 52, DEVICE_WIDTH * 1.22),
     overflow: 'hidden',
+    backgroundColor: '#000',
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
   },
+  /** Solid band over the bottom of the media stack; catches stray GPU pixels above the next list row. */
+  mediaBottomBleedMask: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: Math.max(10, Math.round(12 / PixelRatio.get())),
+    backgroundColor: '#000',
+    zIndex: 8,
+  },
+  /** Hides a strip of “foreign” frame sometimes painted at the top of the next list row. */
+  mediaTopBleedMask: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    height: Math.max(6, Math.round(8 / PixelRatio.get())),
+    backgroundColor: '#000',
+    zIndex: 8,
+  },
   mediaTouchable: {
+    width: '100%',
+    height: '100%',
+    overflow: 'hidden',
+  },
+  mediaInnerFill: {
     width: '100%',
     height: '100%',
   },
@@ -664,8 +749,11 @@ const styles = StyleSheet.create({
   postImage: {
     width: '100%',
     height: '100%',
-    resizeMode: 'cover',
     borderRadius: 10,
+  },
+  /** Position absolute; insets applied in JSX to trim decode/scaling bleed at edges. */
+  postVideo: {
+    position: 'absolute',
   },
   logoOverlay: {
     position: 'absolute',
@@ -716,16 +804,21 @@ const styles = StyleSheet.create({
   readMoreText: {
     color: colors.lightGrey,
   },
-  videoLoader: {
-    position: 'absolute',
-    left: '50%',
-    top: '50%',
-    zIndex: 100,
+  videoLoaderWrap: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 2,
   },
   videoInlineWrap: {
     width: '100%',
     height: '100%',
     position: 'relative',
+    overflow: 'hidden',
+  },
+  videoTouchOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 3,
   },
 });
 
