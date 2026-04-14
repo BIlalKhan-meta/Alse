@@ -2,9 +2,12 @@
 import {useNavigation} from '@react-navigation/native';
 import React, {useEffect, useLayoutEffect, useRef, useState} from 'react';
 import {
+  ActivityIndicator,
   FlatList,
   Image,
+  Modal,
   ScrollView,
+  Text,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -33,7 +36,8 @@ import {
   PostDelete,
 } from '../../store/slices/homeSlice';
 import {timeFormat} from '../../utils';
-import {getMessage} from '../../utils/helpers';
+import {getMessage, parseSharedFrom} from '../../utils/helpers';
+import {useTranslation} from 'react-i18next';
 import {images} from '../../utils/images';
 import {colors} from '../../utils/theme';
 import styles from './styles';
@@ -45,6 +49,7 @@ const productFilter = [
 
 const Saved: React.FC = () => {
   const navigation = useNavigation();
+  const {t} = useTranslation();
   const [reactVisible, setrRactVisible] = useState(false);
   const [active, setActive] = useState<number>(1);
   const [loading, setLoading] = useState(false);
@@ -383,6 +388,7 @@ const Saved: React.FC = () => {
 
   const renderPost = ({item, index}: any) => {
     const isFocused = focusedIndex === index;
+    const {caption, sharedFromName} = parseSharedFrom(item?.description);
     return (
       <PostComponent
         id={item?.user_id}
@@ -390,12 +396,12 @@ const Saved: React.FC = () => {
         // postID={item?.media[0]?.post_id}
         isPaused={pause && currendId == item?.id}
         handleVideoPause={() => handleVideoPause(item?.id)}
-        shareLoader={shareLoader}
         avatar={item?.avatar}
         name={item?.fullname}
         country={item?.country ? item?.country : ''}
         time={timeFormat(item?.date, true)}
-        postText={item?.description}
+        postText={caption}
+        sharedFromName={sharedFromName}
         postImage={item?.media?.[0]?.path}
         mediaType={item?.media?.[0]?.type}
         likes={item?.total_likes}
@@ -423,10 +429,10 @@ const Saved: React.FC = () => {
           setReportVisible({visibility: true, id: item?.id});
         }}
         handleReportPress={() => {
-          // handleDotPress();
+          const {caption} = parseSharedFrom(item?.description);
           navigation.navigate('CreatePostEdit', {
             title: 'Edit Post',
-            data: item,
+            data: {...item, description: caption},
           });
         }}
         isLiked={item?.is_liked}
@@ -440,7 +446,16 @@ const Saved: React.FC = () => {
   }
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false}>
+    <>
+      <Modal visible={shareLoader} transparent animationType="fade">
+        <View style={styles.shareLoaderOverlay}>
+          <View style={styles.shareLoaderContent}>
+            <ActivityIndicator size="large" color={colors.themeColor} />
+            <Text style={styles.shareLoaderText}>{t('sharingPost')}</Text>
+          </View>
+        </View>
+      </Modal>
+      <ScrollView showsVerticalScrollIndicator={false}>
       <View style={styles.container}>
         <Card style={styles.activeContainer}>
           <TouchableOpacity
@@ -663,6 +678,7 @@ const Saved: React.FC = () => {
         )}
       </View>
     </ScrollView>
+    </>
   );
 };
 

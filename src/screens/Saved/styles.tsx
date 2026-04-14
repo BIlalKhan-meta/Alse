@@ -46,6 +46,26 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.f14,
     color: colors.black,
   },
+  shareLoaderOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  shareLoaderContent: {
+    backgroundColor: colors.white,
+    paddingHorizontal: 32,
+    paddingVertical: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    minWidth: 160,
+  },
+  shareLoaderText: {
+    marginTop: 12,
+    fontSize: fontSizes.f14,
+    color: colors.black,
+    fontWeight: '500',
+  },
   contentContainer: {
     marginTop: vh * 2,
     marginBottom: vh * 4,

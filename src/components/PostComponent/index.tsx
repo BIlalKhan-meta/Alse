@@ -28,7 +28,12 @@ import ReportBlockModal from '../ReportBlockModal';
 import InterBold from '../Text/InterBold';
 import InterRegular from '../Text/InterRegular';
 import {CameraRoll} from '@react-native-camera-roll/camera-roll';
-import {changeUrlForData} from '../../utils/helpers';
+import {
+  buildSharedDescription,
+  changeUrlForData,
+  createVideoFile,
+  parseSharedFrom,
+} from '../../utils/helpers';
 
 const requestStoragePermission = async () => {
   try {
@@ -126,21 +131,24 @@ interface PostProps {
   share: number;
   account: string;
   onCommnetPress: () => void;
-  onSavePress: () => void;
+  onSavePress?: () => void;
   onLikePress: () => void;
   onDotPress: () => void;
   handleReportPress: () => void;
   handleBlockPress: () => void;
   handleReportPost: () => void;
-  onLikesModal: () => void;
+  onLikesModal?: () => void;
   modalVisible: boolean;
   isLiked?: boolean;
   isSaved?: boolean;
   onCardPress: () => void;
-  shareLoader: boolean;
-  mediaId: boolean;
+  mediaId?: number | boolean;
   isFocused: boolean;
   onMediaPress?: () => void;
+  sharePost?: (form: FormData) => void;
+  sharedFromName?: string | null;
+  isPaused?: boolean;
+  handleVideoPause?: () => void;
 }
 
 const PostComponent: React.FC<PostProps> = ({
@@ -165,6 +173,7 @@ const PostComponent: React.FC<PostProps> = ({
   isLiked,
   onCardPress,
   sharePost,
+  sharedFromName,
   isPaused,
   handleVideoPause,
   onMediaPress,
@@ -258,17 +267,30 @@ const PostComponent: React.FC<PostProps> = ({
   };
 
   const postShare = async () => {
-    const data = {
-      description: postText,
+    if (!sharePost) {
+      return;
+    }
+    const {caption} = parseSharedFrom(postText || '');
+    const description = buildSharedDescription(caption, name);
+    const filePayload =
+      postImage && mediaType === 'video'
+        ? createVideoFile(postImage)
+        : postImage
+          ? {
+              uri: postImage,
+              name: 'postImage.jpg',
+              type: 'image/jpeg' as const,
+            }
+          : null;
+    const data: Record<string, unknown> = {
+      description,
       privacy: account,
-      ...(postImage
-        ? {'file[0]': {uri: postImage, name: 'postImage', type: 'image/jpeg'}}
-        : {}),
+      ...(filePayload ? {'file[0]': filePayload} : {}),
     };
 
     const form = new FormData();
     Object.entries(data).forEach(([key, value]) => {
-      form.append(key, value);
+      form.append(key, value as any);
     });
     sharePost(form);
   };
@@ -412,13 +434,15 @@ const PostComponent: React.FC<PostProps> = ({
                 <Text style={styles.sideCount}>{comments}</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.sideButton} onPress={postShare}>
-                <Image
-                  source={images.shareIcon}
-                  style={styles.sideIcon}
-                  tintColor="#fff"
-                />
-              </TouchableOpacity>
+              {!myAccount && (
+                <TouchableOpacity style={styles.sideButton} onPress={postShare}>
+                  <Image
+                    source={images.shareIcon}
+                    style={styles.sideIcon}
+                    tintColor="#fff"
+                  />
+                </TouchableOpacity>
+              )}
             </View>
           </View>
         ) : null}
@@ -436,6 +460,11 @@ const PostComponent: React.FC<PostProps> = ({
               </Text>
             )}
           </Text>
+          {sharedFromName ? (
+            <Text style={styles.sharedFromText}>
+              {t('sharedFrom', {name: sharedFromName})}
+            </Text>
+          ) : null}
         </View>
 
         {/* Post interactions for text-only posts */}
@@ -465,14 +494,18 @@ const PostComponent: React.FC<PostProps> = ({
                 <Text style={styles.actionText}>{comments}</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.actionButton} onPress={postShare}>
-                <Image
-                  source={images.shareIcon}
-                  style={styles.actionIcon}
-                  tintColor={colors.lightGrey}
-                />
-                <Text style={styles.actionText}>{share}</Text>
-              </TouchableOpacity>
+              {!myAccount && (
+                <TouchableOpacity
+                  style={styles.actionButton}
+                  onPress={postShare}>
+                  <Image
+                    source={images.shareIcon}
+                    style={styles.actionIcon}
+                    tintColor={colors.lightGrey}
+                  />
+                  <Text style={styles.actionText}>{share}</Text>
+                </TouchableOpacity>
+              )}
             </View>
           </View>
         )}
@@ -685,6 +718,12 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.f14,
     color: colors.inputText,
     lineHeight: 20,
+  },
+  sharedFromText: {
+    fontSize: fontSizes.f12,
+    color: colors.lightGrey,
+    marginTop: 6,
+    fontStyle: 'italic',
   },
   readMoreText: {
     color: colors.lightGrey,

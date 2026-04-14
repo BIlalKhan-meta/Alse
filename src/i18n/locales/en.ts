@@ -84,6 +84,8 @@ export default {
   ok: 'Ok',
   distance: 'Distance',
   more: 'more',
+  sharedFrom: 'shared from {{name}}',
+  sharingPost: 'Sharing...',
   sort: 'Sort by',
   close: 'Close',
   delete: 'Delete',

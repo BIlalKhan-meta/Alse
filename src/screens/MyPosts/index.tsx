@@ -38,7 +38,12 @@ import {
 import InterRegular from '../../components/Text/InterRegular';
 import dayjs from 'dayjs';
 import Loader from '../../components/Loader';
-import {getMessage, Toast, getPrimaryNewsfeedMedia} from '../../utils/helpers';
+import {
+  getMessage,
+  Toast,
+  getPrimaryNewsfeedMedia,
+  parseSharedFrom,
+} from '../../utils/helpers';
 import {timeFormat, timeHelper} from '../../utils';
 import {removeSavedItem, saveItem} from '../../api/menu';
 import LikesModal from '../../components/LikesModal';
@@ -247,6 +252,7 @@ const MyPosts: React.FC = () => {
     console.log('Item from render Post ====>', item?.media);
     const isFocused = focusedIndex === index;
     const primaryMedia = getPrimaryNewsfeedMedia(item?.media);
+    const {caption, sharedFromName} = parseSharedFrom(item?.description);
     return (
       <PostComponent
         isFocused={isFocused}
@@ -256,7 +262,8 @@ const MyPosts: React.FC = () => {
         name={item?.fullname}
         country={item.country ? item.country : ''}
         time={timeFormat(item?.date, true)}
-        postText={item?.description}
+        postText={caption}
+        sharedFromName={sharedFromName}
         isPaused={pause && currendId == item?.id}
         handleVideoPause={() => handleVideoPause(item?.id)}
         postImage={primaryMedia?.path}
@@ -287,9 +294,10 @@ const MyPosts: React.FC = () => {
         // }}
         handleReportPress={() => {
           setActivePostId(null);
+          const {caption} = parseSharedFrom(item?.description);
           navigation.navigate('CreatePostEdit', {
             title: 'Edit Post',
-            data: item,
+            data: {...item, description: caption},
           });
         }}
         isLiked={item?.is_liked}

@@ -262,6 +262,41 @@ export function getPrimaryNewsfeedMedia(
   )[0];
 }
 
+/** App convention: attribution suffix on post `description` for reshares (parse with parseSharedFrom). */
+export const SHARED_FROM_DESCRIPTION_MARKER = '\n\n— Shared from ';
+
+export function parseSharedFrom(description: string | undefined | null): {
+  caption: string;
+  sharedFromName: string | null;
+} {
+  if (description == null || description === '') {
+    return {caption: '', sharedFromName: null};
+  }
+  const i = description.lastIndexOf(SHARED_FROM_DESCRIPTION_MARKER);
+  if (i === -1) {
+    return {caption: description, sharedFromName: null};
+  }
+  const sharedFromName = description
+    .slice(i + SHARED_FROM_DESCRIPTION_MARKER.length)
+    .trim();
+  return {
+    caption: description.slice(0, i),
+    sharedFromName: sharedFromName || null,
+  };
+}
+
+export function buildSharedDescription(
+  caption: string,
+  originalAuthorFullName: string,
+): string {
+  const base = (caption ?? '').trimEnd();
+  const name = (originalAuthorFullName ?? '').trim();
+  if (!name) {
+    return base;
+  }
+  return `${base}${SHARED_FROM_DESCRIPTION_MARKER}${name}`;
+}
+
 export const createFile = (img: string) => {
   let localUri = img;
   let filename: any = localUri.split('/').pop();

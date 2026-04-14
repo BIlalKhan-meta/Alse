@@ -31,9 +31,10 @@ import {
   Toast,
   getAbsoluteAvatarUrl,
   getPrimaryNewsfeedMedia,
+  parseSharedFrom,
 } from '../../../utils/helpers';
 import {colors} from '../../../utils/theme';
-import {getCountriesList, reportPost} from '../../../api/home';
+import {createPost, getCountriesList, reportPost} from '../../../api/home';
 import {removeSavedItem, saveItem} from '../../../api/menu';
 import {checkIsSeller} from '../../../api/shop';
 import {vh, vw} from '../../../constant';
@@ -112,7 +113,7 @@ const Home: React.FC = () => {
   const [_currendId, _setCurrentID] = useState(0);
   const [reportSuccess, setReportSuccess] = useState(false);
 
-  const [shareLoader, _setShareLoader] = useState(false);
+  const [shareLoader, setShareLoader] = useState(false);
   const [commentsLoading, setCommentsLoading] = useState(false);
 
   const [isFabOpen, setIsFabOpen] = useState(false);
@@ -304,6 +305,24 @@ const Home: React.FC = () => {
       });
   };
 
+  const sharePost = useCallback(
+    async (form: FormData) => {
+      setShareLoader(true);
+      try {
+        await createPost(form);
+        Toast.success('Post shared successfully');
+        await dispatch(GetNewsFeed());
+      } catch (err: any) {
+        Toast.error(
+          getMessage(err?.response?.data ?? err?.message ?? err ?? ''),
+        );
+      } finally {
+        setShareLoader(false);
+      }
+    },
+    [dispatch],
+  );
+
   const handleSave = async (id: number, isSaved: boolean) => {
     dispatch(postSave(id));
     const data = {
@@ -346,6 +365,7 @@ const Home: React.FC = () => {
   const renderPost = ({item, index}: any) => {
     const isFocused = focusedIndex === index;
     const primaryMedia = getPrimaryNewsfeedMedia(item?.media);
+    const {caption, sharedFromName} = parseSharedFrom(item?.description);
     // console.log('---', item);
 
     // if (index !== 0) return <></>;
@@ -358,14 +378,15 @@ const Home: React.FC = () => {
         name={item?.fullname}
         country={item?.country ? item?.country : ''}
         time={timeFormat(item?.date, true)}
-        postText={item?.description}
+        postText={caption}
+        sharedFromName={sharedFromName}
         postImage={primaryMedia?.path ?? ''}
         mediaType={primaryMedia?.type ?? 'image'}
         likes={item?.likes?.length}
         comments={item?.total_comments}
         share={item?.share}
         account={item?.privacy}
-        shareLoader={shareLoader}
+        sharePost={sharePost}
         onCommnetPress={() => handleCommentPress(item?.id)}
         onLikesModal={() =>
           setLikesVisible({visiblity: true, likes: item?.likes, id: item?.id})
@@ -384,9 +405,10 @@ const Home: React.FC = () => {
         }}
         handleReportPress={() => {
           setActivePostId(null);
+          const {caption} = parseSharedFrom(item?.description);
           navigation.navigate('CreatePostEdit', {
             title: 'Edit Post',
-            data: item,
+            data: {...item, description: caption},
           });
         }}
         isLiked={item?.is_liked}
@@ -444,6 +466,14 @@ const Home: React.FC = () => {
           <View style={styles.loaderContent}>
             <ActivityIndicator size="large" color={colors.themeColor} />
             <Text style={styles.loaderText}>Loading comments...</Text>
+          </View>
+        </View>
+      </Modal>
+      <Modal visible={shareLoader} transparent animationType="fade">
+        <View style={styles.loaderOverlay}>
+          <View style={styles.loaderContent}>
+            <ActivityIndicator size="large" color={colors.themeColor} />
+            <Text style={styles.loaderText}>{t('sharingPost')}</Text>
           </View>
         </View>
       </Modal>
