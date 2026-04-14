@@ -252,7 +252,8 @@ const MyPosts: React.FC = () => {
     console.log('Item from render Post ====>', item?.media);
     const isFocused = focusedIndex === index;
     const primaryMedia = getPrimaryNewsfeedMedia(item?.media);
-    const {caption, sharedFromName} = parseSharedFrom(item?.description);
+    const postDescriptionRaw = item?.description ?? item?.content ?? '';
+    const {caption, sharedFromName} = parseSharedFrom(postDescriptionRaw);
     return (
       <PostComponent
         isFocused={isFocused}
@@ -267,7 +268,11 @@ const MyPosts: React.FC = () => {
         isPaused={pause && currendId == item?.id}
         handleVideoPause={() => handleVideoPause(item?.id)}
         postImage={primaryMedia?.path}
-        mediaType={primaryMedia?.type ?? 'image'}
+        mediaType={
+          String(primaryMedia?.type ?? 'image').toLowerCase() === 'video'
+            ? 'video'
+            : 'image'
+        }
         mediaId={primaryMedia?.id ?? item?.media?.[0]?.id}
         likes={item?.total_likes}
         comments={item?.total_comments}
@@ -294,7 +299,7 @@ const MyPosts: React.FC = () => {
         // }}
         handleReportPress={() => {
           setActivePostId(null);
-          const {caption} = parseSharedFrom(item?.description);
+          const {caption} = parseSharedFrom(postDescriptionRaw);
           navigation.navigate('CreatePostEdit', {
             title: 'Edit Post',
             data: {...item, description: caption},

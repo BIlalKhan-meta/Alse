@@ -242,29 +242,6 @@ const PostComponent: React.FC<PostProps> = ({
   const handleReadMoreToggle = () => {
     setShowFullText(!showFullText);
   };
-  const renderPostText = () => {
-    if (postText?.length <= maxTextLength || showFullText) {
-      return (
-        <Text style={styles.postText}>
-          {postText}{' '}
-          {postText.length > maxTextLength && (
-            <Text style={styles.readMoreText} onPress={handleReadMoreToggle}>
-              {showFullText ? 'Read Less' : ''}
-            </Text>
-          )}
-        </Text>
-      );
-    } else {
-      return (
-        <Text style={styles.postText}>
-          {`${postText?.substring(0, maxTextLength)}... `}{' '}
-          <Text style={styles.readMoreText} onPress={handleReadMoreToggle}>
-            Read More
-          </Text>
-        </Text>
-      );
-    }
-  };
 
   const postShare = async () => {
     if (!sharePost) {
@@ -349,7 +326,7 @@ const PostComponent: React.FC<PostProps> = ({
                   style={styles.postImage}
                 />
               ) : (
-                <View>
+                <View style={styles.videoInlineWrap}>
                   {videoLoad && (
                     <ActivityIndicator
                       size="large"
@@ -357,25 +334,32 @@ const PostComponent: React.FC<PostProps> = ({
                       style={styles.videoLoader}
                     />
                   )}
-                  <TouchableOpacity
-                    activeOpacity={0.9}
-                    style={{zIndex: 99}}
-                    onPress={handleVideoPause}>
-                    <Video
-                      onReadyForDisplay={() => setVideoLoad(false)}
-                      source={{uri: changeUrlForData(postImage)}}
-                      style={styles.postImage}
-                      resizeMode="cover"
-                      repeat={true}
-                      paused={isPaused}
-                      onBuffer={res => {
-                        if (res?.isBuffering) {
-                          setVideoLoad(true);
-                        }
-                      }}
-                      ignoreSilentSwitch={'ignore'}
+                  <Video
+                    onReadyForDisplay={() => setVideoLoad(false)}
+                    source={{uri: changeUrlForData(postImage)}}
+                    style={styles.postImage}
+                    resizeMode="cover"
+                    repeat={true}
+                    paused={isPaused}
+                    onBuffer={res => {
+                      if (res?.isBuffering) {
+                        setVideoLoad(true);
+                      }
+                    }}
+                    ignoreSilentSwitch={'ignore'}
+                  />
+                                   {(onMediaPress || handleVideoPause) && (
+                    <Pressable
+                      style={StyleSheet.absoluteFill}
+                      onPress={onMediaPress ?? handleVideoPause}
+                      accessibilityRole="button"
+                      accessibilityLabel={
+                        onMediaPress
+                          ? 'Open video fullscreen'
+                          : 'Play or pause video'
+                      }
                     />
-                  </TouchableOpacity>
+                  )}
                 </View>
               )}
             </TouchableOpacity>
@@ -447,25 +431,29 @@ const PostComponent: React.FC<PostProps> = ({
           </View>
         ) : null}
 
-        {/* Post text content */}
-        <View style={styles.postContent}>
-          <Text
-            style={styles.postText}
-            numberOfLines={showFullText ? undefined : 2}>
-            {postText}
-            {postText && postText.length > maxTextLength && !showFullText && (
-              <Text style={styles.readMoreText} onPress={handleReadMoreToggle}>
-                {' '}
-                {t('more')}
+        {/* Post text content (caption + optional reshare attribution) */}
+        {(postText || sharedFromName) && (
+          <View style={styles.postContent}>
+            {postText ? (
+              <Text
+                style={styles.postText}
+                numberOfLines={showFullText ? undefined : 2}>
+                {postText}
+                {postText.length > maxTextLength && !showFullText && (
+                  <Text style={styles.readMoreText} onPress={handleReadMoreToggle}>
+                    {' '}
+                    {t('more')}
+                  </Text>
+                )}
               </Text>
-            )}
-          </Text>
-          {sharedFromName ? (
-            <Text style={styles.sharedFromText}>
-              {t('sharedFrom', {name: sharedFromName})}
-            </Text>
-          ) : null}
-        </View>
+            ) : null}
+            {sharedFromName ? (
+              <Text style={styles.sharedFromText}>
+                {t('sharedFrom', {name: sharedFromName})}
+              </Text>
+            ) : null}
+          </View>
+        )}
 
         {/* Post interactions for text-only posts */}
         {!postImage && (
@@ -733,6 +721,11 @@ const styles = StyleSheet.create({
     left: '50%',
     top: '50%',
     zIndex: 100,
+  },
+  videoInlineWrap: {
+    width: '100%',
+    height: '100%',
+    position: 'relative',
   },
 });
 

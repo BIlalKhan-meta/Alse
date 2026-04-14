@@ -1,4 +1,4 @@
-import React, {useState, useRef} from 'react';
+import React, {useState, useRef, useEffect, useMemo} from 'react';
 import {
   Modal,
   View,
@@ -9,12 +9,13 @@ import {
   StatusBar,
   ActivityIndicator,
   Text,
+  Platform,
 } from 'react-native';
 import Video from 'react-native-video';
-import {X, Play, Pause} from 'lucide-react-native';
+import {X} from 'lucide-react-native';
 import InterRegular from '../Text/InterRegular';
-import {colors} from '../../utils/theme';
 import {vh, vw} from '../../constant';
+import {changeUrlForData} from '../../utils/helpers';
 
 interface MediaModalProps {
   visible: boolean;
@@ -35,14 +36,21 @@ const MediaModal: React.FC<MediaModalProps> = ({
   userName,
   postTime,
 }) => {
-  const [isVideoPaused, setIsVideoPaused] = useState(false);
   const [isVideoLoading, setIsVideoLoading] = useState(true);
   const [videoError, setVideoError] = useState(false);
   const videoRef = useRef<Video>(null);
 
-  const handleVideoPress = () => {
-    setIsVideoPaused(!isVideoPaused);
-  };
+  const resolvedUrl = useMemo(
+    () => (mediaUrl ? changeUrlForData(mediaUrl) : ''),
+    [mediaUrl],
+  );
+
+  useEffect(() => {
+    if (visible) {
+      setIsVideoLoading(true);
+      setVideoError(false);
+    }
+  }, [visible, mediaUrl, mediaType]);
 
   const handleVideoLoad = () => {
     setIsVideoLoading(false);
@@ -73,40 +81,18 @@ const MediaModal: React.FC<MediaModalProps> = ({
           />
         )}
 
-        <TouchableOpacity
-          style={styles.videoTouchable}
-          activeOpacity={0.9}
-          onPress={handleVideoPress}>
-          <Video
-            ref={videoRef}
-            source={{uri: mediaUrl}}
-            style={styles.video}
-            resizeMode="contain"
-            repeat={true}
-            paused={isVideoPaused}
-            onLoad={handleVideoLoad}
-            onError={handleVideoError}
-            onBuffer={({isBuffering}) => {
-              if (isBuffering) {
-                setIsVideoLoading(true);
-              }
-            }}
-            ignoreSilentSwitch="ignore"
-          />
-        </TouchableOpacity>
-
-        {/* Video Controls Overlay */}
-        <View style={styles.videoControls}>
-          <TouchableOpacity
-            style={styles.playButton}
-            onPress={handleVideoPress}>
-            {isVideoPaused ? (
-              <Play size={40} color="#fff" />
-            ) : (
-              <Pause size={40} color="#fff" />
-            )}
-          </TouchableOpacity>
-        </View>
+        <Video
+          ref={videoRef}
+          source={{uri: resolvedUrl}}
+          style={styles.video}
+          resizeMode="contain"
+          controls
+          repeat={false}
+          onLoad={handleVideoLoad}
+          onReadyForDisplay={handleVideoLoad}
+          onError={handleVideoError}
+          ignoreSilentSwitch="ignore"
+        />
       </View>
     );
   };
@@ -114,7 +100,7 @@ const MediaModal: React.FC<MediaModalProps> = ({
   const renderImageContent = () => {
     return (
       <Image
-        source={{uri: mediaUrl}}
+        source={{uri: resolvedUrl}}
         style={styles.image}
         resizeMode="contain"
       />
@@ -127,10 +113,10 @@ const MediaModal: React.FC<MediaModalProps> = ({
       transparent={false}
       animationType="fade"
       onRequestClose={onClose}
-      statusBarTranslucent>
+      statusBarTranslucent
+      presentationStyle={Platform.OS === 'ios' ? 'fullScreen' : undefined}>
       <StatusBar backgroundColor="#000" barStyle="light-content" />
       <View style={styles.container}>
-        {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerInfo}>
             {userName && (
@@ -145,7 +131,6 @@ const MediaModal: React.FC<MediaModalProps> = ({
           </TouchableOpacity>
         </View>
 
-        {/* Media Content */}
         <View style={styles.mediaContainer}>
           {mediaType === 'image' ? renderImageContent() : renderVideoContent()}
         </View>
@@ -165,7 +150,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: vw * 4,
     paddingVertical: vh * 2,
-    paddingTop: vh * 6, // Account for status bar
+    paddingTop: vh * 6,
   },
   headerInfo: {
     flex: 1,
@@ -187,42 +172,21 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    minHeight: screenHeight * 0.75,
   },
   image: {
     width: screenWidth,
-    height: screenHeight * 0.8,
+    flex: 1,
   },
   videoContainer: {
     width: screenWidth,
-    height: screenHeight * 0.8,
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  videoTouchable: {
-    width: '100%',
-    height: '100%',
   },
   video: {
-    width: '100%',
-    height: '100%',
-  },
-  videoControls: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-  },
-  playButton: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: screenWidth,
+    flex: 1,
   },
   videoLoader: {
     position: 'absolute',

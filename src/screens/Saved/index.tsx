@@ -388,7 +388,8 @@ const Saved: React.FC = () => {
 
   const renderPost = ({item, index}: any) => {
     const isFocused = focusedIndex === index;
-    const {caption, sharedFromName} = parseSharedFrom(item?.description);
+    const postDescriptionRaw = item?.description ?? item?.content ?? '';
+    const {caption, sharedFromName} = parseSharedFrom(postDescriptionRaw);
     return (
       <PostComponent
         id={item?.user_id}
@@ -403,7 +404,11 @@ const Saved: React.FC = () => {
         postText={caption}
         sharedFromName={sharedFromName}
         postImage={item?.media?.[0]?.path}
-        mediaType={item?.media?.[0]?.type}
+        mediaType={
+          String(item?.media?.[0]?.type ?? 'image').toLowerCase() === 'video'
+            ? 'video'
+            : 'image'
+        }
         likes={item?.total_likes}
         comments={item?.total_comments}
         share={item?.share}
@@ -429,7 +434,7 @@ const Saved: React.FC = () => {
           setReportVisible({visibility: true, id: item?.id});
         }}
         handleReportPress={() => {
-          const {caption} = parseSharedFrom(item?.description);
+          const {caption} = parseSharedFrom(postDescriptionRaw);
           navigation.navigate('CreatePostEdit', {
             title: 'Edit Post',
             data: {...item, description: caption},

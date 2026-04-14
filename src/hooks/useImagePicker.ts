@@ -1,19 +1,28 @@
 import {useState} from 'react';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 
+export type LibraryMediaType = 'photo' | 'video' | 'mixed';
+
 const useImagePicker = () => {
   const [image, setImage] = useState<any>(null); // State to store the selected image URI
   const [imageData, setImageData] = useState<any>(null);
 
-  // Function to handle image selection from gallery
-  const chooseImageFromLibrary = () => {
-    let options: any = {
-      mediaType: 'photo', // 'photo' or 'video'
-      maxWidth: 300,
-      maxHeight: 550,
-      // quality: 0.2,
+  const libraryOptionsFor = (mediaType: LibraryMediaType) => {
+    const base: any = {
+      mediaType,
       quality: 1,
+      selectionLimit: 1,
     };
+    if (mediaType === 'photo') {
+      base.maxWidth = 300;
+      base.maxHeight = 550;
+    }
+    return base;
+  };
+
+  // Function to handle image selection from gallery
+  const chooseImageFromLibrary = (mediaType: LibraryMediaType = 'photo') => {
+    const options = libraryOptionsFor(mediaType);
 
     launchImageLibrary(options, response => {
       if (response.didCancel) {
@@ -29,14 +38,8 @@ const useImagePicker = () => {
   };
 
   // Function to capture image using the camera
-  const captureImage = (mediaType?: string) => {
-    let options: any = {
-      mediaType: mediaType || 'photo', // 'photo' or 'video'
-      maxWidth: 300,
-      maxHeight: 550,
-      // quality: 0.2,
-      quality: 1,
-    };
+  const captureImage = (mediaType: LibraryMediaType = 'photo') => {
+    const options = libraryOptionsFor(mediaType);
 
     launchCamera(options, response => {
       if (response.didCancel) {
@@ -58,6 +61,8 @@ const useImagePicker = () => {
     imageData,
     captureImage,
     chooseImageFromLibrary,
+    chooseVideoFromLibrary: () => chooseImageFromLibrary('video'),
+    chooseMediaFromLibrary: () => chooseImageFromLibrary('mixed'),
     setImageData,
     setImage,
   };

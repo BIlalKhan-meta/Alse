@@ -365,7 +365,8 @@ const Home: React.FC = () => {
   const renderPost = ({item, index}: any) => {
     const isFocused = focusedIndex === index;
     const primaryMedia = getPrimaryNewsfeedMedia(item?.media);
-    const {caption, sharedFromName} = parseSharedFrom(item?.description);
+    const postDescriptionRaw = item?.description ?? item?.content ?? '';
+    const {caption, sharedFromName} = parseSharedFrom(postDescriptionRaw);
     // console.log('---', item);
 
     // if (index !== 0) return <></>;
@@ -381,7 +382,11 @@ const Home: React.FC = () => {
         postText={caption}
         sharedFromName={sharedFromName}
         postImage={primaryMedia?.path ?? ''}
-        mediaType={primaryMedia?.type ?? 'image'}
+        mediaType={
+          String(primaryMedia?.type ?? 'image').toLowerCase() === 'video'
+            ? 'video'
+            : 'image'
+        }
         likes={item?.likes?.length}
         comments={item?.total_comments}
         share={item?.share}
@@ -405,7 +410,7 @@ const Home: React.FC = () => {
         }}
         handleReportPress={() => {
           setActivePostId(null);
-          const {caption} = parseSharedFrom(item?.description);
+          const {caption} = parseSharedFrom(postDescriptionRaw);
           navigation.navigate('CreatePostEdit', {
             title: 'Edit Post',
             data: {...item, description: caption},

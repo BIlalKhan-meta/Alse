@@ -51,6 +51,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  mediaPickRow: {
+    flex: 1,
+    flexDirection: 'row',
+    gap: 12,
+    paddingHorizontal: 16,
+    alignItems: 'stretch',
+    justifyContent: 'center',
+  },
+  mediaPickHalf: {
+    flex: 1,
+    backgroundColor: '#F5F5F5',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 12,
+  },
+  mediaPickLabel: {
+    fontSize: fontSizes.f14,
+    color: '#999999',
+    fontWeight: '500',
+    marginTop: 8,
+  },
+  recentVideoThumb: {
+    width: '100%',
+    height: '100%',
+  },
   addImageIcon: {
     width: 50,
     height: 50,

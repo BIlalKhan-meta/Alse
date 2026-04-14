@@ -33,7 +33,11 @@ export const postComment = (formData: FormData, id: number) => {
 };
 
 export const createPost = (formData: FormData) => {
-  return uploadWithFetch(endpoints.home.createPost, formData);
+  return uploadWithFetch(
+    endpoints.home.createPost,
+    formData,
+    CREATE_POST_UPLOAD_TIMEOUT_MS,
+  );
 };
 
 export const editPost = (formData: FormData, id: number) => {
@@ -166,7 +170,8 @@ export const getAllLogs = () => {
   return axiosInstance.get('/call-history');
 };
 
-const UPLOAD_TIMEOUT_MS = 60000; // 60s for image/video uploads
+const UPLOAD_TIMEOUT_MS = 60000; // 60s default for image uploads
+const CREATE_POST_UPLOAD_TIMEOUT_MS = 120000; // 120s for posts (may include video)
 
 /**
  * Upload FormData via fetch. Avoids axios FormData/Android Network Error issues.
@@ -175,11 +180,12 @@ const UPLOAD_TIMEOUT_MS = 60000; // 60s for image/video uploads
 async function uploadWithFetch(
   path: string,
   body: FormData,
+  timeoutMs: number = UPLOAD_TIMEOUT_MS,
 ): Promise<{data: any}> {
   const token = store.getState().auth.token;
   const url = `${BASE_URL.replace(/\/$/, '')}${path}`;
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), UPLOAD_TIMEOUT_MS);
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   const headers: Record<string, string> = {
     Accept: 'application/json',
