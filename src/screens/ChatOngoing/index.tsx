@@ -27,13 +27,13 @@ import {images} from '../../utils/images';
 import {colors} from '../../utils/theme';
 import {
   createRenderMessageImage,
+  createRenderMessageVideo,
   renderBubble,
   renderMessageText,
-  renderMessageVideo,
 } from './MessageContainer';
 import styles from './styles';
 
-import {Phone, Video, X} from 'lucide-react-native';
+import {Phone, Video as VideoIcon, X} from 'lucide-react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useSelector} from 'react-redux';
 import {
@@ -53,6 +53,7 @@ import zegoCallService from '../../services/zegoCallService';
 import {navigationRef} from '../../utils/navigationRef';
 import {DEVICE_HEIGHT} from '../../constant';
 import useImagePicker from '../../hooks/useImagePicker-story';
+import Video from 'react-native-video';
 import {
   createFile,
   createVideoFile,
@@ -139,10 +140,18 @@ const ChatOngoing: React.FC<Props> = props => {
   const [fullscreenImageUri, setFullscreenImageUri] = useState<string | null>(
     null,
   );
-  const [imageSendLoading, setImageSendLoading] = useState(false);
+  const [fullscreenVideoUri, setFullscreenVideoUri] = useState<string | null>(
+    null,
+  );
+  const [isMediaUploading, setIsMediaUploading] = useState(false);
+  const [mediaUploadLabel, setMediaUploadLabel] = useState('Sending media...');
 
   const renderMessageImageFullscreen = useMemo(
     () => createRenderMessageImage(uri => setFullscreenImageUri(uri)),
+    [],
+  );
+  const renderMessageVideoFullscreen = useMemo(
+    () => createRenderMessageVideo(uri => setFullscreenVideoUri(uri)),
     [],
   );
 
@@ -663,7 +672,8 @@ const ChatOngoing: React.FC<Props> = props => {
     formData.append('chat_id', props.route.params.id);
     formData.append('image', createFile(asset.uri));
 
-    setImageSendLoading(true);
+    setMediaUploadLabel('Sending image...');
+    setIsMediaUploading(true);
     try {
       const res: any = await uploadImages(formData);
       const imageUrl =
@@ -691,7 +701,7 @@ const ChatOngoing: React.FC<Props> = props => {
       setMessages(prev => prev.filter(m => m._id !== tempId));
       Alert.alert('Error', 'Failed to send image. Please try again.');
     } finally {
-      setImageSendLoading(false);
+      setIsMediaUploading(false);
     }
   };
 
@@ -716,6 +726,8 @@ const ChatOngoing: React.FC<Props> = props => {
     formData.append('chat_id', props.route.params.id);
     formData.append('video', createVideoFile(asset.uri));
 
+    setMediaUploadLabel('Sending video...');
+    setIsMediaUploading(true);
     try {
       const res: any = await uploadVideo(formData);
       const videoUrl =
@@ -742,6 +754,8 @@ const ChatOngoing: React.FC<Props> = props => {
       console.log('Error saving video:', Err);
       setMessages(prev => prev.filter(m => m._id !== tempId));
       Alert.alert('Error', 'Failed to send video. Please try again.');
+    } finally {
+      setIsMediaUploading(false);
     }
   };
 
@@ -809,7 +823,7 @@ const ChatOngoing: React.FC<Props> = props => {
             ]}
             onPress={() => makeVideoCall('video')}
             disabled={isVideoCalling}>
-            <Video
+            <VideoIcon
               size={20}
               color={isVideoCalling ? '#4CAF50' : '#666'}
               strokeWidth={2}
@@ -857,7 +871,7 @@ const ChatOngoing: React.FC<Props> = props => {
           }}
           renderMessageText={renderMessageText as any}
           renderMessageImage={renderMessageImageFullscreen as any}
-          renderMessageVideo={renderMessageVideo as any}
+          renderMessageVideo={renderMessageVideoFullscreen as any}
           messagesContainerStyle={styles.messagesContainer}
           renderBubble={renderBubble as any}
           renderInputToolbar={props => (
@@ -895,15 +909,44 @@ const ChatOngoing: React.FC<Props> = props => {
       </View>
 
       <Modal
-        visible={imageSendLoading}
+        visible={isMediaUploading}
         transparent
         animationType="fade"
         statusBarTranslucent>
         <View style={styles.uploadLoaderOverlay} pointerEvents="box-none">
           <View style={styles.uploadLoaderCard}>
             <ActivityIndicator size="large" color={colors.themeColor} />
-            <Text style={styles.uploadLoaderLabel}>Sending image…</Text>
+            <Text style={styles.uploadLoaderLabel}>{mediaUploadLabel}</Text>
           </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={!!fullscreenVideoUri}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        presentationStyle="fullScreen"
+        onRequestClose={() => setFullscreenVideoUri(null)}>
+        <View style={styles.fullscreenModalRoot}>
+          <StatusBar barStyle="light-content" backgroundColor="#000" />
+          {fullscreenVideoUri ? (
+            <Video
+              source={{uri: fullscreenVideoUri}}
+              style={styles.fullscreenVideo}
+              controls
+              resizeMode="contain"
+              paused={false}
+              ignoreSilentSwitch="ignore"
+            />
+          ) : null}
+          <TouchableOpacity
+            style={[styles.fullscreenCloseBtn, {top: insets.top + 8}]}
+            onPress={() => setFullscreenVideoUri(null)}
+            accessibilityLabel="Close full screen video"
+            hitSlop={{top: 12, bottom: 12, left: 12, right: 12}}>
+            <X size={22} color="#fff" strokeWidth={2} />
+          </TouchableOpacity>
         </View>
       </Modal>
 

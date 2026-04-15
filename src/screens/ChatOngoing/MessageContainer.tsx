@@ -1,6 +1,6 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
-import {Image, Linking, TouchableOpacity} from 'react-native';
+import {Image, TouchableOpacity, View} from 'react-native';
 import {
   Bubble,
   MessageText,
@@ -66,31 +66,52 @@ export function createRenderMessageImage(
 /** Default renderer without fullscreen (tap does nothing). */
 export const renderMessageImage = createRenderMessageImage(() => {});
 
-/** Custom video message renderer - GiftedChat default doesn't implement video */
-export const renderMessageVideo: React.FC<RenderMessageVideoProps<any>> = ({
-  currentMessage,
-  ...rest
-}) => {
-  const videoUrl = currentMessage?.video;
-  if (!videoUrl) return null;
-  const absoluteUrl = getAbsoluteAvatarUrl(videoUrl) || videoUrl;
-  return (
-    <TouchableOpacity
-      onPress={() => Linking.openURL(absoluteUrl)}
-      style={{
-        width: 200,
-        height: 150,
-        backgroundColor: '#333',
-        borderRadius: 12,
-        justifyContent: 'center',
-        alignItems: 'center',
-        overflow: 'hidden',
-      }}
-      {...rest}>
-      <Play size={48} color="#fff" fill="#fff" />
-    </TouchableOpacity>
-  );
-};
+/** Pass `onOpenFullscreen` to open the video in an in-app fullscreen player. */
+export function createRenderMessageVideo(
+  onOpenFullscreen: (uri: string) => void,
+): React.FC<RenderMessageVideoProps<any>> {
+  const ChatMessageVideo = ({
+    currentMessage,
+    ...rest
+  }: RenderMessageVideoProps<any>) => {
+    const videoUrl = currentMessage?.video;
+    if (!videoUrl) return null;
+    const absoluteUrl = getAbsoluteAvatarUrl(videoUrl) || videoUrl;
+    return (
+      <TouchableOpacity
+        onPress={() => onOpenFullscreen(absoluteUrl)}
+        style={{
+          width: 200,
+          height: 150,
+          backgroundColor: '#333',
+          borderRadius: 12,
+          justifyContent: 'center',
+          alignItems: 'center',
+          overflow: 'hidden',
+        }}
+        accessibilityRole="button"
+        accessibilityLabel="Play video full screen"
+        {...rest}>
+        <View
+          style={{
+            width: 52,
+            height: 52,
+            borderRadius: 26,
+            backgroundColor: 'rgba(255,255,255,0.2)',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}>
+          <Play size={26} color="#fff" fill="#fff" />
+        </View>
+      </TouchableOpacity>
+    );
+  };
+  ChatMessageVideo.displayName = 'ChatMessageVideo';
+  return ChatMessageVideo;
+}
+
+/** Default renderer without fullscreen action. */
+export const renderMessageVideo = createRenderMessageVideo(() => {});
 
 export const renderBubble: React.FC<BubbleProps> = props => (
   <Bubble

@@ -354,6 +354,11 @@ const styles = StyleSheet.create({
     width: '100%',
     flex: 1,
   },
+  fullscreenVideo: {
+    width: '100%',
+    flex: 1,
+    backgroundColor: '#000',
+  },
   fullscreenCloseBtn: {
     position: 'absolute',
     right: vw * 4,
