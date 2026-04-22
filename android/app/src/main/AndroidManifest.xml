@@ -64,14 +64,8 @@
             </intent-filter>
         </receiver>
 
-        <service
-            android:name="com.dieam.reactnativepushnotification.modules.RNPushNotificationListenerService"
-            android:exported="false" >
-            <intent-filter>
-                <action android:name="com.google.firebase.MESSAGING_EVENT" />
-            </intent-filter>
-        </service>
-
+        <!-- FCM: use ReactNativeFirebaseMessagingService only. RNPushNotificationListenerService
+             must NOT register MESSAGING_EVENT or it steals messages from @react-native-firebase/messaging. -->
 
       <activity
         android:name=".MainActivity"

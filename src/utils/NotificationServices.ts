@@ -1,7 +1,7 @@
 // notificationService.js
 import PushNotification from 'react-native-push-notification';
 import messaging from '@react-native-firebase/messaging';
-import navigationRef from '../../App';
+import {navigationRef} from './navigationRef';
 
 export const requestUserPermission = async () => {
   try {
@@ -86,33 +86,14 @@ class NotificationListener {
       //     style: 'cancel',
       //   },
       // ]);
-      navigationRef?.navigate('AcknowledgeCall', {
-        chat_id: remoteMessage?.data?.chat_id,
-        role: '0',
-        name: remoteMessage?.data?.name,
-        image: remoteMessage?.data?.avatar,
-      });
+      // Only incoming-call payloads should open AcknowledgeCall (requires chat_id in data).
+      this.handleNavigation(remoteMessage);
 
       // PushNotification.localNotification({
       //   channelId: 'channel-id2',
       //   message: remoteMessage.notification.body,
       //   title: remoteMessage.notification.title,
       // });
-    });
-
-    messaging().setBackgroundMessageHandler(async remoteMessage => {
-      // console.log('Background message received:', remoteMessage);
-
-      createNotificationChannel();
-      if (handleNotification) {
-        handleNotification(remoteMessage);
-      }
-
-      PushNotification.localNotification({
-        channelId: 'channel-id2',
-        message: remoteMessage.notification.body,
-        title: remoteMessage.notification.title,
-      });
     });
   }
 

@@ -3419,6 +3419,11 @@ PODS:
     - React-Core
   - RNLocalize (3.7.0):
     - React-Core
+  - RNNotifee (9.1.8):
+    - React-Core
+    - RNNotifee/NotifeeCore (= 9.1.8)
+  - RNNotifee/NotifeeCore (9.1.8):
+    - React-Core
   - RNPermissions (5.5.1):
     - React-Core
   - RNReanimated (3.19.5):
@@ -3731,6 +3736,7 @@ DEPENDENCIES:
   - "RNGoogleSignin (from `../node_modules/@react-native-google-signin/google-signin`)"
   - RNInAppBrowser (from `../node_modules/react-native-inappbrowser-reborn`)
   - RNLocalize (from `../node_modules/react-native-localize`)
+  - "RNNotifee (from `../node_modules/@notifee/react-native`)"
   - RNPermissions (from `../node_modules/react-native-permissions`)
   - RNReanimated (from `../node_modules/react-native-reanimated`)
   - RNScreens (from `../node_modules/react-native-screens`)
@@ -3998,6 +4004,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-inappbrowser-reborn"
   RNLocalize:
     :path: "../node_modules/react-native-localize"
+  RNNotifee:
+    :path: "../node_modules/@notifee/react-native"
   RNPermissions:
     :path: "../node_modules/react-native-permissions"
   RNReanimated:
@@ -4158,6 +4166,7 @@ SPEC CHECKSUMS:
   RNGoogleSignin: c26dada63b1a357af4f6a87f93ee70268d420c0f
   RNInAppBrowser: b53e6f6072c931115bc22ac9dc9510ac2cbea62d
   RNLocalize: 4372ecce8b0d483980847e04f6567ad342ca97d6
+  RNNotifee: 4a6ee5c7deaf00e005050052d73ee6315dff7ec9
   RNPermissions: a866e3c8d431b28898b64016d5fd2c9160ad67e2
   RNReanimated: 6358dcd45c7e152652c4642179fe8f592b56e9eb
   RNScreens: 19a1e20650ecffaaffcec4598e33ccd71b0ebe52
