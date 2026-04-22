@@ -1,0 +1,17 @@
+{
+  "name": "hms-calls-server",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Reference Node server: create 100ms rooms and mint peer tokens (HMS credentials stay here only).",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "axios": "^1.7.9",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2"
+  }
+}

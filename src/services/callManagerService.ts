@@ -6,9 +6,8 @@ import {
 import callNotificationService from './callNotificationService';
 
 /**
- * Service for managing call flow - now uses Zego Cloud for all calling.
- * Call invitations and in-call UI are handled by ZegoCallInvitationDialog
- * and ZegoUIKitPrebuiltCallService (see ChatOngoing, IncomingCallHandler).
+ * Optional session helpers for 1:1 calls (HMS/REST + chat signaling).
+ * Invites go through `emitMessage` with structured payloads (see `src/utils/callPayload.ts`).
  */
 class CallManagerService {
   private currentCall: {
@@ -20,7 +19,7 @@ class CallManagerService {
   };
 
   /**
-   * Create a call session (backend) - used for tracking. Zego handles actual call signaling.
+   * Create a call session (backend) - used for optional tracking.
    */
   async initiateCall(
     receiverId: string,
@@ -73,7 +72,7 @@ class CallManagerService {
   }
 
   /**
-   * Join call - Zego handles this via ZegoCallInvitationDialog.
+   * Placeholder join metadata for app flow.
    */
   async joinCall(
     channel: string,

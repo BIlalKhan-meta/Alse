@@ -4,6 +4,7 @@ import React, {
   useEffect,
   useLayoutEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import {
@@ -43,14 +44,20 @@ import {
   uploadVideo,
 } from '../../api/home';
 import {selectUserProfile, selectBearerToken} from '../../store/slices/authSlice';
-import {connectSocket, emitMessage, listenMessage} from '../../utils/socket';
+import {
+  connectSocket,
+  emitMessage,
+  joinChatRoom,
+  leaveChatRoom,
+  listenMessage,
+} from '../../utils/socket';
 import {renderComposer, SendWithLoader} from './InputToolbar';
 // @ts-ignore
 import call from 'react-native-phone-call';
-import ZegoUIKitPrebuiltCallService from '@zegocloud/zego-uikit-prebuilt-call-rn';
 import ReportBlockModal from '../../components/ReportBlockModal';
-import zegoCallService from '../../services/zegoCallService';
 import {navigationRef} from '../../utils/navigationRef';
+import chatSocket from '../../services/chatSocket';
+import agoraRtmCallService from '../../services/agoraRtmCallService';
 import {DEVICE_HEIGHT} from '../../constant';
 import useImagePicker from '../../hooks/useImagePicker-story';
 import Video from 'react-native-video';
@@ -108,6 +115,10 @@ function resolveChatAttachmentUrls(item: any): {
     : undefined;
 
   return {imageUrl, videoUrl};
+}
+
+function generateAgoraCallId(): string {
+  return `call_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 }
 
 interface Props {
@@ -270,71 +281,96 @@ const ChatOngoing: React.FC<Props> = props => {
 
     try {
       setIsVideoCalling(true);
-
-      // Ensure ZEGOCLOUD is initialized (may take a moment after login)
-      if (!zegoCallService.isLoggedIn()) {
-        if (token && user?.id) {
-          console.log('[ChatOngoing] ZEGOCLOUD not ready, attempting init...');
-          await zegoCallService.init(
-            user.id,
-            user.full_name || user.name || `user_${user.id}`,
-          );
-        }
-        if (!zegoCallService.isLoggedIn()) {
-          console.log('[ChatOngoing] ZEGOCLOUD not ready, waiting up to 3s...');
-          for (let i = 0; i < 6; i++) {
-            await new Promise(r => setTimeout(r, 500));
-            if (zegoCallService.isLoggedIn()) break;
-          }
-        }
-        if (!zegoCallService.isLoggedIn()) {
-          Alert.alert(
-            'Call Unavailable',
-            'Call service is still initializing. Please wait a moment and try again.',
-          );
-          return;
-        }
-      }
-
-      const chatId = props?.route?.params?.id;
-      const channel = chatId ? `chat_${chatId}` : `call_${Date.now()}`;
-      const receiverName =
-        props?.route?.params?.name ||
-        props?.route?.params?.user?.full_name ||
-        props?.route?.params?.user?.name ||
-        'Unknown User';
-
-      console.log('[ChatOngoing] Initiating ZEGOCLOUD call:', {
-        chatId,
-        channel,
-        callType,
-        receiverId,
-        receiverName,
-      });
-
-      // Use navigationRef for reliable navigation to call screens
-      const nav = navigationRef.isReady() ? navigationRef : (navigation as any);
-      if (!nav?.navigate) {
-        Alert.alert('Call Failed', 'Navigation not ready. Please try again.');
+      if (!user?.id) {
+        Alert.alert('Error', 'You must be logged in to call.');
         return;
       }
 
-      await ZegoUIKitPrebuiltCallService.sendCallInvitation(
-        [{userID: receiverId, userName: receiverName}],
-        callType === 'video',
-        nav,
-        {callID: channel},
+      const chatId = props?.route?.params?.id;
+      if (!chatId) {
+        Alert.alert('Error', 'Missing chat. Cannot start a call.');
+        return;
+      }
+
+      const callId = generateAgoraCallId();
+      const callerName =
+        user?.full_name || user.name || `user_${user.id}`;
+      const peerName = props?.route?.params?.name || 'User';
+
+      connectSocket();
+      agoraRtmCallService
+        .sendLocalInvitation(String(receiverId), {
+          chatId,
+          content: JSON.stringify({
+            chatId: String(chatId),
+            callType: callType === 'video' ? 'video' : 'audio',
+            name: String(callerName),
+          }),
+        })
+        .catch(err => console.warn('[ChatOngoing] RTM invite', err));
+
+      if (chatSocket.isSocketConnected()) {
+        chatSocket.sendCallRequest({
+          chat_id: chatId,
+          extraD: 'Calling...',
+          callType: callType === 'video' ? 'video' : 'audio',
+          callId,
+        });
+      }
+
+      const meta = JSON.stringify({
+        type: 'call_invite',
+        callId,
+        callType: callType === 'video' ? 'video' : 'audio',
+        chatId: String(chatId),
+        callerId: String(user.id),
+        name: String(callerName),
+      });
+      emitMessage({
+        chat_id: chatId,
+        message: meta,
+        message_type: 'call',
+        created_at: Date.now(),
+        user: {
+          _id: user.id,
+          avatar: user?.avatar,
+        },
+      });
+
+      const fd = new FormData();
+      fd.append('chat_id', String(chatId));
+      fd.append(
+        'message',
+        callType === 'video' ? 'Video call' : 'Voice call',
       );
+      createMessage(fd).catch((err: any) => {
+        console.warn('createMessage call invite', err);
+      });
+
+      const navParams = {
+        chatId: String(chatId),
+        callId,
+        userName: String(peerName),
+        name: String(peerName),
+        otherUserId: String(receiverId),
+        isReceiver: false,
+        isVideo: callType === 'video',
+      };
+      if (navigationRef.isReady()) {
+        if (callType === 'audio') {
+          navigationRef.navigate('AudioCall' as never, navParams as never);
+        } else {
+          navigationRef.navigate('VideoCall' as never, navParams as never);
+        }
+      }
     } catch (error: any) {
       console.error('[ChatOngoing] Video call error:', error);
-      const code = error?.code ?? error;
-      const msg =
-        typeof error === 'object' && error?.message
+      Alert.alert(
+        'Call Failed',
+        error?.message
           ? String(error.message)
-          : code === -1 || code === '-1'
-            ? 'The receiver may be offline. Please try again when they are available.'
-            : 'Unable to initiate call. Please try again.';
-      Alert.alert('Call Failed', msg || 'Unable to initiate call. Please try again.');
+          : 'Unable to initiate call. Please try again.',
+      );
     } finally {
       setIsVideoCalling(false);
     }
@@ -514,12 +550,21 @@ const ChatOngoing: React.FC<Props> = props => {
         return GiftedChat.append(previousMessages, [newMessage]);
       });
     },
-    [props?.route?.params?.id, user?.id],
+    [props?.route?.params?.id, user?.id, user?.full_name, user?.name],
   );
 
   useEffect(() => {
     connectSocket();
   }, []);
+
+  useEffect(() => {
+    const id = props?.route?.params?.id;
+    if (!id) {
+      return;
+    }
+    joinChatRoom(String(id));
+    return () => leaveChatRoom(String(id));
+  }, [props?.route?.params?.id]);
 
   const getData = useCallback(() => {
     if (!props?.route?.params?.id) {

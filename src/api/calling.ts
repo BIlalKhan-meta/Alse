@@ -3,7 +3,7 @@ import endpoints from './endpoints';
 
 /**
  * API functions for calling - uses backend live stream APIs.
- * Zego Cloud handles call signaling and media.
+ * Live stream helpers. 1:1 calls use Agora + Socket.IO (see `src/services/chatSocket.ts`).
  */
 
 export interface LiveStreamResponse {

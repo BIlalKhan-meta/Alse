@@ -16,7 +16,6 @@ import {requestUserPermission} from './src/utils/NotificationServices';
 import MainNavigation from './src/navigation';
 import IncomingCallHandler from './src/components/IncomingCallHandler';
 import {navigationRef} from './src/utils/navigationRef';
-import {ZegoCallInvitationDialog} from '@zegocloud/zego-uikit-prebuilt-call-rn';
 import {
   configureReanimatedLogger,
   ReanimatedLogLevel,
@@ -93,7 +92,6 @@ function App(): React.JSX.Element {
         <LanguageProvider>
           <NavigationContainer ref={navigationRef} theme={theme}>
             <MainNavigation />
-            <ZegoCallInvitationDialog />
             <IncomingCallHandler />
             {__DEV__ && <NetworkLoggerFAB />}
           </NavigationContainer>

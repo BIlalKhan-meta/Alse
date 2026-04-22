@@ -10,11 +10,12 @@ end
 node_require('react-native/scripts/react_native_pods.rb')
 node_require('react-native-permissions/scripts/setup.rb')
 
-platform :ios, min_ios_version_supported
+platform :ios, '16.0'
 prepare_react_native_project!
 
 setup_permissions([
   'Camera',
+  'Microphone',
   'Notifications',
   'PhotoLibrary',
 ])
@@ -118,6 +119,8 @@ target 'Alenga' do
           config.build_settings['EXCLUDED_SOURCE_FILE_NAMES[sdk=iphoneos*]'] = 'RCTProfileTrampoline-x86_64.S RCTProfileTrampoline-i386.S'
           config.build_settings['EXCLUDED_SOURCE_FILE_NAMES[sdk=iphonesimulator*]'] = 'RCTProfileTrampoline-arm.S'
         end
+
+        config.build_settings['ENABLE_BITCODE'] = 'NO'
       end
       
       # Remove Android header files from the target's file references (only for native targets)
@@ -158,6 +161,18 @@ target 'Alenga' do
         end
       end
     end
+
+    # Agora RTM may ship bitcode; strip for App Store validation (LetsPlanADate pattern)
+    bitcode_strip_path = `xcrun --find bitcode_strip`.chop!
+    def strip_agora_rtm_bitcode(bitcode_strip_path, framework_path)
+      return unless File.exist?(framework_path)
+      system("#{bitcode_strip_path} #{framework_path} -r -o #{framework_path}")
+    end
+    pods_root = installer.sandbox.root
+    strip_agora_rtm_bitcode(
+      bitcode_strip_path,
+      File.join(pods_root, 'AgoraRtm_iOS/AgoraRtmKit.xcframework/ios-arm64_armv7/AgoraRtmKit.framework/AgoraRtmKit'),
+    )
 
   end
 end

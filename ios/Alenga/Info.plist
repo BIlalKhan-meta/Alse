@@ -55,6 +55,8 @@
 	<string>${PRODUCT_NAME} needs access to your photo library to show your profile picture, upload images for posts, and manage product photos. Granting permission will help us improve your experience</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>${PRODUCT_NAME} does require access to the microphone to post video.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>${PRODUCT_NAME} uses the local network for voice and video calls.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>${PRODUCT_NAME} needs access to your photo library to show your profile picture, upload images for posts, and manage product photos. Granting permission will help us improve your experience</string>
 	<key>NSLocationWhenInUseUsageDescription</key>

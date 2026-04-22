@@ -28,6 +28,7 @@ import videoReducer from './slices/videoSlice';
 import {persistReducer, persistStore} from 'redux-persist';
 import {FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER} from 'redux-persist';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {callCleanupListener} from './callCleanupListener';
 
 // Create a persist config
 const persistConfig = {
@@ -58,7 +59,7 @@ const store = configureStore({
       serializableCheck: {
         ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
       },
-    }),
+    }).prepend(callCleanupListener.middleware),
 });
 
 // Export the persistor along with the store

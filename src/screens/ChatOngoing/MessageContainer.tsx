@@ -16,6 +16,7 @@ import styles from './styles';
 import {colors} from '../../utils/theme';
 import {vh} from '../../constant';
 import {getAbsoluteAvatarUrl} from '../../utils/helpers';
+import {getCallMessageDisplayText} from '../../utils/callPayload';
 
 function resolveMessageImageUri(uri: string): string {
   return uri.startsWith('http://') ||
@@ -169,6 +170,14 @@ export const renderSystemMessage: React.FC<SystemMessageProps> = props => (
 export const renderMessageText: React.FC<MessageTextProps> = props => (
   <MessageText
     {...props}
+    currentMessage={
+      props.currentMessage
+        ? {
+            ...props.currentMessage,
+            text: getCallMessageDisplayText(props.currentMessage.text),
+          }
+        : props.currentMessage
+    }
     containerStyle={{
       left: {
         backgroundColor: 'transparent',

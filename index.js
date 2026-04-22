@@ -19,12 +19,3 @@ try {
   }
 }
 
-try {
-  const ZegoUIKitPrebuiltCallService = require('@zegocloud/zego-uikit-prebuilt-call-rn').default;
-  const ZIM = require('zego-zim-react-native');
-  ZegoUIKitPrebuiltCallService.useSystemCallingUI([ZIM]);
-} catch (e) {
-  if (__DEV__) {
-    console.warn('Zego init failed:', e?.message);
-  }
-}

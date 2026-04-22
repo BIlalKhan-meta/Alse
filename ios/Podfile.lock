@@ -1145,6 +1145,12 @@ PODS:
     - abseil/meta/type_traits
     - abseil/xcprivacy
   - abseil/xcprivacy (1.20240116.2)
+  - agora-react-native-rtm (1.5.1):
+    - AgoraRtm_iOS (= 1.5.1)
+    - React-Core
+  - AgoraIrisRTC_iOS2 (4.6.2-build.1)
+  - AgoraRtm_iOS (1.5.1)
+  - AgoraVideo_Special_iOS (4.6.2.70)
   - AppAuth (1.7.6):
     - AppAuth/Core (= 1.7.6)
     - AppAuth/ExternalUserAgent (= 1.7.6)
@@ -2681,6 +2687,32 @@ PODS:
     - React-jsiexecutor
     - React-RCTFBReactNativeSpec
     - ReactCommon/turbomodule/core
+  - react-native-agora (4.6.2):
+    - AgoraIrisRTC_iOS2 (= 4.6.2-build.1)
+    - AgoraVideo_Special_iOS (= 4.6.2.70)
+    - DoubleConversion
+    - glog
+    - hermes-engine
+    - RCT-Folly (= 2024.11.18.00)
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-hermes
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - Yoga
   - react-native-blob-util (0.24.7):
     - React-Core
   - react-native-blur (4.4.1):
@@ -2849,6 +2881,8 @@ PODS:
     - Yoga
   - react-native-menu (1.2.4):
     - React
+  - react-native-orientation-locker (1.7.0):
+    - React-Core
   - react-native-pager-view (6.9.1):
     - DoubleConversion
     - glog
@@ -3282,6 +3316,8 @@ PODS:
     - React-Core
   - RNCAsyncStorage (2.2.0):
     - React-Core
+  - RNCClipboard (1.16.3):
+    - React-Core
   - RNCMaskedView (0.3.2):
     - DoubleConversion
     - glog
@@ -3573,7 +3609,7 @@ PODS:
   - VisionCamera/React (4.7.3):
     - React-Core
   - Yoga (0.0.0)
-  - zego-uikit-prebuilt-call-rn (6.6.9):
+  - zego-uikit-prebuilt-live-streaming-rn (2.9.0):
     - React-Core
     - zego-uikit-rn
   - zego-uikit-rn (2.19.2):
@@ -3584,6 +3620,7 @@ PODS:
   - ZIM (2.27.0)
 
 DEPENDENCIES:
+  - agora-react-native-rtm (from `../node_modules/agora-react-native-rtm`)
   - boost (from `../node_modules/react-native/third-party-podspecs/boost.podspec`)
   - BVLinearGradient (from `../node_modules/react-native-linear-gradient`)
   - DoubleConversion (from `../node_modules/react-native/third-party-podspecs/DoubleConversion.podspec`)
@@ -3625,6 +3662,7 @@ DEPENDENCIES:
   - React-logger (from `../node_modules/react-native/ReactCommon/logger`)
   - React-Mapbuffer (from `../node_modules/react-native/ReactCommon`)
   - React-microtasksnativemodule (from `../node_modules/react-native/ReactCommon/react/nativemodule/microtasks`)
+  - react-native-agora (from `../node_modules/react-native-agora`)
   - react-native-blob-util (from `../node_modules/react-native-blob-util`)
   - "react-native-blur (from `../node_modules/@react-native-community/blur`)"
   - "react-native-cameraroll (from `../node_modules/@react-native-camera-roll/camera-roll`)"
@@ -3637,6 +3675,7 @@ DEPENDENCIES:
   - react-native-keep-awake (from `../node_modules/react-native-keep-awake`)
   - react-native-keyboard-controller (from `../node_modules/react-native-keyboard-controller`)
   - "react-native-menu (from `../node_modules/@react-native-menu/menu`)"
+  - react-native-orientation-locker (from `../node_modules/react-native-orientation-locker`)
   - react-native-pager-view (from `../node_modules/react-native-pager-view`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
   - react-native-video (from `../node_modules/react-native-video`)
@@ -3677,6 +3716,7 @@ DEPENDENCIES:
   - "RNAppleAuthentication (from `../node_modules/@invertase/react-native-apple-authentication`)"
   - RNBootSplash (from `../node_modules/react-native-bootsplash`)
   - "RNCAsyncStorage (from `../node_modules/@react-native-async-storage/async-storage`)"
+  - "RNCClipboard (from `../node_modules/@react-native-clipboard/clipboard`)"
   - "RNCMaskedView (from `../node_modules/@react-native-masked-view/masked-view`)"
   - "RNCPicker (from `../node_modules/@react-native-picker/picker`)"
   - "RNCPushNotificationIOS (from `../node_modules/@react-native-community/push-notification-ios`)"
@@ -3699,12 +3739,15 @@ DEPENDENCIES:
   - RNVectorIcons (from `../node_modules/react-native-vector-icons`)
   - VisionCamera (from `../node_modules/react-native-vision-camera`)
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
-  - "zego-uikit-prebuilt-call-rn (from `../node_modules/@zegocloud/zego-uikit-prebuilt-call-rn`)"
+  - "zego-uikit-prebuilt-live-streaming-rn (from `../node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn`)"
   - "zego-uikit-rn (from `../node_modules/@zegocloud/zego-uikit-rn`)"
 
 SPEC REPOS:
   trunk:
     - abseil
+    - AgoraIrisRTC_iOS2
+    - AgoraRtm_iOS
+    - AgoraVideo_Special_iOS
     - AppAuth
     - BoringSSL-GRPC
     - ComputableLayout
@@ -3736,6 +3779,8 @@ SPEC REPOS:
     - ZIM
 
 EXTERNAL SOURCES:
+  agora-react-native-rtm:
+    :path: "../node_modules/agora-react-native-rtm"
   boost:
     :podspec: "../node_modules/react-native/third-party-podspecs/boost.podspec"
   BVLinearGradient:
@@ -3815,6 +3860,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon"
   React-microtasksnativemodule:
     :path: "../node_modules/react-native/ReactCommon/react/nativemodule/microtasks"
+  react-native-agora:
+    :path: "../node_modules/react-native-agora"
   react-native-blob-util:
     :path: "../node_modules/react-native-blob-util"
   react-native-blur:
@@ -3839,6 +3886,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-keyboard-controller"
   react-native-menu:
     :path: "../node_modules/@react-native-menu/menu"
+  react-native-orientation-locker:
+    :path: "../node_modules/react-native-orientation-locker"
   react-native-pager-view:
     :path: "../node_modules/react-native-pager-view"
   react-native-safe-area-context:
@@ -3919,6 +3968,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-bootsplash"
   RNCAsyncStorage:
     :path: "../node_modules/@react-native-async-storage/async-storage"
+  RNCClipboard:
+    :path: "../node_modules/@react-native-clipboard/clipboard"
   RNCMaskedView:
     :path: "../node_modules/@react-native-masked-view/masked-view"
   RNCPicker:
@@ -3963,13 +4014,17 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-vision-camera"
   Yoga:
     :path: "../node_modules/react-native/ReactCommon/yoga"
-  zego-uikit-prebuilt-call-rn:
-    :path: "../node_modules/@zegocloud/zego-uikit-prebuilt-call-rn"
+  zego-uikit-prebuilt-live-streaming-rn:
+    :path: "../node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn"
   zego-uikit-rn:
     :path: "../node_modules/@zegocloud/zego-uikit-rn"
 
 SPEC CHECKSUMS:
   abseil: d121da9ef7e2ff4cab7666e76c5a3e0915ae08c3
+  agora-react-native-rtm: 20cd594088d33caa46c75f2d079efbac62848cec
+  AgoraIrisRTC_iOS2: 13996c3c78134da357634f6a1a12741436658886
+  AgoraRtm_iOS: 595a9fa33a409831e6183396ea8f8bc563918403
+  AgoraVideo_Special_iOS: 9bd42c487f936f4d335d5630e2632f0b08e214f5
   AppAuth: d4f13a8fe0baf391b2108511793e4b479691fb73
   boost: 7e761d76ca2ce687f7cc98e698152abd03a18f90
   BoringSSL-GRPC: ca6a8e5d04812fce8ffd6437810c2d46f925eaeb
@@ -4034,6 +4089,7 @@ SPEC CHECKSUMS:
   React-logger: 6eca7d3c56341f3b001cf67d40452acfc4be7fa1
   React-Mapbuffer: fd2ab8923b59196d007dc261844e86ed93fa716c
   React-microtasksnativemodule: fa64cc58db43baea35753db87993103d96359b72
+  react-native-agora: 6ec38b7c387fe59eefe16a746fa3e6ac6396575b
   react-native-blob-util: 63bbc2ae9ad0fd6a4e7864e25e47f38265c13bb7
   react-native-blur: f486242a62ab9f6fd4b64a1c3bca2436c92eb5ad
   react-native-cameraroll: 38419de89a1ca1b974b2b2a53eb63124b6dc1a0a
@@ -4046,6 +4102,7 @@ SPEC CHECKSUMS:
   react-native-keep-awake: afad8a51dfef9fe9655a6344771be32c8596d774
   react-native-keyboard-controller: fe81c9c214b7317a0e0cbcdb93aa43f05eca8733
   react-native-menu: aed489e483401e8e42cad0556b8989ea4409cf10
+  react-native-orientation-locker: 5819fd23ca89cbac0d736fb4314745f62716d517
   react-native-pager-view: 22c8753a8dc7ee427df271f1faf075bc16dd5923
   react-native-safe-area-context: 37b720094bcaa36abcd593e08f2ad16507a94769
   react-native-video: 81f3f17a9d05a312962a399d6569e62bf9d81c15
@@ -4086,6 +4143,7 @@ SPEC CHECKSUMS:
   RNAppleAuthentication: d6fe579e5f43cf8db54bdc48518bccea61c592a4
   RNBootSplash: 3d02faefc01d08e28e8cdcdeecd6a865ab1a9922
   RNCAsyncStorage: 23e56519cc41d3bade3c8d4479f7760cb1c11996
+  RNCClipboard: dfeb43751adff21e588657b5b6c888c72f3aa68e
   RNCMaskedView: 42f3684c136239957b410dbfa81978b25f2c0e18
   RNCPicker: 0ce5d66262fe7f79e95664bae9447b0d7ed857da
   RNCPushNotificationIOS: b9dcb4f28c85f77483c3f86d2fcb1e0f0ab396fa
@@ -4100,7 +4158,7 @@ SPEC CHECKSUMS:
   RNGoogleSignin: c26dada63b1a357af4f6a87f93ee70268d420c0f
   RNInAppBrowser: b53e6f6072c931115bc22ac9dc9510ac2cbea62d
   RNLocalize: 4372ecce8b0d483980847e04f6567ad342ca97d6
-  RNPermissions: 3310ed3bfa385b8f138076ea4efc436e886bd517
+  RNPermissions: a866e3c8d431b28898b64016d5fd2c9160ad67e2
   RNReanimated: 6358dcd45c7e152652c4642179fe8f592b56e9eb
   RNScreens: 19a1e20650ecffaaffcec4598e33ccd71b0ebe52
   RNSound: af4bd867158e7871ba5f54c3a52c51b048ee9a5e
@@ -4109,12 +4167,12 @@ SPEC CHECKSUMS:
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
   VisionCamera: 3ea10c46a5c612f5f89fb46a54bef4a0de8b58a7
   Yoga: b37eeaa6148984cac70ecaf8022bb209e03296cb
-  zego-uikit-prebuilt-call-rn: a4da21f88270430d70efd173b66adb277d643afe
+  zego-uikit-prebuilt-live-streaming-rn: fcce55c75767187a5a5ee391cd85107a3e947118
   zego-uikit-rn: 3de6d90c6214d145b0e6d4f39f859cdef44de5af
   ZegoExpressEngine: c1b01551fc817e6fd32b3a877a9d15de6d93f68e
   ZegoUIKitReport: 36f4bc9a02a4fdd5d1eda1bf665b42c54cbbfd89
   ZIM: b39b9a5a2ddff4d60de51c3bd6a5574cedbcdf03
 
-PODFILE CHECKSUM: ead42cdfef5527ac0e17d199659fb76ea0f9e66b
+PODFILE CHECKSUM: a1110ec21d72fc507979e16a58c7b6d27be500a0
 
 COCOAPODS: 1.16.2
