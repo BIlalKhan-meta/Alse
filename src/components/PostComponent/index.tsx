@@ -158,6 +158,8 @@ interface PostProps {
   sharedFromName?: string | null;
   isPaused?: boolean;
   handleVideoPause?: () => void;
+  /** When true, inline feed video plays without sound (fullscreen modal can unmute). */
+  muteInlineVideo?: boolean;
 }
 
 const PostComponent: React.FC<PostProps> = ({
@@ -187,6 +189,7 @@ const PostComponent: React.FC<PostProps> = ({
   isPaused,
   handleVideoPause,
   onMediaPress,
+  muteInlineVideo,
 }) => {
   const navigation = useNavigation();
   const user = useSelector(selectUserProfile);
@@ -375,6 +378,7 @@ const PostComponent: React.FC<PostProps> = ({
                     resizeMode="cover"
                     repeat={true}
                     paused={isPaused}
+                    muted={!!muteInlineVideo}
                     useTextureView={Platform.OS === 'android'}
                     onBuffer={res => {
                       if (res?.isBuffering) {

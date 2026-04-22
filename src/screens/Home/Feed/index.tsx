@@ -422,6 +422,7 @@ const Home: React.FC = () => {
           handleMediaPress(item);
           handleDotPress(null);
         }}
+        muteInlineVideo
       />
     );
   };
