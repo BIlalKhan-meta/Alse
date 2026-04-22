@@ -51,10 +51,82 @@ export function parseAlseCallMessage(
   return null;
 }
 
+/**
+ * Decline/reject signaling should not appear as a chat bubble (socket may send JSON or objects).
+ */
+export function shouldOmitCallDeclineFromChat(
+  message: string | undefined | null | object,
+): boolean {
+  if (message == null) {
+    return false;
+  }
+  if (typeof message === 'object') {
+    const o = message as {type?: string};
+    return o.type === 'call_declined';
+  }
+  if (typeof message !== 'string') {
+    return false;
+  }
+  const parsedAlse = parseAlseCallMessage(message);
+  if (parsedAlse?.type === 'call_rejected') {
+    return true;
+  }
+  const t = message.trim();
+  if (t.startsWith('{')) {
+    try {
+      const j = JSON.parse(t) as {type?: string};
+      if (j?.type === 'call_declined') {
+        return true;
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+  return false;
+}
+
+/** Normalize API/socket message body to a string for GiftedChat. */
+export function normalizeChatMessageText(
+  message: unknown,
+  textFallback?: unknown,
+): string {
+  const raw = message ?? textFallback;
+  if (raw == null) {
+    return '';
+  }
+  if (typeof raw === 'string') {
+    return raw;
+  }
+  if (typeof raw === 'object') {
+    const o = raw as {type?: string; message?: string; text?: string};
+    if (o.type === 'call_declined') {
+      return '';
+    }
+    if (typeof o.message === 'string') {
+      return o.message;
+    }
+    if (typeof o.text === 'string') {
+      return o.text;
+    }
+    try {
+      return JSON.stringify(raw);
+    } catch {
+      return '';
+    }
+  }
+  return String(raw);
+}
+
 /** User-visible line in chat bubble */
 export function getCallMessageDisplayText(message: string | undefined | null): string {
   const p = parseAlseCallMessage(message);
   if (!p) {
+    if (
+      typeof message === 'string' &&
+      shouldOmitCallDeclineFromChat(message)
+    ) {
+      return '';
+    }
     return message || '';
   }
   if (p.type === 'call_invite') {
@@ -64,7 +136,7 @@ export function getCallMessageDisplayText(message: string | undefined | null): s
     return 'Call accepted';
   }
   if (p.type === 'call_rejected') {
-    return 'Call declined';
+    return '';
   }
   if (p.type === 'call_ended') {
     return 'Call ended';

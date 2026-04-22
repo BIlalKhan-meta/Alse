@@ -347,28 +347,7 @@ const IncomingCallHandler: React.FC = () => {
         userId: String(user.id),
         otherUserId: incoming.callerId,
       });
-      chatSocket.sendMessage(
-        JSON.stringify({
-          type: 'call_declined',
-          callId: incoming.callId,
-          callType: incoming.callType,
-          declinedBy: String(user.id),
-        }),
-        incoming.chatId,
-        String(user.id),
-        undefined,
-      );
     }
-    emitMessage({
-      chat_id: incoming.chatId,
-      message: serializeAlseCall({
-        v: 1,
-        type: 'call_rejected',
-        call_id: incoming.callId,
-      }),
-      message_type: 'call',
-      user: {_id: user.id, avatar: user?.avatar},
-    });
     clearIncoming();
   }, [clearIncoming, incoming, user?.avatar, user?.id]);
 

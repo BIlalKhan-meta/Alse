@@ -66,6 +66,10 @@ import {
   createVideoFile,
   getAbsoluteAvatarUrl,
 } from '../../utils/helpers';
+import {
+  normalizeChatMessageText,
+  shouldOmitCallDeclineFromChat,
+} from '../../utils/callPayload';
 
 /**
  * get-chat (and socket) use `medias: string[]` + `message_type`; legacy fields used `image` / `video`.
@@ -524,11 +528,16 @@ const ChatOngoing: React.FC<Props> = props => {
         return;
       }
 
+      const textBody = normalizeChatMessageText(res?.message, res?.text);
+      if (shouldOmitCallDeclineFromChat(textBody) || shouldOmitCallDeclineFromChat(res?.message)) {
+        return;
+      }
+
       const {imageUrl, videoUrl} = resolveChatAttachmentUrls(res);
       const newMessage = {
         _id: res?.id || `sock-${Date.now()}-${Math.random()}`,
         chat_id: res?.chat_id || props?.route?.params?.id,
-        text: res?.message || '',
+        text: textBody,
         image: imageUrl,
         video: videoUrl,
         createdAt: new Date(res?.created_at || Date.now()),
@@ -574,12 +583,18 @@ const ChatOngoing: React.FC<Props> = props => {
     getChat(props?.route?.params?.id)
       .then((res: any) => {
         const messagesData = res?.data?.data || [];
-        const formattedMessages = messagesData.map((item: any) => {
+        const formattedMessages = messagesData
+          .filter((item: any) => {
+            const t = normalizeChatMessageText(item?.message, item?.text);
+            return !shouldOmitCallDeclineFromChat(t) && !shouldOmitCallDeclineFromChat(item?.message);
+          })
+          .map((item: any) => {
           const {imageUrl, videoUrl} = resolveChatAttachmentUrls(item);
+          const text = normalizeChatMessageText(item?.message, item?.text);
           return {
             _id: item?.id || Math.random(),
             chat_id: item?.chat_id,
-            text: item?.message ?? '',
+            text,
             image: imageUrl,
             video: videoUrl,
             createdAt: new Date(item?.created_at || Date.now()),
