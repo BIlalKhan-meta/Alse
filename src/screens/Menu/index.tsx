@@ -1,13 +1,7 @@
-import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Image,
-  TouchableOpacity,
-  ScrollView,
-} from 'react-native';
+import React, {useState} from 'react';
+import {View, Image, TouchableOpacity, ScrollView} from 'react-native';
 import Card from '../../components/Card';
+import GeneralModal from '../../components/GeneralModal';
 import styles from './styles';
 import {images} from '../../utils/images';
 import InterRegular from '../../components/Text/InterRegular';
@@ -28,14 +22,16 @@ const Menu: React.FC = () => {
 
   const dispatch = useAppDispatch();
   const user = useSelector(selectUserProfile);
+  const [logoutModalVisible, setLogoutModalVisible] = useState(false);
 
-  const handleLogout = () => {
+  const confirmLogout = () => {
+    setLogoutModalVisible(false);
     dispatch(logout());
     dispatch(LogoutUser());
-    // navigation.navigate('Login');
   };
 
   return (
+    <>
     <ScrollView showsVerticalScrollIndicator={false}>
       <View style={styles.container}>
         <Card style={styles.cardContainer}>
@@ -251,7 +247,7 @@ const Menu: React.FC = () => {
           </Card>
 
           <Card style={styles.cardContainer2}>
-            <TouchableOpacity onPress={handleLogout}>
+            <TouchableOpacity onPress={() => setLogoutModalVisible(true)}>
               <View style={styles.cardContent5}>
                 <View style={[styles.notifiCon, {width: vw * 8}]}>
                   <Image source={images.logout} style={styles.imageStyle} />
@@ -263,6 +259,21 @@ const Menu: React.FC = () => {
         </View>
       </View>
     </ScrollView>
+
+    <GeneralModal
+      visible={logoutModalVisible}
+      closeModal={() => setLogoutModalVisible(false)}
+      icon={images.logout}
+      title="Log out?"
+      message="Are you sure you want to log out?"
+      buttonText="Yes"
+      onPress={confirmLogout}
+      primaryBtn={false}
+      secondaryBtn
+      SecondaryText1="Yes"
+      SecondaryText2="No"
+    />
+    </>
   );
 };
 

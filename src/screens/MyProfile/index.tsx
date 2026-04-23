@@ -71,6 +71,7 @@ const MyProfile: React.FC = () => {
   const [avatarError, setAvatarError] = useState(false);
   const [shareLoading, setShareLoading] = useState(false);
   const [shareSuccessModal, setShareSuccessModal] = useState(false);
+  const [logoutModalVisible, setLogoutModalVisible] = useState(false);
 
   // Initialize profile data when user is available
   useEffect(() => {
@@ -269,10 +270,10 @@ const MyProfile: React.FC = () => {
 
   const keyExtractor = useCallback((item: PostItem) => item.id, []);
 
-  const handleLogout = () => {
+  const confirmLogout = () => {
+    setLogoutModalVisible(false);
     dispatch(logout());
     dispatch(LogoutUser());
-    // navigation.navigate('Login');
   };
 
   // Show loader only on initial load, rather than focus
@@ -316,7 +317,9 @@ const MyProfile: React.FC = () => {
               ) : null}
             </View>
 
-            <TouchableOpacity onPress={handleLogout} style={{marginTop: 10}}>
+            <TouchableOpacity
+              onPress={() => setLogoutModalVisible(true)}
+              style={{marginTop: 10}}>
               <View style={styles.cardContent5}>
                 <View style={[styles.notifiCon, {width: vw * 8}]}>
                   <Image source={images.logout} style={styles.imageStyle} />
@@ -413,6 +416,20 @@ const MyProfile: React.FC = () => {
         buttonText={t('ok')}
         onPress={() => setShareSuccessModal(false)}
         primaryBtn={true}
+      />
+
+      <GeneralModal
+        visible={logoutModalVisible}
+        closeModal={() => setLogoutModalVisible(false)}
+        icon={images.logout}
+        title="Log out?"
+        message="Are you sure you want to log out?"
+        buttonText="Yes"
+        onPress={confirmLogout}
+        primaryBtn={false}
+        secondaryBtn
+        SecondaryText1="Yes"
+        SecondaryText2="No"
       />
     </View>
   );

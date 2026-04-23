@@ -31,6 +31,8 @@ const CONN_STATE_NAMES: Record<number, string> = {
 };
 
 let rtmEngine: RtmEngine | null = null;
+/** Ensures only one native `release()` runs at a time (concurrent calls crash Android JNI). */
+let releaseInFlight: Promise<void> | null = null;
 let isInitialized = false;
 let currentRemoteInvitation: RemoteInvitation | null = null;
 /** Last sent local invitation (caller side) – used to cancel when receiver doesn't pick up */
@@ -387,25 +389,41 @@ export async function cancelLocalInvitation(): Promise<void> {
 
 /**
  * Release RTM and remove all listeners. Call on logout.
+ * Safe to call from multiple places concurrently (e.g. Redux listener + useEffect cleanup).
  */
 export async function releaseAgoraRtm(): Promise<void> {
-  subscriptions.forEach((sub) => {
-    try {
-      sub.remove();
-    } catch (_) {}
-  });
-  subscriptions.length = 0;
-  currentRemoteInvitation = null;
-  currentLocalInvitation = null;
-  onIncomingCallCallback = null;
-  onInvitationEndedCallback = null;
-  onLocalInvitationAcceptedCallback = null;
-  onLocalInvitationRefusedCallback = null;
-  isInitialized = false;
-  if (rtmEngine) {
-    await rtmEngine.release();
-    rtmEngine = null;
-    console.log(TAG, 'released');
+  if (releaseInFlight) {
+    return releaseInFlight;
+  }
+  releaseInFlight = (async () => {
+    subscriptions.forEach((sub) => {
+      try {
+        sub.remove();
+      } catch (_) {}
+    });
+    subscriptions.length = 0;
+    currentRemoteInvitation = null;
+    currentLocalInvitation = null;
+    onIncomingCallCallback = null;
+    onInvitationEndedCallback = null;
+    onLocalInvitationAcceptedCallback = null;
+    onLocalInvitationRefusedCallback = null;
+    isInitialized = false;
+    if (rtmEngine) {
+      try {
+        await rtmEngine.release();
+      } catch (err) {
+        console.warn(TAG, 'release error (ignored):', err);
+      } finally {
+        rtmEngine = null;
+        console.log(TAG, 'released');
+      }
+    }
+  })();
+  try {
+    await releaseInFlight;
+  } finally {
+    releaseInFlight = null;
   }
 }
 
