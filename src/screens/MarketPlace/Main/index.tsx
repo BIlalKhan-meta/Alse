@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   Image,
   ScrollView,
   Animated,
+  RefreshControl,
 } from 'react-native';
 import {useIsFocused, useNavigation} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
@@ -83,6 +84,7 @@ const Marketplace: React.FC = () => {
   const [isFabOpen, setIsFabOpen] = useState(false);
   const [fabAnimation] = useState(new Animated.Value(0));
   const [orders, setOrders] = useState<Order[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
 
   const {t} = useTranslation();
   const {
@@ -206,6 +208,20 @@ const Marketplace: React.FC = () => {
       setLoading(false);
     }
   };
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([
+        getData(),
+        getProductData(),
+        getOrdersData(),
+        getCurrentLocation(),
+      ]);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [getProductData, getCurrentLocation]);
 
   // FAB animation functions
   const toggleFab = () => {
@@ -362,7 +378,10 @@ const Marketplace: React.FC = () => {
       <ScrollView
         style={styles.contentArea}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.contentContainer}>
+        contentContainerStyle={styles.contentContainer}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+        }>
         {/* Featured Stores Section */}
 
         {/* Featured Stores Section */}
