@@ -17,6 +17,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import {images} from '../../../utils/images';
+import {BASE_URL} from '../../../utils/baseurl';
 import {colors} from '../../../utils/theme';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {getProductByShop, shopDetail} from '../../../api/shop';
@@ -89,6 +90,125 @@ function isRemoteImageUrl(url?: string | null): boolean {
   );
 }
 
+/**
+ * Normalizes GET /shop/:id responses. Typical shape:
+ * `{ status, message, data: { id, user_id, shop_name, banner, avatar, ... } }`
+ * (axios `res.data` = that object, shop = `res.data.data`).
+ * Also supports nested `data.data` and unwrapped shop objects on `res.data`.
+ */
+function extractShopDetailPayload(res: any): Record<string, any> {
+  const body = res?.data;
+  if (!body || typeof body !== 'object') {
+    return {};
+  }
+
+  const outer = (body as any).data;
+  if (outer == null) {
+    if (
+      (body as any).banner != null ||
+      (body as any).avatar != null ||
+      (body as any).shop_name != null ||
+      typeof (body as any).id === 'number'
+    ) {
+      return body as Record<string, any>;
+    }
+    return {};
+  }
+  if (Array.isArray(outer)) {
+    const first = outer[0];
+    return first && typeof first === 'object' ? first : {};
+  }
+  if (typeof outer !== 'object') {
+    return {};
+  }
+
+  if (outer.shop && typeof outer.shop === 'object' && !Array.isArray(outer.shop)) {
+    return outer.shop;
+  }
+
+  const inner = (outer as any).data;
+  if (inner && typeof inner === 'object' && !Array.isArray(inner)) {
+    if (Array.isArray(inner.data) && inner.data.length > 0) {
+      const row = inner.data[0];
+      if (
+        row &&
+        typeof row === 'object' &&
+        (row.banner != null ||
+          row.avatar != null ||
+          row.shop_name != null ||
+          typeof row.id === 'number')
+      ) {
+        return row;
+      }
+    }
+    if (
+      !Array.isArray(inner.data) &&
+      (inner.banner != null ||
+        inner.avatar != null ||
+        inner.shop_name != null ||
+        inner.user_id != null ||
+        typeof inner.id === 'number')
+    ) {
+      return inner;
+    }
+  }
+
+  return outer as Record<string, any>;
+}
+
+function resolveShopMediaUrl(value?: string | null): string | undefined {
+  if (value == null || typeof value !== 'string') {
+    return undefined;
+  }
+  const v = value.trim();
+  if (!v) {
+    return undefined;
+  }
+  if (v.startsWith('http://') || v.startsWith('https://')) {
+    try {
+      const baseHost = new URL(BASE_URL).host;
+      const parsed = new URL(v);
+      if (parsed.protocol === 'http:' && parsed.host === baseHost) {
+        return `https://${parsed.host}${parsed.pathname}${parsed.search}${parsed.hash}`;
+      }
+    } catch {
+      /* ignore URL parse errors */
+    }
+    return v;
+  }
+  if (v.startsWith('//')) {
+    return `https:${v}`;
+  }
+  const root = BASE_URL.replace(/\/api\/?$/i, '');
+  if (v.startsWith('/')) {
+    return `${root}${v}`;
+  }
+  return `${root}/${v}`;
+}
+
+function pickBannerUrl(shop: Record<string, any>): string | undefined {
+  const raw =
+    shop?.banner ??
+    shop?.shop_banner ??
+    shop?.banner_url ??
+    shop?.cover_image ??
+    shop?.cover ??
+    shop?.shop?.banner ??
+    shop?.user?.banner ??
+    shop?.user?.cover_photo;
+  return resolveShopMediaUrl(raw);
+}
+
+function pickAvatarUrl(shop: Record<string, any>): string | undefined {
+  const raw =
+    shop?.avatar ??
+    shop?.shop_avatar ??
+    shop?.logo ??
+    shop?.image ??
+    shop?.user?.avatar;
+  return resolveShopMediaUrl(raw);
+}
+
 const Shop: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute();
@@ -116,6 +236,8 @@ const Shop: React.FC = () => {
   });
   const [bannerError, setBannerError] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
+  const [bannerLoaded, setBannerLoaded] = useState(false);
+  const [avatarLoaded, setAvatarLoaded] = useState(false);
 
   const sellerId = shopDetails?.user_id ?? shopDetails?.user?.id;
   const sellerName =
@@ -128,19 +250,53 @@ const Shop: React.FC = () => {
   const sellerEmail =
     shopDetails?.user?.email ?? shopDetails?.email ?? '';
 
+  const resolvedBannerUrl = useMemo(
+    () => pickBannerUrl(shopDetails),
+    [
+      shopDetails?.banner,
+      shopDetails?.shop_banner,
+      shopDetails?.banner_url,
+      shopDetails?.cover_image,
+      shopDetails?.cover,
+      shopDetails?.shop?.banner,
+      shopDetails?.user?.banner,
+      shopDetails?.user?.cover_photo,
+    ],
+  );
+
+  const resolvedAvatarUrl = useMemo(
+    () => pickAvatarUrl(shopDetails),
+    [
+      shopDetails?.avatar,
+      shopDetails?.shop_avatar,
+      shopDetails?.logo,
+      shopDetails?.image,
+      shopDetails?.user?.avatar,
+    ],
+  );
+
   const bannerSource = useMemo(() => {
-    if (isRemoteImageUrl(shopDetails?.banner) && !bannerError) {
-      return {uri: shopDetails.banner as string};
+    if (resolvedBannerUrl && isRemoteImageUrl(resolvedBannerUrl) && !bannerError) {
+      return {uri: resolvedBannerUrl};
     }
     return images.shopCover;
-  }, [shopDetails?.banner, bannerError]);
+  }, [resolvedBannerUrl, bannerError]);
 
   const avatarSource = useMemo(() => {
-    if (isRemoteImageUrl(shopDetails?.avatar) && !avatarError) {
-      return {uri: shopDetails.avatar as string};
+    if (resolvedAvatarUrl && isRemoteImageUrl(resolvedAvatarUrl) && !avatarError) {
+      return {uri: resolvedAvatarUrl};
     }
     return images.shop11;
-  }, [shopDetails?.avatar, avatarError]);
+  }, [resolvedAvatarUrl, avatarError]);
+
+  const isBannerRemote =
+    Boolean(resolvedBannerUrl && isRemoteImageUrl(resolvedBannerUrl)) &&
+    !bannerError;
+  const isAvatarRemote =
+    Boolean(resolvedAvatarUrl && isRemoteImageUrl(resolvedAvatarUrl)) &&
+    !avatarError;
+  const showBannerLoader = isBannerRemote && !bannerLoaded;
+  const showAvatarLoader = isAvatarRemote && !avatarLoaded;
 
   const handleChatPress = useCallback(async () => {
     if (!sellerId) {
@@ -158,7 +314,7 @@ const Shop: React.FC = () => {
         phoneNumber: sellerPhone,
         user: {
           id: sellerId,
-          avatar: shopDetails?.avatar ?? shopDetails?.image,
+          avatar: resolvedAvatarUrl ?? shopDetails?.avatar ?? shopDetails?.image,
         },
       });
     } catch (err) {
@@ -170,6 +326,7 @@ const Shop: React.FC = () => {
     sellerName,
     sellerPhone,
     navigation,
+    resolvedAvatarUrl,
     shopDetails?.avatar,
     shopDetails?.image,
   ]);
@@ -206,10 +363,12 @@ const Shop: React.FC = () => {
       const res = await shopDetail(shopId);
       const res2 = await getProductByShop(shopId);
 
-      setShopDetails(res?.data?.data || {});
+      setShopDetails(extractShopDetailPayload(res));
       setShopProducts(res2?.data?.data?.data || []);
       setBannerError(false);
       setAvatarError(false);
+      setBannerLoaded(false);
+      setAvatarLoaded(false);
     } catch (error) {
       console.error('Error fetching shop data:', error);
     } finally {
@@ -288,8 +447,19 @@ const Shop: React.FC = () => {
               source={bannerSource}
               style={styles.bannerImage}
               resizeMode="cover"
-              onError={() => setBannerError(true)}
+              onLoadEnd={() => setBannerLoaded(true)}
+              onError={() => {
+                setBannerError(true);
+                setBannerLoaded(true);
+              }}
             />
+            {showBannerLoader ? (
+              <View
+                style={styles.bannerLoaderOverlay}
+                pointerEvents="none">
+                <ActivityIndicator size="large" color={colors.themeColor} />
+              </View>
+            ) : null}
 
             {/* Store Avatar */}
             <View style={styles.avatarContainer}>
@@ -297,8 +467,19 @@ const Shop: React.FC = () => {
                 source={avatarSource}
                 style={styles.avatarImage}
                 resizeMode="cover"
-                onError={() => setAvatarError(true)}
+                onLoadEnd={() => setAvatarLoaded(true)}
+                onError={() => {
+                  setAvatarError(true);
+                  setAvatarLoaded(true);
+                }}
               />
+              {showAvatarLoader ? (
+                <View
+                  style={styles.avatarLoaderOverlay}
+                  pointerEvents="none">
+                  <ActivityIndicator size="small" color={colors.themeColor} />
+                </View>
+              ) : null}
             </View>
           </View>
 
@@ -584,6 +765,13 @@ const styles = StyleSheet.create({
     height: '100%',
     resizeMode: 'cover',
   },
+  bannerLoaderOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#ececec',
+    zIndex: 1,
+  },
   avatarContainer: {
     position: 'absolute',
     bottom: -30,
@@ -594,11 +782,19 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: 'white',
     overflow: 'hidden',
+    zIndex: 2,
   },
   avatarImage: {
     width: '100%',
     height: '100%',
     resizeMode: 'cover',
+  },
+  avatarLoaderOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#ececec',
+    zIndex: 1,
   },
   storeInfoContainer: {
     flexDirection: 'row',
