@@ -7,7 +7,7 @@ import {BASE_URL} from '../utils/baseurl';
  * POST FormData via fetch. Avoids axios FormData/Android Network Error issues.
  * Returns { data } to match axios response shape for existing callers.
  */
-async function postFormDataWithFetch(
+export async function postFormDataWithFetch(
   path: string,
   body: FormData,
 ): Promise<{data: any}> {

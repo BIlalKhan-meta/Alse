@@ -1,5 +1,6 @@
 import axiosInstance from '.';
 import endpoints from './endpoints';
+import {postFormDataWithFetch} from './product';
 
 export const getAllShop = () => {
   return axiosInstance.get(endpoints.shop.allShop);
@@ -26,43 +27,21 @@ export const updateShop = (formData: FormData, id: number) => {
   });
 };
 
-export const createProduct = (formData: FormData, id: number) => {
-  console.log('🌐 API: createProduct called');
-  console.log('🌐 API: Shop ID:', id);
-  console.log(
-    '🌐 API: Endpoint:',
-    `${endpoints.shop.shopDetail}/${id}/product/create`,
-  );
-  console.log('🌐 API: FormData type:', typeof formData);
-  console.log('🌐 API: axiosInstance type:', typeof axiosInstance);
-  console.log('🌐 API: About to make axios POST request...');
-
-  const promise = axiosInstance.post(
+export const createProduct = (formData: FormData, id: number) =>
+  postFormDataWithFetch(
     `${endpoints.shop.shopDetail}/${id}/product/create`,
     formData,
-    {
-      formData: true, // This triggers the form-data handling in the interceptor
-    },
   );
-
-  console.log('🌐 API: axios POST request initiated, promise created');
-  return promise;
-};
 
 export const updateProduct = (
   formData: FormData,
   shopId: number,
   productId: number,
-) => {
-  // console.log(formData, id, 'Formmmm Dataaaa Createee possttt');
-  return axiosInstance.post(
+) =>
+  postFormDataWithFetch(
     `${endpoints.shop.shopDetail}/${shopId}/product/update/${productId}`,
     formData,
-    {
-      formData: true, // This triggers the form-data handling in the interceptor
-    },
   );
-};
 
 export const checkIsSeller = () => {
   return axiosInstance.get(endpoints.shop.isSeller);

@@ -6,7 +6,6 @@ import {
   ScrollView,
   TextInput,
   Image,
-  Alert,
 } from 'react-native';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {Formik} from 'formik';
@@ -29,15 +28,13 @@ import {
 import {vh, vw} from '../../constant';
 import {colors} from '../../utils/theme';
 import CategoryDropdownComponent from '../../components/TextInput/CategoryDropdownComponent';
-import DropDownTextInput from '../../components/TextInput/DropDownTextInput';
 
+/** POST /shop/:id/product/create — multipart fields only */
 const validationSchema = yup.object().shape({
   productTitle: yup.string().required('Product title is required'),
   productDescription: yup.string().required('Product description is required'),
   price: yup.string().required('Price is required'),
   quantity: yup.string().required('Quantity is required'),
-  brand_name: yup.string().required('Brand name is required'),
-  sku: yup.string().required('SKU is required'),
 });
 
 const initialValues = {
@@ -45,11 +42,32 @@ const initialValues = {
   productDescription: '',
   price: '',
   quantity: '',
-  color: '',
-  size: '',
-  brand_name: '',
-  sku: '',
 };
+
+function getCreateProductErrorMessage(error: any): string {
+  if (!error) {
+    return 'Failed to create product';
+  }
+  if (typeof error === 'string') {
+    return error;
+  }
+  const payload = error?.response?.data ?? error?.data;
+  if (payload?.message) {
+    return String(payload.message);
+  }
+  const errors = payload?.errors ?? error?.errors;
+  if (errors && typeof errors === 'object') {
+    const firstVal = Object.values(errors)[0] as unknown;
+    const line = Array.isArray(firstVal) ? firstVal[0] : firstVal;
+    if (line != null && line !== '') {
+      return String(line);
+    }
+  }
+  if (typeof error?.message === 'string' && error.message.length > 0) {
+    return error.message;
+  }
+  return 'Failed to create product';
+}
 
 const AddProduct: React.FC = () => {
   const navigation = useNavigation();
@@ -67,15 +85,6 @@ const AddProduct: React.FC = () => {
   const [categoryId, setCategoryId] = useState();
   const [visible, setVisible] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
-  const [selectedCategory, setSelectedCategory] = useState('');
-  const [selectedDeliveryOption, setSelectedDeliveryOption] = useState('COD');
-
-  const deliveryOptions = [
-    {label: 'COD', value: 'COD'},
-    {label: 'Standard Delivery', value: 'standard'},
-    {label: 'Express Delivery', value: 'express'},
-    {label: 'Pickup', value: 'pickup'},
-  ];
 
   useEffect(() => {
     getData();
@@ -91,7 +100,6 @@ const AddProduct: React.FC = () => {
       if (fetchedCategories && fetchedCategories.length > 0) {
         setCategories(fetchedCategories);
         setCategoryId(fetchedCategories[0].id);
-        setSelectedCategory(fetchedCategories[0].title);
         console.log(
           'Using API categories, selected:',
           fetchedCategories[0].title,
@@ -112,7 +120,6 @@ const AddProduct: React.FC = () => {
         ];
         setCategories(mockCategories);
         setCategoryId(mockCategories[0].id);
-        setSelectedCategory(mockCategories[0].title);
         console.log(
           'Using mock categories, selected:',
           mockCategories[0].title,
@@ -135,7 +142,6 @@ const AddProduct: React.FC = () => {
       ];
       setCategories(mockCategories);
       setCategoryId(mockCategories[0].id);
-      setSelectedCategory(mockCategories[0].title);
       console.log(
         'Using fallback mock categories, selected:',
         mockCategories[0].title,
@@ -187,14 +193,22 @@ const AddProduct: React.FC = () => {
     setLoading(true);
     setSubmitted(true);
 
+    const numericShopId = Number(shopId);
+    if (shopId == null || shopId === '' || Number.isNaN(numericShopId) || numericShopId < 1) {
+      setLoading(false);
+      return Toast.show({
+        type: 'error',
+        text1: 'Missing shop',
+        text2: 'Open Add Product from your shop again.',
+      });
+    }
+
     // Validate required fields
     if (
       !values.productTitle ||
       !values.productDescription ||
       !values.price ||
-      !values.quantity ||
-      !values.brand_name ||
-      !values.sku
+      !values.quantity
     ) {
       setLoading(false);
       return Toast.show({
@@ -226,73 +240,33 @@ const AddProduct: React.FC = () => {
       // Prepare form data according to API payload
       const formData = new FormData();
 
-      // Basic product information
-      formData.append('title', values.productTitle);
-      formData.append('brand_name', values.brand_name);
-      formData.append('category_id', categoryId.toString());
-      formData.append('sku', values.sku);
-      formData.append('description', values.productDescription);
-      formData.append('price', values.price);
-      formData.append('quantity', values.quantity);
-      // Status field - server expects 1 for active, 0 for inactive
-      console.log('🔍 Status value being sent:', status, typeof status);
+      // POST /shop/:id/product/create — only: title, category_id, description,
+      // price, quantity, status, images[0..n]
+      formData.append('title', String(values.productTitle));
+      formData.append('category_id', String(categoryId));
+      formData.append('description', String(values.productDescription));
+      formData.append('price', String(values.price));
+      formData.append('quantity', String(values.quantity));
       formData.append('status', status ? '1' : '0');
-      console.log('🔍 Status appended to FormData as:', status ? '1' : '0');
 
-      // Add images
-      media.forEach((item: any, index) => {
-        if (!item?.id) {
-          formData.append(`images[]`, item);
+      let imageUploadIndex = 0;
+      media.forEach((item: any) => {
+        if (!item?.id && item?.uri) {
+          formData.append(`images[${imageUploadIndex}]`, {
+            uri: item.uri,
+            name: item.name || `product_${imageUploadIndex}.jpg`,
+            type: item.type || 'image/jpeg',
+          } as any);
+          imageUploadIndex += 1;
         }
-      });
-
-      // Add colors if provided
-      if (values.color) {
-        formData.append('colors[]', values.color);
-      }
-
-      // Add sizes if provided
-      if (values.size) {
-        formData.append('sizes[]', values.size);
-      }
-
-      // Add delivery option
-      if (selectedDeliveryOption) {
-        formData.append('delivery_option', selectedDeliveryOption);
-      }
-
-      console.log('🚀 STARTING API CALL - createProduct');
-      console.log('📋 Shop ID:', shopId);
-      console.log('📋 FormData created successfully');
-      console.log('📋 Form data entries:');
-
-      // Log all form data entries (React Native compatible)
-      try {
-        for (let [key, value] of formData.entries()) {
-          console.log(`  ${key}:`, value);
-        }
-      } catch (e) {
-        console.log('📋 FormData entries logging failed:', e);
-      }
-
-      // Debug: Log all form data values
-      console.log('📊 Product data summary:', {
-        title: values.productTitle,
-        brand_name: values.brand_name,
-        category_id: categoryId,
-        sku: values.sku,
-        description: values.productDescription,
-        price: values.price,
-        quantity: values.quantity,
-        status: status,
-        colors: values.color,
-        sizes: values.size,
-        delivery_option: selectedDeliveryOption,
-        imagesCount: media.length,
       });
 
       if (title === 'Edit Product') {
-        const response = await updateProduct(formData, shopId, item?.id);
+        const response = await updateProduct(
+          formData,
+          numericShopId,
+          item?.id,
+        );
         if (response?.data) {
           Toast.show({
             type: 'success',
@@ -302,22 +276,7 @@ const AddProduct: React.FC = () => {
           navigation.navigate('ProductView', {productId: item?.id});
         }
       } else {
-        console.log('📞 CALLING createProduct API...');
-        console.log('📞 Endpoint: /shop/' + shopId + '/product/create');
-        console.log('📞 FormData type:', typeof formData);
-        console.log('📞 FormData constructor:', formData.constructor.name);
-        console.log('📞 About to call createProduct function...');
-
-        // Test network connectivity first
-        console.log('🌐 Testing network connectivity...');
-        try {
-          const testResponse = await fetch('https://httpbin.org/get');
-          console.log('🌐 Network test successful:', testResponse.status);
-        } catch (networkError) {
-          console.log('🌐 Network test failed:', networkError);
-        }
-
-        const response = await createProduct(formData, shopId);
+        const response = await createProduct(formData, numericShopId);
 
         console.log('📞 createProduct function completed');
         console.log('📞 Response object:', response);
@@ -348,7 +307,7 @@ const AddProduct: React.FC = () => {
       Toast.show({
         type: 'error',
         text1: 'Error',
-        text2: error?.response?.data?.message || 'Failed to create product',
+        text2: getCreateProductErrorMessage(error),
       });
     } finally {
       setLoading(false);
@@ -429,36 +388,6 @@ const AddProduct: React.FC = () => {
                 )}
               </View>
 
-              {/* Enter Brand Name */}
-              <View style={styles.inputContainer}>
-                <TextInput
-                  style={styles.textInput}
-                  placeholder="Enter Brand Name"
-                  placeholderTextColor="#999"
-                  onChangeText={handleChange('brand_name')}
-                  onBlur={handleBlur('brand_name')}
-                  value={values.brand_name}
-                />
-                {errors.brand_name && touched.brand_name && (
-                  <Text style={styles.errorText}>{errors.brand_name}</Text>
-                )}
-              </View>
-
-              {/* Enter SKU */}
-              <View style={styles.inputContainer}>
-                <TextInput
-                  style={styles.textInput}
-                  placeholder="Enter SKU"
-                  placeholderTextColor="#999"
-                  onChangeText={handleChange('sku')}
-                  onBlur={handleBlur('sku')}
-                  value={values.sku}
-                />
-                {errors.sku && touched.sku && (
-                  <Text style={styles.errorText}>{errors.sku}</Text>
-                )}
-              </View>
-
               {/* Select Category */}
               <View style={styles.inputContainer}>
                 <CategoryDropdownComponent
@@ -466,24 +395,13 @@ const AddProduct: React.FC = () => {
                   placeholder="Select Category"
                   defaultValue={categoryId}
                   onChangeCategory={id => {
-                    console.log('Category selected:', id);
                     setCategoryId(id);
-                    const selectedCat = categories.find(cat => cat.id === id);
-                    if (selectedCat) {
-                      setSelectedCategory(selectedCat.title);
-                      console.log('Selected category name:', selectedCat.title);
-                    }
                   }}
-                  style={styles.dropdownStyle}
+                  style={styles.dropdownContainer}
                 />
                 {!categoryId && (
                   <Text style={styles.errorText}>Please select a category</Text>
                 )}
-                {/* Debug info */}
-                <Text style={{fontSize: 10, color: '#666', marginTop: 4}}>
-                  Categories loaded: {categories.length} | Selected:{' '}
-                  {selectedCategory}
-                </Text>
               </View>
 
               {/* Enter Price */}
@@ -522,41 +440,6 @@ const AddProduct: React.FC = () => {
                 )}
               </View>
 
-              {/* Enter Color */}
-              <View style={styles.inputContainer}>
-                <TextInput
-                  style={styles.textInput}
-                  placeholder="Enter Color (optional)"
-                  placeholderTextColor="#999"
-                  onChangeText={handleChange('color')}
-                  onBlur={handleBlur('color')}
-                  value={values.color}
-                />
-              </View>
-
-              {/* Enter Size */}
-              <View style={styles.inputContainer}>
-                <TextInput
-                  style={styles.textInput}
-                  placeholder="Enter Size (optional)"
-                  placeholderTextColor="#999"
-                  onChangeText={handleChange('size')}
-                  onBlur={handleBlur('size')}
-                  value={values.size}
-                />
-              </View>
-
-              {/* Select Delivery Option */}
-              <View style={styles.inputContainer}>
-                <DropDownTextInput
-                  items={deliveryOptions}
-                  placeholder="Select Delivery Option"
-                  defaultValue={selectedDeliveryOption}
-                  onChangeValue={value => setSelectedDeliveryOption(value)}
-                  style={styles.dropdownStyle}
-                />
-              </View>
-
               {/* File Upload Section */}
               <View style={styles.uploadSection}>
                 <TouchableOpacity
@@ -576,13 +459,7 @@ const AddProduct: React.FC = () => {
               {/* Add Product Button */}
               <TouchableOpacity
                 style={styles.addProductButton}
-                onPress={() => {
-                  console.log('🔘 ADD PRODUCT BUTTON CLICKED');
-                  console.log('🔘 Form values:', values);
-                  console.log('🔘 Category ID:', categoryId);
-                  console.log('🔘 Media count:', media.length);
-                  handleSubmit();
-                }}>
+                onPress={() => handleSubmit()}>
                 <Text style={styles.addProductButtonText}>Add Product</Text>
               </TouchableOpacity>
             </View>
