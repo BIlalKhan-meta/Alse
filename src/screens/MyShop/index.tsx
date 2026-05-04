@@ -29,6 +29,13 @@ const filterItems = [
   {label: 'Rating', value: 'rating'},
 ];
 
+function isRemoteImageUrl(url?: string | null): boolean {
+  return (
+    typeof url === 'string' &&
+    (url.startsWith('http://') || url.startsWith('https://'))
+  );
+}
+
 const MyShop: React.FC = () => {
   const navigation = useNavigation();
   const isFocused = useIsFocused();
@@ -121,9 +128,9 @@ const MyShop: React.FC = () => {
           <View style={styles.bannerContainer}>
             <Image
               source={
-                shopDetails?.banner && !bannerError
+                isRemoteImageUrl(shopDetails?.banner) && !bannerError
                   ? {uri: shopDetails.banner}
-                  : images.shop11
+                  : images.shopCover
               }
               style={styles.bannerImage}
               resizeMode="cover"
@@ -148,7 +155,7 @@ const MyShop: React.FC = () => {
             <View style={styles.avatarContainer}>
               <Image
                 source={
-                  shopDetails?.avatar && shopDetails.avatar.startsWith('http')
+                  isRemoteImageUrl(shopDetails?.avatar) && !avatarError
                     ? {uri: shopDetails.avatar}
                     : images.shop11
                 }

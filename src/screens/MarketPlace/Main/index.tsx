@@ -68,6 +68,19 @@ interface Order {
   expected_delivery?: string;
 }
 
+const FEATURED_STORES_LIMIT = 4;
+
+function shopAvatarSource(avatar?: string | null) {
+  if (
+    avatar &&
+    typeof avatar === 'string' &&
+    (avatar.startsWith('http://') || avatar.startsWith('https://'))
+  ) {
+    return {uri: avatar};
+  }
+  return images.shop11;
+}
+
 const Marketplace: React.FC = () => {
   const navigation: any = useNavigation();
   const user = useSelector(selectUserProfile);
@@ -409,29 +422,38 @@ const Marketplace: React.FC = () => {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.carouselContainer}>
               {filteredData.length > 0 ? (
-                filteredData.map((store, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={styles.storeCard}
-                    onPress={() => {
-                      if (user.id === store.userId) {
-                        (navigation as any).navigate('MyShop', {
-                          shopId: store.id,
-                        });
-                      } else {
-                        (navigation as any).navigate('Shop', {
-                          shopId: store.id,
-                        });
-                      }
-                    }}>
-                    <View style={[styles.storeLogoContainer]}>
-                      <Image source={images.shop11} style={styles.storeLogo} />
-                    </View>
-                    <Text style={styles.storeName} numberOfLines={1}>
-                      {store.shop_name || 'Store'}
-                    </Text>
-                  </TouchableOpacity>
-                ))
+                filteredData
+                  .slice(0, FEATURED_STORES_LIMIT)
+                  .map((store, index) => (
+                    <TouchableOpacity
+                      key={store.id ?? `store-${index}`}
+                      style={styles.storeCard}
+                      onPress={() => {
+                        const isOwnShop =
+                          String(user?.id) === String(store.user_id);
+                        if (isOwnShop) {
+                          (navigation as any).navigate('MyShop', {
+                            shopId: store.id,
+                          });
+                        } else {
+                          (navigation as any).navigate('Shop', {
+                            shopId: store.id,
+                          });
+                        }
+                      }}>
+                      <View style={[styles.storeLogoContainer]}>
+                        <Image
+                          source={shopAvatarSource(store.avatar)}
+                          style={styles.storeLogo}
+                          resizeMode="cover"
+                          defaultSource={images.shop11}
+                        />
+                      </View>
+                      <Text style={styles.storeName} numberOfLines={1}>
+                        {store.shop_name || 'Store'}
+                      </Text>
+                    </TouchableOpacity>
+                  ))
               ) : (
                 // Placeholder when no stores are available
                 <View style={styles.emptyContainer}>

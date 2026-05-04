@@ -1,4 +1,10 @@
-import React, {useEffect, useLayoutEffect, useState, useCallback} from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState,
+} from 'react';
 import {
   View,
   Text,
@@ -76,6 +82,13 @@ const filterConfig = [
   {key: 'rating', placeholder: 'Ratings', items: filterRatings},
 ];
 
+function isRemoteImageUrl(url?: string | null): boolean {
+  return (
+    typeof url === 'string' &&
+    (url.startsWith('http://') || url.startsWith('https://'))
+  );
+}
+
 const Shop: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute();
@@ -101,6 +114,8 @@ const Shop: React.FC = () => {
     location: 'any',
     rating: 'any',
   });
+  const [bannerError, setBannerError] = useState(false);
+  const [avatarError, setAvatarError] = useState(false);
 
   const sellerId = shopDetails?.user_id ?? shopDetails?.user?.id;
   const sellerName =
@@ -112,6 +127,20 @@ const Shop: React.FC = () => {
     shopDetails?.user?.phone_number ?? shopDetails?.phone_number ?? '';
   const sellerEmail =
     shopDetails?.user?.email ?? shopDetails?.email ?? '';
+
+  const bannerSource = useMemo(() => {
+    if (isRemoteImageUrl(shopDetails?.banner) && !bannerError) {
+      return {uri: shopDetails.banner as string};
+    }
+    return images.shopCover;
+  }, [shopDetails?.banner, bannerError]);
+
+  const avatarSource = useMemo(() => {
+    if (isRemoteImageUrl(shopDetails?.avatar) && !avatarError) {
+      return {uri: shopDetails.avatar as string};
+    }
+    return images.shop11;
+  }, [shopDetails?.avatar, avatarError]);
 
   const handleChatPress = useCallback(async () => {
     if (!sellerId) {
@@ -127,13 +156,23 @@ const Shop: React.FC = () => {
         receiverId: sellerId,
         name: sellerName,
         phoneNumber: sellerPhone,
-        user: {id: sellerId, avatar: shopDetails?.image},
+        user: {
+          id: sellerId,
+          avatar: shopDetails?.avatar ?? shopDetails?.image,
+        },
       });
     } catch (err) {
       setChatLoader(false);
       Toast.error(getMessage((err as any)?.message));
     }
-  }, [sellerId, sellerName, sellerPhone, navigation]);
+  }, [
+    sellerId,
+    sellerName,
+    sellerPhone,
+    navigation,
+    shopDetails?.avatar,
+    shopDetails?.image,
+  ]);
 
   const handleStoreInfoPress = useCallback(() => {
     setStoreInfoVisible(true);
@@ -169,10 +208,8 @@ const Shop: React.FC = () => {
 
       setShopDetails(res?.data?.data || {});
       setShopProducts(res2?.data?.data?.data || []);
-
-      // Debug: Log the shop details to see what banner data we have
-      console.log('Shop Details:', res?.data?.data);
-      console.log('Banner URL:', res?.data?.data?.banner);
+      setBannerError(false);
+      setAvatarError(false);
     } catch (error) {
       console.error('Error fetching shop data:', error);
     } finally {
@@ -248,29 +285,19 @@ const Shop: React.FC = () => {
           {/* Banner */}
           <View style={styles.bannerContainer}>
             <Image
-              // source={
-              //   shopDetails?.banner && shopDetails?.banner !== ''
-              //     ? {uri: shopDetails.banner}
-              //     : images.shopCover
-              // }
-              source={images.shopCover}
+              source={bannerSource}
               style={styles.bannerImage}
-              onError={error => {
-                console.log('Banner image error:', error);
-              }}
+              resizeMode="cover"
+              onError={() => setBannerError(true)}
             />
 
             {/* Store Avatar */}
             <View style={styles.avatarContainer}>
               <Image
-                source={
-                  shopDetails?.avatar &&
-                  shopDetails?.avatar !==
-                    'http://aabcndbkji.us-east-1.awsapprunner.com/storage/default.png'
-                    ? {uri: shopDetails.avatar}
-                    : images.shop11
-                }
+                source={avatarSource}
                 style={styles.avatarImage}
+                resizeMode="cover"
+                onError={() => setAvatarError(true)}
               />
             </View>
           </View>
