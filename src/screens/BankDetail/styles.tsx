@@ -6,13 +6,14 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: colors.headerColor,
     paddingHorizontal: vw * 5,
-    // paddingVertical: vh * 4,
     flex: 1,
+    width: '100%',
+    alignSelf: 'stretch',
   },
   contentContainer: {
     marginTop: Platform.OS == 'ios' ? vh * 8 : vh * 1,
-
-    // alignItems: "center"
+    width: '100%',
+    alignSelf: 'stretch',
   },
   btnConatiner: {
     alignSelf: 'center',
@@ -103,23 +104,25 @@ const styles = StyleSheet.create({
     height: vh * 5,
     paddingLeft: vw * 2,
     color: colors.black,
+    width: '100%',
+    alignSelf: 'stretch',
   },
   label: {
     color: colors.black,
     fontWeight: 'bold',
   },
   dropdownContainer: {
-    // marginTop: vh * 1.4,
-    width: vw * 82,
+    width: '100%',
+    alignSelf: 'stretch',
     zIndex: 5,
     backgroundColor: colors.inputcolor,
   },
   dropDown: {
     borderColor: colors.inputcolor,
-    // backgroundColor: colors.dateConatiner,
     backgroundColor: colors.inputcolor,
     borderWidth: 1,
-    // zIndex: 100
+    width: '100%',
+    alignSelf: 'stretch',
   },
   countryLabel: {
     fontSize: fontSizes.f14,

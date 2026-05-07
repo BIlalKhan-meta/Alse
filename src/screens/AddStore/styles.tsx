@@ -187,8 +187,15 @@ const styles = StyleSheet.create({
   },
   imagePreview: {
     width: '100%',
-    height: 100,
+    height: 140,
     borderRadius: 8,
+    resizeMode: 'cover',
+  },
+  avatarPreview: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    alignSelf: 'center',
     resizeMode: 'cover',
   },
   changeImageText: {

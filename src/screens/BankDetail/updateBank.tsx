@@ -72,7 +72,12 @@ export const UpdateBank = ({data, setData, storeData, isNewStore}) => {
 
       const response = await createShop(storeFormData);
 
-      if (response?.status) {
+      if (
+        response?.data?.status === true ||
+        response?.data?.success === true ||
+        response?.data?.data?.id != null ||
+        response?.data?.id != null
+      ) {
         console.log('Store created successfully');
         setStoreCreated(true);
         Toast.show({
@@ -123,8 +128,8 @@ export const UpdateBank = ({data, setData, storeData, isNewStore}) => {
             setLoading(false);
             setData(temp);
 
-            // If this is a new store flow, create the store after bank details
-            if (isNewStore && storeData) {
+            // Shop was already created in AddStore — only create here if missing
+            if (isNewStore && storeData && !storeData.shopId) {
               createStoreAfterBankDetails();
             }
           }

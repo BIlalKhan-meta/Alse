@@ -303,13 +303,13 @@ const Marketplace: React.FC = () => {
         navigation.navigate('ExistingSeller');
       } else {
         // User is not a seller, navigate to become seller form
-        console.log('User is not a seller, navigating to BecomeSeller form');
-        navigation.navigate('BecomeSeller');
+        console.log('User is not a seller, navigating to AddStore flow');
+        navigation.navigate('AddStore', {title: 'Create your store'});
       }
     } catch (error) {
       console.log('Error checking seller status:', error);
       // On error, default to become seller form
-      navigation.navigate('BecomeSeller');
+      navigation.navigate('AddStore', {title: 'Create your store'});
     } finally {
       setSellerCheckLoading(false);
     }
@@ -627,12 +627,12 @@ const Marketplace: React.FC = () => {
         {/* Options Menu */}
         {isFabOpen && (
           <View style={styles.fabOptions}>
-            <TouchableOpacity
+            {/* <TouchableOpacity
               style={styles.fabOption}
               onPress={handleBecomeRider}>
               <Bike size={16} color="white" style={styles.fabOptionIcon} />
               <Text style={styles.fabOptionText}>Become a Rider</Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
             <TouchableOpacity
               style={styles.fabOption}
               onPress={handleTrackOrder}>
@@ -656,7 +656,7 @@ const Marketplace: React.FC = () => {
               <Gavel size={16} color="white" style={styles.fabOptionIcon} />
               <Text style={styles.fabOptionText}>View Sample Auction</Text>
             </TouchableOpacity>
-            <TouchableOpacity
+            {/* <TouchableOpacity
               style={styles.fabOption}
               onPress={handleFinancials}>
               <DollarSign
@@ -665,7 +665,7 @@ const Marketplace: React.FC = () => {
                 style={styles.fabOptionIcon}
               />
               <Text style={styles.fabOptionText}>Financials</Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
             <TouchableOpacity
               style={styles.fabOption}
               onPress={handleBecomeSeller}

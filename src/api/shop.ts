@@ -6,12 +6,9 @@ export const getAllShop = () => {
   return axiosInstance.get(endpoints.shop.allShop);
 };
 
-export const createShop = (formData: FormData) => {
-  console.log(formData, 'Formmmm Dataaaa Createee possttt');
-  return axiosInstance.post(endpoints.shop.createShop, formData, {
-    formData: true, // This triggers the form-data handling in the interceptor
-  });
-};
+/** Multipart POST; uses fetch so React Native multipart uploads behave reliably on Android. */
+export const createShop = (formData: FormData) =>
+  postFormDataWithFetch(endpoints.shop.createShop, formData);
 
 export const shopDetail = (id: number) => {
   return axiosInstance.get(`${endpoints.shop.shopDetail}/${id}`);

@@ -256,12 +256,16 @@ export default {
   },
 
   addStore: {
-    name: 'Name',
+    name: 'Shop name',
     description: 'Description',
+    deliveryFees: 'Delivery fees',
+    shopBanner: 'Shop banner',
+    shopAvatar: 'Shop profile image',
     address: 'Address (Area and Street)',
     phoneNumber: 'Phone Number',
     country: 'Country',
-    submit: 'Submit Details',
+    submit: 'Create shop',
+    deliveryFeesPlaceholder: 'e.g. 0',
   },
 
   blogs: {

@@ -1,4 +1,4 @@
-import React, {useLayoutEffect, useState} from 'react';
+import React, {useCallback, useLayoutEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -12,8 +12,10 @@ import {Formik} from 'formik';
 import * as yup from 'yup';
 import {
   launchImageLibrary,
-  ImagePickerResponse,
+  launchCamera,
+  Asset,
   MediaType,
+  ImagePickerResponse,
 } from 'react-native-image-picker';
 
 import styles from './styles';
@@ -25,51 +27,78 @@ import {createShop} from '../../api/shop';
 
 const initialValues = {
   name: '',
-  description: '',
-  address: '',
-  phoneNumber: '',
-  country: '',
+  delivery_fees: '0',
+};
+
+const imagePickerMediaOptions = {
+  mediaType: 'photo' as MediaType,
+  includeBase64: false,
+  maxHeight: 2000,
+  maxWidth: 2000,
 };
 
 const validationSchema = yup.object().shape({
-  name: yup.string().required('Name is required'),
-  description: yup.string().required('Description is required'),
-  address: yup.string().required('Address is required'),
-  phoneNumber: yup.string().required('Phone number is required'),
-  country: yup.string().required('Country is required'),
+  name: yup.string().trim().required('Shop name is required'),
+  delivery_fees: yup
+    .string()
+    .trim()
+    .required('Delivery fees is required')
+    .matches(/^\d+(\.\d{1,2})?$/, 'Enter a valid amount (e.g. 0 or 9.99)'),
 });
 
 const AddStore: React.FC = () => {
   const navigation: any = useNavigation();
   const route: any = useRoute();
 
-  const title = route?.params?.title || 'Submit Store Details';
+  const title = route?.params?.title || 'Create your store';
 
   const [submitted, setSubmitted] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
-  const [showCountryDropdown, setShowCountryDropdown] = useState(false);
-  const [selectedImage, setSelectedImage] = useState<any>(null);
+  const [bannerImage, setBannerImage] = useState<Asset | null>(null);
+  const [avatarImage, setAvatarImage] = useState<Asset | null>(null);
 
   const {t} = useTranslation();
 
-  const selectImage = () => {
-    const options = {
-      mediaType: 'photo' as MediaType,
-      includeBase64: false,
-      maxHeight: 2000,
-      maxWidth: 2000,
-    };
-
-    launchImageLibrary(options, (response: ImagePickerResponse) => {
+  const assignImageAsset = useCallback(
+    (which: 'banner' | 'avatar', response: ImagePickerResponse) => {
       if (response.didCancel || response.errorMessage) {
         return;
       }
-
-      if (response.assets && response.assets[0]) {
-        setSelectedImage(response.assets[0]);
+      const asset = response.assets?.[0];
+      if (!asset) {
+        return;
       }
-    });
-  };
+      if (which === 'banner') {
+        setBannerImage(asset);
+      } else {
+        setAvatarImage(asset);
+      }
+    },
+    [],
+  );
+
+  const pickImage = useCallback(
+    (which: 'banner' | 'avatar') => {
+      Alert.alert('Add image', 'Choose gallery or camera.', [
+        {text: 'Cancel', style: 'cancel'},
+        {
+          text: 'Take photo',
+          onPress: () =>
+            launchCamera(imagePickerMediaOptions, response =>
+              assignImageAsset(which, response),
+            ),
+        },
+        {
+          text: 'Photo library',
+          onPress: () =>
+            launchImageLibrary(imagePickerMediaOptions, response =>
+              assignImageAsset(which, response),
+            ),
+        },
+      ]);
+    },
+    [assignImageAsset],
+  );
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -81,7 +110,7 @@ const AddStore: React.FC = () => {
         fontSize: 18,
         fontWeight: '600',
       },
-      title: title,
+      title,
       headerLeft: () => (
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <ChevronLeft size={24} color="#333" />
@@ -90,83 +119,118 @@ const AddStore: React.FC = () => {
     });
   }, [navigation, title]);
 
-  const handleStoreDetails = async (values: any) => {
-    setLoading(true);
+  const handleStoreDetails = async (values: typeof initialValues) => {
     setSubmitted(true);
+    if (!bannerImage?.uri || !avatarImage?.uri) {
+      Toast.show({
+        type: 'error',
+        text1: 'Images required',
+        text2: 'Please add both shop banner and profile image.',
+      });
+      return;
+    }
+
+    setLoading(true);
 
     try {
-      // Create FormData for the API call
       const formData = new FormData();
-      formData.append('name', values.name);
-      formData.append('description', values.description);
-      formData.append('address', values.address);
-      formData.append('phone_number', values.phoneNumber);
-      formData.append('country', values.country);
-      formData.append('delivery_fees', '0'); // Add required delivery_fees field
+      formData.append('name', values.name.trim());
+      formData.append('delivery_fees', values.delivery_fees.trim() || '0');
+      formData.append('shop_banner', {
+        uri: bannerImage.uri,
+        type: bannerImage.type || 'image/jpeg',
+        name: bannerImage.fileName || 'shop_banner.jpg',
+      } as any);
+      formData.append('shop_avatar', {
+        uri: avatarImage.uri,
+        type: avatarImage.type || 'image/jpeg',
+        name: avatarImage.fileName || 'shop_avatar.jpg',
+      } as any);
 
-      // Add shop banner image
-      if (selectedImage) {
-        formData.append('shop_banner', {
-          uri: selectedImage.uri,
-          type: selectedImage.type || 'image/jpeg',
-          name: selectedImage.fileName || 'shop_banner.jpg',
-        } as any);
+      const {data} = await createShop(formData);
+
+      const ok =
+        data?.status === true ||
+        data?.success === true ||
+        data?.data?.id != null ||
+        data?.id != null;
+
+      if (!ok) {
+        throw new Error(data?.message || 'Failed to create shop');
       }
 
-      console.log('Creating shop with data:', values);
+      const shopId =
+        data?.data?.id ??
+        data?.data?.shop_id ??
+        data?.id ??
+        data?.shop?.id;
 
-      // Call the createShop API
-      const response = await createShop(formData);
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: 'Shop created successfully!',
+      });
 
-      console.log('Shop creation response:', response);
-
-      if (
-        response?.data?.success ||
-        response?.data?.data ||
-        response?.status === 200
-      ) {
-        Toast.show({
-          type: 'success',
-          text1: 'Success',
-          text2: 'Shop created successfully!',
-        });
-
-        // Store the form data in navigation params to pass to bank details
-        const storeData = {
-          name: values.name,
-          description: values.description,
-          address: values.address,
-          phoneNumber: values.phoneNumber,
-          country: values.country,
-          shopId: response?.data?.data?.id || response?.data?.id,
-        };
-
-        // Navigate to bank details with the store data
-        navigation.navigate('BankDetail', {storeData, isNewStore: true});
-      } else {
-        throw new Error('Failed to create shop');
-      }
+      navigation.navigate('BankDetail', {
+        storeData: {
+          name: values.name.trim(),
+          delivery_fees: values.delivery_fees.trim() || '0',
+          shopId,
+        },
+        isNewStore: true,
+      });
     } catch (error: any) {
-      console.log('Error creating shop:', error);
+      const msg =
+        error?.response?.data?.message ??
+        error?.response?.data?.error ??
+        error?.message ??
+        'Failed to create shop';
       Toast.show({
         type: 'error',
         text1: 'Error',
         text2:
-          error?.response?.data?.message ||
-          error?.message ||
-          'Failed to create shop',
+          typeof msg === 'string' ? msg : 'Failed to create shop',
       });
     } finally {
       setLoading(false);
     }
   };
 
-  const countries = [
-    {label: 'USA', value: 'USA', flag: '🇺🇸'},
-    {label: 'Canada', value: 'Canada', flag: '🇨🇦'},
-    {label: 'UK', value: 'UK', flag: '🇬🇧'},
-    {label: 'Australia', value: 'Australia', flag: '🇦🇺'},
-  ];
+  const renderPicker = (
+    label: string,
+    selected: Asset | null,
+    hint: string,
+    which: 'banner' | 'avatar',
+  ) => (
+    <View style={styles.inputContainer}>
+      <Text style={styles.label}>{label} *</Text>
+      <TouchableOpacity
+        style={styles.imageUploadButton}
+        onPress={() => pickImage(which)}
+        accessibilityRole="button">
+        {selected?.uri ? (
+          <View style={styles.imagePreviewContainer}>
+            <Image
+              source={{uri: selected.uri}}
+              style={
+                which === 'banner' ? styles.imagePreview : styles.avatarPreview
+              }
+              resizeMode="cover"
+            />
+            <Text style={styles.changeImageText}>Tap to change</Text>
+          </View>
+        ) : (
+          <View style={styles.uploadPlaceholder}>
+            <Camera size={24} color="#666" />
+            <Text style={styles.uploadText}>{hint}</Text>
+          </View>
+        )}
+      </TouchableOpacity>
+      {submitted && !selected?.uri ? (
+        <Text style={styles.errorText}>{label} is required</Text>
+      ) : null}
+    </View>
+  );
 
   return (
     <View style={styles.container}>
@@ -178,171 +242,60 @@ const AddStore: React.FC = () => {
           initialValues={initialValues}
           validationSchema={validationSchema}
           onSubmit={handleStoreDetails}>
-          {({
-            handleSubmit,
-            handleChange,
-            handleBlur,
-            values,
-            errors,
-            setFieldValue,
-          }) => (
+          {({handleSubmit, handleChange, handleBlur, values, errors}) => (
             <>
               <View style={styles.formContainer}>
-                {/* Name Field */}
                 <View style={styles.inputContainer}>
-                  <Text style={styles.label}>{t('addStore.name')}</Text>
+                  <Text style={styles.label}>{t('addStore.name')} *</Text>
                   <TextInput
                     style={styles.textInput}
-                    placeholder="Name"
+                    placeholder="My shop name"
                     placeholderTextColor="#999"
                     onChangeText={handleChange('name')}
                     onBlur={handleBlur('name')}
                     value={values.name}
                   />
-                  {submitted && errors.name && (
+                  {submitted && errors.name ? (
                     <Text style={styles.errorText}>{errors.name}</Text>
-                  )}
+                  ) : null}
                 </View>
 
-                {/* Description Field */}
                 <View style={styles.inputContainer}>
-                  <Text style={styles.label}>{t('addStore.description')}</Text>
-                  <TextInput
-                    style={[styles.textInput, styles.textArea]}
-                    placeholder="Description"
-                    placeholderTextColor="#999"
-                    onChangeText={handleChange('description')}
-                    onBlur={handleBlur('description')}
-                    value={values.description}
-                    multiline
-                    numberOfLines={4}
-                    textAlignVertical="top"
-                  />
-                  {submitted && errors.description && (
-                    <Text style={styles.errorText}>{errors.description}</Text>
-                  )}
-                </View>
-
-                {/* Address Field */}
-                <View style={styles.inputContainer}>
-                  <Text style={styles.label}>{t('addStore.address')} *</Text>
+                  <Text style={styles.label}>{t('addStore.deliveryFees')} *</Text>
                   <TextInput
                     style={styles.textInput}
-                    placeholder={`${t('addStore.address *')}`}
+                    placeholder={t('addStore.deliveryFeesPlaceholder')}
                     placeholderTextColor="#999"
-                    onChangeText={handleChange('address')}
-                    onBlur={handleBlur('address')}
-                    value={values.address}
+                    onChangeText={handleChange('delivery_fees')}
+                    onBlur={handleBlur('delivery_fees')}
+                    value={values.delivery_fees}
+                    keyboardType="decimal-pad"
                   />
-                  {submitted && errors.address && (
-                    <Text style={styles.errorText}>{errors.address}</Text>
-                  )}
+                  {submitted && errors.delivery_fees ? (
+                    <Text style={styles.errorText}>{errors.delivery_fees}</Text>
+                  ) : null}
                 </View>
 
-                {/* Phone Number Field */}
-                <View style={styles.inputContainer}>
-                  <Text style={styles.label}>{t('addStore.phone')}</Text>
-                  <View style={styles.phoneContainer}>
-                    <TouchableOpacity style={styles.countrySelector}>
-                      <Text style={styles.countryText}>USA</Text>
-                      <Text style={styles.dropdownArrow}>▼</Text>
-                    </TouchableOpacity>
-                    <TextInput
-                      style={[styles.textInput, styles.phoneInput]}
-                      placeholder={t('enterPhone')}
-                      placeholderTextColor="#999"
-                      onChangeText={handleChange('phoneNumber')}
-                      onBlur={handleBlur('phoneNumber')}
-                      value={values.phoneNumber}
-                      keyboardType="phone-pad"
-                    />
-                  </View>
-                  {submitted && errors.phoneNumber && (
-                    <Text style={styles.errorText}>{errors.phoneNumber}</Text>
-                  )}
-                </View>
-
-                {/* Country Field */}
-                <View style={styles.inputContainer}>
-                  <Text style={styles.label}>{t('addStore.country')}</Text>
-                  <TouchableOpacity
-                    style={styles.countryField}
-                    onPress={() =>
-                      setShowCountryDropdown(!showCountryDropdown)
-                    }>
-                    <View style={styles.countryDisplay}>
-                      <Text style={styles.flagText}>🇺🇸</Text>
-                      <Text style={styles.countryValue}>
-                        {values.country || t('addStore.country')}
-                      </Text>
-                    </View>
-                    <Text style={styles.dropdownArrow}>▼</Text>
-                  </TouchableOpacity>
-
-                  {showCountryDropdown && (
-                    <View style={styles.dropdownContainer}>
-                      {countries.map((country, index) => (
-                        <TouchableOpacity
-                          key={index}
-                          style={styles.dropdownItem}
-                          onPress={() => {
-                            setFieldValue('country', country.label);
-                            setShowCountryDropdown(false);
-                          }}>
-                          <Text style={styles.flagText}>{country.flag}</Text>
-                          <Text style={styles.dropdownItemText}>
-                            {country.label}
-                          </Text>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                  )}
-
-                  {submitted && errors.country && (
-                    <Text style={styles.errorText}>{errors.country}</Text>
-                  )}
-                </View>
-
-                {/* Shop Banner Upload */}
-                <View style={styles.inputContainer}>
-                  <Text style={styles.label}>Shop Banner *</Text>
-                  <TouchableOpacity
-                    style={styles.imageUploadButton}
-                    onPress={selectImage}>
-                    {selectedImage ? (
-                      <View style={styles.imagePreviewContainer}>
-                        <Image
-                          source={{uri: selectedImage.uri}}
-                          style={styles.imagePreview}
-                        />
-                        <Text style={styles.changeImageText}>
-                          Tap to change image
-                        </Text>
-                      </View>
-                    ) : (
-                      <View style={styles.uploadPlaceholder}>
-                        <Camera size={24} color="#666" />
-                        <Text style={styles.uploadText}>
-                          Tap to select shop banner
-                        </Text>
-                      </View>
-                    )}
-                  </TouchableOpacity>
-                  {submitted && !selectedImage && (
-                    <Text style={styles.errorText}>
-                      Shop banner is required
-                    </Text>
-                  )}
-                </View>
+                {renderPicker(
+                  t('addStore.shopBanner'),
+                  bannerImage,
+                  'Tap to select banner image',
+                  'banner',
+                )}
+                {renderPicker(
+                  t('addStore.shopAvatar'),
+                  avatarImage,
+                  'Tap to select profile photo',
+                  'avatar',
+                )}
               </View>
 
-              {/* Submit Button */}
               <TouchableOpacity
                 style={styles.submitButton}
-                onPress={() => handleStoreDetails(values)}
+                onPress={() => handleSubmit()}
                 disabled={loading}>
                 <Text style={styles.submitButtonText}>
-                  {loading ? 'Creating Shop...' : t('addStore.submit')}
+                  {loading ? 'Creating shop…' : t('addStore.submit')}
                 </Text>
               </TouchableOpacity>
             </>
