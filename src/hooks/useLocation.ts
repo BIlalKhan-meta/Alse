@@ -1,6 +1,15 @@
-import {useState, useEffect, useCallback} from 'react';
+import {useState, useCallback} from 'react';
 import Geolocation from 'react-native-geolocation-service';
-import {PermissionsAndroid, Platform, Alert} from 'react-native';
+import {PermissionsAndroid, Platform} from 'react-native';
+import DeviceInfo from 'react-native-device-info';
+
+/** Nominatim requires an app-identifying User-Agent; stock library UAs get blocked (non‑JSON/HTML responses). */
+const buildNominatimUserAgent = () => {
+  const version = DeviceInfo.getVersion();
+  const bundleId = DeviceInfo.getBundleId();
+  const os = Platform.OS === 'ios' ? 'iOS' : 'Android';
+  return `Alenga/${version} (${os}; ${bundleId})`;
+};
 
 interface LocationData {
   latitude: number;
@@ -50,16 +59,47 @@ export const useLocation = () => {
     longitude: number,
   ): Promise<string> => {
     try {
-      // Using OpenStreetMap Nominatim API for reverse geocoding (free)
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
-      );
-      const data = await response.json();
+      const url =
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`;
+      const response = await fetch(url, {
+        headers: {
+          'User-Agent': buildNominatimUserAgent(),
+          Accept: 'application/json',
+          'Accept-Language': 'en',
+        },
+      });
+
+      const raw = await response.text();
+      if (!response.ok) {
+        console.warn(
+          'Reverse geocoding HTTP error:',
+          response.status,
+          raw.slice(0, 120),
+        );
+        return 'Address unavailable';
+      }
+
+      let data: {
+        display_name?: string;
+        address?: Record<string, string>;
+      };
+      try {
+        data = JSON.parse(raw);
+      } catch {
+        console.warn(
+          'Reverse geocoding: response was not JSON',
+          raw.slice(0, 120),
+        );
+        return 'Address unavailable';
+      }
 
       if (data && data.display_name) {
-        // Parse the address to get a more readable format
         const address = data.address;
         let formattedAddress = '';
+
+        if (!address) {
+          return data.display_name;
+        }
 
         if (address.house_number && address.road) {
           formattedAddress += `${address.house_number} ${address.road}`;
