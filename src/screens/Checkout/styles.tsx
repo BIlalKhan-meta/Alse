@@ -59,27 +59,33 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.f14,
     color: colors.inputText,
   },
+  fieldContainer: {
+    width: '100%',
+    alignSelf: 'stretch',
+  },
   inputStyle: {
     backgroundColor: colors.inputcolor,
     height: vh * 5,
     color: colors.black,
+    width: '100%',
+    alignSelf: 'stretch',
   },
   label: {
     color: colors.black,
     fontWeight: 'bold',
   },
   dropdownContainer: {
-    // marginTop: vh * 1.4,
-    width: vw * 82,
+    width: '100%',
+    alignSelf: 'stretch',
     zIndex: 5,
     backgroundColor: colors.inputcolor,
   },
   dropDown: {
     borderColor: colors.inputcolor,
-    // backgroundColor: colors.dateConatiner,
     backgroundColor: colors.inputcolor,
     borderWidth: 1,
-    // zIndex: 100
+    width: '100%',
+    alignSelf: 'stretch',
   },
   countryLabel: {
     fontSize: fontSizes.f14,

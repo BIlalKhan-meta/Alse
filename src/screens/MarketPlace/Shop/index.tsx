@@ -487,10 +487,10 @@ const Shop: React.FC = () => {
 
           {/* Store Stats */}
           <View style={styles.storeStatsContainer}>
-            <View style={styles.statItem}>
+            {/* <View style={styles.statItem}>
               <Text style={styles.statNumber}>124</Text>
               <Text style={styles.statLabel}>Followers</Text>
-            </View>
+            </View> */}
             <View style={styles.statItem}>
               <Text style={styles.statNumber}>{shopProducts.length}</Text>
               <Text style={styles.statLabel}>Products</Text>

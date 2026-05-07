@@ -181,6 +181,7 @@ export default {
     featuredStores: 'Tiendas destacadas',
     noStores: 'No hay tiendas disponibles',
     recommendedProds: 'Productos recomendados socialmente',
+    allProducts: 'Todos los productos',
     noProds: 'No hay productos disponibles ahora',
     createShop: 'Crear tienda / Mi tienda',
   },

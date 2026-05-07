@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   ViewStyle,
   Text,
+  Keyboard,
 } from 'react-native';
 import TextInputWrapper from '../TextInputWrapper';
 import {StyleSheet} from 'react-native';
@@ -56,7 +57,11 @@ const DatePickerTextInput: React.FC<DatePickerTextInputProps> = props => {
     <>
       <View style={styles.container}>
         {label && <InterBoldLabel style={styles.label}>{label}</InterBoldLabel>}
-        <TouchableOpacity onPress={() => setOpenDate(true)}>
+        <TouchableOpacity
+          onPress={() => {
+            Keyboard.dismiss();
+            setOpenDate(true);
+          }}>
           <View style={[styles.textinputbox]}>
             <InterLight style={{color: colors.silver}}>
               {value ? value : 'mm/dd/yyyy'}

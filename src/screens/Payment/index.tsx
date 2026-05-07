@@ -1,10 +1,8 @@
 import React from 'react';
-import {Text, View, SafeAreaView} from 'react-native';
-import {useLayoutEffect, useState} from 'react';
+import {Text, View, SafeAreaView, Modal, Platform} from 'react-native';
+import {useLayoutEffect, useRef, useState, useEffect} from 'react';
 
-import {useNavigation, useRoute} from '@react-navigation/native';
-import {useSelector} from 'react-redux';
-import {selectUserProfile} from '../../store/slices/authSlice';
+import {useNavigation} from '@react-navigation/native';
 
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {Formik} from 'formik';
@@ -17,25 +15,27 @@ import DatePickerTextInput from '../../components/TextInput/DatePickerTextInput'
 import CustomButton from '../../components/CustomButton';
 import {formatDate} from '../../utils';
 import {colors} from '../../utils/theme';
-import {checkout} from '../../api/product';
-import {Toast} from '../../utils/helpers';
+import Loader from '../../components/Loader';
+import InterRegular from '../../components/Text/InterRegular';
 
 const Payment: React.FC = () => {
   const navigation = useNavigation();
-  const route = useRoute();
-  const user = useSelector(selectUserProfile);
 
   const [submitted, setSubmitted] = useState<boolean>(false);
   const [paymentSuccess, setPaymentSuccess] = useState<boolean>(false);
   const [openDate, setOpenDate] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(false);
+  /** Full-screen-ish overlay while “processing” payment (demo flow, no API). */
+  const [processingPayment, setProcessingPayment] = useState<boolean>(false);
+  const mountedRef = useRef(true);
 
-  // Get order data from route params (passed from checkout screen)
-  const orderData = (route.params as any)?.orderData || {};
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
-  // Debug: Log the received order data
-  console.log('Payment Screen - Received order data:', orderData);
-  console.log('Payment Screen - Route params:', route.params);
+  const PAYMENT_PROCESS_MS = 5000;
 
   interface FormValues {
     cardHolderName: string;
@@ -96,59 +96,19 @@ const Payment: React.FC = () => {
     expirationDate: yup.date().required('Expiration Date is required'),
   });
 
-  const handleSubmit = async (values: FormValues) => {
-    setLoading(true);
+  const handleSubmit = async (_values: FormValues) => {
+    setProcessingPayment(true);
 
-    try {
-      // Combine order data with payment data
-      const paymentData = {
-        ...orderData, // Include all the shipping/billing data from checkout
-        // Ensure required fields are present with correct names
-        first_name:
-          orderData.shipping_first_name || orderData.billing_first_name,
-        last_name: orderData.shipping_last_name || orderData.billing_last_name,
-        email:
-          user?.email || orderData.shipping_email || orderData.billing_email, // Use user's actual email from profile
-        phone: orderData.shipping_phone || orderData.billing_phone,
-        address: orderData.shipping_address || orderData.billing_address,
-        // Payment fields
-        card_holder_name: values.cardHolderName,
-        card_number: values.cardNumber.replace(/\s/g, ''), // Remove spaces for API
-        cvv: values.CVVNumber,
-        expiration_date: formatDate(values.expirationDate),
-      };
+    await new Promise<void>(resolve =>
+      setTimeout(resolve, PAYMENT_PROCESS_MS),
+    );
 
-      console.log('Payment Screen - Combined payment data:', paymentData);
-      console.log('Payment Screen - Order data keys:', Object.keys(orderData));
-
-      // Create FormData for API call
-      const formData = new FormData();
-      Object.entries(paymentData).forEach(([key, value]) => {
-        formData.append(key, value);
-      });
-
-      console.log('Payment data being sent:', paymentData);
-
-      // Call checkout API with complete order + payment data
-      const response = await checkout(formData);
-
-      if (response?.data) {
-        console.log('Payment successful:', response.data);
-        setPaymentSuccess(true);
-        Toast.success('Payment processed successfully!');
-      } else {
-        Toast.error('Payment failed. Please try again.');
-      }
-    } catch (error: any) {
-      console.log('Payment error:', error);
-      const errorMessage =
-        error?.response?.data?.message ||
-        error?.message ||
-        'Payment failed. Please try again.';
-      Toast.error(errorMessage);
-    } finally {
-      setLoading(false);
+    if (!mountedRef.current) {
+      return;
     }
+
+    setProcessingPayment(false);
+    setPaymentSuccess(true);
   };
 
   useLayoutEffect(() => {
@@ -161,6 +121,25 @@ const Payment: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <Modal
+        visible={processingPayment}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={() => undefined}>
+        <View style={styles.paymentLoadingBackdrop}>
+          <View style={styles.paymentLoadingCard}>
+            <Loader
+              size="large"
+              style={{flex: 0, backgroundColor: 'transparent'}}
+            />
+            <InterRegular style={styles.paymentLoadingCaption}>
+              Processing your payment...
+            </InterRegular>
+          </View>
+        </View>
+      </Modal>
+
       <Formik
         initialValues={initialValues}
         validationSchema={validationSchema}
@@ -176,7 +155,13 @@ const Payment: React.FC = () => {
           <>
             <KeyboardAwareScrollView
               style={styles.scrollview}
-              showsVerticalScrollIndicator={false}>
+              contentContainerStyle={styles.scrollContent}
+              showsVerticalScrollIndicator={false}
+              enableOnAndroid
+              enableAutomaticScroll
+              keyboardShouldPersistTaps="handled"
+              extraScrollHeight={Platform.OS === 'ios' ? 100 : 120}
+              extraHeight={Platform.OS === 'ios' ? 100 : 120}>
               <View style={styles.container}>
                 {/* Payment Card Container */}
                 <View style={styles.paymentCard}>
@@ -250,7 +235,7 @@ const Payment: React.FC = () => {
 
                   <CustomButton
                     style={styles.payButton}
-                    loading={loading}
+                    disable={processingPayment}
                     onPress={() => {
                       setSubmitted(true);
                       handleSubmit();
@@ -263,8 +248,8 @@ const Payment: React.FC = () => {
                   visible={paymentSuccess}
                   closeModal={() => setPaymentSuccess(false)}
                   icon={images.checkedIcon}
-                  title="Successfully"
-                  message="Payment has been processed successfully. Your Order ID is #1234567"
+                  title="Payment complete"
+                  message="Your payment has been made successfully."
                   buttonText="Ok"
                   primaryBtn={true}
                   onPress={() => {

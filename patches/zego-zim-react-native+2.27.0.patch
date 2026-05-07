@@ -1,0 +1,15 @@
+diff --git a/node_modules/zego-zim-react-native/react-native-zego-zim.podspec b/node_modules/zego-zim-react-native/react-native-zego-zim.podspec
+index f67c5cb..1bee408 100644
+--- a/node_modules/zego-zim-react-native/react-native-zego-zim.podspec
++++ b/node_modules/zego-zim-react-native/react-native-zego-zim.podspec
+@@ -16,7 +16,9 @@ Pod::Spec.new do |s|
+   s.author             = { 'zego.im' => 'developer@zego.im' }
+   s.platforms    = { :ios => '9.0' }
+   s.source       = { :path => '.' }
+-  s.source_files  = 'ios/**/*.{h,c,m,mm,swift}'
++  # Do not use ios/**/* here: it matches ZIM.xcframework headers under ios/libs, and
++  # Xcode then copies the same public headers from each slice (device/sim/maccatalyst).
++  s.source_files = 'ios/*.{h,c,m,mm,swift}', 'ios/internal/**/*.{h,c,m,mm,swift}'
+   s.requires_arc = true
+ 
+ 

@@ -181,6 +181,7 @@ export default {
     featuredStores: 'विशेष दुकानें',
     noStores: 'कोई दुकान उपलब्ध नहीं',
     recommendedProds: 'सामाजिक रूप से अनुशंसित उत्पाद',
+    allProducts: 'सभी उत्पाद',
     noProds: 'अभी कोई उत्पाद उपलब्ध नहीं',
     createShop: 'दुकान बनाएँ / मेरी दुकान',
   },

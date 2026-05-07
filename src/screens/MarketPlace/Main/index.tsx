@@ -20,6 +20,7 @@ import {
 } from '../../../api/product';
 import {checkIsSeller} from '../../../api/shop';
 import Loader from '../../../components/Loader';
+import ShopProductListRow from '../../../components/ShopProductListRow';
 import {Subscribe} from '../../../components/Subscribe';
 import {
   MapPin,
@@ -87,8 +88,10 @@ const Marketplace: React.FC = () => {
 
   const [shops, setShops] = useState<any[]>([]);
   const [products, setProducts] = useState<Product[]>([]); // Typed products
+  const [allProductsList, setAllProductsList] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [productsLoading, setProductsLoading] = useState(false);
+  const [allProductsLoading, setAllProductsLoading] = useState(false);
   const [sellerCheckLoading, setSellerCheckLoading] = useState(false);
   const isFocused = useIsFocused();
   const [filteredData, setFilteredData] = useState<any[]>([]);
@@ -161,6 +164,20 @@ const Marketplace: React.FC = () => {
     }
   }, []);
 
+  const getAllMarketplaceProducts = React.useCallback(async () => {
+    setAllProductsLoading(true);
+    try {
+      const res = await getAllProducts({per_page: 50});
+      const list = res?.data?.data?.data;
+      setAllProductsList(Array.isArray(list) ? list : []);
+    } catch (error) {
+      console.log('Error fetching marketplace products list:', error);
+      setAllProductsList([]);
+    } finally {
+      setAllProductsLoading(false);
+    }
+  }, []);
+
   // Function to get orders data
   const getOrdersData = async () => {
     try {
@@ -176,8 +193,9 @@ const Marketplace: React.FC = () => {
   useEffect(() => {
     getData();
     getProductData();
+    getAllMarketplaceProducts();
     getOrdersData();
-  }, [isFocused, getProductData]);
+  }, [isFocused, getProductData, getAllMarketplaceProducts]);
 
   // Separate useEffect for location to prevent infinite loops
   useEffect(() => {
@@ -214,13 +232,14 @@ const Marketplace: React.FC = () => {
       await Promise.all([
         getData(),
         getProductData(),
+        getAllMarketplaceProducts(),
         getOrdersData(),
         getCurrentLocation(),
       ]);
     } finally {
       setRefreshing(false);
     }
-  }, [getProductData, getCurrentLocation]);
+  }, [getProductData, getAllMarketplaceProducts, getCurrentLocation]);
 
   // FAB animation functions
   const toggleFab = () => {
@@ -456,7 +475,7 @@ const Marketplace: React.FC = () => {
             <Text style={styles.sectionTitle}>
               {t('marketplace.recommendedProds')}
             </Text>
-            <ChevronRight size={20} color="#333" />
+            {/* <ChevronRight size={20} color="#333" /> */}
           </View>
 
           {productsLoading ? (
@@ -573,14 +592,34 @@ const Marketplace: React.FC = () => {
                 </TouchableOpacity>
               ))}
             </ScrollView>
-          ) : (
-            <View style={styles.noProductsContainer}>
-              <Text style={styles.noProductsText}>
-                {t('marketplace.noProds')}
-              </Text>
-            </View>
-          )}
+          ) : null}
         </View>
+
+        {(allProductsLoading || allProductsList.length > 0) && (
+          <View style={styles.allProductsSection}>
+            {allProductsLoading ? (
+              <View style={styles.productsLoadingContainer}>
+                <Loader />
+              </View>
+            ) : (
+              allProductsList.map((product, index) =>
+                product?.id != null ? (
+                  <ShopProductListRow
+                    key={product.id}
+                    product={product}
+                    onPress={() =>
+                      (navigation as any).navigate('ProductView', {
+                        productId: product.id,
+                      })
+                    }
+                  />
+                ) : (
+                  <ShopProductListRow key={index} product={product} />
+                ),
+              )
+            )}
+          </View>
+        )}
       </ScrollView>
 
       {/* FAB Button */}
@@ -794,7 +833,12 @@ const styles = StyleSheet.create({
   recommendedSection: {
     paddingHorizontal: 16,
     paddingTop: 20,
-    marginBottom: 80, // Space for the button at bottom
+  },
+  allProductsSection: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 24,
+    backgroundColor: 'white',
   },
   sectionHeaderRow: {
     flexDirection: 'row',
@@ -1055,17 +1099,6 @@ const styles = StyleSheet.create({
     width: 80,
     height: 18,
     backgroundColor: '#e0e0e0',
-  },
-
-  noProductsContainer: {
-    paddingVertical: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  noProductsText: {
-    fontSize: 16,
-    color: '#999',
-    textAlign: 'center',
   },
 });
 

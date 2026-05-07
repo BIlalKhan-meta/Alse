@@ -186,6 +186,7 @@ export default {
     featuredStores: 'Boutiques en vedette',
     noStores: 'Aucune boutique disponible',
     recommendedProds: 'Produits recommandés socialement',
+    allProducts: 'Tous les produits',
     noProds: 'Aucun produit disponible pour le moment',
     createShop: 'Créer une boutique / Ma boutique',
   },

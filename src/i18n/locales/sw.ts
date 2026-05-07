@@ -182,6 +182,7 @@ export default {
     featuredStores: 'Maduka yaliyopendekezwa',
     noStores: 'Hakuna maduka yanayopatikana',
     recommendedProds: 'Bidhaa zilizopendekezwa kijamii',
+    allProducts: 'Bidhaa zote',
     noProds: 'Hakuna bidhaa kwa sasa',
     createShop: 'Unda Duka / Duka Langu',
   },

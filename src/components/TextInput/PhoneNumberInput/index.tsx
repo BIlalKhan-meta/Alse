@@ -1,5 +1,5 @@
 import React, {useRef} from 'react';
-import {View, StyleSheet, StyleProp, TextStyle} from 'react-native';
+import {View, StyleProp, TextStyle, ViewStyle} from 'react-native';
 import PhoneInput from 'react-native-phone-number-input';
 import styles from './styles';
 import InterRegular from '../../Text/InterRegular';
@@ -16,6 +16,8 @@ interface PhoneNumberInputProps {
   labelStyle?: StyleProp<TextStyle>;
   errors?: string;
   submitted?: boolean;
+  /** Merged onto PhoneInput `containerStyle` (e.g. `{ width: '100%' }) */
+  phoneContainerStyle?: StyleProp<ViewStyle>;
 }
 
 const PhoneNumberInput: React.FC<PhoneNumberInputProps> = ({
@@ -27,6 +29,7 @@ const PhoneNumberInput: React.FC<PhoneNumberInputProps> = ({
   labelStyle,
   errors,
   submitted,
+  phoneContainerStyle,
 }) => {
   const phoneInput = useRef<PhoneInput>(null);
 
@@ -52,7 +55,7 @@ const PhoneNumberInput: React.FC<PhoneNumberInputProps> = ({
         defaultCode={initialCountryCode}
         layout="first"
         onChangeText={handleChange}
-        containerStyle={styles.phoneContainer}
+        containerStyle={[styles.phoneContainer, phoneContainerStyle]}
         textContainerStyle={styles.textInput}
         // onChangeCountry={val => handleCountryChange(val?.callingCode[0])}
         onChangeCountry={val => {

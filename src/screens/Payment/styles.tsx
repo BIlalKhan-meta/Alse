@@ -10,11 +10,13 @@ const styles = StyleSheet.create({
   scrollview: {
     flex: 1,
   },
+  scrollContent: {
+    /* Extra space so inputs below the keyboard (e.g. expiration) stay reachable via scroll */
+    paddingBottom: vh * 10,
+  },
   container: {
     backgroundColor: colors.headerColor,
-    flex: 1,
     paddingHorizontal: vw * 5,
-    paddingBottom: vh * 5,
   },
   header: {
     flexDirection: 'row',
@@ -141,6 +143,32 @@ const styles = StyleSheet.create({
   },
   headingContainer: {
     marginBottom: vh * 2,
+  },
+  paymentLoadingBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: vw * 8,
+  },
+  paymentLoadingCard: {
+    backgroundColor: colors.white,
+    borderRadius: vw * 3,
+    paddingVertical: vh * 3,
+    paddingHorizontal: vw * 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
+    flexGrow: 0,
+    flexShrink: 0,
+    width: '100%',
+    maxWidth: 320,
+    height: vh * 16,
+  },
+  paymentLoadingCaption: {
+    marginTop: vh * 2.5,
+    color: colors.black,
+    fontSize: fontSizes.f14,
   },
 });
 

@@ -180,6 +180,7 @@ export default {
     featuredStores: '推荐商店',
     noStores: '暂无商店',
     recommendedProds: '社交推荐商品',
+    allProducts: '全部商品',
     noProds: '暂无商品',
     createShop: '创建商店 / 我的商店',
   },

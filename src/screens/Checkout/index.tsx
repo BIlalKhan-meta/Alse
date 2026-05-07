@@ -352,6 +352,7 @@ const CheckoutScreen: React.FC = () => {
                   value={values.shipping_first_name}
                   errors={errors.shipping_first_name}
                   submitted={submitted}
+                  containerStyle={styles.fieldContainer}
                   style={styles.inputStyle}
                 />
                 <RegularTextInput
@@ -362,6 +363,7 @@ const CheckoutScreen: React.FC = () => {
                   value={values.shipping_last_name}
                   errors={errors.shipping_last_name}
                   submitted={submitted}
+                  containerStyle={styles.fieldContainer}
                   style={styles.inputStyle}
                 />
                 <RegularTextInput
@@ -372,6 +374,7 @@ const CheckoutScreen: React.FC = () => {
                   value={values.shipping_email}
                   errors={errors.shipping_email}
                   submitted={submitted}
+                  containerStyle={styles.fieldContainer}
                   style={styles.inputStyle}
                 />
 
@@ -382,6 +385,7 @@ const CheckoutScreen: React.FC = () => {
                   errors={errors.shipping_phone}
                   submitted={submitted}
                   labelStyle={styles.label}
+                  phoneContainerStyle={styles.fieldContainer}
                 />
 
                 <RegularTextInput
@@ -392,6 +396,7 @@ const CheckoutScreen: React.FC = () => {
                   value={values.shipping_address}
                   errors={errors.shipping_address}
                   submitted={submitted}
+                  containerStyle={styles.fieldContainer}
                   style={styles.inputStyle}
                 />
 
@@ -524,6 +529,7 @@ const CheckoutScreen: React.FC = () => {
                   value={values.shipping_zip}
                   errors={errors.shipping_zip}
                   submitted={submitted}
+                  containerStyle={styles.fieldContainer}
                   style={styles.inputStyle}
                 />
               </View>
@@ -547,7 +553,8 @@ const CheckoutScreen: React.FC = () => {
                     value={values.billing_first_name}
                     errors={errors.billing_first_name}
                     submitted={submitted}
-                    style={styles.inputStyle}
+                    containerStyle={styles.fieldContainer}
+                  style={styles.inputStyle}
                   />
                   <RegularTextInput
                     label="Last Name *"
@@ -557,7 +564,8 @@ const CheckoutScreen: React.FC = () => {
                     value={values.billing_last_name}
                     errors={errors.billing_last_name}
                     submitted={submitted}
-                    style={styles.inputStyle}
+                    containerStyle={styles.fieldContainer}
+                  style={styles.inputStyle}
                   />
 
                   <RegularTextInput
@@ -568,7 +576,8 @@ const CheckoutScreen: React.FC = () => {
                     value={values.billing_email}
                     errors={errors.billing_email}
                     submitted={submitted}
-                    style={styles.inputStyle}
+                    containerStyle={styles.fieldContainer}
+                  style={styles.inputStyle}
                   />
 
                   <PhoneNumberInput
@@ -578,6 +587,7 @@ const CheckoutScreen: React.FC = () => {
                     errors={errors.billing_phone}
                     submitted={submitted}
                     labelStyle={styles.label}
+                    phoneContainerStyle={styles.fieldContainer}
                   />
 
                   <RegularTextInput
@@ -588,7 +598,8 @@ const CheckoutScreen: React.FC = () => {
                     value={values.billing_address}
                     errors={errors.billing_address}
                     submitted={submitted}
-                    style={styles.inputStyle}
+                    containerStyle={styles.fieldContainer}
+                  style={styles.inputStyle}
                   />
 
                   <InterBoldLabel style={styles.countryLabel}>
@@ -736,7 +747,8 @@ const CheckoutScreen: React.FC = () => {
                     value={values.billing_zip}
                     errors={errors.billing_zip}
                     submitted={submitted}
-                    style={styles.inputStyle}
+                    containerStyle={styles.fieldContainer}
+                  style={styles.inputStyle}
                   />
                 </View>
               )}
