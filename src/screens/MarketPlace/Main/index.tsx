@@ -128,47 +128,33 @@ const Marketplace: React.FC = () => {
     }
   };
 
-  // New function to get recommended products
   const getProductData = React.useCallback(async () => {
     setProductsLoading(true);
     try {
-      // First try to get recommended products from API
       const recommendedRes = await getRecommendedProducts();
       if (recommendedRes.data?.data && recommendedRes.data.data.length > 0) {
         setProducts(recommendedRes.data.data);
-        console.log('Recommended products from API:', recommendedRes.data.data);
         return;
       }
 
-      // If recommended products are empty, try to get all products
-      console.log('Recommended products empty, trying all products API...');
       const allProductsRes = await getAllProducts();
       if (allProductsRes.data?.data && allProductsRes.data.data.length > 0) {
         setProducts(allProductsRes.data.data);
-        console.log('All products from API:', allProductsRes.data.data);
         return;
       }
 
-      // If both APIs return empty, try with some filters to get more products
-      console.log('All products empty, trying with filters...');
       const filteredRes = await getAllProducts({
         per_page: 20,
         sort: 'newest',
       });
       if (filteredRes.data?.data && filteredRes.data.data.length > 0) {
         setProducts(filteredRes.data.data);
-        console.log('Filtered products from API:', filteredRes.data.data);
         return;
       }
 
-      // If all API calls fail or return empty, set empty array
-      console.log(
-        'All API calls failed or returned empty, no products available',
-      );
       setProducts([]);
     } catch (error) {
       console.log('Error fetching products from all APIs:', error);
-      // Set empty array if all APIs fail
       setProducts([]);
     } finally {
       setProductsLoading(false);
@@ -395,8 +381,6 @@ const Marketplace: React.FC = () => {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
         }>
-        {/* Featured Stores Section */}
-
         {/* Featured Stores Section */}
         <View style={styles.featuredSection}>
           <Text style={styles.featuredTitle}>

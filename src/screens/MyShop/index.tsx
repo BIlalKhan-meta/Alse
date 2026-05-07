@@ -10,24 +10,24 @@ import {
 import {images} from '../../utils/images';
 import {colors} from '../../utils/theme';
 import {useIsFocused, useNavigation, useRoute} from '@react-navigation/native';
+import {useSelector} from 'react-redux';
+import {selectUserProfile} from '../../store/slices/authSlice';
 import {getProductByShop, shopDetail} from '../../api/shop';
 import CustomButton from '../../components/CustomButton';
 import Loader from '../../components/Loader';
-import {
-  MessageCircle,
-  HelpCircle,
-  Mail,
-  Share2,
-  ChevronDown,
-} from 'lucide-react-native';
+import ShopProductListRow from '../../components/ShopProductListRow';
+import {MessageCircle, HelpCircle, Mail, Share2} from 'lucide-react-native';
 import GlobalHeader from '../../components/GlobalHeader';
 
+/*
 const filterItems = [
   {label: 'Category', value: 'category'},
   {label: 'Price', value: 'price'},
   {label: 'Seller Location', value: 'location'},
   {label: 'Rating', value: 'rating'},
 ];
+// Filters UI + modals disabled — re-enable with FilterSelectModal / getCategories when ready.
+*/
 
 function isRemoteImageUrl(url?: string | null): boolean {
   return (
@@ -41,6 +41,7 @@ const MyShop: React.FC = () => {
   const isFocused = useIsFocused();
   const route = useRoute();
   const shopId = (route?.params as any)?.shopId;
+  const user = useSelector(selectUserProfile);
 
   const [shopDetails, setShopDetails] = useState<any>({});
   const [shopProducts, setShopProducts] = useState<any[]>([]);
@@ -50,13 +51,6 @@ const MyShop: React.FC = () => {
   const [_bannerLoaded, setBannerLoaded] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
   const [_avatarLoaded, setAvatarLoaded] = useState(false);
-
-  const getSecureUrl = (url?: string) => {
-    if (!url) {
-      return url as any;
-    }
-    return url.startsWith('http://') ? url.replace('http://', 'https://') : url;
-  };
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -99,6 +93,18 @@ const MyShop: React.FC = () => {
   if (loading) {
     return <Loader />;
   }
+
+  const shopOwnerId =
+    shopDetails?.user_id ??
+    shopDetails?.user?.id ??
+    shopDetails?.seller_id;
+  const isOwnShop =
+    user?.id != null &&
+    shopOwnerId != null &&
+    String(user.id) === String(shopOwnerId);
+  const showVisitorContactActions =
+    shopOwnerId != null &&
+    !isOwnShop;
 
   return (
     <View style={styles.container}>
@@ -214,20 +220,22 @@ const MyShop: React.FC = () => {
           </View>
         </View>
 
-        {/* Action Buttons */}
-        <View style={styles.actionButtonsContainer}>
-          <TouchableOpacity style={styles.actionButton}>
-            <MessageCircle size={24} color={colors.themeColor} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton}>
-            <HelpCircle size={24} color={colors.themeColor} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton}>
-            <Mail size={24} color={colors.themeColor} />
-          </TouchableOpacity>
-        </View>
+        {/* Message / help / mail — only when viewing someone else's shop */}
+        {showVisitorContactActions ? (
+          <View style={styles.actionButtonsContainer}>
+            <TouchableOpacity style={styles.actionButton}>
+              <MessageCircle size={24} color={colors.themeColor} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.actionButton}>
+              <HelpCircle size={24} color={colors.themeColor} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.actionButton}>
+              <Mail size={24} color={colors.themeColor} />
+            </TouchableOpacity>
+          </View>
+        ) : null}
 
-        {/* Filter Bar */}
+        {/* Filters (commented out — not wired yet)
         <View style={styles.filterBar}>
           {filterItems.map((item, index) => (
             <TouchableOpacity key={index} style={styles.filterButton}>
@@ -236,40 +244,28 @@ const MyShop: React.FC = () => {
             </TouchableOpacity>
           ))}
         </View>
+        */}
 
         {/* Products Section */}
         <View style={styles.productsSection}>
           <Text style={styles.productsTitle}>Recently Listed Products</Text>
 
           {shopProducts.length > 0 ? (
-            shopProducts.map((product, index) => (
-              <View key={index} style={styles.productCard}>
-                <Image
-                  source={
-                    product?.images?.length > 0 && product.images[0]?.path
-                      ? {uri: getSecureUrl(product.images[0].path)}
-                      : product?.banner
-                      ? {uri: getSecureUrl(product.banner)}
-                      : images.pro1
+            shopProducts.map((product, index) =>
+              product?.id != null ? (
+                <ShopProductListRow
+                  key={product.id}
+                  product={product}
+                  onPress={() =>
+                    (navigation as any).navigate('ProductView', {
+                      productId: product.id,
+                    })
                   }
-                  style={styles.productImage}
-                  resizeMode="cover"
                 />
-                <View style={styles.productInfo}>
-                  <Text style={styles.productName} numberOfLines={1}>
-                    {product?.title || 'Razer BlackShark...'}
-                  </Text>
-                  <Text style={styles.productDescription} numberOfLines={2}>
-                    Lorem ipsum is simply dummy text of the printing and
-                    typesetting industry. Lorem ipsum
-                  </Text>
-                  <View style={styles.productFooter}>
-                    <Text style={styles.bestDeal}>Best Deal '25</Text>
-                    <Text style={styles.likedBy}>Liked by Aaron Byrnes</Text>
-                  </View>
-                </View>
-              </View>
-            ))
+              ) : (
+                <ShopProductListRow key={index} product={product} />
+              ),
+            )
           ) : (
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyText}>No products available</Text>
@@ -476,48 +472,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 16,
-  },
-  productCard: {
-    flexDirection: 'row',
-    marginBottom: 16,
-    backgroundColor: '#f9f9f9',
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  productImage: {
-    width: 120,
-    height: 120,
-    resizeMode: 'cover',
-  },
-  productInfo: {
-    flex: 1,
-    padding: 12,
-  },
-  productName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 8,
-  },
-  productDescription: {
-    fontSize: 14,
-    color: '#666',
-    lineHeight: 20,
-    marginBottom: 12,
-  },
-  productFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  bestDeal: {
-    fontSize: 12,
-    color: colors.themeColor,
-    fontWeight: 'bold',
-  },
-  likedBy: {
-    fontSize: 12,
-    color: '#666',
   },
   emptyContainer: {
     alignItems: 'center',

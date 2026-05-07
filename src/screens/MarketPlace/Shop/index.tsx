@@ -29,7 +29,7 @@ import {createChat, reportPost} from '../../../api/home';
 import {getMessage, Toast} from '../../../utils/helpers';
 import {MessageCircle, HelpCircle, Mail, Share2, X} from 'lucide-react-native';
 import GlobalHeader from '../../../components/GlobalHeader';
-
+import ShopProductListRow from '../../../components/ShopProductListRow';
 
 const filterCategories = [
   {label: 'All categories', value: 'all'},
@@ -252,27 +252,12 @@ const Shop: React.FC = () => {
 
   const resolvedBannerUrl = useMemo(
     () => pickBannerUrl(shopDetails),
-    [
-      shopDetails?.banner,
-      shopDetails?.shop_banner,
-      shopDetails?.banner_url,
-      shopDetails?.cover_image,
-      shopDetails?.cover,
-      shopDetails?.shop?.banner,
-      shopDetails?.user?.banner,
-      shopDetails?.user?.cover_photo,
-    ],
+    [shopDetails],
   );
 
   const resolvedAvatarUrl = useMemo(
     () => pickAvatarUrl(shopDetails),
-    [
-      shopDetails?.avatar,
-      shopDetails?.shop_avatar,
-      shopDetails?.logo,
-      shopDetails?.image,
-      shopDetails?.user?.avatar,
-    ],
+    [shopDetails],
   );
 
   const bannerSource = useMemo(() => {
@@ -581,44 +566,21 @@ const Shop: React.FC = () => {
           <Text style={styles.productsTitle}>Recently Listed Products</Text>
 
           {shopProducts.length > 0 ? (
-            shopProducts.map((product, index) => (
-              <TouchableOpacity
-                key={index}
-                style={styles.productCard}
-                onPress={() => {
-                  console.log(
-                    'Navigating to ProductView with product:',
-                    product,
-                  );
-                  (navigation as any).navigate('ProductView', {
-                    productId: product.id,
-                  });
-                }}>
-                <Image
-                  source={
-                    product?.images?.length > 0
-                      ? {uri: product.images[0].path}
-                      : product?.banner
-                      ? {uri: product.banner}
-                      : images.pro1
+            shopProducts.map((product, index) =>
+              product?.id != null ? (
+                <ShopProductListRow
+                  key={product.id}
+                  product={product}
+                  onPress={() =>
+                    (navigation as any).navigate('ProductView', {
+                      productId: product.id,
+                    })
                   }
-                  style={styles.productImage}
                 />
-                <View style={styles.productInfo}>
-                  <Text style={styles.productName} numberOfLines={1}>
-                    {product?.title || 'Razer BlackShark...'}
-                  </Text>
-                  <Text style={styles.productDescription} numberOfLines={2}>
-                    {product?.description ||
-                      'Lorem ipsum is simply dummy text of the printing and typesetting industry. Lorem ipsum'}
-                  </Text>
-                  <View style={styles.productFooter}>
-                    <Text style={styles.bestDeal}>Best Deal '25</Text>
-                    <Text style={styles.likedBy}>Liked by Aaron Byrnes</Text>
-                  </View>
-                </View>
-              </TouchableOpacity>
-            ))
+              ) : (
+                <ShopProductListRow key={index} product={product} />
+              ),
+            )
           ) : (
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyText}>No products available</Text>
@@ -927,48 +889,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 16,
-  },
-  productCard: {
-    flexDirection: 'row',
-    marginBottom: 16,
-    backgroundColor: '#f9f9f9',
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  productImage: {
-    width: 120,
-    height: 120,
-    resizeMode: 'cover',
-  },
-  productInfo: {
-    flex: 1,
-    padding: 12,
-  },
-  productName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 8,
-  },
-  productDescription: {
-    fontSize: 14,
-    color: '#666',
-    lineHeight: 20,
-    marginBottom: 12,
-  },
-  productFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  bestDeal: {
-    fontSize: 12,
-    color: colors.themeColor,
-    fontWeight: 'bold',
-  },
-  likedBy: {
-    fontSize: 12,
-    color: '#666',
   },
   emptyContainer: {
     alignItems: 'center',
