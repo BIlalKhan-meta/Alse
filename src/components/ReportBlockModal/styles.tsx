@@ -7,35 +7,27 @@ const styles = StyleSheet.create({
         padding: 10,
     },
     modalBackground: {
-        // flex: 1,
-        // backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        // justifyContent: 'flex-end',
         alignItems: 'center',
-        width: vw * 30,
-        // alignSelf: "flex-end",
-        // marginTop: vh * 8,
-        // marginRight: vw * 12,
+        width: 120,
         position: "absolute",
-        right: vh * 2,
-        zIndex: 100
-        // top: 55
-        // elevation: 4,
-        // borderWidth: 1
+        right: 15,
+        zIndex: 100,
     },
     modalContainer: {
         backgroundColor: '#fff',
-        borderRadius: 5,
-        // marginBottom: 20,
+        borderRadius: 8,
         width: "100%",
         elevation: 5,
-        paddingVertical: vh * 1
-
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        paddingVertical: 10,
     },
     modalOption: {
-        paddingVertical: vh * 0.5,
-        // borderBottomWidth: 1,
-        // borderBottomColor: '#ccc',
-        alignItems: 'center',
+        paddingVertical: 8,
+        paddingHorizontal: 15,
+        alignItems: 'flex-start',
     },
 });
 

@@ -1,11 +1,11 @@
 // PostComponent.tsx
 import {useNavigation} from '@react-navigation/native';
+import {MoreVertical, Heart, MessageCircle, Bookmark, ThumbsUp, CornerUpRight} from 'lucide-react-native';
 import React, {useEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {
   ActivityIndicator,
   Alert,
-  Image,
   Linking,
   PermissionsAndroid,
   PixelRatio,
@@ -26,6 +26,7 @@ import {colors} from '../../utils/theme';
 import Card from '../Card';
 import CustomImage from '../CustomeImage';
 import ReportBlockModal from '../ReportBlockModal';
+import ShareModal from '../ShareModal';
 import InterBold from '../Text/InterBold';
 import InterRegular from '../Text/InterRegular';
 import {CameraRoll} from '@react-native-camera-roll/camera-roll';
@@ -167,6 +168,7 @@ const PostComponent: React.FC<PostProps> = ({
   mediaId,
   avatar,
   name,
+  country,
   time,
   postText,
   postImage,
@@ -176,6 +178,7 @@ const PostComponent: React.FC<PostProps> = ({
   share,
   account,
   onCommnetPress,
+  onSavePress,
   onLikePress,
   onDotPress,
   modalVisible,
@@ -183,9 +186,11 @@ const PostComponent: React.FC<PostProps> = ({
   handleBlockPress,
   handleReportPost,
   isLiked,
+  isSaved,
   onCardPress,
   sharePost,
   sharedFromName,
+  isFocused,
   isPaused,
   handleVideoPause,
   onMediaPress,
@@ -197,9 +202,9 @@ const PostComponent: React.FC<PostProps> = ({
   const [showFullText, setShowFullText] = useState(false);
   const maxTextLength = 100;
   const [numberLikes, setNumberLikes] = useState(likes);
-  const [loading, setLoading] = useState(false);
   const [videoLoad, setVideoLoad] = useState(true);
   const [error, setError] = useState(false);
+  const [shareModalVisible, setShareModalVisible] = useState(false);
   // console.log("isFocusedisFocused ====>",isFocused)
   useEffect(() => {
     setNumberLikes(likes);
@@ -212,6 +217,9 @@ const PostComponent: React.FC<PostProps> = ({
   }, [postImage, mediaType]);
 
   const {t} = useTranslation();
+  const videoPaused = isPaused !== undefined ? isPaused : !isFocused;
+  const shouldPlayInlineVideo =
+    mediaType === 'video' && isFocused === true && !videoPaused;
 
   const handleLike = () => {
     if (isLiked) {
@@ -249,10 +257,11 @@ const PostComponent: React.FC<PostProps> = ({
   const options = myAccount
     ? [
         {text: 'Edit', onPress: () => handleReportPress()},
-        {text: 'Delete', onPress: () => handleBlockPress()},
+        {text: 'Remove', onPress: () => handleBlockPress()},
       ]
     : [
         {text: 'Report', onPress: () => handleReportPost()},
+        {text: 'Hide post', onPress: () => {}},
         ...(postImage && mediaType === 'image'
           ? [{text: 'Download', onPress: handleDownload}]
           : []),
@@ -260,6 +269,10 @@ const PostComponent: React.FC<PostProps> = ({
 
   const handleReadMoreToggle = () => {
     setShowFullText(!showFullText);
+  };
+
+  const handleOpenShareModal = () => {
+    setShareModalVisible(true);
   };
 
   const postShare = async () => {
@@ -301,189 +314,35 @@ const PostComponent: React.FC<PostProps> = ({
           styles.card,
           postImage && mediaType === 'video' && styles.cardVideoSpacing,
         ]}>
-        <View
-          style={styles.cardCompositingLayer}
-          collapsable={false}
-          {...(postImage && mediaType === 'video'
-            ? Platform.OS === 'android'
-              ? {renderToHardwareTextureAndroid: true}
-              : {needsOffscreenAlphaCompositing: true}
-            : {})}>
-        {/* Header section - only for text posts */}
-        {!postImage && (
-          <View
-            style={[
-              styles.header,
-              {
-                borderBottomWidth: 0.5,
-                borderBottomColor: '#eee',
-                paddingBottom: 10,
-              },
-            ]}>
-            <View style={styles.userInfo}>
-              <TouchableOpacity disabled={myAccount} onPress={goToProfile}>
-                <CustomImage
-                  source={
-                    avatar && !error
-                      ? {uri: changeUrlForData(avatar)}
-                      : images.defaultDp
-                  }
-                  style={styles.avatar}
-                  onError={() => setError(true)}
-                />
-              </TouchableOpacity>
-              <View>
-                <InterBold style={styles.name}>{name}</InterBold>
-                <InterRegular style={styles.time}>{time}</InterRegular>
-              </View>
-            </View>
-            <TouchableOpacity style={styles.moreButton} onPress={onDotPress}>
-              <Image source={images.saveIcon} style={styles.saveIcon} />
+        <View style={styles.cardCompositingLayer} collapsable={false}>
+        
+        {/* Header section - ALWAYS visible at the top */}
+        <View style={styles.header}>
+          <View style={styles.userInfo}>
+            <TouchableOpacity disabled={myAccount} onPress={goToProfile}>
+              <CustomImage
+                source={
+                  avatar && !error
+                    ? {uri: changeUrlForData(avatar)}
+                    : images.defaultDp
+                }
+                style={styles.avatar}
+                onError={() => setError(true)}
+              />
             </TouchableOpacity>
+            <View>
+              <InterBold style={styles.name}>{name}</InterBold>
+              <InterRegular style={styles.time}>
+                {country ? `${country}    ` : ''}{time}
+              </InterRegular>
+            </View>
           </View>
-        )}
+          <TouchableOpacity style={styles.moreButton} onPress={onDotPress}>
+            <MoreVertical color="#000" size={20} />
+          </TouchableOpacity>
+        </View>
 
-        {/* Post image section with overlaid header and interactions */}
-        {postImage ? (
-          <View style={styles.mediaContainer} collapsable={false}>
-            {/* Image or video content */}
-            <View style={styles.mediaTouchable} collapsable={false}>
-              {mediaType === 'image' ? (
-                <Pressable style={styles.mediaInnerFill} onPress={onMediaPress}>
-                  <CustomImage
-                    source={{uri: changeUrlForData(postImage)}}
-                    style={styles.postImage}
-                  />
-                </Pressable>
-              ) : (
-                <View style={styles.videoInlineWrap} collapsable={false}>
-                  {videoLoad ? (
-                    <View style={styles.videoLoaderWrap} pointerEvents="none">
-                      <ActivityIndicator size="large" color="white" />
-                    </View>
-                  ) : null}
-                  <Video
-                    key={`${String(mediaId ?? id ?? '')}-${changeUrlForData(postImage)}`}
-                    onReadyForDisplay={() => setVideoLoad(false)}
-                    source={{uri: changeUrlForData(postImage)}}
-                    style={[
-                      styles.postVideo,
-                      {
-                        top: VIDEO_INSET_TOP,
-                        left: VIDEO_INSET_X,
-                        right: VIDEO_INSET_X,
-                        bottom: VIDEO_INSET_BOTTOM,
-                      },
-                    ]}
-                    resizeMode="cover"
-                    repeat={true}
-                    paused={isPaused}
-                    muted={!!muteInlineVideo}
-                    useTextureView={Platform.OS === 'android'}
-                    onBuffer={res => {
-                      if (res?.isBuffering) {
-                        setVideoLoad(true);
-                      }
-                    }}
-                    ignoreSilentSwitch={'ignore'}
-                  />
-                  {(onMediaPress || handleVideoPause) && (
-                    <Pressable
-                      style={styles.videoTouchOverlay}
-                      onPress={onMediaPress ?? handleVideoPause}
-                      accessibilityRole="button"
-                      accessibilityLabel={
-                        onMediaPress
-                          ? 'Open video fullscreen'
-                          : 'Play or pause video'
-                      }
-                    />
-                  )}
-                </View>
-              )}
-            </View>
-
-            {mediaType === 'video' ? (
-              <View
-                pointerEvents="none"
-                style={styles.mediaBottomBleedMask}
-              />
-            ) : null}
-
-            {/* Header overlay for image posts */}
-            <View style={styles.headerOverlay}>
-              <View style={styles.userInfo}>
-                <TouchableOpacity disabled={myAccount} onPress={goToProfile}>
-                  <CustomImage
-                    source={{uri: changeUrlForData(avatar)}}
-                    style={styles.avatar}
-                  />
-                </TouchableOpacity>
-                <View>
-                  <Text style={styles.nameOverlay}>{name}</Text>
-                  <Text style={styles.timeOverlay}>{time}</Text>
-                </View>
-              </View>
-              <TouchableOpacity style={styles.moreButton} onPress={onDotPress}>
-                <Image
-                  source={images.saveIcon}
-                  style={[styles.threeDots, {tintColor: '#fff'}]}
-                />
-              </TouchableOpacity>
-            </View>
-
-            {/* App logo overlay */}
-            <View style={styles.logoOverlay}>
-              <Image
-                source={images.logoIcon}
-                style={styles.centerLogo}
-                tintColor={colors.themeColor}
-              />
-            </View>
-
-            {/* Right side interaction indicators */}
-            <View style={styles.sideInteractions}>
-              <TouchableOpacity style={styles.sideButton} onPress={handleLike}>
-                <Image
-                  // source={isLiked ? images.likeFill : images.like}
-                  source={images.heartLikeIcon}
-                  style={styles.sideIcon}
-                  tintColor={isLiked ? colors.blue : colors.white}
-                />
-                <Text style={styles.sideCount}>{numberLikes}</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.sideButton}
-                onPress={onCommnetPress}>
-                <Image
-                  source={images.commentIcon}
-                  style={styles.sideIcon}
-                  tintColor="#fff"
-                />
-                <Text style={styles.sideCount}>{comments}</Text>
-              </TouchableOpacity>
-
-              {!myAccount && (
-                <TouchableOpacity style={styles.sideButton} onPress={postShare}>
-                  <Image
-                    source={images.shareIcon}
-                    style={styles.sideIcon}
-                    tintColor="#fff"
-                  />
-                </TouchableOpacity>
-              )}
-            </View>
-            {mediaType === 'video' ? (
-              <View
-                pointerEvents="none"
-                style={styles.mediaTopBleedMask}
-              />
-            ) : null}
-          </View>
-        ) : null}
-
-        {/* Post text content (caption + optional reshare attribution) */}
+        {/* Post text content */}
         {(postText || sharedFromName) && (
           <View style={styles.postContent}>
             {postText ? (
@@ -493,8 +352,7 @@ const PostComponent: React.FC<PostProps> = ({
                 {postText}
                 {postText.length > maxTextLength && !showFullText && (
                   <Text style={styles.readMoreText} onPress={handleReadMoreToggle}>
-                    {' '}
-                    {t('more')}
+                    ...Read More
                   </Text>
                 )}
               </Text>
@@ -507,58 +365,157 @@ const PostComponent: React.FC<PostProps> = ({
           </View>
         )}
 
-        {/* Post interactions for text-only posts */}
-        {!postImage && (
-          <View style={styles.textPostActions}>
-            <View style={styles.actionRow}>
-              <TouchableOpacity
-                style={styles.actionButton}
-                onPress={handleLike}>
-                <Image
-                  // source={isLiked ? images.likeFill : images.like}
-                  source={images.heartLikeIcon}
-                  style={styles.HeartIcon}
-                  tintColor={isLiked ? colors.blue : colors.lightGrey}
-                />
-                <Text style={styles.actionText}>{numberLikes}</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.actionButton}
-                onPress={onCommnetPress}>
-                <Image
-                  source={images.commentIcon}
-                  style={styles.actionIcon}
-                  tintColor={colors.lightGrey}
-                />
-                <Text style={styles.actionText}>{comments}</Text>
-              </TouchableOpacity>
-
-              {!myAccount && (
-                <TouchableOpacity
-                  style={styles.actionButton}
-                  onPress={postShare}>
-                  <Image
-                    source={images.shareIcon}
-                    style={styles.actionIcon}
-                    tintColor={colors.lightGrey}
+        {/* Post image section */}
+        {postImage ? (
+          <View style={styles.mediaContainer} collapsable={false}>
+            <View style={styles.mediaTouchable} collapsable={false}>
+              {mediaType === 'image' ? (
+                <Pressable style={styles.mediaInnerFill} onPress={onMediaPress}>
+                  <CustomImage
+                    source={{uri: changeUrlForData(postImage)}}
+                    style={styles.postImage}
                   />
-                  <Text style={styles.actionText}>{share}</Text>
-                </TouchableOpacity>
+                </Pressable>
+              ) : (
+                <View style={styles.videoInlineWrap} collapsable={false}>
+                  {shouldPlayInlineVideo ? (
+                    <>
+                      {videoLoad ? (
+                        <View style={styles.videoLoaderWrap} pointerEvents="none">
+                          <ActivityIndicator
+                            size="large"
+                            color={colors.themeColor}
+                          />
+                        </View>
+                      ) : null}
+                      <Video
+                        key={`${String(mediaId ?? id ?? '')}-${changeUrlForData(postImage)}`}
+                        onReadyForDisplay={() => setVideoLoad(false)}
+                        source={{uri: changeUrlForData(postImage)}}
+                        style={[
+                          styles.postVideo,
+                          {
+                            top: VIDEO_INSET_TOP,
+                            left: VIDEO_INSET_X,
+                            right: VIDEO_INSET_X,
+                            bottom: VIDEO_INSET_BOTTOM,
+                          },
+                        ]}
+                        resizeMode="cover"
+                        repeat
+                        paused={false}
+                        muted={!!muteInlineVideo}
+                        playInBackground={false}
+                        playWhenInactive={false}
+                        useTextureView={Platform.OS === 'android'}
+                        onBuffer={res => {
+                          if (res?.isBuffering) {
+                            setVideoLoad(true);
+                          }
+                        }}
+                        ignoreSilentSwitch="ignore"
+                      />
+                    </>
+                  ) : (
+                    <Pressable
+                      style={styles.mediaInnerFill}
+                      onPress={onMediaPress ?? handleVideoPause}>
+                      <View style={styles.videoPoster}>
+                        <ActivityIndicator
+                          size="small"
+                          color={colors.themeColor}
+                        />
+                      </View>
+                    </Pressable>
+                  )}
+                  {(onMediaPress || handleVideoPause) && shouldPlayInlineVideo ? (
+                    <Pressable
+                      style={styles.videoTouchOverlay}
+                      onPress={onMediaPress ?? handleVideoPause}
+                      accessibilityRole="button"
+                      accessibilityLabel={
+                        onMediaPress
+                          ? 'Open video fullscreen'
+                          : 'Play or pause video'
+                      }
+                    />
+                  ) : null}
+                </View>
               )}
             </View>
           </View>
-        )}
+        ) : null}
 
+        {/* Post interactions */}
+        <View style={styles.textPostActions}>
+            <View style={styles.countsRow}>
+              <View style={styles.countsLeft}>
+                <Heart color="#FF3B30" size={16} fill="#FF3B30" />
+                <Text style={styles.countText}>{numberLikes}</Text>
+                
+                <MessageCircle color="#65676B" size={16} style={styles.countIconMargin} />
+                <Text style={styles.countText}>{comments}</Text>
+                
+                <CornerUpRight color="#65676B" size={16} style={styles.countIconMargin} />
+                <Text style={styles.countText}>{share}</Text>
+              </View>
+              <TouchableOpacity onPress={onSavePress}>
+                <Bookmark
+                  color={isSaved ? colors.blue : '#65676B'}
+                  size={18}
+                  fill={isSaved ? colors.blue : 'transparent'}
+                />
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.actionsRow}>
+              <TouchableOpacity style={styles.actionButton} onPress={handleLike}>
+                <ThumbsUp color={isLiked ? colors.blue : '#65676B'} size={20} />
+                <Text style={styles.actionText}>Like</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.actionButton} onPress={onCommnetPress}>
+                <MessageCircle color="#65676B" size={20} />
+                <Text style={styles.actionText}>Comment</Text>
+              </TouchableOpacity>
+
+              {!myAccount && (
+                <TouchableOpacity style={styles.actionButton} onPress={handleOpenShareModal}>
+                  <CornerUpRight color="#65676B" size={20} />
+                  <Text style={styles.actionText}>Share</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+        </View>
+
+        </View>
+      </Card>
+
+      {modalVisible && (
         <ReportBlockModal
           isVisible={modalVisible}
           options={options}
           onClose={onDotPress}
-          style={{top: 55}}
+          style={{top: 45}}
         />
-        </View>
-      </Card>
+      )}
+
+      {shareModalVisible ? (
+        <ShareModal
+          visible={shareModalVisible}
+          onClose={() => setShareModalVisible(false)}
+          onShareToNewsfeed={() => {
+            setShareModalVisible(false);
+            postShare();
+          }}
+          onSendToChats={selectedIds => {
+            setShareModalVisible(false);
+            console.log('Sending to chats:', selectedIds);
+          }}
+        />
+      ) : null}
     </Pressable>
+
   );
 };
 
@@ -591,7 +548,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 12,
+    paddingHorizontal: 15,
+    paddingTop: 15,
+    paddingBottom: 10,
   },
   userInfo: {
     flexDirection: 'row',
@@ -599,11 +558,7 @@ const styles = StyleSheet.create({
   },
 
   textPostActions: {
-    paddingHorizontal: 12,
-    paddingBottom: 12,
-    borderTopWidth: 0.5,
-    borderTopColor: '#eee',
-    marginTop: 8,
+    paddingBottom: 5,
   },
 
   actionRow: {
@@ -612,26 +567,39 @@ const styles = StyleSheet.create({
     paddingTop: 12,
   },
 
+  countsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 15,
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E4E6EB',
+  },
+  countsLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  countText: {
+    fontSize: 12,
+    color: '#65676B',
+    marginLeft: 5,
+  },
+  countIconMargin: {
+    marginLeft: 15,
+  },
+  actionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingVertical: 12,
+  },
   actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
   },
-
-  actionIcon: {
-    width: 20,
-    height: 20,
-    marginRight: 5,
-  },
-  HeartIcon: {
-    width: 25,
-    height: 22,
-    marginRight: 5,
-  },
-
   actionText: {
-    fontSize: fontSizes.f12,
-    color: colors.lightGrey,
+    fontSize: 14,
+    color: '#65676B',
+    marginLeft: 8,
   },
 
   // Update header style to work for both cases
@@ -679,12 +647,12 @@ const styles = StyleSheet.create({
   // Taller than before (~1.2× screen width) so each clip has a dedicated box; overflow clips native video.
   mediaContainer: {
     position: 'relative',
-    width: '100%',
-    height: Math.min(vh * 52, DEVICE_WIDTH * 1.22),
+    height: DEVICE_WIDTH * 0.8,
     overflow: 'hidden',
-    backgroundColor: '#000',
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
+    backgroundColor: '#F0F2F5',
+    borderRadius: 10,
+    marginHorizontal: 15,
+    marginBottom: 10,
   },
   /** Solid band over the bottom of the media stack; catches stray GPU pixels above the next list row. */
   mediaBottomBleedMask: {
@@ -716,19 +684,20 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: 10,
+    width: 45,
+    height: 45,
+    borderRadius: 22.5,
+    marginRight: 12,
   },
   name: {
-    fontSize: fontSizes.f14,
+    fontSize: 16,
     color: colors.black,
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
   time: {
-    fontSize: fontSizes.f12,
-    color: colors.lightGrey,
+    fontSize: 12,
+    color: '#65676B',
+    marginTop: 2,
   },
   moreButton: {
     padding: 8,
@@ -792,11 +761,13 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   postContent: {
-    padding: 12,
+    paddingHorizontal: 15,
+    paddingTop: 5,
+    paddingBottom: 10,
   },
   postText: {
-    fontSize: fontSizes.f14,
-    color: colors.inputText,
+    fontSize: 14,
+    color: '#333333',
     lineHeight: 20,
   },
   sharedFromText: {
@@ -806,7 +777,8 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   readMoreText: {
-    color: colors.lightGrey,
+    color: '#169BD5',
+    fontWeight: '500',
   },
   videoLoaderWrap: {
     ...StyleSheet.absoluteFillObject,
@@ -823,6 +795,12 @@ const styles = StyleSheet.create({
   videoTouchOverlay: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 3,
+  },
+  videoPoster: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#E4E6EB',
   },
 });
 

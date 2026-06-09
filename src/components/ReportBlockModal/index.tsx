@@ -32,7 +32,7 @@ const ReportBlockModal: React.FC<ReportBlockModalProps> = ({
               key={index}
               style={styles.modalOption}
               onPress={option.onPress}>
-              <Text style={{color: 'black'}}>{option.text}</Text>
+              <Text style={{color: '#65676B', fontSize: 14}}>{option.text}</Text>
             </TouchableOpacity>
           ))}
         </View>

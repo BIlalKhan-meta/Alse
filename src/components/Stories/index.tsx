@@ -527,7 +527,11 @@ const Stories = forwardRef<StoriesRef>((_, ref) => {
   };
 
   if (!stories || !stories.length || isInitialLoading) {
-    return <Loader />;
+    return (
+      <View style={styles.initialLoaderWrap}>
+        <Loader size="small" style={styles.initialLoader} />
+      </View>
+    );
   }
 
   return (
@@ -755,6 +759,15 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0, 0, 0, 0.5)',
     textShadowOffset: {width: 0.5, height: 0.5},
     textShadowRadius: 1,
+  },
+  initialLoaderWrap: {
+    height: 96,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  initialLoader: {
+    flex: 0,
+    backgroundColor: 'transparent',
   },
 });
 

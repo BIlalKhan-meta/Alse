@@ -101,13 +101,23 @@ const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
     position: 'relative',
+    backgroundColor: '#EAF6F6',
   },
   contentContainer: {
     paddingHorizontal: vh * 2,
     flex: 1,
+    minHeight: 0,
   },
   feedContainer: {
     flex: 1,
+    minHeight: 0,
+  },
+  feedList: {
+    flex: 1,
+  },
+  feedListContent: {
+    flexGrow: 1,
+    paddingBottom: vh * 10,
   },
   loaderOverlay: {
     flex: 1,
@@ -127,6 +137,62 @@ const styles = StyleSheet.create({
     marginTop: 12,
     fontSize: fontSizes.f14,
     color: colors.black,
+    fontWeight: '500',
+  },
+  whatsOnYourMindContainer: {
+    backgroundColor: colors.white,
+    borderRadius: 16,
+    padding: 15,
+    marginBottom: 15,
+    marginTop: 10,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  whatsOnYourMindTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  profilePic: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 10,
+  },
+  whatsOnYourMindInput: {
+    flex: 1,
+    backgroundColor: '#F0F2F5',
+    borderRadius: 20,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+  },
+  whatsOnYourMindText: {
+    color: '#65676B',
+    fontSize: 14,
+  },
+  whatsOnYourMindBottom: {
+    flexDirection: 'row',
+    paddingTop: 5,
+  },
+  whatsOnYourMindButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#E4E6EB',
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    borderRadius: 8,
+    marginRight: 10,
+  },
+  whatsOnYourMindButtonText: {
+    color: '#65676B',
+    fontSize: 14,
+    marginLeft: 8,
     fontWeight: '500',
   },
 });

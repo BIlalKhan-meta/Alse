@@ -44,7 +44,7 @@ const titles: {[key: string]: string} = {
   SavedChat: 'Saved Chat',
   SavedChatDetail: 'Saved Chat',
   SavedScripts: 'Saved Scripts',
-  Home: 'Alse',
+  Home: 'News Feed',
   Notifications: 'Notifications',
   Settings: 'Settings',
   PurchaseHistory: 'Purchase History',
@@ -130,25 +130,49 @@ export const getHeaderRight: React.FC<NavigationOptionsProps> = props => {
         <TouchableOpacity
           style={[styles.iconContainer, {marginRight: 4}]}
           onPress={() => props.navigation.navigate('Notifications')}>
-          <View style={styles.notificationcontainer}>
-            <Image source={images.bellIcon} style={styles.notificationicon} />
-          </View>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.iconContainer, {marginRight: 4}]}
-          onPress={() => props.navigation.navigate('Settings')}>
-          <View style={styles.notificationcontainer}>
+          <View
+            style={[
+              styles.notificationcontainer,
+              {
+                backgroundColor: '#fff',
+                borderWidth: 1,
+                borderColor: '#E4E6EB',
+                width: 40,
+                height: 40,
+                borderRadius: 20,
+              },
+            ]}>
             <Image
-              source={images.settingsIcon}
-              style={styles.notificationicon}
+              source={images.bellIcon}
+              style={[
+                styles.notificationicon,
+                {tintColor: '#0C959B', width: 20, height: 20},
+              ]}
             />
           </View>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.iconContainer, {marginRight: 4}]}
-          onPress={() => props.navigation.navigate('ChatScreen')}>
-          <View style={styles.notificationcontainer}>
-            <Image source={images.messageIcon} style={styles.messageIcon} />
+          onPress={() => props.navigation.navigate('SearchUsers')}>
+          <View
+            style={[
+              styles.notificationcontainer,
+              {
+                backgroundColor: '#fff',
+                borderWidth: 1,
+                borderColor: '#E4E6EB',
+                width: 40,
+                height: 40,
+                borderRadius: 20,
+              },
+            ]}>
+            <Image
+              source={images.searchIcon}
+              style={[
+                styles.notificationicon,
+                {tintColor: '#0C959B', width: 20, height: 20},
+              ]}
+            />
           </View>
         </TouchableOpacity>
       </View>
@@ -197,7 +221,9 @@ const NavigationOptions: React.FC<NavigationOptionsProps> = props => {
     headerTitleAlign: 'left',
     headerTransparent:
       props?.route?.name === 'NearestRestaurent' ? true : false,
-    headerStyle: styles.header,
+    headerStyle: isHomeScreen
+      ? [styles.header, {backgroundColor: '#EAF6F6'}]
+      : styles.header,
     headerTitleStyle: isHomeScreen ? styles.homeTitle : styles.headerTitle,
     headerBackTitleVisible: false,
     headerBackVisible: false,

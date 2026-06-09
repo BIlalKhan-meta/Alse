@@ -21,9 +21,9 @@ const styles = StyleSheet.create({
     width: Math.round(vw * 80),
   },
   homeTitle: {
-    color: '#0C959B',
-    fontSize: Math.round(fontSizes.f26),
-    fontWeight: '600',
+    color: colors.black,
+    fontSize: Math.round(fontSizes.f24),
+    fontWeight: 'bold',
     width: Math.round(vw * 80),
   },
   headericonStyle: {

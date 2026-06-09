@@ -7,6 +7,7 @@ import {
   Modal,
   ActivityIndicator,
   Text,
+  Image,
 } from 'react-native';
 import {images} from '../../../utils/images';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
@@ -50,7 +51,7 @@ import {
 import eventEmitter, {EVENT_TYPES} from '../../../utils/EventEmitter';
 import LikesModal from '../../../components/LikesModal';
 import Stories, {StoriesRef} from '../../../components/Stories';
-import {Plus} from 'lucide-react-native';
+import {Plus, Video, Image as ImageIcon} from 'lucide-react-native';
 import PostSkeleton from '../../../components/SkeletonLoaders';
 import {useTranslation} from 'react-i18next';
 import MediaModal from '../../../components/MediaModal';
@@ -169,7 +170,7 @@ const Home: React.FC = () => {
           }
         });
         await checkIsSeller();
-        await storiesRef.current?.refresh();
+        void storiesRef.current?.refresh();
       } catch (error) {
         console.log('Error fetching data:', error);
       } finally {
@@ -344,10 +345,16 @@ const Home: React.FC = () => {
     }
   };
 
-  const onViewableItemsChanged = ({viewableItems}: any) => {
+  const onViewableItemsChanged = useRef(({viewableItems}: any) => {
     const newFocusedIndex = viewableItems[0]?.index;
-    setFocusedIndex(newFocusedIndex);
-  };
+    if (typeof newFocusedIndex === 'number') {
+      setFocusedIndex(newFocusedIndex);
+    }
+  }).current;
+
+  const viewabilityConfig = useRef({
+    itemVisiblePercentThreshold: 50,
+  }).current;
 
   const handleMediaPress = (item: any) => {
     const primary = getPrimaryNewsfeedMedia(item?.media);
@@ -422,8 +429,51 @@ const Home: React.FC = () => {
           handleMediaPress(item);
           handleDotPress(null);
         }}
+        isPaused={!isFocused}
         muteInlineVideo
       />
+    );
+  };
+
+  const renderHeader = () => {
+    return (
+      <View style={styles.whatsOnYourMindContainer}>
+        <View style={styles.whatsOnYourMindTop}>
+          <Image
+            source={
+              user?.avatar
+                ? {uri: getAbsoluteAvatarUrl(user?.avatar)}
+                : images.profile
+            }
+            style={styles.profilePic}
+          />
+          <TouchableOpacity
+            style={styles.whatsOnYourMindInput}
+            onPress={() => navigation.navigate('CreatePost')}>
+            <InterRegular style={styles.whatsOnYourMindText}>
+              What's on your mind?
+            </InterRegular>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.whatsOnYourMindBottom}>
+          <TouchableOpacity
+            style={styles.whatsOnYourMindButton}
+            onPress={() => navigation.navigate('CreatePost')}>
+            <Video color="#FF3B30" size={20} />
+            <InterRegular style={styles.whatsOnYourMindButtonText}>
+              Video
+            </InterRegular>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.whatsOnYourMindButton}
+            onPress={() => navigation.navigate('CreatePost')}>
+            <ImageIcon color="#4CD964" size={20} />
+            <InterRegular style={styles.whatsOnYourMindButtonText}>
+              Photo
+            </InterRegular>
+          </TouchableOpacity>
+        </View>
+      </View>
     );
   };
 
@@ -459,9 +509,6 @@ const Home: React.FC = () => {
     React.useCallback(() => {
       setFocusedIndex(0);
       scrollToTop();
-      return () => {
-        setFocusedIndex(null);
-      };
     }, []),
   );
 
@@ -492,17 +539,19 @@ const Home: React.FC = () => {
           ) : (
             <FlatList
               ref={flatListRef}
+              style={styles.feedList}
+              ListHeaderComponent={renderHeader}
               onViewableItemsChanged={onViewableItemsChanged}
-              viewabilityConfig={{itemVisiblePercentThreshold: 50}}
+              viewabilityConfig={viewabilityConfig}
               data={posts}
               onRefresh={handleRefresh}
               refreshing={refreshing}
               renderItem={renderPost}
-              contentContainerStyle={{paddingBottom: vh * 10}}
+              contentContainerStyle={styles.feedListContent}
               keyExtractor={item => item.id.toString()}
               showsVerticalScrollIndicator={false}
               ListEmptyComponent={renderEmpty}
-              removeClippedSubviews={true}
+              removeClippedSubviews={false}
             />
           )}
 

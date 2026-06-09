@@ -18,12 +18,9 @@ import styles from './styles';
 import {BlurView} from '@react-native-community/blur';
 
 import {useEffect, useState} from 'react';
-import * as yup from 'yup';
-import {Formik} from 'formik';
 import {images} from '../../utils/images';
 import InterMedium from '../Text/InterMedium';
 import InterRegular from '../Text/InterRegular';
-import RegularTextInput from '../TextInput/RegularTextInput';
 import {
   getCommentLikesThunk,
   likeComment,
@@ -34,11 +31,12 @@ import {useSelector} from 'react-redux';
 import {capitalize} from '../../utils';
 import {postComment} from '../../api/home';
 import {getMessage, Toast} from '../../utils/helpers';
-import {vh, vw} from '../../constant';
+import {vh} from '../../constant';
 import {EmptyComponent} from '../EmptyComponent';
 import LikesModal from '../LikesModal';
 import {useNavigation} from '@react-navigation/native';
 import React from 'react';
+import {ThumbsUp, Heart, MessageCircle, Send} from 'lucide-react-native';
 
 interface Comment {
   id: number;
@@ -81,7 +79,7 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
   }, [comments]);
 
   const handleCommentSubmit = async () => {
-    if (newComment.length == 0) {
+    if (newComment.length === 0) {
       return;
     }
     const commentText = newComment.trim();
@@ -120,7 +118,7 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
 
   const handleLikePress = (id: number) => {
     const arr = [...commentsData];
-    let index = arr.findIndex(item => item?.id == id);
+    let index = arr.findIndex(item => item?.id === id);
     if (arr[index].is_liked) {
       arr[index].total_likes = arr[index].total_likes - 1;
     } else {
@@ -139,7 +137,7 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
 
   const handleAccount = (privacy: number, id: number) => {
     closeModal();
-    if (user.id != id) {
+    if (user.id !== id) {
       navigation.navigate('Profile', {privacy, id});
     }
   };
@@ -187,17 +185,25 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
         >
           {/* <View style={styles.container}> */}
           <FlatList
-            style={{flex: 1, width: '90%'}}
+            style={styles.flatList}
             showsVerticalScrollIndicator={false}
             data={commentsData}
             keyExtractor={item => item?.id.toString()}
-            ListEmptyComponent={() => <EmptyComponent text={'No Comments'} />}
-            renderItem={({item}) => {
+            ListEmptyComponent={<EmptyComponent text={'No Comments'} />}
+            renderItem={({item, index}) => {
+              const badges = [
+                {text: 'Question', color: '#20B2AA'},
+                {text: 'Experience', color: '#169BD5'},
+                {text: 'Answer', color: '#4CD964'},
+                {text: 'Answer', color: '#4CD964'},
+              ];
+              const badge = badges[index % badges.length];
+
               return (
-                <View key={item.id} style={{width: vw * 85}}>
+                <View key={item.id} style={styles.commentItem}>
                   <View style={styles.commentContainer}>
                     <TouchableOpacity
-                      disabled={user.id == item?.user?.id}
+                      disabled={user.id === item?.user?.id}
                       onPress={() =>
                         handleAccount(item?.user?.is_private, item?.user?.id)
                       }
@@ -212,51 +218,62 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
                       />
                     </TouchableOpacity>
                     <View style={styles.contentContainer}>
-                      <TouchableOpacity
-                        disabled={user.id == item?.user?.id}
-                        onPress={() =>
-                          handleAccount(item?.user?.is_private, item?.user?.id)
-                        }>
-                        <InterMedium style={styles.userName}>
-                          {item?.user?.full_name ||
-                            capitalize(item?.user?.first_name) +
-                              ' ' +
-                              capitalize(item?.user?.last_name)}
-                        </InterMedium>
-                      </TouchableOpacity>
+                      <View style={styles.nameRow}>
+                        <TouchableOpacity
+                          style={styles.userNameContainer}
+                          disabled={user.id === item?.user?.id}
+                          onPress={() =>
+                            handleAccount(item?.user?.is_private, item?.user?.id)
+                          }>
+                          <InterMedium style={styles.userName} numberOfLines={1}>
+                            {item?.user?.full_name ||
+                              capitalize(item?.user?.first_name) +
+                                ' ' +
+                                capitalize(item?.user?.last_name)}
+                          </InterMedium>
+                        </TouchableOpacity>
+                        
+                        <View style={styles.badgeRow}>
+                          <View style={[styles.badge, {backgroundColor: badge.color}]}>
+                            <Text style={styles.badgeText}>{badge.text}</Text>
+                          </View>
+                          <TouchableOpacity
+                            style={styles.likeButton}
+                            onPress={() => handleLikePress(item?.id)}>
+                            <ThumbsUp color={item?.is_liked ? colors.blue : '#169BD5'} size={18} />
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                      
                       <InterRegular style={styles.comment}>
                         {item?.comment}
                       </InterRegular>
-                    </View>
-                    <TouchableOpacity
-                      style={styles.likeButton}
-                      onPress={() => handleLikePress(item?.id)}>
-                      <Image
-                        source={item?.is_liked ? images.likeFill : images.like}
-                        style={styles.likeIcon}
-                        tintColor={colors.blue}
-                      />
-                    </TouchableOpacity>
-                  </View>
 
-                  <TouchableOpacity
-                    style={styles.postActions}
-                    onPress={() =>
-                      handleCommentLikesPress(item?.id, item?.total_likes ?? 0)
-                    }>
-                    <View style={styles.leftActions}>
-                      <Image source={images.like} style={styles.icon} />
-                      <InterRegular style={styles.actionText}>
-                        {item?.total_likes}
-                      </InterRegular>
+                      <TouchableOpacity
+                        style={styles.postActions}
+                        onPress={() =>
+                          handleCommentLikesPress(item?.id, item?.total_likes ?? 0)
+                        }>
+                        <View style={styles.leftActions}>
+                          <Heart color="#FF3B30" size={14} fill="#FF3B30" />
+                          <InterRegular style={styles.actionText}>
+                            {item?.total_likes || 0}
+                          </InterRegular>
+                          
+                          <MessageCircle color="#65676B" size={14} />
+                          <InterRegular style={styles.actionText}>
+                            {/* @ts-ignore */}
+                            {item?.total_replies || 0}
+                          </InterRegular>
+                        </View>
+                      </TouchableOpacity>
                     </View>
-                  </TouchableOpacity>
+                  </View>
                   <View style={styles.separator} />
                 </View>
               );
             }}
           />
-
           <View style={styles.inputConatiner}>
             <View style={styles.inputCon}>
               <TextInput
@@ -271,7 +288,7 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
               style={styles.send}
               onPress={handleCommentSubmit}
               disabled={isSubmittingComment}>
-              <Image source={images.send} style={styles.icon} />
+              <Send color="#169BD5" size={20} fill="#169BD5" />
             </TouchableOpacity>
           </View>
           {/* </View> */}

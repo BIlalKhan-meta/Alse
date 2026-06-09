@@ -1,0 +1,37 @@
+---
+description: Rule to prevent using hardcoded dummy data in UI components
+globs: **/*.tsx, **/*.ts, **/*.jsx, **/*.js
+---
+# No Hardcoded Data Rule
+
+## Problem
+When building or updating UI components (like modals, lists, feeds, or screens), it's tempting to use hardcoded dummy data (e.g., `DUMMY_CHATS`, hardcoded names like "Group Name", or hardcoded counts like "1.25k") to quickly match a design or screenshot. However, this leads to bugs where the UI doesn't reflect the actual application state or backend data.
+
+## Solution
+ALWAYS use dynamic data from the application's state, props, or API endpoints. 
+
+- **Do not** create static arrays of dummy objects for production components unless explicitly asked to create a "mock" or "prototype" that is completely disconnected from the app.
+- **Do not** hardcode numbers, names, descriptions, or image URLs.
+- If a component needs data, either:
+  1. Fetch it using the existing API functions (e.g., `getConversations`, `getNewsFeed`).
+  2. Pass it down as props from a parent component that already has the data.
+  3. Select it from the Redux store.
+- If the data is empty or loading, show an appropriate empty state or loading indicator rather than falling back to dummy data.
+
+## Example
+**Bad:**
+```tsx
+const DUMMY_USERS = [{ id: 1, name: 'John Doe', avatar: 'https://...' }];
+// ...
+<FlatList data={DUMMY_USERS} renderItem={...} />
+```
+
+**Good:**
+```tsx
+const [users, setUsers] = useState([]);
+useEffect(() => {
+  fetchUsers().then(res => setUsers(res.data));
+}, []);
+// ...
+<FlatList data={users} renderItem={...} />
+```
