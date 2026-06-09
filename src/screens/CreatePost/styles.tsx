@@ -1,259 +1,257 @@
-import {Platform, StyleSheet} from 'react-native';
+import {StyleSheet, Platform} from 'react-native';
 import {colors} from '../../utils/theme';
-import {DEVICE_WIDTH, fontSizes, vh, vw} from '../../constant';
+import {fontSizes} from '../../constant';
 
 const styles = StyleSheet.create({
-  scrollContainer: {
-    flex: 1,
-    backgroundColor: colors.white,
-  },
   container: {
     flex: 1,
-    backgroundColor: colors.white,
+    backgroundColor: '#EAF6F6',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'ios' ? 50 : 20,
+    paddingBottom: 15,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#000',
+    marginLeft: 10,
+  },
+  postButton: {
+    backgroundColor: '#20B2AA',
+    paddingVertical: 6,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+  },
+  postButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  postButtonDisabled: {
+    opacity: 0.5,
+  },
+  card: {
+    backgroundColor: '#fff',
+    marginHorizontal: 20,
+    marginTop: 10,
+    borderRadius: 12,
+    padding: 15,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  userInfo: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 12,
+  },
+  inputContainer: {
+    flex: 1,
+  },
+  userName: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#000',
+    marginBottom: 8,
+  },
+  inputWrapper: {
+    backgroundColor: '#F8FAFE',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    minHeight: 40,
+  },
+  input: {
+    fontSize: 14,
+    color: '#333',
+    padding: 0,
+    margin: 0,
   },
 
-  // Image Section
-  imageSection: {
-    width: '100%',
-    aspectRatio: 16 / 9,
-    backgroundColor: colors.white,
+  multiMediaContainer: {
+    marginTop: 15,
   },
-  imageWrapper: {
+  mainMediaWrapper: {
+    width: '100%',
+    height: 200,
+    borderRadius: 8,
+    overflow: 'hidden',
+    position: 'relative',
+    marginBottom: 10,
+  },
+  mainMediaImage: {
     width: '100%',
     height: '100%',
+  },
+  thumbnailRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    flexWrap: 'wrap',
+  },
+  thumbnailWrapper: {
+    width: '32%',
+    aspectRatio: 1,
+    borderRadius: 8,
+    overflow: 'hidden',
+    position: 'relative',
+    marginRight: '2%',
+    marginBottom: 10,
+  },
+  thumbnailImage: {
+    width: '100%',
+    height: '100%',
+  },
+  removeThumbnailButton: {
+    position: 'absolute',
+    top: 5,
+    right: 5,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#fff',
+  },
+  musicRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+    marginLeft: 5,
+  },
+  musicText: {
+    fontSize: 13,
+    color: '#333',
+  },
+  musicRemoveButton: {
+    marginLeft: 5,
+  },
+  musicRemoveIconContainer: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#333',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  selectedMediaContainer: {
+    marginTop: 15,
+    borderRadius: 8,
+    overflow: 'hidden',
     position: 'relative',
   },
   selectedImage: {
     width: '100%',
-    height: '100%',
-  },
-  removeImageButton: {
-    position: 'absolute',
-    top: 15,
-    right: 15,
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 10,
-  },
-  removeIcon: {
-    width: 12,
-    height: 12,
-    tintColor: colors.white,
-  },
-  addImageButton: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: '#F5F5F5',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  mediaPickRow: {
-    flex: 1,
-    flexDirection: 'row',
-    gap: 12,
-    paddingHorizontal: 16,
-    alignItems: 'stretch',
-    justifyContent: 'center',
-  },
-  mediaPickHalf: {
-    flex: 1,
-    backgroundColor: '#F5F5F5',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 12,
-  },
-  mediaPickLabel: {
-    fontSize: fontSizes.f14,
-    color: '#999999',
-    fontWeight: '500',
-    marginTop: 8,
-  },
-  recentVideoThumb: {
-    width: '100%',
-    height: '100%',
-  },
-  addImageIcon: {
-    width: 50,
-    height: 50,
-    tintColor: '#CCCCCC',
-    marginBottom: 10,
-  },
-  addImageText: {
-    fontSize: fontSizes.f16,
-    color: '#999999',
-    fontWeight: '500',
-  },
-
-  // Description Section
-  descriptionSection: {
-    flex: 1,
-    backgroundColor: '#F5F5F5',
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 20,
-    minHeight: vh * 30,
-  },
-  descriptionInput: {
-    fontSize: fontSizes.f16,
-    color: colors.black,
-    lineHeight: 24,
-    minHeight: vh * 20,
-  },
-
-  // Post Button (in header)
-  postButton: {
-    minWidth: vw * 20,
-    height: vh * 5,
-    margin: 0,
-    marginRight: 15,
-    backgroundColor: colors.themeColor,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 4,
-  },
-  postTxt: {
-    color: colors.white,
-    fontSize: fontSizes.f13,
-  },
-
-  // add from old commit
-  cancelText: {
-    fontSize: 16,
-    color: '#000000',
-    fontWeight: '400',
-  },
-  mainImageContainer: {
-    width: '100%',
-    height: 300,
-    backgroundColor: '#F5F5F5',
-    marginTop: 16,
-    paddingHorizontal: 16,
-  },
-  mainImage: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 12,
-  },
-  placeholderContainer: {
-    width: '100%',
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F5F5F5',
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#E0E0E0',
-    borderStyle: 'dashed',
-  },
-  placeholderText: {
-    fontSize: 16,
-    color: '#999999',
-  },
-  recentsSection: {
-    marginTop: 24,
-    paddingHorizontal: 16,
-    paddingBottom: 100,
-  },
-  recentsHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  recentsTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#000000',
-  },
-  dropdownIcon: {
-    fontSize: 12,
-    color: '#666666',
-  },
-  recentsList: {
-    paddingBottom: 20,
-  },
-  recentRow: {
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  recentImageContainer: {
-    width: (DEVICE_WIDTH - 44) / 2,
-    height: (DEVICE_WIDTH - 44) / 2,
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  recentImage: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
-  fabButton: {
-    position: 'absolute',
-    bottom: 24,
-    right: 24,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: colors.themeColor,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-  },
-  fabButtonDisabled: {
-    opacity: 0.5,
-  },
-  // Details Step Styles
-  detailsContainer: {
-    flex: 1,
-    paddingTop: 16,
-  },
-  imagePreviewContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-  },
-  imagePreview: {
-    width: 80,
-    height: 80,
+    height: 200,
     borderRadius: 8,
   },
-  descriptionInputContainer: {
-    flex: 1,
-    marginLeft: 12,
+  removeMediaButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#fff',
   },
-  optionsContainer: {
-    marginTop: 8,
-    backgroundColor: '#FFFFFF',
+  bottomSheet: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    marginTop: 'auto',
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 20,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: -2},
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 10,
   },
   optionItem: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 16,
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F2F5',
   },
-  optionLeft: {
+  optionItemLast: {
+    borderBottomWidth: 0,
+  },
+  optionIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 15,
+  },
+  optionIconContainerImage: {
+    backgroundColor: '#EAF6F6',
+  },
+  optionIconContainerVideo: {
+    backgroundColor: '#FFF3F3',
+  },
+  optionIconContainerMusic: {
+    backgroundColor: '#E8F5E9',
+  },
+  optionText: {
+    fontSize: 15,
+    color: '#333',
+    fontWeight: '500',
+  },
+  privacyContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+    paddingTop: 10,
+  },
+  privacyOption: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  optionText: {
-    fontSize: 16,
-    color: '#000000',
-    marginLeft: 12,
+  checkbox: {
+    width: 18,
+    height: 18,
+    borderRadius: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 8,
+    borderWidth: 1,
   },
-  divider: {
-    height: 1,
-    backgroundColor: '#F0F0F0',
-    marginHorizontal: 16,
+  checkboxSelected: {
+    backgroundColor: '#20B2AA',
+    borderColor: '#20B2AA',
+  },
+  checkboxUnselected: {
+    backgroundColor: '#EAF6F6',
+    borderColor: '#EAF6F6',
+  },
+  privacyText: {
+    fontSize: 13,
+    color: '#333',
   },
   loaderOverlay: {
     flex: 1,
@@ -274,6 +272,9 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.f14,
     color: colors.black,
     fontWeight: '500',
+  },
+  thumbnailWrapperLast: {
+    marginRight: 0,
   },
 });
 

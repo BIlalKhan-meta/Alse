@@ -1,29 +1,27 @@
-// CreatePost.tsx
-import {CameraRoll} from '@react-native-camera-roll/camera-roll';
-import {useNavigation, useRoute} from '@react-navigation/native';
-import {ArrowRight, Video as VideoIcon} from 'lucide-react-native';
-import React, {useEffect, useLayoutEffect, useRef, useState} from 'react';
+import {useNavigation} from '@react-navigation/native';
+import {ChevronLeft, Camera, Video as VideoIcon, Music, Check, X} from 'lucide-react-native';
+import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {
   ActivityIndicator,
-  FlatList,
   Image,
   Modal,
-  ScrollView,
   Text,
   TextInput,
   TouchableOpacity,
   View,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import Video from 'react-native-video';
-import GlobalHeader from '../../components/GlobalHeader';
+import {useSelector} from 'react-redux';
 import {useAppDispatch} from '../../hooks/storeHooks';
 import useImagePicker from '../../hooks/useImagePicker';
 import {postCreate} from '../../store/slices/homeSlice';
-import {createVideoFile, ensurePhotoPermission, getMessage, Toast} from '../../utils/helpers';
-import {images} from '../../utils/images';
+import {selectUserProfile} from '../../store/slices/authSlice';
+import {createVideoFile, getMessage, Toast, getAbsoluteAvatarUrl} from '../../utils/helpers';
 import {colors} from '../../utils/theme';
+import {images} from '../../utils/images';
 import styles from './styles';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 
 type MediaKind = 'image' | 'video';
 
@@ -34,79 +32,35 @@ type SelectedMedia = {
   kind: MediaKind;
 };
 
-type RecentItem = {
-  id: string;
-  uri: string;
-  kind: MediaKind;
-  name?: string;
-  type?: string;
-};
-
 const CreatePost: React.FC = () => {
   const navigation = useNavigation();
-  const route = useRoute();
-  const initialMediaType = (route.params as {mediaType?: 'photo' | 'video'} | undefined)
-    ?.mediaType;
   const dispatch = useAppDispatch();
+  const user = useSelector(selectUserProfile);
 
-  const [step, setStep] = useState<'select' | 'details'>('select');
-  const [selectedMedia, setSelectedMedia] = useState<SelectedMedia | null>(null);
-  const [recentItems, setRecentItems] = useState<RecentItem[]>([]);
   const [description, setDescription] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [selectedMedia, setSelectedMedia] = useState<SelectedMedia | null>(null);
+  const [selectedMediaList, setSelectedMediaList] = useState<SelectedMedia[]>([]);
+  const [privacy, setPrivacy] = useState<'friends' | 'public' | 'only_me'>('friends');
 
-  const {imageData, chooseImageFromLibrary} = useImagePicker();
-  const openedInitialPicker = useRef(false);
+  const {imageData, imagesData, chooseImageFromLibrary, setImagesData} = useImagePicker();
 
-  const loadRecentMedia = async () => {
-    const granted = await ensurePhotoPermission();
-    if (!granted) {
-      console.log('Permission denied');
-      return;
-    }
-
-    try {
-      const [photos, videos] = await Promise.all([
-        CameraRoll.getPhotos({first: 4, assetType: 'Photos'}),
-        CameraRoll.getPhotos({first: 4, assetType: 'Videos'}),
-      ]);
-
-      const photoItems: RecentItem[] = photos.edges.map((edge, i) => ({
-        id: `p-${i}-${edge.node.image.uri}`,
-        uri: edge.node.image.uri,
-        kind: 'image',
-      }));
-
-      const videoItems: RecentItem[] = videos.edges.map((edge, i) => ({
-        id: `v-${i}-${edge.node.image.uri}`,
-        uri: edge.node.image.uri,
-        kind: 'video',
-        name: edge.node.image.filename || 'video.mp4',
-        type: 'video/mp4',
-      }));
-
-      setRecentItems([...photoItems, ...videoItems]);
-    } catch (e) {
-      console.log('Error loading recents:', e);
-    }
-  };
 
   useEffect(() => {
-    loadRecentMedia();
-  }, []);
-
-  useEffect(() => {
-    if (!initialMediaType || openedInitialPicker.current) {
-      return;
+    if (imagesData && imagesData.length > 0) {
+      const newMediaList: SelectedMedia[] = imagesData.map(asset => {
+        const assetType = asset.type ?? '';
+        const kind: MediaKind = assetType.startsWith('video') || asset.duration != null ? 'video' : 'image';
+        return {
+          uri: asset.uri,
+          name: asset.fileName,
+          type: asset.type,
+          kind,
+        };
+      });
+      setSelectedMediaList(newMediaList);
     }
-    openedInitialPicker.current = true;
-    if (initialMediaType === 'video') {
-      chooseImageFromLibrary('video');
-    } else if (initialMediaType === 'photo') {
-      chooseImageFromLibrary('photo');
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- chooseImageFromLibrary identity changes each render
-  }, [initialMediaType]);
+  }, [imagesData]);
 
   useEffect(() => {
     if (!imageData?.uri) {
@@ -144,18 +98,41 @@ const CreatePost: React.FC = () => {
     } as any);
   };
 
-  const handleNext = () => {
-    setStep('details');
-  };
-
   const handlePost = async () => {
+    if (!description.trim() && !selectedMedia && selectedMediaList.length === 0) {
+      Toast.error('Please add some text or media to post');
+      return;
+    }
+
     const body = new FormData();
     const text = description.trim();
     body.append('content', text);
     body.append('description', text);
-    body.append('privacy', '2');
 
-    if (selectedMedia?.uri) {
+    // Map privacy state to API values (assuming 1=public, 2=friends, 3=only_me based on previous code)
+    let privacyValue = '2';
+    if (privacy === 'public') {
+      privacyValue = '1';
+    }
+    if (privacy === 'only_me') {
+      privacyValue = '3';
+    }
+    body.append('privacy', privacyValue);
+
+    if (selectedMediaList.length > 0) {
+      selectedMediaList.forEach((media, index) => {
+        if (media.kind === 'video') {
+          const file = createVideoFile(media.uri);
+          body.append(`file[${index}]`, file as any);
+        } else {
+          body.append(`file[${index}]`, {
+            uri: media.uri,
+            name: media.name || `image_${index}.jpg`,
+            type: media.type || 'image/jpeg',
+          } as any);
+        }
+      });
+    } else if (selectedMedia?.uri) {
       appendMediaToForm(body, selectedMedia);
     }
 
@@ -163,7 +140,7 @@ const CreatePost: React.FC = () => {
 
     dispatch(postCreate(body))
       .unwrap()
-      .then(res => {
+      .then(_res => {
         setIsLoading(false);
         Toast.success('Posted Successfully');
         navigation.goBack();
@@ -178,169 +155,42 @@ const CreatePost: React.FC = () => {
       });
   };
 
-  const handleBack = () => {
-    setSelectedMedia(null);
-    if (step === 'details') {
-      setStep('select');
-    } else {
-      navigation.goBack();
+  const removeMedia = (indexToRemove: number) => {
+    const newList = selectedMediaList.filter((_, index) => index !== indexToRemove);
+    setSelectedMediaList(newList);
+    if (newList.length === 0) {
+      setSelectedMedia(null);
+      setImagesData([]);
     }
   };
 
-  const renderSelectedPreview = (opts: {showRemove: boolean; videoPaused: boolean}) => {
-    if (!selectedMedia?.uri) {
-      return null;
-    }
-    const {showRemove, videoPaused} = opts;
+  const renderPrivacyOption = (value: 'friends' | 'public' | 'only_me', label: string) => {
+    const isSelected = privacy === value;
     return (
-      <View style={styles.imageWrapper}>
-        {selectedMedia.kind === 'video' ? (
-          <Video
-            source={{uri: selectedMedia.uri}}
-            style={styles.selectedImage}
-            resizeMode="cover"
-            repeat
-            muted
-            paused={videoPaused}
-          />
-        ) : (
-          <Image
-            source={{uri: selectedMedia.uri}}
-            style={styles.selectedImage}
-            resizeMode="cover"
-          />
-        )}
-        {showRemove && (
-          <TouchableOpacity
-            style={styles.removeImageButton}
-            onPress={() => setSelectedMedia(null)}>
-            <Image source={images.cross} style={styles.removeIcon} />
-          </TouchableOpacity>
-        )}
-      </View>
+      <TouchableOpacity
+        style={styles.privacyOption}
+        onPress={() => setPrivacy(value)}
+        activeOpacity={0.7}
+      >
+        <View style={[
+          styles.checkbox,
+          isSelected ? styles.checkboxSelected : styles.checkboxUnselected,
+        ]}>
+          {isSelected && <Check color="white" size={12} strokeWidth={3} />}
+        </View>
+        <Text style={styles.privacyText}>{label}</Text>
+      </TouchableOpacity>
     );
   };
 
-  const renderRecentItem = ({item}: {item: RecentItem}) => (
-    <TouchableOpacity
-      style={styles.recentImageContainer}
-      onPress={() =>
-        setSelectedMedia({
-          uri: item.uri,
-          kind: item.kind,
-          name: item.name,
-          type: item.type,
-        })
-      }>
-      {item.kind === 'video' ? (
-        <Video
-          source={{uri: item.uri}}
-          style={styles.recentVideoThumb}
-          resizeMode="cover"
-          paused
-          muted
-        />
-      ) : (
-        <Image source={{uri: item.uri}} style={styles.recentImage} />
-      )}
-    </TouchableOpacity>
-  );
-
-  // Step 1: Media selection
-  const renderSelectStep = () => (
-    <>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <View style={styles.imageSection}>
-          {selectedMedia ? (
-            renderSelectedPreview({showRemove: true, videoPaused: false})
-          ) : (
-            <View style={styles.mediaPickRow}>
-              <TouchableOpacity
-                style={styles.mediaPickHalf}
-                onPress={() => chooseImageFromLibrary('photo')}>
-                <Image
-                  source={images.media}
-                  style={styles.addImageIcon}
-                  resizeMode="contain"
-                />
-                <Text style={styles.mediaPickLabel}>Photo</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.mediaPickHalf}
-                onPress={() => chooseImageFromLibrary('video')}>
-                <VideoIcon size={50} color="#CCCCCC" />
-                <Text style={styles.mediaPickLabel}>Video</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-        </View>
-
-        <View style={styles.recentsSection}>
-          <View style={styles.recentsHeader}>
-            <Text style={styles.recentsTitle}>Recents</Text>
-          </View>
-
-          <FlatList
-            data={recentItems}
-            renderItem={renderRecentItem}
-            keyExtractor={item => item.id}
-            numColumns={2}
-            scrollEnabled={false}
-            columnWrapperStyle={styles.recentRow}
-            contentContainerStyle={styles.recentsList}
-          />
-        </View>
-      </ScrollView>
-
-      <TouchableOpacity onPress={handleNext} style={styles.fabButton}>
-        {!isLoading ? (
-          <ArrowRight color="white" size={24} />
-        ) : (
-          <ActivityIndicator size={24} color={'white'} />
-        )}
-      </TouchableOpacity>
-    </>
-  );
-
-  // Step 2: Add details
-  const renderDetailsStep = () => (
-    <KeyboardAwareScrollView
-      style={styles.scrollContainer}
-      enableOnAndroid={true}
-      extraScrollHeight={20}
-      enableAutomaticScroll={true}
-      keyboardShouldPersistTaps="handled"
-      showsVerticalScrollIndicator={false}>
-      <View style={styles.container}>
-        {selectedMedia?.uri && (
-          <View style={styles.imageSection}>
-            {renderSelectedPreview({showRemove: false, videoPaused: true})}
-          </View>
-        )}
-
-        <View style={styles.descriptionSection}>
-          <TextInput
-            style={styles.descriptionInput}
-            placeholder="Add a description..."
-            placeholderTextColor="#999999"
-            multiline
-            value={description}
-            onChangeText={setDescription}
-            autoFocus
-          />
-        </View>
-      </View>
-      <TouchableOpacity
-        onPress={handlePost}
-        style={[styles.fabButton, isLoading && styles.fabButtonDisabled]}
-        disabled={isLoading}>
-        <ArrowRight color="white" size={24} />
-      </TouchableOpacity>
-    </KeyboardAwareScrollView>
-  );
+  const avatarUrl = user?.avatar ? {uri: getAbsoluteAvatarUrl(user.avatar)} : images.profile;
+  const userName = user?.full_name || user?.first_name + ' ' + user?.last_name || 'User';
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
       <Modal visible={isLoading} transparent animationType="fade">
         <View style={styles.loaderOverlay}>
           <View style={styles.loaderContent}>
@@ -349,32 +199,179 @@ const CreatePost: React.FC = () => {
           </View>
         </View>
       </Modal>
-      <GlobalHeader />
-      <View
-        style={{
-          flexDirection: 'row',
-          width: '100%',
-          justifyContent: 'space-between',
-          paddingHorizontal: 10,
-        }}>
-        <Text style={{color: '#000000C7', fontWeight: 'bold', fontSize: 16}}>
-          Upload a Post
-        </Text>
-        <TouchableOpacity onPress={handleBack}>
-          <Text style={{color: '#000000C7', fontSize: 16}}>Cancel</Text>
+
+      {/* Header */}
+      <View style={styles.header}>
+        <View style={styles.headerLeft}>
+          <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+            <ChevronLeft color="#000" size={28} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Create Post</Text>
+        </View>
+        <TouchableOpacity
+          style={[styles.postButton, (!description.trim() && !selectedMedia && selectedMediaList.length === 0) && styles.postButtonDisabled]}
+          onPress={handlePost}
+          disabled={(!description.trim() && !selectedMedia && selectedMediaList.length === 0) || isLoading}
+        >
+          <Text style={styles.postButtonText}>Post</Text>
         </TouchableOpacity>
       </View>
-      <View
-        style={{
-          width: '95%',
-          backgroundColor: '#8E8E8EB0',
-          height: 1,
-          marginVertical: 10,
-          alignSelf: 'center',
-        }}
-      />
-      {step === 'select' ? renderSelectStep() : renderDetailsStep()}
-    </View>
+
+      {/* Main Card */}
+      <View style={styles.card}>
+        <View style={styles.userInfo}>
+          <Image source={avatarUrl} style={styles.avatar} />
+          <View style={styles.inputContainer}>
+            <Text style={styles.userName}>{userName}</Text>
+            <View style={styles.inputWrapper}>
+              <TextInput
+                style={styles.input}
+                placeholder="What's on your mind?"
+                placeholderTextColor="#999"
+                multiline
+                value={description}
+                onChangeText={setDescription}
+              />
+            </View>
+            <View style={styles.musicRow}>
+              <Text style={styles.musicText}>ABC Music</Text>
+              <TouchableOpacity style={styles.musicRemoveButton}>
+                <View style={styles.musicRemoveIconContainer}>
+                  <X color="#333" size={10} />
+                </View>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+
+        {/* Selected Media Preview */}
+        {selectedMediaList.length > 0 ? (
+          <View style={styles.multiMediaContainer}>
+            {/* Main Image */}
+            <View style={styles.mainMediaWrapper}>
+              {selectedMediaList[0].kind === 'video' ? (
+                <Video
+                  source={{uri: selectedMediaList[0].uri}}
+                  style={styles.mainMediaImage}
+                  resizeMode="cover"
+                  repeat
+                  muted
+                />
+              ) : (
+                <Image
+                  source={{uri: selectedMediaList[0].uri}}
+                  style={styles.mainMediaImage}
+                  resizeMode="cover"
+                />
+              )}
+              <TouchableOpacity
+                style={styles.removeMediaButton}
+                onPress={() => removeMedia(0)}>
+                <X color="#fff" size={14} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Thumbnail Images */}
+            {selectedMediaList.length > 1 && (
+              <View style={styles.thumbnailRow}>
+                {selectedMediaList.slice(1, 4).map((media, index) => (
+                  <View key={index} style={[styles.thumbnailWrapper, (index + 1) % 3 === 0 && styles.thumbnailWrapperLast]}>
+                    {media.kind === 'video' ? (
+                      <Video
+                        source={{uri: media.uri}}
+                        style={styles.thumbnailImage}
+                        resizeMode="cover"
+                        repeat
+                        muted
+                      />
+                    ) : (
+                      <Image
+                        source={{uri: media.uri}}
+                        style={styles.thumbnailImage}
+                        resizeMode="cover"
+                      />
+                    )}
+                    <TouchableOpacity
+                      style={styles.removeThumbnailButton}
+                      onPress={() => removeMedia(index + 1)}>
+                      <X color="#fff" size={10} />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
+        ) : selectedMedia && (
+          <View style={styles.selectedMediaContainer}>
+            {selectedMedia.kind === 'video' ? (
+              <Video
+                source={{uri: selectedMedia.uri}}
+                style={styles.selectedImage}
+                resizeMode="cover"
+                repeat
+                muted
+              />
+            ) : (
+              <Image
+                source={{uri: selectedMedia.uri}}
+                style={styles.selectedImage}
+                resizeMode="cover"
+              />
+            )}
+            <TouchableOpacity
+              style={styles.removeMediaButton}
+              onPress={() => {
+                setSelectedMedia(null);
+                setSelectedMediaList([]);
+                setImagesData([]);
+              }}>
+              <X color="#fff" size={16} />
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
+
+      {/* Bottom Sheet Options */}
+      <View style={styles.bottomSheet}>
+        <TouchableOpacity
+          style={styles.optionItem}
+          onPress={() => chooseImageFromLibrary('photo', 4)}
+        >
+          <View style={[styles.optionIconContainer, styles.optionIconContainerImage]}>
+            <Camera color="#169BD5" size={20} />
+          </View>
+          <Text style={styles.optionText}>Upload Image</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.optionItem}
+          onPress={() => chooseImageFromLibrary('video')}
+        >
+          <View style={[styles.optionIconContainer, styles.optionIconContainerVideo]}>
+            <VideoIcon color="#FF3B30" size={20} />
+          </View>
+          <Text style={styles.optionText}>Upload Video</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.optionItem, styles.optionItemLast]}
+          onPress={() => {
+            Toast.show('Music upload coming soon!');
+          }}
+        >
+          <View style={[styles.optionIconContainer, styles.optionIconContainerMusic]}>
+            <Music color="#4CD964" size={20} />
+          </View>
+          <Text style={styles.optionText}>Add Music</Text>
+        </TouchableOpacity>
+
+        <View style={styles.privacyContainer}>
+          {renderPrivacyOption('friends', 'Only Friends')}
+          {renderPrivacyOption('public', 'Public')}
+          {renderPrivacyOption('only_me', 'Only Me')}
+        </View>
+      </View>
+    </KeyboardAvoidingView>
   );
 };
 
