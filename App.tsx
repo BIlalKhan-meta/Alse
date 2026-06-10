@@ -1,6 +1,7 @@
 import 'react-native-gesture-handler';
 import React, {useEffect} from 'react';
 import {NativeModules, Platform, StyleSheet} from 'react-native';
+import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {DefaultTheme, NavigationContainer} from '@react-navigation/native';
 import {colors} from './src/utils/theme';
 import {Provider} from 'react-redux';
@@ -180,7 +181,11 @@ function App(): React.JSX.Element {
     </PersistGate>
   );
 
-  return appContent;
+  return (
+    <GestureHandlerRootView style={styles.container}>
+      {appContent}
+    </GestureHandlerRootView>
+  );
 }
 
 const styles = StyleSheet.create({

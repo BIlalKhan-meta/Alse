@@ -188,6 +188,11 @@ src/
 3. Implement proper navigation types
 4. Add any required API integration
 
+### Create Post Media Editing
+- New picks from `CreatePost` / `CreatePostEdit` go through `MediaEditor` before upload.
+- See [CREATE_POST_MEDIA_FLOW.md](CREATE_POST_MEDIA_FLOW.md) and `.cursor/rules/create-post-media-flow.mdc`.
+- Video export uses `react-native-video-trim` after the in-app MediaEditor preview.
+
 ### Implementing Real-time Features
 - Chat: Use existing Socket.io service in `src/utils/socket.ts`
 - Live streams: Integrate with Agora service patterns

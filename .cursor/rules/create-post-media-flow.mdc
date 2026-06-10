@@ -1,0 +1,52 @@
+---
+description: Create Post / Edit Post media pick → edit → upload flow
+globs:
+  - src/screens/CreatePost/**
+  - src/screens/CreatePostEdit/**
+  - src/screens/MediaEditor/**
+  - src/hooks/useImagePicker.ts
+  - src/hooks/useMediaEditorFlow.ts
+  - src/utils/mediaEditor.ts
+  - src/types/mediaEditor.ts
+alwaysApply: false
+---
+
+# Create Post Media Flow
+
+Read `CREATE_POST_MEDIA_FLOW.md` before changing pick, edit, or upload behavior.
+
+## Hard rules
+
+1. **Always route new picks through MediaEditor** — do not push raw picker URIs directly into `selectedMediaList` / `mediaList`.
+2. **Never mix video and images** in one post (max 10 images OR 1 video).
+3. **Multi-image gallery/camera picks** use the editor queue (`queue`, `queueIndex` in `MediaEditor` params).
+4. **Video** replaces the list; **images** merge with `mergeMediaList`.
+5. **Video uploads** must use the trim export URI from `openVideoEditorForPost` (`react-native-video-trim`), not the raw picker URI.
+6. **FormData uploads** use `fetch` (see `formdata-upload-network-error.mdc`), not axios.
+7. **Editor UI** must keep the light layout: Editor header, white preview card, Crop + Text toolbar only (see `screenshots/media-editor-reference.png`).
+
+## Integration pattern
+
+```typescript
+// After picker returns assets:
+startImageEditFlow(imagesData, remainingMediaSlots);
+// or for video:
+startVideoEditFlow({ uri, name, type, kind: 'video' });
+
+// MediaEditor finish — navigate only, never goBack() after (extra goBack pops to Home):
+navigation.navigate({ name: 'CreatePost', params: { editedMediaBatch: batch }, merge: true });
+
+// On return to CreatePost / CreatePostEdit:
+useFocusEffect(() => {
+  const batch = route.params?.editedMediaBatch;
+  if (batch?.length) {
+    // video → replace; images → merge
+    navigation.setParams({ editedMediaBatch: undefined });
+  }
+});
+```
+
+## App requirements
+
+- `App.tsx`: `GestureHandlerRootView` wraps the app.
+- Video export: `react-native-video-trim` (old architecture compatible).

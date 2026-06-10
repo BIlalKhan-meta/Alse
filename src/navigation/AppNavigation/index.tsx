@@ -4,6 +4,7 @@ import TabNavigation from '../BottomTab';
 import Saved from '../../screens/Saved';
 import Shop from '../../screens/MarketPlace/Shop';
 import CreatePost from '../../screens/CreatePost';
+import MediaEditor from '../../screens/MediaEditor';
 import RequestScreen from '../../screens/RequestScreen';
 import Notifications from '../../screens/Home/Notifications';
 import ContactUs from '../../screens/ContactUs';
@@ -168,6 +169,11 @@ const AppNavigation = () => {
           name="CreatePost"
           component={CreatePost}
           // options={NavigationOptions}
+        />
+        <Stack.Screen
+          name="MediaEditor"
+          component={MediaEditor}
+          options={{headerShown: false}}
         />
         <Stack.Screen
           name="CreateReel"

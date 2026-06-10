@@ -18,6 +18,7 @@ const titles: {[key: string]: string} = {
   ChatOngoing: 'Group 1',
   MyPosts: 'My Post',
   CreatePost: 'Create Post',
+  MediaEditor: 'Editor',
   Cart: 'My Cart',
   Marketplace: 'Shops',
   Menu: 'Menu',
@@ -66,6 +67,7 @@ const titles: {[key: string]: string} = {
 const backButtonRoutes: {[key: string]: boolean} = {
   ChatOngoing: true,
   CreatePost: true,
+  MediaEditor: true,
   Shop: true,
   ProductView: true,
   MyOrderDetail: true,

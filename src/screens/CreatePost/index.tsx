@@ -1,4 +1,4 @@
-import {useNavigation} from '@react-navigation/native';
+import {useFocusEffect, useNavigation, useRoute} from '@react-navigation/native';
 import {ChevronLeft, Camera, Video as VideoIcon, Music, Check, X} from 'lucide-react-native';
 import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {
@@ -16,23 +16,26 @@ import Video from 'react-native-video';
 import {useSelector} from 'react-redux';
 import {useAppDispatch} from '../../hooks/storeHooks';
 import useImagePicker, {
-  mapPickerAssetsToMedia,
   mergeMediaList,
   PickedMedia,
 } from '../../hooks/useImagePicker';
+import useMediaEditorFlow from '../../hooks/useMediaEditorFlow';
+import {EditedMedia} from '../../types/mediaEditor';
 import {postCreate} from '../../store/slices/homeSlice';
 import {selectUserProfile} from '../../store/slices/authSlice';
 import {createVideoFile, getMessage, Toast, getAbsoluteAvatarUrl} from '../../utils/helpers';
 import {colors} from '../../utils/theme';
 import {images} from '../../utils/images';
 import styles from './styles';
+import {useTranslation} from 'react-i18next';
 
 type SelectedMedia = PickedMedia;
 
 const MAX_MEDIA = 10;
 
 const CreatePost: React.FC = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
+  const route = useRoute<any>();
   const dispatch = useAppDispatch();
   const user = useSelector(selectUserProfile);
 
@@ -41,25 +44,41 @@ const CreatePost: React.FC = () => {
   const [selectedMediaList, setSelectedMediaList] = useState<SelectedMedia[]>([]);
   const [privacy, setPrivacy] = useState<'friends' | 'public' | 'only_me'>('friends');
 
+  const {t} = useTranslation();
+
   const {
     imageData,
     imagesData,
     chooseImageFromLibrary,
+    showImageSourcePicker,
     setImagesData,
+    setImageData,
   } = useImagePicker();
+
+  const {startImageEditFlow, startVideoEditFlow} = useMediaEditorFlow('create');
+  const remainingMediaSlots = MAX_MEDIA - selectedMediaList.length;
+
+  useFocusEffect(
+    React.useCallback(() => {
+      const batch = route.params?.editedMediaBatch as EditedMedia[] | undefined;
+      if (batch?.length) {
+        if (batch.some(item => item.kind === 'video')) {
+          setSelectedMediaList(batch);
+        } else {
+          setSelectedMediaList(prev => mergeMediaList(prev, batch, MAX_MEDIA));
+        }
+        navigation.setParams({editedMediaBatch: undefined});
+      }
+    }, [navigation, route.params?.editedMediaBatch]),
+  );
 
   useEffect(() => {
     if (!imagesData?.length) {
       return;
     }
-    const incoming = mapPickerAssetsToMedia(imagesData).filter(
-      item => item.kind === 'image',
-    );
-    if (incoming.length > 0) {
-      setSelectedMediaList(prev => mergeMediaList(prev, incoming, MAX_MEDIA));
-    }
+    startImageEditFlow(imagesData, remainingMediaSlots);
     setImagesData([]);
-  }, [imagesData, setImagesData]);
+  }, [imagesData, setImagesData, startImageEditFlow, remainingMediaSlots]);
 
   useEffect(() => {
     if (!imageData?.uri) {
@@ -71,16 +90,15 @@ const CreatePost: React.FC = () => {
     if (!isVideo) {
       return;
     }
-    setSelectedMediaList([
-      {
-        uri: imageData.uri,
-        name: imageData.fileName,
-        type: imageData.type,
-        kind: 'video',
-      },
-    ]);
+    startVideoEditFlow({
+      uri: imageData.uri,
+      name: imageData.fileName,
+      type: imageData.type,
+      kind: 'video',
+    });
+    setImageData(null);
     setImagesData([]);
-  }, [imageData, setImagesData]);
+  }, [imageData, setImageData, setImagesData, startVideoEditFlow]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -149,7 +167,6 @@ const CreatePost: React.FC = () => {
     );
   };
 
-  const remainingMediaSlots = MAX_MEDIA - selectedMediaList.length;
   const hasVideoSelected = selectedMediaList.some(media => media.kind === 'video');
 
   const handlePickImages = () => {
@@ -161,7 +178,13 @@ const CreatePost: React.FC = () => {
       Toast.error(`You can add up to ${MAX_MEDIA} images`);
       return;
     }
-    chooseImageFromLibrary('photo', remainingMediaSlots);
+    showImageSourcePicker('photo', remainingMediaSlots, {
+      title: t('uploadImage'),
+      message: t('chooseImageSource'),
+      camera: t('cameraUpload'),
+      gallery: t('galleryUpload'),
+      cancel: t('cancel'),
+    });
   };
 
   const handlePickVideo = () => {

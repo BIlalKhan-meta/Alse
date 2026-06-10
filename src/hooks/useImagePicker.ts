@@ -1,4 +1,5 @@
 import {useState} from 'react';
+import {Alert} from 'react-native';
 import {
   Asset,
   launchCamera,
@@ -6,6 +7,14 @@ import {
 } from 'react-native-image-picker';
 
 export type LibraryMediaType = 'photo' | 'video' | 'mixed';
+
+export type ImageSourcePickerLabels = {
+  title?: string;
+  message?: string;
+  camera?: string;
+  gallery?: string;
+  cancel?: string;
+};
 
 export type PickedMediaKind = 'image' | 'video';
 
@@ -114,12 +123,35 @@ const useImagePicker = () => {
     setImagesData([]);
   };
 
+  const showImageSourcePicker = (
+    mediaType: LibraryMediaType = 'photo',
+    selectionLimit: number = 1,
+    labels?: ImageSourcePickerLabels,
+  ) => {
+    Alert.alert(
+      labels?.title ?? 'Upload Image',
+      labels?.message ?? 'Choose camera or gallery',
+      [
+        {text: labels?.cancel ?? 'Cancel', style: 'cancel'},
+        {
+          text: labels?.camera ?? 'Open Camera',
+          onPress: () => captureImage(mediaType),
+        },
+        {
+          text: labels?.gallery ?? 'Open Gallery',
+          onPress: () => chooseImageFromLibrary(mediaType, selectionLimit),
+        },
+      ],
+    );
+  };
+
   return {
     image,
     imageData,
     imagesData,
     captureImage,
     chooseImageFromLibrary,
+    showImageSourcePicker,
     chooseVideoFromLibrary: () => chooseImageFromLibrary('video'),
     chooseMediaFromLibrary: () => chooseImageFromLibrary('mixed'),
     setImageData,

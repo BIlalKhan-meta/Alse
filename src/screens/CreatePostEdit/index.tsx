@@ -1,19 +1,21 @@
 import React, {useEffect, useLayoutEffect, useMemo, useState} from 'react';
 import {View, ScrollView, TouchableOpacity} from 'react-native';
 import CardComponent from '../../components/CardComponent';
-import {useNavigation, useRoute} from '@react-navigation/native';
+import {useFocusEffect, useNavigation, useRoute} from '@react-navigation/native';
 import styles from './styles';
 import useImagePicker, {
-  mapPickerAssetsToMedia,
   mergeMediaList,
   PickedMedia,
 } from '../../hooks/useImagePicker';
+import useMediaEditorFlow from '../../hooks/useMediaEditorFlow';
+import {EditedMedia} from '../../types/mediaEditor';
 import InterMedium from '../../components/Text/InterMedium';
 import {postEdit, updatePost} from '../../store/slices/homeSlice';
 import {useAppDispatch} from '../../hooks/storeHooks';
 import {createVideoFile, getMessage, Toast} from '../../utils/helpers';
 import Loader from '../../components/Loader';
 import {removeImage} from '../../api/home';
+import {useTranslation} from 'react-i18next';
 
 const ListOptions = [
   {label: 'Public', value: '2'},
@@ -56,16 +58,35 @@ const CreatePostEdit: React.FC = () => {
     route?.params?.data?.description || '',
   );
 
+  const {t} = useTranslation();
+
   const {
     imageData,
     imagesData,
     captureImage,
     chooseImageFromLibrary,
+    showImageSourcePicker,
     setImagesData,
+    setImageData,
   } = useImagePicker();
 
   const remainingMediaSlots = MAX_MEDIA - mediaList.length;
   const hasVideoSelected = mediaList.some(media => media.kind === 'video');
+  const {startImageEditFlow, startVideoEditFlow} = useMediaEditorFlow('edit');
+
+  useFocusEffect(
+    React.useCallback(() => {
+      const batch = route.params?.editedMediaBatch as EditedMedia[] | undefined;
+      if (batch?.length) {
+        if (batch.some(item => item.kind === 'video')) {
+          setMediaList(batch);
+        } else {
+          setMediaList(prev => mergeMediaList(prev, batch, MAX_MEDIA));
+        }
+        navigation.setParams({editedMediaBatch: undefined});
+      }
+    }, [navigation, route.params?.editedMediaBatch]),
+  );
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -87,14 +108,9 @@ const CreatePostEdit: React.FC = () => {
     if (!imagesData?.length) {
       return;
     }
-    const incoming = mapPickerAssetsToMedia(imagesData).filter(
-      item => item.kind === 'image',
-    );
-    if (incoming.length > 0) {
-      setMediaList(prev => mergeMediaList(prev, incoming, MAX_MEDIA));
-    }
+    startImageEditFlow(imagesData, remainingMediaSlots);
     setImagesData([]);
-  }, [imagesData, setImagesData]);
+  }, [imagesData, setImagesData, startImageEditFlow, remainingMediaSlots]);
 
   useEffect(() => {
     if (!imageData?.uri) {
@@ -107,22 +123,21 @@ const CreatePostEdit: React.FC = () => {
       return;
     }
 
-    setMediaList(prev => {
-      if (prev.some(item => item.isExisting)) {
-        Toast.error('Remove existing media before replacing with a video');
-        return prev;
-      }
-      return [
-        {
-          uri: imageData.uri,
-          name: imageData.fileName,
-          type: imageData.type,
-          kind: 'video',
-        },
-      ];
+    if (mediaList.some(item => item.isExisting)) {
+      Toast.error('Remove existing media before replacing with a video');
+      setImagesData([]);
+      return;
+    }
+
+    startVideoEditFlow({
+      uri: imageData.uri,
+      name: imageData.fileName,
+      type: imageData.type,
+      kind: 'video',
     });
+    setImageData(null);
     setImagesData([]);
-  }, [imageData, setImagesData]);
+  }, [imageData, setImageData, setImagesData, startVideoEditFlow, mediaList]);
 
   const previewMedia = useMemo(
     () => mediaList.map(item => ({uri: item.uri, id: item.mediaId})),
@@ -138,7 +153,13 @@ const CreatePostEdit: React.FC = () => {
       Toast.error(`You can add up to ${MAX_MEDIA} images`);
       return;
     }
-    chooseImageFromLibrary('photo', remainingMediaSlots);
+    showImageSourcePicker('photo', remainingMediaSlots, {
+      title: t('uploadImage'),
+      message: t('chooseImageSource'),
+      camera: t('cameraUpload'),
+      gallery: t('galleryUpload'),
+      cancel: t('cancel'),
+    });
   };
 
   const handlePickVideo = () => {
