@@ -233,33 +233,44 @@ function isStoryMediaItem(m: NewsfeedMediaItem): boolean {
 }
 
 /**
+ * All newsfeed post media for display: drops story attachments (`Story_*`), then
+ * returns every `Post_*` upload (oldest first), or all remaining items by date.
+ */
+export function getNewsfeedMediaList(
+  media: NewsfeedMediaItem[] | undefined | null,
+): NewsfeedMediaItem[] {
+  if (!media?.length) {
+    return [];
+  }
+  const postOnly = media.filter(m => m?.path && !isStoryMediaItem(m));
+  if (!postOnly.length) {
+    return [];
+  }
+
+  const postUploads = postOnly.filter(m =>
+    mediaBasename(m.file).startsWith('post_'),
+  );
+  if (postUploads.length) {
+    return [...postUploads].sort(
+      (a, b) =>
+        (a.id ?? 0) - (b.id ?? 0) ||
+        (a.date || '').localeCompare(b.date || ''),
+    );
+  }
+
+  return [...postOnly].sort((a, b) =>
+    (b.date || '').localeCompare(a.date || ''),
+  );
+}
+
+/**
  * Picks newsfeed post media only: drops story attachments (`Story_*`), then prefers
  * `Post_*` uploads, else newest image/video by `date`.
  */
 export function getPrimaryNewsfeedMedia(
   media: NewsfeedMediaItem[] | undefined | null,
 ): NewsfeedMediaItem | undefined {
-  if (!media?.length) {
-    return undefined;
-  }
-  const postOnly = media.filter(
-    m => m?.path && !isStoryMediaItem(m),
-  );
-  if (!postOnly.length) {
-    return undefined;
-  }
-
-  const images = postOnly.filter(m => m.type === 'image' || m.type == null);
-  const candidates = images.length ? images : postOnly;
-
-  const postUpload = candidates.find(m => mediaBasename(m.file).startsWith('post_'));
-  if (postUpload) {
-    return postUpload;
-  }
-
-  return [...candidates].sort((a, b) =>
-    (b.date || '').localeCompare(a.date || ''),
-  )[0];
+  return getNewsfeedMediaList(media)[0];
 }
 
 /** App convention: attribution suffix on post `description` for reshares (parse with parseSharedFrom). */

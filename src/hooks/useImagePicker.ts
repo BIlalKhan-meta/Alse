@@ -1,7 +1,50 @@
 import {useState} from 'react';
-import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
+import {
+  Asset,
+  launchCamera,
+  launchImageLibrary,
+} from 'react-native-image-picker';
 
 export type LibraryMediaType = 'photo' | 'video' | 'mixed';
+
+export type PickedMediaKind = 'image' | 'video';
+
+export type PickedMedia = {
+  uri: string;
+  name?: string;
+  type?: string;
+  kind: PickedMediaKind;
+};
+
+export const mapPickerAssetsToMedia = (assets: Asset[]): PickedMedia[] =>
+  assets.map(asset => {
+    const assetType = asset.type ?? '';
+    const kind: PickedMediaKind =
+      assetType.startsWith('video') || asset.duration != null ? 'video' : 'image';
+    return {
+      uri: asset.uri ?? '',
+      name: asset.fileName,
+      type: asset.type,
+      kind,
+    };
+  });
+
+export const mergeMediaList = (
+  existing: PickedMedia[],
+  incoming: PickedMedia[],
+  maxCount: number,
+): PickedMedia[] => {
+  const merged = [...existing];
+  for (const item of incoming) {
+    if (merged.length >= maxCount) {
+      break;
+    }
+    if (item.uri && !merged.some(media => media.uri === item.uri)) {
+      merged.push(item);
+    }
+  }
+  return merged;
+};
 
 const useImagePicker = () => {
   const [image, setImage] = useState<any>(null); // State to store the selected image URI
@@ -30,11 +73,16 @@ const useImagePicker = () => {
         console.log('User cancelled image picker');
       } else if (response.errorCode == 'permission') {
         console.log('Permission not satisfied');
-      } else {
-        if (response.assets && response.assets.length > 0) {
-          setImage(response.assets[0].uri);
-          setImageData(response.assets[0]);
-          setImagesData(response.assets);
+      } else if (response.assets && response.assets.length > 0) {
+        const assets = response.assets;
+        if (selectionLimit > 1) {
+          setImagesData(assets);
+          setImageData(null);
+          setImage(null);
+        } else {
+          setImage(assets[0].uri);
+          setImageData(assets[0]);
+          setImagesData(assets);
         }
       }
     });
@@ -51,14 +99,19 @@ const useImagePicker = () => {
         console.log('Camera not available on device');
       } else if (response.errorCode == 'permission') {
         console.log('Permission not satisfied');
-      } else {
-        if (response.assets && response.assets.length > 0) {
-          setImage(response.assets[0].uri);
-          setImageData(response.assets[0]);
-          setImagesData([response.assets[0]]);
-        }
+      } else if (response.assets && response.assets.length > 0) {
+        const asset = response.assets[0];
+        setImage(asset.uri);
+        setImageData(asset);
+        setImagesData([asset]);
       }
     });
+  };
+
+  const clearPickerSelection = () => {
+    setImage(null);
+    setImageData(null);
+    setImagesData([]);
   };
 
   return {
@@ -72,6 +125,7 @@ const useImagePicker = () => {
     setImageData,
     setImage,
     setImagesData,
+    clearPickerSelection,
   };
 };
 

@@ -19,12 +19,13 @@ import {useSelector} from 'react-redux';
 import {selectUserProfile} from '../../store/slices/authSlice';
 import {useTranslation} from 'react-i18next';
 
+interface MediaPreviewItem {
+  uri: string;
+  id?: number;
+}
+
 interface CardComponentProps {
   onTextInput: () => void;
-  // notifiVisible: boolean;
-  // chatVisible: boolean;
-  // searchVisible: boolean;
-  // back: boolean;
   onVideoPress: () => void;
   onImagePress: () => void;
   onCameraPress: () => void;
@@ -34,8 +35,9 @@ interface CardComponentProps {
   setPrivacy?: () => void;
   handleOnChangeText: () => void;
   removeMedia: () => void;
+  onRemoveMediaAt?: (index: number) => void;
   image?: object | null;
-  // dots: boolean;
+  mediaList?: MediaPreviewItem[];
 }
 const CardComponent: React.FC<CardComponentProps> = ({
   handleOnChangeText,
@@ -47,13 +49,35 @@ const CardComponent: React.FC<CardComponentProps> = ({
   setPrivacy,
   privacy,
   image,
+  mediaList,
   removeMedia,
+  onRemoveMediaAt,
 }) => {
   const [open, setOpen] = useState(false);
   const user = useSelector(selectUserProfile);
   const {t} = useTranslation();
 
-  // console.log('USERRRRRRRRRRRRRRRRRRRRR', user);
+  const previewItems: MediaPreviewItem[] =
+    mediaList && mediaList.length > 0
+      ? mediaList
+      : image
+        ? [
+            {
+              uri:
+                typeof image === 'string'
+                  ? image
+                  : (image as {uri?: string})?.uri ?? '',
+            },
+          ]
+        : [];
+
+  const handleRemoveAt = (index: number) => {
+    if (onRemoveMediaAt) {
+      onRemoveMediaAt(index);
+      return;
+    }
+    removeMedia();
+  };
 
   return (
     <Card>
@@ -123,19 +147,21 @@ const CardComponent: React.FC<CardComponentProps> = ({
       </View>
 
       <View style={styles.media_main}>
-        {image && (
-          <View style={styles.media_box}>
+        {previewItems.map((item, index) => (
+          <View
+            key={item.id ? `existing-${item.id}` : `${item.uri}-${index}`}
+            style={[
+              styles.media_box,
+              previewItems.length === 1 && styles.media_box_single,
+            ]}>
             <TouchableOpacity
-              onPress={() => removeMedia()}
+              onPress={() => handleRemoveAt(index)}
               style={styles.cross_box}>
               <Image source={images.cross} style={styles.cross_icon} />
             </TouchableOpacity>
-            <Image
-              source={image?.uri ? {uri: image?.uri} : {uri: image}}
-              style={styles.media_style}
-            />
+            <Image source={{uri: item.uri}} style={styles.media_style} />
           </View>
-        )}
+        ))}
       </View>
     </Card>
   );
@@ -175,12 +201,17 @@ const styles = StyleSheet.create({
     // justifyContent: 'space-between',
   },
   media_box: {
-    width: '100%',
-    height: vh * 20,
+    width: '31%',
+    height: vh * 12,
     borderRadius: vh,
     overflow: 'hidden',
     marginTop: vh * 2,
-    marginRight: vw * 2.8,
+    marginRight: '2%',
+  },
+  media_box_single: {
+    width: '100%',
+    height: vh * 20,
+    marginRight: 0,
   },
   media_style: {
     width: '100%',

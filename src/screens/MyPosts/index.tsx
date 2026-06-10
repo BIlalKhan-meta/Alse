@@ -41,7 +41,7 @@ import Loader from '../../components/Loader';
 import {
   getMessage,
   Toast,
-  getPrimaryNewsfeedMedia,
+  getNewsfeedMediaList,
   parseSharedFrom,
 } from '../../utils/helpers';
 import {timeFormat, timeHelper} from '../../utils';
@@ -251,7 +251,8 @@ const MyPosts: React.FC = () => {
   const renderPost = ({item, index}) => {
     console.log('Item from render Post ====>', item?.media);
     const isFocused = focusedIndex === index;
-    const primaryMedia = getPrimaryNewsfeedMedia(item?.media);
+    const mediaList = getNewsfeedMediaList(item?.media);
+    const primaryMedia = mediaList[0];
     const postDescriptionRaw = item?.description ?? item?.content ?? '';
     const {caption, sharedFromName} = parseSharedFrom(postDescriptionRaw);
     return (
@@ -265,6 +266,11 @@ const MyPosts: React.FC = () => {
         time={timeFormat(item?.date, true)}
         postText={caption}
         sharedFromName={sharedFromName}
+        mediaList={mediaList.map(media => ({
+          id: media.id,
+          path: media.path ?? '',
+          type: media.type ?? 'image',
+        }))}
         isPaused={pause && currendId == item?.id}
         handleVideoPause={() => handleVideoPause(item?.id)}
         postImage={primaryMedia?.path}

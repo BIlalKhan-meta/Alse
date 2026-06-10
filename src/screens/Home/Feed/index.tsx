@@ -31,7 +31,7 @@ import {
   getMessage,
   Toast,
   getAbsoluteAvatarUrl,
-  getPrimaryNewsfeedMedia,
+  getNewsfeedMediaList,
   parseSharedFrom,
 } from '../../../utils/helpers';
 import {colors} from '../../../utils/theme';
@@ -356,13 +356,17 @@ const Home: React.FC = () => {
     itemVisiblePercentThreshold: 50,
   }).current;
 
-  const handleMediaPress = (item: any) => {
-    const primary = getPrimaryNewsfeedMedia(item?.media);
-    if (primary?.path) {
+  const handleMediaPress = (item: any, mediaIndex = 0) => {
+    const mediaList = getNewsfeedMediaList(item?.media);
+    const selected = mediaList[mediaIndex] ?? mediaList[0];
+    if (selected?.path) {
       setMediaModalVisible({
         visible: true,
-        mediaUrl: primary.path,
-        mediaType: primary.type === 'video' ? 'video' : 'image',
+        mediaUrl: selected.path,
+        mediaType:
+          String(selected.type ?? 'image').toLowerCase() === 'video'
+            ? 'video'
+            : 'image',
         userName: item.fullname || '',
         postTime: timeFormat(item.date, true),
       });
@@ -371,7 +375,8 @@ const Home: React.FC = () => {
 
   const renderPost = ({item, index}: any) => {
     const isFocused = focusedIndex === index;
-    const primaryMedia = getPrimaryNewsfeedMedia(item?.media);
+    const mediaList = getNewsfeedMediaList(item?.media);
+    const primaryMedia = mediaList[0];
     const postDescriptionRaw = item?.description ?? item?.content ?? '';
     const {caption, sharedFromName} = parseSharedFrom(postDescriptionRaw);
     // console.log('---', item);
@@ -388,6 +393,11 @@ const Home: React.FC = () => {
         time={timeFormat(item?.date, true)}
         postText={caption}
         sharedFromName={sharedFromName}
+        mediaList={mediaList.map(media => ({
+          id: media.id,
+          path: media.path ?? '',
+          type: media.type ?? 'image',
+        }))}
         postImage={primaryMedia?.path ?? ''}
         mediaType={
           String(primaryMedia?.type ?? 'image').toLowerCase() === 'video'
@@ -425,8 +435,8 @@ const Home: React.FC = () => {
         }}
         isLiked={item?.is_liked}
         isSaved={item?.is_saved}
-        onMediaPress={() => {
-          handleMediaPress(item);
+        onMediaPress={(media, mediaIndex) => {
+          handleMediaPress(item, mediaIndex);
           handleDotPress(null);
         }}
         isPaused={!isFocused}
@@ -719,7 +729,7 @@ const Home: React.FC = () => {
             mediaType={mediaModalVisible.mediaType}
             userName={mediaModalVisible.userName}
             postTime={mediaModalVisible.postTime}
-          />
+          />             
         </View>
       </View>
     </View>

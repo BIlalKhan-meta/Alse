@@ -15,7 +15,11 @@ import {
 import Video from 'react-native-video';
 import {useSelector} from 'react-redux';
 import {useAppDispatch} from '../../hooks/storeHooks';
-import useImagePicker from '../../hooks/useImagePicker';
+import useImagePicker, {
+  mapPickerAssetsToMedia,
+  mergeMediaList,
+  PickedMedia,
+} from '../../hooks/useImagePicker';
 import {postCreate} from '../../store/slices/homeSlice';
 import {selectUserProfile} from '../../store/slices/authSlice';
 import {createVideoFile, getMessage, Toast, getAbsoluteAvatarUrl} from '../../utils/helpers';
@@ -23,14 +27,9 @@ import {colors} from '../../utils/theme';
 import {images} from '../../utils/images';
 import styles from './styles';
 
-type MediaKind = 'image' | 'video';
+type SelectedMedia = PickedMedia;
 
-type SelectedMedia = {
-  uri: string;
-  name?: string;
-  type?: string;
-  kind: MediaKind;
-};
+const MAX_MEDIA = 10;
 
 const CreatePost: React.FC = () => {
   const navigation = useNavigation();
@@ -39,45 +38,49 @@ const CreatePost: React.FC = () => {
 
   const [description, setDescription] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [selectedMedia, setSelectedMedia] = useState<SelectedMedia | null>(null);
   const [selectedMediaList, setSelectedMediaList] = useState<SelectedMedia[]>([]);
   const [privacy, setPrivacy] = useState<'friends' | 'public' | 'only_me'>('friends');
 
-  const {imageData, imagesData, chooseImageFromLibrary, setImagesData} = useImagePicker();
-
+  const {
+    imageData,
+    imagesData,
+    chooseImageFromLibrary,
+    setImagesData,
+  } = useImagePicker();
 
   useEffect(() => {
-    if (imagesData && imagesData.length > 0) {
-      const newMediaList: SelectedMedia[] = imagesData.map(asset => {
-        const assetType = asset.type ?? '';
-        const kind: MediaKind = assetType.startsWith('video') || asset.duration != null ? 'video' : 'image';
-        return {
-          uri: asset.uri,
-          name: asset.fileName,
-          type: asset.type,
-          kind,
-        };
-      });
-      setSelectedMediaList(newMediaList);
+    if (!imagesData?.length) {
+      return;
     }
-  }, [imagesData]);
+    const incoming = mapPickerAssetsToMedia(imagesData).filter(
+      item => item.kind === 'image',
+    );
+    if (incoming.length > 0) {
+      setSelectedMediaList(prev => mergeMediaList(prev, incoming, MAX_MEDIA));
+    }
+    setImagesData([]);
+  }, [imagesData, setImagesData]);
 
   useEffect(() => {
     if (!imageData?.uri) {
       return;
     }
     const assetType = imageData.type ?? '';
-    const kind: MediaKind =
-      assetType.startsWith('video') || imageData.duration != null
-        ? 'video'
-        : 'image';
-    setSelectedMedia({
-      uri: imageData.uri,
-      name: imageData.fileName,
-      type: imageData.type,
-      kind,
-    });
-  }, [imageData]);
+    const isVideo =
+      assetType.startsWith('video') || imageData.duration != null;
+    if (!isVideo) {
+      return;
+    }
+    setSelectedMediaList([
+      {
+        uri: imageData.uri,
+        name: imageData.fileName,
+        type: imageData.type,
+        kind: 'video',
+      },
+    ]);
+    setImagesData([]);
+  }, [imageData, setImagesData]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -85,21 +88,8 @@ const CreatePost: React.FC = () => {
     });
   }, [navigation]);
 
-  const appendMediaToForm = (body: FormData, media: SelectedMedia) => {
-    if (media.kind === 'video') {
-      const file = createVideoFile(media.uri);
-      body.append('file[0]', file as any);
-      return;
-    }
-    body.append('file[0]', {
-      uri: media.uri,
-      name: media.name || 'image.jpg',
-      type: media.type || 'image/jpeg',
-    } as any);
-  };
-
   const handlePost = async () => {
-    if (!description.trim() && !selectedMedia && selectedMediaList.length === 0) {
+    if (!description.trim() && selectedMediaList.length === 0) {
       Toast.error('Please add some text or media to post');
       return;
     }
@@ -132,8 +122,6 @@ const CreatePost: React.FC = () => {
           } as any);
         }
       });
-    } else if (selectedMedia?.uri) {
-      appendMediaToForm(body, selectedMedia);
     }
 
     setIsLoading(true);
@@ -156,12 +144,32 @@ const CreatePost: React.FC = () => {
   };
 
   const removeMedia = (indexToRemove: number) => {
-    const newList = selectedMediaList.filter((_, index) => index !== indexToRemove);
-    setSelectedMediaList(newList);
-    if (newList.length === 0) {
-      setSelectedMedia(null);
-      setImagesData([]);
+    setSelectedMediaList(prev =>
+      prev.filter((_, index) => index !== indexToRemove),
+    );
+  };
+
+  const remainingMediaSlots = MAX_MEDIA - selectedMediaList.length;
+  const hasVideoSelected = selectedMediaList.some(media => media.kind === 'video');
+
+  const handlePickImages = () => {
+    if (hasVideoSelected) {
+      Toast.error('Remove the video before adding images');
+      return;
     }
+    if (remainingMediaSlots <= 0) {
+      Toast.error(`You can add up to ${MAX_MEDIA} images`);
+      return;
+    }
+    chooseImageFromLibrary('photo', remainingMediaSlots);
+  };
+
+  const handlePickVideo = () => {
+    if (selectedMediaList.length > 0) {
+      Toast.error('Remove existing media before adding a video');
+      return;
+    }
+    chooseImageFromLibrary('video', 1);
   };
 
   const renderPrivacyOption = (value: 'friends' | 'public' | 'only_me', label: string) => {
@@ -209,9 +217,9 @@ const CreatePost: React.FC = () => {
           <Text style={styles.headerTitle}>Create Post</Text>
         </View>
         <TouchableOpacity
-          style={[styles.postButton, (!description.trim() && !selectedMedia && selectedMediaList.length === 0) && styles.postButtonDisabled]}
+          style={[styles.postButton, (!description.trim() && selectedMediaList.length === 0) && styles.postButtonDisabled]}
           onPress={handlePost}
-          disabled={(!description.trim() && !selectedMedia && selectedMediaList.length === 0) || isLoading}
+          disabled={(!description.trim() && selectedMediaList.length === 0) || isLoading}
         >
           <Text style={styles.postButtonText}>Post</Text>
         </TouchableOpacity>
@@ -274,8 +282,8 @@ const CreatePost: React.FC = () => {
             {/* Thumbnail Images */}
             {selectedMediaList.length > 1 && (
               <View style={styles.thumbnailRow}>
-                {selectedMediaList.slice(1, 4).map((media, index) => (
-                  <View key={index} style={[styles.thumbnailWrapper, (index + 1) % 3 === 0 && styles.thumbnailWrapperLast]}>
+                {selectedMediaList.slice(1).map((media, index) => (
+                  <View key={`${media.uri}-${index + 1}`} style={[styles.thumbnailWrapper, (index + 1) % 3 === 0 && styles.thumbnailWrapperLast]}>
                     {media.kind === 'video' ? (
                       <Video
                         source={{uri: media.uri}}
@@ -301,51 +309,26 @@ const CreatePost: React.FC = () => {
               </View>
             )}
           </View>
-        ) : selectedMedia && (
-          <View style={styles.selectedMediaContainer}>
-            {selectedMedia.kind === 'video' ? (
-              <Video
-                source={{uri: selectedMedia.uri}}
-                style={styles.selectedImage}
-                resizeMode="cover"
-                repeat
-                muted
-              />
-            ) : (
-              <Image
-                source={{uri: selectedMedia.uri}}
-                style={styles.selectedImage}
-                resizeMode="cover"
-              />
-            )}
-            <TouchableOpacity
-              style={styles.removeMediaButton}
-              onPress={() => {
-                setSelectedMedia(null);
-                setSelectedMediaList([]);
-                setImagesData([]);
-              }}>
-              <X color="#fff" size={16} />
-            </TouchableOpacity>
-          </View>
-        )}
+        ) : null}
       </View>
 
       {/* Bottom Sheet Options */}
       <View style={styles.bottomSheet}>
         <TouchableOpacity
           style={styles.optionItem}
-          onPress={() => chooseImageFromLibrary('photo', 4)}
+          onPress={handlePickImages}
         >
           <View style={[styles.optionIconContainer, styles.optionIconContainerImage]}>
             <Camera color="#169BD5" size={20} />
           </View>
-          <Text style={styles.optionText}>Upload Image</Text>
+          <Text style={styles.optionText}>
+            Upload Image{remainingMediaSlots > 0 ? ` (${selectedMediaList.length}/${MAX_MEDIA})` : ''}
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.optionItem}
-          onPress={() => chooseImageFromLibrary('video')}
+          onPress={handlePickVideo}
         >
           <View style={[styles.optionIconContainer, styles.optionIconContainerVideo]}>
             <VideoIcon color="#FF3B30" size={20} />

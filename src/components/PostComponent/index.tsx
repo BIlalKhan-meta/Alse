@@ -6,7 +6,10 @@ import {useTranslation} from 'react-i18next';
 import {
   ActivityIndicator,
   Alert,
+  FlatList,
   Linking,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
   PermissionsAndroid,
   PixelRatio,
   Pressable,
@@ -126,6 +129,12 @@ const downloadImage = async (imageUrl: any) => {
   }
 };
 
+interface PostMediaItem {
+  id?: number;
+  path: string;
+  type: string;
+}
+
 interface PostProps {
   id?: number;
   postID?: number;
@@ -136,6 +145,7 @@ interface PostProps {
   postText: string;
   postImage: string;
   mediaType: string;
+  mediaList?: PostMediaItem[];
   likes: number;
   comments: number;
   share: number;
@@ -154,7 +164,7 @@ interface PostProps {
   onCardPress: () => void;
   mediaId?: number | boolean;
   isFocused: boolean;
-  onMediaPress?: () => void;
+  onMediaPress?: (media: PostMediaItem, index: number) => void;
   sharePost?: (form: FormData) => void;
   sharedFromName?: string | null;
   isPaused?: boolean;
@@ -173,6 +183,7 @@ const PostComponent: React.FC<PostProps> = ({
   postText,
   postImage,
   mediaType,
+  mediaList,
   likes,
   comments,
   share,
@@ -205,21 +216,35 @@ const PostComponent: React.FC<PostProps> = ({
   const [videoLoad, setVideoLoad] = useState(true);
   const [error, setError] = useState(false);
   const [shareModalVisible, setShareModalVisible] = useState(false);
-  // console.log("isFocusedisFocused ====>",isFocused)
+  const [activeMediaIndex, setActiveMediaIndex] = useState(0);
+  const [mediaSlideWidth, setMediaSlideWidth] = useState(DEVICE_WIDTH);
+
+  const resolvedMediaList: PostMediaItem[] =
+    mediaList && mediaList.length > 0
+      ? mediaList
+      : postImage
+        ? [{path: postImage, type: mediaType}]
+        : [];
+
+  const isVideoMedia = (type: string) =>
+    String(type ?? '').toLowerCase() === 'video';
+
+  useEffect(() => {
+    setActiveMediaIndex(0);
+  }, [mediaList, postImage, mediaType]);
   useEffect(() => {
     setNumberLikes(likes);
   }, [likes]);
 
   useEffect(() => {
-    if (mediaType === 'video' && postImage) {
+    const activeMedia = resolvedMediaList[activeMediaIndex];
+    if (activeMedia && isVideoMedia(activeMedia.type)) {
       setVideoLoad(true);
     }
-  }, [postImage, mediaType]);
+  }, [activeMediaIndex, mediaList, postImage, mediaType]);
 
   const {t} = useTranslation();
   const videoPaused = isPaused !== undefined ? isPaused : !isFocused;
-  const shouldPlayInlineVideo =
-    mediaType === 'video' && isFocused === true && !videoPaused;
 
   const handleLike = () => {
     if (isLiked) {
@@ -279,14 +304,17 @@ const PostComponent: React.FC<PostProps> = ({
     if (!sharePost) {
       return;
     }
+    const shareMedia = resolvedMediaList[0];
+    const shareImagePath = shareMedia?.path ?? postImage;
+    const shareMediaType = shareMedia?.type ?? mediaType;
     const {caption} = parseSharedFrom(postText || '');
     const description = buildSharedDescription(caption, name);
     const filePayload =
-      postImage && mediaType === 'video'
-        ? createVideoFile(postImage)
-        : postImage
+      shareImagePath && isVideoMedia(shareMediaType)
+        ? createVideoFile(shareImagePath)
+        : shareImagePath
           ? {
-              uri: postImage,
+              uri: shareImagePath,
               name: 'postImage.jpg',
               type: 'image/jpeg' as const,
             }
@@ -302,6 +330,93 @@ const PostComponent: React.FC<PostProps> = ({
       form.append(key, value as any);
     });
     sharePost(form);
+  };
+
+  const handleCarouselScrollEnd = (
+    event: NativeSyntheticEvent<NativeScrollEvent>,
+  ) => {
+    const width = event.nativeEvent.layoutMeasurement.width;
+    if (!width) {
+      return;
+    }
+    const index = Math.round(event.nativeEvent.contentOffset.x / width);
+    setActiveMediaIndex(index);
+  };
+
+  const renderMediaSlide = (item: PostMediaItem, index: number) => {
+    const isVideo = isVideoMedia(item.type);
+    const shouldPlayVideo =
+      isVideo && isFocused === true && !videoPaused && activeMediaIndex === index;
+
+    return (
+      <View style={[styles.mediaSlide, {width: mediaSlideWidth}]}>
+        {isVideo ? (
+          <View style={styles.videoInlineWrap} collapsable={false}>
+            {shouldPlayVideo ? (
+              <>
+                {videoLoad ? (
+                  <View style={styles.videoLoaderWrap} pointerEvents="none">
+                    <ActivityIndicator size="large" color={colors.themeColor} />
+                  </View>
+                ) : null}
+                <Video
+                  key={`${String(item.id ?? mediaId ?? id ?? '')}-${changeUrlForData(item.path)}`}
+                  onReadyForDisplay={() => setVideoLoad(false)}
+                  source={{uri: changeUrlForData(item.path)}}
+                  style={[
+                    styles.postVideo,
+                    {
+                      top: VIDEO_INSET_TOP,
+                      left: VIDEO_INSET_X,
+                      right: VIDEO_INSET_X,
+                      bottom: VIDEO_INSET_BOTTOM,
+                    },
+                  ]}
+                  resizeMode="cover"
+                  repeat
+                  paused={false}
+                  muted={!!muteInlineVideo}
+                  playInBackground={false}
+                  playWhenInactive={false}
+                  useTextureView={Platform.OS === 'android'}
+                  onBuffer={res => {
+                    if (res?.isBuffering) {
+                      setVideoLoad(true);
+                    }
+                  }}
+                  ignoreSilentSwitch="ignore"
+                />
+              </>
+            ) : (
+              <Pressable
+                style={styles.mediaInnerFill}
+                onPress={() => onMediaPress?.(item, index)}>
+                <View style={styles.videoPoster}>
+                  <ActivityIndicator size="small" color={colors.themeColor} />
+                </View>
+              </Pressable>
+            )}
+            {(onMediaPress || handleVideoPause) && shouldPlayVideo ? (
+              <Pressable
+                style={styles.videoTouchOverlay}
+                onPress={() => onMediaPress?.(item, index)}
+                accessibilityRole="button"
+                accessibilityLabel="Open video fullscreen"
+              />
+            ) : null}
+          </View>
+        ) : (
+          <Pressable
+            style={styles.mediaInnerFill}
+            onPress={() => onMediaPress?.(item, index)}>
+            <CustomImage
+              source={{uri: changeUrlForData(item.path)}}
+              style={styles.postImage}
+            />
+          </Pressable>
+        )}
+      </View>
+    );
   };
 
   // console.log('=-=-=', changeUrlForData(postImage));
@@ -365,84 +480,53 @@ const PostComponent: React.FC<PostProps> = ({
           </View>
         )}
 
-        {/* Post image section */}
-        {postImage ? (
-          <View style={styles.mediaContainer} collapsable={false}>
-            <View style={styles.mediaTouchable} collapsable={false}>
-              {mediaType === 'image' ? (
-                <Pressable style={styles.mediaInnerFill} onPress={onMediaPress}>
-                  <CustomImage
-                    source={{uri: changeUrlForData(postImage)}}
-                    style={styles.postImage}
-                  />
-                </Pressable>
-              ) : (
-                <View style={styles.videoInlineWrap} collapsable={false}>
-                  {shouldPlayInlineVideo ? (
-                    <>
-                      {videoLoad ? (
-                        <View style={styles.videoLoaderWrap} pointerEvents="none">
-                          <ActivityIndicator
-                            size="large"
-                            color={colors.themeColor}
-                          />
-                        </View>
-                      ) : null}
-                      <Video
-                        key={`${String(mediaId ?? id ?? '')}-${changeUrlForData(postImage)}`}
-                        onReadyForDisplay={() => setVideoLoad(false)}
-                        source={{uri: changeUrlForData(postImage)}}
-                        style={[
-                          styles.postVideo,
-                          {
-                            top: VIDEO_INSET_TOP,
-                            left: VIDEO_INSET_X,
-                            right: VIDEO_INSET_X,
-                            bottom: VIDEO_INSET_BOTTOM,
-                          },
-                        ]}
-                        resizeMode="cover"
-                        repeat
-                        paused={false}
-                        muted={!!muteInlineVideo}
-                        playInBackground={false}
-                        playWhenInactive={false}
-                        useTextureView={Platform.OS === 'android'}
-                        onBuffer={res => {
-                          if (res?.isBuffering) {
-                            setVideoLoad(true);
-                          }
-                        }}
-                        ignoreSilentSwitch="ignore"
-                      />
-                    </>
-                  ) : (
-                    <Pressable
-                      style={styles.mediaInnerFill}
-                      onPress={onMediaPress ?? handleVideoPause}>
-                      <View style={styles.videoPoster}>
-                        <ActivityIndicator
-                          size="small"
-                          color={colors.themeColor}
-                        />
-                      </View>
-                    </Pressable>
-                  )}
-                  {(onMediaPress || handleVideoPause) && shouldPlayInlineVideo ? (
-                    <Pressable
-                      style={styles.videoTouchOverlay}
-                      onPress={onMediaPress ?? handleVideoPause}
-                      accessibilityRole="button"
-                      accessibilityLabel={
-                        onMediaPress
-                          ? 'Open video fullscreen'
-                          : 'Play or pause video'
-                      }
+        {/* Post media section */}
+        {resolvedMediaList.length > 0 ? (
+          <View
+            style={styles.mediaContainer}
+            collapsable={false}
+            onLayout={event => {
+              const width = event.nativeEvent.layout.width;
+              if (width > 0) {
+                setMediaSlideWidth(width);
+              }
+            }}>
+            {resolvedMediaList.length > 1 ? (
+              <>
+                <FlatList
+                  horizontal
+                  pagingEnabled
+                  bounces={false}
+                  showsHorizontalScrollIndicator={false}
+                  data={resolvedMediaList}
+                  keyExtractor={(item, index) =>
+                    `${item.id ?? index}-${item.path}`
+                  }
+                  renderItem={({item, index}) => renderMediaSlide(item, index)}
+                  onMomentumScrollEnd={handleCarouselScrollEnd}
+                  getItemLayout={(_, index) => ({
+                    length: mediaSlideWidth,
+                    offset: mediaSlideWidth * index,
+                    index,
+                  })}
+                />
+                <View style={styles.mediaPagination} pointerEvents="none">
+                  {resolvedMediaList.map((item, index) => (
+                    <View
+                      key={`${item.id ?? index}-dot`}
+                      style={[
+                        styles.mediaDot,
+                        index === activeMediaIndex && styles.mediaDotActive,
+                      ]}
                     />
-                  ) : null}
+                  ))}
                 </View>
-              )}
-            </View>
+              </>
+            ) : (
+              <View style={styles.mediaTouchable} collapsable={false}>
+                {renderMediaSlide(resolvedMediaList[0], 0)}
+              </View>
+            )}
           </View>
         ) : null}
 
@@ -678,6 +762,33 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     overflow: 'hidden',
+  },
+  mediaSlide: {
+    height: '100%',
+    overflow: 'hidden',
+  },
+  mediaPagination: {
+    position: 'absolute',
+    bottom: 10,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 6,
+    zIndex: 4,
+  },
+  mediaDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: 'rgba(255,255,255,0.5)',
+  },
+  mediaDotActive: {
+    backgroundColor: '#fff',
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
   mediaInnerFill: {
     width: '100%',
