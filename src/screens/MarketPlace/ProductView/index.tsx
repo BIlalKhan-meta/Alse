@@ -13,6 +13,7 @@ import {useSelector} from 'react-redux';
 import {
   ChevronLeft,
   ChevronRight,
+  Forward,
   Heart,
   Minus,
   Plus,
@@ -23,6 +24,7 @@ import {createChat, createMessage} from '../../../api/home';
 import {removeSavedItem, saveItem} from '../../../api/menu';
 import Loader from '../../../components/Loader';
 import MakeOfferModal from '../../../components/MakeOfferModal';
+import ShareModal from '../../../components/ShareModal';
 import RatingandReviewComponent from '../../../components/RatingandReviewComponent';
 import ShopComponent from '../../../components/ShopComponent';
 import {images} from '../../../utils/images';
@@ -84,6 +86,25 @@ function formatOfferPrice(value: string): string {
   return amount % 1 === 0 ? String(amount) : amount.toFixed(2);
 }
 
+function buildProductShareMessage(params: {
+  productName: string;
+  price: string;
+  vendor?: string;
+  productId?: number | string;
+}): string {
+  const lines = [`Check out this product: "${params.productName}"`, `Price: ${params.price}`];
+
+  if (params.vendor) {
+    lines.push(`Shop: ${params.vendor}`);
+  }
+
+  if (params.productId != null) {
+    lines.push(`Product ID: ${params.productId}`);
+  }
+
+  return lines.join('\n');
+}
+
 const ProductView: React.FC = () => {
   const route = useRoute();
   const navigation = useNavigation();
@@ -107,6 +128,8 @@ const ProductView: React.FC = () => {
   const [offerPrice, setOfferPrice] = useState('');
   const [offerNote, setOfferNote] = useState('');
   const [submittingOffer, setSubmittingOffer] = useState(false);
+  const [shareModalVisible, setShareModalVisible] = useState(false);
+  const [sendingProductShare, setSendingProductShare] = useState(false);
 
   const fetchData = useCallback(async () => {
     if (!productId) {
@@ -230,18 +253,69 @@ const ProductView: React.FC = () => {
     }
   }, [title, priceLabel]);
 
+  const handleForwardToChat = useCallback(() => {
+    setShareModalVisible(true);
+  }, []);
+
+  const handleSendProductToChats = useCallback(
+    async (chatIds: number[]) => {
+      if (!productDetails?.id || chatIds.length === 0) {
+        Toast.error('Please select at least one chat.');
+        return;
+      }
+
+      const message = buildProductShareMessage({
+        productName: title,
+        price: priceLabel,
+        vendor: vendorLabel || undefined,
+        productId: productDetails.id,
+      });
+
+      setSendingProductShare(true);
+      try {
+        await Promise.all(
+          chatIds.map(async chatId => {
+            const form = new FormData();
+            form.append('chat_id', String(chatId));
+            form.append('message', message);
+            await createMessage(form);
+          }),
+        );
+
+        Toast.success(
+          chatIds.length === 1
+            ? 'Product sent to chat.'
+            : `Product sent to ${chatIds.length} chats.`,
+        );
+      } catch (error) {
+        Toast.error(getMessage((error as any)?.message));
+      } finally {
+        setSendingProductShare(false);
+      }
+    },
+    [productDetails?.id, title, priceLabel, vendorLabel],
+  );
+
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <TouchableOpacity
-          onPress={handleShare}
-          style={styles.navShareButton}
-          hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
-          <Share2 size={22} color={colors.black} />
-        </TouchableOpacity>
+        <View style={styles.navActions}>
+          <TouchableOpacity
+            onPress={handleForwardToChat}
+            style={styles.navIconButton}
+            hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+            <Forward size={22} color={colors.black} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={handleShare}
+            style={styles.navShareButton}
+            hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+            <Share2 size={22} color={colors.black} />
+          </TouchableOpacity>
+        </View>
       ),
     });
-  }, [navigation, handleShare]);
+  }, [navigation, handleShare, handleForwardToChat]);
 
   const handleToggleSave = async () => {
     if (!productDetails?.id) {
@@ -610,6 +684,19 @@ const ProductView: React.FC = () => {
         onChangeQuantity={setOfferQuantity}
         onChangePrice={setOfferPrice}
         onChangeNote={setOfferNote}
+      />
+
+      <ShareModal
+        visible={shareModalVisible}
+        onClose={() => {
+          if (!sendingProductShare) {
+            setShareModalVisible(false);
+          }
+        }}
+        title="Send Product"
+        showNewsfeedOption={false}
+        sendLabel={sendingProductShare ? 'Sending...' : 'Send'}
+        onSendToChats={handleSendProductToChats}
       />
     </View>
   );

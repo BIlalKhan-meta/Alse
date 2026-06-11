@@ -21,8 +21,11 @@ import styles from './styles';
 interface ShareModalProps {
   visible: boolean;
   onClose: () => void;
-  onShareToNewsfeed: () => void;
   onSendToChats: (selectedIds: number[]) => void;
+  onShareToNewsfeed?: () => void;
+  title?: string;
+  showNewsfeedOption?: boolean;
+  sendLabel?: string;
 }
 
 const ShareModal: React.FC<ShareModalProps> = ({
@@ -30,6 +33,9 @@ const ShareModal: React.FC<ShareModalProps> = ({
   onClose,
   onShareToNewsfeed,
   onSendToChats,
+  title = 'Share Post',
+  showNewsfeedOption = true,
+  sendLabel = 'Send',
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
@@ -84,11 +90,14 @@ const ShareModal: React.FC<ShareModalProps> = ({
   const handleSend = () => {
     if (selectedIds.length > 0) {
       onSendToChats(selectedIds);
-    } else {
-      // If nothing selected, maybe just reshare to newsfeed or show alert
-      onShareToNewsfeed();
+      onClose();
+      return;
     }
-    onClose();
+
+    if (showNewsfeedOption && onShareToNewsfeed) {
+      onShareToNewsfeed();
+      onClose();
+    }
   };
 
   const renderItem = ({item}: {item: any}) => {
@@ -144,9 +153,9 @@ const ShareModal: React.FC<ShareModalProps> = ({
         
         <View style={styles.container}>
           <View style={styles.header}>
-            <Text style={styles.title}>Share Post</Text>
+            <Text style={styles.title}>{title}</Text>
             <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
-              <Text style={styles.sendButtonText}>Send</Text>
+              <Text style={styles.sendButtonText}>{sendLabel}</Text>
             </TouchableOpacity>
           </View>
 
@@ -161,18 +170,19 @@ const ShareModal: React.FC<ShareModalProps> = ({
             />
           </View>
 
-          {/* Option to reshare on newsfeed directly */}
-          <TouchableOpacity 
-            style={styles.reshareButton} 
-            onPress={() => {
-              onShareToNewsfeed();
-              onClose();
-            }}>
-            <View style={styles.reshareIconContainer}>
-              <Repeat color="#0C959B" size={20} />
-            </View>
-            <Text style={styles.reshareText}>Reshare on Newsfeed</Text>
-          </TouchableOpacity>
+          {showNewsfeedOption && onShareToNewsfeed ? (
+            <TouchableOpacity
+              style={styles.reshareButton}
+              onPress={() => {
+                onShareToNewsfeed();
+                onClose();
+              }}>
+              <View style={styles.reshareIconContainer}>
+                <Repeat color="#0C959B" size={20} />
+              </View>
+              <Text style={styles.reshareText}>Reshare on Newsfeed</Text>
+            </TouchableOpacity>
+          ) : null}
 
           {loading && chats.length === 0 ? (
             <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>

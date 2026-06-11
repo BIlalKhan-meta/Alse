@@ -8,6 +8,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: PRODUCT_VIEW_BG,
   },
+  navActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  navIconButton: {
+    marginRight: 12,
+    padding: 4,
+  },
   navShareButton: {
     marginRight: 16,
     padding: 4,
