@@ -8,32 +8,23 @@ import {
   Modal,
   ActivityIndicator,
   StyleSheet,
+  SafeAreaView,
 } from 'react-native';
 import {useSelector} from 'react-redux';
-import {
-  PencilLine,
-  Bell,
-  Globe,
-  Gavel,
-  ShoppingCart,
-  Lock,
-  Users,
-} from 'lucide-react-native';
+import {PencilLine, Shield} from 'lucide-react-native';
 import InterLight from '../../components/Text/InterLight';
 import InterBoldLabel from '../../components/Text/InterBoldLabel';
-import {GetUserProfile, selectUserProfile} from '../../store/slices/authSlice';
+import InterRegular from '../../components/Text/InterRegular';
+import InterMedium from '../../components/Text/InterMedium';
+import Card from '../../components/Card';
+import GeneralModal from '../../components/GeneralModal';
+import {GetUserProfile, selectUserProfile, logout, LogoutUser} from '../../store/slices/authSlice';
 import {selectProfileData} from '../../store/slices/settingsSlice';
 import {images} from '../../utils/images';
 import styles from './styles';
 import {colors} from '../../utils/theme';
-import SettingsItem from './components/settingsItem';
 import {useAppDispatch} from '../../hooks/storeHooks';
-import {
-  fetchAllSettings,
-  updateProfile,
-} from '../../store/slices/settingsSlice';
-import {useAppTranslation} from '../../i18n/hooks/useAppTranslation';
-import GlobalHeader from '../../components/GlobalHeader';
+import {fetchAllSettings, updateProfile} from '../../store/slices/settingsSlice';
 import ProfileForm from './components/profileForm';
 import {
   launchImageLibrary,
@@ -41,7 +32,6 @@ import {
   Asset,
 } from 'react-native-image-picker';
 import Toast from 'react-native-toast-message';
-import {updateUserType} from '../../api/settings';
 import {useRoute} from '@react-navigation/native';
 import RNFS from 'react-native-fs';
 import ReactNativeBlobUtil from 'react-native-blob-util';
@@ -49,6 +39,7 @@ import {getAbsoluteAvatarUrl} from '../../utils/helpers';
 import {BASE_URL} from '../../utils/baseurl';
 import endpoints from '../../api/endpoints';
 import store from '../../store';
+import {vw} from '../../constant';
 
 interface RouteParams {
   isEditMode?: boolean;
@@ -76,29 +67,69 @@ const avatarUploadingStyles = StyleSheet.create({
   },
 });
 
+interface MenuIconRowProps {
+  icon: React.ReactNode;
+  label: string;
+  onPress: () => void;
+  iconWidth?: number;
+}
+
+interface MenuHeaderProps {
+  onBackPress: () => void;
+}
+
+const MenuHeader = ({onBackPress}: MenuHeaderProps) => (
+  <View style={styles.menuHeader}>
+    <TouchableOpacity
+      style={styles.backButton}
+      onPress={onBackPress}
+      hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+      <Image source={images.backicon} style={styles.backIcon} />
+    </TouchableOpacity>
+    <InterBoldLabel style={styles.menuTitle}>Menu</InterBoldLabel>
+  </View>
+);
+
+const MenuIconRow = ({icon, label, onPress, iconWidth}: MenuIconRowProps) => (
+  <Card style={styles.cardContainer}>
+    <TouchableOpacity onPress={onPress}>
+      <View style={styles.cardContent5}>
+        <View style={[styles.notifiCon, iconWidth ? {width: iconWidth} : null]}>
+          {icon}
+        </View>
+        <InterMedium style={styles.cardHeading}>{label}</InterMedium>
+      </View>
+    </TouchableOpacity>
+  </Card>
+);
+
 const Settings = ({navigation}: any) => {
   const dispatch = useAppDispatch();
   const user = useSelector(selectUserProfile);
   const profileData = useSelector(selectProfileData);
-  const {currentLanguage, t} = useAppTranslation();
   const [avatarUri, setAvatarUri] = useState(user?.avatar || null);
-  const [avatarKey, setAvatarKey] = useState(0); // Force Image remount after upload
+  const [avatarKey, setAvatarKey] = useState(0);
   const [avatarUploading, setAvatarUploading] = useState(false);
-  const [currentUserType, setCurrentUserType] = useState(user?.user_type || 'buyer');
-  const [userTypeLoading, setUserTypeLoading] = useState(false);
+  const [logoutModalVisible, setLogoutModalVisible] = useState(false);
+
+  const route = useRoute();
+  const {isEditMode} = (route.params as RouteParams) ?? {};
+  const [isEditing, setIsEditing] = useState(isEditMode || false);
+  const [localProfileData, setLocalProfileData] = useState({
+    firstName: user?.first_name || user?.full_name?.split(' ')[0] || '',
+    lastName: user?.last_name || user?.full_name?.split(' ')[1] || '',
+    userName: user?.username || user?.full_name || '',
+    location: user?.location || '',
+    description: user?.bio || '',
+    pronouns: user?.pronouns || '',
+    storeName: user?.store_name || '',
+    storeDescription: user?.store_description || '',
+  });
 
   useEffect(() => {
     dispatch(fetchAllSettings());
   }, [dispatch]);
 
-  // Update currentUserType when user data changes
-  useEffect(() => {
-    if (user?.user_type && user.user_type !== currentUserType) {
-      setCurrentUserType(user.user_type);
-    }
-  }, [user?.user_type]);
-
-  // Sync local profile data and avatar when user is updated (e.g. after profile save + refetch)
   useEffect(() => {
     if (user) {
       setLocalProfileData({
@@ -115,24 +146,19 @@ const Settings = ({navigation}: any) => {
         setAvatarUri(user.avatar);
       }
     }
-  }, [user?.id, user?.first_name, user?.last_name, user?.username, user?.location, user?.location_name, user?.bio, user?.pronouns, user?.store_name, user?.store_description, user?.avatar]);
-
-  // Profile editing state
-  const route = useRoute();
-  const {isEditMode} = (route.params as RouteParams) ?? {};
-  const [isEditing, setIsEditing] = useState(isEditMode || false);
-  const [localProfileData, setLocalProfileData] = useState({
-    firstName: user?.first_name || user?.full_name?.split(' ')[0] || '',
-    lastName: user?.last_name || user?.full_name?.split(' ')[1] || '',
-    userName: user?.username || user?.full_name || '',
-    location: user?.location || '',
-    description: user?.bio || '',
-    pronouns: user?.pronouns || '',
-    storeName: user?.store_name || '',
-    storeDescription: user?.store_description || '',
-  });
-
-  console.log('User ======>', JSON.stringify(user, null, 2));
+  }, [
+    user?.id,
+    user?.first_name,
+    user?.last_name,
+    user?.username,
+    user?.location,
+    user?.location_name,
+    user?.bio,
+    user?.pronouns,
+    user?.store_name,
+    user?.store_description,
+    user?.avatar,
+  ]);
 
   const handleProfileUpdate = (field: string, value: string) => {
     setLocalProfileData(prev => ({
@@ -141,7 +167,6 @@ const Settings = ({navigation}: any) => {
     }));
   };
 
-  // Upload image functions
   const handleImagePick = async () => {
     const options: ImageLibraryOptions = {
       mediaType: 'photo',
@@ -155,7 +180,6 @@ const Settings = ({navigation}: any) => {
       const result = await launchImageLibrary(options);
 
       if (result.didCancel) {
-        console.log('User cancelled image picker');
         return;
       }
 
@@ -169,8 +193,7 @@ const Settings = ({navigation}: any) => {
       }
 
       if (result.assets && result.assets.length > 0) {
-        const selectedImage = result.assets[0];
-        await uploadProfileImage(selectedImage);
+        await uploadProfileImage(result.assets[0]);
       }
     } catch (error) {
       console.error('Error picking image:', error);
@@ -263,249 +286,352 @@ const Settings = ({navigation}: any) => {
     }
   };
 
-  // Handle user type change
-  const handleUserTypeChange = async (newUserType: string) => {
-    if (newUserType === currentUserType || userTypeLoading) {
+  const confirmLogout = () => {
+    setLogoutModalVisible(false);
+    dispatch(logout());
+    dispatch(LogoutUser());
+  };
+
+  const displayName =
+    user?.first_name || user?.last_name
+      ? [user?.first_name, user?.last_name].filter(Boolean).join(' ')
+      : user?.full_name || 'Alse';
+
+  const avatarSource = (() => {
+    const u = profileData?.avatar || avatarUri || user?.avatar;
+    const uri = getAbsoluteAvatarUrl(u);
+    const finalUri =
+      uri && avatarKey > 0
+        ? `${uri}${uri.includes('?') ? '&' : '?'}v=${avatarKey}`
+        : uri;
+    return finalUri ? {uri: finalUri} : images.profile;
+  })();
+
+  const renderMenuItem = (label: string, onPress: () => void) => (
+    <TouchableOpacity key={label} onPress={onPress}>
+      <InterRegular style={styles.cardText}>{label}</InterRegular>
+    </TouchableOpacity>
+  );
+
+  const handleBackPress = () => {
+    if (isEditing) {
+      setIsEditing(false);
       return;
     }
-
-    try {
-      setUserTypeLoading(true);
-      console.log('🔄 Updating user type to:', newUserType);
-      
-      const response = await updateUserType(newUserType as 'buyer' | 'seller' | 'rider');
-      
-      console.log('📡 Full API Response:', JSON.stringify(response.data, null, 2));
-      
-      // Check for both 'status' and 'success' fields to handle different API response formats
-      if (response.data?.status === true || response.data?.success === true) {
-        const updatedUserType = response.data?.data?.user_type || newUserType;
-        setCurrentUserType(updatedUserType);
-        Toast.show({
-          type: 'success',
-          text1: 'Success',
-          text2: `User type updated to ${getUserTypeDisplayName(updatedUserType)}`,
-        });
-        console.log('✅ User type updated successfully:', response.data);
-      } else {
-        throw new Error(response.data?.message || 'Failed to update user type');
-      }
-    } catch (error: any) {
-      console.error('❌ Error updating user type:', error);
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: error.response?.data?.message || 'Failed to update user type',
-      });
-    } finally {
-      setUserTypeLoading(false);
+    if (navigation.canGoBack()) {
+      navigation.goBack();
     }
   };
 
-  // Get current language display name
-  const getCurrentLanguageName = () => {
-    switch (currentLanguage) {
-      case 'en':
-        return 'English';
-      case 'sw':
-        return 'Swahili';
-      case 'zh':
-        return '中文';
-      case 'fr':
-        return 'Français';
-      case 'hi':
-        return 'हिंदी';
-      case 'pt':
-        return 'Português';
-      case 'es':
-        return 'Español';
-      default:
-        return 'English';
-    }
-  };
+  if (isEditing) {
+    return (
+      <View style={styles.container}>
+        <Modal visible={avatarUploading} transparent>
+          <View style={avatarUploadingStyles.overlay}>
+            <View style={avatarUploadingStyles.box}>
+              <ActivityIndicator size="large" color={colors.themeColor} />
+              <InterLight style={avatarUploadingStyles.text}>
+                Uploading profile image...
+              </InterLight>
+            </View>
+          </View>
+        </Modal>
 
-  // Get display name for user type
-  const getUserTypeDisplayName = (userType: string) => {
-    switch (userType) {
-      case 'buyer':
-        return 'Buyer';
-      case 'seller':
-        return 'Seller';
-      case 'rider':
-        return 'Rider';
-      default:
-        return 'Buyer';
-    }
-  };
+        <SafeAreaView style={styles.safeArea}>
+          <ScrollView
+            style={styles.scrollContainer}
+            showsVerticalScrollIndicator={false}>
+            <MenuHeader onBackPress={handleBackPress} />
+
+            <View style={styles.profileSection}>
+              <View style={styles.profileImageContainer}>
+                <Image
+                  key={`avatar-${avatarKey}-${profileData?.avatar || avatarUri || user?.avatar || 'default'}`}
+                  source={avatarSource}
+                  resizeMode="cover"
+                  style={styles.profileImage}
+                />
+                <TouchableOpacity
+                  style={styles.editIconContainer}
+                  onPress={handleImagePick}>
+                  <PencilLine size={20} color={colors.themeColor} />
+                </TouchableOpacity>
+              </View>
+              <View style={styles.profileInfo}>
+                <View>
+                  <View style={styles.profileNameContainer}>
+                    <InterBoldLabel style={styles.profileName}>
+                      {displayName}
+                    </InterBoldLabel>
+                    <InterLight style={styles.profileUsername}>
+                      @{user?.username || user?.email?.split('@')[0]}
+                    </InterLight>
+                  </View>
+                  <InterLight style={styles.profileLocation}>
+                    {user?.location || user?.location_name || 'New Jersey, USA'}
+                  </InterLight>
+                </View>
+              </View>
+
+              <ProfileForm
+                profileData={localProfileData}
+                handleProfileUpdate={handleProfileUpdate}
+                setIsEditing={() => setIsEditing(false)}
+                onProfileUpdateSuccess={() => {
+                  dispatch(GetUserProfile());
+                }}
+              />
+            </View>
+          </ScrollView>
+        </SafeAreaView>
+      </View>
+    );
+  }
 
   return (
-    <View style={styles.container}>
+    <>
       <Modal visible={avatarUploading} transparent>
         <View style={avatarUploadingStyles.overlay}>
           <View style={avatarUploadingStyles.box}>
             <ActivityIndicator size="large" color={colors.themeColor} />
-            <InterLight style={avatarUploadingStyles.text}>Uploading profile image...</InterLight>
+            <InterLight style={avatarUploadingStyles.text}>
+              Uploading profile image...
+            </InterLight>
           </View>
         </View>
       </Modal>
-      {/* Header */}
-      <View style={styles.header}>
-        <GlobalHeader icon={true} />
-      </View>
 
-      <ScrollView
-        style={styles.scrollContainer}
-        showsVerticalScrollIndicator={false}>
-        {/* Profile Section */}
-        <View style={styles.profileSection}>
-          <View style={styles.profileImageContainer}>
-            <Image
-              key={`avatar-${avatarKey}-${profileData?.avatar || avatarUri || user?.avatar || 'default'}`}
-              source={
-                (() => {
-                  const u =
-                    profileData?.avatar || avatarUri || user?.avatar;
-                  const uri = getAbsoluteAvatarUrl(u);
-                  // Add cache-bust when avatarKey > 0 (after upload) to force reload
-                  const finalUri = uri && avatarKey > 0
-                    ? `${uri}${uri.includes('?') ? '&' : '?'}v=${avatarKey}`
-                    : uri;
-                  return finalUri ? {uri: finalUri} : images.profile;
-                })()
-              }
-              resizeMode="cover"
-              style={styles.profileImage}
-            />
-            {isEditing && (
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView
+          style={styles.scrollContainer}
+          showsVerticalScrollIndicator={false}>
+          <View style={styles.menuContent}>
+            <MenuHeader onBackPress={handleBackPress} />
+
+            <Card style={styles.cardContainer}>
               <TouchableOpacity
-                style={styles.editIconContainer}
-                // TODO image upload functionality
-                onPress={() => handleImagePick()}>
-                <PencilLine size={20} color={colors.themeColor} />
+                onPress={() => navigation.navigate('MyProfile')}>
+                <View style={styles.contentCon}>
+                  <View style={styles.avatarContainer}>
+                    <Image
+                      source={avatarSource}
+                      style={styles.imageStyle}
+                      resizeMode="cover"
+                    />
+                  </View>
+                  <InterRegular style={styles.userName}>{displayName}</InterRegular>
+                </View>
               </TouchableOpacity>
-            )}
-          </View>
-          <View style={styles.profileInfo}>
-            <View>
-              <View style={styles.profileNameContainer}>
-                <InterBoldLabel style={styles.profileName}>
-                  {user?.first_name || user?.last_name
-                    ? [user?.first_name, user?.last_name].filter(Boolean).join(' ')
-                    : user?.full_name || 'Alse'}
-                </InterBoldLabel>
-                <InterLight style={styles.profileUsername}>
-                  @{user?.username || user?.email?.split('@')[0]}
-                </InterLight>
+            </Card>
+
+            <Card style={styles.cardContainer}>
+              <View style={styles.cardContent2}>
+                <InterMedium style={styles.cardHeading}>
+                  - &nbsp;&nbsp;&nbsp;Social Interactivity
+                </InterMedium>
+                <View style={styles.btnCon}>
+                  {renderMenuItem('Home', () => navigation.navigate('Home'))}
+                  {renderMenuItem('Create Post', () =>
+                    navigation.navigate('CreatePost'),
+                  )}
+                  {renderMenuItem('My Posts', () =>
+                    navigation.navigate('MyPosts'),
+                  )}
+                  {renderMenuItem('Blocked Users', () =>
+                    navigation.navigate('BlockedUsers'),
+                  )}
+                  {renderMenuItem('Chats and Groups', () =>
+                    navigation.navigate('ChatScreen'),
+                  )}
+                  {renderMenuItem('Recordings', () =>
+                    navigation.navigate('SavedChat'),
+                  )}
+                  {renderMenuItem('Scripts', () =>
+                    navigation.navigate('SavedScripts'),
+                  )}
+                </View>
               </View>
-              <InterLight style={styles.profileLocation}>
-                {user?.location || 'New Jersey, USA'}
-              </InterLight>
+            </Card>
+
+            <Card style={styles.cardContainer}>
+              <View style={styles.cardContent2}>
+                <InterMedium style={styles.cardHeading}>
+                  - &nbsp;&nbsp;&nbsp;Marketplace
+                </InterMedium>
+                <View style={styles.btnCon}>
+                  {renderMenuItem('Shops', () =>
+                    navigation.navigate('MarketPlaceNavigation'),
+                  )}
+                  {renderMenuItem('My Cart', () => navigation.navigate('Cart'))}
+                  {renderMenuItem('Manage Bank Account Details', () =>
+                    navigation.navigate('BankDetail'),
+                  )}
+                  {renderMenuItem('Payment Logs', () =>
+                    navigation.navigate('MarketPlaceNavigation', {
+                      screen: 'PaymentLogs',
+                    }),
+                  )}
+                  {renderMenuItem('Order Logs', () =>
+                    navigation.navigate('MyOrders'),
+                  )}
+                  {renderMenuItem('Offer Logs', () =>
+                    navigation.navigate('MarketPlaceNavigation', {
+                      screen: 'AuctionBidding',
+                    }),
+                  )}
+                </View>
+              </View>
+            </Card>
+
+            <Card style={styles.cardContainer}>
+              <View style={styles.cardContent2}>
+                <InterMedium style={styles.cardHeading}>
+                  - &nbsp;&nbsp;&nbsp;Educational Library
+                </InterMedium>
+                <View style={styles.btnCon}>
+                  {renderMenuItem('View Content', () =>
+                    navigation.navigate('Blogs'),
+                  )}
+                  {renderMenuItem('Subscription Logs', () =>
+                    navigation.navigate('SubscriptionLogs'),
+                  )}
+                  {renderMenuItem('Games', () => navigation.navigate('Videos'))}
+                </View>
+              </View>
+            </Card>
+
+            <MenuIconRow
+              label="Security Settings"
+              onPress={() => navigation.navigate('SecurityPrivacy')}
+              icon={<Shield size={22} color={colors.themeColor} />}
+            />
+
+            <MenuIconRow
+              label="Notification"
+              onPress={() => navigation.navigate('NotificationSettings')}
+              icon={
+                <Image
+                  source={images.notifi}
+                  style={styles.iconImage}
+                />
+              }
+            />
+
+            <MenuIconRow
+              label="Requests"
+              onPress={() => navigation.navigate('RequestScreen')}
+              icon={
+                <Image
+                  source={images.request}
+                  style={styles.iconImage}
+                />
+              }
+            />
+
+            <MenuIconRow
+              label="Subscription Plan"
+              onPress={() => navigation.navigate('SubscriptionPlan')}
+              icon={
+                <Image
+                  source={images.plan}
+                  style={styles.iconImage}
+                />
+              }
+              iconWidth={vw * 9}
+            />
+
+            <MenuIconRow
+              label="Blogs"
+              onPress={() => navigation.navigate('Blogs')}
+              icon={
+                <Image
+                  source={images.blogs}
+                  style={styles.iconImage}
+                />
+              }
+              iconWidth={vw * 8}
+            />
+
+            <View style={styles.bottomCon}>
+              <Card style={styles.cardContainer2}>
+                <TouchableOpacity onPress={() => navigation.navigate('Saved')}>
+                  <View style={styles.cardContent5}>
+                    <View style={styles.notifiCon}>
+                      <Image
+                        source={images.save}
+                        style={styles.iconImage}
+                      />
+                    </View>
+                    <InterMedium style={styles.cardHeading}>
+                      Saved Items
+                    </InterMedium>
+                  </View>
+                </TouchableOpacity>
+              </Card>
+
+              <Card style={styles.cardContainer2}>
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('ContactUs')}>
+                  <View style={styles.cardContent5}>
+                    <View style={[styles.notifiCon, {width: vw * 8}]}>
+                      <Image
+                        source={images.phone}
+                        style={styles.iconImage}
+                      />
+                    </View>
+                    <InterMedium style={styles.cardHeading}>Contact</InterMedium>
+                  </View>
+                </TouchableOpacity>
+              </Card>
             </View>
-            {!isEditing && (
-              <TouchableOpacity
-                style={styles.editButton}
-                onPress={() => setIsEditing(!isEditing)}>
-                <PencilLine size={20} color={colors.themeColor} />
-              </TouchableOpacity>
-            )}
+
+            <View style={styles.bottomCon}>
+              <Card style={styles.cardContainer2}>
+                <TouchableOpacity onPress={() => navigation.navigate('AboutUs')}>
+                  <View style={styles.cardContent5}>
+                    <View style={[styles.notifiCon, {width: vw * 8}]}>
+                      <Image
+                        source={images.help}
+                        style={styles.iconImage}
+                      />
+                    </View>
+                    <InterMedium style={styles.cardHeading}>About Us</InterMedium>
+                  </View>
+                </TouchableOpacity>
+              </Card>
+
+              <Card style={styles.cardContainer2}>
+                <TouchableOpacity onPress={() => setLogoutModalVisible(true)}>
+                  <View style={styles.cardContent5}>
+                    <View style={[styles.notifiCon, {width: vw * 8}]}>
+                      <Image
+                        source={images.logout}
+                        style={styles.iconImage}
+                      />
+                    </View>
+                    <InterMedium style={styles.cardHeading}>Log out</InterMedium>
+                  </View>
+                </TouchableOpacity>
+              </Card>
+            </View>
           </View>
+        </ScrollView>
+      </SafeAreaView>
 
-          {isEditing && (
-            <ProfileForm
-              profileData={localProfileData}
-              handleProfileUpdate={handleProfileUpdate}
-              setIsEditing={() => {
-                setIsEditing(false);
-              }}
-              onProfileUpdateSuccess={() => {
-                dispatch(GetUserProfile());
-              }}
-            />
-          )}
-        </View>
-
-        {!isEditing && (
-          <View style={styles.settingsContainer}>
-            {/* Social Activity */}
-            <SettingsItem
-              title={t('settings.socialActivity')}
-              icon={Users}
-              type="navigation"
-              onPress={() => navigation.navigate('SocialActivity')}
-            />
-
-            {/* User Type */}
-            <SettingsItem
-              title="User Type"
-              subtitle={getUserTypeDisplayName(currentUserType)}
-              icon={Users}
-              type="select"
-              value={currentUserType}
-              onValueChange={handleUserTypeChange}
-              options={[
-                { label: 'Buyer', value: 'buyer' },
-                { label: 'Seller', value: 'seller' },
-                { label: 'Rider', value: 'rider' },
-              ]}
-              loading={userTypeLoading}
-            />
-
-            {/* Language */}
-            <SettingsItem
-              title={t('settings.language')}
-              subtitle={getCurrentLanguageName()}
-              icon={Globe}
-              type="navigation"
-              onPress={() => {
-                navigation.navigate('LanguageSelection');
-              }}
-            />
-            {/* Notification */}
-            <SettingsItem
-              title={t('settings.notification')}
-              icon={Bell}
-              type="navigation"
-              onPress={() => {
-                navigation.navigate('NotificationSettings');
-              }}
-            />
-
-            {/* Separator */}
-            <View style={styles.separator} />
-
-            {/* Bidding & Auction Setting */}
-            <SettingsItem
-              title={t('settings.biddingAuctionSetting')}
-              icon={Gavel}
-              type="navigation"
-              onPress={() => {
-                navigation.navigate('BiddingAuctionSetting');
-              }}
-            />
-
-            {/* Marketplace Activity */}
-            <SettingsItem
-              title={t('settings.marketplaceActivity')}
-              icon={ShoppingCart}
-              type="navigation"
-              onPress={() => {
-                navigation.navigate('MarketplaceActivity');
-              }}
-            />
-
-            {/* Security & Privacy */}
-            <SettingsItem
-              title={t('settings.securityPrivacy')}
-              icon={Lock}
-              type="navigation"
-              onPress={() => {
-                navigation.navigate('SecurityPrivacy');
-              }}
-            />
-          </View>
-        )}
-      </ScrollView>
-    </View>
+      <GeneralModal
+        visible={logoutModalVisible}
+        closeModal={() => setLogoutModalVisible(false)}
+        icon={images.logout}
+        title="Log out?"
+        message="Are you sure you want to log out?"
+        buttonText="Yes"
+        onPress={confirmLogout}
+        primaryBtn={false}
+        secondaryBtn
+        SecondaryText1="Yes"
+        SecondaryText2="No"
+      />
+    </>
   );
 };
 

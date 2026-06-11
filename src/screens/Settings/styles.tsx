@@ -1,55 +1,145 @@
 import {StyleSheet, Dimensions} from 'react-native';
+import {fontSizes, vh, vw} from '../../constant';
 import {colors} from '../../utils/theme';
 
 const {height, width} = Dimensions.get('screen');
 const avatarSize = Math.min(width, height) * 0.3;
 
+const menuBackground = '#F5FBFA';
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.white,
+    backgroundColor: menuBackground,
   },
 
   scrollContainer: {
     flex: 1,
   },
 
-  // Header
-  header: {
-    // flexDirection: 'row',
-    // justifyContent: 'space-between',
-    // alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingTop: 5,
-    paddingBottom: 10,
-    backgroundColor: colors.white,
+  safeArea: {
+    flex: 1,
+    backgroundColor: menuBackground,
   },
 
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: colors.themeColor,
-  },
-
-  headerIcons: {
+  menuHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
+    paddingHorizontal: vw * 5,
+    paddingTop: vh * 1.5,
+    paddingBottom: vh * 0.5,
   },
 
-  headerIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  backButton: {
+    marginRight: vw * 2,
+    padding: vw * 1,
+  },
+
+  backIcon: {
+    width: 24,
+    height: 24,
+    resizeMode: 'contain',
+  },
+
+  menuTitle: {
+    fontSize: fontSizes.f28,
+    color: colors.black,
+    fontWeight: '700',
+  },
+
+  menuContent: {
+    paddingBottom: vh * 4,
+  },
+
+  cardContainer: {
+    width: vw * 90,
+    alignSelf: 'center',
+    marginTop: vh * 1.5,
+    paddingVertical: vh * 1.5,
+    borderRadius: vw * 1.5,
+  },
+
+  cardContainer2: {
+    width: vw * 43,
+    marginTop: vh * 1.5,
+    paddingVertical: vh * 1.5,
+    borderRadius: vw * 1.5,
+  },
+
+  contentCon: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  avatarContainer: {
+    width: vw * 12,
+    height: vw * 12,
+    borderRadius: vw * 6,
+    overflow: 'hidden',
+  },
+
+  userName: {
+    fontSize: fontSizes.f16,
+    color: colors.black,
+    marginLeft: vw * 3,
+  },
+
+  imageStyle: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'contain',
+  },
+
+  cardHeading: {
+    fontSize: fontSizes.f14,
+    color: colors.black,
+    fontWeight: '600',
+  },
+
+  cardText: {
+    fontSize: fontSizes.f14,
+    color: colors.lightGrey,
+    marginLeft: vw * 6,
+    marginTop: vh * 1,
+    marginBottom: vh * 0.8,
+  },
+
+  btnCon: {
+    marginTop: vh * 1.5,
+  },
+
+  cardContent2: {
+    width: '100%',
+  },
+
+  cardContent5: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  notifiCon: {
+    width: vw * 7,
+    height: vh * 4,
+    marginRight: vw * 4,
     alignItems: 'center',
     justifyContent: 'center',
   },
 
-  activeHeaderIcon: {
-    backgroundColor: '#F0F0F0',
+  bottomCon: {
+    flexDirection: 'row',
+    alignSelf: 'center',
+    width: vw * 90,
+    justifyContent: 'space-between',
   },
 
-  // Profile Section
+  iconImage: {
+    width: vw * 5.5,
+    height: vw * 5.5,
+    resizeMode: 'contain',
+    tintColor: colors.themeColor,
+  },
+
+  // Profile edit mode
   profileSection: {
     alignItems: 'center',
     paddingHorizontal: 12,
@@ -106,7 +196,6 @@ const styles = StyleSheet.create({
     padding: 8,
   },
 
-  // Profile Form
   profileForm: {
     marginTop: 16,
     paddingTop: 16,
@@ -163,13 +252,11 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
 
-  // Settings Container
   settingsContainer: {
     paddingHorizontal: 16,
     paddingTop: 20,
   },
 
-  // Settings Item
   settingsItem: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -217,7 +304,6 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 
-  // Select Button
   selectButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -233,7 +319,6 @@ const styles = StyleSheet.create({
     color: colors.themeColor,
   },
 
-  // Separator
   separator: {
     height: 1,
     backgroundColor: colors.lightGrey,
@@ -241,60 +326,116 @@ const styles = StyleSheet.create({
     opacity: 0.3,
   },
 
-  // Bottom Navigation
-  bottomNav: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    backgroundColor: colors.white,
-    borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
+  saveButtonContainer: {
+    marginTop: 20,
+    marginHorizontal: 16,
   },
 
-  navItem: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-  },
-
-  activeNavItem: {
-    backgroundColor: colors.themeColor + '20',
-  },
-
-  navProfileImage: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-  },
-
-  // Loading and Error States
-  loadingContainer: {
-    flex: 1,
+  saveButton: {
+    alignSelf: 'flex-end',
+    backgroundColor: colors.themeColor,
+    paddingVertical: 14,
+    marginTop: 16,
+    width: '100%',
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.midGray,
   },
 
-  errorContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.midGray,
-    paddingHorizontal: 20,
-  },
-
-  errorText: {
+  saveButtonText: {
     fontSize: 16,
-    color: colors.inputText,
-    textAlign: 'center',
-    marginTop: 8,
+    fontWeight: '600',
+    color: colors.white,
   },
 
-  // Modal and Picker Styles
+  saveButtonDisabled: {
+    backgroundColor: colors.lightGrey,
+  },
+
+  profileImageContainer: {
+    position: 'relative',
+    width: 120,
+    height: 120,
+  },
+
+  editIconContainer: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    borderRadius: 20,
+    padding: 6,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+    gap: 15,
+  },
+
+  cancelButton: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: colors.themeColor,
+    flex: 1,
+  },
+
+  cancelButtonText: {
+    color: colors.themeColor,
+  },
+
+  // Sub-screen styles (kept for other Settings screens)
+  header: {
+    paddingHorizontal: 10,
+    paddingTop: 5,
+    paddingBottom: 10,
+    backgroundColor: colors.white,
+  },
+
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: colors.themeColor,
+  },
+
+  languageHeader: {
+    alignItems: 'flex-start',
+    paddingVertical: 10,
+    paddingLeft: 16,
+  },
+
+  languageTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.black,
+  },
+
+  navigationItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    backgroundColor: colors.white,
+  },
+
+  navigationItemText: {
+    fontSize: 16,
+    color: colors.black,
+    fontWeight: '500',
+  },
+
+  navigationArrow: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F0F0F0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -344,62 +485,20 @@ const styles = StyleSheet.create({
     backgroundColor: colors.themeColor + '10',
   },
 
-  // Save Button (for profile editing)
-  saveButtonContainer: {
-    marginTop: 20,
-    marginHorizontal: 16,
+  selectedOption: {
+    backgroundColor: 'rgba(0, 122, 255, 0.1)',
   },
 
-  saveButton: {
-    alignSelf: 'flex-end',
-    backgroundColor: colors.themeColor,
-    paddingVertical: 14,
-    marginTop: 16,
-    width: '100%',
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
+  selectedOptionText: {
+    color: '#007AFF',
+    fontWeight: '500',
   },
 
-  saveButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.white,
-  },
-
-  saveButtonDisabled: {
-    backgroundColor: colors.lightGrey,
-  },
-
-  // Toggle Animation
-  toggleContainer: {
-    width: 50,
-    height: 30,
-    borderRadius: 15,
-    justifyContent: 'center',
-    paddingHorizontal: 2,
-  },
-
-  toggleCircle: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: colors.white,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-
-  // dropdown settings
   chevronIcon: {
     marginLeft: 8,
     transform: [{rotate: '0deg'}],
   },
+
   chevronIconRotated: {
     transform: [{rotate: '180deg'}],
   },
@@ -419,132 +518,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e0e0e0',
   },
+
   optionsList: {
     flexGrow: 0,
   },
 
-  selectedOption: {
-    backgroundColor: 'rgba(0, 122, 255, 0.1)',
-  },
-
-  selectedOptionText: {
-    color: '#007AFF',
-    fontWeight: '500',
-  },
-  // Language Selection Screen Styles
-  languageHeader: {
-    alignItems: 'flex-start',
-    paddingVertical: 10,
-    paddingLeft: 16,
-  },
-
-  globeContainer: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: colors.themeColor,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 20,
-  },
-
-  languageTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: colors.black,
-  },
-
-  searchContainer: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F8F9FA',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    marginBottom: 8,
-  },
-
-  searchIcon: {
-    marginRight: 12,
-  },
-
-  searchInput: {
-    flex: 1,
-    fontSize: 16,
-    color: colors.black,
-  },
-
-  allLanguagesLabel: {
-    fontSize: 14,
-    color: colors.lightGrey,
-    marginLeft: 4,
-  },
-
-  languageList: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-
-  languageCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: colors.white,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-
-  selectedLanguageCard: {
-    backgroundColor: colors.themeColor + '10',
-    borderColor: colors.themeColor,
-  },
-
-  languageCardLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-
-  languageIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F3F4F6',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 16,
-  },
-
-  languageIconText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: colors.themeColor,
-  },
-
-  languageTextContainer: {
-    flex: 1,
-  },
-
-  languageName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.black,
-    marginBottom: 4,
-  },
-
-  languageEnglishName: {
-    fontSize: 14,
-    color: colors.lightGrey,
-  },
-  //
   selectWrapper: {
     backgroundColor: '#F9FAFB',
     borderRadius: 8,
@@ -557,82 +535,37 @@ const styles = StyleSheet.create({
   },
 
   picker: {
-    flex: 1, // <-- important, makes text visible
-    color: '#111827', // text color on Android
+    flex: 1,
+    color: '#111827',
   },
 
   pickerItem: {
     fontSize: 14,
-    color: '#111827', // text color on iOS
+    color: '#111827',
   },
 
-  // Profile form
-  profileImageSection: {
+  loadingContainer: {
+    flex: 1,
     alignItems: 'center',
-    marginBottom: 20,
-  },
-  editOverlay: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    padding: 8,
-    alignItems: 'center',
-  },
-  editText: {
-    color: 'white',
-    fontSize: 12,
-  },
-  uploadingContainer: {
-    width: '100%',
-    height: '100%',
     justifyContent: 'center',
+    backgroundColor: colors.midGray,
+  },
+
+  errorContainer: {
+    flex: 1,
     alignItems: 'center',
-    backgroundColor: colors.lightGrey,
-  },
-  //
-  profileImageContainer: {
-    position: 'relative',
-    width: 120,
-    height: 120,
-  },
-  editIconContainer: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    borderRadius: 20,
-    padding: 6,
     justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: colors.midGray,
+    paddingHorizontal: 20,
   },
 
-  // Navigation Item Styles for Marketplace Activity
-  navigationItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    backgroundColor: colors.white,
-  },
-
-  navigationItemText: {
+  errorText: {
     fontSize: 16,
-    color: colors.black,
-    fontWeight: '500',
+    color: colors.inputText,
+    textAlign: 'center',
+    marginTop: 8,
   },
 
-  navigationArrow: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#F0F0F0',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  // Delete/Disable Account Buttons
   deleteAccountButton: {
     backgroundColor: '#DC2626',
     paddingVertical: 16,
@@ -680,7 +613,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  // Modal Styles
   modalMessage: {
     fontSize: 16,
     color: colors.black,
@@ -727,7 +659,6 @@ const styles = StyleSheet.create({
     color: colors.white,
   },
 
-  // Purchase History Styles
   purchasesContainer: {
     paddingHorizontal: 16,
     paddingTop: 20,
@@ -831,7 +762,6 @@ const styles = StyleSheet.create({
     color: colors.white,
   },
 
-  // Saved Auctions Styles
   savedItemsContainer: {
     paddingHorizontal: 16,
     paddingTop: 20,
@@ -849,7 +779,6 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
   },
 
-  // Shipping Address Styles
   formContainer: {
     paddingHorizontal: 16,
     paddingTop: 20,
@@ -996,21 +925,106 @@ const styles = StyleSheet.create({
     marginTop: 4,
     marginLeft: 4,
   },
-  // Profile form
-  buttonRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 20,
-    gap: 15,
+
+  searchContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
   },
-  cancelButton: {
-    backgroundColor: 'transparent',
+
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8F9FA',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginBottom: 8,
+  },
+
+  searchIcon: {
+    marginRight: 12,
+  },
+
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: colors.black,
+  },
+
+  allLanguagesLabel: {
+    fontSize: 14,
+    color: colors.lightGrey,
+    marginLeft: 4,
+  },
+
+  languageList: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+
+  languageCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
     borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+
+  selectedLanguageCard: {
+    backgroundColor: colors.themeColor + '10',
     borderColor: colors.themeColor,
+  },
+
+  languageCardLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
     flex: 1,
   },
-  cancelButtonText: {
+
+  languageIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+
+  languageIconText: {
+    fontSize: 16,
+    fontWeight: 'bold',
     color: colors.themeColor,
+  },
+
+  languageTextContainer: {
+    flex: 1,
+  },
+
+  languageName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.black,
+    marginBottom: 4,
+  },
+
+  languageEnglishName: {
+    fontSize: 14,
+    color: colors.lightGrey,
+  },
+
+  globeContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: colors.themeColor,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
   },
 });
 
