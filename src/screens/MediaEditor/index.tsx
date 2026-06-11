@@ -1,5 +1,5 @@
-import {useNavigation, useRoute} from '@react-navigation/native';
-import React, {useCallback, useMemo, useRef, useState} from 'react';
+import {useFocusEffect, useNavigation, useRoute} from '@react-navigation/native';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -8,27 +8,26 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {useTranslation} from 'react-i18next';
 import Video from 'react-native-video';
 import {
-  CropAspect,
+  createDefaultTextOverlay,
   EditedMedia,
   EditorTool,
   MediaEditorRouteParams,
   TextOverlayState,
 } from '../../types/mediaEditor';
 import {
-  CropTransform,
   exportImageMedia,
+  openNativeImageCropper,
   openVideoEditorForPost,
 } from '../../utils/mediaEditor';
 import {Toast} from '../../utils/helpers';
-import CropCanvas from './components/CropCanvas';
 import EditorToolbar from './components/EditorToolbar';
 import TextOverlayLayer from './components/TextOverlayLayer';
+import TextStylePanel from './components/TextStylePanel';
 import styles from './styles';
-
-const ASPECT_OPTIONS: CropAspect[] = ['original', '1:1', '4:5', '16:9'];
 
 const MediaEditor: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -45,21 +44,18 @@ const MediaEditor: React.FC = () => {
     queueIndex = 0,
     origin = 'create',
     completedMedia = [],
+    workingUri: paramWorkingUri,
+    croppedUri,
   } = params;
 
   const previewRef = useRef<View>(null);
   const [cardWidth, setCardWidth] = useState(320);
   const [cardHeight, setCardHeight] = useState(400);
   const [activeTool, setActiveTool] = useState<EditorTool>('none');
-  const [cropAspect, setCropAspect] = useState<CropAspect>('original');
-  const [cropTransform, setCropTransform] = useState<CropTransform>({
-    scale: 1,
-    offsetX: 0,
-    offsetY: 0,
-  });
   const [textOverlay, setTextOverlay] = useState<TextOverlayState | null>(null);
   const [videoPaused, setVideoPaused] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [isCropping, setIsCropping] = useState(false);
 
   const currentItem = useMemo(
     () =>
@@ -72,8 +68,29 @@ const MediaEditor: React.FC = () => {
     [queue, queueIndex, uri, name, type, kind],
   );
 
+  const [workingUri, setWorkingUri] = useState(
+    paramWorkingUri ?? croppedUri ?? currentItem.uri,
+  );
+
+  useEffect(() => {
+    setWorkingUri(paramWorkingUri ?? currentItem.uri);
+    setTextOverlay(null);
+    setActiveTool('none');
+  }, [currentItem.uri, paramWorkingUri, queueIndex]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (croppedUri) {
+        setWorkingUri(croppedUri);
+        navigation.setParams({croppedUri: undefined, workingUri: croppedUri});
+      }
+    }, [croppedUri, navigation]),
+  );
+
   const queueLabel =
     queue.length > 1 ? `${queueIndex + 1} / ${queue.length}` : null;
+
+  const isTextActive = activeTool === 'text';
 
   const onCardLayout = (event: LayoutChangeEvent) => {
     const {width, height} = event.nativeEvent.layout;
@@ -86,9 +103,6 @@ const MediaEditor: React.FC = () => {
   const finishWithBatch = useCallback(
     (batch: EditedMedia[]) => {
       const targetScreen = origin === 'edit' ? 'CreatePostEdit' : 'CreatePost';
-      // Navigate back to the post screen with results. Do not call goBack() after
-      // this — navigate already pops MediaEditor off the stack; an extra goBack
-      // would pop CreatePost/CreatePostEdit and land on Home.
       navigation.navigate({
         name: targetScreen,
         params: {editedMediaBatch: batch},
@@ -113,6 +127,8 @@ const MediaEditor: React.FC = () => {
           kind: nextItem.kind,
           queueIndex: nextIndex,
           completedMedia: nextCompleted,
+          workingUri: undefined,
+          croppedUri: undefined,
         });
         return;
       }
@@ -122,20 +138,35 @@ const MediaEditor: React.FC = () => {
     [completedMedia, finishWithBatch, navigation, params, queue, queueIndex],
   );
 
-  const handleSelectCrop = () => {
-    setActiveTool(prev => (prev === 'crop' ? 'none' : 'crop'));
+  const handleSelectCrop = async () => {
+    if (currentItem.kind === 'video') {
+      Toast.show(t('videoCropOnDone'));
+      setActiveTool(prev => (prev === 'crop' ? 'none' : 'crop'));
+      return;
+    }
+
+    if (isCropping) {
+      return;
+    }
+
+    setIsCropping(true);
+    try {
+      const croppedUri = await openNativeImageCropper(workingUri);
+      if (croppedUri) {
+        setWorkingUri(croppedUri);
+      }
+    } catch (error: any) {
+      Toast.error(error?.message ?? t('imageEditorFailed'));
+    } finally {
+      setIsCropping(false);
+    }
   };
 
   const handleSelectText = () => {
     setActiveTool(prev => {
       const next = prev === 'text' ? 'none' : 'text';
       if (next === 'text' && !textOverlay) {
-        setTextOverlay({
-          text: '',
-          x: cardWidth * 0.05,
-          y: cardHeight * 0.62,
-          width: cardWidth * 0.9,
-        });
+        setTextOverlay(createDefaultTextOverlay(cardWidth, cardHeight));
       }
       return next;
     });
@@ -167,14 +198,12 @@ const MediaEditor: React.FC = () => {
         return;
       }
 
+      const hasText = !!textOverlay?.text?.trim();
+
       const exported = await exportImageMedia({
-        uri: currentItem.uri,
-        aspect: cropAspect,
-        transform: cropTransform,
-        hasTextOverlay: !!textOverlay?.text?.trim(),
+        uri: workingUri,
+        hasTextOverlay: hasText,
         previewRef,
-        cardWidth,
-        cardHeight,
       });
 
       advanceQueue({
@@ -192,19 +221,35 @@ const MediaEditor: React.FC = () => {
     }
   };
 
-  const aspectLabel = (aspect: CropAspect) => {
-    switch (aspect) {
-      case 'original':
-        return t('aspectOriginal');
-      case '1:1':
-        return '1:1';
-      case '4:5':
-        return '4:5';
-      case '16:9':
-        return '16:9';
-      default:
-        return aspect;
+  const renderMedia = () => {
+    if (currentItem.kind === 'video') {
+      return (
+        <>
+          <Video
+            source={{uri: currentItem.uri}}
+            style={styles.mediaFill}
+            resizeMode="cover"
+            repeat
+            paused={videoPaused}
+          />
+          <TouchableOpacity
+            style={styles.videoControls}
+            onPress={() => setVideoPaused(prev => !prev)}>
+            <Text style={styles.videoControlText}>
+              {videoPaused ? t('play') : t('pause')}
+            </Text>
+          </TouchableOpacity>
+        </>
+      );
     }
+
+    return (
+      <Image
+        source={{uri: workingUri}}
+        style={styles.mediaFill}
+        resizeMode="cover"
+      />
+    );
   };
 
   return (
@@ -221,50 +266,30 @@ const MediaEditor: React.FC = () => {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.content}>
+      <KeyboardAwareScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        enableOnAndroid
+        extraScrollHeight={24}
+        keyboardShouldPersistTaps="handled"
+        scrollEnabled={!isTextActive}
+        showsVerticalScrollIndicator={false}>
         <View
           ref={previewRef}
           collapsable={false}
           style={styles.previewCard}
           onLayout={onCardLayout}>
-          <CropCanvas
-            active={activeTool === 'crop' && currentItem.kind === 'image'}
-            aspect={cropAspect}
-            cardWidth={cardWidth}
-            cardHeight={cardHeight}
-            transform={cropTransform}
-            onTransformChange={setCropTransform}>
-            {currentItem.kind === 'video' ? (
-              <>
-                <Video
-                  source={{uri: currentItem.uri}}
-                  style={styles.mediaFill}
-                  resizeMode="cover"
-                  repeat
-                  paused={videoPaused}
-                />
-                <TouchableOpacity
-                  style={styles.videoControls}
-                  onPress={() => setVideoPaused(prev => !prev)}>
-                  <Text style={styles.videoControlText}>
-                    {videoPaused ? t('play') : t('pause')}
-                  </Text>
-                </TouchableOpacity>
-              </>
-            ) : (
-              <Image
-                source={{uri: currentItem.uri}}
-                style={styles.mediaFill}
-                resizeMode="cover"
-              />
-            )}
-          </CropCanvas>
+          <View
+            style={[styles.previewInner, {width: cardWidth, height: cardHeight}]}>
+            {renderMedia()}
+          </View>
 
           <TextOverlayLayer
             overlay={textOverlay}
             cardWidth={cardWidth}
             cardHeight={cardHeight}
-            editable={activeTool === 'text'}
+            editable={isTextActive}
+            draggable={!!textOverlay}
             placeholder={t('editorTextPlaceholder')}
             onChange={setTextOverlay}
           />
@@ -274,36 +299,24 @@ const MediaEditor: React.FC = () => {
           <Text style={styles.queueIndicator}>{queueLabel}</Text>
         ) : null}
 
-        {activeTool === 'crop' && currentItem.kind === 'image' ? (
-          <View style={styles.aspectRow}>
-            {ASPECT_OPTIONS.map(aspect => (
-              <TouchableOpacity
-                key={aspect}
-                style={[
-                  styles.aspectChip,
-                  cropAspect === aspect && styles.aspectChipActive,
-                ]}
-                onPress={() => setCropAspect(aspect)}>
-                <Text
-                  style={[
-                    styles.aspectChipText,
-                    cropAspect === aspect && styles.aspectChipTextActive,
-                  ]}>
-                  {aspectLabel(aspect)}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+        {activeTool === 'crop' && currentItem.kind === 'video' ? (
+          <Text style={styles.cropHint}>{t('videoCropOnDone')}</Text>
         ) : null}
+
+        {isTextActive && textOverlay ? (
+          <TextStylePanel overlay={textOverlay} onChange={setTextOverlay} />
+        ) : null}
+      </KeyboardAwareScrollView>
+
+      <View style={styles.toolbarDock}>
+        <EditorToolbar
+          activeTool={activeTool}
+          onSelectCrop={handleSelectCrop}
+          onSelectText={handleSelectText}
+        />
       </View>
 
-      <EditorToolbar
-        activeTool={activeTool}
-        onSelectCrop={handleSelectCrop}
-        onSelectText={handleSelectText}
-      />
-
-      {isExporting ? (
+      {isExporting || isCropping ? (
         <View style={styles.loaderOverlay}>
           <ActivityIndicator size="large" color="#20B2AA" />
         </View>

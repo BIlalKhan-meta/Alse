@@ -33,10 +33,19 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#20B2AA',
   },
-  content: {
+  scroll: {
     flex: 1,
-    justifyContent: 'center',
+  },
+  scrollContent: {
+    flexGrow: 1,
     paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 16,
+  },
+  toolbarDock: {
+    backgroundColor: '#F5F5F5',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#E0E0E0',
   },
   previewCard: {
     alignSelf: 'center',
@@ -53,11 +62,30 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   previewInner: {
-    flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: '#111',
+    overflow: 'hidden',
   },
   mediaFill: {
     ...StyleSheet.absoluteFillObject,
+  },
+  imageStage: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  imageTransformWrap: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cropImage: {
+    width: '100%',
+    height: '100%',
+  },
+  cropDimPanel: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0,0,0,0.55)',
   },
   cropFrame: {
     position: 'absolute',
@@ -65,17 +93,52 @@ const styles = StyleSheet.create({
     borderColor: '#FFFFFF',
     backgroundColor: 'transparent',
   },
-  cropDim: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.35)',
+  cropCorner: {
+    position: 'absolute',
+    width: 18,
+    height: 18,
+    borderColor: '#FFFFFF',
+  },
+  cropCornerTL: {
+    top: -1,
+    left: -1,
+    borderTopWidth: 3,
+    borderLeftWidth: 3,
+  },
+  cropCornerTR: {
+    top: -1,
+    right: -1,
+    borderTopWidth: 3,
+    borderRightWidth: 3,
+  },
+  cropCornerBL: {
+    bottom: -1,
+    left: -1,
+    borderBottomWidth: 3,
+    borderLeftWidth: 3,
+  },
+  cropCornerBR: {
+    bottom: -1,
+    right: -1,
+    borderBottomWidth: 3,
+    borderRightWidth: 3,
+  },
+  cropControls: {
+    marginTop: 14,
+    paddingHorizontal: 8,
+  },
+  cropHint: {
+    textAlign: 'center',
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 10,
   },
   aspectRow: {
     flexDirection: 'row',
     justifyContent: 'center',
     flexWrap: 'wrap',
     gap: 8,
-    marginTop: 16,
-    paddingHorizontal: 12,
+    paddingHorizontal: 4,
   },
   aspectChip: {
     paddingHorizontal: 12,
@@ -94,18 +157,142 @@ const styles = StyleSheet.create({
   aspectChipTextActive: {
     color: '#FFF',
   },
+  resetChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: '#FFF',
+    borderWidth: 1,
+    borderColor: '#CCC',
+  },
+  resetChipText: {
+    fontSize: 12,
+    color: '#333',
+    fontWeight: '500',
+  },
+  textStylePanel: {
+    marginTop: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    backgroundColor: '#FFF',
+    borderRadius: 12,
+    marginHorizontal: 4,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  textStyleSectionLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 8,
+    marginTop: 4,
+  },
+  colorRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginBottom: 10,
+  },
+  colorSwatch: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+  },
+  colorSwatchBorder: {
+    borderWidth: 1,
+    borderColor: '#DDD',
+  },
+  colorSwatchSelected: {
+    borderWidth: 3,
+    borderColor: '#20B2AA',
+  },
+  sizeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 16,
+    marginBottom: 10,
+  },
+  sizeButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#F0F0F0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sizeValue: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#000',
+    minWidth: 32,
+    textAlign: 'center',
+  },
+  opacityRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 4,
+  },
+  opacityChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 14,
+    backgroundColor: '#F0F0F0',
+  },
+  opacityChipActive: {
+    backgroundColor: '#20B2AA',
+  },
+  opacityChipText: {
+    fontSize: 12,
+    color: '#333',
+    fontWeight: '500',
+  },
+  opacityChipTextActive: {
+    color: '#FFF',
+  },
+  bgToggleRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 10,
+  },
+  bgToggleChip: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: '#F0F0F0',
+    alignItems: 'center',
+  },
+  bgToggleChipActive: {
+    backgroundColor: '#20B2AA',
+  },
+  bgToggleChipText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#333',
+  },
+  bgToggleChipTextActive: {
+    color: '#FFF',
+  },
   textOverlayBox: {
     position: 'absolute',
-    backgroundColor: 'rgba(255,255,255,0.85)',
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
     minWidth: 120,
     maxWidth: '90%',
+    zIndex: 5,
+  },
+  textDragHandle: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingBottom: 6,
+    marginBottom: 2,
   },
   textOverlayInput: {
-    color: '#000',
-    fontSize: 13,
     textAlign: 'center',
     padding: 0,
     margin: 0,

@@ -1,5 +1,7 @@
 import ImageEditor from '@react-native-community/image-editor';
-import {Image, NativeEventEmitter, NativeModules, Platform} from 'react-native';
+import {Image, InteractionManager, NativeEventEmitter, NativeModules, Platform} from 'react-native';
+import RNFS from 'react-native-fs';
+import ImagePicker from 'react-native-image-crop-picker';
 import {captureRef} from 'react-native-view-shot';
 import {showEditor} from 'react-native-video-trim';
 import type {RefObject} from 'react';
@@ -61,15 +63,40 @@ export async function getImageDimensions(uri: string): Promise<ImageDimensions> 
   });
 }
 
+export function getContainBaseSize(
+  imageSize: ImageDimensions,
+  cardWidth: number,
+  cardHeight: number,
+): ImageDimensions {
+  const imageAspect = imageSize.width / imageSize.height;
+  const cardAspect = cardWidth / cardHeight;
+
+  if (imageAspect > cardAspect) {
+    return {
+      width: cardWidth,
+      height: cardWidth / imageAspect,
+    };
+  }
+
+  return {
+    width: cardHeight * imageAspect,
+    height: cardHeight,
+  };
+}
+
 export function computeCropRect(
   imageSize: ImageDimensions,
   cardSize: ImageDimensions,
   cropFrame: ImageDimensions,
   transform: CropTransform,
+  baseSize?: ImageDimensions,
 ): {offset: {x: number; y: number}; size: {width: number; height: number}} {
+  const containBase =
+    baseSize ?? getContainBaseSize(imageSize, cardSize.width, cardSize.height);
   const {scale, offsetX, offsetY} = transform;
-  const displayedWidth = imageSize.width * scale;
-  const displayedHeight = imageSize.height * scale;
+
+  const displayedWidth = containBase.width * scale;
+  const displayedHeight = containBase.height * scale;
 
   const imageLeft = (cardSize.width - displayedWidth) / 2 + offsetX;
   const imageTop = (cardSize.height - displayedHeight) / 2 + offsetY;
@@ -82,8 +109,14 @@ export function computeCropRect(
   const relativeW = cropFrame.width / displayedWidth;
   const relativeH = cropFrame.height / displayedHeight;
 
-  const x = Math.max(0, Math.min(imageSize.width, relativeX * imageSize.width));
-  const y = Math.max(0, Math.min(imageSize.height, relativeY * imageSize.height));
+  const x = Math.max(
+    0,
+    Math.min(imageSize.width, relativeX * imageSize.width),
+  );
+  const y = Math.max(
+    0,
+    Math.min(imageSize.height, relativeY * imageSize.height),
+  );
   const width = Math.max(
     1,
     Math.min(imageSize.width - x, relativeW * imageSize.width),
@@ -118,44 +151,125 @@ export async function capturePreviewAsImage(
   return Platform.OS === 'android' ? uri : uri.replace('file://', '');
 }
 
+type ResolvedImagePath = {
+  path: string;
+  cleanup?: () => Promise<void>;
+};
+
+export async function resolveLocalImagePath(
+  uri: string,
+): Promise<ResolvedImagePath> {
+  if (!uri) {
+    throw new Error('Missing image uri');
+  }
+
+  if (uri.startsWith('http://') || uri.startsWith('https://')) {
+    const dest = `${RNFS.CachesDirectoryPath}/crop-source-${Date.now()}.jpg`;
+    const download = await RNFS.downloadFile({fromUrl: uri, toFile: dest}).promise;
+    if (download.statusCode && download.statusCode >= 400) {
+      throw new Error('Could not download image for cropping');
+    }
+    return {
+      path: dest,
+      cleanup: () => RNFS.unlink(dest).catch(() => {}),
+    };
+  }
+
+  if (
+    Platform.OS === 'ios' &&
+    (uri.startsWith('ph://') || uri.startsWith('assets-library://'))
+  ) {
+    const dimensions = await getImageDimensions(uri);
+    const dest = `${RNFS.CachesDirectoryPath}/crop-source-${Date.now()}.jpg`;
+    await RNFS.copyAssetsFileIOS(
+      uri,
+      dest,
+      dimensions.width,
+      dimensions.height,
+    );
+    return {
+      path: dest,
+      cleanup: () => RNFS.unlink(dest).catch(() => {}),
+    };
+  }
+
+  if (Platform.OS === 'android' && uri.startsWith('content://')) {
+    const dest = `${RNFS.CachesDirectoryPath}/crop-source-${Date.now()}.jpg`;
+    await RNFS.copyFile(uri, dest);
+    return {
+      path: dest,
+      cleanup: () => RNFS.unlink(dest).catch(() => {}),
+    };
+  }
+
+  const path = uri.startsWith('file://') ? uri.replace('file://', '') : uri;
+  return {path};
+}
+
+export async function openNativeImageCropper(
+  uri: string,
+): Promise<string | null> {
+  let resolved: ResolvedImagePath | null = null;
+
+  try {
+    await new Promise<void>(resolve => {
+      InteractionManager.runAfterInteractions(() => resolve());
+    });
+
+    resolved = await resolveLocalImagePath(uri);
+    const result = await ImagePicker.openCropper({
+      path: resolved.path,
+      mediaType: 'photo',
+      cropping: true,
+      freeStyleCropEnabled: true,
+      compressImageQuality: 0.92,
+      avoidEmptySpaceAroundImage: true,
+    });
+
+    if (!result?.path) {
+      return null;
+    }
+
+    if (Platform.OS === 'android') {
+      return result.path.startsWith('file://')
+        ? result.path
+        : `file://${result.path}`;
+    }
+
+    return result.path.startsWith('file://')
+      ? result.path
+      : `file://${result.path}`;
+  } catch (error: any) {
+    if (error?.code === 'E_PICKER_CANCELLED') {
+      return null;
+    }
+    throw error;
+  } finally {
+    if (resolved?.cleanup) {
+      await resolved.cleanup();
+    }
+  }
+}
+
 export async function exportImageMedia(options: {
   uri: string;
-  aspect: CropAspect;
-  transform: CropTransform;
   hasTextOverlay: boolean;
   previewRef: RefObject<View | null>;
-  cardWidth?: number;
-  cardHeight?: number;
 }): Promise<{uri: string; width?: number; height?: number}> {
-  const cardWidth = options.cardWidth ?? CARD_PREVIEW_WIDTH;
-  const cardHeight = options.cardHeight ?? CARD_PREVIEW_HEIGHT;
-
   if (options.hasTextOverlay && options.previewRef.current) {
     const capturedUri = await capturePreviewAsImage(options.previewRef);
     return {uri: capturedUri};
   }
 
-  if (options.aspect !== 'original') {
-    const imageSize = await getImageDimensions(options.uri);
-    const cropFrame = getCropFrameSize(options.aspect, cardWidth, cardHeight);
-    const cropRect = computeCropRect(
-      imageSize,
-      {width: cardWidth, height: cardHeight},
-      cropFrame,
-      options.transform,
-    );
-    const workingUri = await applyImageCrop(options.uri, cropRect);
-    const dimensions = await getImageDimensions(
-      workingUri.startsWith('file://') ? workingUri : `file://${workingUri}`,
-    ).catch(() => null);
-    return {
-      uri: workingUri,
-      width: dimensions?.width,
-      height: dimensions?.height,
-    };
-  }
+  const dimensions = await getImageDimensions(
+    options.uri.startsWith('file://') ? options.uri : `file://${options.uri}`,
+  ).catch(() => null);
 
-  return {uri: options.uri};
+  return {
+    uri: options.uri,
+    width: dimensions?.width,
+    height: dimensions?.height,
+  };
 }
 
 export type VideoEditorPostResult = {

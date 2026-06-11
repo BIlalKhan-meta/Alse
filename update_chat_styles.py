@@ -1,4 +1,10 @@
-import {StyleSheet} from 'react-native';
+import re
+
+with open('src/screens/ChatScreen/styles.tsx', 'r') as f:
+    content = f.read()
+
+new_styles = """import {Platform, StyleSheet} from 'react-native';
+import {fontSizes, vh, vw} from '../../constant';
 import {colors} from '../../utils/theme';
 
 const styles = StyleSheet.create({
@@ -25,19 +31,19 @@ const styles = StyleSheet.create({
   },
   manageTemplatesButton: {
     borderWidth: 1,
-    borderColor: colors.themeColor,
+    borderColor: '#379696',
     borderRadius: 6,
     paddingVertical: 6,
     paddingHorizontal: 10,
     marginRight: 10,
   },
   manageTemplatesText: {
-    color: colors.themeColor,
+    color: '#379696',
     fontSize: 12,
     fontWeight: '500',
   },
   newGroupButton: {
-    backgroundColor: colors.themeColor,
+    backgroundColor: '#379696',
     borderRadius: 6,
     paddingVertical: 7,
     paddingHorizontal: 12,
@@ -197,3 +203,9 @@ const styles = StyleSheet.create({
   },
 });
 export default styles;
+"""
+
+with open('src/screens/ChatScreen/styles.tsx', 'w') as f:
+    f.write(new_styles)
+
+print("Replaced styles.tsx successfully")

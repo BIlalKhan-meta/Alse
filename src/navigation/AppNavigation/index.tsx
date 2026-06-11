@@ -4,6 +4,7 @@ import TabNavigation from '../BottomTab';
 import Saved from '../../screens/Saved';
 import Shop from '../../screens/MarketPlace/Shop';
 import CreatePost from '../../screens/CreatePost';
+import ImageCrop from '../../screens/ImageCrop';
 import MediaEditor from '../../screens/MediaEditor';
 import RequestScreen from '../../screens/RequestScreen';
 import Notifications from '../../screens/Home/Notifications';
@@ -174,6 +175,11 @@ const AppNavigation = () => {
           name="MediaEditor"
           component={MediaEditor}
           options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="ImageCrop"
+          component={ImageCrop}
+          options={{headerShown: false, presentation: 'fullScreenModal'}}
         />
         <Stack.Screen
           name="CreateReel"

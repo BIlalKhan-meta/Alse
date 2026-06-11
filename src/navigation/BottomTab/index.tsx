@@ -23,9 +23,12 @@ const TabNavigation = () => {
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarShowLabel: false,
+        tabBarShowLabel: true,
         tabBarHideOnKeyboard: true,
         tabBarStyle: styles.tabStyle,
+        tabBarActiveTintColor: colors.themeColor,
+        tabBarInactiveTintColor: colors.lightGrey,
+        tabBarLabelStyle: styles.tabBarLabel,
       }}
       initialRouteName="HomeNavigation">
       <Tab.Screen
@@ -41,25 +44,13 @@ const TabNavigation = () => {
           },
         })}
         options={{
-          tabBarIcon: ({focused}) => (
+          tabBarLabel: 'Home',
+          tabBarIcon: ({focused, color}) => (
             <View style={styles.tabButton}>
               <Image
                 source={images.home}
-                style={[
-                  styles.icon,
-                  {tintColor: focused ? colors.themeColor : colors.lightGrey},
-                ]}
+                style={[styles.icon, {tintColor: color}]}
               />
-              {/* <InterBold
-                style={[
-                  styles.tabButtonText,
-                  {
-                    color: focused ? colors.themeColor : colors.lightGrey,
-                    fontSize: fontSizes.f10,
-                  },
-                ]}>
-                Home
-              </InterBold> */}
             </View>
           ),
           ...NavigationOptions,
@@ -70,35 +61,10 @@ const TabNavigation = () => {
         name="Search"
         component={SearchTab}
         options={{
-          tabBarIcon: ({focused}) => (
+          tabBarLabel: 'Search',
+          tabBarIcon: ({color}) => (
             <View style={styles.tabButton}>
-              {/* <Image
-                source={images.menu}
-                style={[
-                  styles.icon,
-                  {
-                    tintColor: focused ? colors.themeColor : colors.lightGrey,
-                  },
-                ]}
-              /> */}
-              <Search
-                style={[
-                  styles.icon,
-                  {
-                    color: focused ? colors.themeColor : colors.lightGrey,
-                  },
-                ]}
-              />
-              {/* <InterBold
-                style={[
-                  styles.tabButtonText,
-                  {
-                    color: focused ? colors.themeColor : colors.lightGrey,
-                    fontSize: fontSizes.f10,
-                  },
-                ]}>
-                Menu
-              </InterBold> */}
+              <Search color={color} size={22} />
             </View>
           ),
           ...NavigationOptions,
@@ -108,25 +74,13 @@ const TabNavigation = () => {
         name="MarketPlaceNavigation"
         component={MarketPlaceNavigation}
         options={{
-          tabBarIcon: ({focused}) => (
+          tabBarLabel: 'Market',
+          tabBarIcon: ({color}) => (
             <View style={styles.tabButton}>
               <Image
                 source={images.market}
-                style={[
-                  styles.icon,
-                  {tintColor: focused ? colors.themeColor : colors.lightGrey},
-                ]}
+                style={[styles.icon, {tintColor: color}]}
               />
-              {/* <InterBold
-                style={[
-                  styles.tabButtonText,
-                  {
-                    color: focused ? colors.themeColor : colors.lightGrey,
-                    fontSize: fontSizes.f10,
-                  },
-                ]}>
-                MarketPlace
-              </InterBold> */}
             </View>
           ),
           ...NavigationOptions,
@@ -138,25 +92,13 @@ const TabNavigation = () => {
         initialParams={{isHost: true, channel: ''}}
         options={{
           unmountOnBlur: true,
-          tabBarIcon: ({focused}) => (
+          tabBarLabel: 'Go Live',
+          tabBarIcon: ({color}) => (
             <View style={styles.tabButton}>
               <Image
                 source={images.liveStream}
-                style={[
-                  styles.icon,
-                  {tintColor: focused ? colors.themeColor : colors.lightGrey},
-                ]}
+                style={[styles.icon, {tintColor: color}]}
               />
-              {/* <InterBold
-                style={[
-                  styles.tabButtonText,
-                  {
-                    color: focused ? colors.themeColor : colors.lightGrey,
-                    fontSize: fontSizes.f10,
-                  },
-                ]}>
-                Go Live
-              </InterBold> */}
             </View>
           ),
           ...NavigationOptions,
@@ -167,76 +109,26 @@ const TabNavigation = () => {
         name="Videos"
         component={VideosTab}
         options={{
-          tabBarIcon: ({focused}) => (
+          tabBarLabel: 'Videos',
+          tabBarIcon: ({color}) => (
             <View style={styles.tabButton}>
               <Image
                 source={images.videoTab}
-                style={[
-                  styles.icon,
-                  {
-                    tintColor: focused ? colors.themeColor : colors.lightGrey,
-                  },
-                ]}
+                style={[styles.icon, {tintColor: color}]}
               />
-              {/* <InterBold
-                style={[
-                  styles.tabButtonText,
-                  {
-                    color: focused ? colors.themeColor : colors.lightGrey,
-                    fontSize: fontSizes.f10,
-                  },
-                ]}>
-                Videos
-              </InterBold> */}
             </View>
           ),
           ...NavigationOptions,
         }}
       />
-      {/* TODO need to set the profile screen here directly */}
       <Tab.Screen
         name="MyProfile"
         component={MyProfile}
         options={{
-          tabBarIcon: ({focused}) => (
+          tabBarLabel: 'Profile',
+          tabBarIcon: ({color}) => (
             <View style={styles.tabButton}>
-              <View style={[styles.tabButton]}>
-                <User
-                  // name="person"
-                  color={focused ? colors.themeColor : colors.lightGrey}
-                />
-              </View>
-              {/* {user?.avatar ? (
-                <Image
-                  source={{uri: user.avatar}}
-                  style={[
-                    // need this style
-                    // styles.avatarImage,
-                    {
-                      width: 40,
-                      height: 40,
-                      borderRadius: 20,
-                    },
-                  ]}
-                />
-              ) : (
-                <View style={[styles.tabButton]}>
-                  <User
-                    // name="person"
-                    color={focused ? colors.themeColor : colors.lightGrey}
-                  />
-                </View>
-              )} */}
-              {/* <InterBold
-                style={[
-                  styles.tabButtonText,
-                  {
-                    color: focused ? colors.themeColor : colors.lightGrey,
-                    fontSize: fontSizes.f10,
-                  },
-                ]}>
-                Menu
-              </InterBold> */}
+              <User color={color} size={22} />
             </View>
           ),
           ...NavigationOptions,
