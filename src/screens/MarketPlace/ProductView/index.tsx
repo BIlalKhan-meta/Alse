@@ -19,8 +19,10 @@ import {
   Share2,
 } from 'lucide-react-native';
 import {addProductToCart, productDetail} from '../../../api/product';
+import {createChat, createMessage} from '../../../api/home';
 import {removeSavedItem, saveItem} from '../../../api/menu';
 import Loader from '../../../components/Loader';
+import MakeOfferModal from '../../../components/MakeOfferModal';
 import RatingandReviewComponent from '../../../components/RatingandReviewComponent';
 import ShopComponent from '../../../components/ShopComponent';
 import {images} from '../../../utils/images';
@@ -47,6 +49,41 @@ function normalizeOptionLabel(entry: any, key: 'color' | 'size'): string {
   return String(entry?.[key] ?? entry?.name ?? entry?.title ?? '').trim();
 }
 
+function buildOfferMessage(params: {
+  productName: string;
+  quantity: string;
+  price: string;
+  note: string;
+  listedPrice?: string;
+}): string {
+  const lines = [
+    `Hi, I'd like to make an offer on "${params.productName}".`,
+    '',
+    `Quantity: ${params.quantity}`,
+    `Offer Price: $${params.price}`,
+  ];
+
+  if (params.listedPrice) {
+    lines.push(`Listed Price: ${params.listedPrice}`);
+  }
+
+  const trimmedNote = params.note.trim();
+  if (trimmedNote) {
+    lines.push(`Note: ${trimmedNote}`);
+  }
+
+  return lines.join('\n');
+}
+
+function formatOfferPrice(value: string): string {
+  const normalized = value.replace(/,/g, '').trim();
+  const amount = Number(normalized);
+  if (!Number.isFinite(amount)) {
+    return value.trim();
+  }
+  return amount % 1 === 0 ? String(amount) : amount.toFixed(2);
+}
+
 const ProductView: React.FC = () => {
   const route = useRoute();
   const navigation = useNavigation();
@@ -65,6 +102,11 @@ const ProductView: React.FC = () => {
   const [quantity, setQuantity] = useState(1);
   const [addingToCart, setAddingToCart] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [offerModalVisible, setOfferModalVisible] = useState(false);
+  const [offerQuantity, setOfferQuantity] = useState('');
+  const [offerPrice, setOfferPrice] = useState('');
+  const [offerNote, setOfferNote] = useState('');
+  const [submittingOffer, setSubmittingOffer] = useState(false);
 
   const fetchData = useCallback(async () => {
     if (!productId) {
@@ -254,14 +296,100 @@ const ProductView: React.FC = () => {
   };
 
   const handleMakeOffer = () => {
-    if (shopOwnerId) {
-      (navigation as any).navigate('ChatOngoing', {
-        receiverId: shopOwnerId,
-        name: vendorLabel || 'Seller',
-      });
+    if (!shopOwnerId) {
+      Toast.error('Seller information is not available.');
       return;
     }
-    Toast.error('Seller information is not available.');
+    setOfferQuantity(String(quantity));
+    setOfferPrice('');
+    setOfferNote('');
+    setOfferModalVisible(true);
+  };
+
+  const handleCloseOfferModal = () => {
+    if (submittingOffer) {
+      return;
+    }
+    setOfferModalVisible(false);
+  };
+
+  const handleSubmitOffer = async () => {
+    if (!shopOwnerId) {
+      Toast.error('Seller information is not available.');
+      return;
+    }
+
+    const trimmedQuantity = offerQuantity.trim();
+    const trimmedPrice = offerPrice.trim();
+
+    if (!trimmedQuantity) {
+      Toast.error('Please enter quantity.');
+      return;
+    }
+
+    if (!/^\d+$/.test(trimmedQuantity) || Number(trimmedQuantity) < 1) {
+      Toast.error('Please enter a valid quantity.');
+      return;
+    }
+
+    if (!trimmedPrice) {
+      Toast.error('Please enter price.');
+      return;
+    }
+
+    const normalizedPrice = trimmedPrice.replace(/,/g, '');
+    if (!/^\d+(\.\d{1,2})?$/.test(normalizedPrice) || Number(normalizedPrice) <= 0) {
+      Toast.error('Please enter a valid price.');
+      return;
+    }
+
+    const formattedPrice = formatOfferPrice(normalizedPrice);
+    const offerMessage = buildOfferMessage({
+      productName: title,
+      quantity: trimmedQuantity,
+      price: formattedPrice,
+      note: offerNote,
+      listedPrice: priceLabel !== '—' ? priceLabel : undefined,
+    });
+
+    setSubmittingOffer(true);
+    try {
+      const chatRes = await createChat({user_id: shopOwnerId});
+      const chatId = chatRes?.data?.data?.id;
+
+      if (!chatId) {
+        throw new Error('Unable to start chat with this store.');
+      }
+
+      const messageForm = new FormData();
+      messageForm.append('chat_id', String(chatId));
+      messageForm.append('message', offerMessage);
+      await createMessage(messageForm);
+
+      setOfferModalVisible(false);
+      Toast.success('Your offer has been sent to the store.');
+
+      (navigation as any).navigate('ChatOngoing', {
+        id: chatId,
+        receiverId: shopOwnerId,
+        name: vendorLabel || 'Seller',
+        phoneNumber:
+          productDetails?.shop?.user?.phone_number ??
+          productDetails?.shop?.phone_number ??
+          '',
+        user: {
+          id: shopOwnerId,
+          avatar:
+            productDetails?.shop?.avatar ??
+            productDetails?.shop?.user?.avatar ??
+            productDetails?.shop?.logo,
+        },
+      });
+    } catch (error) {
+      Toast.error(getMessage((error as any)?.message));
+    } finally {
+      setSubmittingOffer(false);
+    }
   };
 
   const renderTabContent = () => {
@@ -470,6 +598,19 @@ const ProductView: React.FC = () => {
           </View>
         ) : null}
       </View>
+
+      <MakeOfferModal
+        visible={offerModalVisible}
+        loading={submittingOffer}
+        onClose={handleCloseOfferModal}
+        onSubmit={handleSubmitOffer}
+        quantity={offerQuantity}
+        price={offerPrice}
+        note={offerNote}
+        onChangeQuantity={setOfferQuantity}
+        onChangePrice={setOfferPrice}
+        onChangeNote={setOfferNote}
+      />
     </View>
   );
 };
