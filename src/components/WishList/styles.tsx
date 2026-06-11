@@ -9,8 +9,7 @@ const styles = StyleSheet.create({
     // alignItems:'flex-start'
   },
   productContainer: {
-    // flex: 1,
-    width: vw * 40,
+    width: '100%',
     flexDirection: 'column',
     alignItems: 'center',
     margin: vh * 0.6,
@@ -18,7 +17,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: '#fff',
     position: 'relative',
-    zIndex : -99
+    zIndex: -99,
   },
   productImage: {
     width: '100%',
@@ -67,6 +66,16 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.f12,
     color: colors.black,
     fontWeight: 'bold',
+  },
+  embeddedGrid: {
+    width: '100%',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  embeddedGridItem: {
+    width: '48%',
+    marginBottom: vh * 1.2,
   },
 });
 

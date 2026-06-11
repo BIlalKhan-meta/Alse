@@ -1,31 +1,48 @@
 import React, {useEffect, useState} from 'react';
 import {View} from 'react-native';
 import styles from './styles';
-import {useNavigation, useRoute} from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 import WishlistScreen from '../WishList';
-import {getSimilarProducts, productDetail} from '../../api/product';
+import {getSimilarProducts} from '../../api/product';
 import Loader from '../Loader';
 
-const ShopComponent: React.FC = ({id}) => {
+type ShopComponentProps = {
+  id?: number | string;
+  embedded?: boolean;
+};
+
+const ShopComponent: React.FC<ShopComponentProps> = ({id, embedded = false}) => {
   const navigation = useNavigation();
-  const [data, setData] = useState([]);
+  const [data, setData] = useState<any[]>([]);
   const [loader, setLoader] = useState(false);
 
-  const getData = async () => {
-    setLoader(true);
-    await getSimilarProducts(id).then(res => {
-      if (res?.data) {
-        setData(res?.data?.data);
-        setLoader(false);
-      }
-    });
-  };
-
   useEffect(() => {
-    if (id) {
-      getData();
+    if (!id) {
+      return;
     }
-  }, []);
+
+    let cancelled = false;
+
+    const getData = async () => {
+      setLoader(true);
+      try {
+        const res = await getSimilarProducts(id);
+        if (!cancelled && res?.data) {
+          setData(Array.isArray(res.data.data) ? res.data.data : []);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoader(false);
+        }
+      }
+    };
+
+    getData();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
 
   if (loader) {
     return <Loader />;
@@ -39,9 +56,11 @@ const ShopComponent: React.FC = ({id}) => {
           heart={true}
           addCart={true}
           product={true}
-          // handleRemove={handleRemoveFromWishlist}
-          onPress={id => {
-            navigation.navigate('ProductView', {productId: id});
+          embedded={embedded}
+          onPress={productItemId => {
+            (navigation as any).navigate('ProductView', {
+              productId: productItemId,
+            });
           }}
         />
       </View>

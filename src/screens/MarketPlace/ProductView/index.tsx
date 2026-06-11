@@ -1,18 +1,16 @@
-import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import React, {useCallback, useEffect, useLayoutEffect, useMemo, useState} from 'react';
 import {
   View,
   Text,
   Image,
   TouchableOpacity,
   ScrollView,
-  SafeAreaView,
   Share,
   ActivityIndicator,
 } from 'react-native';
 import {useIsFocused, useRoute, useNavigation} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
 import {
-  ArrowLeft,
   ChevronLeft,
   ChevronRight,
   Heart,
@@ -180,7 +178,7 @@ const ProductView: React.FC = () => {
     setImageIndex(prev => (prev === imageUrls.length - 1 ? 0 : prev + 1));
   };
 
-  const handleShare = async () => {
+  const handleShare = useCallback(async () => {
     try {
       await Share.share({
         message: `${title} - ${priceLabel}`,
@@ -188,7 +186,20 @@ const ProductView: React.FC = () => {
     } catch (error) {
       console.error('Share error:', error);
     }
-  };
+  }, [title, priceLabel]);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <TouchableOpacity
+          onPress={handleShare}
+          style={styles.navShareButton}
+          hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+          <Share2 size={22} color={colors.black} />
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation, handleShare]);
 
   const handleToggleSave = async () => {
     if (!productDetails?.id) {
@@ -257,11 +268,13 @@ const ProductView: React.FC = () => {
     switch (activeTab) {
       case 'rating':
         return productId ? (
-          <RatingandReviewComponent {...({id: productId} as any)} />
+          <RatingandReviewComponent
+            {...({id: productId, embedded: true} as any)}
+          />
         ) : null;
       case 'similar':
         return productId ? (
-          <ShopComponent {...({id: productId} as any)} />
+          <ShopComponent {...({id: productId, embedded: true} as any)} />
         ) : null;
       case 'description':
       default:
@@ -321,44 +334,21 @@ const ProductView: React.FC = () => {
 
   if (!productDetails) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.headerWrap}>
-          <View style={styles.headerLeft}>
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => navigation.goBack()}>
-              <ArrowLeft size={24} color={colors.black} />
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>Product View</Text>
-          </View>
-        </View>
+      <View style={styles.container}>
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyText}>Product not found.</Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.headerWrap}>
-        <View style={styles.headerLeft}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}>
-            <ArrowLeft size={24} color={colors.black} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Product View</Text>
-        </View>
-        <TouchableOpacity style={styles.shareButton} onPress={handleShare}>
-          <Share2 size={22} color={colors.black} />
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        style={styles.scrollView}>
-        <View style={styles.contentCard}>
+    <View style={styles.container}>
+      <View style={styles.contentCard}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}>
           <View style={styles.imageWrap}>
             <Image
               source={currentImageUrl ? {uri: currentImageUrl} : images.pro1}
@@ -441,46 +431,46 @@ const ProductView: React.FC = () => {
           </View>
 
           <View style={styles.tabContent}>{renderTabContent()}</View>
+        </ScrollView>
 
-          {!isOwnProduct ? (
-            <View style={styles.footer}>
-              <View style={styles.cartRow}>
-                <View style={styles.quantityWrap}>
-                  <TouchableOpacity
-                    style={styles.quantityButton}
-                    onPress={() => quantity > 1 && setQuantity(quantity - 1)}>
-                    <Minus size={18} color={colors.black} />
-                  </TouchableOpacity>
-                  <Text style={styles.quantityValue}>{quantity}</Text>
-                  <TouchableOpacity
-                    style={styles.quantityButton}
-                    onPress={() => setQuantity(quantity + 1)}>
-                    <Plus size={18} color={colors.black} />
-                  </TouchableOpacity>
-                </View>
-
+        {!isOwnProduct ? (
+          <View style={styles.footer}>
+            <View style={styles.cartRow}>
+              <View style={styles.quantityWrap}>
                 <TouchableOpacity
-                  style={styles.addToCartButton}
-                  onPress={handleAddToCart}
-                  disabled={addingToCart}>
-                  {addingToCart ? (
-                    <ActivityIndicator color={colors.white} size="small" />
-                  ) : (
-                    <Text style={styles.addToCartText}>Add to Cart</Text>
-                  )}
+                  style={styles.quantityButton}
+                  onPress={() => quantity > 1 && setQuantity(quantity - 1)}>
+                  <Minus size={18} color={colors.black} />
+                </TouchableOpacity>
+                <Text style={styles.quantityValue}>{quantity}</Text>
+                <TouchableOpacity
+                  style={styles.quantityButton}
+                  onPress={() => setQuantity(quantity + 1)}>
+                  <Plus size={18} color={colors.black} />
                 </TouchableOpacity>
               </View>
 
               <TouchableOpacity
-                style={styles.offerButton}
-                onPress={handleMakeOffer}>
-                <Text style={styles.offerButtonText}>Make an offer</Text>
+                style={styles.addToCartButton}
+                onPress={handleAddToCart}
+                disabled={addingToCart}>
+                {addingToCart ? (
+                  <ActivityIndicator color={colors.white} size="small" />
+                ) : (
+                  <Text style={styles.addToCartText}>Add to Cart</Text>
+                )}
               </TouchableOpacity>
             </View>
-          ) : null}
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+
+            <TouchableOpacity
+              style={styles.offerButton}
+              onPress={handleMakeOffer}>
+              <Text style={styles.offerButtonText}>Make an offer</Text>
+            </TouchableOpacity>
+          </View>
+        ) : null}
+      </View>
+    </View>
   );
 };
 

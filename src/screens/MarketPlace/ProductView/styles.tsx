@@ -8,41 +8,23 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: PRODUCT_VIEW_BG,
   },
-  headerWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 8,
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  backButton: {
-    marginRight: 8,
-    padding: 4,
-  },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: colors.black,
-  },
-  shareButton: {
+  navShareButton: {
+    marginRight: 16,
     padding: 4,
   },
   scrollView: {
     flex: 1,
   },
+  scrollContent: {
+    flexGrow: 1,
+  },
   contentCard: {
+    flex: 1,
     marginHorizontal: 16,
-    marginBottom: 24,
+    marginBottom: 16,
     backgroundColor: colors.white,
     borderRadius: 16,
     overflow: 'hidden',
-    paddingBottom: 16,
   },
   imageWrap: {
     margin: 16,
@@ -154,8 +136,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   tabContent: {
+    flex: 1,
     paddingHorizontal: 16,
-    minHeight: 80,
+    paddingBottom: 8,
   },
   descriptionText: {
     fontSize: 13,
@@ -188,6 +171,9 @@ const styles = StyleSheet.create({
   footer: {
     paddingHorizontal: 16,
     paddingTop: 8,
+    paddingBottom: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#F0F0F0',
   },
   cartRow: {
     flexDirection: 'row',

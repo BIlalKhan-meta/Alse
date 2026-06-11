@@ -1,49 +1,57 @@
 import React, {useEffect, useState} from 'react';
-import {FlatList, Image, View, StyleSheet, Text} from 'react-native';
+import {FlatList, Image, View, StyleSheet} from 'react-native';
 import {colors} from '../../utils/theme';
 import {fontSizes, vh, vw} from '../../constant';
-
 import {images} from '../../utils/images';
 import HorizontalSeparator from '../HorizontalSeparator';
-import {reviews} from '../../dummyData';
 import InterBoldLabel from '../Text/InterBoldLabel';
 import InterRegularSmallest from '../Text/InterRegularSmallest';
-import InterRegular from '../Text/InterRegular';
 import {productRating} from '../../api/product';
 import {EmptyComponent} from '../EmptyComponent';
 import Loader from '../Loader';
 
-interface Review {
-  id: number;
-  userAvatar: string;
-  userName: string;
-  rating: number;
-  reviewText: string;
-  date: string;
-}
+type RatingandReviewComponentProps = {
+  id?: number | string;
+  embedded?: boolean;
+};
 
-const RatingandReviewComponent: React.FC = ({id}) => {
-  const [reviews, setReviews] = useState([]);
+const RatingandReviewComponent: React.FC<RatingandReviewComponentProps> = ({
+  id,
+  embedded = false,
+}) => {
+  const [reviews, setReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (id) {
-      getData();
+    if (!id) {
+      return;
     }
+
+    let cancelled = false;
+
+    const getData = async () => {
+      setLoading(true);
+      try {
+        const res = await productRating(id);
+        if (!cancelled && res?.data) {
+          setReviews(res?.data?.data?.data ?? []);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    getData();
+
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
-  const getData = async () => {
-    setLoading(true);
-    await productRating(id).then(res => {
-      if (res?.data) {
-        setReviews(res?.data?.data?.data);
-      }
-    });
-    setLoading(false);
-  };
-
-  const renderReviewItem = ({item}) => (
-    <View style={styles.mainContainer} key={item.id}>
+  const renderReviewItem = (item: any) => (
+    <View style={styles.mainContainer} key={String(item.id)}>
       <View style={styles.ratingPersonInfoContainer}>
         <Image
           source={item?.avatar ? {uri: item?.avatar} : images.user}
@@ -73,18 +81,22 @@ const RatingandReviewComponent: React.FC = ({id}) => {
     return <Loader />;
   }
 
-  if (reviews.length == 0) {
+  if (reviews.length === 0) {
     return <EmptyComponent text={'No Reviews Available'} />;
+  }
+
+  if (embedded) {
+    return <View style={styles.container}>{reviews.map(renderReviewItem)}</View>;
   }
 
   return (
     <View style={styles.container}>
       <FlatList
-        data={props?.reviews}
-        renderItem={renderReviewItem}
-        keyExtractor={item => item.id.toString()}
+        data={reviews}
+        renderItem={({item}) => renderReviewItem(item)}
+        keyExtractor={item => String(item.id)}
         contentContainerStyle={styles.listContainer}
-        ListEmptyComponent={renderEmpty}
+        ListEmptyComponent={<EmptyComponent text={'No Reviews Available'} />}
       />
     </View>
   );
@@ -95,7 +107,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     paddingVertical: vh * 1,
     paddingHorizontal: vw * 2,
-    // flex: 1,
     flexGrow: 1,
   },
   listContainer: {
@@ -137,9 +148,6 @@ const styles = StyleSheet.create({
   },
   rating: {
     marginLeft: vw * 0.5,
-  },
-  flatList: {
-    flex: 1,
   },
 });
 
