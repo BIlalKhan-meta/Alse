@@ -1,183 +1,256 @@
-import {Platform, StyleSheet} from 'react-native';
-import {fontSizes, vh, vw} from '../../../constant';
+import {StyleSheet} from 'react-native';
 import {colors} from '../../../utils/theme';
-import fonts from '../../../assets/fonts';
+
+export const PRODUCT_VIEW_BG = '#EFF4F7';
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.headerColor,
-    // paddingHorizontal: 15,
-    paddingTop: Platform.OS == 'ios' ? vh * 6 : 0,
-    // marginBottom: vh * 30,
-    // paddingBottom: 60,
-    //iff ios will createe issue then i have to open height only for ios
-    // height: vh * 100
+    backgroundColor: PRODUCT_VIEW_BG,
   },
-  cardContainer: {
-    flexGrow: 1,
-    margin: vh * 2,
-    // backgroundColor:"yellow"
-  },
-  contentContainer: {
-    // flex:1,
-    height: vh * 100,
-  },
-  activeContainer: {
+  headerWrap: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
     alignItems: 'center',
-  },
-  activeBtn: {
-    backgroundColor: colors.btnColor,
-    paddingHorizontal: vw * 3,
-    paddingVertical: vw * 2,
-    borderRadius: 5,
-  },
-  activeTxt: {
-    fontSize: fontSizes.f14,
-    color: colors.white,
-  },
-  InactiveBtn: {
-    // backgroundColor: colors.themeColor
-  },
-  InactiveTxt: {
-    fontSize: fontSizes.f14,
-    color: colors.black,
-  },
-
-  mainheading: {
-    fontSize: fontSizes.f16,
-    color: colors.black,
-  },
-  sortConatiner: {
-    flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: vh * 2,
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 8,
   },
-  heading: {
-    color: colors.inputText,
-    fontSize: fontSizes.f14,
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
   },
-  label: {
-    // fontSize:fontSizes.f14,
-    alignSelf: 'flex-start',
-    // marginLeft:vw*8,
-    marginTop: vh * 2,
+  backButton: {
+    marginRight: 8,
+    padding: 4,
+  },
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: '700',
     color: colors.black,
-    fontSize: fontSizes.f14,
   },
-  pickercontainer: {
-    // fontFamily: fonts.Inter.Bold,
-    color: colors.inputText,
-    fontSize: fontSizes.f11,
-    height: vh * 6,
-    marginTop: vh * 2,
-    width: vw * 55,
-    // fontWeight: '200',
-    borderColor: colors.inputcolor,
-    borderWidth: 1,
-    borderRadius: 5,
-    paddingHorizontal: 10,
-    backgroundColor: colors.inputcolor,
-    // backgroundColor: "yellow"
+  shareButton: {
+    padding: 4,
   },
-  imageStyle: {
+  scrollView: {
+    flex: 1,
+  },
+  contentCard: {
+    marginHorizontal: 16,
+    marginBottom: 24,
+    backgroundColor: colors.white,
+    borderRadius: 16,
+    overflow: 'hidden',
+    paddingBottom: 16,
+  },
+  imageWrap: {
+    margin: 16,
+    marginBottom: 12,
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: '#F3F3F3',
+    height: 220,
+    position: 'relative',
+  },
+  productImage: {
     width: '100%',
     height: '100%',
-    // borderRadius: 10
   },
-  banner: {
-    // width: vw * 90,
-    height: vh * 40,
-    // top: 0,
-    // position: "absolute"
+  heartButton: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    zIndex: 2,
   },
-
-  headericonButton: {
-    marginRight: vw * 2.1,
-    marginTop: vh * 2,
-    width: vw * 5.5,
-    height: vh * 5,
+  negotiableBadge: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    backgroundColor: colors.blue,
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    zIndex: 2,
   },
-  headericonStyle: {
-    // marginLeft: vw * 2,
-    width: vw * 5,
-    height: vh * 2.5,
-  },
-  headerBtn: {
-    width: vw * 30,
-    height: vh * 5,
-    backgroundColor: colors.btnColor,
-    borderRadius: vw * 2,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerBtnTxt: {
+  negotiableText: {
     color: colors.white,
-    fontSize: fontSizes.f13,
+    fontSize: 10,
+    fontWeight: '600',
   },
-  productDetails: {
-    marginTop: vh * 1.5,
-    width: '100%',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  carouselButton: {
+    position: 'absolute',
+    top: '50%',
+    marginTop: -14,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.9)',
     alignItems: 'center',
-    // backgroundColor: "yellow"
+    justifyContent: 'center',
+    zIndex: 2,
+  },
+  carouselButtonLeft: {
+    left: 8,
+  },
+  carouselButtonRight: {
+    right: 8,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    marginBottom: 6,
+    gap: 12,
   },
   productName: {
-    fontSize: fontSizes.f18,
+    flex: 1,
+    fontSize: 18,
+    fontWeight: '700',
     color: colors.black,
-    textTransform: 'capitalize',
   },
-  priceContainer: {
-    flexDirection: 'row',
+  priceBlock: {
+    alignItems: 'flex-end',
   },
-  ratingTxt: {
-    fontSize: fontSizes.f12,
-    color: colors.darkGray,
+  ratingText: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 2,
   },
   productPrice: {
-    fontSize: fontSizes.f12,
+    fontSize: 18,
+    fontWeight: '700',
     color: colors.black,
-    fontWeight: 'bold',
-    paddingLeft: vw * 2,
   },
-  vendorContainer: {
-    flexDirection: 'row',
-    marginVertical: vh * 1,
-  },
-  vendorTxt: {
-    fontSize: fontSizes.f14,
-    color: colors.darkGray,
-  },
-  bulletTextContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginLeft: vw * 4,
-  },
-  bullet: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: colors.darkGray,
-    marginRight: 8,
-  },
-  buttonText: {
-    color: colors.black,
-    fontSize: fontSizes.f40,
+  metaText: {
+    fontSize: 13,
+    color: '#666',
+    paddingHorizontal: 16,
+    marginBottom: 16,
   },
   tabBar: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginVertical: vh * 2,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ECECEC',
+    marginBottom: 12,
+  },
+  tab: {
+    marginRight: 20,
+    paddingBottom: 10,
   },
   activeTab: {
-    borderBottomWidth: 3,
+    borderBottomWidth: 2,
     borderBottomColor: colors.themeColor,
   },
-  activeText: {
+  tabText: {
+    fontSize: 14,
+    color: '#666',
+    fontWeight: '500',
+  },
+  activeTabText: {
     color: colors.themeColor,
+    fontWeight: '600',
+  },
+  tabContent: {
+    paddingHorizontal: 16,
+    minHeight: 80,
+  },
+  descriptionText: {
+    fontSize: 13,
+    color: '#666',
+    lineHeight: 20,
+    marginBottom: 16,
+  },
+  selectorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    marginBottom: 12,
+  },
+  selectorLabel: {
+    fontSize: 14,
+    color: colors.black,
+    fontWeight: '600',
+    marginRight: 8,
+  },
+  selectorOption: {
+    fontSize: 14,
+    color: '#666',
+    marginRight: 14,
+    paddingVertical: 2,
+  },
+  selectorOptionActive: {
+    color: colors.themeColor,
+    fontWeight: '600',
+  },
+  footer: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
+  },
+  cartRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 12,
+  },
+  quantityWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  quantityButton: {
+    padding: 4,
+  },
+  quantityValue: {
+    minWidth: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: colors.themeColor,
+    color: colors.white,
+    fontSize: 14,
+    fontWeight: '700',
+    textAlign: 'center',
+    lineHeight: 28,
+    overflow: 'hidden',
+  },
+  addToCartButton: {
+    flex: 1,
+    backgroundColor: colors.themeColor,
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addToCartText: {
+    color: colors.white,
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  offerButton: {
+    borderWidth: 1,
+    borderColor: colors.themeColor,
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.white,
+  },
+  offerButtonText: {
+    color: colors.themeColor,
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 40,
+  },
+  emptyText: {
+    fontSize: 15,
+    color: '#666',
+    textAlign: 'center',
   },
 });
 
