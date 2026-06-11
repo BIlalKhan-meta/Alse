@@ -8,16 +8,13 @@ import React, {
 import {
   View,
   Text,
-  StyleSheet,
   Image,
   TouchableOpacity,
   ScrollView,
-  Linking,
-  Modal,
   ActivityIndicator,
+  SafeAreaView,
 } from 'react-native';
 import {images} from '../../../utils/images';
-import {BASE_URL} from '../../../utils/baseurl';
 import {colors} from '../../../utils/theme';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {getProductByShop, shopDetail} from '../../../api/shop';
@@ -25,189 +22,32 @@ import Loader from '../../../components/Loader';
 import FilterSelectModal from '../../../components/FilterSelectModal';
 import ReportBlockModal from '../../../components/ReportBlockModal';
 import GeneralModal from '../../../components/GeneralModal';
-import {createChat, reportPost} from '../../../api/home';
+import {reportPost} from '../../../api/home';
 import {getMessage, Toast} from '../../../utils/helpers';
-import {MessageCircle, HelpCircle, Mail, Share2, X} from 'lucide-react-native';
-import GlobalHeader from '../../../components/GlobalHeader';
-import ShopProductListRow from '../../../components/ShopProductListRow';
+import HeaderComponent from '../../../components/HeaderComponent';
+import ShopProductGridCard from '../../../components/ShopProductGridCard';
+import shopScreenStyles from '../../Shop/shopScreenStyles';
+import {
+  extractShopDetailPayload,
+  isRemoteImageUrl,
+  pickBannerUrl,
+} from '../../../utils/shopMedia';
+import {
+  filterShopProductsByCategory,
+  getProductCategoryLabel,
+  ShopProductSortValue,
+  sortShopProducts,
+} from '../../../utils/shopProductCard';
+import {addProductToCart} from '../../../api/product';
+import {removeSavedItem, saveItem} from '../../../api/menu';
 
-const filterCategories = [
-  {label: 'All categories', value: 'all'},
-  {label: 'Tech & Gadgets', value: 'tech'},
-  {label: 'Fashion & Apparel', value: 'fashion'},
-  {label: 'Home & Garden', value: 'home'},
-  {label: 'Sports & Outdoors', value: 'sports'},
-  {label: 'Books & Media', value: 'books'},
-  {label: 'Electronics', value: 'electronics'},
-  {label: 'Health & Beauty', value: 'health'},
-  {label: 'Toys & Games', value: 'toys'},
-  {label: 'Automotive', value: 'automotive'},
-  {label: 'Food & Beverages', value: 'food'},
-  {label: 'Office Supplies', value: 'office'},
-  {label: 'Other', value: 'other'},
+const sortOptions = [
+  {label: 'Product name (a-z)', value: 'name_asc'},
+  {label: 'Product name (z-a)', value: 'name_desc'},
+  {label: 'Price (low to high)', value: 'price_asc'},
+  {label: 'Price (high to low)', value: 'price_desc'},
+  {label: 'Newest first', value: 'newest'},
 ];
-
-const filterPrices = [
-  {label: 'Any price', value: 'any'},
-  {label: 'Under $25', value: 'under_25'},
-  {label: '$25 – $50', value: '25_50'},
-  {label: '$50 – $100', value: '50_100'},
-  {label: '$100 – $250', value: '100_250'},
-  {label: '$250 – $500', value: '250_500'},
-  {label: 'Over $500', value: 'over_500'},
-];
-
-const filterLocations = [
-  {label: 'Any location', value: 'any'},
-  {label: 'Local', value: 'local'},
-  {label: 'National', value: 'national'},
-  {label: 'International', value: 'international'},
-  {label: 'Same city', value: 'same_city'},
-  {label: 'Same state', value: 'same_state'},
-  {label: 'Worldwide', value: 'worldwide'},
-];
-
-const filterRatings = [
-  {label: 'Any rating', value: 'any'},
-  {label: '5 stars', value: '5'},
-  {label: '4+ stars', value: '4'},
-  {label: '3+ stars', value: '3'},
-  {label: '2+ stars', value: '2'},
-  {label: '1+ stars', value: '1'},
-];
-
-const filterConfig = [
-  {key: 'category', placeholder: 'Categories', items: filterCategories},
-  {key: 'price', placeholder: 'Prices', items: filterPrices},
-  {key: 'location', placeholder: 'Locations', items: filterLocations},
-  {key: 'rating', placeholder: 'Ratings', items: filterRatings},
-];
-
-function isRemoteImageUrl(url?: string | null): boolean {
-  return (
-    typeof url === 'string' &&
-    (url.startsWith('http://') || url.startsWith('https://'))
-  );
-}
-
-/**
- * Normalizes GET /shop/:id responses. Typical shape:
- * `{ status, message, data: { id, user_id, shop_name, banner, avatar, ... } }`
- * (axios `res.data` = that object, shop = `res.data.data`).
- * Also supports nested `data.data` and unwrapped shop objects on `res.data`.
- */
-function extractShopDetailPayload(res: any): Record<string, any> {
-  const body = res?.data;
-  if (!body || typeof body !== 'object') {
-    return {};
-  }
-
-  const outer = (body as any).data;
-  if (outer == null) {
-    if (
-      (body as any).banner != null ||
-      (body as any).avatar != null ||
-      (body as any).shop_name != null ||
-      typeof (body as any).id === 'number'
-    ) {
-      return body as Record<string, any>;
-    }
-    return {};
-  }
-  if (Array.isArray(outer)) {
-    const first = outer[0];
-    return first && typeof first === 'object' ? first : {};
-  }
-  if (typeof outer !== 'object') {
-    return {};
-  }
-
-  if (outer.shop && typeof outer.shop === 'object' && !Array.isArray(outer.shop)) {
-    return outer.shop;
-  }
-
-  const inner = (outer as any).data;
-  if (inner && typeof inner === 'object' && !Array.isArray(inner)) {
-    if (Array.isArray(inner.data) && inner.data.length > 0) {
-      const row = inner.data[0];
-      if (
-        row &&
-        typeof row === 'object' &&
-        (row.banner != null ||
-          row.avatar != null ||
-          row.shop_name != null ||
-          typeof row.id === 'number')
-      ) {
-        return row;
-      }
-    }
-    if (
-      !Array.isArray(inner.data) &&
-      (inner.banner != null ||
-        inner.avatar != null ||
-        inner.shop_name != null ||
-        inner.user_id != null ||
-        typeof inner.id === 'number')
-    ) {
-      return inner;
-    }
-  }
-
-  return outer as Record<string, any>;
-}
-
-function resolveShopMediaUrl(value?: string | null): string | undefined {
-  if (value == null || typeof value !== 'string') {
-    return undefined;
-  }
-  const v = value.trim();
-  if (!v) {
-    return undefined;
-  }
-  if (v.startsWith('http://') || v.startsWith('https://')) {
-    try {
-      const baseHost = new URL(BASE_URL).host;
-      const parsed = new URL(v);
-      if (parsed.protocol === 'http:' && parsed.host === baseHost) {
-        return `https://${parsed.host}${parsed.pathname}${parsed.search}${parsed.hash}`;
-      }
-    } catch {
-      /* ignore URL parse errors */
-    }
-    return v;
-  }
-  if (v.startsWith('//')) {
-    return `https:${v}`;
-  }
-  const root = BASE_URL.replace(/\/api\/?$/i, '');
-  if (v.startsWith('/')) {
-    return `${root}${v}`;
-  }
-  return `${root}/${v}`;
-}
-
-function pickBannerUrl(shop: Record<string, any>): string | undefined {
-  const raw =
-    shop?.banner ??
-    shop?.shop_banner ??
-    shop?.banner_url ??
-    shop?.cover_image ??
-    shop?.cover ??
-    shop?.shop?.banner ??
-    shop?.user?.banner ??
-    shop?.user?.cover_photo;
-  return resolveShopMediaUrl(raw);
-}
-
-function pickAvatarUrl(shop: Record<string, any>): string | undefined {
-  const raw =
-    shop?.avatar ??
-    shop?.shop_avatar ??
-    shop?.logo ??
-    shop?.image ??
-    shop?.user?.avatar;
-  return resolveShopMediaUrl(raw);
-}
 
 const Shop: React.FC = () => {
   const navigation = useNavigation();
@@ -219,44 +59,22 @@ const Shop: React.FC = () => {
   const [shopDetails, setShopDetails] = useState<any>({});
   const [shopProducts, setShopProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [_filter, _setFilter] = useState('');
   const [reportVisible, setReportVisible] = useState({
     visibility: false,
     id: null,
   });
   const [reportLoader, setReportLoader] = useState(false);
-  const [storeInfoVisible, setStoreInfoVisible] = useState(false);
-  const [chatLoader, setChatLoader] = useState(false);
-  const [filterModalOpen, setFilterModalOpen] = useState<string | null>(null);
-  const [filterValues, setFilterValues] = useState<Record<string, string>>({
-    category: 'all',
-    price: 'any',
-    location: 'any',
-    rating: 'any',
-  });
+  const [filterModalOpen, setFilterModalOpen] = useState<
+    'category' | 'sort' | null
+  >(null);
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [sortFilter, setSortFilter] =
+    useState<ShopProductSortValue>('name_asc');
   const [bannerError, setBannerError] = useState(false);
-  const [avatarError, setAvatarError] = useState(false);
   const [bannerLoaded, setBannerLoaded] = useState(false);
-  const [avatarLoaded, setAvatarLoaded] = useState(false);
-
-  const sellerId = shopDetails?.user_id ?? shopDetails?.user?.id;
-  const sellerName =
-    shopDetails?.user?.full_name ??
-    shopDetails?.user?.name ??
-    shopDetails?.shop_name ??
-    'Store';
-  const sellerPhone =
-    shopDetails?.user?.phone_number ?? shopDetails?.phone_number ?? '';
-  const sellerEmail =
-    shopDetails?.user?.email ?? shopDetails?.email ?? '';
 
   const resolvedBannerUrl = useMemo(
     () => pickBannerUrl(shopDetails),
-    [shopDetails],
-  );
-
-  const resolvedAvatarUrl = useMemo(
-    () => pickAvatarUrl(shopDetails),
     [shopDetails],
   );
 
@@ -267,69 +85,38 @@ const Shop: React.FC = () => {
     return images.shopCover;
   }, [resolvedBannerUrl, bannerError]);
 
-  const avatarSource = useMemo(() => {
-    if (resolvedAvatarUrl && isRemoteImageUrl(resolvedAvatarUrl) && !avatarError) {
-      return {uri: resolvedAvatarUrl};
-    }
-    return images.shop11;
-  }, [resolvedAvatarUrl, avatarError]);
-
   const isBannerRemote =
     Boolean(resolvedBannerUrl && isRemoteImageUrl(resolvedBannerUrl)) &&
     !bannerError;
-  const isAvatarRemote =
-    Boolean(resolvedAvatarUrl && isRemoteImageUrl(resolvedAvatarUrl)) &&
-    !avatarError;
   const showBannerLoader = isBannerRemote && !bannerLoaded;
-  const showAvatarLoader = isAvatarRemote && !avatarLoaded;
 
-  const handleChatPress = useCallback(async () => {
-    if (!sellerId) {
-      Toast.error('Unable to start chat with this store.');
-      return;
-    }
-    setChatLoader(true);
-    try {
-      const res = await createChat({user_id: sellerId});
-      setChatLoader(false);
-      (navigation as any).navigate('ChatOngoing', {
-        id: res?.data?.data?.id,
-        receiverId: sellerId,
-        name: sellerName,
-        phoneNumber: sellerPhone,
-        user: {
-          id: sellerId,
-          avatar: resolvedAvatarUrl ?? shopDetails?.avatar ?? shopDetails?.image,
-        },
-      });
-    } catch (err) {
-      setChatLoader(false);
-      Toast.error(getMessage((err as any)?.message));
-    }
-  }, [
-    sellerId,
-    sellerName,
-    sellerPhone,
-    navigation,
-    resolvedAvatarUrl,
-    shopDetails?.avatar,
-    shopDetails?.image,
-  ]);
+  const categoryOptions = useMemo(() => {
+    const categories = new Set<string>();
+    shopProducts.forEach(product => {
+      const label = getProductCategoryLabel(product);
+      if (label) {
+        categories.add(label);
+      }
+    });
+    return [
+      {label: 'All', value: 'all'},
+      ...Array.from(categories).map(label => ({label, value: label})),
+    ];
+  }, [shopProducts]);
 
-  const handleStoreInfoPress = useCallback(() => {
-    setStoreInfoVisible(true);
-  }, []);
+  const displayedProducts = useMemo(() => {
+    const filtered = filterShopProductsByCategory(
+      shopProducts,
+      categoryFilter,
+    );
+    return sortShopProducts(filtered, sortFilter);
+  }, [shopProducts, categoryFilter, sortFilter]);
 
-  const handleMailPress = useCallback(() => {
-    const email = sellerEmail?.trim();
-    if (email) {
-      Linking.openURL(`mailto:${email}`).catch(() => {
-        Toast.error('Could not open mail app.');
-      });
-    } else {
-      Toast.error('No email provided from store owner');
-    }
-  }, [sellerEmail]);
+  const selectedCategoryLabel =
+    categoryOptions.find(item => item.value === categoryFilter)?.label || 'All';
+  const selectedSortLabel =
+    sortOptions.find(item => item.value === sortFilter)?.label ||
+    'Product name (a-z)';
 
   const handleReportPress = () => {
     setModalVisible(false);
@@ -338,7 +125,7 @@ const Shop: React.FC = () => {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerShown: false, // Hide the default header
+      headerShown: false,
     });
   }, [navigation]);
 
@@ -351,9 +138,7 @@ const Shop: React.FC = () => {
       setShopDetails(extractShopDetailPayload(res));
       setShopProducts(res2?.data?.data?.data || []);
       setBannerError(false);
-      setAvatarError(false);
       setBannerLoaded(false);
-      setAvatarLoaded(false);
     } catch (error) {
       console.error('Error fetching shop data:', error);
     } finally {
@@ -373,7 +158,7 @@ const Shop: React.FC = () => {
       reason: `${shopId} Store Report`,
     };
 
-    let formData = new FormData();
+    const formData = new FormData();
     Object.entries(data).forEach(item => {
       formData.append(item[0], item[1]);
     });
@@ -400,37 +185,92 @@ const Shop: React.FC = () => {
     }
   };
 
+  const handleToggleSave = async (productId: number, isSaved: boolean) => {
+    setShopProducts(prev =>
+      prev.map(item =>
+        item.id === productId ? {...item, is_saved: !isSaved} : item,
+      ),
+    );
+
+    const form = new FormData();
+    form.append('item_id', String(productId));
+    form.append('item_type', 'product');
+
+    try {
+      if (isSaved) {
+        await removeSavedItem(form);
+      } else {
+        await saveItem(form);
+      }
+    } catch (err) {
+      setShopProducts(prev =>
+        prev.map(item =>
+          item.id === productId ? {...item, is_saved: isSaved} : item,
+        ),
+      );
+      Toast.error(getMessage((err as any)?.message));
+    }
+  };
+
+  const handleAddToCart = async (product: Record<string, any>) => {
+    if (!product?.id) {
+      return;
+    }
+
+    const form = new FormData();
+    if (Array.isArray(product?.sizes) && product.sizes[0]?.size) {
+      form.append('size', product.sizes[0].size);
+    }
+    if (Array.isArray(product?.colors) && product.colors[0]?.color) {
+      form.append('colors', product.colors[0].color);
+    }
+
+    try {
+      const response = await addProductToCart(product.id, form);
+      Toast.success(
+        response?.data?.message || 'Product added to cart successfully.',
+      );
+    } catch (err) {
+      Toast.error(getMessage((err as any)?.message));
+    }
+  };
+
   if (loading) {
     return <Loader />;
   }
 
-  const options = [
+  const menuOptions = [
     {
       text: 'Report Shop',
-      onPress: () => {
-        handleReportPress();
-      },
+      onPress: handleReportPress,
     },
   ];
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-
-      <View style={styles.headerContainer}>
-        <GlobalHeader icon={true} />
+    <SafeAreaView style={shopScreenStyles.container}>
+      <View style={shopScreenStyles.headerWrap}>
+        <HeaderComponent
+          label="Shop"
+          back
+          dots
+          notifiVisible={false}
+          chatVisible={false}
+          searchVisible={false}
+          onBackPress={() => navigation.goBack()}
+          onDotPress={() => setModalVisible(true)}
+          onNofiPress={() => {}}
+          onChatPress={() => {}}
+        />
       </View>
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        style={styles.scrollView}>
-        {/* Store Profile Section */}
-        <View style={styles.storeProfileSection}>
-          {/* Banner */}
-          <View style={styles.bannerContainer}>
+        style={shopScreenStyles.scrollView}>
+        <View style={shopScreenStyles.contentCard}>
+          <View style={shopScreenStyles.bannerWrap}>
             <Image
               source={bannerSource}
-              style={styles.bannerImage}
+              style={shopScreenStyles.bannerImage}
               resizeMode="cover"
               onLoadEnd={() => setBannerLoaded(true)}
               onError={() => {
@@ -440,159 +280,96 @@ const Shop: React.FC = () => {
             />
             {showBannerLoader ? (
               <View
-                style={styles.bannerLoaderOverlay}
+                style={shopScreenStyles.bannerLoaderOverlay}
                 pointerEvents="none">
                 <ActivityIndicator size="large" color={colors.themeColor} />
               </View>
             ) : null}
-
-            {/* Store Avatar */}
-            <View style={styles.avatarContainer}>
-              <Image
-                source={avatarSource}
-                style={styles.avatarImage}
-                resizeMode="cover"
-                onLoadEnd={() => setAvatarLoaded(true)}
-                onError={() => {
-                  setAvatarError(true);
-                  setAvatarLoaded(true);
-                }}
-              />
-              {showAvatarLoader ? (
-                <View
-                  style={styles.avatarLoaderOverlay}
-                  pointerEvents="none">
-                  <ActivityIndicator size="small" color={colors.themeColor} />
-                </View>
-              ) : null}
-            </View>
           </View>
 
-          {/* Store Info */}
-          <View style={styles.storeInfoContainer}>
-            <View style={styles.storeInfoLeft}>
-              <Text style={styles.storeName}>
-                {shopDetails?.shop_name || 'Razor'}
-              </Text>
-              <Text style={styles.storeCategory}>Tech, Gadgets</Text>
-            </View>
-            {/* <TouchableOpacity
-              style={styles.addProductsButton}
-              onPress={() =>
-                (navigation as any).navigate('AddProduct', {shopId: shopId})
-              }>
-              <Text style={styles.addProductsButtonText}>Add Products</Text>
-            </TouchableOpacity> */}
-          </View>
+          <Text style={shopScreenStyles.shopName}>
+            {shopDetails?.shop_name || 'Shop Name'}
+          </Text>
 
-          {/* Store Stats */}
-          <View style={styles.storeStatsContainer}>
-            {/* <View style={styles.statItem}>
-              <Text style={styles.statNumber}>124</Text>
-              <Text style={styles.statLabel}>Followers</Text>
-            </View> */}
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{shopProducts.length}</Text>
-              <Text style={styles.statLabel}>Products</Text>
-            </View>
-            <TouchableOpacity style={styles.shareButton}>
-              <Share2 size={16} color="#333" />
-              <Text style={styles.shareText}>Share store on Alse Feed</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Action Buttons */}
-        <View style={styles.actionButtonsContainer}>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={handleChatPress}
-            disabled={chatLoader}>
-            {chatLoader ? (
-              <ActivityIndicator size="small" color={colors.themeColor} />
-            ) : (
-              <MessageCircle size={24} color={colors.themeColor} />
-            )}
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={handleStoreInfoPress}>
-            <HelpCircle size={24} color={colors.themeColor} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={handleMailPress}>
-            <Mail size={24} color={colors.themeColor} />
-          </TouchableOpacity>
-        </View>
-
-        {/* Filter Bar */}
-        <View style={styles.filterBar}>
-          {filterConfig.map(filter => {
-            const selectedItem = filter.items.find(
-              i => i.value === filterValues[filter.key],
-            ) || filter.items[0];
-            return (
+          <View style={shopScreenStyles.filterRow}>
+            <View style={shopScreenStyles.filterCol}>
+              <Text style={shopScreenStyles.filterLabel}>Category:</Text>
               <TouchableOpacity
-                key={filter.key}
-                style={styles.filterItem}
-                onPress={() => setFilterModalOpen(filter.key)}>
-                <Text style={styles.filterDropdownText} numberOfLines={1}>
-                  {selectedItem?.label || filter.placeholder}
+                style={shopScreenStyles.filterDropdown}
+                onPress={() => setFilterModalOpen('category')}>
+                <Text
+                  style={shopScreenStyles.filterDropdownText}
+                  numberOfLines={1}>
+                  {selectedCategoryLabel}
                 </Text>
-                <Text style={styles.filterDropdownArrow}>▼</Text>
+                <Text style={shopScreenStyles.filterDropdownArrow}>▼</Text>
               </TouchableOpacity>
-            );
-          })}
-        </View>
+            </View>
 
-        {/* Filter Modals */}
-        {filterConfig.map(filter => (
-          <FilterSelectModal
-            key={filter.key}
-            visible={filterModalOpen === filter.key}
-            onClose={() => setFilterModalOpen(null)}
-            title={`Select ${filter.placeholder.toLowerCase()}`}
-            items={filter.items}
-            selectedValue={filterValues[filter.key] ?? filter.items[0]?.value}
-            onSelect={value =>
-              setFilterValues(prev => ({...prev, [filter.key]: value}))
-            }
-          />
-        ))}
+            <View style={shopScreenStyles.filterCol}>
+              <Text style={shopScreenStyles.filterLabel}>Sort by:</Text>
+              <TouchableOpacity
+                style={shopScreenStyles.filterDropdown}
+                onPress={() => setFilterModalOpen('sort')}>
+                <Text
+                  style={shopScreenStyles.filterDropdownText}
+                  numberOfLines={1}>
+                  {selectedSortLabel}
+                </Text>
+                <Text style={shopScreenStyles.filterDropdownArrow}>▼</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
 
-        {/* Products Section */}
-        <View style={styles.productsSection}>
-          <Text style={styles.productsTitle}>Recently Listed Products</Text>
-
-          {shopProducts.length > 0 ? (
-            shopProducts.map((product, index) =>
-              product?.id != null ? (
-                <ShopProductListRow
-                  key={product.id}
-                  product={product}
-                  onPress={() =>
-                    (navigation as any).navigate('ProductView', {
-                      productId: product.id,
-                    })
-                  }
-                />
-              ) : (
-                <ShopProductListRow key={index} product={product} />
-              ),
-            )
+          {displayedProducts.length > 0 ? (
+            <View style={shopScreenStyles.productGrid}>
+              {displayedProducts.map(product =>
+                product?.id != null ? (
+                  <View key={product.id} style={shopScreenStyles.productGridItem}>
+                    <ShopProductGridCard
+                      product={product}
+                      onPress={() =>
+                        (navigation as any).navigate('ProductView', {
+                          productId: product.id,
+                        })
+                      }
+                      onToggleSave={handleToggleSave}
+                      onAddToCart={handleAddToCart}
+                    />
+                  </View>
+                ) : null,
+              )}
+            </View>
           ) : (
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>No products available</Text>
+            <View style={shopScreenStyles.emptyContainer}>
+              <Text style={shopScreenStyles.emptyText}>
+                No products available
+              </Text>
             </View>
           )}
         </View>
       </ScrollView>
 
-      {/* Modals */}
+      <FilterSelectModal
+        visible={filterModalOpen === 'category'}
+        onClose={() => setFilterModalOpen(null)}
+        title="Select category"
+        items={categoryOptions}
+        selectedValue={categoryFilter}
+        onSelect={value => setCategoryFilter(value)}
+      />
+      <FilterSelectModal
+        visible={filterModalOpen === 'sort'}
+        onClose={() => setFilterModalOpen(null)}
+        title="Sort products"
+        items={sortOptions}
+        selectedValue={sortFilter}
+        onSelect={value => setSortFilter(value as ShopProductSortValue)}
+      />
+
       <ReportBlockModal
         isVisible={modalVisible}
-        options={options}
+        options={menuOptions}
         onClose={() => setModalVisible(false)}
         style={{}}
       />
@@ -628,314 +405,8 @@ const Shop: React.FC = () => {
         primaryBtn={true}
         redImage={true}
       />
-
-      {/* Store Info Modal */}
-      <Modal
-        visible={storeInfoVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setStoreInfoVisible(false)}>
-        <TouchableOpacity
-          style={styles.storeInfoOverlay}
-          activeOpacity={1}
-          onPress={() => setStoreInfoVisible(false)}>
-          <TouchableOpacity
-            activeOpacity={1}
-            onPress={() => {}}
-            style={styles.storeInfoModal}>
-            <View style={styles.storeInfoHeader}>
-              <Text style={styles.storeInfoTitle}>Store info</Text>
-              <TouchableOpacity
-                onPress={() => setStoreInfoVisible(false)}
-                hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
-                <X size={24} color="#333" />
-              </TouchableOpacity>
-            </View>
-            <ScrollView
-              style={styles.storeInfoScroll}
-              showsVerticalScrollIndicator={false}>
-              <Text style={styles.storeInfoLabel}>Store name</Text>
-              <Text style={styles.storeInfoValue}>
-                {shopDetails?.shop_name || '—'}
-              </Text>
-              <Text style={styles.storeInfoLabel}>Category</Text>
-              <Text style={styles.storeInfoValue}>
-                {shopDetails?.category || '—'}
-              </Text>
-              {(shopDetails?.description || shopDetails?.bio) && (
-                <>
-                  <Text style={styles.storeInfoLabel}>Description</Text>
-                  <Text style={styles.storeInfoValue}>
-                    {shopDetails?.description || shopDetails?.bio || '—'}
-                  </Text>
-                </>
-              )}
-              {sellerName && sellerName !== 'Store' && (
-                <>
-                  <Text style={styles.storeInfoLabel}>Seller</Text>
-                  <Text style={styles.storeInfoValue}>{sellerName}</Text>
-                </>
-              )}
-            </ScrollView>
-          </TouchableOpacity>
-        </TouchableOpacity>
-      </Modal>
-    </View>
+    </SafeAreaView>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8f8f8',
-  },
-  headerContainer: {
-    paddingHorizontal: 12,
-    paddingTop: 8,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    paddingBottom: 16,
-    backgroundColor: 'white',
-  },
-  backIcon: {
-    width: 24,
-    height: 24,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: colors.themeColor,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  storeProfileSection: {
-    backgroundColor: 'white',
-    marginBottom: 16,
-  },
-  bannerContainer: {
-    position: 'relative',
-    height: 180,
-  },
-  bannerImage: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
-  bannerLoaderOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#ececec',
-    zIndex: 1,
-  },
-  avatarContainer: {
-    position: 'absolute',
-    bottom: -30,
-    left: 16,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    borderWidth: 3,
-    borderColor: 'white',
-    overflow: 'hidden',
-    zIndex: 2,
-  },
-  avatarImage: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
-  avatarLoaderOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#ececec',
-    zIndex: 1,
-  },
-  storeInfoContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    paddingHorizontal: 16,
-    paddingTop: 40,
-    paddingBottom: 16,
-  },
-  storeInfoLeft: {
-    flex: 1,
-  },
-  storeName: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 4,
-  },
-  storeCategory: {
-    fontSize: 14,
-    color: '#666',
-  },
-  editButton: {
-    padding: 8,
-  },
-  addProductsButton: {
-    backgroundColor: '#00A19D',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 6,
-  },
-  addProductsButtonText: {
-    color: 'white',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  storeStatsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-  },
-  statItem: {
-    marginRight: 24,
-  },
-  statNumber: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  statLabel: {
-    fontSize: 12,
-    color: '#666',
-  },
-  shareButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginLeft: 'auto',
-  },
-  shareText: {
-    fontSize: 12,
-    color: '#333',
-    marginLeft: 4,
-  },
-  actionButtonsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 20,
-    backgroundColor: 'white',
-    marginBottom: 16,
-  },
-  actionButton: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    borderWidth: 2,
-    borderColor: colors.themeColor,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'white',
-  },
-  filterBar: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: 'white',
-    marginBottom: 2,
-    gap: 8,
-  },
-  filterItem: {
-    flex: 1,
-    minWidth: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderColor: '#ddd',
-    borderWidth: 1,
-    borderRadius: 8,
-    backgroundColor: 'white',
-    paddingHorizontal: 10,
-    paddingVertical: 10,
-    minHeight: 40,
-  },
-  filterDropdown: {
-    borderColor: '#ddd',
-    borderWidth: 1,
-    borderRadius: 8,
-    backgroundColor: 'white',
-    paddingHorizontal: 1,
-    paddingVertical: 1,
-    minHeight: 40,
-    justifyContent: 'center',
-  },
-  filterDropdownText: {
-    fontSize: 12,
-    color: '#333',
-    flex: 1,
-  },
-  filterDropdownArrow: {
-    fontSize: 8,
-    color: '#666',
-    marginLeft: 4,
-  },
-  productsSection: {
-    backgroundColor: 'white',
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-  },
-  productsTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 16,
-  },
-  emptyContainer: {
-    alignItems: 'center',
-    paddingVertical: 40,
-  },
-  emptyText: {
-    fontSize: 16,
-    color: '#666',
-  },
-  storeInfoOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    padding: 24,
-  },
-  storeInfoModal: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    maxHeight: '70%',
-  },
-  storeInfoHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  storeInfoTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  storeInfoScroll: {
-    padding: 16,
-  },
-  storeInfoLabel: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 4,
-    marginTop: 12,
-  },
-  storeInfoValue: {
-    fontSize: 15,
-    color: '#333',
-  },
-});
 
 export default Shop;

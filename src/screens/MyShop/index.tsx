@@ -1,11 +1,18 @@
-import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState,
+} from 'react';
 import {
   View,
   Text,
-  StyleSheet,
   Image,
   TouchableOpacity,
   ScrollView,
+  ActivityIndicator,
+  SafeAreaView,
 } from 'react-native';
 import {images} from '../../utils/images';
 import {colors} from '../../utils/theme';
@@ -13,28 +20,34 @@ import {useIsFocused, useNavigation, useRoute} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
 import {selectUserProfile} from '../../store/slices/authSlice';
 import {getProductByShop, shopDetail} from '../../api/shop';
-import CustomButton from '../../components/CustomButton';
 import Loader from '../../components/Loader';
-import ShopProductListRow from '../../components/ShopProductListRow';
-import {MessageCircle, HelpCircle, Mail, Share2} from 'lucide-react-native';
-import GlobalHeader from '../../components/GlobalHeader';
+import HeaderComponent from '../../components/HeaderComponent';
+import ShopProductGridCard from '../../components/ShopProductGridCard';
+import FilterSelectModal from '../../components/FilterSelectModal';
+import ReportBlockModal from '../../components/ReportBlockModal';
+import shopScreenStyles from '../Shop/shopScreenStyles';
+import {
+  extractShopDetailPayload,
+  isRemoteImageUrl,
+  pickBannerUrl,
+} from '../../utils/shopMedia';
+import {
+  filterShopProductsByCategory,
+  getProductCategoryLabel,
+  ShopProductSortValue,
+  sortShopProducts,
+} from '../../utils/shopProductCard';
+import {addProductToCart} from '../../api/product';
+import {removeSavedItem, saveItem} from '../../api/menu';
+import {getMessage, Toast} from '../../utils/helpers';
 
-/*
-const filterItems = [
-  {label: 'Category', value: 'category'},
-  {label: 'Price', value: 'price'},
-  {label: 'Seller Location', value: 'location'},
-  {label: 'Rating', value: 'rating'},
+const sortOptions = [
+  {label: 'Product name (a-z)', value: 'name_asc'},
+  {label: 'Product name (z-a)', value: 'name_desc'},
+  {label: 'Price (low to high)', value: 'price_asc'},
+  {label: 'Price (high to low)', value: 'price_desc'},
+  {label: 'Newest first', value: 'newest'},
 ];
-// Filters UI + modals disabled — re-enable with FilterSelectModal / getCategories when ready.
-*/
-
-function isRemoteImageUrl(url?: string | null): boolean {
-  return (
-    typeof url === 'string' &&
-    (url.startsWith('http://') || url.startsWith('https://'))
-  );
-}
 
 const MyShop: React.FC = () => {
   const navigation = useNavigation();
@@ -46,15 +59,73 @@ const MyShop: React.FC = () => {
   const [shopDetails, setShopDetails] = useState<any>({});
   const [shopProducts, setShopProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [_filter, _setFilter] = useState('');
   const [bannerError, setBannerError] = useState(false);
-  const [_bannerLoaded, setBannerLoaded] = useState(false);
-  const [avatarError, setAvatarError] = useState(false);
-  const [_avatarLoaded, setAvatarLoaded] = useState(false);
+  const [bannerLoaded, setBannerLoaded] = useState(false);
+  const [menuVisible, setMenuVisible] = useState(false);
+  const [filterModalOpen, setFilterModalOpen] = useState<
+    'category' | 'sort' | null
+  >(null);
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [sortFilter, setSortFilter] =
+    useState<ShopProductSortValue>('name_asc');
+
+  const shopOwnerId =
+    shopDetails?.user_id ??
+    shopDetails?.user?.id ??
+    shopDetails?.seller_id;
+  const isOwnShop =
+    user?.id != null &&
+    shopOwnerId != null &&
+    String(user.id) === String(shopOwnerId);
+
+  const resolvedBannerUrl = useMemo(
+    () => pickBannerUrl(shopDetails),
+    [shopDetails],
+  );
+
+  const bannerSource = useMemo(() => {
+    if (resolvedBannerUrl && isRemoteImageUrl(resolvedBannerUrl) && !bannerError) {
+      return {uri: resolvedBannerUrl};
+    }
+    return images.shopCover;
+  }, [resolvedBannerUrl, bannerError]);
+
+  const isBannerRemote =
+    Boolean(resolvedBannerUrl && isRemoteImageUrl(resolvedBannerUrl)) &&
+    !bannerError;
+  const showBannerLoader = isBannerRemote && !bannerLoaded;
+
+  const categoryOptions = useMemo(() => {
+    const categories = new Set<string>();
+    shopProducts.forEach(product => {
+      const label = getProductCategoryLabel(product);
+      if (label) {
+        categories.add(label);
+      }
+    });
+    return [
+      {label: 'All', value: 'all'},
+      ...Array.from(categories).map(label => ({label, value: label})),
+    ];
+  }, [shopProducts]);
+
+  const displayedProducts = useMemo(() => {
+    const filtered = filterShopProductsByCategory(
+      shopProducts,
+      categoryFilter,
+    );
+    return sortShopProducts(filtered, sortFilter);
+  }, [shopProducts, categoryFilter, sortFilter]);
+
+  const selectedCategoryLabel =
+    categoryOptions.find(item => item.value === categoryFilter)?.label || 'All';
+  const selectedSortLabel =
+    sortOptions.find(item => item.value === sortFilter)?.label ||
+    'Product name (a-z)';
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerShown: false, // Hide the default header
+      headerShown: false,
     });
   }, [navigation]);
 
@@ -64,21 +135,10 @@ const MyShop: React.FC = () => {
       const res = await shopDetail(shopId);
       const res2 = await getProductByShop(shopId);
 
-      console.log('Shop details response:', res?.data?.data);
-      console.log('Banner URL:', res?.data?.data?.banner);
-      console.log('Avatar URL:', res?.data?.data?.avatar);
-      console.log('Avatar URL type:', typeof res?.data?.data?.avatar);
-      console.log('Avatar URL length:', res?.data?.data?.avatar?.length);
-      console.log('Avatar URL valid:', !!res?.data?.data?.avatar);
-      console.log(
-        'Avatar URL starts with http:',
-        res?.data?.data?.avatar?.startsWith('http'),
-      );
-
-      setShopDetails(res?.data?.data || {});
+      setShopDetails(extractShopDetailPayload(res));
       setShopProducts(res2?.data?.data?.data || []);
       setBannerError(false);
-      setAvatarError(false);
+      setBannerLoaded(false);
     } catch (error) {
       console.error('Error fetching shop data:', error);
     } finally {
@@ -90,408 +150,224 @@ const MyShop: React.FC = () => {
     getData();
   }, [isFocused, getData]);
 
+  const handleToggleSave = async (productId: number, isSaved: boolean) => {
+    setShopProducts(prev =>
+      prev.map(item =>
+        item.id === productId ? {...item, is_saved: !isSaved} : item,
+      ),
+    );
+
+    const form = new FormData();
+    form.append('item_id', String(productId));
+    form.append('item_type', 'product');
+
+    try {
+      if (isSaved) {
+        await removeSavedItem(form);
+      } else {
+        await saveItem(form);
+      }
+    } catch (err) {
+      setShopProducts(prev =>
+        prev.map(item =>
+          item.id === productId ? {...item, is_saved: isSaved} : item,
+        ),
+      );
+      Toast.error(getMessage((err as any)?.message));
+    }
+  };
+
+  const handleAddToCart = async (product: Record<string, any>) => {
+    if (!product?.id) {
+      return;
+    }
+
+    const form = new FormData();
+    if (Array.isArray(product?.sizes) && product.sizes[0]?.size) {
+      form.append('size', product.sizes[0].size);
+    }
+    if (Array.isArray(product?.colors) && product.colors[0]?.color) {
+      form.append('colors', product.colors[0].color);
+    }
+
+    try {
+      const response = await addProductToCart(product.id, form);
+      Toast.success(
+        response?.data?.message || 'Product added to cart successfully.',
+      );
+    } catch (err) {
+      Toast.error(getMessage((err as any)?.message));
+    }
+  };
+
   if (loading) {
     return <Loader />;
   }
 
-  const shopOwnerId =
-    shopDetails?.user_id ??
-    shopDetails?.user?.id ??
-    shopDetails?.seller_id;
-  const isOwnShop =
-    user?.id != null &&
-    shopOwnerId != null &&
-    String(user.id) === String(shopOwnerId);
-  const showVisitorContactActions =
-    shopOwnerId != null &&
-    !isOwnShop;
+  const menuOptions = isOwnShop
+    ? [
+        {
+          text: 'Edit Shop',
+          onPress: () => {
+            setMenuVisible(false);
+            (navigation as any).navigate('EditShop', {shopId});
+          },
+        },
+        {
+          text: 'Add Product',
+          onPress: () => {
+            setMenuVisible(false);
+            (navigation as any).navigate('AddProduct', {shopId});
+          },
+        },
+        {
+          text: 'Orders',
+          onPress: () => {
+            setMenuVisible(false);
+            (navigation as any).navigate('MyOrders', {
+              MyOrder: true,
+              shopId,
+            });
+          },
+        },
+      ]
+    : [
+        {
+          text: 'Report Shop',
+          onPress: () => setMenuVisible(false),
+        },
+      ];
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        {/* <Text style={styles.headerTitle}>Alse</Text>
-        <View style={styles.headerIcons}>
-          <TouchableOpacity style={styles.iconButton}>
-            <Image source={images.bellIcon} style={styles.headerIcon} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.iconButton}>
-            <Image source={images.settingsIcon} style={styles.headerIcon} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.iconButton}>
-            <Image source={images.smsIcon} style={styles.headerIcon} />
-          </TouchableOpacity>
-        </View> */}
-        <GlobalHeader icon={true} />
+    <SafeAreaView style={shopScreenStyles.container}>
+      <View style={shopScreenStyles.headerWrap}>
+        <HeaderComponent
+          label="Shop"
+          back
+          dots
+          notifiVisible={false}
+          chatVisible={false}
+          searchVisible={false}
+          onBackPress={() => navigation.goBack()}
+          onDotPress={() => setMenuVisible(true)}
+          onNofiPress={() => {}}
+          onChatPress={() => {}}
+        />
       </View>
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        style={styles.scrollView}>
-        {/* Store Profile Section */}
-        <View style={styles.storeProfileSection}>
-          {/* Banner */}
-          <View style={styles.bannerContainer}>
+        style={shopScreenStyles.scrollView}>
+        <View style={shopScreenStyles.contentCard}>
+          <View style={shopScreenStyles.bannerWrap}>
             <Image
-              source={
-                isRemoteImageUrl(shopDetails?.banner) && !bannerError
-                  ? {uri: shopDetails.banner}
-                  : images.shopCover
-              }
-              style={styles.bannerImage}
+              source={bannerSource}
+              style={shopScreenStyles.bannerImage}
               resizeMode="cover"
+              onLoadEnd={() => setBannerLoaded(true)}
               onError={() => {
-                console.log(
-                  'Banner image failed to load:',
-                  shopDetails?.banner,
-                );
                 setBannerError(true);
-              }}
-              onLoad={() => {
-                console.log(
-                  'Banner image loaded successfully:',
-                  shopDetails?.banner,
-                );
                 setBannerLoaded(true);
-                setBannerError(false);
               }}
             />
+            {showBannerLoader ? (
+              <View
+                style={shopScreenStyles.bannerLoaderOverlay}
+                pointerEvents="none">
+                <ActivityIndicator size="large" color={colors.themeColor} />
+              </View>
+            ) : null}
+          </View>
 
-            {/* Store Avatar */}
-            <View style={styles.avatarContainer}>
-              <Image
-                source={
-                  isRemoteImageUrl(shopDetails?.avatar) && !avatarError
-                    ? {uri: shopDetails.avatar}
-                    : images.shop11
-                }
-                style={styles.avatarImage}
-                resizeMode="cover"
-                onError={() => {
-                  console.log(
-                    'Avatar image failed to load:',
-                    shopDetails?.avatar,
-                  );
-                  setAvatarError(true);
-                }}
-                onLoad={() => {
-                  console.log(
-                    'Avatar image loaded successfully:',
-                    shopDetails?.avatar,
-                  );
-                  setAvatarLoaded(true);
-                  setAvatarError(false);
-                }}
-              />
+          <Text style={shopScreenStyles.shopName}>
+            {shopDetails?.shop_name || 'Shop Name'}
+          </Text>
+
+          <View style={shopScreenStyles.filterRow}>
+            <View style={shopScreenStyles.filterCol}>
+              <Text style={shopScreenStyles.filterLabel}>Category:</Text>
+              <TouchableOpacity
+                style={shopScreenStyles.filterDropdown}
+                onPress={() => setFilterModalOpen('category')}>
+                <Text
+                  style={shopScreenStyles.filterDropdownText}
+                  numberOfLines={1}>
+                  {selectedCategoryLabel}
+                </Text>
+                <Text style={shopScreenStyles.filterDropdownArrow}>▼</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={shopScreenStyles.filterCol}>
+              <Text style={shopScreenStyles.filterLabel}>Sort by:</Text>
+              <TouchableOpacity
+                style={shopScreenStyles.filterDropdown}
+                onPress={() => setFilterModalOpen('sort')}>
+                <Text
+                  style={shopScreenStyles.filterDropdownText}
+                  numberOfLines={1}>
+                  {selectedSortLabel}
+                </Text>
+                <Text style={shopScreenStyles.filterDropdownArrow}>▼</Text>
+              </TouchableOpacity>
             </View>
           </View>
 
-          {/* Store Info */}
-          <View style={styles.storeInfoContainer}>
-            <View style={styles.storeInfoLeft}>
-              <Text style={styles.storeName}>
-                {shopDetails?.shop_name || 'Razor'}
-              </Text>
-              <Text style={styles.storeCategory}>Tech, Gadgets</Text>
+          {displayedProducts.length > 0 ? (
+            <View style={shopScreenStyles.productGrid}>
+              {displayedProducts.map(product =>
+                product?.id != null ? (
+                  <View key={product.id} style={shopScreenStyles.productGridItem}>
+                    <ShopProductGridCard
+                      product={product}
+                      onPress={() =>
+                        (navigation as any).navigate('ProductView', {
+                          productId: product.id,
+                        })
+                      }
+                      onToggleSave={handleToggleSave}
+                      onAddToCart={isOwnShop ? undefined : handleAddToCart}
+                      showAddButton={!isOwnShop}
+                    />
+                  </View>
+                ) : null,
+              )}
             </View>
-            <TouchableOpacity
-              style={styles.addProductButton}
-              onPress={() =>
-                (navigation as any).navigate('AddProduct', {shopId})
-              }>
-              <Text style={styles.addProductButtonText}>Add Product</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Store Stats */}
-          <View style={styles.storeStatsContainer}>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{shopDetails?.followers}</Text>
-              <Text style={styles.statLabel}>Followers</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{shopProducts.length}</Text>
-              <Text style={styles.statLabel}>Products</Text>
-            </View>
-            <TouchableOpacity style={styles.shareButton}>
-              <Share2 size={16} color="#333" />
-              <Text style={styles.shareText}>Share store on Alse Feed</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Message / help / mail — only when viewing someone else's shop */}
-        {showVisitorContactActions ? (
-          <View style={styles.actionButtonsContainer}>
-            <TouchableOpacity style={styles.actionButton}>
-              <MessageCircle size={24} color={colors.themeColor} />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.actionButton}>
-              <HelpCircle size={24} color={colors.themeColor} />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.actionButton}>
-              <Mail size={24} color={colors.themeColor} />
-            </TouchableOpacity>
-          </View>
-        ) : null}
-
-        {/* Filters (commented out — not wired yet)
-        <View style={styles.filterBar}>
-          {filterItems.map((item, index) => (
-            <TouchableOpacity key={index} style={styles.filterButton}>
-              <Text style={styles.filterButtonText}>{item.label}</Text>
-              <ChevronDown size={16} color="#666" />
-            </TouchableOpacity>
-          ))}
-        </View>
-        */}
-
-        {/* Products Section */}
-        <View style={styles.productsSection}>
-          <Text style={styles.productsTitle}>Recently Listed Products</Text>
-
-          {shopProducts.length > 0 ? (
-            shopProducts.map((product, index) =>
-              product?.id != null ? (
-                <ShopProductListRow
-                  key={product.id}
-                  product={product}
-                  onPress={() =>
-                    (navigation as any).navigate('ProductView', {
-                      productId: product.id,
-                    })
-                  }
-                />
-              ) : (
-                <ShopProductListRow key={index} product={product} />
-              ),
-            )
           ) : (
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>No products available</Text>
+            <View style={shopScreenStyles.emptyContainer}>
+              <Text style={shopScreenStyles.emptyText}>
+                No products available
+              </Text>
             </View>
           )}
         </View>
-
-        {/* Bottom Buttons */}
-        <View style={styles.bottomButtonsContainer}>
-          <CustomButton
-            style={styles.addProductButton}
-            onPress={() =>
-              (navigation as any).navigate('AddProduct', {shopId})
-            }>
-            Add Product
-          </CustomButton>
-          <CustomButton
-            style={styles.ordersButton}
-            txtstyle={{color: colors.themeColor}}
-            onPress={() =>
-              (navigation as any).navigate('MyOrders', {
-                MyOrder: true,
-                shopId: shopId,
-              })
-            }>
-            Orders
-          </CustomButton>
-        </View>
       </ScrollView>
-    </View>
+
+      <FilterSelectModal
+        visible={filterModalOpen === 'category'}
+        onClose={() => setFilterModalOpen(null)}
+        title="Select category"
+        items={categoryOptions}
+        selectedValue={categoryFilter}
+        onSelect={value => setCategoryFilter(value)}
+      />
+      <FilterSelectModal
+        visible={filterModalOpen === 'sort'}
+        onClose={() => setFilterModalOpen(null)}
+        title="Sort products"
+        items={sortOptions}
+        selectedValue={sortFilter}
+        onSelect={value => setSortFilter(value as ShopProductSortValue)}
+      />
+
+      <ReportBlockModal
+        isVisible={menuVisible}
+        options={menuOptions}
+        onClose={() => setMenuVisible(false)}
+        style={{}}
+      />
+    </SafeAreaView>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8f8f8',
-  },
-  header: {
-    paddingHorizontal: 16,
-    // paddingBottom: 16,
-    backgroundColor: 'white',
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: colors.themeColor,
-  },
-  headerIcons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  iconButton: {
-    marginLeft: 16,
-  },
-  headerIcon: {
-    width: 24,
-    height: 24,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  storeProfileSection: {
-    backgroundColor: 'white',
-    marginBottom: 16,
-  },
-  bannerContainer: {
-    position: 'relative',
-    height: 180,
-  },
-  bannerImage: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
-  avatarContainer: {
-    position: 'absolute',
-    bottom: -30,
-    left: 16,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    borderWidth: 3,
-    borderColor: 'white',
-    overflow: 'hidden',
-  },
-  avatarImage: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
-  storeInfoContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    paddingHorizontal: 16,
-    paddingTop: 40,
-    paddingBottom: 16,
-  },
-  storeInfoLeft: {
-    flex: 1,
-  },
-  storeName: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 4,
-  },
-  storeCategory: {
-    fontSize: 14,
-    color: '#666',
-  },
-  addProductButton: {
-    backgroundColor: colors.themeColor,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  addProductButtonText: {
-    color: 'white',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  storeStatsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-  },
-  statItem: {
-    marginRight: 24,
-  },
-  statNumber: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  statLabel: {
-    fontSize: 12,
-    color: '#666',
-  },
-  shareButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginLeft: 'auto',
-  },
-  shareText: {
-    fontSize: 12,
-    color: '#333',
-    marginLeft: 4,
-  },
-  actionButtonsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 20,
-    backgroundColor: 'white',
-    marginBottom: 16,
-  },
-  actionButton: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    borderWidth: 2,
-    borderColor: colors.themeColor,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'white',
-  },
-  filterBar: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    backgroundColor: 'white',
-    marginBottom: 16,
-    gap: 8,
-  },
-  filterButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    backgroundColor: '#f8f9fa',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#e9ecef',
-  },
-  filterButtonText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#333',
-    flex: 1,
-  },
-  productsSection: {
-    backgroundColor: 'white',
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-  },
-  productsTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 16,
-  },
-  emptyContainer: {
-    alignItems: 'center',
-    paddingVertical: 40,
-  },
-  emptyText: {
-    fontSize: 16,
-    color: '#666',
-  },
-  bottomButtonsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingHorizontal: 16,
-    paddingVertical: 20,
-    backgroundColor: 'white',
-  },
-  ordersButton: {
-    minWidth: '45%',
-    backgroundColor: 'white',
-  },
-});
 
 export default MyShop;

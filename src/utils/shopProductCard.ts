@@ -196,3 +196,149 @@ export function buildProductMetaSummary(product: Record<string, any>): string {
   }
   return parts.join(' · ');
 }
+
+export function getProductTitle(product: Record<string, any>): string {
+  return (
+    product?.title ||
+    product?.name ||
+    product?.product_name ||
+    'Product'
+  );
+}
+
+export function resolveProductImageUrls(
+  product: Record<string, any>,
+): string[] {
+  const urls: string[] = [];
+  const push = (value?: string | null) => {
+    const resolved = resolveProductMediaUrl(value);
+    if (resolved && !urls.includes(resolved)) {
+      urls.push(resolved);
+    }
+  };
+
+  if (Array.isArray(product?.images)) {
+    product.images.forEach((img: any) => {
+      if (typeof img === 'string') {
+        push(img);
+      } else {
+        push(img?.path ?? img?.url);
+      }
+    });
+  }
+
+  push(product?.banner);
+  push(product?.image);
+  push(product?.thumbnail);
+  push(product?.media?.[0]?.path);
+
+  return urls;
+}
+
+export function getProductSizeLabel(product: Record<string, any>): string {
+  const sizes = product?.sizes;
+  if (!Array.isArray(sizes) || sizes.length === 0) {
+    return '';
+  }
+  return 'Size Available';
+}
+
+export function getProductColorsLabel(product: Record<string, any>): string {
+  const colorsList = product?.colors;
+  if (!Array.isArray(colorsList) || colorsList.length === 0) {
+    return '';
+  }
+  const names = colorsList
+    .map((entry: any) => {
+      if (typeof entry === 'string') {
+        return entry.trim();
+      }
+      return String(entry?.color ?? entry?.name ?? '').trim();
+    })
+    .filter(Boolean);
+  if (names.length === 0) {
+    return '';
+  }
+  return `Color: ${names.join(', ')}`;
+}
+
+export function isProductNegotiable(product: Record<string, any>): boolean {
+  if (
+    product?.is_negotiable === true ||
+    product?.negotiable === true ||
+    product?.is_negotiable === 1 ||
+    product?.negotiable === 1
+  ) {
+    return true;
+  }
+  const type = String(
+    product?.listing_type ?? product?.price_type ?? product?.type ?? '',
+  ).toLowerCase();
+  return type.includes('negotiable');
+}
+
+export type ShopProductSortValue =
+  | 'name_asc'
+  | 'name_desc'
+  | 'price_asc'
+  | 'price_desc'
+  | 'newest';
+
+export function sortShopProducts(
+  products: Record<string, any>[],
+  sort: ShopProductSortValue,
+): Record<string, any>[] {
+  const list = [...products];
+  const getName = (product: Record<string, any>) =>
+    getProductTitle(product).toLowerCase();
+  const getPrice = (product: Record<string, any>) => {
+    const raw =
+      product?.sale_price ??
+      product?.discounted_price ??
+      product?.price ??
+      product?.amount ??
+      0;
+    const n = Number(String(raw).replace(/,/g, ''));
+    return Number.isFinite(n) ? n : 0;
+  };
+  const getCreatedAt = (product: Record<string, any>) => {
+    const raw = product?.created_at ?? product?.updated_at ?? 0;
+    const t = Date.parse(String(raw));
+    return Number.isFinite(t) ? t : 0;
+  };
+
+  list.sort((a, b) => {
+    switch (sort) {
+      case 'name_desc':
+        return getName(b).localeCompare(getName(a));
+      case 'price_asc':
+        return getPrice(a) - getPrice(b);
+      case 'price_desc':
+        return getPrice(b) - getPrice(a);
+      case 'newest':
+        return getCreatedAt(b) - getCreatedAt(a);
+      case 'name_asc':
+      default:
+        return getName(a).localeCompare(getName(b));
+    }
+  });
+
+  return list;
+}
+
+export function filterShopProductsByCategory(
+  products: Record<string, any>[],
+  category: string,
+): Record<string, any>[] {
+  if (!category || category === 'all') {
+    return products;
+  }
+  return products.filter(product => {
+    const label = getProductCategoryLabel(product).toLowerCase();
+    const slug = String(
+      product?.category?.slug ?? product?.category_id ?? '',
+    ).toLowerCase();
+    const needle = category.toLowerCase();
+    return label === needle || slug === needle || label.includes(needle);
+  });
+}
