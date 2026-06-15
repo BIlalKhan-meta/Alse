@@ -61,7 +61,9 @@ import {values} from 'lodash';
 const Home: React.FC = () => {
   const flatListRef = useRef<FlatList>(null);
   const storiesRef = useRef<StoriesRef>(null);
-  const [focusedIndex, setFocusedIndex] = useState<number | null>(0);
+  const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
+  const [feedVideoMuted, setFeedVideoMuted] = useState(true);
+  const [isScreenFocused, setIsScreenFocused] = useState(true);
   const navigation = useNavigation<any>();
   const dispatch = useAppDispatch();
   const user = useSelector(selectUserProfile);
@@ -345,16 +347,33 @@ const Home: React.FC = () => {
     }
   };
 
-  const onViewableItemsChanged = useRef(({viewableItems}: any) => {
-    const newFocusedIndex = viewableItems[0]?.index;
-    if (typeof newFocusedIndex === 'number') {
-      setFocusedIndex(newFocusedIndex);
-    }
-  }).current;
+  const onViewableItemsChanged = useRef(
+    ({viewableItems}: {viewableItems: Array<{index?: number | null; isViewable?: boolean}>}) => {
+      const visibleItems = viewableItems.filter(
+        item => item.isViewable !== false && typeof item.index === 'number',
+      );
+
+      if (visibleItems.length === 0) {
+        setFocusedIndex(null);
+        return;
+      }
+
+      const sorted = [...visibleItems].sort(
+        (a, b) => (a.index ?? 0) - (b.index ?? 0),
+      );
+      const primaryItem = sorted[Math.floor(sorted.length / 2)];
+      setFocusedIndex(primaryItem.index ?? null);
+    },
+  ).current;
 
   const viewabilityConfig = useRef({
-    itemVisiblePercentThreshold: 50,
+    itemVisiblePercentThreshold: 60,
+    minimumViewTime: 250,
   }).current;
+
+  const viewabilityConfigCallbackPairs = useRef([
+    {viewabilityConfig, onViewableItemsChanged},
+  ]).current;
 
   const handleMediaPress = (item: any, mediaIndex = 0) => {
     const mediaList = getNewsfeedMediaList(item?.media);
@@ -374,7 +393,10 @@ const Home: React.FC = () => {
   };
 
   const renderPost = ({item, index}: any) => {
-    const isFocused = focusedIndex === index;
+    const isFocused =
+      isScreenFocused &&
+      !mediaModalVisible.visible &&
+      focusedIndex === index;
     const mediaList = getNewsfeedMediaList(item?.media);
     const primaryMedia = mediaList[0];
     const postDescriptionRaw = item?.description ?? item?.content ?? '';
@@ -440,7 +462,8 @@ const Home: React.FC = () => {
           handleDotPress(null);
         }}
         isPaused={!isFocused}
-        muteInlineVideo
+        muteInlineVideo={feedVideoMuted}
+        onToggleVideoMute={() => setFeedVideoMuted(muted => !muted)}
       />
     );
   };
@@ -517,8 +540,11 @@ const Home: React.FC = () => {
 
   useFocusEffect(
     React.useCallback(() => {
-      setFocusedIndex(0);
-      scrollToTop();
+      setIsScreenFocused(true);
+      return () => {
+        setIsScreenFocused(false);
+        setFocusedIndex(null);
+      };
     }, []),
   );
 
@@ -551,8 +577,7 @@ const Home: React.FC = () => {
               ref={flatListRef}
               style={styles.feedList}
               ListHeaderComponent={renderHeader}
-              onViewableItemsChanged={onViewableItemsChanged}
-              viewabilityConfig={viewabilityConfig}
+              viewabilityConfigCallbackPairs={viewabilityConfigCallbackPairs}
               data={posts}
               onRefresh={handleRefresh}
               refreshing={refreshing}

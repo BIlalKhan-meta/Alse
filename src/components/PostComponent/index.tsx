@@ -1,6 +1,15 @@
 // PostComponent.tsx
 import {useNavigation} from '@react-navigation/native';
-import {MoreVertical, Heart, MessageCircle, Bookmark, ThumbsUp, CornerUpRight} from 'lucide-react-native';
+import {
+  MoreVertical,
+  Heart,
+  MessageCircle,
+  Bookmark,
+  ThumbsUp,
+  CornerUpRight,
+  Volume2,
+  VolumeX,
+} from 'lucide-react-native';
 import React, {useEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {
@@ -171,6 +180,7 @@ interface PostProps {
   handleVideoPause?: () => void;
   /** When true, inline feed video plays without sound (fullscreen modal can unmute). */
   muteInlineVideo?: boolean;
+  onToggleVideoMute?: () => void;
 }
 
 const PostComponent: React.FC<PostProps> = ({
@@ -206,6 +216,7 @@ const PostComponent: React.FC<PostProps> = ({
   handleVideoPause,
   onMediaPress,
   muteInlineVideo,
+  onToggleVideoMute,
 }) => {
   const navigation = useNavigation();
   const user = useSelector(selectUserProfile);
@@ -345,14 +356,16 @@ const PostComponent: React.FC<PostProps> = ({
 
   const renderMediaSlide = (item: PostMediaItem, index: number) => {
     const isVideo = isVideoMedia(item.type);
+    const isActiveSlide = activeMediaIndex === index;
     const shouldPlayVideo =
-      isVideo && isFocused === true && !videoPaused && activeMediaIndex === index;
+      isVideo && isFocused === true && !videoPaused && isActiveSlide;
+    const shouldMountVideo = isVideo && isFocused === true && isActiveSlide;
 
     return (
       <View style={[styles.mediaSlide, {width: mediaSlideWidth}]}>
         {isVideo ? (
           <View style={styles.videoInlineWrap} collapsable={false}>
-            {shouldPlayVideo ? (
+            {shouldMountVideo ? (
               <>
                 {videoLoad ? (
                   <View style={styles.videoLoaderWrap} pointerEvents="none">
@@ -374,7 +387,7 @@ const PostComponent: React.FC<PostProps> = ({
                   ]}
                   resizeMode="cover"
                   repeat
-                  paused={false}
+                  paused={!shouldPlayVideo}
                   muted={!!muteInlineVideo}
                   playInBackground={false}
                   playWhenInactive={false}
@@ -391,18 +404,32 @@ const PostComponent: React.FC<PostProps> = ({
               <Pressable
                 style={styles.mediaInnerFill}
                 onPress={() => onMediaPress?.(item, index)}>
-                <View style={styles.videoPoster}>
-                  <ActivityIndicator size="small" color={colors.themeColor} />
-                </View>
+                <View style={styles.videoPoster} />
               </Pressable>
             )}
-            {(onMediaPress || handleVideoPause) && shouldPlayVideo ? (
+            {onMediaPress && shouldMountVideo ? (
               <Pressable
                 style={styles.videoTouchOverlay}
                 onPress={() => onMediaPress?.(item, index)}
                 accessibilityRole="button"
                 accessibilityLabel="Open video fullscreen"
               />
+            ) : null}
+            {shouldMountVideo && onToggleVideoMute ? (
+              <TouchableOpacity
+                style={styles.muteButton}
+                onPress={onToggleVideoMute}
+                hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
+                accessibilityRole="button"
+                accessibilityLabel={
+                  muteInlineVideo ? 'Unmute video' : 'Mute video'
+                }>
+                {muteInlineVideo ? (
+                  <VolumeX color="#fff" size={18} />
+                ) : (
+                  <Volume2 color="#fff" size={18} />
+                )}
+              </TouchableOpacity>
             ) : null}
           </View>
         ) : (
@@ -909,9 +936,19 @@ const styles = StyleSheet.create({
   },
   videoPoster: {
     flex: 1,
+    backgroundColor: '#E4E6EB',
+  },
+  muteButton: {
+    position: 'absolute',
+    bottom: 12,
+    right: 12,
+    zIndex: 10,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#E4E6EB',
   },
 });
 
