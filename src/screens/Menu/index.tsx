@@ -16,9 +16,11 @@ import {
   selectUserProfile,
 } from '../../store/slices/authSlice';
 import {useSelector} from 'react-redux';
+import {useTranslation} from 'react-i18next';
 
 const Menu: React.FC = () => {
   const navigation = useNavigation();
+  const {t} = useTranslation();
 
   const dispatch = useAppDispatch();
   const user = useSelector(selectUserProfile);
@@ -62,6 +64,10 @@ const Menu: React.FC = () => {
               <TouchableOpacity
                 onPress={() => navigation.navigate('CreatePost')}>
                 <InterRegular style={styles.cardText}>Create Post</InterRegular>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('PostDrafts')}>
+                <InterRegular style={styles.cardText}>{t('drafts')}</InterRegular>
               </TouchableOpacity>
               <TouchableOpacity onPress={() => navigation.navigate('MyPosts')}>
                 <InterRegular style={styles.cardText}>My Posts</InterRegular>

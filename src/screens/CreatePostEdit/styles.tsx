@@ -63,6 +63,20 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         borderRadius: 4
     },
+    headerActions: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    saveDraftButton: {
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        marginRight: 4,
+    },
+    saveDraftTxt: {
+        color: colors.themeColor,
+        fontSize: fontSizes.f12,
+    },
     postTxt: {
         color: colors.white,
         fontSize: fontSizes.f13

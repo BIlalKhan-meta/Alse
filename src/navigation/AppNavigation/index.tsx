@@ -32,6 +32,7 @@ import SavedChat from '../../screens/SavedChat';
 import SavedChatDetail from '../../screens/SavedChatDetail';
 import SavedScripts from '../../screens/SavedScripts';
 import CreatePostEdit from '../../screens/CreatePostEdit';
+import PostDrafts from '../../screens/PostDrafts';
 import AddProduct from '../../screens/AddProduct';
 import MyShop from '../../screens/MyShop';
 import EditBlog from '../../screens/EditBlog';
@@ -208,6 +209,11 @@ const AppNavigation = () => {
         <Stack.Screen
           name="CreatePostEdit"
           component={CreatePostEdit}
+          options={NavigationOptions}
+        />
+        <Stack.Screen
+          name="PostDrafts"
+          component={PostDrafts}
           options={NavigationOptions}
         />
         <Stack.Screen

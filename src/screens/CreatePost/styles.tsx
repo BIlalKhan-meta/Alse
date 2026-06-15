@@ -18,6 +18,25 @@ const styles = StyleSheet.create({
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  saveDraftButton: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#20B2AA',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+  },
+  saveDraftButtonText: {
+    color: '#20B2AA',
+    fontSize: 13,
+    fontWeight: '600',
   },
   headerTitle: {
     fontSize: 20,

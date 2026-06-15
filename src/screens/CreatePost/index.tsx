@@ -31,6 +31,12 @@ import {
   MUSIC_TOO_MANY_IMAGES_FOR_CLIP,
 } from '../../utils/backgroundMusic';
 import {buildPostVideoFile, getMessage, Toast, getAbsoluteAvatarUrl} from '../../utils/helpers';
+import {
+  deletePostDraftById,
+  draftMediaToPickedMedia,
+  loadPostDraft,
+  savePostDraft,
+} from '../../utils/postDrafts';
 import {colors} from '../../utils/theme';
 import {images} from '../../utils/images';
 import styles from './styles';
@@ -52,6 +58,10 @@ const CreatePost: React.FC = () => {
   const [selectedMusic, setSelectedMusic] = useState<SelectedMusic | null>(null);
   const [privacy, setPrivacy] = useState<'friends' | 'public' | 'only_me'>('friends');
   const [loadingMessage, setLoadingMessage] = useState('');
+  const [activeDraftId, setActiveDraftId] = useState<string | undefined>(
+    route.params?.draftId,
+  );
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
 
   const {t} = useTranslation();
 
@@ -101,6 +111,44 @@ const CreatePost: React.FC = () => {
       route.params?.selectedMusic,
     ]),
   );
+
+  useEffect(() => {
+    const draftId = route.params?.draftId as string | undefined;
+    if (!draftId || !user?.id) {
+      return;
+    }
+
+    let cancelled = false;
+
+    (async () => {
+      const draft = await loadPostDraft(user.id, draftId);
+      if (cancelled) {
+        return;
+      }
+      if (!draft || draft.kind !== 'create') {
+        Toast.error(t('draftLoadFailed'));
+        return;
+      }
+
+      setDescription(draft.description);
+      setSelectedMediaList(draftMediaToPickedMedia(draft.media));
+      if (draft.music) {
+        setSelectedMusic(draft.music);
+      }
+      if (
+        draft.privacy === 'friends' ||
+        draft.privacy === 'public' ||
+        draft.privacy === 'only_me'
+      ) {
+        setPrivacy(draft.privacy);
+      }
+      setActiveDraftId(draft.id);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [route.params?.draftId, t, user?.id]);
 
   useEffect(() => {
     const invalidMusicState =
@@ -210,6 +258,9 @@ const CreatePost: React.FC = () => {
 
       setLoadingMessage(t('creatingPost'));
       await dispatch(postCreate(body)).unwrap();
+      if (user?.id && activeDraftId) {
+        await deletePostDraftById(user.id, activeDraftId);
+      }
       setIsLoading(false);
       setLoadingMessage('');
       Toast.success('Posted Successfully');
@@ -234,6 +285,42 @@ const CreatePost: React.FC = () => {
             ? t('musicComposeFailed')
             : getMessage(err);
       Toast.error(message);
+    }
+  };
+
+  const hasDraftContent =
+    !!description.trim() || selectedMediaList.length > 0 || !!selectedMusic;
+
+  const handleSaveDraft = async () => {
+    if (!user?.id) {
+      return;
+    }
+    if (!hasDraftContent) {
+      Toast.error('Please add some text or media to save');
+      return;
+    }
+
+    setIsSavingDraft(true);
+    setLoadingMessage(t('savingDraft'));
+
+    try {
+      const draftId = await savePostDraft({
+        userId: user.id,
+        kind: 'create',
+        description,
+        privacy,
+        media: selectedMediaList,
+        music: selectedMusic,
+        draftId: activeDraftId,
+      });
+      setActiveDraftId(draftId);
+      Toast.success(t('draftSaved'));
+      navigation.goBack();
+    } catch (err: any) {
+      Toast.error(getMessage(err));
+    } finally {
+      setIsSavingDraft(false);
+      setLoadingMessage('');
     }
   };
 
@@ -341,7 +428,7 @@ const CreatePost: React.FC = () => {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <Modal visible={isLoading} transparent animationType="fade">
+      <Modal visible={isLoading || isSavingDraft} transparent animationType="fade">
         <View style={styles.loaderOverlay}>
           <View style={styles.loaderContent}>
             <ActivityIndicator size="large" color={colors.themeColor} />
@@ -360,13 +447,28 @@ const CreatePost: React.FC = () => {
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Create Post</Text>
         </View>
-        <TouchableOpacity
-          style={[styles.postButton, (!description.trim() && selectedMediaList.length === 0) && styles.postButtonDisabled]}
-          onPress={handlePost}
-          disabled={(!description.trim() && selectedMediaList.length === 0) || isLoading}
-        >
-          <Text style={styles.postButtonText}>Post</Text>
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            style={[
+              styles.saveDraftButton,
+              (!hasDraftContent || isLoading || isSavingDraft) &&
+                styles.postButtonDisabled,
+            ]}
+            onPress={handleSaveDraft}
+            disabled={!hasDraftContent || isLoading || isSavingDraft}>
+            <Text style={styles.saveDraftButtonText}>{t('saveDraft')}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.postButton,
+              (!hasDraftContent || isLoading || isSavingDraft) &&
+                styles.postButtonDisabled,
+            ]}
+            onPress={handlePost}
+            disabled={!hasDraftContent || isLoading || isSavingDraft}>
+            <Text style={styles.postButtonText}>Post</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Main Card */}

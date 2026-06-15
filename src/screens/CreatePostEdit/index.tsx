@@ -17,6 +17,14 @@ import {buildPostVideoFile, getMessage, Toast} from '../../utils/helpers';
 import Loader from '../../components/Loader';
 import {removeImage} from '../../api/home';
 import {useTranslation} from 'react-i18next';
+import {useSelector} from 'react-redux';
+import {selectUserProfile} from '../../store/slices/authSlice';
+import {
+  deleteDraftsForPost,
+  draftMediaToPickedMedia,
+  loadPostDraft,
+  savePostDraft,
+} from '../../utils/postDrafts';
 
 const ListOptions = [
   {label: 'Public', value: '2'},
@@ -55,10 +63,16 @@ const CreatePostEdit: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
+  const user = useSelector(selectUserProfile);
   const title = route?.params?.title || 'Create Post';
   const data = route?.params?.data;
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
+  const [activeDraftId, setActiveDraftId] = useState<string | undefined>(
+    route.params?.draftId,
+  );
+  const [removedMediaIds, setRemovedMediaIds] = useState<number[]>([]);
   const [mediaList, setMediaList] = useState<EditMediaItem[]>(() =>
     mapExistingPostMedia(data?.media),
   );
@@ -110,21 +124,73 @@ const CreatePostEdit: React.FC = () => {
     }, [navigation, route.params?.editedMediaBatch, route.params?.reEditIndex]),
   );
 
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      title: title,
-      headerRight: () => (
-        <TouchableOpacity
-          disabled={isLoading}
-          style={styles.postButton}
-          onPress={handlePost}>
-          <InterMedium style={styles.postTxt}>
-            {title === 'Edit Post' ? 'Update' : 'Post'}
-          </InterMedium>
-        </TouchableOpacity>
-      ),
-    });
-  }, [navigation, title, isLoading, comment, privacy, mediaList]);
+  useEffect(() => {
+    const draftId = route.params?.draftId as string | undefined;
+    if (!draftId || !user?.id) {
+      return;
+    }
+
+    let cancelled = false;
+
+    (async () => {
+      const draft = await loadPostDraft(user.id, draftId);
+      if (cancelled) {
+        return;
+      }
+      if (!draft || draft.kind !== 'edit') {
+        Toast.error(t('draftLoadFailed'));
+        return;
+      }
+
+      setComment(draft.description);
+      setPrivacy(draft.privacy);
+      setMediaList(draftMediaToPickedMedia(draft.media));
+      setRemovedMediaIds(draft.removedMediaIds ?? []);
+      setActiveDraftId(draft.id);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [route.params?.draftId, t, user?.id]);
+
+  const hasDraftContent = !!comment.trim() || mediaList.length > 0;
+
+  const handleSaveDraft = async () => {
+    if (!user?.id) {
+      return;
+    }
+    const postId = data?.id ?? route.params?.data?.id;
+    if (!postId) {
+      Toast.error(t('draftLoadFailed'));
+      return;
+    }
+    if (!hasDraftContent) {
+      Toast.error('Please add some text or media to save');
+      return;
+    }
+
+    setIsSavingDraft(true);
+    try {
+      const draftId = await savePostDraft({
+        userId: user.id,
+        kind: 'edit',
+        description: comment,
+        privacy,
+        media: mediaList,
+        postId,
+        removedMediaIds,
+        draftId: activeDraftId,
+      });
+      setActiveDraftId(draftId);
+      Toast.success(t('draftSaved'));
+      navigation.goBack();
+    } catch (err: any) {
+      Toast.error(getMessage(err));
+    } finally {
+      setIsSavingDraft(false);
+    }
+  };
 
   useEffect(() => {
     if (!imagesData?.length) {
@@ -234,12 +300,10 @@ const CreatePostEdit: React.FC = () => {
       return;
     }
 
-    if (target.isExisting && target.mediaId && data?.id) {
-      try {
-        await removeImage(data.id, target.mediaId);
-      } catch (err) {
-        console.log('Error from Image Removed', err);
-      }
+    if (target.isExisting && target.mediaId) {
+      setRemovedMediaIds(prev =>
+        prev.includes(target.mediaId!) ? prev : [...prev, target.mediaId!],
+      );
     }
 
     setMediaList(prev => prev.filter((_, itemIndex) => itemIndex !== index));
@@ -254,6 +318,16 @@ const CreatePostEdit: React.FC = () => {
     setIsLoading(true);
 
     try {
+      if (data?.id && removedMediaIds.length > 0) {
+        for (const mediaId of removedMediaIds) {
+          try {
+            await removeImage(data.id, mediaId);
+          } catch (err) {
+            console.log('Error from Image Removed', err);
+          }
+        }
+      }
+
       const body = new FormData();
       body.append('description', comment);
       body.append('privacy', Number(privacy));
@@ -290,6 +364,9 @@ const CreatePostEdit: React.FC = () => {
       );
 
       await dispatch(postEdit({formData: body, id: data?.id})).unwrap();
+      if (user?.id && data?.id) {
+        await deleteDraftsForPost(user.id, data.id);
+      }
       setIsLoading(false);
       Toast.success('Posted Edit Successfully');
       navigation.goBack();
@@ -299,7 +376,38 @@ const CreatePostEdit: React.FC = () => {
     }
   };
 
-  if (isLoading) {
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      title: title,
+      headerRight: () => (
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            disabled={isLoading || isSavingDraft || !hasDraftContent}
+            style={styles.saveDraftButton}
+            onPress={handleSaveDraft}>
+            <InterMedium style={styles.saveDraftTxt}>{t('saveDraft')}</InterMedium>
+          </TouchableOpacity>
+          <TouchableOpacity
+            disabled={isLoading || isSavingDraft}
+            style={styles.postButton}
+            onPress={handlePost}>
+            <InterMedium style={styles.postTxt}>
+              {title === 'Edit Post' ? 'Update' : 'Post'}
+            </InterMedium>
+          </TouchableOpacity>
+        </View>
+      ),
+    });
+  }, [
+    navigation,
+    title,
+    isLoading,
+    isSavingDraft,
+    hasDraftContent,
+    t,
+  ]);
+
+  if (isLoading || isSavingDraft) {
     return <Loader />;
   }
 

@@ -434,6 +434,9 @@ const Settings = ({navigation}: any) => {
                   {renderMenuItem('Create Post', () =>
                     navigation.navigate('CreatePost'),
                   )}
+                  {renderMenuItem('Drafts', () =>
+                    navigation.navigate('PostDrafts'),
+                  )}
                   {renderMenuItem('My Posts', () =>
                     navigation.navigate('MyPosts'),
                   )}

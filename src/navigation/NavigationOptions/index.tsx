@@ -64,6 +64,7 @@ const titles: {[key: string]: string} = {
   SearchUsers: 'Search User',
   Videos: 'Videos',
   ExistingSeller: 'My Stores',
+  PostDrafts: 'Drafts',
 };
 const backButtonRoutes: {[key: string]: boolean} = {
   ChatOngoing: true,
@@ -86,6 +87,7 @@ const backButtonRoutes: {[key: string]: boolean} = {
   SavedChatDetail: true,
   AddStore: true,
   CreatePostEdit: true,
+  PostDrafts: true,
   MyShop: true,
   EditShop: true,
   AddProduct: true,
