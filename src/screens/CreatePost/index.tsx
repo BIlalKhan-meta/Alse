@@ -26,8 +26,9 @@ import {EditedMedia} from '../../types/mediaEditor';
 import {postCreate} from '../../store/slices/homeSlice';
 import {selectUserProfile} from '../../store/slices/authSlice';
 import {
-  composePhotoMusicVideo,
+  composePhotoMusicSlideshow,
   formatMusicLabel,
+  MUSIC_TOO_MANY_IMAGES_FOR_CLIP,
 } from '../../utils/backgroundMusic';
 import {buildPostVideoFile, getMessage, Toast, getAbsoluteAvatarUrl} from '../../utils/helpers';
 import {colors} from '../../utils/theme';
@@ -103,9 +104,8 @@ const CreatePost: React.FC = () => {
 
   useEffect(() => {
     const invalidMusicState =
-      selectedMediaList.length !== 1 ||
-      selectedMediaList[0]?.kind === 'video' ||
-      !selectedMediaList[0]?.uri;
+      selectedMediaList.length === 0 ||
+      selectedMediaList.some(media => media?.kind === 'video');
 
     if (invalidMusicState && selectedMusic) {
       setSelectedMusic(null);
@@ -167,16 +167,24 @@ const CreatePost: React.FC = () => {
       }
       body.append('privacy', privacyValue);
 
+      const imageMediaList = selectedMediaList.filter(
+        media => media?.kind !== 'video' && media?.uri,
+      );
       const shouldMuxMusic =
         !!selectedMusic &&
-        selectedMediaList.length === 1 &&
-        selectedMediaList[0]?.kind !== 'video';
+        imageMediaList.length > 0 &&
+        imageMediaList.length === selectedMediaList.length;
 
       if (shouldMuxMusic && selectedMusic) {
         setLoadingMessage(t('composingMusicVideo'));
-        const videoUri = await composePhotoMusicVideo({
-          imageUri: selectedMediaList[0].uri,
+        const videoUri = await composePhotoMusicSlideshow({
+          imageUris: imageMediaList.map(media => media.uri),
           music: selectedMusic,
+          onProgress: (current, total) => {
+            setLoadingMessage(
+              t('composingSlide', {current, total}),
+            );
+          },
         });
         const file = await buildPostVideoFile(
           videoUri,
@@ -213,7 +221,9 @@ const CreatePost: React.FC = () => {
         err?.message === 'Network Error' ||
         err?.message === 'Network request failed'
           ? 'Please check your internet connection and try again.'
-          : err?.message?.includes('compose') ||
+          : err?.message === MUSIC_TOO_MANY_IMAGES_FOR_CLIP
+            ? t('musicTooManyImagesForClip')
+            : err?.message?.includes('compose') ||
               err?.message?.includes('FFmpeg') ||
               err?.message?.includes('Command failed') ||
               err?.message?.includes('audio') ||
@@ -275,21 +285,13 @@ const CreatePost: React.FC = () => {
       return;
     }
     if (selectedMediaList.length === 0) {
-      Toast.error(t('musicRequiresImage'));
-      return;
-    }
-    if (selectedMediaList.length !== 1) {
-      Toast.error(t('musicRequiresOneImage'));
-      return;
-    }
-    if (selectedMediaList[0]?.kind === 'video') {
-      Toast.error(t('musicNotWithVideo'));
+      Toast.error(t('musicRequiresImages'));
       return;
     }
 
     navigation.navigate('MusicPicker', {
-      imageUri: selectedMediaList[0].uri,
-      imageName: selectedMediaList[0].name,
+      imageUris: selectedMediaList.map(media => media.uri),
+      imageName: selectedMediaList[0]?.name,
       existingMusic: selectedMusic ?? undefined,
     });
   };

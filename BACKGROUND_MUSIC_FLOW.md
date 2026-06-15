@@ -9,19 +9,21 @@ Related: [CREATE_POST_MEDIA_FLOW.md](CREATE_POST_MEDIA_FLOW.md) (image pick → 
 ## End-to-end flow
 
 ```
-CreatePost (single image in media list)
+CreatePost (1–10 images in media list, no video)
   → Tap Add Music
   → MusicPicker screen
       → useMusicPicker.pickAudioFile (@react-native-documents/picker)
       → Trim clip (start offset + duration, max 30s)
-      → Preview image + audio (react-native-video)
+      → Preview first image + thumbnail strip + audio (react-native-video)
       → Done: navigation.navigate({ selectedMusic }) — NEVER goBack() after this
   → CreatePost receives selectedMusic via useFocusEffect
   → handlePost:
-      → composePhotoMusicVideo (native: image → video + audio mux)
+      → composePhotoMusicSlideshow (native slideshow + audio mux)
       → buildPostVideoFile → FormData file[0] via fetch
   → Feed renders muxed post as inline video (existing PostComponent path)
 ```
+
+**Feed note:** Multi-image + music posts upload as **one slideshow video**, not a swipeable image carousel.
 
 ---
 
@@ -29,15 +31,16 @@ CreatePost (single image in media list)
 
 | # | Rule |
 |---|------|
-| 1 | Music is **images only** — hide/disable when video is selected; clear music if user adds video. |
-| 2 | **v1: single image + music** — multiple images show toast; carousel slideshow mux = Phase 2. |
+| 1 | Music is **images only** (1–10) — no video; clear music if user adds video or removes all images. |
+| 2 | Music **persists** when user adds more images (still all images). |
 | 3 | **At least one image required** before Add Music. |
 | 4 | Max clip duration **30 seconds** (`MAX_MUSIC_CLIP_SECONDS` in `backgroundMusic.ts`). |
-| 5 | Mux output uploads as **one video file** via `buildPostVideoFile` + existing fetch upload. |
-| 6 | Never hardcode track names — use file metadata + `unknownTrack` i18n fallback. |
-| 7 | Copy `content://` / `ph://` URIs to cache before FFmpeg (`resolveLocalAudioPath`, `resolveLocalImagePath`). |
-| 8 | FormData uploads use native **fetch** (see `.cursor/rules/formdata-upload-network-error.mdc`). |
-| 9 | After MusicPicker finishes: `navigation.navigate({ name: 'CreatePost', params: { selectedMusic }, merge: true })` only — extra `goBack()` pops past CreatePost. |
+| 5 | Min **1 second per slide** (`MIN_SLIDE_DURATION_SEC`) — reject compose if `clipDuration / imageCount < 1s`. |
+| 6 | Mux output uploads as **one video file** via `buildPostVideoFile` + existing fetch upload. |
+| 7 | Never hardcode track names — use file metadata + `unknownTrack` i18n fallback. |
+| 8 | Copy `content://` / `ph://` URIs to cache before native compose (`resolveLocalAudioPath`, `resolveLocalImagePath`). |
+| 9 | FormData uploads use native **fetch** (see `.cursor/rules/formdata-upload-network-error.mdc`). |
+| 10 | After MusicPicker finishes: `navigation.navigate({ name: 'CreatePost', params: { selectedMusic }, merge: true })` only — extra `goBack()` pops past CreatePost. |
 
 ---
 
@@ -45,10 +48,11 @@ CreatePost (single image in media list)
 
 | File | Role |
 |------|------|
-| `src/screens/CreatePost/index.tsx` | Music state, Add Music guards, mux on post |
-| `src/screens/MusicPicker/index.tsx` | Pick audio, trim clip, preview, return `selectedMusic` |
+| `src/screens/CreatePost/index.tsx` | Music state, Add Music guards, slideshow mux on post |
+| `src/screens/MusicPicker/index.tsx` | Pick audio, trim clip, multi-image preview, return `selectedMusic` |
 | `src/hooks/useMusicPicker.ts` | Document picker + cache copy |
-| `src/utils/backgroundMusic.ts` | URI resolve, FFmpeg mux, label formatting |
+| `src/utils/backgroundMusic.ts` | URI resolve, slideshow compose, label formatting |
+| `src/utils/photoMusicComposer.ts` | Native audio trim + video/audio mux bridge |
 | `src/types/backgroundMusic.ts` | `SelectedMusic`, route params |
 | `src/utils/mediaEditor.ts` | `resolveLocalImagePath` reused for image mux input |
 | `src/utils/helpers.tsx` | `buildPostVideoFile`, `prepareVideoUriForUpload` |
@@ -60,37 +64,42 @@ CreatePost (single image in media list)
 ```typescript
 // src/types/backgroundMusic.ts
 export type SelectedMusic = {
-  uri: string;            // cached local audio path
-  name: string;           // display title (filename without extension)
-  mimeType: string;       // audio/mpeg, audio/mp4, etc.
-  durationMs: number;     // full track length
-  clipStartMs: number;    // trim offset
-  clipDurationMs: number; // segment length (<= MAX_MUSIC_CLIP_SECONDS)
+  uri: string;
+  name: string;
+  mimeType: string;
+  durationMs: number;
+  clipStartMs: number;
+  clipDurationMs: number;
+};
+
+export type MusicPickerRouteParams = {
+  imageUris: string[];
+  imageName?: string;
+  existingMusic?: SelectedMusic;
 };
 ```
 
 ---
 
-## FFmpeg mux reference
+## Slideshow compose reference
 
-Function: `composePhotoMusicVideo` in `src/utils/backgroundMusic.ts`
+Function: `composePhotoMusicSlideshow` in `src/utils/backgroundMusic.ts`
 
-Uses **native platform APIs** (no FFmpeg — FFmpegKit binaries were retired):
+1. `trimAudioClipNative()` via `PhotoMusicComposer` — trim + AAC encode
+2. `convertImageToVideo()` per image (bare path, equal `slideDurationSec`)
+3. `mergeVideos()` from `react-native-nitro-media-kit` — concat silent clips
+4. `muxVideoWithAudioNative()` via `PhotoMusicComposer` — attach music bed
 
-1. `trim()` from `react-native-video-trim` (headless, `type: 'audio'`, `outputExt: 'm4a'`) — extract the selected clip segment
-2. `convertImageToVideo()` from `react-native-nitro-media-kit` — still image → silent H.264 MP4
-3. `addAudio()` from `react-native-video-lab` — mux trimmed M4A audio onto silent video
+`composePhotoMusicVideo({ imageUri })` delegates to slideshow with `imageUris: [imageUri]`.
 
-**Input:** cached image path + `SelectedMusic` clip window  
-**Output:** `file://.../photo-music-{timestamp}.mp4` in app cache
+**Slide duration:** `clipDurationMs / 1000 / imageCount` (equal split).
 
 **Tunables** (change in `backgroundMusic.ts` only):
 
 | Constant | Default | Purpose |
 |----------|---------|---------|
 | `MAX_MUSIC_CLIP_SECONDS` | 30 | Max selectable clip length |
-| `MAX_OUTPUT_LONG_EDGE` | 1080 | Scale cap (matches photo resize in useImagePicker) |
-| `OUTPUT_FPS` | 30 | Video frame rate for still loop |
+| `MIN_SLIDE_DURATION_SEC` | 1 | Min seconds per image in slideshow |
 
 ---
 
@@ -100,38 +109,22 @@ Uses **native platform APIs** (no FFmpeg — FFmpegKit binaries were retired):
 
 ```typescript
 navigation.navigate('MusicPicker', {
-  imageUri: selectedMediaList[0].uri,
-  imageName: selectedMediaList[0].name,
+  imageUris: selectedMediaList.map(media => media.uri),
+  imageName: selectedMediaList[0]?.name,
+  existingMusic: selectedMusic ?? undefined,
 });
-```
-
-### Receive selected music
-
-```typescript
-useFocusEffect(
-  useCallback(() => {
-    const music = route.params?.selectedMusic as SelectedMusic | undefined;
-    if (music) {
-      setSelectedMusic(music);
-      navigation.setParams({ selectedMusic: undefined });
-    }
-  }, [navigation, route.params?.selectedMusic]),
-);
 ```
 
 ### Post with music
 
 ```typescript
-if (selectedMusic && selectedMediaList.length === 1) {
-  const videoUri = await composePhotoMusicVideo({
-    imageUri: selectedMediaList[0].uri,
-    music: selectedMusic,
-  });
-  const file = await buildPostVideoFile(videoUri, 'post_music.mp4', 'video/mp4');
-  body.append('file[0]', file as any);
-} else {
-  // existing image/video loop
-}
+const videoUri = await composePhotoMusicSlideshow({
+  imageUris: imageMediaList.map(media => media.uri),
+  music: selectedMusic,
+  onProgress: (current, total) => setLoadingMessage(t('composingSlide', { current, total })),
+});
+const file = await buildPostVideoFile(videoUri, 'post_music.mp4', 'video/mp4');
+body.append('file[0]', file as any);
 ```
 
 ### Clear music when media changes
@@ -139,13 +132,12 @@ if (selectedMusic && selectedMediaList.length === 1) {
 ```typescript
 useEffect(() => {
   const invalid =
-    selectedMediaList.length !== 1 ||
-    selectedMediaList[0]?.kind === 'video' ||
-    !selectedMediaList[0]?.uri;
+    selectedMediaList.length === 0 ||
+    selectedMediaList.some(media => media?.kind === 'video');
   if (invalid && selectedMusic) {
     setSelectedMusic(null);
   }
-}, [selectedMediaList]);
+}, [selectedMediaList, selectedMusic]);
 ```
 
 ---
@@ -153,17 +145,13 @@ useEffect(() => {
 ## Native / deps
 
 - `@react-native-documents/picker` — device audio pick (`types.audio`)
-- `react-native-nitro-media-kit` + `react-native-nitro-modules` — image → silent video (AVFoundation / MediaCodec)
-- `react-native-video-lab` — audio trim + mux onto video
-- `react-native-sound` — probe audio duration (already in project)
+- `react-native-nitro-media-kit` + `react-native-nitro-modules` — image → silent video, merge clips
+- `PhotoMusicComposer` (app native module) — FFmpeg (Android) / AVFoundation (iOS) trim + mux
+- `react-native-sound` — probe audio duration
 - `react-native-fs` — copy URIs to cache
 - `react-native-video` — trim preview playback
-- iOS: `pod install` after native dep changes
-- Android: rebuild after Gradle sync
-
-### FFmpegKit retirement note
-
-FFmpegKit official binaries were removed in 2025. This feature uses **native media APIs** instead. Do not re-add `ffmpeg-kit-react-native` unless you vendor binaries locally (see community guides).
+- iOS: `PhotoMusicComposer.swift` + `.m` in Xcode project; `pod install` after dep changes
+- Android: `PhotoMusicComposerPackage` registered in `MainApplication.kt`; rebuild after Gradle sync
 
 ---
 
@@ -171,7 +159,6 @@ FFmpegKit official binaries were removed in 2025. This feature uses **native med
 
 | Feature | Approach |
 |---------|----------|
-| Carousel + music | FFmpeg concat filter: N images × equal seconds + one audio bed |
 | CreatePostEdit | Reuse MusicPicker; mux on update if new music attached |
 | Licensed catalog | Replace `pickAudioFile` with API search; keep `SelectedMusic` shape |
 | Playback overlay | Backend stores `audio_url`; feed plays synced audio over static image |
@@ -183,23 +170,24 @@ FFmpegKit official binaries were removed in 2025. This feature uses **native med
 
 | Symptom | Cause | Fix |
 |---------|-------|-----|
-| FFmpeg "No such file" | Raw `content://` passed to mux | Run `resolveLocalImagePath` / `resolveLocalAudioPath` first |
-| Native module not linked | Skipped pod install / rebuild | Run `cd ios && pod install` and rebuild the app |
-| Pick returns wrong type | Android provider ignores filter | Check `hasRequestedType` on picker response |
-| Compose failure | Native trim/mux error | Verify audio is MP3/M4A; rebuild app after installing native deps |
+| Too many images error | Clip too short for image count | Shorten image list or extend music clip (min 1s/slide) |
+| Native module not linked | Skipped rebuild | Rebuild app; verify `PhotoMusicComposer` in native project |
+| Image decode failed | `file://` passed to `convertImageToVideo` | Use bare filesystem path from `resolveLocalImagePath` |
 | Upload network error | axios used for FormData | Use existing `uploadWithFetch` in `home.ts` |
-| Done pops to Home | Extra `goBack()` after navigate | Remove goBack; use `navigate({ merge: true })` only |
-| Music row shows with video | Missing guard | Clear music when `kind === 'video'` |
+| Done pops to Home | Extra `goBack()` after navigate | Use `navigate({ merge: true })` only |
+| Music cleared after 2nd image | Old single-image guard | Only clear on video or empty media list |
 
 ---
 
 ## Manual test checklist
 
 - [ ] Single image + MP3 → mux → upload → appears as video in feed
-- [ ] Add Music disabled when no image / multiple images / video selected
-- [ ] Remove music → posts as normal image
+- [ ] 2+ images + MP3 → slideshow video with equal slide timing
+- [ ] 10 images + 5s clip → `musicTooManyImagesForClip` error
+- [ ] Add music with 1 image, add 2nd image → music retained
+- [ ] Add video after music → music cleared
+- [ ] Remove music → posts as normal multi-image carousel
 - [ ] Trim start + duration reflected in output length
 - [ ] Android `content://` and iOS `file://` audio URIs
-- [ ] Compose failure shows toast, does not crash
-- [ ] i18n strings (no hardcoded English in production paths)
+- [ ] Compose progress message during multi-image post
 - [ ] Cancel MusicPicker — music state unchanged on CreatePost

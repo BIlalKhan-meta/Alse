@@ -64,6 +64,30 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  slideCountBadge: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  slideCountText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  thumbnailStrip: {
+    paddingTop: 12,
+    gap: 8,
+  },
+  thumbnailImage: {
+    width: 56,
+    height: 56,
+    borderRadius: 8,
+    backgroundColor: '#ddd',
+  },
   hiddenAudio: {
     width: 0,
     height: 0,

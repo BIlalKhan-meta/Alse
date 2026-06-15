@@ -5,6 +5,7 @@ globs:
   - src/screens/MusicPicker/**
   - src/hooks/useMusicPicker.ts
   - src/utils/backgroundMusic.ts
+  - src/utils/photoMusicComposer.ts
   - src/types/backgroundMusic.ts
   - BACKGROUND_MUSIC_FLOW.md
 alwaysApply: false
@@ -16,34 +17,36 @@ alwaysApply: false
 
 ## Non-negotiables
 
-1. Music is **single image only** in v1 — clear music if media count ≠ 1 or video selected.
-2. Max clip **30 seconds** (`MAX_MUSIC_CLIP_SECONDS`).
-3. Mux image + audio → MP4 on device via native APIs; upload as **one video** via `buildPostVideoFile`.
+1. Music is **images only** (1–10) — clear music if video selected or media list empty.
+2. Max clip **30 seconds** (`MAX_MUSIC_CLIP_SECONDS`); min **1s per slide** (`MIN_SLIDE_DURATION_SEC`).
+3. Slideshow mux → MP4 on device; upload as **one video** via `buildPostVideoFile`.
 4. Copy `content://` / `ph://` to cache before native compose — never pass raw picker URIs.
-5. FormData = **fetch**, not axios.
-6. After MusicPicker Done: `navigate({ selectedMusic })` only — **no goBack()**.
-7. Never hardcode track names — use `formatMusicLabel` + i18n.
+5. Pass **bare paths** to `convertImageToVideo` (not `file://` URIs).
+6. FormData = **fetch**, not axios.
+7. After MusicPicker Done: `navigate({ selectedMusic })` only — **no goBack()**.
+8. Never hardcode track names — use `formatMusicLabel` + i18n.
 
 ## Quick integration
 
 ```typescript
 // Open picker
-navigation.navigate('MusicPicker', { imageUri, imageName });
-
-// Receive music
-useFocusEffect(() => {
-  const music = route.params?.selectedMusic;
-  if (music) { setSelectedMusic(music); navigation.setParams({ selectedMusic: undefined }); }
+navigation.navigate('MusicPicker', {
+  imageUris: selectedMediaList.map(m => m.uri),
+  existingMusic: selectedMusic,
 });
 
 // Post
-const videoUri = await composePhotoMusicVideo({ imageUri, music: selectedMusic });
+const videoUri = await composePhotoMusicSlideshow({
+  imageUris: imageMediaList.map(m => m.uri),
+  music: selectedMusic,
+  onProgress: (current, total) => setLoadingMessage(t('composingSlide', { current, total })),
+});
 const file = await buildPostVideoFile(videoUri, 'post_music.mp4', 'video/mp4');
 body.append('file[0]', file);
 ```
 
 ## Phase 2 (do not implement without updating MD)
 
-- Carousel slideshow mux
 - CreatePostEdit music
 - Backend music catalog API
+- Feed music attribution chip

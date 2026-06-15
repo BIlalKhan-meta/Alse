@@ -80,7 +80,11 @@ export default {
   musicClipStart: 'शुरुआत का समय',
   musicClipLength: 'क्लिप की लंबाई',
   musicRequiresImage: 'संगीत चुनने से पहले एक छवि जोड़ें',
-  musicRequiresOneImage: 'संगीत केवल एक-छवि वाली पोस्ट के लिए उपलब्ध है',
+  musicRequiresImages: 'संगीत चुनने से पहले कम से कम एक छवि जोड़ें',
+  musicTooManyImagesForClip:
+    'चयनित संगीत लंबाई के लिए बहुत अधिक छवियाँ। कम छवियाँ या लंबा क्लिप उपयोग करें।',
+  musicSlideCount: '{{current}} / {{total}}',
+  composingSlide: 'स्लाइड {{current}} / {{total}} तैयार हो रही है...',
   musicNotWithVideo: 'संगीत जोड़ने से पहले वीडियो हटाएं',
   composingMusicVideo: 'आपकी फोटो में संगीत जोड़ा जा रहा है...',
   creatingPost: 'पोस्ट बनाई जा रही है...',

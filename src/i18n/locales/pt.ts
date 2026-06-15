@@ -80,7 +80,11 @@ export default {
   musicClipStart: 'Tempo inicial',
   musicClipLength: 'Duração do trecho',
   musicRequiresImage: 'Adicione uma imagem antes de selecionar música',
-  musicRequiresOneImage: 'A música está disponível apenas para publicações com uma imagem',
+  musicRequiresImages: 'Adicione pelo menos uma imagem antes de selecionar música',
+  musicTooManyImagesForClip:
+    'Imagens demais para a duração da música selecionada. Use menos imagens ou um clipe mais longo.',
+  musicSlideCount: '{{current}} / {{total}}',
+  composingSlide: 'Preparando slide {{current}} de {{total}}...',
   musicNotWithVideo: 'Remova o vídeo antes de adicionar música',
   composingMusicVideo: 'Adicionando música à sua foto...',
   creatingPost: 'Criando publicação...',

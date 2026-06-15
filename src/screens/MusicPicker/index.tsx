@@ -172,7 +172,16 @@ const MusicPicker: React.FC = () => {
   const route = useRoute<any>();
   const {t} = useTranslation();
   const params = (route.params ?? {}) as MusicPickerRouteParams;
-  const {imageUri} = params;
+  const imageUris = useMemo(() => {
+    if (params.imageUris?.length) {
+      return params.imageUris;
+    }
+    if (params.imageUri) {
+      return [params.imageUri];
+    }
+    return [];
+  }, [params.imageUri, params.imageUris]);
+  const previewImageUri = imageUris[0];
 
   const videoRef = useRef<any>(null);
   const {isPicking, pickAudioFile} = useMusicPicker();
@@ -317,11 +326,23 @@ const MusicPicker: React.FC = () => {
         nestedScrollEnabled>
         <View style={styles.previewSection}>
           <View style={styles.previewCard}>
-            <Image
-              source={{uri: imageUri}}
-              style={styles.previewImage}
-              resizeMode="cover"
-            />
+            {previewImageUri ? (
+              <Image
+                source={{uri: previewImageUri}}
+                style={styles.previewImage}
+                resizeMode="cover"
+              />
+            ) : null}
+            {imageUris.length > 1 ? (
+              <View style={styles.slideCountBadge}>
+                <Text style={styles.slideCountText}>
+                  {t('musicSlideCount', {
+                    current: 1,
+                    total: imageUris.length,
+                  })}
+                </Text>
+              </View>
+            ) : null}
             {music ? (
               <Video
                 ref={videoRef}
@@ -352,6 +373,21 @@ const MusicPicker: React.FC = () => {
               />
             ) : null}
           </View>
+          {imageUris.length > 1 ? (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.thumbnailStrip}>
+              {imageUris.map((uri, index) => (
+                <Image
+                  key={`${uri}-${index}`}
+                  source={{uri}}
+                  style={styles.thumbnailImage}
+                  resizeMode="cover"
+                />
+              ))}
+            </ScrollView>
+          ) : null}
         </View>
 
         <View style={styles.content}>

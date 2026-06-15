@@ -8,7 +8,8 @@ export type SelectedMusic = {
 };
 
 export type MusicPickerRouteParams = {
-  imageUri: string;
+  imageUris: string[];
+  imageUri?: string;
   imageName?: string;
   existingMusic?: SelectedMusic;
 };

@@ -2,8 +2,8 @@ import {Platform} from 'react-native';
 import RNFS from 'react-native-fs';
 import Sound from 'react-native-sound';
 import {keepLocalCopy} from '@react-native-documents/picker';
-import {convertImageToVideo} from 'react-native-nitro-media-kit';
-import {resolveLocalImagePath, getImageDimensions} from './mediaEditor';
+import {convertImageToVideo, mergeVideos} from 'react-native-nitro-media-kit';
+import {resolveLocalImagePath} from './mediaEditor';
 import {
   muxVideoWithAudioNative,
   trimAudioClipNative,
@@ -16,7 +16,8 @@ import {
 
 export {MAX_MUSIC_CLIP_SECONDS, MAX_MUSIC_CLIP_MS};
 
-const MAX_OUTPUT_LONG_EDGE = 1080;
+export const MIN_SLIDE_DURATION_SEC = 1;
+export const MUSIC_TOO_MANY_IMAGES_FOR_CLIP = 'MUSIC_TOO_MANY_IMAGES_FOR_CLIP';
 
 const AUDIO_EXTENSIONS = ['mp3', 'm4a', 'aac', 'wav', 'ogg', 'flac', 'mp4'];
 
@@ -188,25 +189,6 @@ export async function getAudioDurationMs(uri: string): Promise<number> {
   });
 }
 
-function computeOutputSize(
-  width: number,
-  height: number,
-): {width: number; height: number} {
-  const longEdge = Math.max(width, height);
-  if (longEdge <= MAX_OUTPUT_LONG_EDGE) {
-    return {
-      width: Math.max(2, Math.round(width / 2) * 2),
-      height: Math.max(2, Math.round(height / 2) * 2),
-    };
-  }
-
-  const scale = MAX_OUTPUT_LONG_EDGE / longEdge;
-  return {
-    width: Math.max(2, Math.round((width * scale) / 2) * 2),
-    height: Math.max(2, Math.round((height * scale) / 2) * 2),
-  };
-}
-
 export type ComposePhotoMusicVideoOptions = {
   imageUri: string;
   music: SelectedMusic;
@@ -214,62 +196,98 @@ export type ComposePhotoMusicVideoOptions = {
   outputHeight?: number;
 };
 
-export async function composePhotoMusicVideo(
-  options: ComposePhotoMusicVideoOptions,
+export type ComposePhotoMusicSlideshowOptions = {
+  imageUris: string[];
+  music: SelectedMusic;
+  onProgress?: (current: number, total: number) => void;
+};
+
+export async function composePhotoMusicSlideshow(
+  options: ComposePhotoMusicSlideshowOptions,
 ): Promise<string> {
-  const {music} = options;
+  const {music, imageUris, onProgress} = options;
+  if (!imageUris.length) {
+    throw new Error('Missing image uris');
+  }
+
   const clip = clampMusicClip(
     music.durationMs,
     music.clipStartMs,
     music.clipDurationMs,
   );
-  const clipDurationSec = clip.clipDurationMs / 1000;
+  const slideDurationSec = clip.clipDurationMs / 1000 / imageUris.length;
 
-  const resolvedImage = await resolveLocalImagePath(options.imageUri);
+  if (slideDurationSec < MIN_SLIDE_DURATION_SEC) {
+    throw new Error(MUSIC_TOO_MANY_IMAGES_FOR_CLIP);
+  }
+
   const resolvedAudio = await resolveLocalAudioPath(
     music.uri,
     music.name,
     music.mimeType,
   );
 
+  const trimmedAudio = await trimAudioClipNative(
+    resolvedAudio,
+    clip.clipStartMs,
+    clip.clipStartMs + clip.clipDurationMs,
+  );
+
+  const resolvedImages = await Promise.all(
+    imageUris.map(uri => resolveLocalImagePath(uri)),
+  );
+
   try {
-    const dimensions = await getImageDimensions(
-      options.imageUri.startsWith('file://')
-        ? options.imageUri
-        : toFileUri(resolvedImage.path),
-    ).catch(() => ({width: 1080, height: 1350}));
+    const silentClipPaths: string[] = [];
 
-    computeOutputSize(
-      options.outputWidth ?? dimensions.width,
-      options.outputHeight ?? dimensions.height,
-    );
-
-    const trimmedAudio = await trimAudioClipNative(
-      resolvedAudio,
-      clip.clipStartMs,
-      clip.clipStartMs + clip.clipDurationMs,
-    );
-
-    const silentVideoResult = await convertImageToVideo(
-      resolvedImage.path,
-      clipDurationSec,
-    );
-
-    if (!silentVideoResult.ok || !silentVideoResult.outputUri) {
-      throw new Error(
-        silentVideoResult.error?.message ?? 'Failed to create video from image',
+    for (let index = 0; index < resolvedImages.length; index++) {
+      onProgress?.(index + 1, resolvedImages.length);
+      const resolvedImage = resolvedImages[index];
+      const silentVideoResult = await convertImageToVideo(
+        resolvedImage.path,
+        slideDurationSec,
       );
+
+      if (!silentVideoResult.ok || !silentVideoResult.outputUri) {
+        throw new Error(
+          silentVideoResult.error?.message ?? 'Failed to create video from image',
+        );
+      }
+
+      silentClipPaths.push(silentVideoResult.outputUri);
+    }
+
+    let mergedVideoPath: string;
+    if (silentClipPaths.length === 1) {
+      mergedVideoPath = silentClipPaths[0];
+    } else {
+      const mergeResult = await mergeVideos(silentClipPaths);
+      if (!mergeResult.ok || !mergeResult.outputUri) {
+        throw new Error(
+          mergeResult.error?.message ?? 'Failed to merge slideshow clips',
+        );
+      }
+      mergedVideoPath = mergeResult.outputUri;
     }
 
     const muxedVideo = await muxVideoWithAudioNative(
-      silentVideoResult.outputUri,
+      mergedVideoPath,
       trimmedAudio,
     );
 
     return toFileUri(muxedVideo);
   } finally {
-    await resolvedImage.cleanup?.();
+    await Promise.all(resolvedImages.map(image => image.cleanup?.()));
   }
+}
+
+export async function composePhotoMusicVideo(
+  options: ComposePhotoMusicVideoOptions,
+): Promise<string> {
+  return composePhotoMusicSlideshow({
+    imageUris: [options.imageUri],
+    music: options.music,
+  });
 }
 
 export function deriveTrackName(fileName?: string | null): string {

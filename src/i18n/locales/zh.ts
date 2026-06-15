@@ -80,7 +80,11 @@ export default {
   musicClipStart: '开始时间',
   musicClipLength: '片段长度',
   musicRequiresImage: '请先添加图片再选择音乐',
-  musicRequiresOneImage: '音乐仅适用于单图帖子',
+  musicRequiresImages: '请先添加至少一张图片再选择音乐',
+  musicTooManyImagesForClip:
+    '图片数量相对于所选音乐时长过多。请减少图片或使用更长的片段。',
+  musicSlideCount: '{{current}} / {{total}}',
+  composingSlide: '正在准备第 {{current}} / {{total}} 张幻灯片...',
   musicNotWithVideo: '请先移除视频再添加音乐',
   composingMusicVideo: '正在为照片添加音乐...',
   creatingPost: '正在创建帖子...',

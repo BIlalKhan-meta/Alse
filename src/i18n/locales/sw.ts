@@ -80,7 +80,11 @@ export default {
   musicClipStart: 'Muda wa kuanza',
   musicClipLength: 'Urefu wa kipande',
   musicRequiresImage: 'Ongeza picha kabla ya kuchagua muziki',
-  musicRequiresOneImage: 'Muziki unapatikana kwa machapisho ya picha moja tu',
+  musicRequiresImages: 'Ongeza angalau picha moja kabla ya kuchagua muziki',
+  musicTooManyImagesForClip:
+    'Picha nyingi sana kwa urefu wa muziki uliochaguliwa. Tumia picha chache au klipu ndefu zaidi.',
+  musicSlideCount: '{{current}} / {{total}}',
+  composingSlide: 'Inaandaa slaidi {{current}} kati ya {{total}}...',
   musicNotWithVideo: 'Ondoa video kabla ya kuongeza muziki',
   composingMusicVideo: 'Inaongeza muziki kwenye picha yako...',
   creatingPost: 'Inaunda chapisho...',
