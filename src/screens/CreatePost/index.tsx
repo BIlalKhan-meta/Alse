@@ -16,14 +16,20 @@ import Video from 'react-native-video';
 import {useSelector} from 'react-redux';
 import {useAppDispatch} from '../../hooks/storeHooks';
 import useImagePicker, {
+  isVideoAsset,
   mergeMediaList,
   PickedMedia,
 } from '../../hooks/useImagePicker';
 import useMediaEditorFlow from '../../hooks/useMediaEditorFlow';
+import {SelectedMusic} from '../../types/backgroundMusic';
 import {EditedMedia} from '../../types/mediaEditor';
 import {postCreate} from '../../store/slices/homeSlice';
 import {selectUserProfile} from '../../store/slices/authSlice';
-import {createVideoFile, getMessage, Toast, getAbsoluteAvatarUrl} from '../../utils/helpers';
+import {
+  composePhotoMusicVideo,
+  formatMusicLabel,
+} from '../../utils/backgroundMusic';
+import {buildPostVideoFile, getMessage, Toast, getAbsoluteAvatarUrl} from '../../utils/helpers';
 import {colors} from '../../utils/theme';
 import {images} from '../../utils/images';
 import styles from './styles';
@@ -42,14 +48,15 @@ const CreatePost: React.FC = () => {
   const [description, setDescription] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [selectedMediaList, setSelectedMediaList] = useState<SelectedMedia[]>([]);
+  const [selectedMusic, setSelectedMusic] = useState<SelectedMusic | null>(null);
   const [privacy, setPrivacy] = useState<'friends' | 'public' | 'only_me'>('friends');
+  const [loadingMessage, setLoadingMessage] = useState('');
 
   const {t} = useTranslation();
 
   const {
     imageData,
     imagesData,
-    chooseImageFromLibrary,
     showImageSourcePicker,
     setImagesData,
     setImageData,
@@ -80,8 +87,30 @@ const CreatePost: React.FC = () => {
         }
         navigation.setParams({editedMediaBatch: undefined, reEditIndex: undefined});
       }
-    }, [navigation, route.params?.editedMediaBatch, route.params?.reEditIndex]),
+
+      const music = route.params?.selectedMusic as SelectedMusic | undefined;
+      if (music) {
+        setSelectedMusic(music);
+        navigation.setParams({selectedMusic: undefined});
+      }
+    }, [
+      navigation,
+      route.params?.editedMediaBatch,
+      route.params?.reEditIndex,
+      route.params?.selectedMusic,
+    ]),
   );
+
+  useEffect(() => {
+    const invalidMusicState =
+      selectedMediaList.length !== 1 ||
+      selectedMediaList[0]?.kind === 'video' ||
+      !selectedMediaList[0]?.uri;
+
+    if (invalidMusicState && selectedMusic) {
+      setSelectedMusic(null);
+    }
+  }, [selectedMediaList, selectedMusic]);
 
   useEffect(() => {
     if (!imagesData?.length) {
@@ -95,10 +124,7 @@ const CreatePost: React.FC = () => {
     if (!imageData?.uri) {
       return;
     }
-    const assetType = imageData.type ?? '';
-    const isVideo =
-      assetType.startsWith('video') || imageData.duration != null;
-    if (!isVideo) {
+    if (!isVideoAsset(imageData)) {
       return;
     }
     startVideoEditFlow({
@@ -123,53 +149,82 @@ const CreatePost: React.FC = () => {
       return;
     }
 
-    const body = new FormData();
-    const text = description.trim();
-    body.append('content', text);
-    body.append('description', text);
-
-    // Map privacy state to API values (assuming 1=public, 2=friends, 3=only_me based on previous code)
-    let privacyValue = '2';
-    if (privacy === 'public') {
-      privacyValue = '1';
-    }
-    if (privacy === 'only_me') {
-      privacyValue = '3';
-    }
-    body.append('privacy', privacyValue);
-
-    if (selectedMediaList.length > 0) {
-      selectedMediaList.forEach((media, index) => {
-        if (media.kind === 'video') {
-          const file = createVideoFile(media.uri);
-          body.append(`file[${index}]`, file as any);
-        } else {
-          body.append(`file[${index}]`, {
-            uri: media.uri,
-            name: media.name || `image_${index}.jpg`,
-            type: media.type || 'image/jpeg',
-          } as any);
-        }
-      });
-    }
-
     setIsLoading(true);
+    setLoadingMessage(t('creatingPost'));
 
-    dispatch(postCreate(body))
-      .unwrap()
-      .then(_res => {
-        setIsLoading(false);
-        Toast.success('Posted Successfully');
-        navigation.goBack();
-      })
-      .catch(err => {
-        setIsLoading(false);
-        const message =
-          err?.message === 'Network Error'
-            ? 'Please check your internet connection and try again.'
+    try {
+      const body = new FormData();
+      const text = description.trim();
+      body.append('content', text);
+      body.append('description', text);
+
+      let privacyValue = '2';
+      if (privacy === 'public') {
+        privacyValue = '1';
+      }
+      if (privacy === 'only_me') {
+        privacyValue = '3';
+      }
+      body.append('privacy', privacyValue);
+
+      const shouldMuxMusic =
+        !!selectedMusic &&
+        selectedMediaList.length === 1 &&
+        selectedMediaList[0]?.kind !== 'video';
+
+      if (shouldMuxMusic && selectedMusic) {
+        setLoadingMessage(t('composingMusicVideo'));
+        const videoUri = await composePhotoMusicVideo({
+          imageUri: selectedMediaList[0].uri,
+          music: selectedMusic,
+        });
+        const file = await buildPostVideoFile(
+          videoUri,
+          'post_music.mp4',
+          'video/mp4',
+        );
+        body.append('file[0]', file as any);
+      } else {
+        for (let index = 0; index < selectedMediaList.length; index++) {
+          const media = selectedMediaList[index];
+          if (media.kind === 'video') {
+            const file = await buildPostVideoFile(media.uri, media.name, media.type);
+            body.append(`file[${index}]`, file as any);
+          } else {
+            body.append(`file[${index}]`, {
+              uri: media.uri,
+              name: media.name || `image_${index}.jpg`,
+              type: media.type || 'image/jpeg',
+            } as any);
+          }
+        }
+      }
+
+      setLoadingMessage(t('creatingPost'));
+      await dispatch(postCreate(body)).unwrap();
+      setIsLoading(false);
+      setLoadingMessage('');
+      Toast.success('Posted Successfully');
+      navigation.goBack();
+    } catch (err: any) {
+      setIsLoading(false);
+      setLoadingMessage('');
+      const message =
+        err?.message === 'Network Error' ||
+        err?.message === 'Network request failed'
+          ? 'Please check your internet connection and try again.'
+          : err?.message?.includes('compose') ||
+              err?.message?.includes('FFmpeg') ||
+              err?.message?.includes('Command failed') ||
+              err?.message?.includes('audio') ||
+              err?.message?.includes('music') ||
+              err?.message?.includes('PhotoMusicComposer') ||
+              err?.message?.includes('MUX_FAILED') ||
+              err?.message?.includes('TRIM_AUDIO_FAILED')
+            ? t('musicComposeFailed')
             : getMessage(err);
-        Toast.error(message);
-      });
+      Toast.error(message);
+    }
   };
 
   const handleEditMedia = (index: number) => {
@@ -177,7 +232,15 @@ const CreatePost: React.FC = () => {
     if (!media?.uri) {
       return;
     }
-    startReEditFlow(media, index);
+    const kind = media.kind ?? (isVideoAsset(media) ? 'video' : 'image');
+    startReEditFlow(
+      {
+        ...media,
+        kind,
+        sourceUri: media.sourceUri ?? media.uri,
+      },
+      index,
+    );
   };
 
   const removeMedia = (indexToRemove: number) => {
@@ -206,12 +269,47 @@ const CreatePost: React.FC = () => {
     });
   };
 
+  const handleAddMusic = () => {
+    if (hasVideoSelected) {
+      Toast.error(t('musicNotWithVideo'));
+      return;
+    }
+    if (selectedMediaList.length === 0) {
+      Toast.error(t('musicRequiresImage'));
+      return;
+    }
+    if (selectedMediaList.length !== 1) {
+      Toast.error(t('musicRequiresOneImage'));
+      return;
+    }
+    if (selectedMediaList[0]?.kind === 'video') {
+      Toast.error(t('musicNotWithVideo'));
+      return;
+    }
+
+    navigation.navigate('MusicPicker', {
+      imageUri: selectedMediaList[0].uri,
+      imageName: selectedMediaList[0].name,
+      existingMusic: selectedMusic ?? undefined,
+    });
+  };
+
+  const handleRemoveMusic = () => {
+    setSelectedMusic(null);
+  };
+
   const handlePickVideo = () => {
     if (selectedMediaList.length > 0) {
       Toast.error('Remove existing media before adding a video');
       return;
     }
-    chooseImageFromLibrary('video', 1);
+    showImageSourcePicker('video', 1, {
+      title: t('uploadVideo'),
+      message: t('chooseVideoSource'),
+      camera: t('recordVideo'),
+      gallery: t('galleryUpload'),
+      cancel: t('cancel'),
+    });
   };
 
   const renderPrivacyOption = (value: 'friends' | 'public' | 'only_me', label: string) => {
@@ -245,7 +343,9 @@ const CreatePost: React.FC = () => {
         <View style={styles.loaderOverlay}>
           <View style={styles.loaderContent}>
             <ActivityIndicator size="large" color={colors.themeColor} />
-            <Text style={styles.loaderText}>Creating post...</Text>
+            <Text style={styles.loaderText}>
+              {loadingMessage || t('creatingPost')}
+            </Text>
           </View>
         </View>
       </Modal>
@@ -283,14 +383,21 @@ const CreatePost: React.FC = () => {
                 onChangeText={setDescription}
               />
             </View>
-            <View style={styles.musicRow}>
-              <Text style={styles.musicText}>ABC Music</Text>
-              <TouchableOpacity style={styles.musicRemoveButton}>
-                <View style={styles.musicRemoveIconContainer}>
-                  <X color="#333" size={10} />
-                </View>
-              </TouchableOpacity>
-            </View>
+            {selectedMusic ? (
+              <View style={styles.musicRow}>
+                <Text style={styles.musicText} numberOfLines={1}>
+                  {formatMusicLabel(selectedMusic, t('unknownTrack'))}
+                </Text>
+                <TouchableOpacity
+                  style={styles.musicRemoveButton}
+                  onPress={handleRemoveMusic}
+                  accessibilityLabel={t('removeMusic')}>
+                  <View style={styles.musicRemoveIconContainer}>
+                    <X color="#333" size={10} />
+                  </View>
+                </TouchableOpacity>
+              </View>
+            ) : null}
           </View>
         </View>
 
@@ -310,6 +417,7 @@ const CreatePost: React.FC = () => {
                     resizeMode="cover"
                     repeat
                     muted
+                    pointerEvents="none"
                   />
                 </TouchableOpacity>
               ) : (
@@ -347,6 +455,7 @@ const CreatePost: React.FC = () => {
                           resizeMode="cover"
                           repeat
                           muted
+                          pointerEvents="none"
                         />
                       ) : (
                         <Image
@@ -395,14 +504,12 @@ const CreatePost: React.FC = () => {
 
         <TouchableOpacity
           style={[styles.optionItem, styles.optionItemLast]}
-          onPress={() => {
-            Toast.show('Music upload coming soon!');
-          }}
+          onPress={handleAddMusic}
         >
           <View style={[styles.optionIconContainer, styles.optionIconContainerMusic]}>
             <Music color="#4CD964" size={20} />
           </View>
-          <Text style={styles.optionText}>Add Music</Text>
+          <Text style={styles.optionText}>{t('addMusic')}</Text>
         </TouchableOpacity>
 
         <View style={styles.privacyContainer}>

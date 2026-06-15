@@ -41,9 +41,11 @@ export const createPost = (formData: FormData) => {
 };
 
 export const editPost = (formData: FormData, id: number) => {
-  return axiosInstance.post(endpoints.home.updatePost + `/${id}`, formData, {
-    formData: true,
-  });
+  return uploadWithFetch(
+    `${endpoints.home.updatePost}/${id}`,
+    formData,
+    CREATE_POST_UPLOAD_TIMEOUT_MS,
+  );
 };
 export const removeImage = (postID, id) => {
   return axiosInstance.post(
@@ -171,7 +173,7 @@ export const getAllLogs = () => {
 };
 
 const UPLOAD_TIMEOUT_MS = 60000; // 60s default for image uploads
-const CREATE_POST_UPLOAD_TIMEOUT_MS = 120000; // 120s for posts (may include video)
+const CREATE_POST_UPLOAD_TIMEOUT_MS = 300000; // 5 min for posts with video
 
 /**
  * Upload FormData via fetch. Avoids axios FormData/Android Network Error issues.
@@ -214,8 +216,14 @@ async function uploadWithFetch(
   } catch (e: any) {
     clearTimeout(timeoutId);
     if (e.name === 'AbortError') {
-      const err: any = new Error('Network request timeout');
+      const err: any = new Error('Upload timed out. Try a shorter video or better connection.');
       err.code = 'ECONNABORTED';
+      throw err;
+    }
+    if (e?.message === 'Network request failed') {
+      const err: any = new Error(
+        'Upload failed. The video file may be missing or too large to send.',
+      );
       throw err;
     }
     throw e;

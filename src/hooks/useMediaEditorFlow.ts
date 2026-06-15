@@ -3,6 +3,7 @@ import {useCallback} from 'react';
 import {Asset} from 'react-native-image-picker';
 import {
   mapPickerAssetsToMedia,
+  isVideoAsset,
   PickedMedia,
 } from './useImagePicker';
 import {
@@ -87,19 +88,21 @@ export const useMediaEditorFlow = (origin: MediaEditorOrigin) => {
   const startReEditFlow = useCallback(
     (media: PickedMedia, reEditIndex: number) => {
       const sourceUri = media.sourceUri ?? media.uri;
+      const kind =
+        media.kind ?? (isVideoAsset(media) ? 'video' : 'image');
 
       navigation.navigate('MediaEditor', {
         uri: sourceUri,
         workingUri: media.uri,
         name: media.name,
         type: media.type,
-        kind: media.kind,
+        kind,
         queue: [
           {
             uri: sourceUri,
             name: media.name,
             type: media.type,
-            kind: media.kind,
+            kind,
           },
         ],
         queueIndex: 0,

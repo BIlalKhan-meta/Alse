@@ -7,8 +7,8 @@ import {
   Image,
   Text,
   TouchableOpacity,
-  ImageBackground,
 } from 'react-native';
+import Video from 'react-native-video';
 import {images} from '../../utils/images';
 import {colors} from '../../utils/theme';
 import Card from '../Card';
@@ -22,6 +22,7 @@ import {useTranslation} from 'react-i18next';
 interface MediaPreviewItem {
   uri: string;
   id?: number;
+  kind?: 'image' | 'video';
 }
 
 interface CardComponentProps {
@@ -166,7 +167,18 @@ const CardComponent: React.FC<CardComponentProps> = ({
               onPress={() => onMediaPress?.(index)}
               disabled={!onMediaPress}
               style={styles.media_pressable}>
-              <Image source={{uri: item.uri}} style={styles.media_style} />
+              {item.kind === 'video' ? (
+                <Video
+                  source={{uri: item.uri}}
+                  style={styles.media_style}
+                  resizeMode="cover"
+                  repeat
+                  muted
+                  pointerEvents="none"
+                />
+              ) : (
+                <Image source={{uri: item.uri}} style={styles.media_style} />
+              )}
             </TouchableOpacity>
           </View>
         ))}

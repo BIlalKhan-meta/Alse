@@ -112,7 +112,11 @@ export const postCreate = createAsyncThunk(
       return response;
     } catch (error: any) {
       const payload =
-        error?.response != null ? error.response.data : error;
+        error?.response != null
+          ? error.response.data
+          : error instanceof Error
+            ? {message: error.message}
+            : error;
       return rejectWithValue(
         payload ?? {message: error?.message || 'Failed to create post'},
       );
@@ -131,7 +135,13 @@ export const postEdit = createAsyncThunk(
       const response = await editPost(formData, id);
       return response;
     } catch (error: any) {
-      return rejectWithValue(error.response.data || 'post update failed');
+      const payload =
+        error?.response != null
+          ? error.response.data
+          : error instanceof Error
+            ? {message: error.message}
+            : error;
+      return rejectWithValue(payload ?? {message: 'post update failed'});
     }
   },
 );

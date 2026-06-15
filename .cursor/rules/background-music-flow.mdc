@@ -1,0 +1,49 @@
+---
+description: Background music on photo posts — pick, trim, mux, upload. Read BACKGROUND_MUSIC_FLOW.md first.
+globs:
+  - src/screens/CreatePost/**
+  - src/screens/MusicPicker/**
+  - src/hooks/useMusicPicker.ts
+  - src/utils/backgroundMusic.ts
+  - src/types/backgroundMusic.ts
+  - BACKGROUND_MUSIC_FLOW.md
+alwaysApply: false
+---
+
+# Background Music Flow
+
+**Always read `BACKGROUND_MUSIC_FLOW.md` before changing this feature.**
+
+## Non-negotiables
+
+1. Music is **single image only** in v1 — clear music if media count ≠ 1 or video selected.
+2. Max clip **30 seconds** (`MAX_MUSIC_CLIP_SECONDS`).
+3. Mux image + audio → MP4 on device via native APIs; upload as **one video** via `buildPostVideoFile`.
+4. Copy `content://` / `ph://` to cache before native compose — never pass raw picker URIs.
+5. FormData = **fetch**, not axios.
+6. After MusicPicker Done: `navigate({ selectedMusic })` only — **no goBack()**.
+7. Never hardcode track names — use `formatMusicLabel` + i18n.
+
+## Quick integration
+
+```typescript
+// Open picker
+navigation.navigate('MusicPicker', { imageUri, imageName });
+
+// Receive music
+useFocusEffect(() => {
+  const music = route.params?.selectedMusic;
+  if (music) { setSelectedMusic(music); navigation.setParams({ selectedMusic: undefined }); }
+});
+
+// Post
+const videoUri = await composePhotoMusicVideo({ imageUri, music: selectedMusic });
+const file = await buildPostVideoFile(videoUri, 'post_music.mp4', 'video/mp4');
+body.append('file[0]', file);
+```
+
+## Phase 2 (do not implement without updating MD)
+
+- Carousel slideshow mux
+- CreatePostEdit music
+- Backend music catalog API

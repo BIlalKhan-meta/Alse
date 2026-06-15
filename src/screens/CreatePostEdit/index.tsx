@@ -4,6 +4,7 @@ import CardComponent from '../../components/CardComponent';
 import {useFocusEffect, useNavigation, useRoute} from '@react-navigation/native';
 import styles from './styles';
 import useImagePicker, {
+  isVideoAsset,
   mergeMediaList,
   PickedMedia,
 } from '../../hooks/useImagePicker';
@@ -12,7 +13,7 @@ import {EditedMedia} from '../../types/mediaEditor';
 import InterMedium from '../../components/Text/InterMedium';
 import {postEdit, updatePost} from '../../store/slices/homeSlice';
 import {useAppDispatch} from '../../hooks/storeHooks';
-import {createVideoFile, getMessage, Toast} from '../../utils/helpers';
+import {buildPostVideoFile, getMessage, Toast} from '../../utils/helpers';
 import Loader from '../../components/Loader';
 import {removeImage} from '../../api/home';
 import {useTranslation} from 'react-i18next';
@@ -33,15 +34,22 @@ type EditMediaItem = PickedMedia & {
 const mapExistingPostMedia = (media: any[] = []): EditMediaItem[] =>
   media
     .filter(item => item?.path)
-    .map(item => ({
-      uri: item.path,
-      sourceUri: item.path,
-      type: item.type,
-      kind:
-        String(item.type ?? '').toLowerCase() === 'video' ? 'video' : 'image',
-      mediaId: item.id,
-      isExisting: true,
-    }));
+    .map(item => {
+      const uri = item.path;
+      const candidate = {uri, type: item.type};
+      const kind: PickedMedia['kind'] =
+        String(item.type ?? '').toLowerCase() === 'video' || isVideoAsset(candidate)
+          ? 'video'
+          : 'image';
+      return {
+        uri,
+        sourceUri: uri,
+        type: item.type,
+        kind,
+        mediaId: item.id,
+        isExisting: true,
+      };
+    });
 
 const CreatePostEdit: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -65,7 +73,6 @@ const CreatePostEdit: React.FC = () => {
     imageData,
     imagesData,
     captureImage,
-    chooseImageFromLibrary,
     showImageSourcePicker,
     setImagesData,
     setImageData,
@@ -131,10 +138,7 @@ const CreatePostEdit: React.FC = () => {
     if (!imageData?.uri) {
       return;
     }
-    const assetType = imageData.type ?? '';
-    const isVideo =
-      assetType.startsWith('video') || imageData.duration != null;
-    if (!isVideo) {
+    if (!isVideoAsset(imageData)) {
       return;
     }
 
@@ -155,7 +159,12 @@ const CreatePostEdit: React.FC = () => {
   }, [imageData, setImageData, setImagesData, startVideoEditFlow, mediaList]);
 
   const previewMedia = useMemo(
-    () => mediaList.map(item => ({uri: item.uri, id: item.mediaId})),
+    () =>
+      mediaList.map(item => ({
+        uri: item.uri,
+        id: item.mediaId,
+        kind: item.kind ?? (isVideoAsset(item) ? 'video' : 'image'),
+      })),
     [mediaList],
   );
 
@@ -182,7 +191,13 @@ const CreatePostEdit: React.FC = () => {
       Toast.error('Remove existing media before adding a video');
       return;
     }
-    chooseImageFromLibrary('video', 1);
+    showImageSourcePicker('video', 1, {
+      title: t('uploadVideo'),
+      message: t('chooseVideoSource'),
+      camera: t('recordVideo'),
+      gallery: t('galleryUpload'),
+      cancel: t('cancel'),
+    });
   };
 
   const handleCapturePhoto = () => {
@@ -202,7 +217,15 @@ const CreatePostEdit: React.FC = () => {
     if (!media?.uri) {
       return;
     }
-    startReEditFlow(media, index);
+    const kind = media.kind ?? (isVideoAsset(media) ? 'video' : 'image');
+    startReEditFlow(
+      {
+        ...media,
+        kind,
+        sourceUri: media.sourceUri ?? media.uri,
+      },
+      index,
+    );
   };
 
   const handleRemoveMediaAt = async (index: number) => {
@@ -228,52 +251,52 @@ const CreatePostEdit: React.FC = () => {
       return;
     }
 
-    const body = new FormData();
-    body.append('description', comment);
-    body.append('privacy', Number(privacy));
-
-    const newMedia = mediaList.filter(item => !item.isExisting);
-    newMedia.forEach((media, index) => {
-      if (media.kind === 'video') {
-        body.append(`file[${index}]`, createVideoFile(media.uri) as any);
-      } else {
-        body.append(`file[${index}]`, {
-          name: media.name || `image_${index}.jpg`,
-          uri: media.uri,
-          type: media.type || 'image/jpeg',
-        } as any);
-      }
-    });
-
     setIsLoading(true);
 
-    dispatch(
-      updatePost({
-        ...data,
-        description: comment,
-        privacy: privacy,
-        ...(newMedia.length
-          ? {
-              media: newMedia.map(item => ({
-                path: item.uri,
-                type: item.kind,
-              })),
-            }
-          : {}),
-      }),
-    );
+    try {
+      const body = new FormData();
+      body.append('description', comment);
+      body.append('privacy', Number(privacy));
 
-    dispatch(postEdit({formData: body, id: data?.id}))
-      .unwrap()
-      .then(() => {
-        setIsLoading(false);
-        Toast.success('Posted Edit Successfully');
-        navigation.goBack();
-      })
-      .catch(err => {
-        setIsLoading(false);
-        Toast.error(getMessage(err?.message));
-      });
+      const newMedia = mediaList.filter(item => !item.isExisting);
+      for (let index = 0; index < newMedia.length; index++) {
+        const media = newMedia[index];
+        if (media.kind === 'video') {
+          const file = await buildPostVideoFile(media.uri, media.name, media.type);
+          body.append(`file[${index}]`, file as any);
+        } else {
+          body.append(`file[${index}]`, {
+            name: media.name || `image_${index}.jpg`,
+            uri: media.uri,
+            type: media.type || 'image/jpeg',
+          } as any);
+        }
+      }
+
+      dispatch(
+        updatePost({
+          ...data,
+          description: comment,
+          privacy: privacy,
+          ...(newMedia.length
+            ? {
+                media: newMedia.map(item => ({
+                  path: item.uri,
+                  type: item.kind,
+                })),
+              }
+            : {}),
+        }),
+      );
+
+      await dispatch(postEdit({formData: body, id: data?.id})).unwrap();
+      setIsLoading(false);
+      Toast.success('Posted Edit Successfully');
+      navigation.goBack();
+    } catch (err: any) {
+      setIsLoading(false);
+      Toast.error(getMessage(err?.message ?? err));
+    }
   };
 
   if (isLoading) {

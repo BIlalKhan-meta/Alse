@@ -1,5 +1,6 @@
 import moment from 'moment';
 import {Platform} from 'react-native';
+import RNFS from 'react-native-fs';
 import {BASE_URL} from './baseurl';
 import {
   check,
@@ -53,6 +54,47 @@ export async function ensurePhotoPermission() {
 
   if (result === RESULTS.DENIED) {
     // 👇 This will show the permission popup
+    result = await request(permission);
+  }
+
+  return result === RESULTS.GRANTED;
+}
+
+export async function ensureCameraPermission(
+  options: {forVideo?: boolean} = {},
+): Promise<boolean> {
+  const {forVideo = false} = options;
+
+  if (Platform.OS === 'ios') {
+    const permissions = forVideo
+      ? [PERMISSIONS.IOS.CAMERA, PERMISSIONS.IOS.MICROPHONE]
+      : [PERMISSIONS.IOS.CAMERA];
+    const statuses = await requestMultiple(permissions);
+    return permissions.every(permission => statuses[permission] === RESULTS.GRANTED);
+  }
+
+  const permissions = forVideo
+    ? [PERMISSIONS.ANDROID.CAMERA, PERMISSIONS.ANDROID.RECORD_AUDIO]
+    : [PERMISSIONS.ANDROID.CAMERA];
+  const statuses = await requestMultiple(permissions);
+  return permissions.every(permission => statuses[permission] === RESULTS.GRANTED);
+}
+
+export async function ensureAudioPermission(): Promise<boolean> {
+  if (Platform.OS === 'ios') {
+    return true;
+  }
+
+  const isAndroid13OrAbove =
+    typeof Platform.Version === 'number' && Platform.Version >= 33;
+
+  const permission = isAndroid13OrAbove
+    ? PERMISSIONS.ANDROID.READ_MEDIA_AUDIO
+    : PERMISSIONS.ANDROID.READ_EXTERNAL_STORAGE;
+
+  let result = await check(permission);
+
+  if (result === RESULTS.DENIED) {
     result = await request(permission);
   }
 
@@ -323,14 +365,88 @@ export const createFile = (img: string) => {
 };
 
 /** Use for chat video uploads so the correct video/* MIME type is set. */
-export const createVideoFile = (uri: string) => {
-  const filename = uri.split('/').pop() ?? 'video';
-  const match = /\.(\w+)$/.exec(filename);
-  const ext = match?.[1] ?? 'mp4';
-  const type = `video/${ext}`;
+const VIDEO_MIME_BY_EXT: Record<string, string> = {
+  mp4: 'video/mp4',
+  mov: 'video/quicktime',
+  m4v: 'video/mp4',
+  webm: 'video/webm',
+  '3gp': 'video/3gpp',
+};
+
+export const resolveVideoMimeType = (uri: string, type?: string): string => {
+  if (type?.startsWith('video/')) {
+    return type;
+  }
+  const ext = (uri.split('?')[0].split('.').pop() ?? 'mp4').toLowerCase();
+  return VIDEO_MIME_BY_EXT[ext] ?? 'video/mp4';
+};
+
+export const normalizeFormDataUri = (uri: string): string => {
+  const trimmed = decodeURIComponent(uri.trim());
+  if (
+    trimmed.startsWith('file://') ||
+    trimmed.startsWith('content://') ||
+    trimmed.startsWith('ph://')
+  ) {
+    return trimmed;
+  }
+  return `file://${trimmed}`;
+};
+
+export async function prepareVideoUriForUpload(uri: string): Promise<string> {
+  if (!uri) {
+    throw new Error('Video file is missing');
+  }
+
+  const decoded = decodeURIComponent(uri.trim());
+
+  if (decoded.startsWith('http://') || decoded.startsWith('https://')) {
+    const dest = `${RNFS.CachesDirectoryPath}/upload-video-${Date.now()}.mp4`;
+    const result = await RNFS.downloadFile({fromUrl: decoded, toFile: dest})
+      .promise;
+    if (result.statusCode && result.statusCode >= 400) {
+      throw new Error('Could not download video for upload');
+    }
+    return normalizeFormDataUri(dest);
+  }
+
+  if (decoded.startsWith('content://')) {
+    const dest = `${RNFS.CachesDirectoryPath}/upload-video-${Date.now()}.mp4`;
+    await RNFS.copyFile(decoded, dest);
+    return normalizeFormDataUri(dest);
+  }
+
+  const normalized = normalizeFormDataUri(decoded);
+  const path = normalized.replace(/^file:\/\//, '');
+  const exists = await RNFS.exists(path);
+  if (!exists) {
+    throw new Error('Video file not found on device');
+  }
+
+  return normalized;
+};
+
+export const createVideoFile = (
+  uri: string,
+  name?: string,
+  type?: string,
+) => {
+  const normalizedUri = normalizeFormDataUri(uri);
+  const baseName =
+    name ?? uri.split('/').pop()?.split('?')[0] ?? 'video.mp4';
+  const ext = /\.(\w+)$/.exec(baseName)?.[1] ?? 'mp4';
   return {
-    name: `video_${new Date().getTime()}.${ext}`,
-    type,
-    uri: Platform.OS === 'android' ? uri : uri.replace('file://', ''),
+    name: baseName.includes('.') ? baseName : `video_${Date.now()}.${ext}`,
+    type: resolveVideoMimeType(uri, type),
+    uri: normalizedUri,
   };
+};
+
+export async function buildPostVideoFile(
+  uri: string,
+  name?: string,
+  type?: string,
+) {
+  const preparedUri = await prepareVideoUriForUpload(uri);
+  return createVideoFile(preparedUri, name, type);
 };

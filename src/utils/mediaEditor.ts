@@ -7,6 +7,7 @@ import {showEditor} from 'react-native-video-trim';
 import type {RefObject} from 'react';
 import type {View} from 'react-native';
 import {CropAspect} from '../types/mediaEditor';
+import {normalizeFormDataUri} from './helpers';
 
 export type ImageDimensions = {width: number; height: number};
 
@@ -344,7 +345,10 @@ export async function openVideoEditorForPost(
     const subscription = emitter.addListener('VideoTrim', (event: any) => {
       const name = event?.name;
       if (name === 'onFinishTrimming' && event.outputPath) {
-        finish({success: true, exportedUri: event.outputPath});
+        finish({
+          success: true,
+          exportedUri: normalizeFormDataUri(event.outputPath),
+        });
         return;
       }
       if (name === 'onError') {

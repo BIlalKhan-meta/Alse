@@ -6,6 +6,7 @@ import Shop from '../../screens/MarketPlace/Shop';
 import CreatePost from '../../screens/CreatePost';
 import ImageCrop from '../../screens/ImageCrop';
 import MediaEditor from '../../screens/MediaEditor';
+import MusicPicker from '../../screens/MusicPicker';
 import RequestScreen from '../../screens/RequestScreen';
 import Notifications from '../../screens/Home/Notifications';
 import ContactUs from '../../screens/ContactUs';
@@ -174,6 +175,11 @@ const AppNavigation = () => {
         <Stack.Screen
           name="MediaEditor"
           component={MediaEditor}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="MusicPicker"
+          component={MusicPicker}
           options={{headerShown: false}}
         />
         <Stack.Screen
