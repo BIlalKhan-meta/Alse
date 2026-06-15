@@ -1,13 +1,13 @@
 import {GripHorizontal} from 'lucide-react-native';
-import React, {useCallback, useMemo} from 'react';
-import {TextInput, View} from 'react-native';
+import React, {useCallback, useMemo, useRef} from 'react';
+import {Text, TextInput, View} from 'react-native';
 import {Gesture, GestureDetector} from 'react-native-gesture-handler';
 import Animated, {
   runOnJS,
   useAnimatedStyle,
   useSharedValue,
 } from 'react-native-reanimated';
-import {TextOverlayState} from '../../../types/mediaEditor';
+import {hexToRgba, TextOverlayState} from '../../../types/mediaEditor';
 import styles from '../styles';
 
 type Props = {
@@ -16,8 +16,10 @@ type Props = {
   cardHeight: number;
   editable: boolean;
   draggable: boolean;
+  exportMode?: boolean;
   placeholder: string;
   onChange: (next: TextOverlayState) => void;
+  onDragEnd?: (overlay: TextOverlayState) => void;
 };
 
 const TextOverlayLayer: React.FC<Props> = ({
@@ -26,9 +28,12 @@ const TextOverlayLayer: React.FC<Props> = ({
   cardHeight,
   editable,
   draggable,
+  exportMode = false,
   placeholder,
   onChange,
+  onDragEnd,
 }) => {
+  const inputRef = useRef<TextInput>(null);
   const posX = useSharedValue(overlay?.x ?? cardWidth * 0.1);
   const posY = useSharedValue(overlay?.y ?? cardHeight * 0.55);
   const startX = useSharedValue(0);
@@ -42,33 +47,29 @@ const TextOverlayLayer: React.FC<Props> = ({
     }
   }, [overlay?.x, overlay?.y, overlay, posX, posY]);
 
-  const commitPosition = useCallback(
+  const finishDrag = useCallback(
     (x: number, y: number) => {
       if (!overlay) {
         return;
       }
+      isDragging.current = false;
 
-      const maxX = Math.max(0, cardWidth - 40);
-      const maxY = Math.max(0, cardHeight - 24);
-
-      onChange({
+      const boxWidth = overlay.width ?? 120;
+      const boxHeight = overlay.height ?? 56;
+      const maxX = Math.max(0, cardWidth - boxWidth);
+      const maxY = Math.max(0, cardHeight - boxHeight);
+      const next = {
         ...overlay,
         x: Math.max(0, Math.min(maxX, x)),
         y: Math.max(0, Math.min(maxY, y)),
-      });
+      };
+      onChange(next);
+      onDragEnd?.(next);
     },
-    [cardHeight, cardWidth, onChange, overlay],
+    [cardHeight, cardWidth, onChange, onDragEnd, overlay],
   );
 
-  const finishDrag = useCallback(
-    (x: number, y: number) => {
-      isDragging.current = false;
-      commitPosition(x, y);
-    },
-    [commitPosition],
-  );
-
-  const pan = useMemo(() => {
+  const handlePan = useMemo(() => {
     return Gesture.Pan()
       .enabled(draggable && !!overlay)
       .minDistance(4)
@@ -99,51 +100,64 @@ const TextOverlayLayer: React.FC<Props> = ({
   }
 
   const backgroundColor = overlay.backgroundEnabled
-    ? `rgba(255,255,255,${overlay.backgroundOpacity})`
+    ? hexToRgba(
+        overlay.backgroundColor ?? '#FFFFFF',
+        overlay.backgroundOpacity,
+      )
     : 'transparent';
 
-  const content = (
+  const showDragHandle = draggable && !exportMode;
+  const textStyle = {
+    color: overlay.color,
+    fontSize: overlay.fontSize,
+  };
+
+  return (
     <Animated.View
       style={[
         styles.textOverlayBox,
+        exportMode && styles.textOverlayBoxExport,
         {
           width: overlay.width,
+          height: overlay.height,
           backgroundColor,
         },
         animatedStyle,
       ]}>
-      {editable ? (
-        <GestureDetector gesture={pan}>
-          <View style={styles.textDragHandle} hitSlop={8}>
-            <GripHorizontal color="#666" size={16} />
+      {showDragHandle ? (
+        <GestureDetector gesture={handlePan}>
+          <View style={styles.textDragHandle}>
+            <GripHorizontal color="#666" size={14} />
           </View>
         </GestureDetector>
       ) : null}
-      <TextInput
-        style={[
-          styles.textOverlayInput,
-          {
-            color: overlay.color,
-            fontSize: overlay.fontSize,
-          },
-        ]}
-        value={overlay.text}
-        onChangeText={text => onChange({...overlay, text})}
-        placeholder={placeholder}
-        placeholderTextColor="#666"
-        multiline
-        editable={editable}
-        pointerEvents={editable ? 'auto' : 'none'}
-        autoFocus={editable && overlay.text === ''}
-      />
+      {exportMode ? (
+        <Text style={[styles.textOverlayExportText, textStyle]}>{overlay.text}</Text>
+      ) : (
+        <TextInput
+          ref={inputRef}
+          style={[
+            styles.textOverlayInput,
+            textStyle,
+            {
+              height: Math.max(28, overlay.height - (showDragHandle ? 28 : 0)),
+            },
+          ]}
+          value={overlay.text}
+          onChangeText={text => onChange({...overlay, text})}
+          placeholder={placeholder}
+          placeholderTextColor="#666"
+          multiline
+          editable={editable}
+          onPressIn={() => {
+            if (editable) {
+              inputRef.current?.focus();
+            }
+          }}
+        />
+      )}
     </Animated.View>
   );
-
-  if (editable) {
-    return content;
-  }
-
-  return <GestureDetector gesture={pan}>{content}</GestureDetector>;
 };
 
 export default TextOverlayLayer;

@@ -1,5 +1,5 @@
 ---
-description: Create Post / Edit Post media pick → edit → upload flow
+description: Create Post / Edit Post — full pick → MediaEditor → upload flow. Read CREATE_POST_MEDIA_FLOW.md first.
 globs:
   - src/screens/CreatePost/**
   - src/screens/CreatePostEdit/**
@@ -8,45 +8,58 @@ globs:
   - src/hooks/useMediaEditorFlow.ts
   - src/utils/mediaEditor.ts
   - src/types/mediaEditor.ts
+  - CREATE_POST_MEDIA_FLOW.md
 alwaysApply: false
 ---
 
 # Create Post Media Flow
 
-Read `CREATE_POST_MEDIA_FLOW.md` before changing pick, edit, or upload behavior.
+**Always read `CREATE_POST_MEDIA_FLOW.md` before changing this flow.**
 
-## Hard rules
+## Non-negotiables
 
-1. **Always route new picks through MediaEditor** — do not push raw picker URIs directly into `selectedMediaList` / `mediaList`.
-2. **Never mix video and images** in one post (max 10 images OR 1 video).
-3. **Multi-image gallery/camera picks** use the editor queue (`queue`, `queueIndex` in `MediaEditor` params).
-4. **Video** replaces the list; **images** merge with `mergeMediaList`.
-5. **Video uploads** must use the trim export URI from `openVideoEditorForPost` (`react-native-video-trim`), not the raw picker URI.
-6. **FormData uploads** use `fetch` (see `formdata-upload-network-error.mdc`), not axios.
-7. **Editor UI** must keep the light layout: Editor header, white preview card, Crop + Text toolbar only (see `screenshots/media-editor-reference.png`).
+1. New picks → **MediaEditor** first (never raw URIs in media list).
+2. Max **10 images OR 1 video** — never mixed.
+3. Video replaces list; images merge via `mergeMediaList`.
+4. Video upload = trim export URI (`openVideoEditorForPost`).
+5. FormData = **fetch**, not axios.
+6. After Done: `navigate({ editedMediaBatch })` only — **no goBack()**.
 
-## Integration pattern
+## MediaEditor layout — do not break
 
-```typescript
-// After picker returns assets:
-startImageEditFlow(imagesData, remainingMediaSlots);
-// or for video:
-startVideoEditFlow({ uri, name, type, kind: 'video' });
-
-// MediaEditor finish — navigate only, never goBack() after (extra goBack pops to Home):
-navigation.navigate({ name: 'CreatePost', params: { editedMediaBatch: batch }, merge: true });
-
-// On return to CreatePost / CreatePostEdit:
-useFocusEffect(() => {
-  const batch = route.params?.editedMediaBatch;
-  if (batch?.length) {
-    // video → replace; images → merge
-    navigation.setParams({ editedMediaBatch: undefined });
-  }
-});
+```
+Header (fixed)
+Preview card + TextOverlay (fixed, OUTSIDE ScrollView)  ← drag works here
+ScrollView (flex:1, TextStylePanel only)                ← scroll works here
+Toolbar Crop|Text (fixed, compact)
 ```
 
-## App requirements
+### Never do these
 
-- `App.tsx`: `GestureHandlerRootView` wraps the app.
-- Video export: `react-native-video-trim` (old architecture compatible).
+- Put preview/overlay **inside** ScrollView (breaks text drag OR scroll).
+- `scrollEnabled={!isTextActive}` (blocks scroll when text tool open).
+- Decorative overlay without `pointerEvents: 'none'`.
+- `activeOffsetX/Y` on text pan gesture (breaks drag).
+- Pass raw `ph://` / `content://` to cropper (use `resolveLocalImagePath`).
+
+### Text overlay UX
+
+- Placeholder: `"text"` only.
+- Move: drag **grip handle** on text box (works even while keyboard is open).
+- Type: tap text area below handle.
+- Re-edit: tap thumbnail on CreatePost / CreatePostEdit → `startReEditFlow`.
+- Undo: header Undo steps back (crop, text, styles, position).
+
+## Quick integration
+
+```typescript
+startImageEditFlow(imagesData, remainingMediaSlots);
+startVideoEditFlow({ uri, name, type, kind: 'video' });
+startReEditFlow(media, index); // tap existing thumbnail
+
+navigation.navigate({
+  name: 'CreatePost',
+  params: { editedMediaBatch: batch, reEditIndex: index },
+  merge: true,
+});
+```

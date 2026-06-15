@@ -36,6 +36,7 @@ interface CardComponentProps {
   handleOnChangeText: () => void;
   removeMedia: () => void;
   onRemoveMediaAt?: (index: number) => void;
+  onMediaPress?: (index: number) => void;
   image?: object | null;
   mediaList?: MediaPreviewItem[];
 }
@@ -52,6 +53,7 @@ const CardComponent: React.FC<CardComponentProps> = ({
   mediaList,
   removeMedia,
   onRemoveMediaAt,
+  onMediaPress,
 }) => {
   const [open, setOpen] = useState(false);
   const user = useSelector(selectUserProfile);
@@ -159,7 +161,13 @@ const CardComponent: React.FC<CardComponentProps> = ({
               style={styles.cross_box}>
               <Image source={images.cross} style={styles.cross_icon} />
             </TouchableOpacity>
-            <Image source={{uri: item.uri}} style={styles.media_style} />
+            <TouchableOpacity
+              activeOpacity={0.9}
+              onPress={() => onMediaPress?.(index)}
+              disabled={!onMediaPress}
+              style={styles.media_pressable}>
+              <Image source={{uri: item.uri}} style={styles.media_style} />
+            </TouchableOpacity>
           </View>
         ))}
       </View>
@@ -212,6 +220,10 @@ const styles = StyleSheet.create({
     width: '100%',
     height: vh * 20,
     marginRight: 0,
+  },
+  media_pressable: {
+    width: '100%',
+    height: '100%',
   },
   media_style: {
     width: '100%',

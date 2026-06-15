@@ -35,6 +35,7 @@ const mapExistingPostMedia = (media: any[] = []): EditMediaItem[] =>
     .filter(item => item?.path)
     .map(item => ({
       uri: item.path,
+      sourceUri: item.path,
       type: item.type,
       kind:
         String(item.type ?? '').toLowerCase() === 'video' ? 'video' : 'image',
@@ -72,20 +73,34 @@ const CreatePostEdit: React.FC = () => {
 
   const remainingMediaSlots = MAX_MEDIA - mediaList.length;
   const hasVideoSelected = mediaList.some(media => media.kind === 'video');
-  const {startImageEditFlow, startVideoEditFlow} = useMediaEditorFlow('edit');
+  const {startImageEditFlow, startVideoEditFlow, startReEditFlow} =
+    useMediaEditorFlow('edit');
 
   useFocusEffect(
     React.useCallback(() => {
       const batch = route.params?.editedMediaBatch as EditedMedia[] | undefined;
+      const editIndex = route.params?.reEditIndex as number | undefined;
       if (batch?.length) {
-        if (batch.some(item => item.kind === 'video')) {
+        if (editIndex !== undefined && editIndex >= 0) {
+          setMediaList(prev => {
+            const next = [...prev];
+            const previous = next[editIndex];
+            next[editIndex] = {
+              ...batch[0],
+              sourceUri: batch[0].sourceUri ?? previous?.sourceUri,
+              isExisting: previous?.isExisting,
+              mediaId: previous?.mediaId,
+            };
+            return next;
+          });
+        } else if (batch.some(item => item.kind === 'video')) {
           setMediaList(batch);
         } else {
           setMediaList(prev => mergeMediaList(prev, batch, MAX_MEDIA));
         }
-        navigation.setParams({editedMediaBatch: undefined});
+        navigation.setParams({editedMediaBatch: undefined, reEditIndex: undefined});
       }
-    }, [navigation, route.params?.editedMediaBatch]),
+    }, [navigation, route.params?.editedMediaBatch, route.params?.reEditIndex]),
   );
 
   useLayoutEffect(() => {
@@ -182,6 +197,14 @@ const CreatePostEdit: React.FC = () => {
     captureImage('photo');
   };
 
+  const handleEditMediaAt = (index: number) => {
+    const media = mediaList[index];
+    if (!media?.uri) {
+      return;
+    }
+    startReEditFlow(media, index);
+  };
+
   const handleRemoveMediaAt = async (index: number) => {
     const target = mediaList[index];
     if (!target) {
@@ -264,6 +287,7 @@ const CreatePostEdit: React.FC = () => {
           onImagePress={handlePickImages}
           onVideoPress={handlePickVideo}
           onCameraPress={handleCapturePhoto}
+          onMediaPress={handleEditMediaAt}
           value={comment}
           handleOnChangeText={setComment}
           ListOptions={ListOptions}

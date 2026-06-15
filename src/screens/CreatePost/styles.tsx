@@ -99,6 +99,10 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  mediaPressable: {
+    width: '100%',
+    height: '100%',
+  },
   thumbnailRow: {
     flexDirection: 'row',
     justifyContent: 'flex-start',

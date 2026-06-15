@@ -24,7 +24,7 @@ const EditorToolbar: React.FC<Props> = ({
         <View style={styles.toolIconWrap}>
           <Crop
             color={activeTool === 'crop' ? '#20B2AA' : '#000'}
-            size={28}
+            size={22}
             strokeWidth={1.5}
           />
         </View>

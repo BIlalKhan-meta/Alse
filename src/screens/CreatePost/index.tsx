@@ -55,21 +55,32 @@ const CreatePost: React.FC = () => {
     setImageData,
   } = useImagePicker();
 
-  const {startImageEditFlow, startVideoEditFlow} = useMediaEditorFlow('create');
+  const {startImageEditFlow, startVideoEditFlow, startReEditFlow} =
+    useMediaEditorFlow('create');
   const remainingMediaSlots = MAX_MEDIA - selectedMediaList.length;
 
   useFocusEffect(
     React.useCallback(() => {
       const batch = route.params?.editedMediaBatch as EditedMedia[] | undefined;
+      const editIndex = route.params?.reEditIndex as number | undefined;
       if (batch?.length) {
-        if (batch.some(item => item.kind === 'video')) {
+        if (editIndex !== undefined && editIndex >= 0) {
+          setSelectedMediaList(prev => {
+            const next = [...prev];
+            next[editIndex] = {
+              ...batch[0],
+              sourceUri: batch[0].sourceUri ?? next[editIndex]?.sourceUri,
+            };
+            return next;
+          });
+        } else if (batch.some(item => item.kind === 'video')) {
           setSelectedMediaList(batch);
         } else {
           setSelectedMediaList(prev => mergeMediaList(prev, batch, MAX_MEDIA));
         }
-        navigation.setParams({editedMediaBatch: undefined});
+        navigation.setParams({editedMediaBatch: undefined, reEditIndex: undefined});
       }
-    }, [navigation, route.params?.editedMediaBatch]),
+    }, [navigation, route.params?.editedMediaBatch, route.params?.reEditIndex]),
   );
 
   useEffect(() => {
@@ -159,6 +170,14 @@ const CreatePost: React.FC = () => {
             : getMessage(err);
         Toast.error(message);
       });
+  };
+
+  const handleEditMedia = (index: number) => {
+    const media = selectedMediaList[index];
+    if (!media?.uri) {
+      return;
+    }
+    startReEditFlow(media, index);
   };
 
   const removeMedia = (indexToRemove: number) => {
@@ -281,19 +300,29 @@ const CreatePost: React.FC = () => {
             {/* Main Image */}
             <View style={styles.mainMediaWrapper}>
               {selectedMediaList[0].kind === 'video' ? (
-                <Video
-                  source={{uri: selectedMediaList[0].uri}}
-                  style={styles.mainMediaImage}
-                  resizeMode="cover"
-                  repeat
-                  muted
-                />
+                <TouchableOpacity
+                  activeOpacity={0.9}
+                  onPress={() => handleEditMedia(0)}
+                  style={styles.mediaPressable}>
+                  <Video
+                    source={{uri: selectedMediaList[0].uri}}
+                    style={styles.mainMediaImage}
+                    resizeMode="cover"
+                    repeat
+                    muted
+                  />
+                </TouchableOpacity>
               ) : (
-                <Image
-                  source={{uri: selectedMediaList[0].uri}}
-                  style={styles.mainMediaImage}
-                  resizeMode="cover"
-                />
+                <TouchableOpacity
+                  activeOpacity={0.9}
+                  onPress={() => handleEditMedia(0)}
+                  style={styles.mediaPressable}>
+                  <Image
+                    source={{uri: selectedMediaList[0].uri}}
+                    style={styles.mainMediaImage}
+                    resizeMode="cover"
+                  />
+                </TouchableOpacity>
               )}
               <TouchableOpacity
                 style={styles.removeMediaButton}
@@ -307,21 +336,26 @@ const CreatePost: React.FC = () => {
               <View style={styles.thumbnailRow}>
                 {selectedMediaList.slice(1).map((media, index) => (
                   <View key={`${media.uri}-${index + 1}`} style={[styles.thumbnailWrapper, (index + 1) % 3 === 0 && styles.thumbnailWrapperLast]}>
-                    {media.kind === 'video' ? (
-                      <Video
-                        source={{uri: media.uri}}
-                        style={styles.thumbnailImage}
-                        resizeMode="cover"
-                        repeat
-                        muted
-                      />
-                    ) : (
-                      <Image
-                        source={{uri: media.uri}}
-                        style={styles.thumbnailImage}
-                        resizeMode="cover"
-                      />
-                    )}
+                    <TouchableOpacity
+                      activeOpacity={0.9}
+                      onPress={() => handleEditMedia(index + 1)}
+                      style={styles.mediaPressable}>
+                      {media.kind === 'video' ? (
+                        <Video
+                          source={{uri: media.uri}}
+                          style={styles.thumbnailImage}
+                          resizeMode="cover"
+                          repeat
+                          muted
+                        />
+                      ) : (
+                        <Image
+                          source={{uri: media.uri}}
+                          style={styles.thumbnailImage}
+                          resizeMode="cover"
+                        />
+                      )}
+                    </TouchableOpacity>
                     <TouchableOpacity
                       style={styles.removeThumbnailButton}
                       onPress={() => removeMedia(index + 1)}>

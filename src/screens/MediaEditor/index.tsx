@@ -14,6 +14,7 @@ import Video from 'react-native-video';
 import {
   createDefaultTextOverlay,
   EditedMedia,
+  EditorSnapshot,
   EditorTool,
   MediaEditorRouteParams,
   TextOverlayState,
@@ -28,6 +29,11 @@ import EditorToolbar from './components/EditorToolbar';
 import TextOverlayLayer from './components/TextOverlayLayer';
 import TextStylePanel from './components/TextStylePanel';
 import styles from './styles';
+
+const snapshotsEqual = (a: EditorSnapshot, b: EditorSnapshot) =>
+  a.workingUri === b.workingUri &&
+  a.activeTool === b.activeTool &&
+  JSON.stringify(a.textOverlay) === JSON.stringify(b.textOverlay);
 
 const MediaEditor: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -46,9 +52,13 @@ const MediaEditor: React.FC = () => {
     completedMedia = [],
     workingUri: paramWorkingUri,
     croppedUri,
+    sourceUri: paramSourceUri,
+    reEditIndex,
   } = params;
 
   const previewRef = useRef<View>(null);
+  const historyRef = useRef<EditorSnapshot[]>([]);
+  const historyIndexRef = useRef(0);
   const [cardWidth, setCardWidth] = useState(320);
   const [cardHeight, setCardHeight] = useState(400);
   const [activeTool, setActiveTool] = useState<EditorTool>('none');
@@ -56,6 +66,8 @@ const MediaEditor: React.FC = () => {
   const [videoPaused, setVideoPaused] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [isCropping, setIsCropping] = useState(false);
+  const [captureOverlay, setCaptureOverlay] = useState(false);
+  const [canUndo, setCanUndo] = useState(false);
 
   const currentItem = useMemo(
     () =>
@@ -68,23 +80,60 @@ const MediaEditor: React.FC = () => {
     [queue, queueIndex, uri, name, type, kind],
   );
 
+  const sourceUri = paramSourceUri ?? currentItem.uri;
+
   const [workingUri, setWorkingUri] = useState(
     paramWorkingUri ?? croppedUri ?? currentItem.uri,
   );
 
+  const applySnapshot = useCallback((snapshot: EditorSnapshot) => {
+    setWorkingUri(snapshot.workingUri);
+    setTextOverlay(snapshot.textOverlay);
+    setActiveTool(snapshot.activeTool);
+  }, []);
+
+  const pushSnapshot = useCallback(
+    (snapshot: EditorSnapshot) => {
+      const trimmed = historyRef.current.slice(0, historyIndexRef.current + 1);
+      const last = trimmed[trimmed.length - 1];
+      if (last && snapshotsEqual(last, snapshot)) {
+        applySnapshot(snapshot);
+        return;
+      }
+
+      const nextHistory = [...trimmed, snapshot];
+      historyRef.current = nextHistory;
+      historyIndexRef.current = nextHistory.length - 1;
+      setCanUndo(historyIndexRef.current > 0);
+      applySnapshot(snapshot);
+    },
+    [applySnapshot],
+  );
+
   useEffect(() => {
-    setWorkingUri(paramWorkingUri ?? currentItem.uri);
-    setTextOverlay(null);
-    setActiveTool('none');
-  }, [currentItem.uri, paramWorkingUri, queueIndex]);
+    const initialWorking = paramWorkingUri ?? currentItem.uri;
+    const initial: EditorSnapshot = {
+      workingUri: initialWorking,
+      textOverlay: null,
+      activeTool: 'none',
+    };
+    historyRef.current = [initial];
+    historyIndexRef.current = 0;
+    setCanUndo(false);
+    applySnapshot(initial);
+  }, [currentItem.uri, paramWorkingUri, queueIndex, applySnapshot]);
 
   useFocusEffect(
     useCallback(() => {
       if (croppedUri) {
-        setWorkingUri(croppedUri);
+        pushSnapshot({
+          workingUri: croppedUri,
+          textOverlay,
+          activeTool,
+        });
         navigation.setParams({croppedUri: undefined, workingUri: croppedUri});
       }
-    }, [croppedUri, navigation]),
+    }, [activeTool, croppedUri, navigation, pushSnapshot, textOverlay]),
   );
 
   const queueLabel =
@@ -105,16 +154,23 @@ const MediaEditor: React.FC = () => {
       const targetScreen = origin === 'edit' ? 'CreatePostEdit' : 'CreatePost';
       navigation.navigate({
         name: targetScreen,
-        params: {editedMediaBatch: batch},
+        params: {
+          editedMediaBatch: batch,
+          ...(reEditIndex !== undefined ? {reEditIndex} : {}),
+        },
         merge: true,
       });
     },
-    [navigation, origin],
+    [navigation, origin, reEditIndex],
   );
 
   const advanceQueue = useCallback(
     (edited: EditedMedia) => {
-      const nextCompleted = [...completedMedia, edited];
+      const editedWithSource = {
+        ...edited,
+        sourceUri: edited.sourceUri ?? sourceUri,
+      };
+      const nextCompleted = [...completedMedia, editedWithSource];
       const nextIndex = queueIndex + 1;
 
       if (nextIndex < queue.length) {
@@ -129,14 +185,28 @@ const MediaEditor: React.FC = () => {
           completedMedia: nextCompleted,
           workingUri: undefined,
           croppedUri: undefined,
+          sourceUri: nextItem.uri,
+          reEditIndex: undefined,
         });
         return;
       }
 
       finishWithBatch(nextCompleted);
     },
-    [completedMedia, finishWithBatch, navigation, params, queue, queueIndex],
+    [completedMedia, finishWithBatch, navigation, params, queue, queueIndex, sourceUri],
   );
+
+  const handleUndo = () => {
+    if (historyIndexRef.current <= 0) {
+      return;
+    }
+    historyIndexRef.current -= 1;
+    const snapshot = historyRef.current[historyIndexRef.current];
+    setCanUndo(historyIndexRef.current > 0);
+    if (snapshot) {
+      applySnapshot(snapshot);
+    }
+  };
 
   const handleSelectCrop = async () => {
     if (currentItem.kind === 'video') {
@@ -153,7 +223,11 @@ const MediaEditor: React.FC = () => {
     try {
       const croppedUri = await openNativeImageCropper(workingUri);
       if (croppedUri) {
-        setWorkingUri(croppedUri);
+        pushSnapshot({
+          workingUri: croppedUri,
+          textOverlay,
+          activeTool,
+        });
       }
     } catch (error: any) {
       Toast.error(error?.message ?? t('imageEditorFailed'));
@@ -163,12 +237,50 @@ const MediaEditor: React.FC = () => {
   };
 
   const handleSelectText = () => {
-    setActiveTool(prev => {
-      const next = prev === 'text' ? 'none' : 'text';
-      if (next === 'text' && !textOverlay) {
-        setTextOverlay(createDefaultTextOverlay(cardWidth, cardHeight));
-      }
-      return next;
+    if (activeTool === 'text') {
+      pushSnapshot({
+        workingUri,
+        textOverlay,
+        activeTool: 'none',
+      });
+      return;
+    }
+
+    if (!textOverlay) {
+      const overlay = createDefaultTextOverlay(cardWidth, cardHeight);
+      pushSnapshot({
+        workingUri,
+        textOverlay: overlay,
+        activeTool: 'text',
+      });
+      return;
+    }
+
+    pushSnapshot({
+      workingUri,
+      textOverlay,
+      activeTool: 'text',
+    });
+  };
+
+  const handleTextOverlayChange = (next: TextOverlayState) => {
+    setTextOverlay(next);
+  };
+
+  const handleTextDragEnd = (next: TextOverlayState) => {
+    pushSnapshot({
+      workingUri,
+      textOverlay: next,
+      activeTool,
+    });
+  };
+
+  const handleTextStyleChange = (next: TextOverlayState) => {
+    setTextOverlay(next);
+    pushSnapshot({
+      workingUri,
+      textOverlay: next,
+      activeTool,
     });
   };
 
@@ -177,11 +289,10 @@ const MediaEditor: React.FC = () => {
       return;
     }
 
-    setIsExporting(true);
-
     try {
       if (currentItem.kind === 'video') {
-        const result = await openVideoEditorForPost(currentItem.uri);
+        setIsExporting(true);
+        const result = await openVideoEditorForPost(workingUri || currentItem.uri);
         if (!result.success || !result.exportedUri) {
           if (result.error && result.error !== 'User cancelled') {
             Toast.error(result.error ?? t('videoEditorFailed'));
@@ -194,17 +305,32 @@ const MediaEditor: React.FC = () => {
           name: currentItem.name,
           type: currentItem.type ?? 'video/mp4',
           kind: 'video',
+          sourceUri,
         });
         return;
       }
 
       const hasText = !!textOverlay?.text?.trim();
 
+      if (hasText) {
+        setCaptureOverlay(true);
+        await new Promise<void>(resolve => {
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => resolve());
+          });
+        });
+      } else {
+        setIsExporting(true);
+      }
+
       const exported = await exportImageMedia({
         uri: workingUri,
         hasTextOverlay: hasText,
         previewRef,
       });
+
+      setCaptureOverlay(false);
+      setIsExporting(true);
 
       advanceQueue({
         uri: exported.uri,
@@ -213,10 +339,12 @@ const MediaEditor: React.FC = () => {
         kind: 'image',
         width: exported.width,
         height: exported.height,
+        sourceUri,
       });
     } catch (error: any) {
       Toast.error(error?.message ?? t('imageEditorFailed'));
     } finally {
+      setCaptureOverlay(false);
       setIsExporting(false);
     }
   };
@@ -226,7 +354,7 @@ const MediaEditor: React.FC = () => {
       return (
         <>
           <Video
-            source={{uri: currentItem.uri}}
+            source={{uri: workingUri || currentItem.uri}}
             style={styles.mediaFill}
             resizeMode="cover"
             repeat
@@ -257,7 +385,18 @@ const MediaEditor: React.FC = () => {
       <View style={styles.gradientOverlay} />
 
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>{t('editor')}</Text>
+        <View style={styles.headerLeft}>
+          <TouchableOpacity
+            style={[styles.undoButton, !canUndo && styles.undoButtonDisabled]}
+            onPress={handleUndo}
+            disabled={!canUndo || isExporting}>
+            <Text
+              style={[styles.undoText, !canUndo && styles.undoTextDisabled]}>
+              {t('undo')}
+            </Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>{t('editor')}</Text>
+        </View>
         <TouchableOpacity
           style={styles.doneButton}
           onPress={handleDone}
@@ -266,14 +405,7 @@ const MediaEditor: React.FC = () => {
         </TouchableOpacity>
       </View>
 
-      <KeyboardAwareScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        enableOnAndroid
-        extraScrollHeight={24}
-        keyboardShouldPersistTaps="handled"
-        scrollEnabled={!isTextActive}
-        showsVerticalScrollIndicator={false}>
+      <View style={styles.previewSection}>
         <View
           ref={previewRef}
           collapsable={false}
@@ -289,9 +421,11 @@ const MediaEditor: React.FC = () => {
             cardWidth={cardWidth}
             cardHeight={cardHeight}
             editable={isTextActive}
-            draggable={!!textOverlay}
+            draggable={isTextActive && !!textOverlay}
+            exportMode={captureOverlay}
             placeholder={t('editorTextPlaceholder')}
-            onChange={setTextOverlay}
+            onChange={handleTextOverlayChange}
+            onDragEnd={handleTextDragEnd}
           />
         </View>
 
@@ -302,9 +436,24 @@ const MediaEditor: React.FC = () => {
         {activeTool === 'crop' && currentItem.kind === 'video' ? (
           <Text style={styles.cropHint}>{t('videoCropOnDone')}</Text>
         ) : null}
+      </View>
 
+      <KeyboardAwareScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        enableOnAndroid
+        enableAutomaticScroll
+        extraScrollHeight={24}
+        keyboardShouldPersistTaps="handled"
+        nestedScrollEnabled
+        showsVerticalScrollIndicator={false}>
         {isTextActive && textOverlay ? (
-          <TextStylePanel overlay={textOverlay} onChange={setTextOverlay} />
+          <TextStylePanel
+            overlay={textOverlay}
+            cardWidth={cardWidth}
+            cardHeight={cardHeight}
+            onChange={handleTextStyleChange}
+          />
         ) : null}
       </KeyboardAwareScrollView>
 
@@ -316,7 +465,7 @@ const MediaEditor: React.FC = () => {
         />
       </View>
 
-      {isExporting || isCropping ? (
+      {(isExporting || isCropping) && !captureOverlay ? (
         <View style={styles.loaderOverlay}>
           <ActivityIndicator size="large" color="#20B2AA" />
         </View>

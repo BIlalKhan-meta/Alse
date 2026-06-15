@@ -11,7 +11,7 @@ import {
 } from '../types/mediaEditor';
 
 const toQueueItem = (media: PickedMedia): MediaEditorQueueItem => ({
-  uri: media.uri,
+  uri: media.sourceUri ?? media.uri,
   name: media.name,
   type: media.type,
   kind: media.kind,
@@ -35,9 +35,10 @@ export const useMediaEditorFlow = (origin: MediaEditorOrigin) => {
 
       const queue = incoming.map(toQueueItem);
       const first = queue[0];
+      const sourceUri = first.uri;
 
       navigation.navigate('MediaEditor', {
-        uri: first.uri,
+        uri: sourceUri,
         name: first.name,
         type: first.type,
         kind: 'image',
@@ -46,6 +47,7 @@ export const useMediaEditorFlow = (origin: MediaEditorOrigin) => {
         maxRemaining,
         origin,
         completedMedia: [],
+        sourceUri,
       });
     },
     [navigation, origin],
@@ -63,9 +65,11 @@ export const useMediaEditorFlow = (origin: MediaEditorOrigin) => {
       }
 
       const queueItem = toQueueItem(media);
+      const sourceUri = media.sourceUri ?? media.uri;
 
       navigation.navigate('MediaEditor', {
-        uri: queueItem.uri,
+        uri: sourceUri,
+        workingUri: media.uri !== sourceUri ? media.uri : undefined,
         name: queueItem.name,
         type: queueItem.type,
         kind: 'video',
@@ -74,6 +78,36 @@ export const useMediaEditorFlow = (origin: MediaEditorOrigin) => {
         maxRemaining: 1,
         origin,
         completedMedia: [],
+        sourceUri,
+      });
+    },
+    [navigation, origin],
+  );
+
+  const startReEditFlow = useCallback(
+    (media: PickedMedia, reEditIndex: number) => {
+      const sourceUri = media.sourceUri ?? media.uri;
+
+      navigation.navigate('MediaEditor', {
+        uri: sourceUri,
+        workingUri: media.uri,
+        name: media.name,
+        type: media.type,
+        kind: media.kind,
+        queue: [
+          {
+            uri: sourceUri,
+            name: media.name,
+            type: media.type,
+            kind: media.kind,
+          },
+        ],
+        queueIndex: 0,
+        maxRemaining: 1,
+        origin,
+        completedMedia: [],
+        sourceUri,
+        reEditIndex,
       });
     },
     [navigation, origin],
@@ -82,6 +116,7 @@ export const useMediaEditorFlow = (origin: MediaEditorOrigin) => {
   return {
     startImageEditFlow,
     startVideoEditFlow,
+    startReEditFlow,
   };
 };
 

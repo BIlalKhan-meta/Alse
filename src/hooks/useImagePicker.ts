@@ -23,6 +23,7 @@ export type PickedMedia = {
   name?: string;
   type?: string;
   kind: PickedMediaKind;
+  sourceUri?: string;
 };
 
 export const mapPickerAssetsToMedia = (assets: Asset[]): PickedMedia[] =>
@@ -30,11 +31,13 @@ export const mapPickerAssetsToMedia = (assets: Asset[]): PickedMedia[] =>
     const assetType = asset.type ?? '';
     const kind: PickedMediaKind =
       assetType.startsWith('video') || asset.duration != null ? 'video' : 'image';
+    const uri = asset.uri ?? '';
     return {
-      uri: asset.uri ?? '',
+      uri,
       name: asset.fileName,
       type: asset.type,
       kind,
+      sourceUri: uri,
     };
   });
 

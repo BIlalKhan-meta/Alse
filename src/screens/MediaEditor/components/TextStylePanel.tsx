@@ -4,19 +4,33 @@ import {Text, TouchableOpacity, View} from 'react-native';
 import {useTranslation} from 'react-i18next';
 import {
   TEXT_BACKGROUND_OPACITIES,
-  TEXT_COLORS,
+  TEXT_BOX_HEIGHT_STEP,
+  TEXT_BOX_MIN_HEIGHT,
+  TEXT_BOX_MIN_WIDTH,
+  TEXT_BOX_WIDTH_STEP,
   TEXT_SIZES,
   TextOverlayState,
 } from '../../../types/mediaEditor';
+import OverlayColorPicker from './OverlayColorPicker';
 import styles from '../styles';
 
 type Props = {
   overlay: TextOverlayState;
+  cardWidth: number;
+  cardHeight: number;
   onChange: (next: TextOverlayState) => void;
 };
 
-const TextStylePanel: React.FC<Props> = ({overlay, onChange}) => {
+const TextStylePanel: React.FC<Props> = ({
+  overlay,
+  cardWidth,
+  cardHeight,
+  onChange,
+}) => {
   const {t} = useTranslation();
+
+  const maxWidth = Math.round(cardWidth * 0.95);
+  const maxHeight = Math.round(cardHeight * 0.6);
 
   const sizeIndex = Math.max(
     0,
@@ -33,36 +47,41 @@ const TextStylePanel: React.FC<Props> = ({overlay, onChange}) => {
     onChange({...overlay, fontSize: TEXT_SIZES[nextIndex]});
   };
 
+  const boxWidth = overlay.width ?? TEXT_BOX_MIN_WIDTH;
+  const boxHeight = overlay.height ?? TEXT_BOX_MIN_HEIGHT;
+
+  const adjustWidth = (delta: number) => {
+    const nextWidth = Math.max(
+      TEXT_BOX_MIN_WIDTH,
+      Math.min(maxWidth, boxWidth + delta),
+    );
+    onChange({...overlay, width: nextWidth, height: boxHeight});
+  };
+
+  const adjustHeight = (delta: number) => {
+    const nextHeight = Math.max(
+      TEXT_BOX_MIN_HEIGHT,
+      Math.min(maxHeight, boxHeight + delta),
+    );
+    onChange({...overlay, width: boxWidth, height: nextHeight});
+  };
+
   return (
     <View style={styles.textStylePanel}>
-      <Text style={styles.textStyleSectionLabel}>{t('textColor')}</Text>
-      <View style={styles.colorRow}>
-        {TEXT_COLORS.map(color => {
-          const selected = overlay.color === color;
-          const isLight = color === '#FFFFFF' || color === '#FFCC00';
-          return (
-            <TouchableOpacity
-              key={color}
-              style={[
-                styles.colorSwatch,
-                {backgroundColor: color},
-                isLight && styles.colorSwatchBorder,
-                selected && styles.colorSwatchSelected,
-              ]}
-              onPress={() => onChange({...overlay, color})}
-            />
-          );
-        })}
-      </View>
+      <OverlayColorPicker
+        label={t('textColor')}
+        value={overlay.color}
+        onChange={color => onChange({...overlay, color})}
+      />
 
       <Text style={styles.textStyleSectionLabel}>{t('textSize')}</Text>
       <View style={styles.sizeRow}>
         <TouchableOpacity style={styles.sizeButton} onPress={decreaseSize}>
-          <Minus color="#333" size={18} />
+          <Minus color="#333" size={16} />
         </TouchableOpacity>
         <Text style={styles.sizeValue}>{overlay.fontSize}</Text>
         <TouchableOpacity style={styles.sizeButton} onPress={increaseSize}>
-          <Plus color="#333" size={18} />
+          <Plus color="#333" size={16} />
         </TouchableOpacity>
       </View>
 
@@ -100,6 +119,14 @@ const TextStylePanel: React.FC<Props> = ({overlay, onChange}) => {
 
       {overlay.backgroundEnabled ? (
         <>
+          <OverlayColorPicker
+            label={t('textBackgroundColor')}
+            value={overlay.backgroundColor ?? '#FFFFFF'}
+            onChange={backgroundColor =>
+              onChange({...overlay, backgroundColor})
+            }
+          />
+
           <Text style={styles.textStyleSectionLabel}>
             {t('backgroundOpacity')}
           </Text>
@@ -129,6 +156,36 @@ const TextStylePanel: React.FC<Props> = ({overlay, onChange}) => {
           </View>
         </>
       ) : null}
+
+      <Text style={styles.textStyleSectionLabel}>{t('textBoxWidth')}</Text>
+      <View style={styles.sizeRow}>
+        <TouchableOpacity
+          style={styles.sizeButton}
+          onPress={() => adjustWidth(-TEXT_BOX_WIDTH_STEP)}>
+          <Minus color="#333" size={16} />
+        </TouchableOpacity>
+        <Text style={styles.sizeValue}>{Math.round(boxWidth)}</Text>
+        <TouchableOpacity
+          style={styles.sizeButton}
+          onPress={() => adjustWidth(TEXT_BOX_WIDTH_STEP)}>
+          <Plus color="#333" size={16} />
+        </TouchableOpacity>
+      </View>
+
+      <Text style={styles.textStyleSectionLabel}>{t('textBoxHeight')}</Text>
+      <View style={styles.sizeRow}>
+        <TouchableOpacity
+          style={styles.sizeButton}
+          onPress={() => adjustHeight(-TEXT_BOX_HEIGHT_STEP)}>
+          <Minus color="#333" size={16} />
+        </TouchableOpacity>
+        <Text style={styles.sizeValue}>{Math.round(boxHeight)}</Text>
+        <TouchableOpacity
+          style={styles.sizeButton}
+          onPress={() => adjustHeight(TEXT_BOX_HEIGHT_STEP)}>
+          <Plus color="#333" size={16} />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };

@@ -156,6 +156,18 @@ type ResolvedImagePath = {
   cleanup?: () => Promise<void>;
 };
 
+function formatPathForCropper(localPath: string): string {
+  const normalized = localPath.startsWith('file://')
+    ? localPath
+    : `file://${localPath}`;
+
+  if (Platform.OS === 'android') {
+    return normalized;
+  }
+
+  return normalized.replace(/^file:\/\//, '');
+}
+
 export async function resolveLocalImagePath(
   uri: string,
 ): Promise<ResolvedImagePath> {
@@ -163,9 +175,14 @@ export async function resolveLocalImagePath(
     throw new Error('Missing image uri');
   }
 
-  if (uri.startsWith('http://') || uri.startsWith('https://')) {
-    const dest = `${RNFS.CachesDirectoryPath}/crop-source-${Date.now()}.jpg`;
-    const download = await RNFS.downloadFile({fromUrl: uri, toFile: dest}).promise;
+  const decodedUri = decodeURIComponent(uri.trim());
+  const dest = `${RNFS.CachesDirectoryPath}/crop-source-${Date.now()}.jpg`;
+
+  if (decodedUri.startsWith('http://') || decodedUri.startsWith('https://')) {
+    const download = await RNFS.downloadFile({
+      fromUrl: decodedUri,
+      toFile: dest,
+    }).promise;
     if (download.statusCode && download.statusCode >= 400) {
       throw new Error('Could not download image for cropping');
     }
@@ -177,12 +194,14 @@ export async function resolveLocalImagePath(
 
   if (
     Platform.OS === 'ios' &&
-    (uri.startsWith('ph://') || uri.startsWith('assets-library://'))
+    (decodedUri.startsWith('ph://') || decodedUri.startsWith('assets-library://'))
   ) {
-    const dimensions = await getImageDimensions(uri);
-    const dest = `${RNFS.CachesDirectoryPath}/crop-source-${Date.now()}.jpg`;
+    const dimensions = await getImageDimensions(decodedUri).catch(() => ({
+      width: 3000,
+      height: 3000,
+    }));
     await RNFS.copyAssetsFileIOS(
-      uri,
+      decodedUri,
       dest,
       dimensions.width,
       dimensions.height,
@@ -193,17 +212,25 @@ export async function resolveLocalImagePath(
     };
   }
 
-  if (Platform.OS === 'android' && uri.startsWith('content://')) {
-    const dest = `${RNFS.CachesDirectoryPath}/crop-source-${Date.now()}.jpg`;
-    await RNFS.copyFile(uri, dest);
+  if (Platform.OS === 'android' && decodedUri.startsWith('content://')) {
+    await RNFS.copyFile(decodedUri, dest);
     return {
       path: dest,
       cleanup: () => RNFS.unlink(dest).catch(() => {}),
     };
   }
 
-  const path = uri.startsWith('file://') ? uri.replace('file://', '') : uri;
-  return {path};
+  const sourcePath = decodedUri.replace(/^file:\/\//, '');
+  const sourceExists = await RNFS.exists(sourcePath);
+  if (!sourceExists) {
+    throw new Error('Image file not found');
+  }
+
+  await RNFS.copyFile(sourcePath, dest);
+  return {
+    path: dest,
+    cleanup: () => RNFS.unlink(dest).catch(() => {}),
+  };
 }
 
 export async function openNativeImageCropper(
@@ -217,8 +244,14 @@ export async function openNativeImageCropper(
     });
 
     resolved = await resolveLocalImagePath(uri);
+    const cropperPath = formatPathForCropper(resolved.path);
+    const cropperReady = await RNFS.exists(resolved.path);
+    if (!cropperReady) {
+      throw new Error('Could not prepare image for cropping');
+    }
+
     const result = await ImagePicker.openCropper({
-      path: resolved.path,
+      path: cropperPath,
       mediaType: 'photo',
       cropping: true,
       freeStyleCropEnabled: true,
@@ -242,6 +275,12 @@ export async function openNativeImageCropper(
   } catch (error: any) {
     if (error?.code === 'E_PICKER_CANCELLED') {
       return null;
+    }
+    if (
+      error?.code === 'E_NO_IMAGE_DATA_FOUND' ||
+      error?.code === 'E_CROPPER_IMAGE_NOT_FOUND'
+    ) {
+      throw new Error('Could not load image for cropping');
     }
     throw error;
   } finally {
