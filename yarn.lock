@@ -8236,9 +8236,9 @@ react-native-screens@^3.31.1:
     react-freeze "^1.0.0"
     warn-once "^0.1.0"
 
-"react-native-sound@git+https://github.com/ZEGOCLOUD/react-native-sound.git#v0.11.5":
+"react-native-sound@https://github.com/ZEGOCLOUD/react-native-sound/archive/refs/tags/v0.11.5.tar.gz":
   version "0.11.5"
-  resolved "git+ssh://git@github.com/ZEGOCLOUD/react-native-sound.git#0af3beb657e871ed33ef2fbc711d15d2dc70f308"
+  resolved "https://github.com/ZEGOCLOUD/react-native-sound/archive/refs/tags/v0.11.5.tar.gz#4b771609cd6622bdda293d5019c8d4baf7d8cad0"
 
 react-native-svg@^15.11.1:
   version "15.15.3"

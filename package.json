@@ -106,7 +106,7 @@
     "react-native-reels-list": "^1.0.6",
     "react-native-safe-area-context": "^5.5.1",
     "react-native-screens": "^3.31.1",
-    "react-native-sound": "git+https://github.com/ZEGOCLOUD/react-native-sound.git#v0.11.5",
+    "react-native-sound": "https://github.com/ZEGOCLOUD/react-native-sound/archive/refs/tags/v0.11.5.tar.gz",
     "react-native-svg": "^15.11.1",
     "react-native-swiper": "^1.6.0",
     "react-native-tab-view": "^3.5.2",
