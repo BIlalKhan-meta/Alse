@@ -1,0 +1,23 @@
+appId: com.blitzapp.alenga.alse
+---
+- runFlow:
+    when:
+      visible:
+        text: "Allow Alenga to send you notifications?"
+    commands:
+      - tapOn: "Allow"
+    label: Notification permission
+
+- runFlow:
+    when:
+      visible: "Allow"
+    commands:
+      - tapOn: "Allow"
+    label: Generic Allow button
+
+- runFlow:
+    when:
+      visible: "While using the app"
+    commands:
+      - tapOn: "While using the app"
+    label: Location permission

@@ -1,0 +1,27 @@
+appId: com.blitzapp.alenga.alse
+---
+- assertVisible:
+    id: "login-email"
+- tapOn:
+    id: "login-email"
+- eraseText
+- inputText: ${TEST_EMAIL}
+- tapOn:
+    id: "login-password"
+- eraseText
+- inputText: ${TEST_PASSWORD}
+- hideKeyboard
+- tapOn:
+    id: "login-submit"
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "Subscription Plan"
+    commands:
+      - back
+      - waitForAnimationToEnd
+    label: Dismiss subscription plan if redirected after login
+- extendedWaitUntil:
+    visible:
+      id: "tab-home"
+    timeout: 90000

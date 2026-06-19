@@ -1,0 +1,21 @@
+appId: com.blitzapp.alenga.alse
+---
+- tapOn:
+    id: "tab-profile"
+- tapOn:
+    id: "header-settings"
+- assertVisible: "Menu"
+- scrollUntilVisible:
+    element:
+      id: "settings-logout"
+    direction: DOWN
+    visibilityPercentage: 50
+    timeout: 60000
+- tapOn:
+    id: "settings-logout"
+- assertVisible: "Log out?"
+- tapOn: "Yes"
+- extendedWaitUntil:
+    visible:
+      id: "login-submit"
+    timeout: 30000

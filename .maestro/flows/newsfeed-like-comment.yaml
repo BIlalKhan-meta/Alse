@@ -1,0 +1,59 @@
+appId: com.blitzapp.alenga.alse
+---
+- runFlow: ../subflows/launch-app.yaml
+- runFlow: ../subflows/logout-and-login.yaml
+- assertVisible:
+    id: "tab-home"
+- tapOn:
+    id: "tab-home"
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "Subscribe"
+    commands:
+      - back
+    label: Leave subscription gate if shown
+- swipe:
+    direction: UP
+    duration: 800
+- swipe:
+    direction: UP
+    duration: 800
+- scrollUntilVisible:
+    element:
+      id: "post-like"
+    direction: DOWN
+    visibilityPercentage: 50
+    timeout: 90000
+- tapOn:
+    id: "post-like"
+- waitForAnimationToEnd
+- tapOn:
+    id: "post-comment"
+- extendedWaitUntil:
+    visible: "Write a comment"
+    timeout: 30000
+- tapOn:
+    id: "comment-input"
+- eraseText
+- inputText: "Maestro E2E test comment"
+- hideKeyboard
+- waitForAnimationToEnd
+- tapOn:
+    id: "comment-send"
+- extendedWaitUntil:
+    visible: "Maestro E2E test comment"
+    timeout: 15000
+    label: Comment appears in list (optimistic UI)
+- extendedWaitUntil:
+    notVisible: "Posting comment..."
+    timeout: 45000
+- scrollUntilVisible:
+    element:
+      text: "Maestro E2E test comment"
+    direction: DOWN
+    visibilityPercentage: 20
+    timeout: 30000
+    label: Scroll comments list to posted comment
+- assertVisible: "Maestro E2E test comment"
+- back

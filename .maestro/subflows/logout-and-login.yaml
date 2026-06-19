@@ -1,0 +1,23 @@
+appId: com.blitzapp.alenga.alse
+---
+- runFlow:
+    when:
+      visible: "Home"
+    commands:
+      - runFlow: logout-from-settings.yaml
+    label: Log out if already signed in
+
+- runFlow:
+    when:
+      visible:
+        id: "login-submit"
+    commands:
+      - runFlow: login.yaml
+    label: Sign in with TEST_EMAIL credentials
+
+- runFlow:
+    when:
+      visible: "Sign In"
+    commands:
+      - runFlow: login.yaml
+    label: Sign in when login screen uses text labels

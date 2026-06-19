@@ -1,0 +1,14 @@
+appId: com.blitzapp.alenga.alse
+---
+- runFlow: ../subflows/launch-app.yaml
+- runFlow: ../subflows/login.yaml
+- runFlow: ../subflows/open-settings.yaml
+- scrollUntilVisible:
+    element:
+      id: "settings-logout"
+    direction: DOWN
+- tapOn:
+    id: "settings-logout"
+- assertVisible: "Log out?"
+- tapOn: "No"
+- assertVisible: "Menu"

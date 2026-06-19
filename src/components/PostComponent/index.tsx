@@ -580,12 +580,12 @@ const PostComponent: React.FC<PostProps> = ({
             </View>
             
             <View style={styles.actionsRow}>
-              <TouchableOpacity style={styles.actionButton} onPress={handleLike}>
+              <TouchableOpacity testID="post-like" style={styles.actionButton} onPress={handleLike}>
                 <ThumbsUp color={isLiked ? colors.blue : '#65676B'} size={20} />
                 <Text style={styles.actionText}>Like</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.actionButton} onPress={onCommnetPress}>
+              <TouchableOpacity testID="post-comment" style={styles.actionButton} onPress={onCommnetPress}>
                 <MessageCircle color="#65676B" size={20} />
                 <Text style={styles.actionText}>Comment</Text>
               </TouchableOpacity>

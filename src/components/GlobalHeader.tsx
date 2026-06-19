@@ -32,6 +32,7 @@ const GlobalHeader: React.FC<GlobalHeaderProps> = ({title = 'Alse', icon}) => {
           )}
         </TouchableOpacity>
         <TouchableOpacity
+          testID="header-settings"
           onPress={() => navigation.navigate('Settings')}
           style={styles.iconButton}>
           <View style={styles.notificationcontainer}>

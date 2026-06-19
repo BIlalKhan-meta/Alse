@@ -298,6 +298,7 @@ const LoginScreen: React.FC = () => {
                 </View>
 
                 <RegularTextInput
+                  testID="login-email"
                   placeholder={t('Enter Email')}
                   placeholderTextColor={colors.darkGray}
                   onChangeText={handleChange('identifier')}
@@ -309,6 +310,7 @@ const LoginScreen: React.FC = () => {
                 />
 
                 <RegularTextInput
+                  testID="login-password"
                   placeholder={t('password')}
                   placeholderTextColor={colors.darkGray}
                   onChangeText={handleChange('password')}
@@ -330,6 +332,7 @@ const LoginScreen: React.FC = () => {
                 />
 
                 <CustomButton
+                  testID="login-submit"
                   style={styles.loginBtn}
                   onPress={formikSubmit}
                   loading={submitted}>

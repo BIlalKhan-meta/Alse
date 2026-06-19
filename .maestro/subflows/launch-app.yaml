@@ -1,0 +1,6 @@
+appId: com.blitzapp.alenga.alse
+---
+- launchApp:
+    stopApp: true
+- waitForAnimationToEnd
+- runFlow: dismiss-permissions.yaml

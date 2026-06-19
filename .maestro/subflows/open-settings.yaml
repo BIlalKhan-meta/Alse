@@ -1,0 +1,23 @@
+appId: com.blitzapp.alenga.alse
+---
+- runFlow:
+    when:
+      visible:
+        id: "tab-profile"
+    commands:
+      - tapOn:
+          id: "tab-profile"
+      - tapOn:
+          id: "header-settings"
+    label: Open settings via testIDs
+
+- runFlow:
+    when:
+      visible: "Profile"
+    commands:
+      - tapOn: "Profile"
+      - tapOn:
+          point: "92%,7%"
+    label: Open settings via profile tab and header icon
+
+- assertVisible: "Menu"

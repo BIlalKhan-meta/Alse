@@ -15,6 +15,13 @@
     "start": "react-native start",
     "start:reset": "react-native start --reset-cache",
     "test": "jest",
+    "e2e:android:build": "cd android && ./gradlew assembleDebug",
+    "e2e:android:bundle-build": "yarn bundle && cd android && ./gradlew assembleDebug",
+    "e2e:android:metro": "adb reverse tcp:8081 tcp:8081 || true",
+    "e2e:android": "bash scripts/e2e-android.sh .maestro/smoke/",
+    "e2e:android:settings": "bash scripts/e2e-android.sh .maestro/settings/",
+    "e2e:android:all": "bash scripts/e2e-android.sh",
+    "e2e:android:newsfeed": "bash scripts/e2e-android.sh .maestro/flows/newsfeed-like-comment.yaml",
     "android:debug": "cd android; ./gradlew clean && ./gradlew assembleDebug; cd ..; open android/app/build/outputs/",
     "bundle": "npx react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res"
   },

@@ -1,0 +1,28 @@
+appId: com.blitzapp.alenga.alse
+---
+- runFlow: ../subflows/launch-app.yaml
+- runFlow:
+    when:
+      visible:
+        id: "login-submit"
+    commands:
+      - assertVisible:
+          id: "login-email"
+      - assertVisible:
+          id: "login-submit"
+    label: Login screen via testID
+
+- runFlow:
+    when:
+      visible: "Sign In"
+    commands:
+      - assertVisible: "Sign In"
+      - assertVisible: "Log in"
+    label: Login screen via text
+
+- runFlow:
+    when:
+      visible: "Home"
+    commands:
+      - assertVisible: "Home"
+    label: Already authenticated

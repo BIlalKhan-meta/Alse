@@ -66,6 +66,7 @@ yarn-error.log
 
 # testing
 /coverage
+.maestro/.env.local.yaml
 
 # Yarn
 .yarn/*

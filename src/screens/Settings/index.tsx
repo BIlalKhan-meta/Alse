@@ -72,6 +72,7 @@ interface MenuIconRowProps {
   label: string;
   onPress: () => void;
   iconWidth?: number;
+  testID?: string;
 }
 
 interface MenuHeaderProps {
@@ -90,9 +91,9 @@ const MenuHeader = ({onBackPress}: MenuHeaderProps) => (
   </View>
 );
 
-const MenuIconRow = ({icon, label, onPress, iconWidth}: MenuIconRowProps) => (
+const MenuIconRow = ({icon, label, onPress, iconWidth, testID}: MenuIconRowProps) => (
   <Card style={styles.cardContainer}>
-    <TouchableOpacity onPress={onPress}>
+    <TouchableOpacity testID={testID} onPress={onPress}>
       <View style={styles.cardContent5}>
         <View style={[styles.notifiCon, iconWidth ? {width: iconWidth} : null]}>
           {icon}
@@ -504,6 +505,7 @@ const Settings = ({navigation}: any) => {
             </Card>
 
             <MenuIconRow
+              testID="settings-security"
               label="Security Settings"
               onPress={() => navigation.navigate('SecurityPrivacy')}
               icon={<Shield size={22} color={colors.themeColor} />}
@@ -604,7 +606,9 @@ const Settings = ({navigation}: any) => {
               </Card>
 
               <Card style={styles.cardContainer2}>
-                <TouchableOpacity onPress={() => setLogoutModalVisible(true)}>
+                <TouchableOpacity
+                  testID="settings-logout"
+                  onPress={() => setLogoutModalVisible(true)}>
                   <View style={styles.cardContent5}>
                     <View style={[styles.notifiCon, {width: vw * 8}]}>
                       <Image

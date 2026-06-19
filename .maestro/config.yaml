@@ -1,0 +1,12 @@
+# Shared defaults for local Android E2E runs.
+# Override secrets via shell env or .maestro/.env.local.yaml (gitignored).
+#
+# Prerequisites:
+# 1. Debug APK built: yarn e2e:android:build
+# 2. App installed on emulator/device: adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+# 3. Metro running for debug builds: yarn start (then yarn e2e:android:metro)
+# 4. Prefer Android emulator over physical devices (clearState requires emulator; Oppo devices may block pm clear)
+env:
+  APP_ID: com.blitzapp.alenga.alse
+  TEST_EMAIL: ""
+  TEST_PASSWORD: ""

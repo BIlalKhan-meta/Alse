@@ -1,0 +1,6 @@
+appId: com.blitzapp.alenga.alse
+---
+- runFlow: ../subflows/launch-app.yaml
+- runFlow: ../subflows/login.yaml
+- assertVisible:
+    id: "tab-home"

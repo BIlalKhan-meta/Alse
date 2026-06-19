@@ -277,14 +277,22 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
           <View style={styles.inputConatiner}>
             <View style={styles.inputCon}>
               <TextInput
+                testID="comment-input"
                 placeholder="Write a comment"
                 style={styles.input}
                 placeholderTextColor={colors.inputText}
                 value={newComment}
                 onChangeText={setNewComment}
+                onEndEditing={e => {
+                  const text = e.nativeEvent.text?.trim();
+                  if (text) {
+                    setNewComment(text);
+                  }
+                }}
               />
             </View>
             <TouchableOpacity
+              testID="comment-send"
               style={styles.send}
               onPress={handleCommentSubmit}
               disabled={isSubmittingComment}>

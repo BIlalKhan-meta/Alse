@@ -21,12 +21,14 @@ interface ButtonProps {
   children: React.ReactNode;
   loading?: boolean;
   disable?: boolean;
+  testID?: string;
 }
 
 const CustomButton: React.FC<ButtonProps> = props => {
   return (
     <>
       <TouchableOpacity
+        testID={props.testID}
         disabled={props.disable || props?.loading}
         onPress={props?.onPress}
         style={[styles.button, props.style]}>

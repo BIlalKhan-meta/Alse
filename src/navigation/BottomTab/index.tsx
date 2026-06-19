@@ -45,6 +45,7 @@ const TabNavigation = () => {
         })}
         options={{
           tabBarLabel: 'Home',
+          tabBarTestID: 'tab-home',
           tabBarIcon: ({focused, color}) => (
             <View style={styles.tabButton}>
               <Image
@@ -62,6 +63,7 @@ const TabNavigation = () => {
         component={SearchTab}
         options={{
           tabBarLabel: 'Search',
+          tabBarTestID: 'tab-search',
           tabBarIcon: ({color}) => (
             <View style={styles.tabButton}>
               <Search color={color} size={22} />
@@ -75,6 +77,7 @@ const TabNavigation = () => {
         component={MarketPlaceNavigation}
         options={{
           tabBarLabel: 'Market',
+          tabBarTestID: 'tab-market',
           tabBarIcon: ({color}) => (
             <View style={styles.tabButton}>
               <Image
@@ -126,6 +129,7 @@ const TabNavigation = () => {
         component={MyProfile}
         options={{
           tabBarLabel: 'Profile',
+          tabBarTestID: 'tab-profile',
           tabBarIcon: ({color}) => (
             <View style={styles.tabButton}>
               <User color={color} size={22} />
