@@ -3,6 +3,7 @@ import {
   FlatList,
   Image,
   ImageSourcePropType,
+  Keyboard,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -17,7 +18,7 @@ import {colors} from '../../utils/theme';
 import styles from './styles';
 import {BlurView} from '@react-native-community/blur';
 
-import {useEffect, useState} from 'react';
+import {useEffect, useRef, useState} from 'react';
 import {images} from '../../utils/images';
 import InterMedium from '../Text/InterMedium';
 import InterRegular from '../Text/InterRegular';
@@ -62,7 +63,8 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
   const user = useSelector(selectUserProfile);
 
   const {visible, closeModal, comments, postId} = props;
-  const [newComment, setNewComment] = useState('');
+  const commentDraftRef = useRef('');
+  const commentInputRef = useRef<TextInput>(null);
   const [commentsData, setCommentsData] = useState(comments);
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [commentLikesVisible, setCommentLikesVisible] = useState<{
@@ -78,11 +80,15 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
     }
   }, [comments]);
 
+  const syncCommentDraft = (text: string) => {
+    commentDraftRef.current = text;
+  };
+
   const handleCommentSubmit = async () => {
-    if (newComment.length === 0) {
+    const commentText = commentDraftRef.current.trim();
+    if (!commentText) {
       return;
     }
-    const commentText = newComment.trim();
     const form = new FormData();
     form.append('comment', commentText);
 
@@ -99,7 +105,8 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
 
     const previousComments = commentsData;
     setCommentsData([...commentsData, optimisticComment]);
-    setNewComment('');
+    commentDraftRef.current = '';
+    commentInputRef.current?.clear();
     setIsSubmittingComment(true);
 
     try {
@@ -114,6 +121,13 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
     } finally {
       setIsSubmittingComment(false);
     }
+  };
+
+  const handleSendPress = () => {
+    Keyboard.dismiss();
+    setTimeout(() => {
+      void handleCommentSubmit();
+    }, 100);
   };
 
   const handleLikePress = (id: number) => {
@@ -277,24 +291,20 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
           <View style={styles.inputConatiner}>
             <View style={styles.inputCon}>
               <TextInput
+                ref={commentInputRef}
                 testID="comment-input"
                 placeholder="Write a comment"
                 style={styles.input}
                 placeholderTextColor={colors.inputText}
-                value={newComment}
-                onChangeText={setNewComment}
-                onEndEditing={e => {
-                  const text = e.nativeEvent.text?.trim();
-                  if (text) {
-                    setNewComment(text);
-                  }
-                }}
+                onChangeText={syncCommentDraft}
+                onEndEditing={e => syncCommentDraft(e.nativeEvent.text || '')}
+                onSubmitEditing={handleCommentSubmit}
               />
             </View>
             <TouchableOpacity
               testID="comment-send"
               style={styles.send}
-              onPress={handleCommentSubmit}
+              onPress={handleSendPress}
               disabled={isSubmittingComment}>
               <Send color="#169BD5" size={20} fill="#169BD5" />
             </TouchableOpacity>

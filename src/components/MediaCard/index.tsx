@@ -50,20 +50,16 @@ const MediaCard: React.FC<MediaCardProps> = ({
       onSavePress();
     }
     setSaved(!saved);
-    const data = {
+    const payload = {
       item_id: id,
       item_type: type,
     };
-    const form = new FormData();
-    Object.entries(data).map(([key, value]) => {
-      form.append(key, value);
-    });
     if (isSaved) {
-      await removeSavedItem(form)
+      await removeSavedItem(payload)
         .then(res => console.log('SAVEDDD ITEMMMMMMMMMM REMOOVEEEDDDD', res))
         .catch(err => console.log('ERRRORRRRRRRRR SAVEDDDDDDDDDDD', err));
     } else {
-      await saveItem(form)
+      await saveItem(payload)
         .then(res => console.log('POSTTTT SAVEEEDDDDDDD', res))
         .catch(err => console.log('SAVEEEEDDDDDD POSTTTTT ERRORRRRRR', err));
     }

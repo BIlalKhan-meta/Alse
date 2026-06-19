@@ -1,5 +1,4 @@
 import React from 'react';
-import {useNavigation} from '@react-navigation/native';
 import {
   View,
   StyleSheet,
@@ -8,12 +7,11 @@ import {
   Text,
 } from 'react-native';
 import {Wifi} from 'lucide-react-native';
+import {navigationRef} from '../../utils/navigationRef';
 
 const {height} = Dimensions.get('window');
 
 export default function NetworkLoggerFAB() {
-  const navigation = useNavigation<any>();
-
   // Debug log to confirm component is rendered in development
   React.useEffect(() => {
     if (__DEV__) {
@@ -24,8 +22,9 @@ export default function NetworkLoggerFAB() {
 
   const handlePress = () => {
     console.log('NetworkLoggerFAB pressed, navigating to NetworkLogger');
-    // `NetworkLogger` is registered as a top-level screen in `MainNavigation`
-    navigation.navigate('NetworkLogger' as never);
+    if (navigationRef.isReady()) {
+      navigationRef.navigate('NetworkLogger' as never);
+    }
   };
 
   return (
@@ -43,13 +42,15 @@ export default function NetworkLoggerFAB() {
 
 const styles = StyleSheet.create({
   root: {
+    ...StyleSheet.absoluteFillObject,
+    pointerEvents: 'box-none',
+    zIndex: 9999,
+    elevation: 9999,
+  },
+  btn: {
     position: 'absolute',
     bottom: height * 0.15,
     right: 50,
-    zIndex: 9999,
-    elevation: 8,
-  },
-  btn: {
     backgroundColor: '#FF3B30',
     justifyContent: 'center',
     alignItems: 'center',

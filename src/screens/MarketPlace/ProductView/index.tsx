@@ -325,15 +325,16 @@ const ProductView: React.FC = () => {
     const nextSaved = !isSaved;
     setIsSaved(nextSaved);
 
-    const form = new FormData();
-    form.append('item_id', String(productDetails.id));
-    form.append('item_type', 'product');
+    const payload = {
+      item_id: productDetails.id,
+      item_type: 'product',
+    };
 
     try {
       if (isSaved) {
-        await removeSavedItem(form);
+        await removeSavedItem(payload);
       } else {
-        await saveItem(form);
+        await saveItem(payload);
       }
     } catch (err) {
       setIsSaved(!nextSaved);

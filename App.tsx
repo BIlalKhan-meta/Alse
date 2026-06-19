@@ -173,8 +173,8 @@ function App(): React.JSX.Element {
           <NavigationContainer ref={navigationRef} theme={theme}>
             <MainNavigation />
             <IncomingCallHandler />
-            {__DEV__ && <NetworkLoggerFAB />}
           </NavigationContainer>
+          {__DEV__ && <NetworkLoggerFAB />}
           <Toast />
         </LanguageProvider>
       </Provider>

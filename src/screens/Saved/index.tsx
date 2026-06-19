@@ -143,27 +143,18 @@ const Saved: React.FC = () => {
       let arr = [...displayPost];
       arr.splice(index, 1);
       setDisplayPost(arr);
-      const data = {
+      const payload = {
         item_id: displayPost[index].savable_id,
         item_type: 'product',
       };
-      const form = new FormData();
-      Object.entries(data).map(([key, value]) => {
-        form.append(key, value);
-      });
-      await removeSavedItem(form);
+      await removeSavedItem(payload);
     } else {
-      const data = {
+      const payload = {
         item_id: productId,
         item_type: 'product',
       };
 
-      const form = new FormData();
-      Object.entries(data).map(([key, value]) => {
-        form.append(key, value);
-      });
-
-      await saveItem(form)
+      await saveItem(payload)
         .then(res => {
           if (res?.data) {
             //   console.log('RESSSSSSSSSS SAVEEEEEEEEEEEEEEE', res?.data);
@@ -263,15 +254,11 @@ const Saved: React.FC = () => {
     const arr = [...displayPost];
     arr.splice(index, 1);
     setDisplayPost(arr);
-    const data = {
+    const payload = {
       item_id: id,
       item_type: 'post',
     };
-    const form = new FormData();
-    Object.entries(data).map(([key, value]) => {
-      form.append(key, value);
-    });
-    await removeSavedItem(form).catch(err =>
+    await removeSavedItem(payload).catch(err =>
       console.log('ERRRORRRRRRRRR SAVEDDDDDDDDDDD', err),
     );
   };

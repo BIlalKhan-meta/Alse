@@ -37,8 +37,6 @@ appId: com.blitzapp.alenga.alse
     id: "comment-input"
 - eraseText
 - inputText: "Maestro E2E test comment"
-- hideKeyboard
-- waitForAnimationToEnd
 - tapOn:
     id: "comment-send"
 - extendedWaitUntil:

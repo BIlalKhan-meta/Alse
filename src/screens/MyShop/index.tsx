@@ -157,15 +157,16 @@ const MyShop: React.FC = () => {
       ),
     );
 
-    const form = new FormData();
-    form.append('item_id', String(productId));
-    form.append('item_type', 'product');
+    const payload = {
+      item_id: productId,
+      item_type: 'product',
+    };
 
     try {
       if (isSaved) {
-        await removeSavedItem(form);
+        await removeSavedItem(payload);
       } else {
-        await saveItem(form);
+        await saveItem(payload);
       }
     } catch (err) {
       setShopProducts(prev =>
