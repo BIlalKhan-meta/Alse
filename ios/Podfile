@@ -98,8 +98,27 @@ target 'Alenga' do
     ]
     folly_module_targets = ['React-jsi', 'RCT-Folly', 'NitroModules', 'NitroMediaKit']
     folly_cpp_flags = '-DFOLLY_NO_CONFIG -DFOLLY_MOBILE=1 -DFOLLY_USE_LIBCPP=1 -DFOLLY_CFG_NO_COROUTINES=1 -DFOLLY_HAVE_CLOCK_GETTIME=1'
+    flt_defs = [
+      'FLT_MAX=3.40282346638528859811704183484516925e+38F',
+      'FLT_MIN=1.17549435082228750796873653722224568e-38F',
+    ]
+    # ReactCodegen compiles generated ObjC++ (e.g. rnasyncstorage-generated.mm) with a UIKit prefix header.
+    # UIKit/UIStackView.h on iOS 18.5+ SDK needs FLT_MAX/FLT_MIN without pulling float.h into every pod.
+    flt_minmax_targets = ['ReactCodegen']
     installer.pods_project.targets.each do |target|
       target.build_configurations.each do |config|
+        if flt_minmax_targets.include?(target.name)
+          defs = config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] || '$(inherited)'
+          defs = [defs] if defs.is_a?(String)
+          flt_defs.each do |definition|
+            key = definition.split('=').first
+            unless defs.any? { |entry| entry.to_s.include?(key) }
+              defs << definition
+            end
+          end
+          config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] = defs
+        end
+
         if folly_module_targets.include?(target.name)
           defs = config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] || '$(inherited)'
           defs = [defs] if defs.is_a?(String)
@@ -201,10 +220,17 @@ target 'Alenga' do
       end
     end
 
-    flt_defs = [
-      'FLT_MAX=3.40282346638528859811704183484516925e+38F',
-      'FLT_MIN=1.17549435082228750796873653722224568e-38F',
-    ]
+    react_codegen_pch = File.join(installer.sandbox.root, 'Target Support Files/ReactCodegen/ReactCodegen-prefix.pch')
+    if File.exist?(react_codegen_pch)
+      pch = File.read(react_codegen_pch)
+      unless pch.include?('FLTMinMax')
+        pch = pch.sub(
+          "#ifdef __OBJC__\n#import <UIKit/UIKit.h>",
+          "#ifdef __OBJC__\n#include \"../../../Alenga/FLTMinMax.h\"\n#import <UIKit/UIKit.h>"
+        )
+        File.write(react_codegen_pch, pch)
+      end
+    end
 
     # Fix FLT_MAX/FLT_MIN for main app target (UIKit/UIStackView.h in iOS 18.5+ SDK)
     installer.aggregate_targets.each do |aggregate_target|
