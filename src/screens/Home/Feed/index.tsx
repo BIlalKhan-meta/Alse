@@ -21,6 +21,7 @@ import {useAppDispatch, useAppSelector} from '../../../hooks/storeHooks';
 import {
   getCommentPost,
   GetNewsFeed,
+  FEED_PAGE_SIZE,
   likePost,
   PostDelete,
   postSave,
@@ -70,7 +71,9 @@ const Home: React.FC = () => {
 
   const {t} = useTranslation();
 
-  const {posts} = useAppSelector(state => state.home);
+  const {posts, loadingMore, hasMore, currentPage} = useAppSelector(
+    state => state.home,
+  );
 
   const [refreshing, setRefreshing] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
@@ -164,7 +167,7 @@ const Home: React.FC = () => {
         if (showInitialLoading) {
           setInitialLoading(true);
         }
-        await dispatch(GetNewsFeed());
+        await dispatch(GetNewsFeed({page: 1, per_page: FEED_PAGE_SIZE}));
         await dispatch(GetUserProfile());
         await getCountriesList().then(res => {
           if (res?.data) {
@@ -187,6 +190,26 @@ const Home: React.FC = () => {
     setRefreshing(true);
     await fetchAllData(false);
   }, [fetchAllData]);
+
+  const loadMorePosts = useCallback(() => {
+    if (!loadingMore && hasMore) {
+      dispatch(
+        GetNewsFeed({page: currentPage + 1, per_page: FEED_PAGE_SIZE}),
+      );
+    }
+  }, [dispatch, loadingMore, hasMore, currentPage]);
+
+  const renderFooter = () => {
+    if (!loadingMore) {
+      return null;
+    }
+
+    return (
+      <View style={styles.loadMoreFooter}>
+        <ActivityIndicator size="small" color={colors.themeColor} />
+      </View>
+    );
+  };
 
   useEffect(() => {
     notificationListenerInstance.init(closePaymentProcess);
@@ -314,7 +337,7 @@ const Home: React.FC = () => {
       try {
         await createPost(form);
         Toast.success('Post shared successfully');
-        await dispatch(GetNewsFeed());
+        await dispatch(GetNewsFeed({page: 1, per_page: FEED_PAGE_SIZE}));
       } catch (err: any) {
         Toast.error(
           getMessage(err?.response?.data ?? err?.message ?? err ?? ''),
@@ -582,6 +605,9 @@ const Home: React.FC = () => {
               keyExtractor={item => item.id.toString()}
               showsVerticalScrollIndicator={false}
               ListEmptyComponent={renderEmpty}
+              ListFooterComponent={renderFooter}
+              onEndReached={loadMorePosts}
+              onEndReachedThreshold={0.5}
               removeClippedSubviews={false}
             />
           )}

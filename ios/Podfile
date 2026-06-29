@@ -13,6 +13,28 @@ node_require('react-native-permissions/scripts/setup.rb')
 platform :ios, '16.0'
 prepare_react_native_project!
 
+# Reduce flaky large-repo git clone failures during pod install.
+ENV['GIT_HTTP_VERSION'] = 'HTTP/1.1'
+ENV['GIT_CONFIG_COUNT'] = '2'
+ENV['GIT_CONFIG_KEY_0'] = 'http.version'
+ENV['GIT_CONFIG_VALUE_0'] = 'HTTP/1.1'
+ENV['GIT_CONFIG_KEY_1'] = 'http.postBuffer'
+ENV['GIT_CONFIG_VALUE_1'] = '524288000'
+
+# BoringSSL-GRPC clones a very large git repo and often fails over HTTP/2.
+# Use the vendored checkout prepared by scripts/vendor-boringssl-grpc.sh.
+BORINGSSL_GRPC_VENDOR = File.join(__dir__, 'vendor/boringssl-grpc')
+unless File.directory?(File.join(BORINGSSL_GRPC_VENDOR, '.git'))
+  vendor_script = File.join(__dir__, 'scripts/vendor-boringssl-grpc.sh')
+  success = system(vendor_script)
+  unless success && File.directory?(BORINGSSL_GRPC_VENDOR)
+    raise <<~ERROR
+      Missing #{BORINGSSL_GRPC_VENDOR}.
+      Run: ./scripts/vendor-boringssl-grpc.sh
+    ERROR
+  end
+end
+
 setup_permissions([
   'Camera',
   'Microphone',
@@ -36,6 +58,8 @@ target 'Alenga' do
 
   # pod 'ZoomVideoSDK'
 
+  pod 'BoringSSL-GRPC', :git => BORINGSSL_GRPC_VENDOR
+
   use_react_native!(
     :path => config[:reactNativePath],
     :app_path => "#{Pod::Config.instance.installation_root}/..",
@@ -52,29 +76,49 @@ target 'Alenga' do
       config[:reactNativePath],
       :mac_catalyst_enabled => false
     )
-    
-    # Fix for Android headers being included in iOS builds
-    # Fix FLT_MAX/FLT_MIN for UIKit (iOS 18.5+ SDK - UIStackView.h uses these without including float.h)
+
+    def apple_silicon_mac?
+      arm64_hw = `sysctl -n hw.optional.arm64 2>/dev/null`.strip
+      return true if arm64_hw == '1'
+
+      cpu_type = `sysctl -n hw.cputype 2>/dev/null`.strip
+      return true if cpu_type == '16777228'
+
+      `uname -m`.strip == 'arm64'
+    end
+
+    simulator_excluded_archs = 'i386 x86_64'
+    grpc_targets = ['gRPC-Core', 'gRPC-C++', 'abseil', 'BoringSSL-GRPC']
+    folly_defs = [
+      'FOLLY_NO_CONFIG',
+      'FOLLY_MOBILE=1',
+      'FOLLY_USE_LIBCPP=1',
+      'FOLLY_CFG_NO_COROUTINES=1',
+      'FOLLY_HAVE_CLOCK_GETTIME=1',
+    ]
+    folly_module_targets = ['React-jsi', 'RCT-Folly', 'NitroModules', 'NitroMediaKit']
+    folly_cpp_flags = '-DFOLLY_NO_CONFIG -DFOLLY_MOBILE=1 -DFOLLY_USE_LIBCPP=1 -DFOLLY_CFG_NO_COROUTINES=1 -DFOLLY_HAVE_CLOCK_GETTIME=1'
     installer.pods_project.targets.each do |target|
       target.build_configurations.each do |config|
-        config.build_settings['BUILD_LIBRARY_FOR_DISTRIBUTION'] = 'YES'
-        
-        # Add -include FLTMinMax.h so FLT_MAX/FLT_MIN are defined before UIKit (fixes "could not build module 'UIKit'")
-        # Uses minimal header (not full float.h) - safe for assembly files, avoids C typedefs that break .S compilation
-        flags = config.build_settings['OTHER_CFLAGS'] || '$(inherited)'
-        flags = [flags] if flags.is_a?(String)
-        unless flags.any? { |f| f.to_s.include?('FLTMinMax') }
-          config.build_settings['OTHER_CFLAGS'] = flags + ['-include $(PODS_ROOT)/../Alenga/FLTMinMax.h']
+        if folly_module_targets.include?(target.name)
+          defs = config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] || '$(inherited)'
+          defs = [defs] if defs.is_a?(String)
+          folly_defs.each do |definition|
+            key = definition.split('=').first
+            unless defs.any? { |entry| entry.to_s.include?(key) }
+              defs << definition
+            end
+          end
+          config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] = defs
+
+          %w[OTHER_CFLAGS OTHER_CPLUSPLUSFLAGS].each do |flag_setting|
+            flags = config.build_settings[flag_setting] || '$(inherited)'
+            flags = flags.join(' ') if flags.is_a?(Array)
+            unless flags.include?('FOLLY_NO_CONFIG')
+              config.build_settings[flag_setting] = "#{flags} #{folly_cpp_flags}"
+            end
+          end
         end
-        
-        # GCC_PREPROCESSOR_DEFINITIONS fallback for FLT_MAX/FLT_MIN (UIKit/UIStackView.h in iOS 18.5+/26 SDK)
-        defs = config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] || '$(inherited)'
-        defs = [defs] if defs.is_a?(String)
-        flt_defs = ['FLT_MAX=3.40282346638528859811704183484516925e+38F', 'FLT_MIN=1.17549435082228750796873653722224568e-38F']
-        unless flt_defs.all? { |d| defs.any? { |f| f.to_s.include?(d.split('=').first) } }
-          config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] = defs + flt_defs
-        end
-        
         # Exclude Android-specific headers from iOS builds
         ['HEADER_SEARCH_PATHS', 'USER_HEADER_SEARCH_PATHS'].each do |setting|
           if config.build_settings[setting]
@@ -105,15 +149,6 @@ target 'Alenga' do
           end
         end
         
-        # Ensure standard C headers are available - UIKit needs FLT_MIN/FLT_MAX
-        # Don't force include, but ensure header search paths don't interfere
-        config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++20'
-        config.build_settings['CLANG_CXX_LIBRARY'] = 'libc++'
-        
-        # Add explicit exclusion for Android headers in module maps
-        config.build_settings['CLANG_ENABLE_MODULES'] = 'YES'
-        config.build_settings['DEFINES_MODULE'] = 'YES'
-        
         # Fix RCTProfileTrampoline: exclude wrong-architecture assembly when building for device (arm64)
         if target.name == 'React-Core'
           config.build_settings['EXCLUDED_SOURCE_FILE_NAMES[sdk=iphoneos*]'] = 'RCTProfileTrampoline-x86_64.S RCTProfileTrampoline-i386.S'
@@ -121,6 +156,22 @@ target 'Alenga' do
         end
 
         config.build_settings['ENABLE_BITCODE'] = 'NO'
+        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '16.0'
+
+        if config.name == 'Debug'
+          config.build_settings['ONLY_ACTIVE_ARCH'] = 'YES'
+        end
+
+        if apple_silicon_mac?
+          config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = simulator_excluded_archs
+        end
+
+        if grpc_targets.include?(target.name)
+          config.build_settings['COMPILER_INDEX_STORE_ENABLE'] = 'NO'
+          if config.name == 'Debug'
+            config.build_settings['GCC_OPTIMIZATION_LEVEL'] = '0'
+          end
+        end
       end
       
       # Remove Android header files from the target's file references (only for native targets)
@@ -133,34 +184,61 @@ target 'Alenga' do
       end
     end
 
+    installer.pods_project.build_configurations.each do |config|
+      if apple_silicon_mac?
+        config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = simulator_excluded_archs
+      end
+    end
+
+    installer.aggregate_targets.each do |aggregate_target|
+      aggregate_target.xcconfigs.each do |config_name, config_file|
+        if apple_silicon_mac?
+          config_file.attributes['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = simulator_excluded_archs
+        end
+        aggregate_target.xcconfig_path(config_name).tap do |xcconfig_path|
+          config_file.save_as(xcconfig_path)
+        end
+      end
+    end
+
+    flt_defs = [
+      'FLT_MAX=3.40282346638528859811704183484516925e+38F',
+      'FLT_MIN=1.17549435082228750796873653722224568e-38F',
+    ]
+
     # Fix FLT_MAX/FLT_MIN for main app target (UIKit/UIStackView.h in iOS 18.5+ SDK)
     installer.aggregate_targets.each do |aggregate_target|
       aggregate_target.user_project.targets.each do |target|
         if target.name == 'Alenga'
           target.build_configurations.each do |config|
-            flags = config.build_settings['OTHER_CFLAGS'] || '$(inherited)'
-            flags = [flags] if flags.is_a?(String)
-            unless flags.any? { |f| f.to_s.include?('FLTMinMax') }
-              config.build_settings['OTHER_CFLAGS'] = flags + ['-include $(PODS_ROOT)/../Alenga/FLTMinMax.h']
+            config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '16.0'
+
+            defs = config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] || '$(inherited)'
+            defs = [defs] if defs.is_a?(String)
+            unless flt_defs.all? { |d| defs.any? { |f| f.to_s.include?(d.split('=').first) } }
+              config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] = defs + flt_defs
+            end
+
+            if apple_silicon_mac?
+              config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = simulator_excluded_archs
+            end
+
+            if config.name == 'Debug'
+              config.build_settings['ONLY_ACTIVE_ARCH'] = 'YES'
             end
           end
         end
       end
-    end
-
-    # Fix FLT_MAX/FLT_MIN for UIKit (Xcode 26 / iOS 26 SDK - UIStackView.h)
-    installer.aggregate_targets.each do |aggregate_target|
-      aggregate_target.xcconfigs.each do |config_name, config_file|
-        xcconfig_path = aggregate_target.xcconfig_path(config_name)
-        if File.exist?(xcconfig_path)
-          xcconfig_content = File.read(xcconfig_path)
-          unless xcconfig_content.include?('FLTMinMax')
-            xcconfig_content = xcconfig_content.gsub(/^(OTHER_CFLAGS = .+)$/) { |m| "#{m} -include $(PODS_ROOT)/../Alenga/FLTMinMax.h" }
-            File.write(xcconfig_path, xcconfig_content)
-          end
+      aggregate_target.user_project.build_configurations.each do |config|
+        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '16.0'
+        if apple_silicon_mac?
+          config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = simulator_excluded_archs
         end
       end
+      aggregate_target.user_project.save
     end
+
+    installer.pods_project.save
 
     # Agora RTM may ship bitcode; strip for App Store validation (LetsPlanADate pattern)
     bitcode_strip_path = `xcrun --find bitcode_strip`.chop!

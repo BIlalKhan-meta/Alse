@@ -37,7 +37,7 @@ class PhotoMusicComposer: NSObject {
 
     let start = CMTimeMakeWithSeconds(startMs.doubleValue / 1000.0, preferredTimescale: 1000)
     let end = CMTimeMakeWithSeconds(endMs.doubleValue / 1000.0, preferredTimescale: 1000)
-    exportSession.timeRange = CMTimeRangeFromTimeToTime(start, end)
+    exportSession.timeRange = CMTimeRange(start: start, end: end)
 
     let outputURL = URL(fileURLWithPath: NSTemporaryDirectory())
       .appendingPathComponent("photo_music_audio_\(Int(Date().timeIntervalSince1970)).m4a")

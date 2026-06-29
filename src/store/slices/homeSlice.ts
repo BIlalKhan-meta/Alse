@@ -23,25 +23,41 @@ import {
   userUnFollow,
 } from '../../api/home';
 
+export const FEED_PAGE_SIZE = 20;
+
+type GetNewsFeedParams = {
+  page?: number;
+  per_page?: number;
+};
+
 interface HomeState {
   posts: [];
   loading: boolean;
+  loadingMore: boolean;
   error: string | null;
+  currentPage: number;
+  lastPage: number;
+  hasMore: boolean;
 }
 
 const initialState: HomeState = {
   posts: [],
   loading: false,
+  loadingMore: false,
   error: null,
+  currentPage: 0,
+  lastPage: 1,
+  hasMore: true,
 };
 
 export const GetNewsFeed = createAsyncThunk(
   'user/NewsFeed',
-  async (_, {rejectWithValue}) => {
+  async (params: GetNewsFeedParams | undefined, {rejectWithValue}) => {
+    const {page = 1, per_page = FEED_PAGE_SIZE} = params ?? {};
     try {
-      const response = await newsFeed({per_page: 100});
+      const response = await newsFeed({page, per_page});
 
-      return response.data;
+      return {response: response.data, page};
     } catch (error: any) {
       console.log(error, 'errrorrr && type');
       return rejectWithValue(error.response.data || 'newsFeedd failed');
@@ -273,16 +289,43 @@ const homeSlice = createSlice({
   },
   extraReducers: builder => {
     builder
-      .addCase(GetNewsFeed.pending, state => {
-        state.loading = true;
+      .addCase(GetNewsFeed.pending, (state, action) => {
+        const page = action.meta.arg?.page ?? 1;
+        if (page > 1) {
+          state.loadingMore = true;
+        } else {
+          state.loading = true;
+        }
         state.error = null;
       })
       .addCase(GetNewsFeed.fulfilled, (state, action) => {
         state.loading = false;
-        state.posts = action.payload?.data?.data;
+        state.loadingMore = false;
+
+        const newPosts = action.payload?.response?.data?.data ?? [];
+        const meta = action.payload?.response?.data?.meta;
+        const page = action.payload?.page ?? 1;
+        const perPage = action.meta.arg?.per_page ?? FEED_PAGE_SIZE;
+
+        if (page > 1) {
+          const existingIds = new Set(state.posts.map(post => post?.id));
+          const uniqueNewPosts = newPosts.filter(
+            post => !existingIds.has(post?.id),
+          );
+          state.posts = [...state.posts, ...uniqueNewPosts];
+        } else {
+          state.posts = newPosts;
+        }
+
+        state.currentPage = meta?.current_page ?? page;
+        state.lastPage = meta?.last_page ?? page;
+        state.hasMore = meta
+          ? state.currentPage < state.lastPage
+          : newPosts.length >= perPage;
       })
       .addCase(GetNewsFeed.rejected, (state, action) => {
         state.loading = false;
+        state.loadingMore = false;
         state.error = action.payload as string;
       });
     // .addCase(likePost.fulfilled, (state, action) => {});

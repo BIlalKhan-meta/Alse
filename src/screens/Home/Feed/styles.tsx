@@ -119,6 +119,10 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingBottom: vh * 10,
   },
+  loadMoreFooter: {
+    paddingVertical: vh * 2,
+    alignItems: 'center',
+  },
   loaderOverlay: {
     flex: 1,
     justifyContent: 'center',
