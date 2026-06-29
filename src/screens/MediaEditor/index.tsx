@@ -398,6 +398,7 @@ const MediaEditor: React.FC = () => {
           <Text style={styles.headerTitle}>{t('editor')}</Text>
         </View>
         <TouchableOpacity
+          testID="media-editor-done"
           style={styles.doneButton}
           onPress={handleDone}
           disabled={isExporting}>

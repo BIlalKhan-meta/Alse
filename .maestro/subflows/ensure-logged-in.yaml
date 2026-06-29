@@ -1,0 +1,38 @@
+appId: com.blitzapp.alenga.alse
+---
+- runFlow:
+    when:
+      visible:
+        id: "login-submit"
+    commands:
+      - runFlow: login.yaml
+    label: Sign in when login screen is shown
+
+- runFlow:
+    when:
+      visible: "Sign In"
+    commands:
+      - runFlow: login.yaml
+    label: Sign in when login screen uses text labels
+
+- runFlow:
+    when:
+      visible: "Subscription Plan"
+    commands:
+      - back
+      - waitForAnimationToEnd
+    label: Dismiss subscription plan if shown
+
+- runFlow:
+    when:
+      visible: "Subscribe"
+    commands:
+      - back
+      - waitForAnimationToEnd
+    label: Dismiss subscription gate if shown
+
+- extendedWaitUntil:
+    visible:
+      id: "tab-home"
+    timeout: 90000
+    label: Wait for home tab after launch or login

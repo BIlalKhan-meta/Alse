@@ -92,6 +92,11 @@ if ! adb -s "${DEVICE}" shell pm path com.blitzapp.alenga.alse >/dev/null 2>&1; 
   exit 1
 fi
 
+echo "==> Waking device (keep it unlocked for Maestro)..."
+adb -s "${DEVICE}" shell input keyevent KEYCODE_WAKEUP >/dev/null 2>&1 || true
+adb -s "${DEVICE}" shell wm dismiss-keyguard >/dev/null 2>&1 || true
+sleep 1
+
 FLOW_TARGETS=("$@")
 if [ ${#FLOW_TARGETS[@]} -eq 0 ]; then
   FLOW_TARGETS=(".maestro/smoke/" ".maestro/settings/")
@@ -102,13 +107,18 @@ MAESTRO_EXIT=0
 for target in "${FLOW_TARGETS[@]}"; do
   echo ""
   echo "==> Flow target: ${target}"
-  if ! maestro test \
-    --config .maestro/config.yaml \
-    --device "${DEVICE}" \
-    --platform android \
-    --no-reinstall-driver \
-    "${MAESTRO_ENV_ARGS[@]}" \
-    "${target}"; then
+  MAESTRO_CMD=(
+    maestro test
+    --config .maestro/config.yaml
+    --device "${DEVICE}"
+    --platform android
+    --no-reinstall-driver
+  )
+  if [ ${#MAESTRO_ENV_ARGS[@]} -gt 0 ]; then
+    MAESTRO_CMD+=("${MAESTRO_ENV_ARGS[@]}")
+  fi
+  MAESTRO_CMD+=("${target}")
+  if ! "${MAESTRO_CMD[@]}"; then
     MAESTRO_EXIT=1
   fi
   sleep 3

@@ -500,6 +500,7 @@ const Home: React.FC = () => {
             style={styles.profilePic}
           />
           <TouchableOpacity
+            testID="feed-create-post"
             style={styles.whatsOnYourMindInput}
             onPress={() => navigation.navigate('CreatePost')}>
             <InterRegular style={styles.whatsOnYourMindText}>

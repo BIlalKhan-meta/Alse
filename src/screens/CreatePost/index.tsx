@@ -459,6 +459,7 @@ const CreatePost: React.FC = () => {
             <Text style={styles.saveDraftButtonText}>{t('saveDraft')}</Text>
           </TouchableOpacity>
           <TouchableOpacity
+            testID="create-post-submit"
             style={[
               styles.postButton,
               (!hasDraftContent || isLoading || isSavingDraft) &&
@@ -479,6 +480,7 @@ const CreatePost: React.FC = () => {
             <Text style={styles.userName}>{userName}</Text>
             <View style={styles.inputWrapper}>
               <TextInput
+                testID="create-post-input"
                 style={styles.input}
                 placeholder="What's on your mind?"
                 placeholderTextColor="#999"
@@ -585,6 +587,7 @@ const CreatePost: React.FC = () => {
       {/* Bottom Sheet Options */}
       <View style={styles.bottomSheet}>
         <TouchableOpacity
+          testID="create-post-upload-image"
           style={styles.optionItem}
           onPress={handlePickImages}
         >

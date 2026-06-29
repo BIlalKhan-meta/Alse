@@ -1,0 +1,108 @@
+appId: com.blitzapp.alenga.alse
+---
+- addMedia:
+    - "../assets/e2e-post-image.png"
+- runFlow: ../subflows/launch-app.yaml
+- runFlow: ../subflows/ensure-logged-in.yaml
+- assertVisible:
+    id: "tab-home"
+- tapOn:
+    id: "tab-home"
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "Subscribe"
+    commands:
+      - back
+    label: Leave subscription gate if shown
+- tapOn:
+    id: "feed-create-post"
+- extendedWaitUntil:
+    visible: "Create Post"
+    timeout: 30000
+- tapOn:
+    id: "create-post-input"
+- inputRandomText:
+    length: 24
+- copyTextFrom:
+    id: "create-post-input"
+- evalScript: ${output.postText = maestro.copiedText}
+- tapOn:
+    id: "create-post-upload-image"
+- extendedWaitUntil:
+    visible: "Upload from gallery"
+    timeout: 15000
+- tapOn: "Upload from gallery"
+- runFlow:
+    when:
+      visible: "Allow Alenga to access photos and videos?"
+    commands:
+      - tapOn: "Allow"
+    label: Photos permission (Android 13+)
+- runFlow:
+    when:
+      visible: "Allow Alenga to access photos and media on your device?"
+    commands:
+      - tapOn: "Allow"
+    label: Photos permission (Android legacy)
+- runFlow: ../subflows/pick-first-image.yaml
+- extendedWaitUntil:
+    visible:
+      id: "media-editor-done"
+    timeout: 60000
+    label: Media editor opens after gallery pick
+- tapOn:
+    id: "media-editor-done"
+- extendedWaitUntil:
+    visible:
+      id: "create-post-submit"
+    timeout: 60000
+    label: Return to create post with attached image
+- tapOn:
+    id: "create-post-submit"
+- extendedWaitUntil:
+    notVisible: "Creating post..."
+    timeout: 120000
+    label: Wait for post upload to finish
+- runFlow:
+    when:
+      visible: "Create Post"
+    commands:
+      - back
+      - waitForAnimationToEnd
+    label: Leave create post screen if still open
+- runFlow:
+    when:
+      visible: "Subscription Plan"
+    commands:
+      - back
+      - waitForAnimationToEnd
+    label: Dismiss subscription plan after posting
+- runFlow:
+    when:
+      visible: "Subscribe"
+    commands:
+      - back
+      - waitForAnimationToEnd
+    label: Dismiss subscription gate after posting
+- extendedWaitUntil:
+    visible:
+      id: "tab-home"
+    timeout: 30000
+    label: Back on main app after posting
+- tapOn:
+    id: "tab-home"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "feed-create-post"
+    timeout: 30000
+    label: Newsfeed header is visible
+- swipe:
+    start: 50%, 25%
+    end: 50%, 75%
+    label: Pull to refresh newsfeed
+- extendedWaitUntil:
+    visible: ${output.postText}
+    timeout: 90000
+    label: Newly created post appears in feed
