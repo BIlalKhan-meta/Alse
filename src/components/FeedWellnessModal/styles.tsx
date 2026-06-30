@@ -1,6 +1,7 @@
 import {StyleSheet} from 'react-native';
 import {colors} from '../../utils/theme';
-import {vh, vw} from '../../constant';
+import {fontSizes, vh, vw} from '../../constant';
+import fonts from '../../assets/fonts';
 
 const styles = StyleSheet.create({
   absolute: {
@@ -43,19 +44,49 @@ const styles = StyleSheet.create({
     width: vw * 80,
     justifyContent: 'space-between',
     marginTop: vh * 2,
+    gap: vw * 2,
   },
-  buttonContainer: {
-    marginTop: 0,
+  modalButton: {
+    flex: 1,
+    minHeight: vh * 6,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: vw * 2,
+    paddingVertical: vh * 1.2,
   },
-  continueButton: {
-    minWidth: vw * 38,
+  modalButtonPressed: {
+    opacity: 0.85,
+    transform: [{scale: 0.97}],
+  },
+  closeButton: {
+    backgroundColor: colors.themeColor,
+    borderWidth: 1,
+    borderColor: colors.themeColor,
+  },
+  closeButtonText: {
+    color: colors.white,
+    fontSize: fontSizes.f16,
+    fontFamily: fonts.Inter.Regular,
+    fontWeight: '500',
+    textAlign: 'center',
   },
   closeFeedButton: {
-    minWidth: vw * 38,
     backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.themeColor,
+  },
+  closeFeedButtonPressed: {
+    backgroundColor: colors.inputcolor,
+    opacity: 0.9,
+    transform: [{scale: 0.97}],
   },
   closeFeedButtonText: {
     color: colors.themeColor,
+    fontSize: fontSizes.f16,
+    fontFamily: fonts.Inter.Regular,
+    fontWeight: '500',
+    textAlign: 'center',
   },
 });
 

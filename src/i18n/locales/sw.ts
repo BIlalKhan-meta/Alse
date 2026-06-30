@@ -52,7 +52,7 @@ export default {
     wellnessTitle: 'Wakati wa kupumzika?',
     wellnessMessage:
       'Umekuwa ukivinjari kwa dakika {{minutes}}. Pumzika kidogo?',
-    wellnessContinue: 'Endelea',
+    wellnessClose: 'Funga',
     wellnessCloseFeed: 'Funga Mlisho',
   },
   public: 'Wazi',

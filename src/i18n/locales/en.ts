@@ -53,7 +53,7 @@ export default {
     wellnessTitle: 'Time for a break?',
     wellnessMessage:
       "You've been browsing for {{minutes}} minutes. Take a break?",
-    wellnessContinue: 'Continue',
+    wellnessClose: 'Close',
     wellnessCloseFeed: 'Close Feed',
   },
   public: 'Public',

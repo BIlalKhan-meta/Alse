@@ -1,8 +1,7 @@
 import React from 'react';
-import {Modal, TouchableOpacity, View} from 'react-native';
+import {Modal, Pressable, Text, TouchableOpacity, View} from 'react-native';
 import {BlurView} from '@react-native-community/blur';
 import {useTranslation} from 'react-i18next';
-import CustomButton from '../CustomButton';
 import InterBoldSmall from '../Text/InterBoldSmall';
 import InterLightAverage from '../Text/InterLightAverage';
 import {WellnessThresholdMinutes} from '../../utils/feedSessionTracking';
@@ -11,14 +10,14 @@ import styles from './styles';
 type FeedWellnessModalProps = {
   visible: boolean;
   minutes: WellnessThresholdMinutes;
-  onContinue: () => void;
+  onClose: () => void;
   onCloseFeed: () => void;
 };
 
 const FeedWellnessModal: React.FC<FeedWellnessModalProps> = ({
   visible,
   minutes,
-  onContinue,
+  onClose,
   onCloseFeed,
 }) => {
   const {t} = useTranslation();
@@ -26,7 +25,7 @@ const FeedWellnessModal: React.FC<FeedWellnessModalProps> = ({
   return (
     <Modal
       visible={visible}
-      onRequestClose={onContinue}
+      onRequestClose={onClose}
       animationType="slide"
       transparent
       testID="feed-wellness-modal">
@@ -38,11 +37,12 @@ const FeedWellnessModal: React.FC<FeedWellnessModalProps> = ({
       />
       <TouchableOpacity
         style={styles.backdrop}
-        onPress={onContinue}
+        activeOpacity={0.9}
+        onPress={onClose}
         accessibilityRole="button"
-        accessibilityLabel={t('feed.wellnessContinue')}
+        accessibilityLabel={t('feed.wellnessClose')}
       />
-      <View style={styles.centeredView}>
+      <View style={styles.centeredView} pointerEvents="box-none">
         <View style={styles.container}>
           <InterBoldSmall style={styles.title}>
             {t('feed.wellnessTitle')}
@@ -51,21 +51,32 @@ const FeedWellnessModal: React.FC<FeedWellnessModalProps> = ({
             {t('feed.wellnessMessage', {minutes})}
           </InterLightAverage>
           <View style={styles.buttonRow}>
-            <CustomButton
-              onPress={onContinue}
-              style={styles.continueButton}
-              containerStyle={styles.buttonContainer}
-              testID="feed-wellness-continue">
-              {t('feed.wellnessContinue')}
-            </CustomButton>
-            <CustomButton
+            <Pressable
+              onPress={onClose}
+              testID="feed-wellness-close"
+              accessibilityRole="button"
+              accessibilityLabel={t('feed.wellnessClose')}
+              style={({pressed}) => [
+                styles.modalButton,
+                styles.closeButton,
+                pressed && styles.modalButtonPressed,
+              ]}>
+              <Text style={styles.closeButtonText}>{t('feed.wellnessClose')}</Text>
+            </Pressable>
+            <Pressable
               onPress={onCloseFeed}
-              style={styles.closeFeedButton}
-              containerStyle={styles.buttonContainer}
-              txtstyle={styles.closeFeedButtonText}
-              testID="feed-wellness-close-feed">
-              {t('feed.wellnessCloseFeed')}
-            </CustomButton>
+              testID="feed-wellness-close-feed"
+              accessibilityRole="button"
+              accessibilityLabel={t('feed.wellnessCloseFeed')}
+              style={({pressed}) => [
+                styles.modalButton,
+                styles.closeFeedButton,
+                pressed && styles.closeFeedButtonPressed,
+              ]}>
+              <Text style={styles.closeFeedButtonText}>
+                {t('feed.wellnessCloseFeed')}
+              </Text>
+            </Pressable>
           </View>
         </View>
       </View>

@@ -92,9 +92,7 @@ export const useFeedSessionTracking = (
     }
     setActiveThreshold(null);
 
-    if (navigation.canGoBack()) {
-      navigation.goBack();
-    }
+    navigation.getParent()?.navigate('MyProfile' as never);
   }, [activeThreshold, navigation]);
 
   return {

@@ -52,7 +52,7 @@ export default {
     wellnessTitle: '¿Hora de un descanso?',
     wellnessMessage:
       'Has estado navegando durante {{minutes}} minutos. ¿Tomar un descanso?',
-    wellnessContinue: 'Continuar',
+    wellnessClose: 'Cerrar',
     wellnessCloseFeed: 'Cerrar feed',
   },
   public: 'Público',

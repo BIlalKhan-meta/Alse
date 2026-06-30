@@ -51,7 +51,7 @@ export default {
     labelRecommended: '推荐',
     wellnessTitle: '该休息一下了？',
     wellnessMessage: '您已浏览 {{minutes}} 分钟。休息一下？',
-    wellnessContinue: '继续',
+    wellnessClose: '关闭',
     wellnessCloseFeed: '关闭动态',
   },
   public: '公开',

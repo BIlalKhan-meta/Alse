@@ -52,7 +52,7 @@ export default {
     wellnessTitle: 'Une pause ?',
     wellnessMessage:
       'Vous naviguez depuis {{minutes}} minutes. Faire une pause ?',
-    wellnessContinue: 'Continuer',
+    wellnessClose: 'Fermer',
     wellnessCloseFeed: 'Fermer le fil',
   },
   public: 'Public',

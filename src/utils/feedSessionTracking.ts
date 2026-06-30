@@ -3,6 +3,32 @@ export const WELLNESS_THRESHOLDS_MINUTES = [15, 30, 45] as const;
 export type WellnessThresholdMinutes =
   (typeof WELLNESS_THRESHOLDS_MINUTES)[number];
 
+/** Dev-only: first wellness popup after 5s on feed (see getWellnessThresholds). */
+export const DEV_WELLNESS_FIRST_THRESHOLD_MS = 5000;
+
+type WellnessThresholdConfig = {
+  elapsedMs: number;
+  minutes: WellnessThresholdMinutes;
+};
+
+const PROD_WELLNESS_THRESHOLDS: WellnessThresholdConfig[] = [
+  {elapsedMs: 15 * 60 * 1000, minutes: 15},
+  {elapsedMs: 30 * 60 * 1000, minutes: 30},
+  {elapsedMs: 45 * 60 * 1000, minutes: 45},
+];
+
+/** Dev: 5s / 10s / 15s — modal copy still uses 15 / 30 / 45 minute labels. */
+const DEV_WELLNESS_THRESHOLDS: WellnessThresholdConfig[] = [
+  {elapsedMs: DEV_WELLNESS_FIRST_THRESHOLD_MS, minutes: 15},
+  {elapsedMs: 10 * 1000, minutes: 30},
+  {elapsedMs: 15 * 1000, minutes: 45},
+];
+
+export const getWellnessThresholds = (): WellnessThresholdConfig[] =>
+  __DEV__ ? DEV_WELLNESS_THRESHOLDS : PROD_WELLNESS_THRESHOLDS;
+
+export const isDevWellnessMode = (): boolean => __DEV__;
+
 type FeedSessionState = {
   cumulativeFeedMs: number;
   segmentStartAt: number | null;
@@ -82,16 +108,16 @@ export const markThresholdShown = (minutes: WellnessThresholdMinutes) => {
 export const getNextThresholdToShow = (
   elapsedMs: number,
 ): WellnessThresholdMinutes | null => {
-  const elapsedMinutes = elapsedMs / 60000;
+  const orderedThresholds = [...getWellnessThresholds()].sort(
+    (a, b) => b.minutes - a.minutes,
+  );
 
-  const orderedThresholds: WellnessThresholdMinutes[] = [45, 30, 15];
-
-  for (const threshold of orderedThresholds) {
+  for (const {elapsedMs: thresholdMs, minutes} of orderedThresholds) {
     if (
-      elapsedMinutes >= threshold &&
-      !sessionState.shownThresholds.has(threshold)
+      elapsedMs >= thresholdMs &&
+      !sessionState.shownThresholds.has(minutes)
     ) {
-      return threshold;
+      return minutes;
     }
   }
 

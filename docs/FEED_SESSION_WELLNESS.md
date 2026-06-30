@@ -91,11 +91,11 @@ The helper `getNextThresholdToShow()` checks **45 → 30 → 15** and returns th
 
 | Action | Behavior |
 |--------|----------|
-| **Continue** | Mark current threshold as shown; dismiss modal; timer keeps running |
-| **Close Feed** | Mark threshold shown; dismiss modal; `navigation.goBack()` if stack allows |
-| Backdrop tap | Same as **Continue** (safe default) |
+| **Close** | Mark current threshold as shown; dismiss modal; timer keeps running |
+| **Close Feed** | Mark threshold shown; dismiss modal; navigate to **Profile** tab (`MyProfile`) |
+| Backdrop tap | Same as **Close** |
 
-If the user is already on the Feed root (`Home` screen) and cannot go back, **Close Feed** only dismisses the modal.
+If the user is on the Feed root, **Close Feed** navigates to the Profile tab.
 
 ## Hook API
 
@@ -118,7 +118,7 @@ Add under `feed` in each locale file:
 |-----|---------|
 | `feed.wellnessTitle` | Time for a break? |
 | `feed.wellnessMessage` | You've been browsing for {{minutes}} minutes. Take a break? |
-| `feed.wellnessContinue` | Continue |
+| `feed.wellnessClose` | Close |
 | `feed.wellnessCloseFeed` | Close Feed |
 
 ## Manual test checklist
@@ -136,7 +136,23 @@ Add under `feed` in each locale file:
 
 ## QA / development testing
 
-Production thresholds are **15 / 30 / 45 minutes**. For faster manual QA, temporarily lower thresholds in `feedSessionTracking.ts` (e.g. `[0.25, 0.5, 0.75]` minutes) — **revert before release**.
+In **`__DEV__` builds only**, thresholds are shortened automatically:
+
+| Modal label (copy) | Dev trigger | Production trigger |
+|--------------------|-------------|-------------------|
+| 15 minutes | **5 seconds** | 15 minutes |
+| 30 minutes | 10 seconds | 30 minutes |
+| 45 minutes | 15 seconds | 45 minutes |
+
+Constants live in `src/utils/feedSessionTracking.ts`:
+
+- `DEV_WELLNESS_FIRST_THRESHOLD_MS` — `5000` (5s first popup)
+- `getWellnessThresholds()` — returns dev or prod threshold list
+- `isDevWellnessMode()` — `true` in dev builds
+
+**How to test:** Run a dev build, open the Feed, stay on screen for ~5 seconds — the wellness modal should appear with the 15-minute message. Tap **Continue**; at ~10s and ~15s the 30- and 45-minute warnings follow.
+
+Production/release builds always use **15 / 30 / 45 minutes** (`__DEV__` is false).
 
 `resetFeedSessionForTests()` is exported for unit tests only.
 

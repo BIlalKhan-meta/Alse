@@ -796,7 +796,7 @@ const Home: React.FC = () => {
           <FeedWellnessModal
             visible={isWarningVisible}
             minutes={activeThreshold ?? 15}
-            onContinue={dismissWarning}
+            onClose={dismissWarning}
             onCloseFeed={closeFeed}
           />
         </View>

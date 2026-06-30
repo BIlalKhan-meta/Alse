@@ -52,7 +52,7 @@ export default {
     wellnessTitle: 'ब्रेक लेने का समय?',
     wellnessMessage:
       'आप {{minutes}} मिनट से ब्राउज़ कर रहे हैं। एक ब्रेक लें?',
-    wellnessContinue: 'जारी रखें',
+    wellnessClose: 'बंद करें',
     wellnessCloseFeed: 'फ़ीड बंद करें',
   },
   public: 'सार्वजनिक',
