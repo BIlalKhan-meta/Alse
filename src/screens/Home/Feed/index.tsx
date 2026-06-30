@@ -9,7 +9,15 @@ import {
   Text,
   Image,
   RefreshControl,
+  LayoutChangeEvent,
 } from 'react-native';
+import Reanimated, {
+  Extrapolation,
+  interpolate,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue,
+} from 'react-native-reanimated';
 import {images} from '../../../utils/images';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import styles from './styles';
@@ -67,8 +75,12 @@ import {
   getFeedFilterApiParam,
 } from '../../../utils/feedFilters';
 
+const CREATE_POST_HEIGHT_FALLBACK = 110;
+
 const Home: React.FC = () => {
   const flatListRef = useRef<FlatList>(null);
+  const scrollY = useSharedValue(0);
+  const createPostHeight = useSharedValue(CREATE_POST_HEIGHT_FALLBACK);
   const storiesRef = useRef<StoriesRef>(null);
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
   const [feedVideoMuted, setFeedVideoMuted] = useState(true);
@@ -163,6 +175,45 @@ const Home: React.FC = () => {
       eventEmitter.emit(EVENT_TYPES.CHECKOUT_TRIGGER, remoteMessage);
     }
   };
+
+  const hasMeasuredCreatePostHeight = useRef(false);
+
+  const onCreatePostLayout = useCallback((event: LayoutChangeEvent) => {
+    if (hasMeasuredCreatePostHeight.current) {
+      return;
+    }
+    const {height} = event.nativeEvent.layout;
+    if (height > 0) {
+      createPostHeight.value = height;
+      hasMeasuredCreatePostHeight.current = true;
+    }
+  }, []);
+
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: event => {
+      scrollY.value = event.contentOffset.y;
+    },
+  });
+
+  const createPostAnimatedStyle = useAnimatedStyle(() => {
+    const height = interpolate(
+      scrollY.value,
+      [0, createPostHeight.value],
+      [createPostHeight.value, 0],
+      Extrapolation.CLAMP,
+    );
+    const opacity = interpolate(
+      scrollY.value,
+      [0, createPostHeight.value * 0.5],
+      [1, 0],
+      Extrapolation.CLAMP,
+    );
+    return {
+      height,
+      opacity,
+      overflow: 'hidden',
+    };
+  });
 
   const toggleFab = () => {
     const toValue = isFabOpen ? 0 : 1;
@@ -575,7 +626,11 @@ const Home: React.FC = () => {
 
   const renderFeedTopSection = () => (
     <View style={styles.feedTopSection} collapsable={false}>
-      {renderCreatePostSection()}
+      <Reanimated.View style={createPostAnimatedStyle} pointerEvents="box-none">
+        <View onLayout={onCreatePostLayout}>
+          {renderCreatePostSection()}
+        </View>
+      </Reanimated.View>
       <FeedFilterTabs
         activeFilter={activeFilter}
         onFilterChange={handleFilterChange}
@@ -682,13 +737,15 @@ const Home: React.FC = () => {
           {initialLoading ? (
             <View style={styles.feedList}>{renderSkeletonLoaders()}</View>
           ) : (
-            <FlatList
+            <Reanimated.FlatList
               key={activeFilter}
               ref={flatListRef}
               style={styles.feedList}
               viewabilityConfigCallbackPairs={viewabilityConfigCallbackPairs}
               data={filteredPosts}
               keyboardShouldPersistTaps="handled"
+              onScroll={scrollHandler}
+              scrollEventThrottle={16}
               refreshControl={
                 <RefreshControl
                   refreshing={refreshing}
