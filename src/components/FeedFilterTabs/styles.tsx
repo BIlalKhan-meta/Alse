@@ -5,12 +5,11 @@ import fonts from '../../assets/fonts';
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: vh * 1,
-    marginTop: vh * 0.5,
+    paddingHorizontal: vw * 2,
+    paddingVertical: vh * 1.2,
   },
   scrollContent: {
     paddingHorizontal: vw * 1,
-    paddingVertical: 4,
     alignItems: 'center',
   },
   tab: {
