@@ -93,7 +93,23 @@ const styles = StyleSheet.create({
   },
   emptyContainer: {
     flexGrow: 1,
-    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: vw * 6,
+    paddingVertical: vh * 6,
+  },
+  emptyTitle: {
+    fontSize: fontSizes.f16,
+    color: colors.inputText,
+    textAlign: 'center',
+    fontWeight: '600',
+  },
+  emptySubtext: {
+    marginTop: vh * 1.5,
+    fontSize: fontSizes.f14,
+    color: colors.lightGrey,
+    textAlign: 'center',
+    lineHeight: 20,
   },
   emptyText: {
     marginVertical: vh * 4,
@@ -108,9 +124,19 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 0,
   },
+  storiesWrap: {
+    flexShrink: 0,
+    zIndex: 1,
+  },
   feedContainer: {
     flex: 1,
     minHeight: 0,
+  },
+  feedTopSection: {
+    zIndex: 20,
+    elevation: 20,
+    flexShrink: 0,
+    backgroundColor: '#EAF6F6',
   },
   feedList: {
     flex: 1,
@@ -147,7 +173,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderRadius: 16,
     padding: 15,
-    marginBottom: 15,
+    marginBottom: 0,
     marginTop: 10,
     elevation: 2,
     shadowColor: '#000',

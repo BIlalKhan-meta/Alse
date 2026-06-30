@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
   View,
   FlatList,
@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Text,
   Image,
+  RefreshControl,
 } from 'react-native';
 import {images} from '../../../utils/images';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
@@ -57,8 +58,14 @@ import PostSkeleton from '../../../components/SkeletonLoaders';
 import {useTranslation} from 'react-i18next';
 import MediaModal from '../../../components/MediaModal';
 import FeedWellnessModal from '../../../components/FeedWellnessModal';
+import FeedFilterTabs from '../../../components/FeedFilterTabs';
 import {useFeedSessionTracking} from '../../../hooks/useFeedSessionTracking';
 import {resolveFeedLabel} from '../../../utils/feedLabels';
+import {
+  FeedFilterTab,
+  filterFeedPosts,
+  getFeedFilterApiParam,
+} from '../../../utils/feedFilters';
 
 const Home: React.FC = () => {
   const flatListRef = useRef<FlatList>(null);
@@ -85,6 +92,7 @@ const Home: React.FC = () => {
 
   const [refreshing, setRefreshing] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [activeFilter, setActiveFilter] = useState<FeedFilterTab>('all');
 
   const [commentsVisible, setCommentsVisible] = useState<{
     visiblity: boolean;
@@ -170,12 +178,19 @@ const Home: React.FC = () => {
 
   // Fetch all home data: feed, profile, countries, user/shops, stories, live-streams
   const fetchAllData = useCallback(
-    async (showInitialLoading = false) => {
+    async (showInitialLoading = false, filter: FeedFilterTab = activeFilter) => {
       try {
         if (showInitialLoading) {
           setInitialLoading(true);
         }
-        await dispatch(GetNewsFeed({page: 1, per_page: FEED_PAGE_SIZE}));
+        const apiFilter = getFeedFilterApiParam(filter);
+        await dispatch(
+          GetNewsFeed({
+            page: 1,
+            per_page: FEED_PAGE_SIZE,
+            ...(apiFilter ? {filter: apiFilter} : {}),
+          }),
+        );
         await dispatch(GetUserProfile());
         await getCountriesList().then(res => {
           if (res?.data) {
@@ -191,8 +206,19 @@ const Home: React.FC = () => {
         setRefreshing(false);
       }
     },
-    [dispatch],
+    [dispatch, activeFilter],
   );
+
+  const filteredPosts = useMemo(
+    () => filterFeedPosts(posts as Record<string, unknown>[], activeFilter),
+    [posts, activeFilter],
+  );
+
+  const handleFilterChange = useCallback((filter: FeedFilterTab) => {
+    setActiveFilter(filter);
+    setFocusedIndex(null);
+    flatListRef.current?.scrollToOffset({animated: true, offset: 0});
+  }, []);
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -201,11 +227,16 @@ const Home: React.FC = () => {
 
   const loadMorePosts = useCallback(() => {
     if (!loadingMore && hasMore) {
+      const apiFilter = getFeedFilterApiParam(activeFilter);
       dispatch(
-        GetNewsFeed({page: currentPage + 1, per_page: FEED_PAGE_SIZE}),
+        GetNewsFeed({
+          page: currentPage + 1,
+          per_page: FEED_PAGE_SIZE,
+          ...(apiFilter ? {filter: apiFilter} : {}),
+        }),
       );
     }
-  }, [dispatch, loadingMore, hasMore, currentPage]);
+  }, [dispatch, loadingMore, hasMore, currentPage, activeFilter]);
 
   const renderFooter = () => {
     if (!loadingMore) {
@@ -501,47 +532,70 @@ const Home: React.FC = () => {
     );
   };
 
-  const renderHeader = () => {
-    return (
-      <View style={styles.whatsOnYourMindContainer}>
-        <View style={styles.whatsOnYourMindTop}>
-          <Image
-            source={
-              user?.avatar
-                ? {uri: getAbsoluteAvatarUrl(user?.avatar)}
-                : images.profile
-            }
-            style={styles.profilePic}
-          />
-          <TouchableOpacity
-            testID="feed-create-post"
-            style={styles.whatsOnYourMindInput}
-            onPress={() => navigation.navigate('CreatePost')}>
-            <InterRegular style={styles.whatsOnYourMindText}>
-              What's on your mind?
-            </InterRegular>
-          </TouchableOpacity>
-        </View>
-        <View style={styles.whatsOnYourMindBottom}>
-          <TouchableOpacity
-            style={styles.whatsOnYourMindButton}
-            onPress={() => navigation.navigate('CreatePost')}>
-            <Video color="#FF3B30" size={20} />
-            <InterRegular style={styles.whatsOnYourMindButtonText}>
-              Video
-            </InterRegular>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.whatsOnYourMindButton}
-            onPress={() => navigation.navigate('CreatePost')}>
-            <ImageIcon color="#4CD964" size={20} />
-            <InterRegular style={styles.whatsOnYourMindButtonText}>
-              Photo
-            </InterRegular>
-          </TouchableOpacity>
-        </View>
+  const renderCreatePostSection = () => (
+    <View style={styles.whatsOnYourMindContainer}>
+      <View style={styles.whatsOnYourMindTop}>
+        <Image
+          source={
+            user?.avatar
+              ? {uri: getAbsoluteAvatarUrl(user?.avatar)}
+              : images.profile
+          }
+          style={styles.profilePic}
+        />
+        <TouchableOpacity
+          testID="feed-create-post"
+          style={styles.whatsOnYourMindInput}
+          onPress={() => navigation.navigate('CreatePost')}>
+          <InterRegular style={styles.whatsOnYourMindText}>
+            What's on your mind?
+          </InterRegular>
+        </TouchableOpacity>
       </View>
-    );
+      <View style={styles.whatsOnYourMindBottom}>
+        <TouchableOpacity
+          style={styles.whatsOnYourMindButton}
+          onPress={() => navigation.navigate('CreatePost')}>
+          <Video color="#FF3B30" size={20} />
+          <InterRegular style={styles.whatsOnYourMindButtonText}>
+            Video
+          </InterRegular>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.whatsOnYourMindButton}
+          onPress={() => navigation.navigate('CreatePost')}>
+          <ImageIcon color="#4CD964" size={20} />
+          <InterRegular style={styles.whatsOnYourMindButtonText}>
+            Photo
+          </InterRegular>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
+  const renderFeedTopSection = () => (
+    <View style={styles.feedTopSection} collapsable={false}>
+      {renderCreatePostSection()}
+      <FeedFilterTabs
+        activeFilter={activeFilter}
+        onFilterChange={handleFilterChange}
+      />
+    </View>
+  );
+
+  const getEmptyMessageKey = (): string => {
+    switch (activeFilter) {
+      case 'following':
+        return 'feed.empty.following';
+      case 'videos':
+        return 'feed.empty.videos';
+      case 'images':
+        return 'feed.empty.images';
+      case 'stories':
+        return 'feed.empty.stories';
+      default:
+        return 'feed.empty.all';
+    }
   };
 
   const renderEmpty = () => {
@@ -552,7 +606,24 @@ const Home: React.FC = () => {
 
     return (
       <View style={styles.emptyContainer}>
-        <InterRegular style={styles.emptyText}>{t('noPosts')}</InterRegular>
+        <InterRegular style={styles.emptyTitle}>
+          {t(getEmptyMessageKey())}
+        </InterRegular>
+        {activeFilter === 'following' ? (
+          <InterRegular style={styles.emptySubtext}>
+            {t('feed.empty.followingHint')}
+          </InterRegular>
+        ) : null}
+        {activeFilter === 'all' && posts.length === 0 ? (
+          <InterRegular style={styles.emptySubtext}>
+            {t('feed.empty.allHint')}
+          </InterRegular>
+        ) : null}
+        {activeFilter === 'stories' ? (
+          <InterRegular style={styles.emptySubtext}>
+            {t('feed.empty.storiesHint')}
+          </InterRegular>
+        ) : null}
       </View>
     );
   };
@@ -601,20 +672,31 @@ const Home: React.FC = () => {
         </View>
       </Modal>
       <View style={styles.contentContainer}>
-        <Stories ref={storiesRef} />
+        <View style={styles.storiesWrap} collapsable={false}>
+          <Stories ref={storiesRef} />
+        </View>
+
+        {renderFeedTopSection()}
 
         <View style={styles.feedContainer}>
           {initialLoading ? (
-            renderSkeletonLoaders()
+            <View style={styles.feedList}>{renderSkeletonLoaders()}</View>
           ) : (
             <FlatList
+              key={activeFilter}
               ref={flatListRef}
               style={styles.feedList}
-              ListHeaderComponent={renderHeader}
               viewabilityConfigCallbackPairs={viewabilityConfigCallbackPairs}
-              data={posts}
-              onRefresh={handleRefresh}
-              refreshing={refreshing}
+              data={filteredPosts}
+              keyboardShouldPersistTaps="handled"
+              refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={handleRefresh}
+                  colors={[colors.themeColor]}
+                  tintColor={colors.themeColor}
+                />
+              }
               renderItem={renderPost}
               contentContainerStyle={styles.feedListContent}
               keyExtractor={item => item.id.toString()}

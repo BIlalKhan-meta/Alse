@@ -28,6 +28,7 @@ export const FEED_PAGE_SIZE = 20;
 type GetNewsFeedParams = {
   page?: number;
   per_page?: number;
+  filter?: string;
 };
 
 interface HomeState {
@@ -53,9 +54,13 @@ const initialState: HomeState = {
 export const GetNewsFeed = createAsyncThunk(
   'user/NewsFeed',
   async (params: GetNewsFeedParams | undefined, {rejectWithValue}) => {
-    const {page = 1, per_page = FEED_PAGE_SIZE} = params ?? {};
+    const {page = 1, per_page = FEED_PAGE_SIZE, filter} = params ?? {};
     try {
-      const response = await newsFeed({page, per_page});
+      const response = await newsFeed({
+        page,
+        per_page,
+        ...(filter ? {filter} : {}),
+      });
 
       return {response: response.data, page};
     } catch (error: any) {

@@ -130,29 +130,13 @@ Add under `feed` in each locale file:
 5. **15 min warning** — After 15 min cumulative feed time, modal appears with correct message.
 6. **Continue** — Dismisses modal; 15 min warning does not reappear; 30 min warning still pending.
 7. **30 / 45 min** — Repeat for higher thresholds.
-8. **Close Feed from stack** — Open Chat, trigger warning (use dev override if needed), tap Close Feed → returns to Feed.
+8. **Close Feed from stack** — Open Chat, trigger warning after threshold, tap Close Feed → returns to Feed.
 9. **Close Feed at root** — On Feed root, Close Feed dismisses modal only.
 10. **Video pause** — Confirm feed videos still pause when leaving the feed tab (no regression).
 
 ## QA / development testing
 
-In **`__DEV__` builds only**, thresholds are shortened automatically:
-
-| Modal label (copy) | Dev trigger | Production trigger |
-|--------------------|-------------|-------------------|
-| 15 minutes | **5 seconds** | 15 minutes |
-| 30 minutes | 10 seconds | 30 minutes |
-| 45 minutes | 15 seconds | 45 minutes |
-
-Constants live in `src/utils/feedSessionTracking.ts`:
-
-- `DEV_WELLNESS_FIRST_THRESHOLD_MS` — `5000` (5s first popup)
-- `getWellnessThresholds()` — returns dev or prod threshold list
-- `isDevWellnessMode()` — `true` in dev builds
-
-**How to test:** Run a dev build, open the Feed, stay on screen for ~5 seconds — the wellness modal should appear with the 15-minute message. Tap **Continue**; at ~10s and ~15s the 30- and 45-minute warnings follow.
-
-Production/release builds always use **15 / 30 / 45 minutes** (`__DEV__` is false).
+Wellness thresholds are always **15 / 30 / 45 minutes** of cumulative feed time (dev and production).
 
 `resetFeedSessionForTests()` is exported for unit tests only.
 
