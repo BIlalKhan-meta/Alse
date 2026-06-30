@@ -46,6 +46,16 @@ export default {
   or: 'Or',
   by: 'By',
   noPosts: 'No posts to show',
+  feed: {
+    labelNew: 'NEW',
+    labelFollowing: 'FOLLOWING',
+    labelRecommended: 'RECOMMENDED',
+    wellnessTitle: 'Time for a break?',
+    wellnessMessage:
+      "You've been browsing for {{minutes}} minutes. Take a break?",
+    wellnessContinue: 'Continue',
+    wellnessCloseFeed: 'Close Feed',
+  },
   public: 'Public',
   private: 'Private',
   followers: 'Followers',

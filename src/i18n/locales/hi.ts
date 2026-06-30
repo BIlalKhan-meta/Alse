@@ -45,6 +45,16 @@ export default {
   done: 'पूर्ण',
   or: 'या',
   noPosts: 'दिखाने के लिए कोई पोस्ट नहीं',
+  feed: {
+    labelNew: 'नया',
+    labelFollowing: 'फ़ॉलोइंग',
+    labelRecommended: 'अनुशंसित',
+    wellnessTitle: 'ब्रेक लेने का समय?',
+    wellnessMessage:
+      'आप {{minutes}} मिनट से ब्राउज़ कर रहे हैं। एक ब्रेक लें?',
+    wellnessContinue: 'जारी रखें',
+    wellnessCloseFeed: 'फ़ीड बंद करें',
+  },
   public: 'सार्वजनिक',
   private: 'निजी',
   followers: 'अनुयायी',

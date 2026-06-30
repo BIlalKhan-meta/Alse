@@ -56,8 +56,9 @@ import {Plus, Video, Image as ImageIcon} from 'lucide-react-native';
 import PostSkeleton from '../../../components/SkeletonLoaders';
 import {useTranslation} from 'react-i18next';
 import MediaModal from '../../../components/MediaModal';
-import {Picker} from '@react-native-picker/picker';
-import {values} from 'lodash';
+import FeedWellnessModal from '../../../components/FeedWellnessModal';
+import {useFeedSessionTracking} from '../../../hooks/useFeedSessionTracking';
+import {resolveFeedLabel} from '../../../utils/feedLabels';
 
 const Home: React.FC = () => {
   const flatListRef = useRef<FlatList>(null);
@@ -70,6 +71,13 @@ const Home: React.FC = () => {
   const user = useSelector(selectUserProfile);
 
   const {t} = useTranslation();
+
+  const {
+    activeThreshold,
+    dismissWarning,
+    closeFeed,
+    isWarningVisible,
+  } = useFeedSessionTracking(navigation);
 
   const {posts, loadingMore, hasMore, currentPage} = useAppSelector(
     state => state.home,
@@ -216,11 +224,17 @@ const Home: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (!user?.has_subscription && !user?.is_child) {
+    fetchAllData(true);
+  }, [fetchAllData]);
+
+  useEffect(() => {
+    if (!user) {
+      return;
+    }
+    if (!user.has_subscription && !user.is_child) {
       navigation.navigate('SubscriptionPlan');
     }
-    fetchAllData(true);
-  }, [navigation, user?.has_subscription, user?.is_child]);
+  }, [navigation, user]);
 
   const scrollToTop = () => {
     if (flatListRef.current) {
@@ -420,11 +434,11 @@ const Home: React.FC = () => {
     const primaryMedia = mediaList[0];
     const postDescriptionRaw = item?.description ?? item?.content ?? '';
     const {caption, sharedFromName} = parseSharedFrom(postDescriptionRaw);
-    // console.log('---', item);
+    const feedLabel = resolveFeedLabel(item);
 
-    // if (index !== 0) return <></>;
     return (
       <PostComponent
+        feedLabel={feedLabel}
         isFocused={isFocused}
         id={item?.user_id}
         mediaId={item?.id}
@@ -777,7 +791,14 @@ const Home: React.FC = () => {
             mediaType={mediaModalVisible.mediaType}
             userName={mediaModalVisible.userName}
             postTime={mediaModalVisible.postTime}
-          />             
+          />
+
+          <FeedWellnessModal
+            visible={isWarningVisible}
+            minutes={activeThreshold ?? 15}
+            onContinue={dismissWarning}
+            onCloseFeed={closeFeed}
+          />
         </View>
       </View>
     </View>

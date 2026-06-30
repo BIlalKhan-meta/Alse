@@ -1,6 +1,11 @@
 import 'react-native-gesture-handler';
 import React, {useEffect} from 'react';
-import {NativeModules, Platform, StyleSheet} from 'react-native';
+import {
+  ActivityIndicator,
+  NativeModules,
+  StyleSheet,
+  View,
+} from 'react-native';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {DefaultTheme, NavigationContainer} from '@react-navigation/native';
 import {colors} from './src/utils/theme';
@@ -167,8 +172,14 @@ function App(): React.JSX.Element {
   // }
 
   const appContent = (
-    <PersistGate loading={null} persistor={persistor}>
-      <Provider store={store}>
+    <Provider store={store}>
+      <PersistGate
+        loading={
+          <View style={styles.bootContainer}>
+            <ActivityIndicator size="large" color={colors.themeColor} />
+          </View>
+        }
+        persistor={persistor}>
         <LanguageProvider>
           <NavigationContainer ref={navigationRef} theme={theme}>
             <MainNavigation />
@@ -177,8 +188,8 @@ function App(): React.JSX.Element {
           {__DEV__ && <NetworkLoggerFAB />}
           <Toast />
         </LanguageProvider>
-      </Provider>
-    </PersistGate>
+      </PersistGate>
+    </Provider>
   );
 
   return (
@@ -191,6 +202,12 @@ function App(): React.JSX.Element {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: colors.white,
+  },
+  bootContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: colors.white,
   },
 });

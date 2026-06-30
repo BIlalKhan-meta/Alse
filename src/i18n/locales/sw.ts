@@ -45,6 +45,16 @@ export default {
   done: 'Kamilisha',
   or: 'Au',
   noPosts: 'Hakuna machapisho ya kuonyesha',
+  feed: {
+    labelNew: 'MPYA',
+    labelFollowing: 'UNAFUATA',
+    labelRecommended: 'INAPENDEKEZWA',
+    wellnessTitle: 'Wakati wa kupumzika?',
+    wellnessMessage:
+      'Umekuwa ukivinjari kwa dakika {{minutes}}. Pumzika kidogo?',
+    wellnessContinue: 'Endelea',
+    wellnessCloseFeed: 'Funga Mlisho',
+  },
   public: 'Wazi',
   private: 'Binafsi',
   followers: 'Wafuasi',

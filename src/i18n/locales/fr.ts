@@ -45,6 +45,16 @@ export default {
   done: 'Terminé',
   or: 'Ou',
   noPosts: 'Aucune publication à afficher',
+  feed: {
+    labelNew: 'NOUVEAU',
+    labelFollowing: 'ABONNEMENT',
+    labelRecommended: 'RECOMMANDÉ',
+    wellnessTitle: 'Une pause ?',
+    wellnessMessage:
+      'Vous naviguez depuis {{minutes}} minutes. Faire une pause ?',
+    wellnessContinue: 'Continuer',
+    wellnessCloseFeed: 'Fermer le fil',
+  },
   public: 'Public',
   private: 'Privé',
   followers: 'Abonnés',

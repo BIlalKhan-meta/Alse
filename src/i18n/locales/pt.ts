@@ -45,6 +45,16 @@ export default {
   done: 'Concluir',
   or: 'ou',
   noPosts: 'Nenhuma publicação para mostrar',
+  feed: {
+    labelNew: 'NOVO',
+    labelFollowing: 'SEGUINDO',
+    labelRecommended: 'RECOMENDADO',
+    wellnessTitle: 'Hora de uma pausa?',
+    wellnessMessage:
+      'Você está navegando há {{minutes}} minutos. Que tal uma pausa?',
+    wellnessContinue: 'Continuar',
+    wellnessCloseFeed: 'Fechar Feed',
+  },
   public: 'Público',
   private: 'Privado',
   followers: 'Seguidores',

@@ -42,12 +42,14 @@ import ShareModal from '../ShareModal';
 import InterBold from '../Text/InterBold';
 import InterRegular from '../Text/InterRegular';
 import {CameraRoll} from '@react-native-camera-roll/camera-roll';
+import FeedLabelBadge from '../FeedLabelBadge';
 import {
   buildSharedDescription,
   changeUrlForData,
   createVideoFile,
   parseSharedFrom,
 } from '../../utils/helpers';
+import {FeedLabelType} from '../../utils/feedLabels';
 
 /**
  * Insets the native video view so scaled frames don’t draw past the layout box.
@@ -181,6 +183,7 @@ interface PostProps {
   /** When true, inline feed video plays without sound (fullscreen modal can unmute). */
   muteInlineVideo?: boolean;
   onToggleVideoMute?: () => void;
+  feedLabel?: FeedLabelType | null;
 }
 
 const PostComponent: React.FC<PostProps> = ({
@@ -217,6 +220,7 @@ const PostComponent: React.FC<PostProps> = ({
   onMediaPress,
   muteInlineVideo,
   onToggleVideoMute,
+  feedLabel,
 }) => {
   const navigation = useNavigation();
   const user = useSelector(selectUserProfile);
@@ -457,7 +461,8 @@ const PostComponent: React.FC<PostProps> = ({
           postImage && mediaType === 'video' && styles.cardVideoSpacing,
         ]}>
         <View style={styles.cardCompositingLayer} collapsable={false}>
-        
+        {feedLabel ? <FeedLabelBadge label={feedLabel} /> : null}
+
         {/* Header section - ALWAYS visible at the top */}
         <View style={styles.header}>
           <View style={styles.userInfo}>

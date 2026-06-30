@@ -1,5 +1,6 @@
 import React from 'react';
 import {Image, TouchableOpacity, View, Text, Settings} from 'react-native';
+import {Search} from 'lucide-react-native';
 import styles from './styles';
 import {images} from '../../utils/images';
 
@@ -159,7 +160,9 @@ export const getHeaderRight: React.FC<NavigationOptionsProps> = props => {
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.iconContainer, {marginRight: 4}]}
-          onPress={() => props.navigation.navigate('SearchUsers')}>
+          onPress={() => props.navigation.navigate('SearchUsers')}
+          accessibilityRole="button"
+          accessibilityLabel="Search users">
           <View
             style={[
               styles.notificationcontainer,
@@ -172,13 +175,7 @@ export const getHeaderRight: React.FC<NavigationOptionsProps> = props => {
                 borderRadius: 20,
               },
             ]}>
-            <Image
-              source={images.searchIcon}
-              style={[
-                styles.notificationicon,
-                {tintColor: '#0C959B', width: 20, height: 20},
-              ]}
-            />
+            <Search color="#0C959B" size={20} strokeWidth={2.25} />
           </View>
         </TouchableOpacity>
       </View>
