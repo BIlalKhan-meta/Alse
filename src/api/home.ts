@@ -32,6 +32,17 @@ export const postComment = (formData: FormData, id: number) => {
   return uploadWithFetch(`/post/${id}/comment`, formData);
 };
 
+export const postCommentReply = (
+  formData: FormData,
+  postId: number,
+  parentCommentId: number,
+) => {
+  return uploadWithFetch(
+    `/post/${postId}/comment/${parentCommentId}/reply`,
+    formData,
+  );
+};
+
 export const createPost = (formData: FormData) => {
   return uploadWithFetch(
     endpoints.home.createPost,

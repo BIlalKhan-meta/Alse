@@ -198,6 +198,26 @@ export default {
   enterTitle: 'Enter title',
   createPost: "What's on your mind",
   writeComment: 'Write a comment',
+  comments: {
+    selectTag: 'Select a tag',
+    loading: 'Loading comments...',
+    reply: 'Reply',
+    report: 'Report',
+    copy: 'Copy',
+    share: 'Share',
+    copied: 'Comment copied to clipboard',
+    reportConfirmTitle: 'Report comment?',
+    reportConfirmMessage:
+      'Are you sure you want to report this comment? Our team will review it.',
+    reportSuccess: 'Comment has been reported successfully!',
+    replyingTo: 'Replying to {{name}}',
+    selectTagBeforeSend: 'Please select a tag before posting',
+    tags: {
+      question: 'Question',
+      answer: 'Answer',
+      experience: 'Experience',
+    },
+  },
   enterPhone: 'Enter your phone number',
 
   // Toasts

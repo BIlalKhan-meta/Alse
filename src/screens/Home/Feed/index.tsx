@@ -76,11 +76,13 @@ import {
 } from '../../../utils/feedFilters';
 
 const CREATE_POST_HEIGHT_FALLBACK = 110;
+const STORIES_HEIGHT_FALLBACK = 90;
 
 const Home: React.FC = () => {
   const flatListRef = useRef<FlatList>(null);
   const scrollY = useSharedValue(0);
   const createPostHeight = useSharedValue(CREATE_POST_HEIGHT_FALLBACK);
+  const storiesHeight = useSharedValue(STORIES_HEIGHT_FALLBACK);
   const storiesRef = useRef<StoriesRef>(null);
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
   const [feedVideoMuted, setFeedVideoMuted] = useState(true);
@@ -105,6 +107,9 @@ const Home: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<FeedFilterTab>('all');
+  const [storiesContentHeight, setStoriesContentHeight] = useState(
+    STORIES_HEIGHT_FALLBACK,
+  );
 
   const [commentsVisible, setCommentsVisible] = useState<{
     visiblity: boolean;
@@ -176,16 +181,18 @@ const Home: React.FC = () => {
     }
   };
 
-  const hasMeasuredCreatePostHeight = useRef(false);
-
   const onCreatePostLayout = useCallback((event: LayoutChangeEvent) => {
-    if (hasMeasuredCreatePostHeight.current) {
-      return;
-    }
     const {height} = event.nativeEvent.layout;
-    if (height > 0) {
+    if (height > createPostHeight.value) {
       createPostHeight.value = height;
-      hasMeasuredCreatePostHeight.current = true;
+    }
+  }, []);
+
+  const onStoriesLayout = useCallback((event: LayoutChangeEvent) => {
+    const {height} = event.nativeEvent.layout;
+    if (height > storiesHeight.value) {
+      storiesHeight.value = height;
+      setStoriesContentHeight(height);
     }
   }, []);
 
@@ -196,7 +203,7 @@ const Home: React.FC = () => {
   });
 
   const createPostAnimatedStyle = useAnimatedStyle(() => {
-    const height = interpolate(
+    const maxHeight = interpolate(
       scrollY.value,
       [0, createPostHeight.value],
       [createPostHeight.value, 0],
@@ -209,7 +216,27 @@ const Home: React.FC = () => {
       Extrapolation.CLAMP,
     );
     return {
-      height,
+      maxHeight,
+      opacity,
+      overflow: 'hidden',
+    };
+  });
+
+  const storiesAnimatedStyle = useAnimatedStyle(() => {
+    const maxHeight = interpolate(
+      scrollY.value,
+      [0, storiesHeight.value],
+      [storiesHeight.value, 0],
+      Extrapolation.CLAMP,
+    );
+    const opacity = interpolate(
+      scrollY.value,
+      [0, storiesHeight.value * 0.5],
+      [1, 0],
+      Extrapolation.CLAMP,
+    );
+    return {
+      maxHeight,
       opacity,
       overflow: 'hidden',
     };
@@ -325,6 +352,11 @@ const Home: React.FC = () => {
   };
 
   const handleCommentPress = (id: any) => {
+    setCommentsVisible({
+      visiblity: true,
+      comments: [],
+      id: id,
+    });
     setCommentsLoading(true);
     dispatch(getCommentPost(id))
       .then((res: any) => {
@@ -337,6 +369,7 @@ const Home: React.FC = () => {
       .catch(err => {
         console.log('error from fetch comments', err);
         Toast.error(getMessage(err?.message));
+        setCommentsVisible({visiblity: false, comments: [], id: null});
       })
       .finally(() => {
         setCommentsLoading(false);
@@ -584,7 +617,10 @@ const Home: React.FC = () => {
   };
 
   const renderCreatePostSection = () => (
-    <View style={styles.whatsOnYourMindContainer}>
+    <View
+      style={styles.whatsOnYourMindContainer}
+      onLayout={onCreatePostLayout}
+      collapsable={false}>
       <View style={styles.whatsOnYourMindTop}>
         <Image
           source={
@@ -627,14 +663,11 @@ const Home: React.FC = () => {
   const renderFeedTopSection = () => (
     <View style={styles.feedTopSection} collapsable={false}>
       <Reanimated.View style={createPostAnimatedStyle} pointerEvents="box-none">
-        <View onLayout={onCreatePostLayout}>
-          {renderCreatePostSection()}
-        </View>
+        {renderCreatePostSection()}
       </Reanimated.View>
       <FeedFilterTabs
         activeFilter={activeFilter}
-        onFilterChange={handleFilterChange}
-      />
+        onFilterChange={handleFilterChange} />
     </View>
   );
 
@@ -710,14 +743,6 @@ const Home: React.FC = () => {
 
   return (
     <View style={styles.mainContainer}>
-      <Modal visible={commentsLoading} transparent animationType="fade">
-        <View style={styles.loaderOverlay}>
-          <View style={styles.loaderContent}>
-            <ActivityIndicator size="large" color={colors.themeColor} />
-            <Text style={styles.loaderText}>Loading comments...</Text>
-          </View>
-        </View>
-      </Modal>
       <Modal visible={shareLoader} transparent animationType="fade">
         <View style={styles.loaderOverlay}>
           <View style={styles.loaderContent}>
@@ -727,9 +752,16 @@ const Home: React.FC = () => {
         </View>
       </Modal>
       <View style={styles.contentContainer}>
-        <View style={styles.storiesWrap} collapsable={false}>
-          <Stories ref={storiesRef} />
-        </View>
+        <Reanimated.View
+          style={[styles.storiesWrap, storiesAnimatedStyle]}
+          pointerEvents="box-none">
+          <View
+            onLayout={onStoriesLayout}
+            style={{height: storiesContentHeight}}
+            collapsable={false}>
+            <Stories ref={storiesRef} />
+          </View>
+        </Reanimated.View>
 
         {renderFeedTopSection()}
 
@@ -824,6 +856,7 @@ const Home: React.FC = () => {
             visible={commentsVisible.visiblity}
             closeModal={() => {
               setCommentsVisible({visiblity: false, comments: [], id: null});
+              setCommentsLoading(false);
               fetchAllData(false);
             }}
             icon={images.checkedIcon}
@@ -832,6 +865,7 @@ const Home: React.FC = () => {
             buttonText="Apply"
             comments={commentsVisible?.comments}
             postId={commentsVisible?.id || 0}
+            isLoadingComments={commentsLoading}
           />
 
           <LikesModal

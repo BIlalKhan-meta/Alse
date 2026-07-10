@@ -6,21 +6,21 @@ import fonts from '../../assets/fonts';
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: vw * 2,
-    paddingVertical: vh * 1.2,
+    paddingBottom: vh * 0.8,
   },
   scrollContent: {
     paddingHorizontal: vw * 1,
     alignItems: 'center',
   },
   tab: {
-    paddingHorizontal: 18,
-    paddingVertical: 9,
-    borderRadius: 20,
-    marginRight: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 14,
+    marginRight: 6,
     backgroundColor: colors.white,
     borderWidth: 1,
     borderColor: '#E4E6EB',
-    minHeight: 38,
+    minHeight: 28,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -29,7 +29,7 @@ const styles = StyleSheet.create({
     borderColor: colors.themeColor,
   },
   tabText: {
-    fontSize: fontSizes.f14,
+    fontSize: fontSizes.f12,
     fontFamily: fonts.Inter.Regular,
     color: '#65676B',
     fontWeight: '500',

@@ -145,6 +145,7 @@ const styles = StyleSheet.create({
     shadowOffset: {width: 0, height: 1},
     shadowOpacity: 0.1,
     shadowRadius: 3,
+    gap: vh * 0.8,
   },
   feedList: {
     flex: 1,
@@ -180,9 +181,7 @@ const styles = StyleSheet.create({
   whatsOnYourMindContainer: {
     paddingHorizontal: 15,
     paddingTop: 15,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F2F5',
+    paddingBottom: vh * 1.5,
   },
   whatsOnYourMindTop: {
     flexDirection: 'row',
@@ -208,7 +207,7 @@ const styles = StyleSheet.create({
   },
   whatsOnYourMindBottom: {
     flexDirection: 'row',
-    paddingTop: 5,
+    paddingTop: 8,
   },
   whatsOnYourMindButton: {
     flexDirection: 'row',

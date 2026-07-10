@@ -3,35 +3,125 @@ import {colors} from '../../utils/theme';
 import {fontSizes, vh, vw} from '../../constant';
 
 const styles = StyleSheet.create({
+  modalRoot: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+  },
   container: {
-    marginTop: 'auto',
     width: vw * 100,
     height: vh * 85,
     backgroundColor: 'white',
     borderTopLeftRadius: vw * 7,
     borderTopRightRadius: vw * 7,
+    overflow: 'hidden',
+  },
+  sheetContent: {
+    flex: 1,
     alignItems: 'center',
-    paddingVertical: vh * 3,
+    paddingBottom: vh * 3,
     paddingHorizontal: vh * 2,
   },
-  blurcontainer: {
-    position: 'absolute',
+  dragHandleArea: {
     width: '100%',
-    height: '100%',
+    alignItems: 'center',
+    paddingTop: vh * 1.5,
+    paddingBottom: vh * 1.5,
   },
-  absolute: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    bottom: 0,
-    right: 0,
+  dragHandle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#D1D5DB',
   },
   flatList: {
     flex: 1,
     width: '100%',
   },
+  commentsLoader: {
+    flex: 1,
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: vh * 4,
+  },
+  commentsLoaderText: {
+    marginTop: 12,
+    fontSize: fontSizes.f14,
+    color: colors.black,
+    fontWeight: '500',
+  },
   commentItem: {
     width: '100%',
+    position: 'relative',
+  },
+  commentItemDepth1: {
+    marginLeft: 24,
+  },
+  commentItemDepth2: {
+    marginLeft: 48,
+  },
+  menuButton: {
+    padding: 4,
+    marginLeft: 4,
+  },
+  replyButton: {
+    marginLeft: 12,
+  },
+  replyButtonText: {
+    fontSize: 12,
+    color: '#65676B',
+    fontWeight: '500',
+  },
+  inlineReplyContainer: {
+    marginTop: 8,
+    marginBottom: 8,
+    padding: 10,
+    backgroundColor: '#F8FAFE',
+    borderRadius: 8,
+  },
+  inlineReplyLabel: {
+    fontSize: 12,
+    color: '#65676B',
+    marginBottom: 8,
+  },
+  inlineReplyTagRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginBottom: 8,
+  },
+  inlineReplyTagPill: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 16,
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: '#E4E6EB',
+  },
+  inlineReplyTagPillText: {
+    fontSize: 11,
+    color: '#65676B',
+  },
+  inlineReplyInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  inlineReplyInput: {
+    flex: 1,
+    minHeight: 36,
+    fontSize: 13,
+    color: '#333',
+    paddingVertical: 4,
+  },
+  inlineReplySend: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  likeButtonDisabled: {
+    opacity: 0.5,
   },
   title: {
     color: colors.filterTxt,
@@ -113,6 +203,7 @@ const styles = StyleSheet.create({
   },
   postActions: {
     flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 5,
   },
   leftActions: {
@@ -136,6 +227,33 @@ const styles = StyleSheet.create({
     marginVertical: 15,
   },
   inputConatiner: {
+    width: '100%',
+    marginTop: 10,
+  },
+  tagSelectorRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 10,
+  },
+  tagPill: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 20,
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: '#E4E6EB',
+  },
+  tagPillText: {
+    fontSize: 12,
+    color: '#65676B',
+    fontWeight: '500',
+  },
+  tagPillTextActive: {
+    color: colors.white,
+    fontWeight: '600',
+  },
+  inputRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -144,7 +262,6 @@ const styles = StyleSheet.create({
     height: 50,
     paddingHorizontal: 15,
     borderRadius: 8,
-    marginTop: 10,
   },
   inputCon: {
     flex: 1,
@@ -161,6 +278,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 10,
+  },
+  sendDisabled: {
+    opacity: 0.4,
   },
   loaderOverlay: {
     flex: 1,
