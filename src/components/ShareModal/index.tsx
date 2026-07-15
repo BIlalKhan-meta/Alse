@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 import {Search, Check, MoreHorizontal, Repeat} from 'lucide-react-native';
 import styles from './styles';
+import {getProductSharePreviewText} from '../../utils/productSharePayload';
 
 interface ShareModalProps {
   visible: boolean;
@@ -59,7 +60,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
     }, 500);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [searchQuery]);
+  }, [searchQuery, visible]);
 
   const fetchChats = (search = '') => {
     setLoading(true);
@@ -104,7 +105,9 @@ const ShareModal: React.FC<ShareModalProps> = ({
     const isSelected = selectedIds.includes(item.id);
     const avatar = item?.image || item?.user?.avatar || 'https://via.placeholder.com/150';
     const name = item?.name || item?.user?.full_name || 'Unknown';
-    const description = item?.last_message?.message || 'No messages yet';
+    const description =
+      getProductSharePreviewText(item?.last_message?.message) ||
+      'No messages yet';
     const time = item?.last_message?.created_at ? moment(item.last_message.created_at).local().fromNow() : '';
 
     return (
@@ -117,9 +120,9 @@ const ShareModal: React.FC<ShareModalProps> = ({
             {isSelected && <Check color="white" size={14} strokeWidth={3} />}
           </View>
         </View>
-        
+
         <Image source={{uri: avatar}} style={styles.avatar} />
-        
+
         <View style={styles.contentContainer}>
           <View style={styles.nameRow}>
             <Text style={styles.name}>{name}</Text>
@@ -150,7 +153,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
           activeOpacity={1}
           onPress={onClose}
         />
-        
+
         <View style={styles.container}>
           <View style={styles.header}>
             <Text style={styles.title}>{title}</Text>

@@ -245,7 +245,7 @@ export default {
     storyRefreshFailed: 'Failed to refresh stories',
     livestreamRefreshFailed: 'Failed to refresh livestreams',
     storyUploadFailed: 'Failed to upload story',
-    storyVideoTooLong: 'Story videos must be 15 seconds or less',
+    storyVideoTooLong: 'Story videos must be 30 seconds or less',
     storyDelNetworkFailed: 'Network error while deleting story',
     storyDelFailed: 'Failed to delete story',
     // success

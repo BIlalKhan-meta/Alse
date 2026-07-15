@@ -40,6 +40,7 @@ import {
   resolveProductImageUrls,
   stripProductDescription,
 } from '../../../utils/shopProductCard';
+import {serializeProductShare} from '../../../utils/productSharePayload';
 import styles from './styles';
 
 type TabKey = 'description' | 'rating' | 'similar';
@@ -84,25 +85,6 @@ function formatOfferPrice(value: string): string {
     return value.trim();
   }
   return amount % 1 === 0 ? String(amount) : amount.toFixed(2);
-}
-
-function buildProductShareMessage(params: {
-  productName: string;
-  price: string;
-  vendor?: string;
-  productId?: number | string;
-}): string {
-  const lines = [`Check out this product: "${params.productName}"`, `Price: ${params.price}`];
-
-  if (params.vendor) {
-    lines.push(`Shop: ${params.vendor}`);
-  }
-
-  if (params.productId != null) {
-    lines.push(`Product ID: ${params.productId}`);
-  }
-
-  return lines.join('\n');
 }
 
 const ProductView: React.FC = () => {
@@ -264,11 +246,14 @@ const ProductView: React.FC = () => {
         return;
       }
 
-      const message = buildProductShareMessage({
-        productName: title,
+      const message = serializeProductShare({
+        v: 1,
+        type: 'product_share',
+        product_id: productDetails.id,
+        title,
         price: priceLabel,
+        image: imageUrls[0],
         vendor: vendorLabel || undefined,
-        productId: productDetails.id,
       });
 
       setSendingProductShare(true);
@@ -293,7 +278,7 @@ const ProductView: React.FC = () => {
         setSendingProductShare(false);
       }
     },
-    [productDetails?.id, title, priceLabel, vendorLabel],
+    [imageUrls, productDetails?.id, title, priceLabel, vendorLabel],
   );
 
   useLayoutEffect(() => {
@@ -694,7 +679,7 @@ const ProductView: React.FC = () => {
             setShareModalVisible(false);
           }
         }}
-        title="Send Product"
+        title="Share in Chat"
         showNewsfeedOption={false}
         sendLabel={sendingProductShare ? 'Sending...' : 'Send'}
         onSendToChats={handleSendProductToChats}

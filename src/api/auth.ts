@@ -2,9 +2,13 @@ import { Platform } from 'react-native';
 import axiosInstance from '.';
 import endpoints from './endpoints';
 
-export const googleLogin = (data: { token: string }) => {
+export const googleLogin = (data: { token: string; deviceToken?: string }) => {
   const formData = new FormData();
   formData.append('token', data.token);
+  if (data.deviceToken) {
+    formData.append('device_id', data.deviceToken);
+    formData.append('device_type', Platform.OS === 'ios' ? 'ios' : 'android');
+  }
   return axiosInstance.post(endpoints.auth.login, formData, {
     formData: true,
   });
@@ -15,12 +19,17 @@ export const appleLogin = (data: {
   fullName: string;
   isAppleLogin: boolean;
   apple_id: string;
+  deviceToken?: string;
 }) => {
   const formData = new FormData();
   formData.append('email', data.email);
   formData.append('full_name', data.fullName);
   formData.append('is_apple_login', data.isAppleLogin);
   formData.append('apple_id', data.apple_id);
+  if (data.deviceToken) {
+    formData.append('device_id', data.deviceToken);
+    formData.append('device_type', Platform.OS === 'ios' ? 'ios' : 'android');
+  }
   return axiosInstance.post(endpoints.auth.login, formData, {
     formData: true,
   });
@@ -77,7 +86,7 @@ export const forgotPassword = (data: { identifier: string }) => {
   formData.append('identifier', data.identifier);
 
   console.log('FormData being sent:', {
-    identifier: data.identifier
+    identifier: data.identifier,
   });
 
   return axiosInstance.post(endpoints.auth.forgotPassword, {
@@ -105,7 +114,7 @@ export const resetPassword = (data: {
   return axiosInstance.post(endpoints.auth.resetPassword, {
     email: data.email,
     password: data.password,
-    confirm_password: data.confirmPassword
+    confirm_password: data.confirmPassword,
   });
 };
 

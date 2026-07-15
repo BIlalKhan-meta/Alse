@@ -15,7 +15,13 @@ import InstagramStories, {
 } from '@birdwingo/react-native-instagram-stories';
 import {images} from '../../utils/images';
 import {getAbsoluteAvatarUrl} from '../../utils/helpers';
-import {AddStory, GetStories, DeleteStory} from '../../api/stories';
+import {
+  AddStory,
+  GetStories,
+  DeleteStory,
+  TrackStoryAnalytics,
+  StoryAnalyticsEvent,
+} from '../../api/stories';
 import * as DropdownMenu from 'zeego/dropdown-menu';
 import Toast from 'react-native-toast-message';
 import useImagePicker from '../../hooks/useImagePicker-story';
@@ -27,16 +33,24 @@ import {useSelector} from 'react-redux';
 import {selectUserProfile} from '../../store/slices/authSlice';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useTranslation} from 'react-i18next';
-import MediaModal from '../MediaModal';
+import {Trash2} from 'lucide-react-native';
 
 // Constants
 const MAX_RETRY_COUNT = 3;
+const MAX_STORY_VIDEO_DURATION = 30; // seconds
+const STORY_IMAGE_DURATION_MS = 10000;
+const STORY_COMPLETION_THRESHOLD = 0.85;
+const STORY_AVATAR_OUTER_SIZE = 58;
+const STORY_LIBRARY_AVATAR_SIZE = 52;
+const STORY_AVATAR_SLOT_WIDTH = 78;
 
 const VIDEO_EXTENSIONS = ['.mp4', '.mov', '.webm', '.m4v', '.avi', '.3gp'];
 
 const getStoryMediaType = (story: any): 'image' | 'video' => {
   const type = story?.media_type || story?.type;
-  if (type === 'video' || type === 'image') return type;
+  if (type === 'video' || type === 'image') {
+    return type;
+  }
   const url = (story?.media_url || '').toLowerCase();
   return VIDEO_EXTENSIONS.some(ext => url.includes(ext)) ? 'video' : 'image';
 };
@@ -60,20 +74,26 @@ const Stories = forwardRef<StoriesRef>((_, ref) => {
     cancelMedia,
   } = useImagePicker();
   const [isUploading, setIsUploading] = useState<boolean>(false);
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
-  const [storyMediaModal, setStoryMediaModal] = useState<{
-    visible: boolean;
-    mediaUrl: string;
-    mediaType: 'image' | 'video';
-    userName: string;
-  }>({
-    visible: false,
-    mediaUrl: '',
-    mediaType: 'image',
-    userName: '',
-  });
 
   const retryCountRef = useRef<number>(0);
+  const storyMetadataRef = useRef<
+    Record<
+      string,
+      {
+        expectedDurationMs: number;
+        hasExplicitDuration: boolean;
+        mediaType: 'image' | 'video';
+      }
+    >
+  >({});
+  const activeStoryRef = useRef<{
+    userId?: string;
+    storyId: string;
+    startedAt: number;
+    completed: boolean;
+  } | null>(null);
 
   // Add current user info (ref ensures renderAvatar always reads latest avatar after profile update)
   const currentUser = useSelector(selectUserProfile);
@@ -81,6 +101,73 @@ const Stories = forwardRef<StoriesRef>((_, ref) => {
   currentUserRef.current = currentUser;
 
   const {t} = useTranslation();
+
+  const getStoryExpiration = (story: any) => story?.expires_at ?? story?.expiresAt;
+
+  const isStoryExpired = (story: any) => {
+    const expiresAt = getStoryExpiration(story);
+    if (!expiresAt) {
+      return false;
+    }
+
+    const expiryTime = new Date(expiresAt).getTime();
+    return Number.isFinite(expiryTime) && expiryTime <= Date.now();
+  };
+
+  const getStoryDurationMetadata = (story: any) => {
+    const rawDuration =
+      story?.duration_ms ?? story?.durationMs ?? story?.duration;
+    const duration = Number(rawDuration);
+    const hasExplicitDuration = Number.isFinite(duration) && duration > 0;
+    const mediaType = getStoryMediaType(story);
+
+    if (hasExplicitDuration) {
+      return {
+        expectedDurationMs: duration > 1000 ? duration : duration * 1000,
+        hasExplicitDuration,
+        mediaType,
+      };
+    }
+
+    return {
+      expectedDurationMs:
+        mediaType === 'video'
+          ? MAX_STORY_VIDEO_DURATION * 1000
+          : STORY_IMAGE_DURATION_MS,
+      hasExplicitDuration,
+      mediaType,
+    };
+  };
+
+  const sendStoryAnalytics = useCallback(
+    (storyId: string | number | undefined, event: StoryAnalyticsEvent) => {
+      if (!storyId) {
+        return;
+      }
+
+      TrackStoryAnalytics(storyId, event).catch(error => {
+        console.warn('Story analytics failed:', error);
+      });
+    },
+    [],
+  );
+
+  const markActiveStorySkipped = useCallback(
+    (storyId?: string) => {
+      const activeStory = activeStoryRef.current;
+      if (
+        !activeStory ||
+        activeStory.completed ||
+        (storyId && activeStory.storyId !== storyId)
+      ) {
+        return;
+      }
+
+      activeStory.completed = true;
+      sendStoryAnalytics(activeStory.storyId, 'skipped');
+    },
+    [sendStoryAnalytics],
+  );
 
   // Fetch stories with ability to control loading indicator
   const getStories = useCallback(async (showLoadingIndicator = true) => {
@@ -129,6 +216,7 @@ const Stories = forwardRef<StoriesRef>((_, ref) => {
         setIsRefreshing(false);
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Combined data fetching function
@@ -151,10 +239,12 @@ const Stories = forwardRef<StoriesRef>((_, ref) => {
   // Initial data fetch only (no polling)
   useEffect(() => {
     fetchData(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const uploadFile = async (file: any) => {
     setIsUploading(true);
+    setUploadProgress(0);
     Toast.show({
       type: 'info',
       text1: t('toast.uploadingStory'),
@@ -166,7 +256,7 @@ const Stories = forwardRef<StoriesRef>((_, ref) => {
     formData.append('file', file);
 
     try {
-      await AddStory(formData);
+      await AddStory(formData, setUploadProgress);
 
       Toast.show({
         type: 'success',
@@ -191,6 +281,7 @@ const Stories = forwardRef<StoriesRef>((_, ref) => {
       });
     } finally {
       setIsUploading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -203,6 +294,7 @@ const Stories = forwardRef<StoriesRef>((_, ref) => {
       };
       uploadFile(file);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [imageData]);
 
   const requestCameraAndAudioPermission = async () => {
@@ -239,8 +331,6 @@ const Stories = forwardRef<StoriesRef>((_, ref) => {
 
     return captureImage('mixed', true); // Enable preview
   };
-
-  const MAX_STORY_VIDEO_DURATION = 15; // seconds
 
   // Handle confirmation of media after preview
   const handleConfirmMedia = () => {
@@ -373,15 +463,21 @@ const Stories = forwardRef<StoriesRef>((_, ref) => {
   };
 
   const formatStories = (stories: any[]): InstagramStoriesProps['stories'] => {
+    storyMetadataRef.current = {};
+    const activeStories = stories.filter(story => !isStoryExpired(story));
+
     // First group stories by user ID
-    const groupedStories = stories.reduce((acc, story) => {
+    const groupedStories = activeStories.reduce((acc, story) => {
       const userId = String(story.user.id);
       const isCurrentUserStory = userId === String(currentUser.id);
       const avatarUri =
         story?.user?.avatar && story.user.avatar !== 'null'
           ? getAbsoluteAvatarUrl(story.user.avatar)
           : '';
-      const avatarSource = avatarUri ? {uri: avatarUri} : images.profile;
+      const storyId = String(story.id);
+      const mediaType = getStoryMediaType(story);
+      const mediaUrl = getAbsoluteAvatarUrl(story.media_url) || story.media_url;
+      storyMetadataRef.current[storyId] = getStoryDurationMetadata(story);
 
       if (!acc[userId]) {
         acc[userId] = {
@@ -395,10 +491,10 @@ const Stories = forwardRef<StoriesRef>((_, ref) => {
       }
 
       const storyItem = {
-        id: String(story.id),
-        source: {uri: story.media_url},
-        mediaType: getStoryMediaType(story),
-        mediaUrl: getAbsoluteAvatarUrl(story.media_url) || story.media_url,
+        id: storyId,
+        source: {uri: mediaUrl},
+        mediaType,
+        mediaUrl,
         // Use renderFooter instead of renderStoryHeader
         renderFooter: isCurrentUserStory
           ? () => (
@@ -406,10 +502,10 @@ const Stories = forwardRef<StoriesRef>((_, ref) => {
                 <TouchableOpacity
                   onPress={() => deleteStory(story.id)}
                   style={styles.deleteButton}
-                  disabled={isDeleting}>
-                  <Text style={styles.deleteButtonText}>
-                    {isDeleting ? 'Deleting...' : 'Delete'}
-                  </Text>
+                  disabled={isDeleting}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('stories.deleteStory')}>
+                  <Trash2 size={20} color="#fff" strokeWidth={2.5} />
                 </TouchableOpacity>
               </SafeAreaView>
             )
@@ -420,63 +516,16 @@ const Stories = forwardRef<StoriesRef>((_, ref) => {
       return acc;
     }, {});
 
-    // Convert to array and add custom renderAvatar for current user (opens MediaModal on tap)
-    const result = Object.values(
+    return Object.values(
       groupedStories,
     ) as InstagramStoriesProps['stories'];
-    return result.map(group => {
-      if (group.id === String(currentUser.id) && group.stories.length > 0) {
-        const firstStory = group.stories[0] as any;
-        const mediaUrl = firstStory.mediaUrl || firstStory.source?.uri || '';
-        const mediaType =
-          (firstStory.mediaType as 'image' | 'video') ||
-          getStoryMediaType({media_url: mediaUrl});
-        return {
-          ...group,
-          // Pass empty stories so library doesn't open its viewer; we use MediaModal instead
-          stories: [],
-          renderAvatar: () => (
-            <TouchableOpacity
-              style={styles.avatarCenter}
-              activeOpacity={0.8}
-              onPress={() =>
-                setStoryMediaModal({
-                  visible: true,
-                  mediaUrl,
-                  mediaType,
-                  userName: group.name || '',
-                })
-              }>
-              <GradientBorderView
-                gradientProps={{
-                  colors: ['#FF7A51', '#FFDB5C'],
-                }}
-                style={styles.addStoryAvatarContainer}>
-                <Image
-                  source={
-                    (group.avatarSource as {uri?: string})?.uri
-                      ? {
-                          uri: getAbsoluteAvatarUrl(
-                            (group.avatarSource as {uri: string}).uri,
-                          ),
-                        }
-                      : images.profile
-                  }
-                  style={styles.addStoryAvatar}
-                />
-              </GradientBorderView>
-              <Text style={styles.storyName}>{group.name}</Text>
-            </TouchableOpacity>
-          ),
-        };
-      }
-      return group;
-    });
   };
 
   // Render the media preview UI
   const renderMediaPreview = () => {
-    if (!pendingMedia) return null;
+    if (!pendingMedia) {
+      return null;
+    }
 
     const isVideo = pendingMedia.type?.startsWith('video/');
 
@@ -526,6 +575,77 @@ const Stories = forwardRef<StoriesRef>((_, ref) => {
     );
   };
 
+  const renderUploadProgress = () => {
+    const progress = Math.max(0, Math.min(100, uploadProgress));
+
+    return (
+      <View style={styles.uploadProgressContainer}>
+        <Text style={styles.uploadProgressText}>
+          {t('toast.uploadingStory')} {progress}%
+        </Text>
+        <View style={styles.uploadProgressTrack}>
+          <View style={[styles.uploadProgressFill, {width: `${progress}%`}]} />
+        </View>
+      </View>
+    );
+  };
+
+  const handleStoryStart = useCallback(
+    (userId?: string, storyId?: string) => {
+      markActiveStorySkipped();
+
+      if (!storyId) {
+        return;
+      }
+
+      activeStoryRef.current = {
+        userId,
+        storyId,
+        startedAt: Date.now(),
+        completed: false,
+      };
+      sendStoryAnalytics(storyId, 'opened');
+    },
+    [markActiveStorySkipped, sendStoryAnalytics],
+  );
+
+  const handleStoryEnd = useCallback(
+    (_userId?: string, storyId?: string) => {
+      if (!storyId) {
+        return;
+      }
+
+      const activeStory = activeStoryRef.current;
+      if (
+        !activeStory ||
+        activeStory.storyId !== storyId ||
+        activeStory.completed
+      ) {
+        return;
+      }
+
+      const metadata = storyMetadataRef.current[storyId];
+      const elapsedMs = Date.now() - activeStory.startedAt;
+      const event: StoryAnalyticsEvent =
+        !metadata ||
+        (metadata.mediaType === 'video' && !metadata.hasExplicitDuration) ||
+        elapsedMs >= metadata.expectedDurationMs * STORY_COMPLETION_THRESHOLD
+          ? 'completed'
+          : 'skipped';
+
+      activeStory.completed = true;
+      sendStoryAnalytics(storyId, event);
+    },
+    [sendStoryAnalytics],
+  );
+
+  const handleStoryHide = useCallback(
+    (storyId: string) => {
+      markActiveStorySkipped(storyId);
+    },
+    [markActiveStorySkipped],
+  );
+
   if (!stories || !stories.length || isInitialLoading) {
     return (
       <View style={styles.initialLoaderWrap}>
@@ -542,6 +662,8 @@ const Stories = forwardRef<StoriesRef>((_, ref) => {
         </View>
       )}
 
+      {isUploading && renderUploadProgress()}
+
       {/* Media Preview Modal */}
       {renderMediaPreview()}
 
@@ -550,34 +672,14 @@ const Stories = forwardRef<StoriesRef>((_, ref) => {
         stories={stories}
         avatarBorderColors={['#FF7A51', '#FFDB5C']}
         saveProgress
-        avatarListContainerStyle={{
-          paddingHorizontal: 5,
-          paddingVertical: 5,
-        }}
-        avatarListContainerProps={{estimatedItemSize: 84}}
-        avatarSize={65}
+        avatarListContainerStyle={styles.avatarListContainer}
+        avatarListContainerProps={{estimatedItemSize: STORY_AVATAR_SLOT_WIDTH}}
+        avatarSize={STORY_LIBRARY_AVATAR_SIZE}
         showName={true}
-        nameTextStyle={{
-          fontSize: 12,
-          marginTop: 4,
-          marginLeft: 13,
-          textAlign: 'center',
-        }}
-      />
-
-      <MediaModal
-        visible={storyMediaModal.visible}
-        onClose={() =>
-          setStoryMediaModal({
-            visible: false,
-            mediaUrl: '',
-            mediaType: 'image',
-            userName: '',
-          })
-        }
-        mediaUrl={storyMediaModal.mediaUrl}
-        mediaType={storyMediaModal.mediaType}
-        userName={storyMediaModal.userName}
+        nameTextStyle={styles.viewerStoryName}
+        onStoryStart={handleStoryStart}
+        onStoryEnd={handleStoryEnd}
+        onHide={handleStoryHide}
       />
     </View>
   );
@@ -627,15 +729,15 @@ const styles = StyleSheet.create({
   },
   addStoryAvatarContainer: {
     borderWidth: 3,
-    borderRadius: 35,
-    height: 65,
-    width: 65,
+    borderRadius: STORY_AVATAR_OUTER_SIZE / 2,
+    height: STORY_AVATAR_OUTER_SIZE,
+    width: STORY_AVATAR_OUTER_SIZE,
     overflow: 'hidden',
   },
   addStoryAvatar: {
     width: '100%',
     height: '100%',
-    borderRadius: 32,
+    borderRadius: STORY_AVATAR_OUTER_SIZE / 2,
   },
   squareImage: {
     width: 64,
@@ -646,7 +748,7 @@ const styles = StyleSheet.create({
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    marginHorizontal: 4,
+    width: STORY_AVATAR_SLOT_WIDTH,
   },
   liveLabelContainer: {
     display: 'flex',
@@ -664,8 +766,26 @@ const styles = StyleSheet.create({
   storyName: {
     textAlign: 'center',
     fontSize: 12,
-    marginBottom: 2,
+    height: 22,
+    lineHeight: 18,
+    marginTop: 4,
+    width: STORY_AVATAR_SLOT_WIDTH,
     color: '#333',
+  },
+  avatarListContainer: {
+    paddingHorizontal: 5,
+    paddingTop: 5,
+    paddingBottom: 18,
+  },
+  viewerStoryName: {
+    color: '#333',
+    fontSize: 12,
+    height: 22,
+    lineHeight: 18,
+    marginTop: 4,
+    marginLeft: 0,
+    textAlign: 'center',
+    width: STORY_AVATAR_SLOT_WIDTH,
   },
   previewContainer: {
     width: '90%',
@@ -732,6 +852,30 @@ const styles = StyleSheet.create({
   confirmText: {
     color: 'white',
   },
+  uploadProgressContainer: {
+    marginHorizontal: 12,
+    marginVertical: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    backgroundColor: '#FFF4EE',
+  },
+  uploadProgressText: {
+    color: '#333',
+    fontSize: 12,
+    marginBottom: 6,
+  },
+  uploadProgressTrack: {
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: '#FFD8C8',
+    overflow: 'hidden',
+  },
+  uploadProgressFill: {
+    height: '100%',
+    borderRadius: 3,
+    backgroundColor: '#FF7A51',
+  },
   footerContainer: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
@@ -746,19 +890,13 @@ const styles = StyleSheet.create({
   },
   deleteButton: {
     backgroundColor: 'rgba(255, 0, 0, 0.8)',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    width: 40,
+    height: 40,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: 'white',
-  },
-  deleteButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 14,
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
-    textShadowOffset: {width: 0.5, height: 0.5},
-    textShadowRadius: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   initialLoaderWrap: {
     height: 96,

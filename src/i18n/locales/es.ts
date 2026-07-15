@@ -178,7 +178,7 @@ export default {
     storyRefreshFailed: 'Error al actualizar las historias',
     livestreamRefreshFailed: 'Error al actualizar las transmisiones en vivo',
     storyUploadFailed: 'Error al subir la historia',
-    storyVideoTooLong: 'Los videos de historias deben ser de 15 segundos o menos',
+    storyVideoTooLong: 'Los videos de historias deben ser de 30 segundos o menos',
     passwordChanged: '¡Contraseña cambiada con éxito!',
     biddingSettingsChanged: 'Configuración de puja actualizada con éxito!',
     followReqSencc: 'Solicitud de seguimiento enviada',

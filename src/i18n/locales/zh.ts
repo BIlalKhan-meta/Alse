@@ -176,7 +176,7 @@ export default {
     storyRefreshFailed: '刷新动态失败',
     livestreamRefreshFailed: '刷新直播失败',
     storyUploadFailed: '上传动态失败',
-    storyVideoTooLong: '动态视频不得超过15秒',
+    storyVideoTooLong: '动态视频不得超过30秒',
     passwordChanged: '密码修改成功！',
     biddingSettingsChanged: '竞拍设置更新成功！',
     followReqSencc: '关注请求已发送',

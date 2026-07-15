@@ -51,14 +51,11 @@ import {checkIsSeller} from '../../../api/shop';
 import {vh, vw} from '../../../constant';
 import {getCountries} from '../../../store/slices/generalSlice';
 import {timeFormat} from '../../../utils';
-import InAppBrowser from 'react-native-inappbrowser-reborn';
-import {notificationListenerInstance} from '../../../utils/NotificationServices';
 import {useSelector} from 'react-redux';
 import {
   GetUserProfile,
   selectUserProfile,
 } from '../../../store/slices/authSlice';
-import eventEmitter, {EVENT_TYPES} from '../../../utils/EventEmitter';
 import LikesModal from '../../../components/LikesModal';
 import Stories, {StoriesRef} from '../../../components/Stories';
 import {Plus, Video, Image as ImageIcon} from 'lucide-react-native';
@@ -76,7 +73,7 @@ import {
 } from '../../../utils/feedFilters';
 
 const CREATE_POST_HEIGHT_FALLBACK = 110;
-const STORIES_HEIGHT_FALLBACK = 90;
+const STORIES_HEIGHT_FALLBACK = 112;
 
 const Home: React.FC = () => {
   const flatListRef = useRef<FlatList>(null);
@@ -171,15 +168,6 @@ const Home: React.FC = () => {
     userName: '',
     postTime: '',
   });
-
-  const closePaymentProcess = async (remoteMessage: any) => {
-    console.log('remoteMesssaadssage ==>', remoteMessage);
-    await InAppBrowser.isAvailable();
-    InAppBrowser.close();
-    if (remoteMessage?.notification?.title === 'Payment Successful') {
-      eventEmitter.emit(EVENT_TYPES.CHECKOUT_TRIGGER, remoteMessage);
-    }
-  };
 
   const onCreatePostLayout = useCallback((event: LayoutChangeEvent) => {
     const {height} = event.nativeEvent.layout;
@@ -327,10 +315,6 @@ const Home: React.FC = () => {
       </View>
     );
   };
-
-  useEffect(() => {
-    notificationListenerInstance.init(closePaymentProcess);
-  }, []);
 
   useEffect(() => {
     fetchAllData(true);

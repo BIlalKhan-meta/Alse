@@ -1,13 +1,9 @@
 import React from 'react';
-import {Image, TouchableOpacity, View, Text, Settings} from 'react-native';
-import {Search} from 'lucide-react-native';
+import {Image, TouchableOpacity, View} from 'react-native';
+import {ChevronLeft, Search} from 'lucide-react-native';
 import styles from './styles';
 import {images} from '../../utils/images';
-
-interface RouteParams {
-  screenName?: string;
-  onRightIconPress?: () => void;
-}
+import {colors} from '../../utils/theme';
 
 interface NavigationOptionsProps {
   route: any;
@@ -185,6 +181,22 @@ export const getHeaderRight: React.FC<NavigationOptionsProps> = props => {
 
 const getHeaderLeft: React.FC<NavigationOptionsProps> = props => {
   if (backButtonRoutes[props?.route?.name]) {
+    if (props?.route?.name === 'ProductView') {
+      return (
+        <TouchableOpacity
+          onPress={() => {
+            props?.navigation.removeListener();
+            props?.navigation?.goBack();
+          }}
+          style={styles.productHeaderBackButton}
+          hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
+          accessibilityRole="button"
+          accessibilityLabel="Go back">
+          <ChevronLeft size={22} color={colors.black} strokeWidth={2.4} />
+        </TouchableOpacity>
+      );
+    }
+
     return (
       <TouchableOpacity
         onPress={() => {

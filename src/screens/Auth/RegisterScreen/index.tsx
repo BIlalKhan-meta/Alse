@@ -16,6 +16,7 @@ import Checkbox from 'expo-checkbox';
 import GoogleLogin from '../../../components/GoogleAuth/Login';
 import AppleAuth from '../../../components/AppleAuth';
 import {useTranslation} from 'react-i18next';
+import {getFcmToken} from '../../../services/pushNotificationService';
 interface FormValues {
   name: string;
   identifier: string;
@@ -57,7 +58,9 @@ const SignupScreen: React.FC = () => {
 
   const handleSubmit = async (values: FormValues) => {
     try {
-      if (submitted) return;
+      if (submitted) {
+        return;
+      }
 
       setSubmitted(true);
 
@@ -129,12 +132,15 @@ const SignupScreen: React.FC = () => {
     }
   };
 
-  const onGoogleLoginSuccess = (idToken: string) => {
-    if (isGoogleSubmitted) return;
+  const onGoogleLoginSuccess = async (idToken: string) => {
+    if (isGoogleSubmitted) {
+      return;
+    }
 
     setIsGoogleSubmitted(true);
 
-    const apiData = {token: idToken};
+    const deviceToken = await getFcmToken();
+    const apiData = {token: idToken, deviceToken};
 
     googleLogin(apiData)
       .then(res => {
@@ -164,8 +170,10 @@ const SignupScreen: React.FC = () => {
       });
   };
 
-  const onAppleLoginSuccess = (user: any) => {
-    if (isAppleSubmitted) return;
+  const onAppleLoginSuccess = async (user: any) => {
+    if (isAppleSubmitted) {
+      return;
+    }
 
     setIsAppleSubmitted(true);
 
@@ -176,6 +184,7 @@ const SignupScreen: React.FC = () => {
       fullName,
       isAppleLogin,
       apple_id,
+      deviceToken: await getFcmToken(),
     };
 
     appleLogin(apiData)
@@ -203,7 +212,7 @@ const SignupScreen: React.FC = () => {
         enableReinitialize
         onSubmit={handleSubmit}>
         {({
-          handleSubmit,
+          handleSubmit: formikHandleSubmit,
           handleChange,
           handleBlur,
           values,
@@ -302,7 +311,7 @@ const SignupScreen: React.FC = () => {
                   //   handleSubmit()
                   // }}
                   style={styles.loginBtn}
-                  onPress={handleSubmit}
+                  onPress={formikHandleSubmit}
                   loading={submitted}>
                   {t('signUp.createAccount')}
                 </CustomButton>

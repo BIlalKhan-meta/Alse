@@ -17,6 +17,11 @@ import {colors} from '../../utils/theme';
 import {vh} from '../../constant';
 import {getAbsoluteAvatarUrl} from '../../utils/helpers';
 import {getCallMessageDisplayText} from '../../utils/callPayload';
+import {
+  getProductShareDisplayText,
+  parseProductShareMessage,
+} from '../../utils/productSharePayload';
+import ChatProductCard from './ChatProductCard';
 
 function resolveMessageImageUri(uri: string): string {
   return uri.startsWith('http://') ||
@@ -167,49 +172,80 @@ export const renderSystemMessage: React.FC<SystemMessageProps> = props => (
   />
 );
 
-export const renderMessageText: React.FC<MessageTextProps> = props => (
-  <MessageText
-    {...props}
-    currentMessage={
-      props.currentMessage
-        ? {
-            ...props.currentMessage,
-            text: getCallMessageDisplayText(props.currentMessage.text),
-          }
-        : props.currentMessage
+export function createRenderCustomView(navigation: any): React.FC<any> {
+  const ChatMessageCustomView = ({currentMessage}: any) => {
+    const payload = parseProductShareMessage(currentMessage?.text);
+    if (!payload) {
+      return null;
     }
-    containerStyle={{
-      left: {
-        backgroundColor: 'transparent',
-      },
-      right: {
-        backgroundColor: 'transparent',
-      },
-    }}
-    textStyle={{
-      left: {
-        color: colors.black,
-        fontSize: 14,
-        lineHeight: 20,
-      },
-      right: {
-        color: colors.white,
-        fontSize: 14,
-        lineHeight: 20,
-      },
-    }}
-    linkStyle={{
-      left: {
-        color: '#00BCD4',
-        textDecorationLine: 'underline',
-      },
-      right: {
-        color: colors.white,
-        textDecorationLine: 'underline',
-      },
-    }}
-  />
-);
+
+    return (
+      <ChatProductCard
+        payload={payload}
+        onViewProduct={() =>
+          navigation?.navigate?.('ProductView', {
+            productId: payload.product_id,
+          })
+        }
+      />
+    );
+  };
+  ChatMessageCustomView.displayName = 'ChatMessageCustomView';
+  return ChatMessageCustomView;
+}
+
+export const renderMessageText: React.FC<MessageTextProps> = props => {
+  const rawText = props.currentMessage?.text;
+  if (parseProductShareMessage(rawText)) {
+    return null;
+  }
+
+  return (
+    <MessageText
+      {...props}
+      currentMessage={
+        props.currentMessage
+          ? {
+              ...props.currentMessage,
+              text: getProductShareDisplayText(
+                getCallMessageDisplayText(rawText),
+              ),
+            }
+          : props.currentMessage
+      }
+      containerStyle={{
+        left: {
+          backgroundColor: 'transparent',
+        },
+        right: {
+          backgroundColor: 'transparent',
+        },
+      }}
+      textStyle={{
+        left: {
+          color: colors.black,
+          fontSize: 14,
+          lineHeight: 20,
+        },
+        right: {
+          color: colors.white,
+          fontSize: 14,
+          lineHeight: 20,
+        },
+      }}
+      linkStyle={{
+        left: {
+          color: '#00BCD4',
+          textDecorationLine: 'underline',
+        },
+        right: {
+          color: colors.white,
+          textDecorationLine: 'underline',
+        },
+      }}
+    />
+  );
+};
 
 // Uncomment and type this if needed
 // export const renderCustomView: React.FC<{ user: { name: string } }> = ({ user }) => (

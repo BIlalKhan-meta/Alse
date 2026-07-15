@@ -121,6 +121,7 @@ const endpoints = {
   stories: {
     getStories: '/stories',
     addStories: '/stories',
+    analytics: (storyId: string | number) => `/stories/${storyId}/analytics`,
   },
   liveStream: {
     getLiveStreams: '/live-stream',

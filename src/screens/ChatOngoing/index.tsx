@@ -4,7 +4,6 @@ import React, {
   useEffect,
   useLayoutEffect,
   useMemo,
-  useRef,
   useState,
 } from 'react';
 import {
@@ -27,6 +26,7 @@ import {GiftedChat, IMessage, InputToolbar} from 'react-native-gifted-chat';
 import {images} from '../../utils/images';
 import {colors} from '../../utils/theme';
 import {
+  createRenderCustomView,
   createRenderMessageImage,
   createRenderMessageVideo,
   renderBubble,
@@ -43,7 +43,7 @@ import {
   uploadImages,
   uploadVideo,
 } from '../../api/home';
-import {selectUserProfile, selectBearerToken} from '../../store/slices/authSlice';
+import {selectUserProfile} from '../../store/slices/authSlice';
 import {
   connectSocket,
   emitMessage,
@@ -146,7 +146,6 @@ const ChatOngoing: React.FC<Props> = props => {
   const [messages, setMessages] = useState<IMessage[]>([]);
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const user = useSelector(selectUserProfile);
-  const token = useSelector(selectBearerToken);
   const [phoneModalVisible, setPhoneModalVisible] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isCalling, setIsCalling] = useState(false);
@@ -168,6 +167,10 @@ const ChatOngoing: React.FC<Props> = props => {
   const renderMessageVideoFullscreen = useMemo(
     () => createRenderMessageVideo(uri => setFullscreenVideoUri(uri)),
     [],
+  );
+  const renderProductCustomView = useMemo(
+    () => createRenderCustomView(navigation),
+    [navigation],
   );
 
   const toggleOption = () => setOptionVisible(!optionVisibal);
@@ -559,7 +562,7 @@ const ChatOngoing: React.FC<Props> = props => {
         return GiftedChat.append(previousMessages, [newMessage]);
       });
     },
-    [props?.route?.params?.id, user?.id, user?.full_name, user?.name],
+    [props?.route?.params?.id, user?.id],
   );
 
   useEffect(() => {
@@ -932,6 +935,7 @@ const ChatOngoing: React.FC<Props> = props => {
           renderMessageText={renderMessageText as any}
           renderMessageImage={renderMessageImageFullscreen as any}
           renderMessageVideo={renderMessageVideoFullscreen as any}
+          renderCustomView={renderProductCustomView as any}
           messagesContainerStyle={styles.messagesContainer}
           renderBubble={renderBubble as any}
           renderInputToolbar={props => (

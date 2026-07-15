@@ -7,6 +7,8 @@ const useImagePicker = () => {
   const [previewMode, setPreviewMode] = useState<any>(false);
   const [pendingMedia, setPendingMedia] = useState<any>(null);
 
+  const MAX_STORY_VIDEO_DURATION = 30;
+
   let globalOptions = {
     mediaType: 'photo', // 'photo' or 'video' or 'mixed'
     maxWidth: 300,
@@ -91,7 +93,7 @@ const useImagePicker = () => {
       quality: 0.2,
     };
     if (isVideoOrMixed) {
-      options.durationLimit = 15; // Limit story videos to 15 seconds
+      options.durationLimit = MAX_STORY_VIDEO_DURATION;
     }
 
     launchCamera(options, response => {

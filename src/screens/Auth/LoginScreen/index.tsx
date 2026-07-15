@@ -11,7 +11,7 @@ import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import RememberMeContainer from '../../../components/RememberMeContainer';
 import {useAppDispatch} from '../../../hooks/storeHooks';
-import {getFcmToken} from '../../../utils/messaging.utils';
+import {getFcmToken} from '../../../services/pushNotificationService';
 import InterBoldLabel from '../../../components/Text/InterBoldLabel';
 import PoppinsLabel from '../../../components/Text/Poppins';
 import {appleLogin, googleLogin, login} from '../../../api/auth';
@@ -182,7 +182,7 @@ const LoginScreen: React.FC = () => {
 
     setGoogleSubmitted(true);
 
-    const apiData = {token: idToken};
+    const apiData = {token: idToken, deviceToken};
 
     googleLogin(apiData)
       .then(res => {
@@ -224,6 +224,7 @@ const LoginScreen: React.FC = () => {
       fullName,
       isAppleLogin,
       apple_id,
+      deviceToken,
     };
 
     appleLogin(apiData)

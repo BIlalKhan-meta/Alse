@@ -36,6 +36,17 @@ const styles = StyleSheet.create({
     width: Math.round(vw * 5.5),
     height: Math.round(vh * 5),
   },
+  productHeaderBackButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: '#E4E6EB',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: Math.round(vw * 2.1),
+  },
   iconContainer: {
     height: vw * 10,
     width: vw * 10,

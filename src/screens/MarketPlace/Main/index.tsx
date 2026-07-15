@@ -444,13 +444,18 @@ const Marketplace: React.FC = () => {
                           });
                         }
                       }}>
-                      <View style={[styles.storeLogoContainer]}>
-                        <Image
-                          source={shopAvatarSource(store.avatar)}
-                          style={styles.storeLogo}
-                          resizeMode="cover"
-                          defaultSource={images.shop11}
-                        />
+                      <View style={styles.storeLogoWrapper}>
+                        <View style={styles.storeLogoContainer}>
+                          <Image
+                            source={shopAvatarSource(store.avatar)}
+                            style={styles.storeLogo}
+                            resizeMode="cover"
+                            defaultSource={images.shop11}
+                          />
+                        </View>
+                        <View style={styles.sellerBadge}>
+                          <Text style={styles.sellerBadgeText}>SELLER</Text>
+                        </View>
                       </View>
                       <Text style={styles.storeName} numberOfLines={1}>
                         {store.shop_name || 'Store'}
@@ -805,14 +810,18 @@ const styles = StyleSheet.create({
     marginRight: 16,
     width: 80,
   },
+  storeLogoWrapper: {
+    width: 70,
+    height: 70,
+    marginBottom: 8,
+    alignItems: 'center',
+  },
   storeLogoContainer: {
     width: 70,
     height: 70,
     borderRadius: 35,
-    // backgroundColor: '#FF6700', // Xiaomi orange color
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 8,
     overflow: 'hidden',
   },
   storeLogo: {
@@ -820,7 +829,20 @@ const styles = StyleSheet.create({
     height: '100%',
     resizeMode: 'cover',
     borderRadius: 35,
-    // tintColor: 'white', // Make the logo white
+  },
+  sellerBadge: {
+    position: 'absolute',
+    bottom: -2,
+    backgroundColor: '#00897B',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    zIndex: 1,
+  },
+  sellerBadgeText: {
+    color: 'white',
+    fontSize: 9,
+    fontWeight: 'bold',
   },
   storeName: {
     fontSize: 14,

@@ -183,7 +183,7 @@ export default {
     livestreamRefreshFailed:
       'Échec de l’actualisation des diffusions en direct',
     storyUploadFailed: 'Échec du téléversement de la story',
-    storyVideoTooLong: 'Les vidéos de story doivent faire 15 secondes ou moins',
+    storyVideoTooLong: 'Les vidéos de story doivent faire 30 secondes ou moins',
     passwordChanged: 'Mot de passe changé avec succès !',
     biddingSettingsChanged: 'Paramètres d’enchères mis à jour avec succès !',
     followReqSencc: 'Demande de suivi envoyée',
