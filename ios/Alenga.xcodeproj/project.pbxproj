@@ -816,7 +816,7 @@
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.appfnh.alenga;
+				PRODUCT_BUNDLE_IDENTIFIER = com.fnhapps.alenga;
 				PRODUCT_NAME = Alenga;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -1043,7 +1043,7 @@
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.appfnh.alenga;
+				PRODUCT_BUNDLE_IDENTIFIER = com.fnhapps.alenga;
 				PRODUCT_NAME = Alenga;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
