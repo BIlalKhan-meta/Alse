@@ -37,11 +37,12 @@ import {
   getShopProductPriceParts,
   getSkuLabel,
   isProductNegotiable,
-  resolveProductImageUrls,
+  resolveProductMediaItems,
   stripProductDescription,
 } from '../../../utils/shopProductCard';
 import {serializeProductShare} from '../../../utils/productSharePayload';
 import styles from './styles';
+import Video from 'react-native-video';
 
 type TabKey = 'description' | 'rating' | 'similar';
 
@@ -146,10 +147,11 @@ const ProductView: React.FC = () => {
     fetchData();
   }, [fetchData, isFocused]);
 
-  const imageUrls = useMemo(
-    () => (productDetails ? resolveProductImageUrls(productDetails) : []),
+  const mediaItems = useMemo(
+    () => (productDetails ? resolveProductMediaItems(productDetails) : []),
     [productDetails],
   );
+  const imageUrls = mediaItems.map(item => item.url);
 
   const colorOptions = useMemo(() => {
     const colorsList = productDetails?.colors;
@@ -172,9 +174,11 @@ const ProductView: React.FC = () => {
   }, [productDetails]);
 
   const title = productDetails ? getProductTitle(productDetails) : '';
-  const {current: priceLabel} = productDetails
+  const priceParts = productDetails
     ? getShopProductPriceParts(productDetails)
-    : {current: '—'};
+    : {current: '—', original: undefined};
+  const priceLabel = priceParts.current;
+  const originalPriceLabel = priceParts.original;
   const description = productDetails
     ? stripProductDescription(productDetails)
     : '';
@@ -209,6 +213,7 @@ const ProductView: React.FC = () => {
     String(user.id) === String(shopOwnerId);
 
   const currentImageUrl = imageUrls[imageIndex];
+  const currentMedia = mediaItems[imageIndex];
   const hasMultipleImages = imageUrls.length > 1;
 
   const handlePrevImage = () => {
@@ -538,11 +543,22 @@ const ProductView: React.FC = () => {
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}>
           <View style={styles.imageWrap}>
-            <Image
-              source={currentImageUrl ? {uri: currentImageUrl} : images.pro1}
-              style={styles.productImage}
-              resizeMode="cover"
-            />
+            {currentMedia?.type === 'video' && currentImageUrl ? (
+              <Video
+                source={{uri: currentImageUrl}}
+                style={styles.productImage}
+                resizeMode="cover"
+                controls
+                paused={false}
+                repeat
+              />
+            ) : (
+              <Image
+                source={currentImageUrl ? {uri: currentImageUrl} : images.pro1}
+                style={styles.productImage}
+                resizeMode="cover"
+              />
+            )}
 
             <TouchableOpacity
               style={styles.heartButton}
@@ -587,6 +603,17 @@ const ProductView: React.FC = () => {
                 <Text style={styles.ratingText}>{ratingLabel}</Text>
               ) : null}
               <Text style={styles.productPrice}>{priceLabel}</Text>
+              {originalPriceLabel ? (
+                <Text
+                  style={{
+                    textDecorationLine: 'line-through',
+                    color: '#999',
+                    fontSize: 13,
+                    marginTop: 2,
+                  }}>
+                  {originalPriceLabel}
+                </Text>
+              ) : null}
             </View>
           </View>
 

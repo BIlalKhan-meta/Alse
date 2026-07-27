@@ -56,6 +56,7 @@ const endpoints = {
     shopDetail: '/shop',
     updateShop: '/shop/update',
     isSeller: '/user/shops',
+    analytics: '/shop',
   },
   products: {
     productDetail: '/product',

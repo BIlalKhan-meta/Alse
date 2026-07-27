@@ -28,6 +28,11 @@ import {createShop} from '../../api/shop';
 const initialValues = {
   name: '',
   delivery_fees: '0',
+  description: '',
+  address: '',
+  phone_number: '',
+  country: '',
+  city: '',
 };
 
 const imagePickerMediaOptions = {
@@ -136,6 +141,21 @@ const AddStore: React.FC = () => {
       const formData = new FormData();
       formData.append('name', values.name.trim());
       formData.append('delivery_fees', values.delivery_fees.trim() || '0');
+      if (values.description.trim()) {
+        formData.append('description', values.description.trim());
+      }
+      if (values.address.trim()) {
+        formData.append('address', values.address.trim());
+      }
+      if (values.phone_number.trim()) {
+        formData.append('phone_number', values.phone_number.trim());
+      }
+      if (values.country.trim()) {
+        formData.append('country', values.country.trim());
+      }
+      if (values.city.trim()) {
+        formData.append('city', values.city.trim());
+      }
       formData.append('shop_banner', {
         uri: bannerImage.uri,
         type: bannerImage.type || 'image/jpeg',
@@ -274,6 +294,68 @@ const AddStore: React.FC = () => {
                   {submitted && errors.delivery_fees ? (
                     <Text style={styles.errorText}>{errors.delivery_fees}</Text>
                   ) : null}
+                </View>
+
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>Description</Text>
+                  <TextInput
+                    style={[styles.textInput, {minHeight: 80, textAlignVertical: 'top'}]}
+                    placeholder="Describe your store"
+                    placeholderTextColor="#999"
+                    onChangeText={handleChange('description')}
+                    onBlur={handleBlur('description')}
+                    value={values.description}
+                    multiline
+                  />
+                </View>
+
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>Address</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="Store address"
+                    placeholderTextColor="#999"
+                    onChangeText={handleChange('address')}
+                    onBlur={handleBlur('address')}
+                    value={values.address}
+                  />
+                </View>
+
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>City</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="City"
+                    placeholderTextColor="#999"
+                    onChangeText={handleChange('city')}
+                    onBlur={handleBlur('city')}
+                    value={values.city}
+                  />
+                </View>
+
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>Country</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="Country"
+                    placeholderTextColor="#999"
+                    onChangeText={handleChange('country')}
+                    onBlur={handleBlur('country')}
+                    value={values.country}
+                  />
+                </View>
+
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>Phone</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="Phone number"
+                    placeholderTextColor="#999"
+                    onChangeText={handleChange('phone_number')}
+                    onBlur={handleBlur('phone_number')}
+                    value={values.phone_number}
+                    keyboardType="phone-pad"
+                  />
                 </View>
 
                 {renderPicker(

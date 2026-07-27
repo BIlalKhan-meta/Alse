@@ -63,15 +63,25 @@ export function getShopProductPriceParts(product: Record<string, any>): {
   current: string;
   original?: string;
 } {
-  const currentRaw =
+  const listPrice = product?.price ?? product?.amount ?? product?.regular_price;
+  const saleRaw =
     product?.sale_price ??
     product?.discounted_price ??
-    product?.price ??
-    product?.amount;
-  const originalRaw =
-    product?.old_price ??
-    product?.compare_at_price ??
-    product?.regular_price;
+    product?.effective_price;
+  const listNum = Number(String(listPrice ?? '').replace(/,/g, ''));
+  const saleNum = Number(String(saleRaw ?? '').replace(/,/g, ''));
+  const hasSale =
+    saleRaw != null &&
+    saleRaw !== '' &&
+    Number.isFinite(saleNum) &&
+    Number.isFinite(listNum) &&
+    saleNum > 0 &&
+    saleNum < listNum;
+
+  const currentRaw = hasSale ? saleRaw : listPrice ?? saleRaw;
+  const originalRaw = hasSale
+    ? listPrice
+    : product?.old_price ?? product?.compare_at_price;
 
   const current = moneyLabel(currentRaw);
   const oNum = Number(String(originalRaw ?? '').replace(/,/g, ''));
@@ -206,23 +216,27 @@ export function getProductTitle(product: Record<string, any>): string {
   );
 }
 
-export function resolveProductImageUrls(
+export function resolveProductMediaItems(
   product: Record<string, any>,
-): string[] {
-  const urls: string[] = [];
-  const push = (value?: string | null) => {
+): Array<{url: string; type: 'image' | 'video'}> {
+  const items: Array<{url: string; type: 'image' | 'video'}> = [];
+  const push = (value?: string | null, type: 'image' | 'video' = 'image') => {
     const resolved = resolveProductMediaUrl(value);
-    if (resolved && !urls.includes(resolved)) {
-      urls.push(resolved);
+    if (resolved && !items.some(i => i.url === resolved)) {
+      items.push({url: resolved, type});
     }
   };
 
   if (Array.isArray(product?.images)) {
     product.images.forEach((img: any) => {
       if (typeof img === 'string') {
-        push(img);
+        push(img, 'image');
       } else {
-        push(img?.path ?? img?.url);
+        const mediaType =
+          img?.type === 'video' || String(img?.mime_type || '').startsWith('video')
+            ? 'video'
+            : 'image';
+        push(img?.path ?? img?.url, mediaType);
       }
     });
   }
@@ -232,7 +246,13 @@ export function resolveProductImageUrls(
   push(product?.thumbnail);
   push(product?.media?.[0]?.path);
 
-  return urls;
+  return items;
+}
+
+export function resolveProductImageUrls(
+  product: Record<string, any>,
+): string[] {
+  return resolveProductMediaItems(product).map(item => item.url);
 }
 
 export function getProductSizeLabel(product: Record<string, any>): string {

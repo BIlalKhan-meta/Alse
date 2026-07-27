@@ -8,6 +8,7 @@ import {
   ScrollView,
   Animated,
   RefreshControl,
+  TextInput,
 } from 'react-native';
 import {useIsFocused, useNavigation} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
@@ -17,8 +18,10 @@ import {
   getOrders,
   getAllProducts,
   getRecommendedProducts,
+  getCategories,
 } from '../../../api/product';
 import {checkIsSeller} from '../../../api/shop';
+import searchAPI from '../../../api/search';
 import Loader from '../../../components/Loader';
 import ShopProductListRow from '../../../components/ShopProductListRow';
 import {Subscribe} from '../../../components/Subscribe';
@@ -39,21 +42,7 @@ import {useTranslation} from 'react-i18next';
 import {useLocation} from '../../../hooks/useLocation';
 import Toast from 'react-native-toast-message';
 
-// Define Product type for API data
-interface Product {
-  id: number;
-  name?: string;
-  image?: string;
-  price?: string | number;
-  oldPrice?: string | number;
-  description?: string;
-  soldBy?: string;
-  rating?: number;
-  reviews?: number;
-  discount?: number;
-  isNew?: boolean;
-  isFeatured?: boolean;
-}
+type Product = Record<string, any>;
 
 interface Order {
   order_id: string;
@@ -70,6 +59,19 @@ interface Order {
 }
 
 const FEATURED_STORES_LIMIT = 4;
+
+function extractList(payload: any): any[] {
+  if (Array.isArray(payload)) {
+    return payload;
+  }
+  if (Array.isArray(payload?.data)) {
+    return payload.data;
+  }
+  if (Array.isArray(payload?.data?.data)) {
+    return payload.data.data;
+  }
+  return [];
+}
 
 function shopAvatarSource(avatar?: string | null) {
   if (
@@ -101,6 +103,17 @@ const Marketplace: React.FC = () => {
   const [fabAnimation] = useState(new Animated.Value(0));
   const [orders, setOrders] = useState<Order[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(
+    null,
+  );
+  const [nearbyShops, setNearbyShops] = useState<any[]>([]);
+  const [marketQuery, setMarketQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<{
+    products: any[];
+    shops: any[];
+  } | null>(null);
+  const [searching, setSearching] = useState(false);
 
   const {t} = useTranslation();
   const {
@@ -134,28 +147,15 @@ const Marketplace: React.FC = () => {
   const getProductData = React.useCallback(async () => {
     setProductsLoading(true);
     try {
-      const recommendedRes = await getRecommendedProducts();
-      if (recommendedRes.data?.data && recommendedRes.data.data.length > 0) {
-        setProducts(recommendedRes.data.data);
+      const recommendedRes = await getRecommendedProducts({per_page: 20});
+      const recommended = extractList(recommendedRes?.data?.data);
+      if (recommended.length > 0) {
+        setProducts(recommended);
         return;
       }
 
-      const allProductsRes = await getAllProducts();
-      if (allProductsRes.data?.data && allProductsRes.data.data.length > 0) {
-        setProducts(allProductsRes.data.data);
-        return;
-      }
-
-      const filteredRes = await getAllProducts({
-        per_page: 20,
-        sort: 'newest',
-      });
-      if (filteredRes.data?.data && filteredRes.data.data.length > 0) {
-        setProducts(filteredRes.data.data);
-        return;
-      }
-
-      setProducts([]);
+      const allProductsRes = await getAllProducts({per_page: 20, sort: 'newest'});
+      setProducts(extractList(allProductsRes?.data?.data));
     } catch (error) {
       console.log('Error fetching products from all APIs:', error);
       setProducts([]);
@@ -164,17 +164,33 @@ const Marketplace: React.FC = () => {
     }
   }, []);
 
-  const getAllMarketplaceProducts = React.useCallback(async () => {
-    setAllProductsLoading(true);
+  const getAllMarketplaceProducts = React.useCallback(
+    async (categoryId?: number | null) => {
+      setAllProductsLoading(true);
+      try {
+        const params: any = {per_page: 50};
+        if (categoryId) {
+          params.category_id = categoryId;
+        }
+        const res = await getAllProducts(params);
+        setAllProductsList(extractList(res?.data?.data));
+      } catch (error) {
+        console.log('Error fetching marketplace products list:', error);
+        setAllProductsList([]);
+      } finally {
+        setAllProductsLoading(false);
+      }
+    },
+    [],
+  );
+
+  const loadCategories = React.useCallback(async () => {
     try {
-      const res = await getAllProducts({per_page: 50});
-      const list = res?.data?.data?.data;
-      setAllProductsList(Array.isArray(list) ? list : []);
-    } catch (error) {
-      console.log('Error fetching marketplace products list:', error);
-      setAllProductsList([]);
-    } finally {
-      setAllProductsLoading(false);
+      const res = await getCategories();
+      const list = extractList(res?.data?.data);
+      setCategories(list.length ? list : Array.isArray(res?.data?.data) ? res.data.data : []);
+    } catch (e) {
+      setCategories([]);
     }
   }, []);
 
@@ -183,7 +199,6 @@ const Marketplace: React.FC = () => {
     try {
       const res = await getOrders();
       setOrders(res?.data?.data?.data || []);
-      console.log('Orders data:', res?.data?.data?.data);
     } catch (error) {
       console.log('Error fetching orders:', error);
       setOrders([]);
@@ -193,9 +208,14 @@ const Marketplace: React.FC = () => {
   useEffect(() => {
     getData();
     getProductData();
-    getAllMarketplaceProducts();
+    getAllMarketplaceProducts(selectedCategoryId);
     getOrdersData();
-  }, [isFocused, getProductData, getAllMarketplaceProducts]);
+    loadCategories();
+  }, [isFocused, getProductData, getAllMarketplaceProducts, loadCategories]);
+
+  useEffect(() => {
+    getAllMarketplaceProducts(selectedCategoryId);
+  }, [selectedCategoryId, getAllMarketplaceProducts]);
 
   // Separate useEffect for location to prevent infinite loops
   useEffect(() => {
@@ -205,24 +225,80 @@ const Marketplace: React.FC = () => {
   }, [isFocused, getCurrentLocation]);
 
   useEffect(() => {
-    const filterOrders = () => {
-      let filtered = [...shops];
-      setFilteredData(filtered);
-    };
+    if (location?.latitude && location?.longitude) {
+      getAllShop({
+        lat: location.latitude,
+        lng: location.longitude,
+        radius: 50,
+        per_page: 10,
+      })
+        .then(res => setNearbyShops(extractList(res?.data?.data)))
+        .catch(() => setNearbyShops([]));
+    }
+  }, [location?.latitude, location?.longitude]);
 
-    filterOrders();
+  useEffect(() => {
+    setFilteredData([...shops]);
   }, [shops]);
 
   const getData = async () => {
     try {
       setLoading(true);
-      const res = await getAllShop();
-      setShops(res.data?.data?.data || []);
+      let featuredRes;
+      try {
+        featuredRes = await getAllShop({featured: 1, per_page: 12});
+      } catch {
+        featuredRes = null;
+      }
+      let featured = extractList(featuredRes?.data?.data);
+      if (featured.length === 0) {
+        const allRes = await getAllShop({per_page: 12});
+        featured = extractList(allRes?.data?.data);
+      }
+      setShops(featured);
+
+      if (location?.latitude && location?.longitude) {
+        try {
+          const nearbyRes = await getAllShop({
+            lat: location.latitude,
+            lng: location.longitude,
+            radius: 50,
+            per_page: 10,
+          });
+          setNearbyShops(extractList(nearbyRes?.data?.data));
+        } catch {
+          setNearbyShops([]);
+        }
+      }
     } catch (error) {
       console.log('Error fetching shops:', error);
       setShops([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const runMarketSearch = async (query: string) => {
+    const q = query.trim();
+    setMarketQuery(query);
+    if (q.length < 2) {
+      setSearchResults(null);
+      return;
+    }
+    setSearching(true);
+    try {
+      const [productsRes, shopsRes] = await Promise.all([
+        searchAPI.searchProducts({search: q, per_page: 20}),
+        searchAPI.searchShops({search: q}),
+      ]);
+      setSearchResults({
+        products: extractList(productsRes?.data?.data),
+        shops: extractList(shopsRes?.data?.data),
+      });
+    } catch (e) {
+      setSearchResults({products: [], shops: []});
+    } finally {
+      setSearching(false);
     }
   };
 
@@ -232,14 +308,21 @@ const Marketplace: React.FC = () => {
       await Promise.all([
         getData(),
         getProductData(),
-        getAllMarketplaceProducts(),
+        getAllMarketplaceProducts(selectedCategoryId),
         getOrdersData(),
         getCurrentLocation(),
+        loadCategories(),
       ]);
     } finally {
       setRefreshing(false);
     }
-  }, [getProductData, getAllMarketplaceProducts, getCurrentLocation]);
+  }, [
+    getProductData,
+    getAllMarketplaceProducts,
+    getCurrentLocation,
+    loadCategories,
+    selectedCategoryId,
+  ]);
 
   // FAB animation functions
   const toggleFab = () => {
@@ -384,11 +467,14 @@ const Marketplace: React.FC = () => {
         {/* Search Bar (inside header section) */}
         <View style={styles.searchContainer}>
           <Search size={20} color="#999" style={styles.searchIcon} />
-          <TouchableOpacity
+          <TextInput
             style={styles.searchInput}
-            onPress={() => navigation.navigate('Search')}>
-            <Text style={styles.searchPlaceholder}>{t('search')}</Text>
-          </TouchableOpacity>
+            placeholder={t('search') || 'Search products & shops'}
+            placeholderTextColor="#999"
+            value={marketQuery}
+            onChangeText={runMarketSearch}
+            returnKeyType="search"
+          />
         </View>
       </View>
 
@@ -400,6 +486,127 @@ const Marketplace: React.FC = () => {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
         }>
+        {searchResults ? (
+          <View style={{marginBottom: 16}}>
+            <Text style={styles.featuredTitle}>
+              {searching ? 'Searching…' : 'Search results'}
+            </Text>
+            {(searchResults.shops || []).slice(0, 6).map((store: any) => (
+              <TouchableOpacity
+                key={`s-${store.id}`}
+                style={{paddingVertical: 10}}
+                onPress={() =>
+                  navigation.navigate('Shop', {shopId: store.id})
+                }>
+                <Text style={{fontWeight: '600', color: '#222'}}>
+                  {store.shop_name || store.name}
+                </Text>
+                <Text style={{color: '#666', fontSize: 12}}>Store</Text>
+              </TouchableOpacity>
+            ))}
+            {(searchResults.products || []).slice(0, 10).map((product: any) => (
+              <TouchableOpacity
+                key={`p-${product.id}`}
+                style={{paddingVertical: 10}}
+                onPress={() =>
+                  navigation.navigate('ProductView', {productId: product.id})
+                }>
+                <Text style={{fontWeight: '600', color: '#222'}}>
+                  {product.title || product.name}
+                </Text>
+                <Text style={{color: '#666', fontSize: 12}}>Product</Text>
+              </TouchableOpacity>
+            ))}
+            {!searching &&
+            searchResults.products.length === 0 &&
+            searchResults.shops.length === 0 ? (
+              <Text style={{color: '#888'}}>No matches</Text>
+            ) : null}
+          </View>
+        ) : null}
+
+        {categories.length > 0 ? (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{paddingBottom: 12, gap: 8}}>
+            <TouchableOpacity
+              style={[
+                styles.categoryChip,
+                selectedCategoryId == null && styles.categoryChipActive,
+              ]}
+              onPress={() => setSelectedCategoryId(null)}>
+              <Text
+                style={[
+                  styles.categoryChipText,
+                  selectedCategoryId == null && styles.categoryChipTextActive,
+                ]}>
+                All
+              </Text>
+            </TouchableOpacity>
+            {categories.map((cat: any) => {
+              const id = cat.id;
+              const label = cat.title || cat.name;
+              const active = selectedCategoryId === id;
+              return (
+                <TouchableOpacity
+                  key={id}
+                  style={[
+                    styles.categoryChip,
+                    active && styles.categoryChipActive,
+                  ]}
+                  onPress={() => setSelectedCategoryId(id)}>
+                  <Text
+                    style={[
+                      styles.categoryChipText,
+                      active && styles.categoryChipTextActive,
+                    ]}>
+                    {label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        ) : null}
+
+        {nearbyShops.length > 0 ? (
+          <View style={styles.featuredSection}>
+            <Text style={styles.featuredTitle}>Nearby stores</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.carouselContainer}>
+              {nearbyShops.map((store, index) => (
+                <TouchableOpacity
+                  key={store.id ?? `nearby-${index}`}
+                  style={styles.storeCard}
+                  onPress={() =>
+                    navigation.navigate('Shop', {shopId: store.id})
+                  }>
+                  <View style={styles.storeLogoWrapper}>
+                    <View style={styles.storeLogoContainer}>
+                      <Image
+                        source={shopAvatarSource(store.avatar)}
+                        style={styles.storeLogo}
+                        resizeMode="cover"
+                        defaultSource={images.shop11}
+                      />
+                    </View>
+                  </View>
+                  <Text style={styles.storeName} numberOfLines={1}>
+                    {store.shop_name || store.name}
+                  </Text>
+                  {store.distance_km != null ? (
+                    <Text style={{fontSize: 11, color: '#666'}}>
+                      {store.distance_km} km
+                    </Text>
+                  ) : null}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        ) : null}
+
         {/* Featured Stores Section */}
         <View style={styles.featuredSection}>
           <Text style={styles.featuredTitle}>
@@ -778,10 +985,30 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     height: 40,
-    justifyContent: 'center',
+    color: '#333',
+    fontSize: 14,
+    paddingVertical: 0,
   },
   searchPlaceholder: {
     color: '#999',
+  },
+  categoryChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#f0f0f0',
+    marginRight: 8,
+  },
+  categoryChipActive: {
+    backgroundColor: '#0C959B',
+  },
+  categoryChipText: {
+    fontSize: 13,
+    color: '#444',
+    fontWeight: '500',
+  },
+  categoryChipTextActive: {
+    color: '#fff',
   },
 
   contentArea: {

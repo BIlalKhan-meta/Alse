@@ -15,7 +15,7 @@ export const getBank = () => {
   return axiosInstance.get(endpoints.menu.banks);
 };
 export type SaveItemPayload = {
-  item_type: string;
+  item_type: 'post' | 'product' | 'blog' | 'article' | 'video' | 'shop' | string;
   item_id: number | string;
 };
 

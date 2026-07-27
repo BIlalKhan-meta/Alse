@@ -61,6 +61,7 @@ const titles: {[key: string]: string} = {
   SearchUsers: 'Search User',
   Videos: 'Videos',
   ExistingSeller: 'My Stores',
+  SellerAnalytics: 'Shop Analytics',
   PostDrafts: 'Drafts',
 };
 const backButtonRoutes: {[key: string]: boolean} = {
@@ -108,6 +109,7 @@ const backButtonRoutes: {[key: string]: boolean} = {
   ChatScreen: true,
   Videos: true,
   ExistingSeller: true,
+  SellerAnalytics: true,
 };
 
 const getTitle: React.FC<NavigationOptionsProps> = props => {

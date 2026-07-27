@@ -107,12 +107,19 @@ const Saved: React.FC = () => {
                 item => item?.savable_type == `App\\Models\\Product`,
               ),
             );
+          } else if (active == 4) {
+            setDisplayPost(
+              res?.data?.data?.data?.filter(
+                item => item?.savable_type == `App\\Models\\Shop`,
+              ),
+            );
           } else {
             setDisplayPost(
               res?.data?.data?.data?.filter(
                 item =>
                   item?.savable_type != `App\\Models\\Product` &&
-                  item?.savable_type != `App\\Models\\Post`,
+                  item?.savable_type != `App\\Models\\Post` &&
+                  item?.savable_type != `App\\Models\\Shop`,
               ),
             );
           }
@@ -476,6 +483,15 @@ const Saved: React.FC = () => {
               Content Saved
             </InterRegular>
           </TouchableOpacity>
+
+          <TouchableOpacity
+            style={active == 4 ? styles.activeBtn : styles.InactiveBtn}
+            onPress={() => setActive(4)}>
+            <InterRegular
+              style={active == 4 ? styles.activeTxt : styles.InactiveTxt}>
+              Stores
+            </InterRegular>
+          </TouchableOpacity>
         </Card>
         {active == 1 && (
           <View>
@@ -665,6 +681,76 @@ const Saved: React.FC = () => {
                   )}
                 </Card>
               )}
+              keyExtractor={item => item?.id?.toString()}
+            />
+          </Card>
+        )}
+
+        {active == 4 && (
+          <Card style={styles.contentContainer}>
+            <FlatList
+              data={displayPost}
+              onRefresh={fetchData}
+              refreshing={loading}
+              ListEmptyComponent={() => (
+                <EmptyComponent text={'No saved stores'} />
+              )}
+              renderItem={({item}) => {
+                const shop = item?.savable_item;
+                return (
+                  <TouchableOpacity
+                    style={styles.itemCard}
+                    onPress={() =>
+                      (navigation as any).navigate('Shop', {
+                        shopId: shop?.id || item?.savable_id,
+                      })
+                    }>
+                    <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                      {shop?.avatar || shop?.banner ? (
+                        <Image
+                          source={{uri: shop.avatar || shop.banner}}
+                          style={{
+                            width: 56,
+                            height: 56,
+                            borderRadius: 8,
+                            marginRight: 12,
+                          }}
+                        />
+                      ) : null}
+                      <View style={{flex: 1}}>
+                        <InterRegular style={{fontWeight: '600', color: '#222'}}>
+                          {shop?.shop_name || 'Store'}
+                        </InterRegular>
+                        {shop?.city || shop?.address ? (
+                          <InterRegular style={{color: '#666', fontSize: 12}}>
+                            {[shop.city, shop.address].filter(Boolean).join(' · ')}
+                          </InterRegular>
+                        ) : null}
+                      </View>
+                      <TouchableOpacity
+                        onPress={async () => {
+                          try {
+                            await removeSavedItem({
+                              item_id: item?.savable_id,
+                              item_type: 'shop',
+                            });
+                            fetchData();
+                          } catch (e) {
+                            Toast.show({
+                              type: 'error',
+                              text1: 'Error',
+                              text2: 'Could not remove store',
+                            });
+                          }
+                        }}>
+                        <InterRegular style={{color: colors.redText || '#c0392b'}}>
+                          Remove
+                        </InterRegular>
+                      </TouchableOpacity>
+                    </View>
+                  </TouchableOpacity>
+                );
+              }}
               keyExtractor={item => item?.id?.toString()}
             />
           </Card>

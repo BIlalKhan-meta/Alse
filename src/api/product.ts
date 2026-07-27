@@ -146,8 +146,11 @@ export const getSimilarProducts = (id: number) => {
   return axiosInstance.get(`${endpoints.products.similar}/${id}/similar`);
 };
 
-export const getRecommendedProducts = () => {
-  return axiosInstance.get(endpoints.products.recommended);
+export const getRecommendedProducts = (params?: {
+  page?: number;
+  per_page?: number;
+}) => {
+  return axiosInstance.get(endpoints.products.recommended, {params});
 };
 
 // Get all products with optional filters
@@ -156,8 +159,10 @@ export const getAllProducts = (params?: {
   category_id?: number;
   sort?: string;
   per_page?: number;
+  page?: number;
   min_price?: number;
   max_price?: number;
+  shop_id?: number;
 }) => {
   return axiosInstance.get(endpoints.products.allProducts, {params});
 };

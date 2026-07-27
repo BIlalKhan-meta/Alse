@@ -34,14 +34,20 @@ const validationSchema = yup.object().shape({
   productTitle: yup.string().required('Product title is required'),
   productDescription: yup.string().required('Product description is required'),
   price: yup.string().required('Price is required'),
+  salePrice: yup.string(),
   quantity: yup.string().required('Quantity is required'),
+  sizes: yup.string(),
+  colors: yup.string(),
 });
 
 const initialValues = {
   productTitle: '',
   productDescription: '',
   price: '',
+  salePrice: '',
   quantity: '',
+  sizes: '',
+  colors: '',
 };
 
 function getCreateProductErrorMessage(error: any): string {
@@ -161,20 +167,31 @@ const AddProduct: React.FC = () => {
   }, [imageData]);
 
   useEffect(() => {
-    if (item && item.images.length != 0) {
-      const arr = item.images.map(item => {
-        return {uri: item.path, id: item?.id};
-      });
-      setMedia(prevMedia => [...prevMedia, ...arr]);
+    if (item) {
+      // Prefill edit values via Formik enableReinitialize below is not used;
+      // media is hydrated here.
+      if (item.images?.length) {
+        const arr = item.images.map((img: any) => {
+          const isVideo = img?.type === 'video';
+          return {
+            uri: img.path,
+            id: img?.id,
+            type: isVideo ? 'video/mp4' : 'image/jpeg',
+            name: isVideo ? 'video.mp4' : 'image.jpg',
+            kind: isVideo ? 'video' : 'image',
+          };
+        });
+        setMedia(arr);
+      }
     }
   }, [item]);
 
   const handleDelete = async (index: number) => {
-    if (media.length <= 3) {
+    if (media.length <= 1) {
       return Toast.show({
         type: 'error',
-        text1: 'Minimum 3 Images Required',
-        text2: 'Add New to Delete previous',
+        text1: 'Keep at least 1 media item',
+        text2: 'Add a new file before deleting the last one',
       });
     }
     const arr = [...media];
@@ -246,16 +263,42 @@ const AddProduct: React.FC = () => {
       formData.append('category_id', String(categoryId));
       formData.append('description', String(values.productDescription));
       formData.append('price', String(values.price));
+      if (values.salePrice?.trim()) {
+        formData.append('sale_price', String(values.salePrice.trim()));
+      }
       formData.append('quantity', String(values.quantity));
       formData.append('status', status ? '1' : '0');
+
+      const sizeList = String(values.sizes || '')
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean);
+      sizeList.forEach((size, idx) => {
+        formData.append(`sizes[${idx}][size]`, size);
+      });
+
+      const colorList = String(values.colors || '')
+        .split(',')
+        .map(c => c.trim())
+        .filter(Boolean);
+      colorList.forEach((color, idx) => {
+        formData.append(`colors[${idx}][color]`, color);
+      });
 
       let imageUploadIndex = 0;
       media.forEach((item: any) => {
         if (!item?.id && item?.uri) {
+          const isVideo =
+            item?.kind === 'video' ||
+            String(item?.type || '').startsWith('video');
           formData.append(`images[${imageUploadIndex}]`, {
             uri: item.uri,
-            name: item.name || `product_${imageUploadIndex}.jpg`,
-            type: item.type || 'image/jpeg',
+            name:
+              item.name ||
+              (isVideo
+                ? `product_${imageUploadIndex}.mp4`
+                : `product_${imageUploadIndex}.jpg`),
+            type: item.type || (isVideo ? 'video/mp4' : 'image/jpeg'),
           } as any);
           imageUploadIndex += 1;
         }
@@ -340,7 +383,25 @@ const AddProduct: React.FC = () => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}>
         <Formik
-          initialValues={initialValues}
+          initialValues={{
+            productTitle: item?.title || '',
+            productDescription: item?.description || '',
+            price: item?.price != null ? String(item.price) : '',
+            salePrice: item?.sale_price != null ? String(item.sale_price) : '',
+            quantity: item?.quantity != null ? String(item.quantity) : '',
+            sizes: Array.isArray(item?.sizes)
+              ? item.sizes
+                  .map((s: any) => (typeof s === 'string' ? s : s?.size))
+                  .filter(Boolean)
+                  .join(', ')
+              : '',
+            colors: Array.isArray(item?.colors)
+              ? item.colors
+                  .map((c: any) => (typeof c === 'string' ? c : c?.color))
+                  .filter(Boolean)
+                  .join(', ')
+              : '',
+          }}
           enableReinitialize
           validationSchema={validationSchema}
           onSubmit={handleSubmit}>
@@ -424,6 +485,40 @@ const AddProduct: React.FC = () => {
                 )}
               </View>
 
+              <View style={styles.inputContainer}>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="Sale price (optional)"
+                  placeholderTextColor="#999"
+                  keyboardType="numeric"
+                  onChangeText={handleChange('salePrice')}
+                  onBlur={handleBlur('salePrice')}
+                  value={values.salePrice}
+                />
+              </View>
+
+              <View style={styles.inputContainer}>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="Sizes (comma separated, e.g. S, M, L)"
+                  placeholderTextColor="#999"
+                  onChangeText={handleChange('sizes')}
+                  onBlur={handleBlur('sizes')}
+                  value={values.sizes}
+                />
+              </View>
+
+              <View style={styles.inputContainer}>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="Colors (comma separated, e.g. Red, Blue)"
+                  placeholderTextColor="#999"
+                  onChangeText={handleChange('colors')}
+                  onBlur={handleBlur('colors')}
+                  value={values.colors}
+                />
+              </View>
+
               {/* Enter Quantity */}
               <View style={styles.inputContainer}>
                 <TextInput
@@ -474,8 +569,12 @@ const AddProduct: React.FC = () => {
         onClose={() => setVisible(false)}
         visible={visible}
         button={[
-          {text: 'Open Camera', onPress: () => captureImage('photo')},
-          {text: 'Open Gallery', onPress: chooseImageFromLibrary},
+          {text: 'Camera photo', onPress: () => captureImage('photo')},
+          {text: 'Camera video', onPress: () => captureImage('video')},
+          {
+            text: 'Gallery (photo/video)',
+            onPress: () => chooseImageFromLibrary('mixed'),
+          },
         ]}
       />
 

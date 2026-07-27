@@ -72,6 +72,7 @@ const Shop: React.FC = () => {
     useState<ShopProductSortValue>('name_asc');
   const [bannerError, setBannerError] = useState(false);
   const [bannerLoaded, setBannerLoaded] = useState(false);
+  const [shopSaved, setShopSaved] = useState(false);
 
   const resolvedBannerUrl = useMemo(
     () => pickBannerUrl(shopDetails),
@@ -137,6 +138,7 @@ const Shop: React.FC = () => {
 
       setShopDetails(extractShopDetailPayload(res));
       setShopProducts(res2?.data?.data?.data || []);
+      setShopSaved(Boolean(extractShopDetailPayload(res)?.is_saved));
       setBannerError(false);
       setBannerLoaded(false);
     } catch (error) {
@@ -182,6 +184,25 @@ const Shop: React.FC = () => {
       });
       Toast.error(getMessage((err as any)?.message));
       console.log('Error reporting shop:', err);
+    }
+  };
+
+  const handleToggleSaveShop = async () => {
+    const next = !shopSaved;
+    setShopSaved(next);
+    const payload = {
+      item_id: shopId,
+      item_type: 'shop' as const,
+    };
+    try {
+      if (shopSaved) {
+        await removeSavedItem(payload);
+      } else {
+        await saveItem(payload);
+      }
+    } catch (err) {
+      setShopSaved(shopSaved);
+      Toast.error(getMessage((err as any)?.message));
     }
   };
 
@@ -291,6 +312,30 @@ const Shop: React.FC = () => {
           <Text style={shopScreenStyles.shopName}>
             {shopDetails?.shop_name || 'Shop Name'}
           </Text>
+
+          <TouchableOpacity
+            style={shopScreenStyles.saveVendorBtn}
+            onPress={handleToggleSaveShop}>
+            <Text style={shopScreenStyles.saveVendorText}>
+              {shopSaved ? 'Saved store' : 'Save store'}
+            </Text>
+          </TouchableOpacity>
+
+          {shopDetails?.description ? (
+            <Text style={shopScreenStyles.shopDescription}>
+              {shopDetails.description}
+            </Text>
+          ) : null}
+          {(shopDetails?.address || shopDetails?.city || shopDetails?.phone_number) ? (
+            <Text style={shopScreenStyles.shopMeta}>
+              {[shopDetails.address, shopDetails.city, shopDetails.country]
+                .filter(Boolean)
+                .join(', ')}
+              {shopDetails.phone_number
+                ? `\n${shopDetails.phone_number}`
+                : ''}
+            </Text>
+          ) : null}
 
           <View style={shopScreenStyles.filterRow}>
             <View style={shopScreenStyles.filterCol}>

@@ -256,7 +256,7 @@ const ExistingSeller: React.FC = () => {
           width: selectedAvatar.width,
           height: selectedAvatar.height,
         });
-        formDataToSend.append('avatar', {
+        formDataToSend.append('shop_avatar', {
           uri: selectedAvatar.uri,
           type: selectedAvatar.type || 'image/jpeg',
           name: selectedAvatar.fileName || 'avatar.jpg',
@@ -469,6 +469,17 @@ const ExistingSeller: React.FC = () => {
                     <Text style={styles.storeDate}>
                       Created: {new Date(shop.created_at).toLocaleDateString()}
                     </Text>
+                    <TouchableOpacity
+                      style={styles.analyticsButton}
+                      onPress={e => {
+                        e?.stopPropagation?.();
+                        (navigation as any).navigate('SellerAnalytics', {
+                          shopId: shop.id,
+                          shopName: shop.shop_name,
+                        });
+                      }}>
+                      <Text style={styles.analyticsButtonText}>Analytics</Text>
+                    </TouchableOpacity>
                   </View>
                   <TouchableOpacity style={styles.storeMenu}>
                     <MoreVertical size={20} color="#666" />
@@ -865,6 +876,19 @@ const styles = StyleSheet.create({
   storeDate: {
     fontSize: 12,
     color: '#666',
+  },
+  analyticsButton: {
+    marginTop: 8,
+    alignSelf: 'flex-start',
+    backgroundColor: '#0C959B',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  analyticsButtonText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
   },
   storeMenu: {
     padding: 8,
