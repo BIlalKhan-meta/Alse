@@ -360,9 +360,9 @@ const ExistingSeller: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Header */}
+      <GlobalHeader icon={true} embedInSafeArea showBack />
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <GlobalHeader icon={true} />
         <View style={styles.header}>
           <View style={styles.headerLeft}>
             <View style={styles.dateContainer}>
@@ -669,10 +669,11 @@ const ExistingSeller: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#fff',
   },
   content: {
     flex: 1,
+    backgroundColor: '#f8f9fa',
   },
   loadingContainer: {
     flex: 1,
@@ -691,8 +692,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 20,
+    paddingTop: 8,
+    paddingBottom: 16,
     backgroundColor: 'white',
   },
   headerLeft: {

@@ -1,26 +1,45 @@
 import React from 'react';
-import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
-import {Image} from 'react-native';
+import {View, TouchableOpacity, StyleSheet, Image} from 'react-native';
 import {images} from '../utils/images';
 import {vh, vw} from '../constant';
 import {useNavigation} from '@react-navigation/native';
-import {colors} from '../utils/theme';
+import {ChevronLeft} from 'lucide-react-native';
 
 interface GlobalHeaderProps {
   title?: string;
   icon?: boolean;
+  /** Skip status-bar padding when parent already uses SafeAreaView */
+  embedInSafeArea?: boolean;
+  showBack?: boolean;
 }
 
-const GlobalHeader: React.FC<GlobalHeaderProps> = ({title = 'Alse', icon}) => {
+const GlobalHeader: React.FC<GlobalHeaderProps> = ({
+  icon,
+  embedInSafeArea = false,
+  showBack = false,
+}) => {
   const navigation = useNavigation();
 
   const handleNotificationPress = () => {
     navigation.navigate('Notifications');
   };
   return (
-    <View style={styles.container}>
-      {/* <Text style={styles.title}>{title}</Text> */}
-      <Image source={images.alseLogo} style={styles.title} />
+    <View
+      style={[
+        styles.container,
+        embedInSafeArea && styles.containerInSafeArea,
+      ]}>
+      <View style={styles.leftSection}>
+        {showBack && (
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={styles.backBtn}
+            hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
+            <ChevronLeft size={24} color="#333" />
+          </TouchableOpacity>
+        )}
+        <Image source={images.alseLogo} style={styles.title} />
+      </View>
       <View style={styles.iconsContainer}>
         <TouchableOpacity
           style={styles.iconButton}
@@ -63,6 +82,18 @@ const styles = StyleSheet.create({
     paddingTop: vh * 4,
     paddingBottom: 10,
     backgroundColor: '#fff',
+  },
+  containerInSafeArea: {
+    paddingTop: 4,
+  },
+  leftSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  backBtn: {
+    paddingVertical: 4,
+    paddingRight: 2,
+    marginLeft: 4,
   },
   title: {
     width: vw * 20,

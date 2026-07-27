@@ -35,6 +35,18 @@ import {
   Gavel,
   DollarSign,
   Store,
+  LayoutGrid,
+  Shirt,
+  Smartphone,
+  Home,
+  Sparkles,
+  Dumbbell,
+  BookOpen,
+  Utensils,
+  Baby,
+  Tag,
+  Watch,
+  Car,
 } from 'lucide-react-native';
 import {images} from '../../../utils/images';
 import {vh, vw} from '../../../constant';
@@ -43,6 +55,30 @@ import {useLocation} from '../../../hooks/useLocation';
 import Toast from 'react-native-toast-message';
 
 type Product = Record<string, any>;
+
+const formatCategoryLabel = (raw?: string) => {
+  if (!raw) return 'Category';
+  const cleaned = String(raw).replace(/_/g, ' ').trim();
+  const autoKey = cleaned.match(/^categories title (\d+)/i);
+  if (autoKey) return `Category ${autoKey[1]}`;
+  return cleaned.length > 22 ? `${cleaned.slice(0, 20)}…` : cleaned;
+};
+
+const getCategoryIcon = (label?: string) => {
+  const l = (label || '').toLowerCase();
+  if (/fashion|cloth|wear|apparel|outfit/.test(l)) return Shirt;
+  if (/electr|phone|gadget|tech|laptop/.test(l)) return Smartphone;
+  if (/home|furniture|decor|kitchen/.test(l)) return Home;
+  if (/beauty|cosmetic|makeup|skin/.test(l)) return Sparkles;
+  if (/sport|fitness|gym/.test(l)) return Dumbbell;
+  if (/book|educat|learn/.test(l)) return BookOpen;
+  if (/food|grocery|restaurant|drink/.test(l)) return Utensils;
+  if (/toy|kid|baby|child/.test(l)) return Baby;
+  if (/watch|jewel|access/.test(l)) return Watch;
+  if (/auto|car|vehicle/.test(l)) return Car;
+  if (/shop|store|seller/.test(l)) return Store;
+  return Tag;
+};
 
 interface Order {
   order_id: string;
@@ -526,47 +562,76 @@ const Marketplace: React.FC = () => {
         ) : null}
 
         {categories.length > 0 ? (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{paddingBottom: 12, gap: 8}}>
-            <TouchableOpacity
-              style={[
-                styles.categoryChip,
-                selectedCategoryId == null && styles.categoryChipActive,
-              ]}
-              onPress={() => setSelectedCategoryId(null)}>
-              <Text
+          <View style={styles.categoriesSection}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.categoriesScroll}>
+              <TouchableOpacity
                 style={[
-                  styles.categoryChipText,
-                  selectedCategoryId == null && styles.categoryChipTextActive,
-                ]}>
-                All
-              </Text>
-            </TouchableOpacity>
-            {categories.map((cat: any) => {
-              const id = cat.id;
-              const label = cat.title || cat.name;
-              const active = selectedCategoryId === id;
-              return (
-                <TouchableOpacity
-                  key={id}
+                  styles.categoryChip,
+                  selectedCategoryId == null && styles.categoryChipActive,
+                ]}
+                activeOpacity={0.85}
+                onPress={() => setSelectedCategoryId(null)}>
+                <View
                   style={[
-                    styles.categoryChip,
-                    active && styles.categoryChipActive,
-                  ]}
-                  onPress={() => setSelectedCategoryId(id)}>
-                  <Text
+                    styles.categoryIconWrap,
+                    selectedCategoryId == null && styles.categoryIconWrapActive,
+                  ]}>
+                  <LayoutGrid
+                    size={15}
+                    color={selectedCategoryId == null ? '#fff' : '#0C959B'}
+                    strokeWidth={2.2}
+                  />
+                </View>
+                <Text
+                  style={[
+                    styles.categoryChipText,
+                    selectedCategoryId == null && styles.categoryChipTextActive,
+                  ]}>
+                  All
+                </Text>
+              </TouchableOpacity>
+              {categories.map((cat: any) => {
+                const id = cat.id;
+                const rawLabel = cat.title || cat.name;
+                const label = formatCategoryLabel(rawLabel);
+                const active = selectedCategoryId === id;
+                const Icon = getCategoryIcon(rawLabel);
+                return (
+                  <TouchableOpacity
+                    key={id}
                     style={[
-                      styles.categoryChipText,
-                      active && styles.categoryChipTextActive,
-                    ]}>
-                    {label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
+                      styles.categoryChip,
+                      active && styles.categoryChipActive,
+                    ]}
+                    activeOpacity={0.85}
+                    onPress={() => setSelectedCategoryId(id)}>
+                    <View
+                      style={[
+                        styles.categoryIconWrap,
+                        active && styles.categoryIconWrapActive,
+                      ]}>
+                      <Icon
+                        size={15}
+                        color={active ? '#fff' : '#0C959B'}
+                        strokeWidth={2.2}
+                      />
+                    </View>
+                    <Text
+                      style={[
+                        styles.categoryChipText,
+                        active && styles.categoryChipTextActive,
+                      ]}
+                      numberOfLines={1}>
+                      {label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
         ) : null}
 
         {nearbyShops.length > 0 ? (
@@ -992,20 +1057,59 @@ const styles = StyleSheet.create({
   searchPlaceholder: {
     color: '#999',
   },
+  categoriesSection: {
+    backgroundColor: '#fff',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#E8EEF0',
+  },
+  categoriesScroll: {
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    gap: 10,
+    alignItems: 'center',
+  },
   categoryChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: '#f0f0f0',
-    marginRight: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingLeft: 8,
+    paddingRight: 14,
+    paddingVertical: 7,
+    borderRadius: 24,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#E4ECEE',
+    shadowColor: '#0A6B6F',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.08,
+    shadowRadius: 5,
+    elevation: 2,
   },
   categoryChipActive: {
     backgroundColor: '#0C959B',
+    borderColor: '#0C959B',
+    shadowColor: '#0C959B',
+    shadowOpacity: 0.28,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  categoryIconWrap: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(12, 149, 155, 0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
+  },
+  categoryIconWrapActive: {
+    backgroundColor: 'rgba(255, 255, 255, 0.22)',
   },
   categoryChipText: {
     fontSize: 13,
-    color: '#444',
-    fontWeight: '500',
+    color: '#1F2D2E',
+    fontWeight: '600',
+    letterSpacing: 0.1,
+    maxWidth: 130,
   },
   categoryChipTextActive: {
     color: '#fff',
