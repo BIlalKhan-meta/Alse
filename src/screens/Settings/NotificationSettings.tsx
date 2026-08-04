@@ -14,13 +14,14 @@ import {useAppTranslation} from '../../i18n/hooks/useAppTranslation';
 import GlobalHeader from '../../components/GlobalHeader';
 import {colors} from '../../utils/theme';
 
-// Map UI toggles to API types
+// Map UI toggles to Module 10 preference keys
 const TOGGLE_MAP = {
-  like: 'social_likes',
-  comment: 'social_comments',
-  follows: 'social_follows',
-  newPosts: 'seller_new_orders',
-  auctionUpdates: 'marketplace_orders',
+  like: 'likes_enabled',
+  comment: 'comments_enabled',
+  follows: 'followers_enabled',
+  newPosts: 'promotions_enabled',
+  auctionUpdates: 'marketplace_enabled',
+  push: 'push_enabled',
 } as const;
 
 const NotificationsSettings = () => {
@@ -28,15 +29,17 @@ const NotificationsSettings = () => {
   const notifications = useSelector(selectNotificationSettings);
   const {t} = useAppTranslation();
 
-  // Use API values; default to false when not yet loaded (avoids assuming "on")
-  // Coerce to boolean - API returns 0/1 or true/false
   const toBool = (v: unknown) => v === true || v === 1 || v === '1';
-  const like = toBool(notifications?.types?.social_likes);
   const toggleLoading = useSelector(selectNotificationToggleLoading);
-  const comment = toBool(notifications?.types?.social_comments);
-  const follows = toBool(notifications?.types?.social_follows);
-  const newPosts = toBool(notifications?.types?.seller_new_orders);
-  const auctionUpdates = toBool(notifications?.types?.marketplace_orders);
+
+  const like = toBool(notifications?.likes_enabled);
+  const comment = toBool(notifications?.comments_enabled);
+  const follows = toBool(notifications?.followers_enabled);
+  const newPosts = toBool(notifications?.promotions_enabled);
+  const auctionUpdates = toBool(notifications?.marketplace_enabled);
+  const pushEnabled = toBool(
+    notifications?.push_enabled == null ? true : notifications.push_enabled,
+  );
 
   useEffect(() => {
     dispatch(fetchAllSettings());
@@ -45,16 +48,12 @@ const NotificationsSettings = () => {
   const handleToggle = useCallback(
     (key: keyof typeof TOGGLE_MAP, value: boolean) => {
       const apiKey = TOGGLE_MAP[key];
-      // Optimistic update: flip switch immediately
       dispatch(
         updateNotifications({
-          types: {
-            ...(notifications?.types ?? {}),
-            [apiKey]: value,
-          },
+          ...(notifications ?? {}),
+          [apiKey]: value,
         }),
       );
-      // POST only the updated toggle to API
       dispatch(saveNotificationToggle({typeKey: apiKey, value}));
     },
     [dispatch, notifications],
@@ -73,7 +72,6 @@ const NotificationsSettings = () => {
           <ActivityIndicator size="large" color={colors.themeColor} />
         </View>
       </Modal>
-      {/* Header */}
       <View style={styles.header}>
         <GlobalHeader icon={true} />
       </View>
@@ -81,7 +79,6 @@ const NotificationsSettings = () => {
       <ScrollView
         style={styles.scrollContainer}
         showsVerticalScrollIndicator={false}>
-        {/* Section Title */}
         <View style={{paddingHorizontal: 16, paddingTop: 6}}>
           <Text style={{fontSize: 18, fontWeight: '700', color: colors.black}}>
             {t('Notification')}
@@ -89,7 +86,19 @@ const NotificationsSettings = () => {
         </View>
 
         <View style={styles.settingsContainer}>
-          {/* Like */}
+          <View style={styles.settingsItem}>
+            <Text style={styles.settingsItemText}>Push notifications</Text>
+            <View style={styles.switchContainer}>
+              <Switch
+                value={pushEnabled}
+                onValueChange={v => handleToggle('push', v)}
+                trackColor={{false: '#E5E7EB', true: colors.themeColor}}
+                thumbColor={'#FFFFFF'}
+                ios_backgroundColor={'#E5E7EB'}
+              />
+            </View>
+          </View>
+
           <View style={styles.settingsItem}>
             <Text style={styles.settingsItemText}>{t('Like')}</Text>
             <View style={styles.switchContainer}>
@@ -102,9 +111,7 @@ const NotificationsSettings = () => {
               />
             </View>
           </View>
-          
 
-          {/* Comment */}
           <View style={styles.settingsItem}>
             <Text style={styles.settingsItemText}>{t('Comment')}</Text>
             <View style={styles.switchContainer}>
@@ -117,9 +124,7 @@ const NotificationsSettings = () => {
               />
             </View>
           </View>
-          
 
-          {/* Follows */}
           <View style={styles.settingsItem}>
             <Text style={styles.settingsItemText}>{t('Follows')}</Text>
             <View style={styles.switchContainer}>
@@ -132,9 +137,7 @@ const NotificationsSettings = () => {
               />
             </View>
           </View>
-          
 
-          {/* New posts from followed stores */}
           <View style={styles.settingsItem}>
             <Text style={styles.settingsItemText}>
               {t('New posts from followed stores')}
@@ -149,9 +152,7 @@ const NotificationsSettings = () => {
               />
             </View>
           </View>
-          
 
-          {/* Auction updates */}
           <View style={styles.settingsItem}>
             <Text style={styles.settingsItemText}>{t('Auction updates')}</Text>
             <View style={styles.switchContainer}>

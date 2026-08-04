@@ -27,11 +27,24 @@ const initialState: AuthState = {
 export const login = createAsyncThunk(
   'auth/login',
   async (
-    credentials: {email: string; password: string; token: string},
+    credentials: {
+      email?: string;
+      identifier?: string;
+      password: string;
+      token?: string;
+      deviceId?: string;
+      fcmToken?: string;
+    },
     {rejectWithValue},
   ) => {
     try {
-      const response = await loginAPI(credentials);
+      const response = await loginAPI({
+        identifier: credentials.identifier || credentials.email || '',
+        password: credentials.password,
+        deviceId: credentials.deviceId,
+        fcmToken: credentials.fcmToken,
+        token: credentials.token,
+      });
       console.log(response, 'Responseee frommm loginnn sliceee');
       return response.data;
     } catch (error: any) {

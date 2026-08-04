@@ -11,7 +11,7 @@ import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import RememberMeContainer from '../../../components/RememberMeContainer';
 import {useAppDispatch} from '../../../hooks/storeHooks';
-import {getFcmToken} from '../../../services/pushNotificationService';
+import {getDeviceIdsForAuth, syncFcmTokenWithBackend} from '../../../services/pushNotificationService';
 import InterBoldLabel from '../../../components/Text/InterBoldLabel';
 import PoppinsLabel from '../../../components/Text/Poppins';
 import {appleLogin, googleLogin, login} from '../../../api/auth';
@@ -62,7 +62,8 @@ const LoginScreen: React.FC = () => {
   const [appleSubmitted, setAppleSubmitted] = useState<boolean>(false);
   const [securePassword, setSecurePassword] = useState<boolean>(true);
   const [isSelected, setIsSelected] = useState<boolean>(false);
-  const [deviceToken, setDeviceToken] = useState<string | undefined>('');
+  const [deviceId, setDeviceId] = useState<string>('');
+  const [fcmToken, setFcmToken] = useState<string | undefined>('');
   const [initialValues, setInitialValues] = useState({
     identifier: __DEV__ ? 'kendricklazarus2@gmail.com' : '',
     password: __DEV__ ? 'Iphone@9876' : '',
@@ -89,12 +90,13 @@ const LoginScreen: React.FC = () => {
 
   const getToken = async () => {
     try {
-      const token = await getFcmToken();
-      console.log('FCM Token received:', token);
-      setDeviceToken(token || 'no-token');
+      const ids = await getDeviceIdsForAuth();
+      console.log('FCM Token received:', ids.fcmToken);
+      setDeviceId(ids.deviceId);
+      setFcmToken(ids.fcmToken || '');
     } catch (error) {
       console.log('Error getting FCM token:', error);
-      setDeviceToken('no-token');
+      setFcmToken('');
     }
   };
 
@@ -118,13 +120,21 @@ const LoginScreen: React.FC = () => {
     }
 
     console.log('Login Form Values:', values);
-    console.log('Device Token:', deviceToken);
     setSubmitted(true);
+
+    let authDeviceId = deviceId;
+    let authFcmToken = fcmToken;
+    if (!authDeviceId || !authFcmToken) {
+      const ids = await getDeviceIdsForAuth();
+      authDeviceId = ids.deviceId;
+      authFcmToken = ids.fcmToken;
+    }
 
     const apiData = {
       identifier: values.identifier.trim(),
       password: values.password,
-      token: deviceToken || '',
+      deviceId: authDeviceId,
+      fcmToken: authFcmToken,
     };
 
     console.log('Login API Data:', apiData);
@@ -152,6 +162,7 @@ const LoginScreen: React.FC = () => {
             removeUserSession();
           }
           dispatch(setUser({user, access_token: token}));
+          syncFcmTokenWithBackend().catch(() => {});
         } else {
           Toast.show({
             type: 'error',
@@ -175,19 +186,25 @@ const LoginScreen: React.FC = () => {
       });
   };
 
-  const onGoogleLoginSuccess = (idToken: string) => {
+  const onGoogleLoginSuccess = async (idToken: string) => {
     if (googleSubmitted) {
       return;
     }
 
     setGoogleSubmitted(true);
 
-    const apiData = {token: idToken, deviceToken};
+    const ids = await getDeviceIdsForAuth();
+    const apiData = {
+      token: idToken,
+      deviceId: ids.deviceId,
+      fcmToken: ids.fcmToken,
+    };
 
     googleLogin(apiData)
       .then(res => {
         if (res?.data?.status) {
           dispatch(setUser(res?.data?.data));
+          syncFcmTokenWithBackend().catch(() => {});
         } else {
           Toast.show({
             type: 'error',
@@ -210,7 +227,7 @@ const LoginScreen: React.FC = () => {
       });
   };
 
-  const onAppleLoginSuccess = (user: any) => {
+  const onAppleLoginSuccess = async (user: any) => {
     if (appleSubmitted) {
       return;
     }
@@ -218,19 +235,22 @@ const LoginScreen: React.FC = () => {
     setAppleSubmitted(true);
 
     const {email, fullName, isAppleLogin, apple_id} = user;
+    const ids = await getDeviceIdsForAuth();
 
     const apiData = {
       email,
       fullName,
       isAppleLogin,
       apple_id,
-      deviceToken,
+      deviceId: ids.deviceId,
+      fcmToken: ids.fcmToken,
     };
 
     appleLogin(apiData)
       .then(res => {
         console.log(res.data, 'Res');
         dispatch(setUser(res?.data?.data));
+        syncFcmTokenWithBackend().catch(() => {});
       })
       .catch(err => {
         console.log(err, 'Err');

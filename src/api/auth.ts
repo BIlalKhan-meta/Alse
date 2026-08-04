@@ -1,13 +1,20 @@
-import { Platform } from 'react-native';
+import {Platform} from 'react-native';
 import axiosInstance from '.';
 import endpoints from './endpoints';
 
-export const googleLogin = (data: { token: string; deviceToken?: string }) => {
+export const googleLogin = (data: {
+  token: string;
+  deviceId?: string;
+  fcmToken?: string;
+}) => {
   const formData = new FormData();
   formData.append('token', data.token);
-  if (data.deviceToken) {
-    formData.append('device_id', data.deviceToken);
+  if (data.deviceId) {
+    formData.append('device_id', data.deviceId);
     formData.append('device_type', Platform.OS === 'ios' ? 'ios' : 'android');
+  }
+  if (data.fcmToken) {
+    formData.append('fcm_token', data.fcmToken);
   }
   return axiosInstance.post(endpoints.auth.login, formData, {
     formData: true,
@@ -19,16 +26,20 @@ export const appleLogin = (data: {
   fullName: string;
   isAppleLogin: boolean;
   apple_id: string;
-  deviceToken?: string;
+  deviceId?: string;
+  fcmToken?: string;
 }) => {
   const formData = new FormData();
   formData.append('email', data.email);
   formData.append('full_name', data.fullName);
   formData.append('is_apple_login', data.isAppleLogin);
   formData.append('apple_id', data.apple_id);
-  if (data.deviceToken) {
-    formData.append('device_id', data.deviceToken);
+  if (data.deviceId) {
+    formData.append('device_id', data.deviceId);
     formData.append('device_type', Platform.OS === 'ios' ? 'ios' : 'android');
+  }
+  if (data.fcmToken) {
+    formData.append('fcm_token', data.fcmToken);
   }
   return axiosInstance.post(endpoints.auth.login, formData, {
     formData: true,
@@ -38,13 +49,18 @@ export const appleLogin = (data: {
 export const login = (data: {
   identifier: string;
   password: string;
-  token: string;
+  deviceId?: string;
+  fcmToken?: string;
+  /** @deprecated use fcmToken + deviceId */
+  token?: string;
 }) => {
-  // API expects JSON body per docs - FormData can cause 422/rejection
+  const deviceId = data.deviceId || data.token;
+  const fcmToken = data.fcmToken || data.token;
   return axiosInstance.post(endpoints.auth.login, {
     identifier: data.identifier,
     password: data.password,
-    device_id: data.token || undefined,
+    device_id: deviceId || undefined,
+    fcm_token: fcmToken || undefined,
     device_type: Platform.OS === 'ios' ? 'ios' : 'android',
   });
 };
@@ -81,23 +97,12 @@ export const signupSeller = (data: {
 };
 
 export const forgotPassword = (data: { identifier: string }) => {
-  const formData = new FormData();
-  // Backend expects "identifier" (email or phone number)
-  formData.append('identifier', data.identifier);
-
-  console.log('FormData being sent:', {
-    identifier: data.identifier,
-  });
-
   return axiosInstance.post(endpoints.auth.forgotPassword, {
     identifier: data.identifier,
   });
 };
 
 export const verifyOtp = (data: { email: string; code: number }) => {
-  console.log(data, 'ForgetData frommmm authhhh ');
-
-
   return axiosInstance.post(endpoints.auth.verifyOtp, {
     email: data.email,
     code: data.code,
@@ -109,8 +114,6 @@ export const resetPassword = (data: {
   password: string;
   confirmPassword: string;
 }) => {
-
-
   return axiosInstance.post(endpoints.auth.resetPassword, {
     email: data.email,
     password: data.password,

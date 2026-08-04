@@ -56,8 +56,19 @@ export async function displayFcmWithNotifee(
     '';
 
   if (title == null && body === '') {
+    console.log('[INCOMING NOTIFICATION] Notifee skip — empty title/body', {
+      messageId: remoteMessage.messageId,
+      data,
+    });
     return;
   }
+
+  console.log('[INCOMING NOTIFICATION] displaying via Notifee', {
+    title,
+    body,
+    messageId: remoteMessage.messageId,
+    data,
+  });
 
   await ensureAndroidChannel();
 

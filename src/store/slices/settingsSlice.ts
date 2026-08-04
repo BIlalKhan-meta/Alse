@@ -6,6 +6,7 @@ import {
   updatePrivacySettings,
   updateNotificationSettings,
   updateNotificationToggle,
+  updateSellerSettings,
 } from '../../api/settings';
 import {editProfile} from '../../api/profile';
 import {GetUserProfile} from './authSlice';
@@ -21,21 +22,21 @@ interface SecuritySettings {
   message_requests: 'everyone' | 'followers' | 'off';
 }
 
-interface NotificationTypes {
-  social_likes: boolean;
-  social_comments: boolean;
-  social_follows: boolean;
-  marketplace_orders: boolean;
-  marketplace_payments: boolean;
-  seller_new_orders: boolean;
-  seller_reviews: boolean;
-  security_alerts: boolean;
-}
-
 interface NotificationSettings {
   push_enabled: boolean;
   email_enabled: boolean;
-  types: NotificationTypes;
+  messages_enabled?: boolean;
+  replies_enabled?: boolean;
+  comments_enabled?: boolean;
+  followers_enabled?: boolean;
+  likes_enabled?: boolean;
+  mentions_enabled?: boolean;
+  promotions_enabled?: boolean;
+  price_drop_enabled?: boolean;
+  local_activity_enabled?: boolean;
+  marketplace_enabled?: boolean;
+  announcements_enabled?: boolean;
+  orders_enabled?: boolean;
 }
 
 interface SellerSettings {
@@ -167,9 +168,9 @@ export const savePrivacySettings = createAsyncThunk(
 
 export const saveNotificationSettings = createAsyncThunk(
   'settings/saveNotifications',
-  async ({formData, id}: {formData: FormData; id: number}) => {
-    const res = await updateNotificationSettings(formData, id);
-    return res.data;
+  async (data: Record<string, boolean>) => {
+    const res = await updateNotificationSettings(data);
+    return res.data?.data ?? res.data;
   },
 );
 
@@ -209,8 +210,11 @@ export const settingsSlice = createSlice({
     updateSecurity: (state, action: PayloadAction<Partial<any>>) => {
       state.security = {...state.security, ...action.payload};
     },
-    updateNotifications: (state, action: PayloadAction<Partial<any>>) => {
-      state.notifications = {...state.notifications, ...action.payload};
+    updateNotifications: (state, action: PayloadAction<Partial<NotificationSettings>>) => {
+      state.notifications = {
+        ...(state.notifications || {push_enabled: true, email_enabled: true}),
+        ...action.payload,
+      };
     },
     updateSeller: (state, action: PayloadAction<Partial<any>>) => {
       state.seller = {...state.seller, ...action.payload};
@@ -306,19 +310,22 @@ export const settingsSlice = createSlice({
     });
     builder.addCase(saveNotificationToggle.fulfilled, (state, action) => {
       state.notificationToggleLoading = false;
-      const {typeKey, value} = action.payload || {};
+      const {typeKey, value, data} = action.payload || {};
+      if (data && typeof data === 'object') {
+        state.notifications = {
+          ...(state.notifications || {push_enabled: true, email_enabled: true}),
+          ...data,
+        };
+        return;
+      }
       if (typeKey) {
         if (!state.notifications) {
           state.notifications = {
             push_enabled: true,
             email_enabled: true,
-            types: {} as NotificationTypes,
           };
         }
-        if (!state.notifications.types) {
-          state.notifications.types = {} as NotificationTypes;
-        }
-        state.notifications.types[typeKey as keyof NotificationTypes] = value;
+        (state.notifications as any)[typeKey] = value;
       }
     });
     builder.addCase(saveNotificationToggle.rejected, state => {

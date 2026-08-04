@@ -1,4 +1,4 @@
-import React, {useCallback, useMemo, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {
   View,
   Text,
@@ -10,8 +10,9 @@ import {
 } from 'react-native';
 import GlobalHeader from '../../../components/GlobalHeader';
 import {colors} from '../../../utils/theme';
-import {getNotifications, markRead} from '../../../api/home';
-import {vh} from '../../../constant';
+import {getNotifications, markAllRead, markRead} from '../../../api/home';
+import {trackNotificationClick} from '../../../api/notifications';
+import {routeNotificationPayload} from '../../../services/pushNotificationService';
 import {
   getAbsoluteAvatarUrl,
   getDateSection,
@@ -23,9 +24,15 @@ type NotificationRow = {
   created_at: string;
   read_at: string | null;
   message: string;
+  title: string;
   avatarUrl: string | null;
   thumbnailUrl: string | null;
   metaKind: string;
+  objectType: string | null;
+  objectId: string | null;
+  deepLink: string | null;
+  notificationType: string | null;
+  rawData: Record<string, any>;
 };
 
 function extractNotificationsList(response: any): any[] {
@@ -66,18 +73,29 @@ function parseDataField(data: unknown): Record<string, any> {
 }
 
 function inferKind(raw: any, data: Record<string, any>): string {
-  const hay = `${String(data.type || '').toLowerCase()} ${String(raw.type || '').toLowerCase()}`;
-  if (hay.includes('like')) {
+  const type = String(
+    raw?.notification_type || data.notification_type || data.type || raw?.type || '',
+  ).toLowerCase();
+  if (type.includes('like')) {
     return 'like';
   }
-  if (hay.includes('mention')) {
+  if (type.includes('mention')) {
     return 'mention';
   }
-  if (hay.includes('comment')) {
+  if (type.includes('comment') || type.includes('reply')) {
     return 'comment';
   }
-  if (hay.includes('follow')) {
+  if (type.includes('follow')) {
     return 'follow';
+  }
+  if (type.includes('message')) {
+    return 'message';
+  }
+  if (type.includes('order') || type.includes('payment')) {
+    return 'order';
+  }
+  if (type.includes('price')) {
+    return 'price';
   }
   return 'default';
 }
@@ -92,6 +110,12 @@ function metaLabelForKind(kind: string): string {
       return 'Comment';
     case 'follow':
       return 'Follow';
+    case 'message':
+      return 'Message';
+    case 'order':
+      return 'Order';
+    case 'price':
+      return 'Deal';
     default:
       return 'Activity';
   }
@@ -99,15 +123,14 @@ function metaLabelForKind(kind: string): string {
 
 function normalizeNotification(raw: any, fallbackIndex: number): NotificationRow {
   const data = parseDataField(raw?.data);
+  // Module 10 nests title/message in data; also support flat columns
+  const nested = parseDataField(data?.data);
   const id = String(raw?.id ?? raw?.uuid ?? raw?.notification_id ?? `n-${fallbackIndex}`);
   const kind = inferKind(raw, data);
 
-  const userName =
-    data.user_name ??
-    data.full_name ??
-    data.sender_name ??
-    raw?.user?.full_name ??
-    raw?.sender?.full_name ??
+  const title =
+    (typeof data.title === 'string' && data.title.trim()) ||
+    (typeof raw?.title === 'string' && raw.title.trim()) ||
     '';
 
   let message =
@@ -116,46 +139,54 @@ function normalizeNotification(raw: any, fallbackIndex: number): NotificationRow
     '';
 
   if (!message) {
-    const name = userName.trim() || 'Someone';
-    if (kind === 'like') {
-      message = `${name} liked your post`;
-    } else if (kind === 'mention') {
-      message = `${name} mentioned you`;
-    } else if (kind === 'comment') {
-      message = `${name} commented on your post`;
-    } else if (kind === 'follow') {
-      message = `${name} started following you`;
-    } else {
-      message = `${name} sent you a notification`;
-    }
+    message = title || 'You have a new notification';
   }
 
   const avatarRaw =
     data.avatar ??
     data.user_avatar ??
     data.sender_avatar ??
-    raw?.user?.avatar ??
-    raw?.sender?.avatar ??
-    raw?.avatar;
+    nested.avatar ??
+    raw?.image ??
+    raw?.sender?.avatar;
 
   const thumbRaw =
+    raw?.image ??
+    data.image ??
     data.post_image ??
     data.thumbnail ??
-    data.image ??
-    data.content_image ??
-    raw?.content_image ??
-    raw?.post?.media?.[0]?.path;
+    nested.image;
 
-  const readAt = raw?.read_at ?? raw?.readAt ?? null;
+  const objectType =
+    raw?.object_type || data.object_type || nested.object_type || null;
+  const objectId = String(
+    raw?.object_id ?? data.object_id ?? nested.object_id ?? '',
+  ) || null;
+  const deepLink = raw?.deep_link || data.deep_link || null;
+  const notificationType =
+    raw?.notification_type || data.notification_type || null;
 
   return {
     id,
     created_at: raw?.created_at || raw?.createdAt || '',
-    read_at: readAt,
+    read_at: raw?.read_at ?? raw?.readAt ?? null,
     message,
+    title,
     avatarUrl: avatarRaw ? getAbsoluteAvatarUrl(String(avatarRaw)) : null,
     thumbnailUrl: thumbRaw ? getAbsoluteAvatarUrl(String(thumbRaw)) : null,
     metaKind: metaLabelForKind(kind),
+    objectType: objectType ? String(objectType) : null,
+    objectId,
+    deepLink: deepLink ? String(deepLink) : null,
+    notificationType: notificationType ? String(notificationType) : null,
+    rawData: {
+      ...data,
+      notification_id: id,
+      notification_type: notificationType,
+      object_type: objectType,
+      object_id: objectId,
+      deep_link: deepLink,
+    },
   };
 }
 
@@ -171,7 +202,7 @@ const Notifications: React.FC = () => {
   const fetchNotifications = useCallback(async () => {
     setRefreshing(true);
     try {
-      const response = await getNotifications();
+      const response = await getNotifications({per_page: 50});
       const list = extractNotificationsList(response);
       setNotifications(list.map((raw, i) => normalizeNotification(raw, i)));
     } catch (error) {
@@ -180,6 +211,10 @@ const Notifications: React.FC = () => {
       setRefreshing(false);
     }
   }, []);
+
+  useEffect(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
 
   const handleMarkAsRead = async (id: string) => {
     const item = notifications.find(n => n.id === id);
@@ -196,6 +231,27 @@ const Notifications: React.FC = () => {
     } catch (error) {
       console.log('Error marking notification read:', error);
     }
+  };
+
+  const handleMarkAllRead = async () => {
+    try {
+      await markAllRead();
+      const now = new Date().toISOString();
+      setNotifications(prev =>
+        prev.map(n => (n.read_at == null ? {...n, read_at: now} : n)),
+      );
+    } catch (error) {
+      console.log('Error marking all notifications read:', error);
+    }
+  };
+
+  const handlePress = async (item: NotificationRow) => {
+    await handleMarkAsRead(item.id);
+    trackNotificationClick(item.id).catch(() => {});
+    routeNotificationPayload(item.rawData, {
+      fromUserPress: true,
+      title: item.title,
+    });
   };
 
   const getTimeAgo = (timestamp: string) => {
@@ -250,7 +306,7 @@ const Notifications: React.FC = () => {
 
         <TouchableOpacity
           style={[styles.notificationItem, unread && styles.notificationItemUnread]}
-          onPress={() => handleMarkAsRead(item.id)}
+          onPress={() => handlePress(item)}
           activeOpacity={0.7}>
           <View style={styles.profileImageContainer}>
             <Image
@@ -316,6 +372,11 @@ const Notifications: React.FC = () => {
             </>
           )}
         </Text>
+        {unreadCount > 0 ? (
+          <TouchableOpacity onPress={handleMarkAllRead} hitSlop={8}>
+            <Text style={styles.markAllText}>Mark all read</Text>
+          </TouchableOpacity>
+        ) : null}
       </View>
 
       <FlatList
@@ -345,105 +406,106 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 8,
     marginBottom: 4,
-    marginTop: vh * 3,
   },
   notificationCounter: {
     paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginBottom: 4,
+    paddingBottom: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   notificationCounterText: {
-    fontSize: 14,
-    color: '#333',
+    fontSize: 13,
+    color: '#6B7280',
+    flex: 1,
   },
   notificationCounterNumber: {
-    fontSize: 14,
     fontWeight: '700',
     color: colors.themeColor,
   },
+  markAllText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.themeColor,
+    marginLeft: 12,
+  },
   sectionHeader: {
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingTop: 12,
+    paddingBottom: 6,
+  },
+  sectionHeaderText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#111827',
   },
   notificationItem: {
     flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
     alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#E5E7EB',
   },
   notificationItemUnread: {
-    backgroundColor: 'rgba(0, 0, 0, 0.03)',
+    backgroundColor: '#F8FAFC',
   },
   profileImageContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    overflow: 'hidden',
     marginRight: 12,
-    borderWidth: 0.5,
-    borderColor: '#ddd',
   },
   profileImage: {
-    width: '100%',
-    height: '100%',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#E5E7EB',
   },
   notificationContent: {
     flex: 1,
-    justifyContent: 'center',
+    marginRight: 8,
   },
   notificationText: {
     fontSize: 14,
-    color: '#000',
-    marginBottom: 2,
+    color: '#111827',
+    lineHeight: 20,
   },
   notificationMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    marginTop: 4,
   },
   notificationMetaText: {
     fontSize: 12,
-    color: '#777',
+    color: '#6B7280',
   },
   contentImageContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 6,
+    width: 48,
+    height: 48,
+    borderRadius: 8,
     overflow: 'hidden',
-    marginLeft: 12,
-    borderWidth: 0.5,
-    borderColor: '#eee',
   },
   contentImage: {
     width: '100%',
     height: '100%',
   },
-  listContentContainer: {
-    paddingBottom: vh * 10,
-  },
-  listEmptyContent: {
-    flexGrow: 1,
-    paddingBottom: vh * 10,
-  },
   emptyWrap: {
-    paddingHorizontal: 24,
-    paddingTop: vh * 8,
+    paddingTop: 80,
     alignItems: 'center',
+    paddingHorizontal: 24,
   },
   emptyTitle: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: '700',
+    color: '#111827',
     marginBottom: 8,
   },
   emptyHint: {
-    fontSize: 14,
-    color: '#777',
+    fontSize: 13,
+    color: '#6B7280',
     textAlign: 'center',
   },
-  sectionHeaderText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#666',
+  listContentContainer: {
+    paddingBottom: 24,
+  },
+  listEmptyContent: {
+    flexGrow: 1,
   },
 });
 

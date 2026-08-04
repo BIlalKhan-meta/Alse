@@ -169,11 +169,17 @@ export const getState = (id: number) => {
 export const getCity = (id: number) => {
   return axiosInstance.get(`${endpoints.home.state}/${id}/cities`);
 };
-export const getNotifications = () => {
-  return axiosInstance.get(`${endpoints.home.notifications}`);
+export const getNotifications = (params?: {
+  type?: 'all' | 'read' | 'unread';
+  per_page?: number;
+  page?: number;
+}) => {
+  return axiosInstance.get(`${endpoints.home.notifications}`, {params});
 };
 export const markRead = (id: string) => {
-  return axiosInstance.get(`${endpoints.home.markRead}/${id}`);
+  return axiosInstance.get(
+    `${endpoints.home.notifications}/${id}/mark-as-read`,
+  );
 };
 export const markAllRead = () => {
   return axiosInstance.post(`${endpoints.home.markAllRead}`);

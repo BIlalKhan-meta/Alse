@@ -16,7 +16,7 @@ import Checkbox from 'expo-checkbox';
 import GoogleLogin from '../../../components/GoogleAuth/Login';
 import AppleAuth from '../../../components/AppleAuth';
 import {useTranslation} from 'react-i18next';
-import {getFcmToken} from '../../../services/pushNotificationService';
+import {getDeviceIdsForAuth} from '../../../services/pushNotificationService';
 interface FormValues {
   name: string;
   identifier: string;
@@ -139,8 +139,12 @@ const SignupScreen: React.FC = () => {
 
     setIsGoogleSubmitted(true);
 
-    const deviceToken = await getFcmToken();
-    const apiData = {token: idToken, deviceToken};
+    const ids = await getDeviceIdsForAuth();
+    const apiData = {
+      token: idToken,
+      deviceId: ids.deviceId,
+      fcmToken: ids.fcmToken,
+    };
 
     googleLogin(apiData)
       .then(res => {
@@ -179,12 +183,15 @@ const SignupScreen: React.FC = () => {
 
     const {email, fullName, isAppleLogin, apple_id} = user;
 
+    const ids = await getDeviceIdsForAuth();
+
     const apiData = {
       email,
       fullName,
       isAppleLogin,
       apple_id,
-      deviceToken: await getFcmToken(),
+      deviceId: ids.deviceId,
+      fcmToken: ids.fcmToken,
     };
 
     appleLogin(apiData)

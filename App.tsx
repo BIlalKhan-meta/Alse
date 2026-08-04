@@ -19,6 +19,7 @@ import {
 } from './src/services/pushNotificationService';
 import MainNavigation from './src/navigation';
 import IncomingCallHandler from './src/components/IncomingCallHandler';
+import PushTokenSync from './src/components/PushTokenSync';
 import {navigationRef} from './src/utils/navigationRef';
 import {
   configureReanimatedLogger,
@@ -85,6 +86,7 @@ function App(): React.JSX.Element {
         persistor={persistor}>
         <LanguageProvider>
           <NavigationContainer ref={navigationRef} theme={theme}>
+            <PushTokenSync />
             <MainNavigation />
             <IncomingCallHandler />
           </NavigationContainer>
