@@ -72,6 +72,24 @@ const styles = StyleSheet.create({
     height: vh * 3,
     resizeMode: 'contain',
   },
+  unreadBadge: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#EF4444',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 3,
+  },
+  unreadBadgeText: {
+    color: '#fff',
+    fontSize: 9,
+    fontWeight: '700',
+  },
+
   messageIcon: {
     width: vh * 3.5,
     height: vh * 3.5,

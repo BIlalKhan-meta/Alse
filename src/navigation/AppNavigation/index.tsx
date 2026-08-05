@@ -63,6 +63,9 @@ import ShippingAddress from '../../screens/Settings/ShippingAddress';
 import BecomeSeller from '../../screens/BecomeSeller';
 import ExistingSeller from '../../screens/ExistingSeller';
 import SellerAnalytics from '../../screens/SellerAnalytics';
+import MyCampaigns from '../../screens/MyCampaigns';
+import CreateCampaign from '../../screens/CreateCampaign';
+import CampaignStats from '../../screens/CampaignStats';
 import AuctionDetail from '../../screens/AuctionDetail';
 import CreateReel from '../../screens/CreateReel';
 const AppNavigation = () => {
@@ -372,6 +375,18 @@ const AppNavigation = () => {
           name="SellerAnalytics"
           component={SellerAnalytics}
           options={NavigationOptions}
+        />
+        <Stack.Screen
+          name="MyCampaigns"
+          component={MyCampaigns}
+        />
+        <Stack.Screen
+          name="CreateCampaign"
+          component={CreateCampaign}
+        />
+        <Stack.Screen
+          name="CampaignStats"
+          component={CampaignStats}
         />
         <Stack.Screen
           name="AuctionDetail"

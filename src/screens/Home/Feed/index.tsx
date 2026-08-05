@@ -71,6 +71,8 @@ import {
   filterFeedPosts,
   getFeedFilterApiParam,
 } from '../../../utils/feedFilters';
+import AdFeedCard from '../../../components/AdFeedCard';
+import {recordImpression} from '../../../api/advertising';
 
 const CREATE_POST_HEIGHT_FALLBACK = 110;
 const STORIES_HEIGHT_FALLBACK = 112;
@@ -104,6 +106,8 @@ const Home: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<FeedFilterTab>('all');
+  const [hiddenAdIds, setHiddenAdIds] = useState<Set<number>>(new Set());
+  const impressedAdIds = useRef<Set<number>>(new Set());
   const [storiesContentHeight, setStoriesContentHeight] = useState(
     STORIES_HEIGHT_FALLBACK,
   );
@@ -275,10 +279,25 @@ const Home: React.FC = () => {
     [dispatch, activeFilter],
   );
 
-  const filteredPosts = useMemo(
-    () => filterFeedPosts(posts as Record<string, unknown>[], activeFilter),
-    [posts, activeFilter],
-  );
+  const filteredPosts = useMemo(() => {
+    const base = filterFeedPosts(
+      posts as Record<string, unknown>[],
+      activeFilter,
+    );
+    if (hiddenAdIds.size === 0) {
+      return base;
+    }
+    return base.filter(item => {
+      const isAd =
+        item.feed_item_type === 'advertisement' ||
+        item.type === 'advertisement' ||
+        item.is_ad === true;
+      if (!isAd) {
+        return true;
+      }
+      return !hiddenAdIds.has(Number(item.advertisement_id));
+    });
+  }, [posts, activeFilter, hiddenAdIds]);
 
   const handleFilterChange = useCallback((filter: FeedFilterTab) => {
     setActiveFilter(filter);
@@ -480,10 +499,33 @@ const Home: React.FC = () => {
   };
 
   const onViewableItemsChanged = useRef(
-    ({viewableItems}: {viewableItems: Array<{index?: number | null; isViewable?: boolean}>}) => {
+    ({
+      viewableItems,
+    }: {
+      viewableItems: Array<{
+        index?: number | null;
+        isViewable?: boolean;
+        item?: any;
+      }>;
+    }) => {
       const visibleItems = viewableItems.filter(
         item => item.isViewable !== false && typeof item.index === 'number',
       );
+
+      visibleItems.forEach(entry => {
+        const feedItem = entry.item;
+        const isAd =
+          feedItem?.feed_item_type === 'advertisement' ||
+          feedItem?.type === 'advertisement' ||
+          feedItem?.is_ad === true;
+        const adId = Number(feedItem?.advertisement_id);
+        if (isAd && adId && !impressedAdIds.current.has(adId)) {
+          impressedAdIds.current.add(adId);
+          recordImpression(adId).catch(() => {
+            impressedAdIds.current.delete(adId);
+          });
+        }
+      });
 
       if (visibleItems.length === 0) {
         setFocusedIndex(null);
@@ -524,7 +566,29 @@ const Home: React.FC = () => {
     }
   };
 
+  const handleAdRemoved = useCallback((advertisementId: number) => {
+    setHiddenAdIds(prev => {
+      const next = new Set(prev);
+      next.add(advertisementId);
+      return next;
+    });
+  }, []);
+
   const renderPost = ({item, index}: any) => {
+    const isAd =
+      item?.feed_item_type === 'advertisement' ||
+      item?.type === 'advertisement' ||
+      item?.is_ad === true;
+
+    if (isAd) {
+      return (
+        <AdFeedCard
+          item={item}
+          onRemoved={handleAdRemoved}
+        />
+      );
+    }
+
     const isFocused =
       isScreenFocused &&
       !mediaModalVisible.visible &&
@@ -772,7 +836,7 @@ const Home: React.FC = () => {
               }
               renderItem={renderPost}
               contentContainerStyle={styles.feedListContent}
-              keyExtractor={item => item.id.toString()}
+              keyExtractor={item => String(item?.id ?? item?.advertisement_id)}
               showsVerticalScrollIndicator={false}
               ListEmptyComponent={renderEmpty}
               ListFooterComponent={renderFooter}

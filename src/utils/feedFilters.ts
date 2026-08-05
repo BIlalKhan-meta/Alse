@@ -84,6 +84,14 @@ const isImagePost = (post: Record<string, unknown>): boolean => {
   );
 };
 
+const isAdvertisement = (post: Record<string, unknown>): boolean => {
+  return (
+    post.feed_item_type === 'advertisement' ||
+    post.type === 'advertisement' ||
+    post.is_ad === true
+  );
+};
+
 export const filterFeedPosts = <T extends Record<string, unknown>>(
   posts: T[],
   filter: FeedFilterTab,
@@ -93,6 +101,11 @@ export const filterFeedPosts = <T extends Record<string, unknown>>(
   }
 
   return posts.filter(post => {
+    // Ads only appear on the "all" tab
+    if (isAdvertisement(post)) {
+      return false;
+    }
+
     switch (filter) {
       case 'following':
         return isFollowingPost(post);

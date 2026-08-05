@@ -231,6 +231,20 @@ const MyShop: React.FC = () => {
             });
           },
         },
+        {
+          text: 'My Campaigns',
+          onPress: () => {
+            setMenuVisible(false);
+            (navigation as any).navigate('MyCampaigns');
+          },
+        },
+        {
+          text: 'Advertise',
+          onPress: () => {
+            setMenuVisible(false);
+            (navigation as any).navigate('CreateCampaign');
+          },
+        },
       ]
     : [
         {

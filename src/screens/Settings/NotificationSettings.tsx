@@ -10,36 +10,59 @@ import {
   saveNotificationToggle,
   updateNotifications,
 } from '../../store/slices/settingsSlice';
-import {useAppTranslation} from '../../i18n/hooks/useAppTranslation';
 import GlobalHeader from '../../components/GlobalHeader';
 import {colors} from '../../utils/theme';
 
 // Map UI toggles to Module 10 preference keys
 const TOGGLE_MAP = {
-  like: 'likes_enabled',
-  comment: 'comments_enabled',
-  follows: 'followers_enabled',
-  newPosts: 'promotions_enabled',
-  auctionUpdates: 'marketplace_enabled',
   push: 'push_enabled',
+  likes: 'likes_enabled',
+  comments: 'comments_enabled',
+  followers: 'followers_enabled',
+  promotions: 'promotions_enabled',
+  marketplace: 'marketplace_enabled',
+  messages: 'messages_enabled',
+  replies: 'replies_enabled',
+  mentions: 'mentions_enabled',
+  priceDrop: 'price_drop_enabled',
+  localActivity: 'local_activity_enabled',
+  announcements: 'announcements_enabled',
+  orders: 'orders_enabled',
+  email: 'email_enabled',
 } as const;
+
+const TOGGLE_ROWS: Array<{
+  key: keyof typeof TOGGLE_MAP;
+  label: string;
+  defaultOn?: boolean;
+}> = [
+  {key: 'push', label: 'Push notifications', defaultOn: true},
+  {key: 'likes', label: 'Likes'},
+  {key: 'comments', label: 'Comments'},
+  {key: 'replies', label: 'Replies'},
+  {key: 'mentions', label: 'Mentions'},
+  {key: 'followers', label: 'Followers'},
+  {key: 'messages', label: 'Messages'},
+  {key: 'promotions', label: 'Promotions'},
+  {key: 'marketplace', label: 'Marketplace'},
+  {key: 'priceDrop', label: 'Price drops'},
+  {key: 'localActivity', label: 'Local activity'},
+  {key: 'announcements', label: 'Announcements'},
+  {key: 'orders', label: 'Orders'},
+  {key: 'email', label: 'Email notifications', defaultOn: true},
+];
 
 const NotificationsSettings = () => {
   const dispatch = useAppDispatch();
   const notifications = useSelector(selectNotificationSettings);
-  const {t} = useAppTranslation();
-
-  const toBool = (v: unknown) => v === true || v === 1 || v === '1';
   const toggleLoading = useSelector(selectNotificationToggleLoading);
 
-  const like = toBool(notifications?.likes_enabled);
-  const comment = toBool(notifications?.comments_enabled);
-  const follows = toBool(notifications?.followers_enabled);
-  const newPosts = toBool(notifications?.promotions_enabled);
-  const auctionUpdates = toBool(notifications?.marketplace_enabled);
-  const pushEnabled = toBool(
-    notifications?.push_enabled == null ? true : notifications.push_enabled,
-  );
+  const toBool = (v: unknown, defaultOn = false) => {
+    if (v == null) {
+      return defaultOn;
+    }
+    return v === true || v === 1 || v === '1';
+  };
 
   useEffect(() => {
     dispatch(fetchAllSettings());
@@ -81,90 +104,32 @@ const NotificationsSettings = () => {
         showsVerticalScrollIndicator={false}>
         <View style={{paddingHorizontal: 16, paddingTop: 6}}>
           <Text style={{fontSize: 18, fontWeight: '700', color: colors.black}}>
-            {t('Notification')}
+            Notification
           </Text>
         </View>
 
         <View style={styles.settingsContainer}>
-          <View style={styles.settingsItem}>
-            <Text style={styles.settingsItemText}>Push notifications</Text>
-            <View style={styles.switchContainer}>
-              <Switch
-                value={pushEnabled}
-                onValueChange={v => handleToggle('push', v)}
-                trackColor={{false: '#E5E7EB', true: colors.themeColor}}
-                thumbColor={'#FFFFFF'}
-                ios_backgroundColor={'#E5E7EB'}
-              />
-            </View>
-          </View>
-
-          <View style={styles.settingsItem}>
-            <Text style={styles.settingsItemText}>{t('Like')}</Text>
-            <View style={styles.switchContainer}>
-              <Switch
-                value={like}
-                onValueChange={v => handleToggle('like', v)}
-                trackColor={{false: '#E5E7EB', true: colors.themeColor}}
-                thumbColor={'#FFFFFF'}
-                ios_backgroundColor={'#E5E7EB'}
-              />
-            </View>
-          </View>
-
-          <View style={styles.settingsItem}>
-            <Text style={styles.settingsItemText}>{t('Comment')}</Text>
-            <View style={styles.switchContainer}>
-              <Switch
-                value={comment}
-                onValueChange={v => handleToggle('comment', v)}
-                trackColor={{false: '#E5E7EB', true: colors.themeColor}}
-                thumbColor={'#FFFFFF'}
-                ios_backgroundColor={'#E5E7EB'}
-              />
-            </View>
-          </View>
-
-          <View style={styles.settingsItem}>
-            <Text style={styles.settingsItemText}>{t('Follows')}</Text>
-            <View style={styles.switchContainer}>
-              <Switch
-                value={follows}
-                onValueChange={v => handleToggle('follows', v)}
-                trackColor={{false: '#E5E7EB', true: colors.themeColor}}
-                thumbColor={'#FFFFFF'}
-                ios_backgroundColor={'#E5E7EB'}
-              />
-            </View>
-          </View>
-
-          <View style={styles.settingsItem}>
-            <Text style={styles.settingsItemText}>
-              {t('New posts from followed stores')}
-            </Text>
-            <View style={styles.switchContainer}>
-              <Switch
-                value={newPosts}
-                onValueChange={v => handleToggle('newPosts', v)}
-                trackColor={{false: '#E5E7EB', true: colors.themeColor}}
-                thumbColor={'#FFFFFF'}
-                ios_backgroundColor={'#E5E7EB'}
-              />
-            </View>
-          </View>
-
-          <View style={styles.settingsItem}>
-            <Text style={styles.settingsItemText}>{t('Auction updates')}</Text>
-            <View style={styles.switchContainer}>
-              <Switch
-                value={auctionUpdates}
-                onValueChange={v => handleToggle('auctionUpdates', v)}
-                trackColor={{false: '#E5E7EB', true: colors.themeColor}}
-                thumbColor={'#FFFFFF'}
-                ios_backgroundColor={'#E5E7EB'}
-              />
-            </View>
-          </View>
+          {TOGGLE_ROWS.map(row => {
+            const apiKey = TOGGLE_MAP[row.key];
+            const value = toBool(
+              notifications?.[apiKey as keyof typeof notifications],
+              row.defaultOn ?? false,
+            );
+            return (
+              <View key={row.key} style={styles.settingsItem}>
+                <Text style={styles.settingsItemText}>{row.label}</Text>
+                <View style={styles.switchContainer}>
+                  <Switch
+                    value={value}
+                    onValueChange={v => handleToggle(row.key, v)}
+                    trackColor={{false: '#E5E7EB', true: colors.themeColor}}
+                    thumbColor={'#FFFFFF'}
+                    ios_backgroundColor={'#E5E7EB'}
+                  />
+                </View>
+              </View>
+            );
+          })}
         </View>
       </ScrollView>
     </View>

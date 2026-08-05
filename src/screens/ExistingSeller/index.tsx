@@ -383,6 +383,11 @@ const ExistingSeller: React.FC = () => {
           </View>
           <View style={styles.headerRight}>
             <TouchableOpacity
+              style={[styles.addStoreButton, {marginRight: 8}]}
+              onPress={() => (navigation as any).navigate('MyCampaigns')}>
+              <Text style={styles.addStoreText}>My Campaigns</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
               style={styles.addStoreButton}
               onPress={handleCreateNewShop}>
               <Plus size={16} color="white" />
@@ -479,6 +484,14 @@ const ExistingSeller: React.FC = () => {
                         });
                       }}>
                       <Text style={styles.analyticsButtonText}>Analytics</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.analyticsButton, {backgroundColor: '#0A7A7E'}]}
+                      onPress={e => {
+                        e?.stopPropagation?.();
+                        (navigation as any).navigate('MyCampaigns');
+                      }}>
+                      <Text style={styles.analyticsButtonText}>Advertise</Text>
                     </TouchableOpacity>
                   </View>
                   <TouchableOpacity style={styles.storeMenu}>

@@ -1,9 +1,11 @@
-import React from 'react';
-import {Image, TouchableOpacity, View} from 'react-native';
+import React, {useCallback, useState} from 'react';
+import {Image, Text, TouchableOpacity, View} from 'react-native';
 import {ChevronLeft, Search} from 'lucide-react-native';
+import {useFocusEffect} from '@react-navigation/native';
 import styles from './styles';
 import {images} from '../../utils/images';
 import {colors} from '../../utils/theme';
+import {getUnreadNotificationCount} from '../../api/notifications';
 
 interface NavigationOptionsProps {
   route: any;
@@ -63,6 +65,9 @@ const titles: {[key: string]: string} = {
   ExistingSeller: 'My Stores',
   SellerAnalytics: 'Shop Analytics',
   PostDrafts: 'Drafts',
+  MyCampaigns: 'My Campaigns',
+  CreateCampaign: 'Create Campaign',
+  CampaignStats: 'Campaign Stats',
 };
 const backButtonRoutes: {[key: string]: boolean} = {
   ChatOngoing: true,
@@ -110,6 +115,9 @@ const backButtonRoutes: {[key: string]: boolean} = {
   Videos: true,
   ExistingSeller: true,
   SellerAnalytics: true,
+  MyCampaigns: true,
+  CreateCampaign: true,
+  CampaignStats: true,
 };
 
 const getTitle: React.FC<NavigationOptionsProps> = props => {
@@ -128,56 +136,99 @@ const getTitle: React.FC<NavigationOptionsProps> = props => {
   return '';
 };
 
+const HomeHeaderRight = ({navigation}: {navigation: any}) => {
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      getUnreadNotificationCount()
+        .then(res => {
+          if (!active) {
+            return;
+          }
+          const data = res?.data?.data ?? res?.data;
+          const count =
+            typeof data?.total === 'number'
+              ? data.total
+              : typeof data?.count === 'number'
+                ? data.count
+                : typeof data === 'number'
+                  ? data
+                  : 0;
+          setUnreadCount(count);
+        })
+        .catch(() => {
+          if (active) {
+            setUnreadCount(0);
+          }
+        });
+      return () => {
+        active = false;
+      };
+    }, []),
+  );
+
+  const badgeLabel = unreadCount > 99 ? '99+' : String(unreadCount);
+
+  return (
+    <View style={styles.notificationandshopcontainer}>
+      <TouchableOpacity
+        style={[styles.iconContainer, {marginRight: 4}]}
+        onPress={() => navigation.navigate('Notifications')}>
+        <View
+          style={[
+            styles.notificationcontainer,
+            {
+              backgroundColor: '#fff',
+              borderWidth: 1,
+              borderColor: '#E4E6EB',
+              width: 40,
+              height: 40,
+              borderRadius: 20,
+            },
+          ]}>
+          <Image
+            source={images.bellIcon}
+            style={[
+              styles.notificationicon,
+              {tintColor: '#0C959B', width: 20, height: 20},
+            ]}
+          />
+          {unreadCount > 0 ? (
+            <View style={styles.unreadBadge}>
+              <Text style={styles.unreadBadgeText}>{badgeLabel}</Text>
+            </View>
+          ) : null}
+        </View>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.iconContainer, {marginRight: 4}]}
+        onPress={() => navigation.navigate('SearchUsers')}
+        accessibilityRole="button"
+        accessibilityLabel="Search users">
+        <View
+          style={[
+            styles.notificationcontainer,
+            {
+              backgroundColor: '#fff',
+              borderWidth: 1,
+              borderColor: '#E4E6EB',
+              width: 40,
+              height: 40,
+              borderRadius: 20,
+            },
+          ]}>
+          <Search color="#0C959B" size={20} strokeWidth={2.25} />
+        </View>
+      </TouchableOpacity>
+    </View>
+  );
+};
+
 export const getHeaderRight: React.FC<NavigationOptionsProps> = props => {
   if (props.route.name === 'Home') {
-    return (
-      <View style={styles.notificationandshopcontainer}>
-        <TouchableOpacity
-          style={[styles.iconContainer, {marginRight: 4}]}
-          onPress={() => props.navigation.navigate('Notifications')}>
-          <View
-            style={[
-              styles.notificationcontainer,
-              {
-                backgroundColor: '#fff',
-                borderWidth: 1,
-                borderColor: '#E4E6EB',
-                width: 40,
-                height: 40,
-                borderRadius: 20,
-              },
-            ]}>
-            <Image
-              source={images.bellIcon}
-              style={[
-                styles.notificationicon,
-                {tintColor: '#0C959B', width: 20, height: 20},
-              ]}
-            />
-          </View>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.iconContainer, {marginRight: 4}]}
-          onPress={() => props.navigation.navigate('SearchUsers')}
-          accessibilityRole="button"
-          accessibilityLabel="Search users">
-          <View
-            style={[
-              styles.notificationcontainer,
-              {
-                backgroundColor: '#fff',
-                borderWidth: 1,
-                borderColor: '#E4E6EB',
-                width: 40,
-                height: 40,
-                borderRadius: 20,
-              },
-            ]}>
-            <Search color="#0C959B" size={20} strokeWidth={2.25} />
-          </View>
-        </TouchableOpacity>
-      </View>
-    );
+    return <HomeHeaderRight navigation={props.navigation} />;
   }
 };
 
