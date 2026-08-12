@@ -411,9 +411,7 @@ const PostComponent: React.FC<PostProps> = ({
                   }}
                   maxBitRate={2_500_000}
                   onBuffer={res => {
-                    if (res?.isBuffering) {
-                      setVideoLoad(true);
-                    }
+                    setVideoLoad(Boolean(res?.isBuffering));
                   }}
                   ignoreSilentSwitch="ignore"
                 />
@@ -455,12 +453,8 @@ const PostComponent: React.FC<PostProps> = ({
             style={styles.mediaInnerFill}
             onPress={() => onMediaPress?.(item, index)}>
             <CustomImage
-              media={item}
-              variant="medium"
               source={{
-                uri: changeUrlForData(
-                  item.medium_path || item.path || item.full_path,
-                ),
+                uri: changeUrlForData(item.path || item.full_path || item.medium_path),
               }}
               style={styles.postImage}
             />

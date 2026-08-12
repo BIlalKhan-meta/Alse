@@ -14,10 +14,8 @@ import {
 import Video from 'react-native-video';
 import {X} from 'lucide-react-native';
 import InterRegular from '../Text/InterRegular';
-import CustomImage from '../CustomeImage';
 import {vh, vw} from '../../constant';
 import {changeUrlForData} from '../../utils/helpers';
-import {appCache} from '../../utils/appCache';
 
 interface MediaModalProps {
   visible: boolean;
@@ -26,11 +24,9 @@ interface MediaModalProps {
   mediaType: 'image' | 'video';
   userName?: string;
   postTime?: string;
-  /** Optional medium URL for progressive quality upgrade */
-  previewUrl?: string;
 }
 
-const {width: screenWidth, height: screenHeight} = Dimensions.get('window');
+const {width: screenWidth} = Dimensions.get('window');
 
 const MediaModal: React.FC<MediaModalProps> = ({
   visible,
@@ -39,36 +35,28 @@ const MediaModal: React.FC<MediaModalProps> = ({
   mediaType,
   userName,
   postTime,
-  previewUrl,
 }) => {
   const [isVideoLoading, setIsVideoLoading] = useState(true);
+  const [isImageLoading, setIsImageLoading] = useState(true);
   const [videoError, setVideoError] = useState(false);
-  const [useFullQuality, setUseFullQuality] = useState(!previewUrl);
   const videoRef = useRef<typeof Video | any>(null);
 
-  const resolvedUrl = useMemo(() => {
-    const preferred =
-      !useFullQuality && previewUrl ? previewUrl : mediaUrl;
-    return preferred ? changeUrlForData(preferred) : '';
-  }, [mediaUrl, previewUrl, useFullQuality]);
+  const resolvedUrl = useMemo(
+    () => (mediaUrl ? changeUrlForData(mediaUrl) : ''),
+    [mediaUrl],
+  );
 
   useEffect(() => {
     if (visible) {
       setIsVideoLoading(true);
+      setIsImageLoading(true);
       setVideoError(false);
-      setUseFullQuality(!previewUrl);
-      if (mediaUrl) {
-        appCache.set(`recent-media:${mediaUrl}`, String(Date.now()));
-      }
     }
-  }, [visible, mediaUrl, mediaType, previewUrl]);
+  }, [visible, mediaUrl, mediaType]);
 
   const handleVideoLoad = () => {
     setIsVideoLoading(false);
     setVideoError(false);
-    if (!useFullQuality && previewUrl && mediaUrl) {
-      setUseFullQuality(true);
-    }
   };
 
   const handleVideoError = () => {
@@ -79,7 +67,6 @@ const MediaModal: React.FC<MediaModalProps> = ({
   const retryVideo = () => {
     setVideoError(false);
     setIsVideoLoading(true);
-    setUseFullQuality(true);
   };
 
   const renderVideoContent = () => {
@@ -128,18 +115,24 @@ const MediaModal: React.FC<MediaModalProps> = ({
 
   const renderImageContent = () => {
     return (
-      <CustomImage
-        source={{uri: resolvedUrl}}
-        variant="full"
-        style={styles.image}
-        resizeMode="contain"
-        showPlaceholder
-        onLoadEnd={() => {
-          if (!useFullQuality && previewUrl) {
-            setUseFullQuality(true);
-          }
-        }}
-      />
+      <View style={styles.imageWrap}>
+        {isImageLoading ? (
+          <View style={styles.loaderOverlay} pointerEvents="none">
+            <ActivityIndicator size="large" color="#fff" />
+          </View>
+        ) : null}
+        {resolvedUrl ? (
+          <Image
+            key={resolvedUrl}
+            source={{uri: resolvedUrl}}
+            style={styles.image}
+            resizeMode="contain"
+            onLoad={() => setIsImageLoading(false)}
+            onLoadEnd={() => setIsImageLoading(false)}
+            onError={() => setIsImageLoading(false)}
+          />
+        ) : null}
+      </View>
     );
   };
 
@@ -206,13 +199,21 @@ const styles = StyleSheet.create({
   },
   mediaContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    minHeight: screenHeight * 0.75,
+    width: '100%',
+  },
+  imageWrap: {
+    flex: 1,
+    width: '100%',
   },
   image: {
-    width: screenWidth,
-    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
+  loaderOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2,
   },
   videoContainer: {
     width: screenWidth,

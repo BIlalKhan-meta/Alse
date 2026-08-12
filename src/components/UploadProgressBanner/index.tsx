@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {StyleSheet, Text, View} from 'react-native';
-import eventEmitter, {EVENT_TYPES} from '../utils/EventEmitter';
-import {colors} from '../utils/theme';
+import eventEmitter, {EVENT_TYPES} from '../../utils/EventEmitter';
+import {colors} from '../../utils/theme';
 
 const UploadProgressBanner: React.FC = () => {
   const [message, setMessage] = useState('');

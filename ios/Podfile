@@ -96,8 +96,80 @@ target 'Alenga' do
       'FOLLY_CFG_NO_COROUTINES=1',
       'FOLLY_HAVE_CLOCK_GETTIME=1',
     ]
-    folly_module_targets = ['React-jsi', 'RCT-Folly', 'NitroModules', 'NitroMediaKit']
+    folly_module_targets = [
+      'React-jsi',
+      'RCT-Folly',
+      'NitroModules',
+      'NitroMediaKit',
+      'react-native-compressor',
+    ]
     folly_cpp_flags = '-DFOLLY_NO_CONFIG -DFOLLY_MOBILE=1 -DFOLLY_USE_LIBCPP=1 -DFOLLY_CFG_NO_COROUTINES=1 -DFOLLY_HAVE_CLOCK_GETTIME=1'
+
+    def folly_related_target?(target, named_targets)
+      named_targets.include?(target.name) || target.name.include?('Nitro')
+    end
+
+    # RCT-Folly never generates folly-config.h under use_frameworks. Nitro public
+    # headers import <jsi/jsi.h>, the jsi umbrella pulls Folly, and the Folly
+    # module then fails without this file.
+    folly_config_path = File.join(installer.sandbox.root, 'RCT-Folly/folly/folly-config.h')
+    unless File.exist?(folly_config_path)
+      File.write(folly_config_path, <<~'HEADER')
+        #pragma once
+        #define FOLLY_NO_CONFIG 1
+        #define FOLLY_MOBILE 1
+        #define FOLLY_USE_LIBCPP 1
+        #define FOLLY_HAVE_PTHREAD 1
+        #define FOLLY_HAVE_PTHREAD_ATFORK 1
+        #define FOLLY_HAVE_LIBGFLAGS 0
+        #define FOLLY_HAVE_LIBGLOG 1
+        #define FOLLY_HAVE_CLOCK_GETTIME 1
+        #define FOLLY_HAVE_OPENAT2 0
+      HEADER
+    end
+
+    folly_umbrella = File.join(installer.sandbox.root, 'Target Support Files/RCT-Folly/RCT-Folly-umbrella.h')
+    if File.exist?(folly_umbrella)
+      umbrella = File.read(folly_umbrella)
+      patched_umbrella = umbrella.gsub(/^#import "folly\/portability\/openat2.h"\n/, '')
+      File.write(folly_umbrella, patched_umbrella) if patched_umbrella != umbrella
+    end
+
+    jsi_umbrella = File.join(installer.sandbox.root, 'Target Support Files/React-jsi/React-jsi-umbrella.h')
+    if File.exist?(jsi_umbrella)
+      umbrella = File.read(jsi_umbrella)
+      patched_umbrella = umbrella.gsub(/^#import "JSIDynamic.h"\n/, '')
+      File.write(jsi_umbrella, patched_umbrella) if patched_umbrella != umbrella
+    end
+
+    Dir.glob(File.join(installer.sandbox.root, 'Target Support Files/NitroModules/*.xcconfig')).each do |xcconfig_path|
+      text = File.read(xcconfig_path)
+      fixed = text.gsub('["${PODS_ROOT}/RCT-Folly"]', '"${PODS_ROOT}/RCT-Folly"')
+      File.write(xcconfig_path, fixed) if fixed != text
+    end
+
+    # Keep Folly flags in xcconfigs too so Xcode's indexer can build the jsi/Nitro modules.
+    %w[react-native-compressor NitroModules NitroMediaKit React-jsi RCT-Folly].each do |pod_name|
+      Dir.glob(File.join(installer.sandbox.root, "Target Support Files/#{pod_name}/*.xcconfig")).each do |xcconfig_path|
+        text = File.read(xcconfig_path)
+        next if text.include?('FOLLY_NO_CONFIG') && text.include?('CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES')
+
+        unless text.include?('FOLLY_NO_CONFIG')
+          if text =~ /^GCC_PREPROCESSOR_DEFINITIONS = .+$/
+            text = text.sub(
+              /^GCC_PREPROCESSOR_DEFINITIONS = (.+)$/,
+              'GCC_PREPROCESSOR_DEFINITIONS = \1 FOLLY_NO_CONFIG FOLLY_MOBILE=1 FOLLY_USE_LIBCPP=1 FOLLY_CFG_NO_COROUTINES=1 FOLLY_HAVE_CLOCK_GETTIME=1'
+            )
+          else
+            text += "GCC_PREPROCESSOR_DEFINITIONS = $(inherited) FOLLY_NO_CONFIG FOLLY_MOBILE=1 FOLLY_USE_LIBCPP=1 FOLLY_CFG_NO_COROUTINES=1 FOLLY_HAVE_CLOCK_GETTIME=1\n"
+          end
+        end
+        unless text.include?('CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES')
+          text += "CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = YES\n"
+        end
+        File.write(xcconfig_path, text)
+      end
+    end
     flt_defs = [
       'FLT_MAX=3.40282346638528859811704183484516925e+38F',
       'FLT_MIN=1.17549435082228750796873653722224568e-38F',
@@ -119,7 +191,7 @@ target 'Alenga' do
           config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] = defs
         end
 
-        if folly_module_targets.include?(target.name)
+        if folly_related_target?(target, folly_module_targets)
           defs = config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] || '$(inherited)'
           defs = [defs] if defs.is_a?(String)
           folly_defs.each do |definition|
@@ -137,6 +209,17 @@ target 'Alenga' do
               config.build_settings[flag_setting] = "#{flags} #{folly_cpp_flags}"
             end
           end
+
+          config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
+          config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] ||= 'c++20'
+
+          paths = config.build_settings['HEADER_SEARCH_PATHS'] || '$(inherited)'
+          paths = [paths] if paths.is_a?(String)
+          paths = paths.map { |path| path.to_s.gsub(/\["(\$\{PODS_ROOT\}\/RCT-Folly)"\]/, '"\1"') }
+          unless paths.any? { |path| path.to_s.include?('RCT-Folly') && !path.to_s.include?('[') }
+            paths << '"$(PODS_ROOT)/RCT-Folly"'
+          end
+          config.build_settings['HEADER_SEARCH_PATHS'] = paths
         end
         # Exclude Android-specific headers from iOS builds
         ['HEADER_SEARCH_PATHS', 'USER_HEADER_SEARCH_PATHS'].each do |setting|

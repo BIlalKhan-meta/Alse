@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -7,16 +7,15 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
-import FastImage, {FastImageProps} from 'react-native-fast-image';
 import {images} from '../utils/images';
 import {colors} from '../utils/theme';
+import {changeUrlForData} from '../utils/helpers';
 
 export type ImageSizeVariant = 'thumbnail' | 'medium' | 'full';
 
 interface CustomeImageInterface extends Omit<ImageProps, 'source'> {
   source?: ImageProps['source'];
   dummyImage?: any;
-  /** Prefer thumbnail/medium/full URL when media object provided */
   variant?: ImageSizeVariant;
   media?: {
     path?: string;
@@ -27,14 +26,16 @@ interface CustomeImageInterface extends Omit<ImageProps, 'source'> {
   showPlaceholder?: boolean;
 }
 
-function isRemoteHttpUri(source: ImageProps['source']): boolean {
-  return (
-    !!source &&
-    typeof source === 'object' &&
-    'uri' in source &&
-    typeof (source as {uri: string}).uri === 'string' &&
-    /^https?:\/\//.test((source as {uri: string}).uri)
-  );
+const loadedRemoteUris = new Set<string>();
+
+export function markRemoteImageLoaded(uri?: string | null) {
+  if (uri) {
+    loadedRemoteUris.add(uri);
+  }
+}
+
+export function isRemoteImageLoaded(uri?: string | null): boolean {
+  return Boolean(uri && loadedRemoteUris.has(uri));
 }
 
 function resolveVariantUrl(
@@ -44,13 +45,14 @@ function resolveVariantUrl(
   if (!media) {
     return undefined;
   }
+  const path = media.path || media.full_path;
   if (variant === 'thumbnail') {
-    return media.thumbnail_path || media.medium_path || media.path || media.full_path;
+    return media.thumbnail_path || media.medium_path || path;
   }
   if (variant === 'full') {
-    return media.full_path || media.path || media.medium_path || media.thumbnail_path;
+    return media.full_path || path || media.medium_path || media.thumbnail_path;
   }
-  return media.medium_path || media.path || media.full_path || media.thumbnail_path;
+  return media.medium_path || path || media.full_path || media.thumbnail_path;
 }
 
 const CustomImage = ({
@@ -59,93 +61,103 @@ const CustomImage = ({
   style,
   dummyImage = images.profile,
   onError,
+  onLoad,
+  onLoadEnd,
   variant = 'medium',
   media,
   showPlaceholder = true,
   ...props
 }: CustomeImageInterface) => {
+  const uri = useMemo(() => {
+    const raw =
+      resolveVariantUrl(media, variant) ||
+      (typeof source === 'object' && source && 'uri' in source
+        ? (source as {uri?: string}).uri
+        : undefined);
+    if (!raw) {
+      return undefined;
+    }
+    return changeUrlForData(raw);
+  }, [media, variant, source]);
+
+  const alreadyLoaded = Boolean(uri && loadedRemoteUris.has(uri));
   const [failed, setFailed] = useState(false);
-  const [loading, setLoading] = useState(true);
-
-  const variantUri = resolveVariantUrl(media, variant);
-  const effectiveSource =
-    variantUri != null
-      ? {uri: variantUri}
-      : source;
-
-  const remote = isRemoteHttpUri(effectiveSource);
+  const [loading, setLoading] = useState(Boolean(uri) && !alreadyLoaded);
+  const [showDelayedSpinner, setShowDelayedSpinner] = useState(false);
 
   useEffect(() => {
+    const cached = Boolean(uri && loadedRemoteUris.has(uri));
     setFailed(false);
-    setLoading(true);
-  }, [effectiveSource]);
+    setLoading(Boolean(uri) && !cached);
+    setShowDelayedSpinner(false);
+  }, [uri]);
 
+  useEffect(() => {
+    if (!loading) {
+      setShowDelayedSpinner(false);
+      return;
+    }
+    const timer = setTimeout(() => setShowDelayedSpinner(true), 250);
+    return () => clearTimeout(timer);
+  }, [loading]);
+
+  const remote = Boolean(uri) && /^https?:\/\//.test(uri || '');
   const resolvedSource =
-    !effectiveSource
+    !uri && !source
       ? dummyImage
-      : typeof effectiveSource === 'number'
-        ? effectiveSource
+      : typeof source === 'number'
+        ? source
         : remote && failed
           ? dummyImage
-          : effectiveSource;
+          : uri
+            ? {uri}
+            : source;
 
-  const fastResizeMode =
-    resizeMode === 'contain'
-      ? FastImage.resizeMode.contain
-      : resizeMode === 'stretch'
-        ? FastImage.resizeMode.stretch
-        : resizeMode === 'center'
-          ? FastImage.resizeMode.center
-          : FastImage.resizeMode.cover;
-
-  if (remote && !failed && typeof resolvedSource === 'object' && 'uri' in resolvedSource) {
-    return (
-      <View style={[styles.wrap, style as ViewStyle]}>
-        {showPlaceholder && loading ? (
-          <View style={styles.placeholder}>
-            <ActivityIndicator size="small" color={colors.themeColor} />
-          </View>
-        ) : null}
-        <FastImage
-          {...(props as FastImageProps)}
-          style={[StyleSheet.absoluteFillObject, style as any]}
-          source={{
-            uri: (resolvedSource as {uri: string}).uri,
-            priority: FastImage.priority.normal,
-            cache: FastImage.cacheControl.immutable,
-          }}
-          resizeMode={fastResizeMode}
-          onLoadStart={() => setLoading(true)}
-          onLoadEnd={() => setLoading(false)}
-          onError={() => {
-            setFailed(true);
-            setLoading(false);
-            onError?.({} as any);
-          }}
-        />
-      </View>
-    );
-  }
+  const showSpinner =
+    showPlaceholder && remote && loading && !failed && showDelayedSpinner;
 
   return (
-    <Image
-      {...props}
-      source={resolvedSource}
-      onError={e => {
-        if (remote) {
-          setFailed(true);
-        }
-        onError?.(e);
-      }}
-      resizeMode={resizeMode}
-      style={style}
-    />
+    <View style={[styles.wrap, style as ViewStyle]}>
+      {showSpinner ? (
+        <View style={styles.placeholder} pointerEvents="none">
+          <ActivityIndicator size="small" color={colors.themeColor} />
+        </View>
+      ) : null}
+      <Image
+        {...props}
+        source={resolvedSource}
+        onLoad={e => {
+          markRemoteImageLoaded(uri);
+          setLoading(false);
+          onLoad?.(e);
+        }}
+        onLoadEnd={() => {
+          markRemoteImageLoaded(uri);
+          setLoading(false);
+          onLoadEnd?.({} as any);
+        }}
+        onError={e => {
+          if (remote) {
+            setFailed(true);
+          }
+          setLoading(false);
+          onError?.(e);
+        }}
+        resizeMode={resizeMode}
+        style={styles.imageFill}
+        fadeDuration={0}
+      />
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   wrap: {
     overflow: 'hidden',
+  },
+  imageFill: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 2,
   },
   placeholder: {
     ...StyleSheet.absoluteFillObject,
