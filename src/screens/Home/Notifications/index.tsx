@@ -18,6 +18,7 @@ import {
   getDateSection,
 } from '../../../utils/helpers';
 import {images} from '../../../utils/images';
+import {refreshNotificationBadgeFromApi} from '../../../utils/notificationBadge';
 
 type NotificationRow = {
   id: string;
@@ -228,6 +229,7 @@ const Notifications: React.FC = () => {
           n.id === id ? {...n, read_at: new Date().toISOString()} : n,
         ),
       );
+      refreshNotificationBadgeFromApi().catch(() => {});
     } catch (error) {
       console.log('Error marking notification read:', error);
     }
@@ -240,6 +242,7 @@ const Notifications: React.FC = () => {
       setNotifications(prev =>
         prev.map(n => (n.read_at == null ? {...n, read_at: now} : n)),
       );
+      refreshNotificationBadgeFromApi().catch(() => {});
     } catch (error) {
       console.log('Error marking all notifications read:', error);
     }

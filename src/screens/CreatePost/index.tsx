@@ -14,7 +14,6 @@ import {
 } from 'react-native';
 import Video from 'react-native-video';
 import {useSelector} from 'react-redux';
-import {useAppDispatch} from '../../hooks/storeHooks';
 import useImagePicker, {
   isVideoAsset,
   mergeMediaList,
@@ -23,20 +22,15 @@ import useImagePicker, {
 import useMediaEditorFlow from '../../hooks/useMediaEditorFlow';
 import {SelectedMusic} from '../../types/backgroundMusic';
 import {EditedMedia} from '../../types/mediaEditor';
-import {postCreate} from '../../store/slices/homeSlice';
 import {selectUserProfile} from '../../store/slices/authSlice';
+import {formatMusicLabel} from '../../utils/backgroundMusic';
+import {Toast, getAbsoluteAvatarUrl} from '../../utils/helpers';
 import {
-  composePhotoMusicSlideshow,
-  formatMusicLabel,
-  MUSIC_TOO_MANY_IMAGES_FOR_CLIP,
-} from '../../utils/backgroundMusic';
-import {buildPostVideoFile, getMessage, Toast, getAbsoluteAvatarUrl} from '../../utils/helpers';
-import {
-  deletePostDraftById,
   draftMediaToPickedMedia,
   loadPostDraft,
   savePostDraft,
 } from '../../utils/postDrafts';
+import {enqueuePostUpload} from '../../services/postUploadQueue';
 import {colors} from '../../utils/theme';
 import {images} from '../../utils/images';
 import styles from './styles';
@@ -49,7 +43,6 @@ const MAX_MEDIA = 10;
 const CreatePost: React.FC = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
-  const dispatch = useAppDispatch();
   const user = useSelector(selectUserProfile);
 
   const [description, setDescription] = useState<string>('');
@@ -197,95 +190,31 @@ const CreatePost: React.FC = () => {
       return;
     }
 
-    setIsLoading(true);
-    setLoadingMessage(t('creatingPost'));
-
-    try {
-      const body = new FormData();
-      const text = description.trim();
-      body.append('content', text);
-      body.append('description', text);
-
-      let privacyValue = '2';
-      if (privacy === 'public') {
-        privacyValue = '1';
-      }
-      if (privacy === 'only_me') {
-        privacyValue = '3';
-      }
-      body.append('privacy', privacyValue);
-
-      const imageMediaList = selectedMediaList.filter(
-        media => media?.kind !== 'video' && media?.uri,
-      );
-      const shouldMuxMusic =
-        !!selectedMusic &&
-        imageMediaList.length > 0 &&
-        imageMediaList.length === selectedMediaList.length;
-
-      if (shouldMuxMusic && selectedMusic) {
-        setLoadingMessage(t('composingMusicVideo'));
-        const videoUri = await composePhotoMusicSlideshow({
-          imageUris: imageMediaList.map(media => media.uri),
-          music: selectedMusic,
-          onProgress: (current, total) => {
-            setLoadingMessage(
-              t('composingSlide', {current, total}),
-            );
-          },
-        });
-        const file = await buildPostVideoFile(
-          videoUri,
-          'post_music.mp4',
-          'video/mp4',
-        );
-        body.append('file[0]', file as any);
-      } else {
-        for (let index = 0; index < selectedMediaList.length; index++) {
-          const media = selectedMediaList[index];
-          if (media.kind === 'video') {
-            const file = await buildPostVideoFile(media.uri, media.name, media.type);
-            body.append(`file[${index}]`, file as any);
-          } else {
-            body.append(`file[${index}]`, {
-              uri: media.uri,
-              name: media.name || `image_${index}.jpg`,
-              type: media.type || 'image/jpeg',
-            } as any);
-          }
-        }
-      }
-
-      setLoadingMessage(t('creatingPost'));
-      await dispatch(postCreate(body)).unwrap();
-      if (user?.id && activeDraftId) {
-        await deletePostDraftById(user.id, activeDraftId);
-      }
-      setIsLoading(false);
-      setLoadingMessage('');
-      Toast.success('Posted Successfully');
-      navigation.goBack();
-    } catch (err: any) {
-      setIsLoading(false);
-      setLoadingMessage('');
-      const message =
-        err?.message === 'Network Error' ||
-        err?.message === 'Network request failed'
-          ? 'Please check your internet connection and try again.'
-          : err?.message === MUSIC_TOO_MANY_IMAGES_FOR_CLIP
-            ? t('musicTooManyImagesForClip')
-            : err?.message?.includes('compose') ||
-              err?.message?.includes('FFmpeg') ||
-              err?.message?.includes('Command failed') ||
-              err?.message?.includes('audio') ||
-              err?.message?.includes('music') ||
-              err?.message?.includes('PhotoMusicComposer') ||
-              err?.message?.includes('MUX_FAILED') ||
-              err?.message?.includes('TRIM_AUDIO_FAILED')
-            ? t('musicComposeFailed')
-            : getMessage(err);
-      Toast.error(message);
+    let privacyValue = '2';
+    if (privacy === 'public') {
+      privacyValue = '1';
     }
+    if (privacy === 'only_me') {
+      privacyValue = '0';
+    }
+
+    const mediaSnapshot = selectedMediaList.filter(media => media?.uri);
+    const musicSnapshot = selectedMusic;
+    const text = description.trim();
+    const draftId = activeDraftId;
+    const userId = user?.id;
+
+    Toast.success(t('uploadStarted', {defaultValue: 'Upload started'}));
+    navigation.goBack();
+
+    void enqueuePostUpload({
+      description: text,
+      privacy: privacyValue,
+      mediaList: mediaSnapshot,
+      music: musicSnapshot,
+      draftId,
+      userId,
+    });
   };
 
   const hasDraftContent =

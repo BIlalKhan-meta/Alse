@@ -26,10 +26,10 @@ const ImagePickerComponent: React.FC<ImagePickerProps> = ({
   const captureImage = async type => {
     let options = {
       mediaType: type,
-      maxWidth: 300,
-      maxHeight: 550,
-      quality: 1,
-      videoQuality: 'low',
+      maxWidth: 2048,
+      maxHeight: 2048,
+      quality: 0.92,
+      videoQuality: 'high',
       durationLimit: 30, //Video max duration in seconds
       saveToPhotos: true,
     };

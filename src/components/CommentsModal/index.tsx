@@ -89,6 +89,11 @@ interface CommentsModalProps {
   comments: Comment[];
   postId: number;
   isLoadingComments?: boolean;
+  isLoadingMore?: boolean;
+  commentsError?: string | null;
+  onRetryComments?: () => void;
+  onLoadMoreComments?: () => void;
+  hasMoreComments?: boolean;
 }
 
 const getDisplayName = (commentUser: Comment['user']) =>
@@ -102,8 +107,18 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
   const user = useSelector(selectUserProfile);
   const {t} = useTranslation();
 
-  const {visible, closeModal, comments, postId, isLoadingComments = false} =
-    props;
+  const {
+    visible,
+    closeModal,
+    comments,
+    postId,
+    isLoadingComments = false,
+    isLoadingMore = false,
+    commentsError = null,
+    onRetryComments,
+    onLoadMoreComments,
+    hasMoreComments = false,
+  } = props;
   const commentDraftRef = useRef('');
   const commentInputRef = useRef<TextInput>(null);
   const replyDraftRef = useRef('');
@@ -765,6 +780,20 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
                     {t('comments.loading')}
                   </Text>
                 </View>
+              ) : commentsError && commentsData.length === 0 ? (
+                <View style={styles.commentsLoader}>
+                  <Text style={styles.commentsLoaderText}>{commentsError}</Text>
+                  {onRetryComments ? (
+                    <TouchableOpacity
+                      style={styles.retryButton}
+                      onPress={onRetryComments}
+                      accessibilityRole="button">
+                      <Text style={styles.retryButtonText}>
+                        {t('comments.retry', {defaultValue: 'Retry'})}
+                      </Text>
+                    </TouchableOpacity>
+                  ) : null}
+                </View>
               ) : (
                 <FlatList
                   style={styles.flatList}
@@ -774,9 +803,25 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
                   ListEmptyComponent={<EmptyComponent text={'No Comments'} />}
                   renderItem={({item}) => renderComment(item)}
                   onScrollBeginDrag={closeCommentMenu}
+                  onEndReached={() => {
+                    if (hasMoreComments && onLoadMoreComments) {
+                      onLoadMoreComments();
+                    }
+                  }}
+                  onEndReachedThreshold={0.4}
+                  ListFooterComponent={
+                    isLoadingMore ? (
+                      <View style={styles.commentsFooterLoader}>
+                        <ActivityIndicator
+                          size="small"
+                          color={colors.themeColor}
+                        />
+                      </View>
+                    ) : null
+                  }
                 />
               )}
-              {!isLoadingComments && !replyingTo ? (
+              {!isLoadingComments && !commentsError && !replyingTo ? (
                 <View style={styles.inputConatiner}>
                   <View style={styles.tagSelectorRow}>
                     {COMMENT_TAGS.map(tag => {

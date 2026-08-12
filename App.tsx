@@ -28,6 +28,9 @@ import {
 import {LanguageProvider} from './src/i18n/LanguageContext';
 import './src/i18n';
 import NetworkLoggerFAB from './src/components/NetworkLoggerFAB';
+import {AppQueryProvider} from './src/providers/AppQueryProvider';
+import ErrorBoundary from './src/components/ErrorBoundary';
+import UploadProgressBanner from './src/components/UploadProgressBanner';
 
 const theme = {
   ...DefaultTheme,
@@ -85,6 +88,7 @@ function App(): React.JSX.Element {
         }
         persistor={persistor}>
         <LanguageProvider>
+          <AppQueryProvider>
           <NavigationContainer ref={navigationRef} theme={theme}>
             <PushTokenSync />
             <MainNavigation />
@@ -92,6 +96,7 @@ function App(): React.JSX.Element {
           </NavigationContainer>
           {__DEV__ && <NetworkLoggerFAB />}
           <Toast />
+          </AppQueryProvider>
         </LanguageProvider>
       </PersistGate>
     </Provider>
@@ -99,7 +104,10 @@ function App(): React.JSX.Element {
 
   return (
     <GestureHandlerRootView style={styles.container}>
-      {appContent}
+      <ErrorBoundary>
+        {appContent}
+        <UploadProgressBanner />
+      </ErrorBoundary>
     </GestureHandlerRootView>
   );
 }

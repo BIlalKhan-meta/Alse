@@ -93,8 +93,8 @@ const libraryOptionsFor = (
     selectionLimit,
   };
   if (mediaType === 'photo') {
-    base.maxWidth = 1200;
-    base.maxHeight = 1200;
+    base.maxWidth = 2048;
+    base.maxHeight = 2048;
   }
   return base;
 };
@@ -118,8 +118,8 @@ const cameraOptionsFor = (mediaType: LibraryMediaType): CameraOptions => {
 
   return {
     mediaType: 'photo',
-    maxWidth: 1200,
-    maxHeight: 1200,
+    maxWidth: 2048,
+    maxHeight: 2048,
     quality: 1,
   };
 };

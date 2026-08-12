@@ -2873,6 +2873,18 @@
   dependencies:
     tslib "^2.8.0"
 
+"@tanstack/query-core@5.101.4":
+  version "5.101.4"
+  resolved "https://registry.yarnpkg.com/@tanstack/query-core/-/query-core-5.101.4.tgz#c01b4289b3094144d8ef96235aa506242cf83efa"
+  integrity sha512-gNwcvOJcRbLWPOLG/2OBm+zM+Yv+MKsXKEOWC57USuZDEsI71hEErQsiEGx5wX9rzWWkfwM0fVSPoiIFSsxfiw==
+
+"@tanstack/react-query@^5.101.4":
+  version "5.101.4"
+  resolved "https://registry.yarnpkg.com/@tanstack/react-query/-/react-query-5.101.4.tgz#044137754d79aaa30a82f6e6c42488be79c86ea7"
+  integrity sha512-yRg2pfOCxIs4ZJW3XYYHU/WgtD04FHSnfHlpRT7h7pR77hwkdRG4wxbKe4aq6P0RvXUTBSQpQeadS1SUYUe+KA==
+  dependencies:
+    "@tanstack/query-core" "5.101.4"
+
 "@twotalltotems/react-native-otp-input@^1.3.11":
   version "1.3.11"
   resolved "https://registry.npmjs.org/@twotalltotems/react-native-otp-input/-/react-native-otp-input-1.3.11.tgz"
@@ -7927,6 +7939,11 @@ react-native-agora@^4.5.3:
     json-bigint "^1.0.0"
     ts-interface-checker "^1.0.2"
 
+react-native-background-upload@^6.6.0:
+  version "6.6.0"
+  resolved "https://registry.yarnpkg.com/react-native-background-upload/-/react-native-background-upload-6.6.0.tgz#7c081f4260d16e7a416522c3622b81938ad799c8"
+  integrity sha512-adfOJmeO3GmPmc53cdHYWp5eTGKagk/AhkraSoQ89BHRwBWrtRQ29NN9sm2CLezBYrSQWg0W47C8TaowtYZ1LQ==
+
 react-native-blob-util@^0.24.7:
   version "0.24.7"
   resolved "https://registry.npmjs.org/react-native-blob-util/-/react-native-blob-util-0.24.7.tgz"
@@ -7959,6 +7976,11 @@ react-native-communications@^2.2.1:
   version "2.2.1"
   resolved "https://registry.npmjs.org/react-native-communications/-/react-native-communications-2.2.1.tgz"
   integrity sha512-5+C0X9mopI0+qxyQHzOPEi5v5rxNBQjxydPPiKMQSlX1RBIcJ8uTcqUPssQ9Mo8p6c1IKIWJUSqCj4jAmD0qVQ==
+
+react-native-compressor@^2.0.3:
+  version "2.0.3"
+  resolved "https://registry.yarnpkg.com/react-native-compressor/-/react-native-compressor-2.0.3.tgz#cc7fe16ee617d11698be9b65590c568023567b58"
+  integrity sha512-T+wEEFpPkS4ewd4LLRmxBOro2e5TztDy2lmsC+8ThwzSnIguR98fHUEay3UYOKOKDB+zuFWRq7DO4JWjqKqWNg==
 
 react-native-country-picker-modal@^2.0.0:
   version "2.0.0"
@@ -7998,6 +8020,11 @@ react-native-event-listeners@^1.0.7:
   integrity sha512-yne2ldnqGtABnuN6VSPgs5afaHZZYIAGMoyBUJFn5O2t5t78eCbX9vNa3hvOIIwulKMkZVfqyRtYcSOrNMmMhg==
   dependencies:
     type-detect "^4.0.8"
+
+react-native-fast-image@^8.6.3:
+  version "8.6.3"
+  resolved "https://registry.yarnpkg.com/react-native-fast-image/-/react-native-fast-image-8.6.3.tgz#6edc3f9190092a909d636d93eecbcc54a8822255"
+  integrity sha512-Sdw4ESidXCXOmQ9EcYguNY2swyoWmx53kym2zRsvi+VeFCHEdkO+WG1DK+6W81juot40bbfLNhkc63QnWtesNg==
 
 react-native-fs@^2.20.0:
   version "2.20.0"
@@ -8118,6 +8145,11 @@ react-native-localize@^3.5.2:
   version "3.7.0"
   resolved "https://registry.npmjs.org/react-native-localize/-/react-native-localize-3.7.0.tgz"
   integrity sha512-6Ohx+zZzycC6zhNVBGM/u1U+O6Ww29YIFseeyXqsKcO/pTfjLcdE40IUJF4SVVwrdh00IMJwy90HjLGUaeqK7Q==
+
+react-native-mmkv@2.12.2:
+  version "2.12.2"
+  resolved "https://registry.yarnpkg.com/react-native-mmkv/-/react-native-mmkv-2.12.2.tgz#4bba0f5f04e2cf222494cce3a9794ba6a4894dee"
+  integrity sha512-6058Aq0p57chPrUutLGe9fYoiDVDNMU2PKV+lLFUJ3GhoHvUrLdsS1PDSCLr00yqzL4WJQ7TTzH+V8cpyrNcfg==
 
 react-native-modal-datetime-picker@^18.0.0:
   version "18.0.0"

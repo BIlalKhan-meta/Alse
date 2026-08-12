@@ -1,4 +1,4 @@
-import React, {useCallback, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {Image, Text, TouchableOpacity, View} from 'react-native';
 import {ChevronLeft, Search} from 'lucide-react-native';
 import {useFocusEffect} from '@react-navigation/native';
@@ -6,6 +6,8 @@ import styles from './styles';
 import {images} from '../../utils/images';
 import {colors} from '../../utils/theme';
 import {getUnreadNotificationCount} from '../../api/notifications';
+import eventEmitter, {EVENT_TYPES} from '../../utils/EventEmitter';
+import {syncNotificationBadgeCount} from '../../utils/notificationBadge';
 
 interface NavigationOptionsProps {
   route: any;
@@ -139,35 +141,52 @@ const getTitle: React.FC<NavigationOptionsProps> = props => {
 const HomeHeaderRight = ({navigation}: {navigation: any}) => {
   const [unreadCount, setUnreadCount] = useState(0);
 
+  const applyCount = useCallback((count: number) => {
+    setUnreadCount(count);
+    syncNotificationBadgeCount(count).catch(() => {});
+  }, []);
+
+  const fetchUnread = useCallback(() => {
+    getUnreadNotificationCount()
+      .then(res => {
+        const data = res?.data?.data ?? res?.data;
+        const count =
+          typeof data?.total === 'number'
+            ? data.total
+            : typeof data?.count === 'number'
+              ? data.count
+              : typeof data === 'number'
+                ? data
+                : 0;
+        applyCount(count);
+      })
+      .catch(() => {
+        applyCount(0);
+      });
+  }, [applyCount]);
+
   useFocusEffect(
     useCallback(() => {
-      let active = true;
-      getUnreadNotificationCount()
-        .then(res => {
-          if (!active) {
-            return;
-          }
-          const data = res?.data?.data ?? res?.data;
-          const count =
-            typeof data?.total === 'number'
-              ? data.total
-              : typeof data?.count === 'number'
-                ? data.count
-                : typeof data === 'number'
-                  ? data
-                  : 0;
-          setUnreadCount(count);
-        })
-        .catch(() => {
-          if (active) {
-            setUnreadCount(0);
-          }
-        });
-      return () => {
-        active = false;
-      };
-    }, []),
+      fetchUnread();
+    }, [fetchUnread]),
   );
+
+  useEffect(() => {
+    const onBadge = (count: number) => {
+      if (typeof count === 'number') {
+        setUnreadCount(count);
+      }
+    };
+    const onForegroundPush = () => {
+      fetchUnread();
+    };
+    eventEmitter.on(EVENT_TYPES.NOTIFICATION_BADGE_UPDATED, onBadge);
+    eventEmitter.on(EVENT_TYPES.FCM_FOREGROUND_RECEIVED, onForegroundPush);
+    return () => {
+      eventEmitter.off(EVENT_TYPES.NOTIFICATION_BADGE_UPDATED, onBadge);
+      eventEmitter.off(EVENT_TYPES.FCM_FOREGROUND_RECEIVED, onForegroundPush);
+    };
+  }, [fetchUnread]);
 
   const badgeLabel = unreadCount > 99 ? '99+' : String(unreadCount);
 

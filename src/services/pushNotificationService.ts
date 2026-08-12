@@ -2,7 +2,7 @@ import notifee, {EventType} from '@notifee/react-native';
 import messaging, {
   FirebaseMessagingTypes,
 } from '@react-native-firebase/messaging';
-import {Platform} from 'react-native';
+import {AppState, Platform} from 'react-native';
 import {
   checkNotifications,
   requestNotifications,
@@ -21,11 +21,37 @@ import store from '../store';
 import {displayFcmWithNotifee} from '../utils/displayFcmWithNotifee';
 import eventEmitter, {EVENT_TYPES} from '../utils/EventEmitter';
 import {navigationRef} from '../utils/navigationRef';
+import {refreshNotificationBadgeFromApi} from '../utils/notificationBadge';
 
 type RemoteMessage = FirebaseMessagingTypes.RemoteMessage;
 
 let handlersRegistered = false;
 let backgroundHandlerRegistered = false;
+let appStateSubscription: {remove: () => void} | null = null;
+let pendingSyncRetry: ReturnType<typeof setTimeout> | null = null;
+let syncAttempt = 0;
+
+const MAX_SYNC_RETRIES = 5;
+const BASE_RETRY_MS = 2000;
+
+function clearPendingSyncRetry() {
+  if (pendingSyncRetry) {
+    clearTimeout(pendingSyncRetry);
+    pendingSyncRetry = null;
+  }
+}
+
+function scheduleFcmSyncRetry() {
+  if (pendingSyncRetry || syncAttempt >= MAX_SYNC_RETRIES) {
+    return;
+  }
+  const delay = BASE_RETRY_MS * Math.pow(2, syncAttempt);
+  syncAttempt += 1;
+  pendingSyncRetry = setTimeout(() => {
+    pendingSyncRetry = null;
+    syncFcmTokenWithBackend().catch(() => {});
+  }, delay);
+}
 
 function logFcmNotification(source: string, remoteMessage: RemoteMessage | null) {
   if (!remoteMessage) {
@@ -331,6 +357,7 @@ export async function getDeviceIdsForAuth(): Promise<{
 
 /**
  * Register current FCM token with backend (requires auth).
+ * Retries with exponential backoff on failure.
  */
 export async function syncFcmTokenWithBackend(): Promise<void> {
   const authToken = store.getState().auth.token;
@@ -342,13 +369,18 @@ export async function syncFcmTokenWithBackend(): Promise<void> {
     const fcmToken = await requestPushPermissionAndToken();
     if (!fcmToken) {
       console.warn('[FCM] No token to sync');
+      scheduleFcmSyncRetry();
       return;
     }
     const payload = await buildFcmDevicePayload(fcmToken);
     await registerFcmDevice(payload);
     console.log('[FCM] device registered with backend', payload.device_id);
+    syncAttempt = 0;
+    clearPendingSyncRetry();
+    refreshNotificationBadgeFromApi().catch(() => {});
   } catch (error) {
     console.warn('[FCM] sync with backend failed:', error);
+    scheduleFcmSyncRetry();
   }
 }
 
@@ -360,8 +392,11 @@ async function refreshFcmTokenWithBackend(fcmToken: string): Promise<void> {
     const payload = await buildFcmDevicePayload(fcmToken);
     await refreshFcmDevice(payload);
     console.log('[FCM] device refreshed with backend', payload.device_id);
+    syncAttempt = 0;
+    clearPendingSyncRetry();
   } catch (error) {
     console.warn('[FCM] refresh with backend failed:', error);
+    scheduleFcmSyncRetry();
   }
 }
 
@@ -419,6 +454,8 @@ export function registerPushNotificationHandlers() {
   const unsubscribeOnMessage = messaging().onMessage(async remoteMessage => {
     logFcmNotification('foreground', remoteMessage);
     await displayFcmWithNotifee(remoteMessage);
+    eventEmitter.emit(EVENT_TYPES.FCM_FOREGROUND_RECEIVED, remoteMessage);
+    refreshNotificationBadgeFromApi().catch(() => {});
     // Foreground: show banner only; don't auto-navigate except payment/call
     if (isPaymentSuccess(remoteMessage) || isIncomingCall(remoteMessage)) {
       routeNotification(remoteMessage, false);
@@ -493,11 +530,23 @@ export function registerPushNotificationHandlers() {
     refreshFcmTokenWithBackend(token).catch(() => {});
   });
 
+  if (!appStateSubscription) {
+    appStateSubscription = AppState.addEventListener('change', nextState => {
+      if (nextState === 'active' && store.getState().auth.token) {
+        syncFcmTokenWithBackend().catch(() => {});
+        refreshNotificationBadgeFromApi().catch(() => {});
+      }
+    });
+  }
+
   return () => {
     unsubscribeOnMessage();
     unsubscribeOpenedApp();
     unsubscribeNotifeeForeground();
     unsubscribeTokenRefresh();
+    appStateSubscription?.remove();
+    appStateSubscription = null;
+    clearPendingSyncRetry();
     handlersRegistered = false;
   };
 }

@@ -53,6 +53,22 @@ const styles = StyleSheet.create({
     color: colors.black,
     fontWeight: '500',
   },
+  retryButton: {
+    marginTop: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+    backgroundColor: colors.themeColor,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontSize: fontSizes.f14,
+    fontWeight: '600',
+  },
+  commentsFooterLoader: {
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
   commentItem: {
     width: '100%',
     position: 'relative',

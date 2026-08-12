@@ -24,8 +24,8 @@ export const getCommentLikes = (postId: number, commentId: number) => {
   return axiosInstance.get(`/post/${postId}/comment/${commentId}/likes`);
 };
 
-export const getPostComment = (id: number) => {
-  return axiosInstance.get(`/post/${id}/comments`);
+export const getPostComment = (id: number, page: number = 1) => {
+  return axiosInstance.get(`/post/${id}/comments`, {params: {page}});
 };
 
 export const postComment = (formData: FormData, id: number) => {
@@ -37,10 +37,8 @@ export const postCommentReply = (
   postId: number,
   parentCommentId: number,
 ) => {
-  return uploadWithFetch(
-    `/post/${postId}/comment/${parentCommentId}/reply`,
-    formData,
-  );
+  formData.append('parent_id', String(parentCommentId));
+  return uploadWithFetch(`/post/${postId}/comment`, formData);
 };
 
 export const createPost = (formData: FormData) => {

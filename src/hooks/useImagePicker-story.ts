@@ -11,9 +11,9 @@ const useImagePicker = () => {
 
   let globalOptions = {
     mediaType: 'photo', // 'photo' or 'video' or 'mixed'
-    maxWidth: 300,
-    maxHeight: 550,
-    quality: 0.2,
+    maxWidth: 2048,
+    maxHeight: 2048,
+    quality: 0.92,
   };
 
   // Function to handle image selection from gallery
@@ -88,9 +88,9 @@ const useImagePicker = () => {
       mediaType === 'video' || mediaType === 'mixed';
     let options: any = {
       mediaType: mediaType, // 'photo' or 'video' or 'mixed'
-      maxWidth: 300,
-      maxHeight: 550,
-      quality: 0.2,
+      maxWidth: 2048,
+      maxHeight: 2048,
+      quality: 0.92,
     };
     if (isVideoOrMixed) {
       options.durationLimit = MAX_STORY_VIDEO_DURATION;

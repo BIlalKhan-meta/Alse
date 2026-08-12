@@ -31,7 +31,6 @@ import {reactions} from '../../dummyData';
 import {useAppDispatch} from '../../hooks/storeHooks';
 import {selectUserProfile} from '../../store/slices/authSlice';
 import {
-  getCommentPost,
   likePost,
   PostDelete,
 } from '../../store/slices/homeSlice';
@@ -41,6 +40,7 @@ import {useTranslation} from 'react-i18next';
 import {images} from '../../utils/images';
 import {colors} from '../../utils/theme';
 import styles from './styles';
+import {usePostComments} from '../../hooks/usePostComments';
 
 const productFilter = [
   {name: 'a', id: 1},
@@ -55,11 +55,17 @@ const Saved: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [displayPost, setDisplayPost] = useState([]);
   const dispatch = useAppDispatch();
-  const [commentsVisible, setCommentsVisible] = useState({
-    visiblity: false,
-    comments: [],
-    id: null,
-  });
+  const {
+    commentsVisible,
+    isLoadingComments,
+    isLoadingMore: isLoadingMoreComments,
+    commentsError,
+    hasMoreComments,
+    openComments,
+    closeComments,
+    retryComments,
+    loadMoreComments,
+  } = usePostComments();
   const [deleteVisible, setDeleteVisible] = useState({
     visibility: false,
     id: null,
@@ -193,22 +199,7 @@ const Saved: React.FC = () => {
   }, [navigation]);
 
   const handleCommentPress = id => {
-    dispatch(getCommentPost(id))
-      .then(res => {
-        console.log(
-          res?.payload?.data?.data?.data,
-          'Commentsss Ressss frommm screennnn ',
-        );
-        setCommentsVisible({
-          visiblity: true,
-          comments: res?.payload?.data?.data?.data,
-          id: id,
-        });
-        // getData();
-      })
-      .catch(err => {
-        console.log('error from like post', err);
-      });
+    openComments(id);
   };
 
   console.log('POSTSSSSSSSSSSSSSSSS', displayPost);
@@ -513,18 +504,20 @@ const Saved: React.FC = () => {
             />
 
             <CommentsModal
-              visible={commentsVisible.visiblity}
-              closeModal={() => {
-                setCommentsVisible({visiblity: false, comments: [], id: null});
-                // fetchData();
-              }}
+              visible={commentsVisible.visible}
+              closeModal={closeComments}
               // icon={CheckedIcon}
               title="Successfully"
               message="Password has been updated successfully"
               buttonText="Apply"
-              onPress={() => navigation.navigate('Home')}
               comments={commentsVisible?.comments}
-              postId={commentsVisible?.id}
+              postId={commentsVisible?.id || 0}
+              isLoadingComments={isLoadingComments}
+              isLoadingMore={isLoadingMoreComments}
+              commentsError={commentsError}
+              onRetryComments={retryComments}
+              onLoadMoreComments={loadMoreComments}
+              hasMoreComments={hasMoreComments}
             />
 
             <ReactModal

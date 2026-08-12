@@ -144,6 +144,9 @@ interface PostMediaItem {
   id?: number;
   path: string;
   type: string;
+  thumbnail_path?: string;
+  medium_path?: string;
+  full_path?: string;
 }
 
 interface PostProps {
@@ -379,7 +382,11 @@ const PostComponent: React.FC<PostProps> = ({
                 <Video
                   key={`${String(item.id ?? mediaId ?? id ?? '')}-${changeUrlForData(item.path)}`}
                   onReadyForDisplay={() => setVideoLoad(false)}
-                  source={{uri: changeUrlForData(item.path)}}
+                  source={{
+                    uri: changeUrlForData(
+                      item.medium_path || item.path || item.full_path,
+                    ),
+                  }}
                   style={[
                     styles.postVideo,
                     {
@@ -396,6 +403,13 @@ const PostComponent: React.FC<PostProps> = ({
                   playInBackground={false}
                   playWhenInactive={false}
                   useTextureView={Platform.OS === 'android'}
+                  bufferConfig={{
+                    minBufferMs: 2000,
+                    maxBufferMs: 10000,
+                    bufferForPlaybackMs: 1000,
+                    bufferForPlaybackAfterRebufferMs: 2000,
+                  }}
+                  maxBitRate={2_500_000}
                   onBuffer={res => {
                     if (res?.isBuffering) {
                       setVideoLoad(true);
@@ -441,7 +455,13 @@ const PostComponent: React.FC<PostProps> = ({
             style={styles.mediaInnerFill}
             onPress={() => onMediaPress?.(item, index)}>
             <CustomImage
-              source={{uri: changeUrlForData(item.path)}}
+              media={item}
+              variant="medium"
+              source={{
+                uri: changeUrlForData(
+                  item.medium_path || item.path || item.full_path,
+                ),
+              }}
               style={styles.postImage}
             />
           </Pressable>
@@ -957,4 +977,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default PostComponent;
+export default React.memo(PostComponent);

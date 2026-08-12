@@ -43,6 +43,10 @@ const endpoints = {
     allUsers: '/search-users',
     videos: 'videos',
   },
+  media: {
+    presign: '/media/presign',
+    finalize: '/media/finalize',
+  },
   profile: {
     editProfile: '/edit-profile',
     getProfile: '/profile',

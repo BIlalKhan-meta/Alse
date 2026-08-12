@@ -28,7 +28,6 @@ import {selectUserProfile} from '../../store/slices/authSlice';
 import {useSelector} from 'react-redux';
 import {useAppDispatch, useAppSelector} from '../../hooks/storeHooks';
 import {
-  getCommentPost,
   getMyPost,
   likePost,
   PostDelete,
@@ -49,6 +48,7 @@ import {removeSavedItem, saveItem} from '../../api/menu';
 import LikesModal from '../../components/LikesModal';
 import {fetchMyPost} from '../../api/home';
 import {useTranslation} from 'react-i18next';
+import {usePostComments} from '../../hooks/usePostComments';
 
 const MyPosts: React.FC = () => {
   const navigation = useNavigation();
@@ -61,11 +61,17 @@ const MyPosts: React.FC = () => {
     setPause(!pause);
     setCurrentID(id);
   };
-  const [commentsVisible, setCommentsVisible] = useState({
-    visiblity: false,
-    comments: [],
-    id: null,
-  });
+  const {
+    commentsVisible,
+    isLoadingComments,
+    isLoadingMore: isLoadingMoreComments,
+    commentsError,
+    hasMoreComments,
+    openComments,
+    closeComments,
+    retryComments,
+    loadMoreComments,
+  } = usePostComments();
   const [reactVisible, setrRactVisible] = useState(false);
   const [activePostId, setActivePostId] = useState<number | null>(null);
   const [deleteVisible, setDeleteVisible] = useState({
@@ -122,22 +128,7 @@ const MyPosts: React.FC = () => {
   // };
 
   const handleCommentPress = id => {
-    dispatch(getCommentPost(id))
-      .then(res => {
-        console.log(
-          res?.payload?.data?.data?.data,
-          'Commentsss Ressss frommm screennnn',
-        );
-        setCommentsVisible({
-          visiblity: true,
-          comments: res?.payload?.data?.data?.data,
-          id: id,
-        });
-        // getData();
-      })
-      .catch(err => {
-        console.log('error from like post', err);
-      });
+    openComments(id);
   };
 
   const handleDelete = () => {
@@ -360,16 +351,20 @@ const MyPosts: React.FC = () => {
         />
 
         <CommentsModal
-          visible={commentsVisible.visiblity}
-          closeModal={() =>
-            setCommentsVisible({visiblity: false, comments: [], id: null})
-          }
+          visible={commentsVisible.visible}
+          closeModal={closeComments}
           // icon={CheckedIcon}
           title="Successfully"
           message="Password has been updated successfully"
           buttonText="Apply"
           comments={commentsVisible?.comments}
-          postId={commentsVisible?.id}
+          postId={commentsVisible?.id || 0}
+          isLoadingComments={isLoadingComments}
+          isLoadingMore={isLoadingMoreComments}
+          commentsError={commentsError}
+          onRetryComments={retryComments}
+          onLoadMoreComments={loadMoreComments}
+          hasMoreComments={hasMoreComments}
         />
 
         <ReactModal

@@ -14,8 +14,10 @@ import {
 import Video from 'react-native-video';
 import {X} from 'lucide-react-native';
 import InterRegular from '../Text/InterRegular';
+import CustomImage from '../CustomeImage';
 import {vh, vw} from '../../constant';
 import {changeUrlForData} from '../../utils/helpers';
+import {appCache} from '../../utils/appCache';
 
 interface MediaModalProps {
   visible: boolean;
@@ -24,6 +26,8 @@ interface MediaModalProps {
   mediaType: 'image' | 'video';
   userName?: string;
   postTime?: string;
+  /** Optional medium URL for progressive quality upgrade */
+  previewUrl?: string;
 }
 
 const {width: screenWidth, height: screenHeight} = Dimensions.get('window');
@@ -35,26 +39,36 @@ const MediaModal: React.FC<MediaModalProps> = ({
   mediaType,
   userName,
   postTime,
+  previewUrl,
 }) => {
   const [isVideoLoading, setIsVideoLoading] = useState(true);
   const [videoError, setVideoError] = useState(false);
-  const videoRef = useRef<Video>(null);
+  const [useFullQuality, setUseFullQuality] = useState(!previewUrl);
+  const videoRef = useRef<typeof Video | any>(null);
 
-  const resolvedUrl = useMemo(
-    () => (mediaUrl ? changeUrlForData(mediaUrl) : ''),
-    [mediaUrl],
-  );
+  const resolvedUrl = useMemo(() => {
+    const preferred =
+      !useFullQuality && previewUrl ? previewUrl : mediaUrl;
+    return preferred ? changeUrlForData(preferred) : '';
+  }, [mediaUrl, previewUrl, useFullQuality]);
 
   useEffect(() => {
     if (visible) {
       setIsVideoLoading(true);
       setVideoError(false);
+      setUseFullQuality(!previewUrl);
+      if (mediaUrl) {
+        appCache.set(`recent-media:${mediaUrl}`, String(Date.now()));
+      }
     }
-  }, [visible, mediaUrl, mediaType]);
+  }, [visible, mediaUrl, mediaType, previewUrl]);
 
   const handleVideoLoad = () => {
     setIsVideoLoading(false);
     setVideoError(false);
+    if (!useFullQuality && previewUrl && mediaUrl) {
+      setUseFullQuality(true);
+    }
   };
 
   const handleVideoError = () => {
@@ -62,11 +76,20 @@ const MediaModal: React.FC<MediaModalProps> = ({
     setVideoError(true);
   };
 
+  const retryVideo = () => {
+    setVideoError(false);
+    setIsVideoLoading(true);
+    setUseFullQuality(true);
+  };
+
   const renderVideoContent = () => {
     if (videoError) {
       return (
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>Failed to load video</Text>
+          <TouchableOpacity onPress={retryVideo} style={styles.retryBtn}>
+            <Text style={styles.retryText}>Retry</Text>
+          </TouchableOpacity>
         </View>
       );
     }
@@ -88,6 +111,12 @@ const MediaModal: React.FC<MediaModalProps> = ({
           resizeMode="contain"
           controls
           repeat={false}
+          bufferConfig={{
+            minBufferMs: 1500,
+            maxBufferMs: 15000,
+            bufferForPlaybackMs: 1000,
+            bufferForPlaybackAfterRebufferMs: 2000,
+          }}
           onLoad={handleVideoLoad}
           onReadyForDisplay={handleVideoLoad}
           onError={handleVideoError}
@@ -99,10 +128,17 @@ const MediaModal: React.FC<MediaModalProps> = ({
 
   const renderImageContent = () => {
     return (
-      <Image
+      <CustomImage
         source={{uri: resolvedUrl}}
+        variant="full"
         style={styles.image}
         resizeMode="contain"
+        showPlaceholder
+        onLoadEnd={() => {
+          if (!useFullQuality && previewUrl) {
+            setUseFullQuality(true);
+          }
+        }}
       />
     );
   };
@@ -200,6 +236,17 @@ const styles = StyleSheet.create({
   errorText: {
     color: '#fff',
     fontSize: 16,
+  },
+  retryBtn: {
+    marginTop: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+    backgroundColor: '#0C959B',
+  },
+  retryText: {
+    color: '#fff',
+    fontWeight: '600',
   },
 });
 

@@ -65,7 +65,9 @@ export const GetNewsFeed = createAsyncThunk(
       return {response: response.data, page};
     } catch (error: any) {
       console.log(error, 'errrorrr && type');
-      return rejectWithValue(error.response.data || 'newsFeedd failed');
+      return rejectWithValue(
+        error?.response?.data || error?.message || 'newsFeed failed',
+      );
     }
   },
 );
@@ -103,15 +105,24 @@ export const getCommentLikesThunk = createAsyncThunk(
 );
 
 export const getCommentPost = createAsyncThunk(
-  'post/likePost',
-  async (id: number) => {
-    const response = await getPostComment(id);
-    return response;
+  'post/getCommentPost',
+  async (
+    {id, page = 1}: {id: number; page?: number},
+    {rejectWithValue},
+  ) => {
+    try {
+      const response = await getPostComment(id, page);
+      return response;
+    } catch (error: any) {
+      return rejectWithValue(
+        error?.response?.data || error?.message || 'Failed to load comments',
+      );
+    }
   },
 );
 
 export const commentPost = createAsyncThunk(
-  'post/likePost',
+  'post/commentPost',
   async (
     {formData, id}: {formData: FormData; id: number},
     {rejectWithValue},
@@ -120,7 +131,9 @@ export const commentPost = createAsyncThunk(
       const response = await postComment(formData, id);
       return response;
     } catch (error: any) {
-      return rejectWithValue(error.response.data || 'post comments failed');
+      return rejectWithValue(
+        error?.response?.data || error?.message || 'post comments failed',
+      );
     }
   },
 );

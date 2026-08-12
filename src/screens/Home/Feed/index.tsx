@@ -1,7 +1,6 @@
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
   View,
-  FlatList,
   TouchableOpacity,
   Animated,
   Modal,
@@ -11,6 +10,7 @@ import {
   RefreshControl,
   LayoutChangeEvent,
 } from 'react-native';
+import {FlashList} from '@shopify/flash-list';
 import Reanimated, {
   Extrapolation,
   interpolate,
@@ -28,7 +28,6 @@ import GeneralModal from '../../../components/GeneralModal';
 import {reactions} from '../../../dummyData';
 import {useAppDispatch, useAppSelector} from '../../../hooks/storeHooks';
 import {
-  getCommentPost,
   GetNewsFeed,
   FEED_PAGE_SIZE,
   likePost,
@@ -73,12 +72,15 @@ import {
 } from '../../../utils/feedFilters';
 import AdFeedCard from '../../../components/AdFeedCard';
 import {recordImpression} from '../../../api/advertising';
+import {usePostComments} from '../../../hooks/usePostComments';
+
+const AnimatedFlashList = Reanimated.createAnimatedComponent(FlashList);
 
 const CREATE_POST_HEIGHT_FALLBACK = 110;
 const STORIES_HEIGHT_FALLBACK = 112;
 
 const Home: React.FC = () => {
-  const flatListRef = useRef<FlatList>(null);
+  const flatListRef = useRef<FlashList<any>>(null);
   const scrollY = useSharedValue(0);
   const createPostHeight = useSharedValue(CREATE_POST_HEIGHT_FALLBACK);
   const storiesHeight = useSharedValue(STORIES_HEIGHT_FALLBACK);
@@ -99,7 +101,7 @@ const Home: React.FC = () => {
     isWarningVisible,
   } = useFeedSessionTracking(navigation);
 
-  const {posts, loadingMore, hasMore, currentPage} = useAppSelector(
+  const {posts, loadingMore, hasMore, currentPage, error: feedError, loading: feedLoading} = useAppSelector(
     state => state.home,
   );
 
@@ -112,15 +114,18 @@ const Home: React.FC = () => {
     STORIES_HEIGHT_FALLBACK,
   );
 
-  const [commentsVisible, setCommentsVisible] = useState<{
-    visiblity: boolean;
-    comments: any[];
-    id: number | null;
-  }>({
-    visiblity: false,
-    comments: [],
-    id: null,
-  });
+  const {
+    commentsVisible,
+    isLoadingComments,
+    isLoadingMore: isLoadingMoreComments,
+    commentsError,
+    hasMoreComments,
+    openComments,
+    closeComments,
+    retryComments,
+    loadMoreComments,
+  } = usePostComments();
+
   const [likesVisible, setLikesVisible] = useState<{
     visiblity: boolean;
     likes: any[];
@@ -154,7 +159,6 @@ const Home: React.FC = () => {
   const [reportSuccess, setReportSuccess] = useState(false);
 
   const [shareLoader, setShareLoader] = useState(false);
-  const [commentsLoading, setCommentsLoading] = useState(false);
 
   const [isFabOpen, setIsFabOpen] = useState(false);
   const animation = useRef(new Animated.Value(0)).current;
@@ -355,28 +359,7 @@ const Home: React.FC = () => {
   };
 
   const handleCommentPress = (id: any) => {
-    setCommentsVisible({
-      visiblity: true,
-      comments: [],
-      id: id,
-    });
-    setCommentsLoading(true);
-    dispatch(getCommentPost(id))
-      .then((res: any) => {
-        setCommentsVisible({
-          visiblity: true,
-          comments: res?.payload?.data?.data?.data ?? [],
-          id: id,
-        });
-      })
-      .catch(err => {
-        console.log('error from fetch comments', err);
-        Toast.error(getMessage(err?.message));
-        setCommentsVisible({visiblity: false, comments: [], id: null});
-      })
-      .finally(() => {
-        setCommentsLoading(false);
-      });
+    openComments(id);
   };
 
   const handleLikePress = (id: number) => {
@@ -740,6 +723,32 @@ const Home: React.FC = () => {
       return null;
     }
 
+    if (feedError && posts.length === 0) {
+      const errorText =
+        typeof feedError === 'string'
+          ? feedError
+          : (feedError as any)?.message || 'Failed to load feed';
+      return (
+        <View style={styles.emptyContainer}>
+          <InterRegular style={styles.emptyTitle}>{errorText}</InterRegular>
+          <TouchableOpacity
+            style={{
+              marginTop: 16,
+              backgroundColor: colors.themeColor,
+              paddingHorizontal: 20,
+              paddingVertical: 10,
+              borderRadius: 8,
+            }}
+            onPress={() => fetchAllData(true)}
+            disabled={feedLoading}>
+            <InterRegular style={{color: '#fff', fontWeight: '600'}}>
+              {t('retry', {defaultValue: 'Retry'})}
+            </InterRegular>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
     return (
       <View style={styles.emptyContainer}>
         <InterRegular style={styles.emptyTitle}>
@@ -814,11 +823,10 @@ const Home: React.FC = () => {
         {renderFeedTopSection()}
 
         <View style={styles.feedContainer}>
-          {initialLoading ? (
+          {initialLoading && posts.length === 0 ? (
             <View style={styles.feedList}>{renderSkeletonLoaders()}</View>
           ) : (
-            <Reanimated.FlatList
-              key={activeFilter}
+            <AnimatedFlashList
               ref={flatListRef}
               style={styles.feedList}
               viewabilityConfigCallbackPairs={viewabilityConfigCallbackPairs}
@@ -842,7 +850,12 @@ const Home: React.FC = () => {
               ListFooterComponent={renderFooter}
               onEndReached={loadMorePosts}
               onEndReachedThreshold={0.5}
-              removeClippedSubviews={false}
+              estimatedItemSize={420}
+              drawDistance={vh * 120}
+              removeClippedSubviews
+              maintainVisibleContentPosition={{
+                minIndexForVisible: 0,
+              }}
             />
           )}
 
@@ -901,10 +914,9 @@ const Home: React.FC = () => {
           </View>
 
           <CommentsModal
-            visible={commentsVisible.visiblity}
+            visible={commentsVisible.visible}
             closeModal={() => {
-              setCommentsVisible({visiblity: false, comments: [], id: null});
-              setCommentsLoading(false);
+              closeComments();
               fetchAllData(false);
             }}
             icon={images.checkedIcon}
@@ -913,7 +925,12 @@ const Home: React.FC = () => {
             buttonText="Apply"
             comments={commentsVisible?.comments}
             postId={commentsVisible?.id || 0}
-            isLoadingComments={commentsLoading}
+            isLoadingComments={isLoadingComments}
+            isLoadingMore={isLoadingMoreComments}
+            commentsError={commentsError}
+            onRetryComments={retryComments}
+            onLoadMoreComments={loadMoreComments}
+            hasMoreComments={hasMoreComments}
           />
 
           <LikesModal

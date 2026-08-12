@@ -21,7 +21,6 @@ import {reactions} from '../../../dummyData';
 import CommentsModal from '../../../components/CommentsModal';
 import {
   blockUser,
-  getCommentPost,
   getProfileById,
   likePost,
   postSave,
@@ -33,6 +32,7 @@ import {getMessage, Toast} from '../../../utils/helpers';
 import {capitalize, timeFormat} from '../../../utils';
 import {createPost, fetchProfileById, reportPost} from '../../../api/home';
 import {removeSavedItem, saveItem} from '../../../api/menu';
+import {usePostComments} from '../../../hooks/usePostComments';
 import {EmptyComponent} from '../../../components/EmptyComponent';
 import LikesModal from '../../../components/LikesModal';
 import {selectUserProfile} from '../../../store/slices/authSlice';
@@ -64,11 +64,17 @@ const ProfileScreen: React.FC = ({navigation}) => {
   const [blockVisible, setBlockVisible] = useState(false);
   const [blockSuccess, setBlockSuccess] = useState(false);
   const [reactVisible, setrRactVisible] = useState(false);
-  const [commentsVisible, setCommentsVisible] = useState({
-    visiblity: false,
-    comments: [],
-    id: null,
-  });
+  const {
+    commentsVisible,
+    isLoadingComments,
+    isLoadingMore: isLoadingMoreComments,
+    commentsError,
+    hasMoreComments,
+    openComments,
+    closeComments,
+    retryComments,
+    loadMoreComments,
+  } = usePostComments();
   const [activePostId, setActivePostId] = useState<number | null>(null);
   const [data, setData] = useState<any>({});
   const [loading, setLoading] = useState(true);
@@ -205,22 +211,7 @@ const ProfileScreen: React.FC = ({navigation}) => {
   };
 
   const handleCommentPress = id => {
-    dispatch(getCommentPost(id))
-      .then(res => {
-        console.log(
-          res?.payload?.data?.data?.data,
-          'Commentsss Ressss frommm screennnn ',
-        );
-        setCommentsVisible({
-          visiblity: true,
-          comments: res?.payload?.data?.data?.data,
-          id: id,
-        });
-        // getData();
-      })
-      .catch(err => {
-        console.log('error from like post', err);
-      });
+    openComments(id);
   };
   const handleSave = async (id: number, isSaved: boolean) => {
     const arr = [...data?.posts];
@@ -598,18 +589,23 @@ const ProfileScreen: React.FC = ({navigation}) => {
         </>
       ) : null} */}
       <CommentsModal
-        visible={commentsVisible.visiblity}
+        visible={commentsVisible.visible}
         closeModal={() => {
-          setCommentsVisible({visiblity: false, comments: [], id: null});
+          closeComments();
           getData();
         }}
         // icon={CheckedIcon}
         title="Successfully"
         message="Password has been updated successfully"
         buttonText="Apply"
-        onPress={() => navigation.navigate('Home')}
         comments={commentsVisible?.comments}
-        postId={commentsVisible?.id}
+        postId={commentsVisible?.id || 0}
+        isLoadingComments={isLoadingComments}
+        isLoadingMore={isLoadingMoreComments}
+        commentsError={commentsError}
+        onRetryComments={retryComments}
+        onLoadMoreComments={loadMoreComments}
+        hasMoreComments={hasMoreComments}
       />
       <ReactModal
         visible={reactVisible}
