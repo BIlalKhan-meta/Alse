@@ -280,7 +280,7 @@ const MusicPicker: React.FC = () => {
     };
 
     navigation.navigate({
-      name: 'CreatePost',
+      name: (params.returnTo as any) || 'CreatePost',
       params: {selectedMusic},
       merge: true,
     });

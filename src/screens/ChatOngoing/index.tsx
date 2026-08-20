@@ -657,11 +657,9 @@ const ChatOngoing: React.FC<Props> = props => {
       }
       setIsSendingMessage(true);
 
-      const data = {
-        chat_id: props.route.params.id,
-        message: message.text,
-        created_at: Date.now(),
-      };
+      const form = new FormData();
+      form.append('chat_id', String(props.route.params.id));
+      form.append('message', message.text);
 
       emitMessage({
         chat_id: props.route.params.id,
@@ -674,13 +672,12 @@ const ChatOngoing: React.FC<Props> = props => {
       });
 
       // Save to backend (async, doesn't block UI)
-      createMessage(data)
+      createMessage(form)
         .then((_res: any) => {
           console.log('Message saved successfully');
         })
         .catch((Err: any) => {
           console.log('Error saving message:', Err);
-          // TODO: Implement retry logic or show error to user
         })
         .finally(() => {
           setIsSendingMessage(false);
@@ -847,7 +844,22 @@ const ChatOngoing: React.FC<Props> = props => {
               <Text style={styles.userName}>
                 {props?.route?.params?.name || 'Mad'}
               </Text>
-              <Text style={styles.userStatus}>● Always active</Text>
+              {(() => {
+                const lastSeen =
+                  props?.route?.params?.user?.last_seen_at ||
+                  props?.route?.params?.last_seen_at;
+                if (!lastSeen) {
+                  return null;
+                }
+                const seenAt = new Date(lastSeen).getTime();
+                const isOnline =
+                  Number.isFinite(seenAt) &&
+                  Date.now() - seenAt < 5 * 60 * 1000;
+                if (!isOnline) {
+                  return null;
+                }
+                return <Text style={styles.userStatus}>● Active</Text>;
+              })()}
             </View>
           </View>
         </View>

@@ -234,31 +234,63 @@ const LoginScreen: React.FC = () => {
 
     setAppleSubmitted(true);
 
-    const {email, fullName, isAppleLogin, apple_id} = user;
+    const {
+      email,
+      fullName,
+      givenName,
+      familyName,
+      isAppleLogin,
+      apple_id,
+      identityToken,
+      authorizationCode,
+    } = user;
     const ids = await getDeviceIdsForAuth();
 
     const apiData = {
       email,
       fullName,
+      givenName,
+      familyName,
       isAppleLogin,
       apple_id,
+      identityToken,
+      authorizationCode,
       deviceId: ids.deviceId,
       fcmToken: ids.fcmToken,
     };
 
     appleLogin(apiData)
       .then(res => {
-        console.log(res.data, 'Res');
-        dispatch(setUser(res?.data?.data));
-        syncFcmTokenWithBackend().catch(() => {});
+        const resData = res?.data;
+        const payload = resData?.data ?? resData;
+        const authUser = payload?.user ?? resData?.user;
+        const token =
+          payload?.access_token ??
+          payload?.token ??
+          resData?.access_token ??
+          resData?.token;
+        const isSuccess =
+          resData?.success === true ||
+          resData?.status === true ||
+          (authUser && token);
+
+        if (isSuccess && authUser && token) {
+          dispatch(setUser({user: authUser, access_token: token}));
+          syncFcmTokenWithBackend().catch(() => {});
+        } else {
+          Toast.show({
+            type: 'error',
+            text1: t('error'),
+            text2: resData?.message || 'Apple Sign In failed.',
+          });
+        }
       })
       .catch(err => {
-        console.log(err, 'Err');
-
+        const errData = err?.response?.data ?? err;
         Toast.show({
           type: 'error',
-          text1: 'Invalid',
-          text2: err?.message,
+          text1: t('error'),
+          text2: errData?.message || err?.message || 'Apple Sign In failed.',
         });
       })
       .finally(() => {

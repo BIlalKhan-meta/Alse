@@ -40,7 +40,7 @@ const sanitizeLiveID = (value: string): string =>
 
 const FRONTEND_TEST_STREAM_KEY = 'alsetest_stream';
 const FRONTEND_TEST_LIVE_ID = 'alsetest_live_room';
-const FRONTEND_FORCE_TEST_ROOM = true;
+const FRONTEND_FORCE_TEST_ROOM = false;
 
 const generateLocalStreamKey = (uid: string) => {
   const normalizedUid = String(uid || '').replace(/[^a-zA-Z0-9_]/g, '') || 'guest';
@@ -513,6 +513,11 @@ const LiveStreamScreen = () => {
           config={{
             ...config,
             onLeaveLiveStreaming: handleLeaveLiveStreaming,
+            // Keep in-room chat visible for host and audience (ZIM plugin).
+            inRoomMessageViewConfig: {
+              ...(config as any).inRoomMessageViewConfig,
+              visible: true,
+            },
             ...(effectiveIsHost
               ? {
                   onStartLiveButtonPressed: () => {

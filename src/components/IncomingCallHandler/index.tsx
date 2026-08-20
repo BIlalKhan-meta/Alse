@@ -16,6 +16,7 @@ import CallIncomingModal from '../CallIncomingModal';
 import chatSocket from '../../services/chatSocket';
 import agoraRtmCallService from '../../services/agoraRtmCallService';
 import {AGORA_SIGNALING_TOKEN} from '../../config/agora';
+import callNotificationService from '../../services/callNotificationService';
 
 type IncomingState = null | {
   callId: string;
@@ -61,6 +62,17 @@ const IncomingCallHandler: React.FC = () => {
       }
       setIncoming(payload);
       Vibration.vibrate([0, 600, 400, 600], true);
+      try {
+        callNotificationService.initialize();
+        callNotificationService.showIncomingCallNotification(
+          payload.callerName || 'Incoming call',
+          payload.callType,
+          payload.chatId,
+          Number(payload.callerId) || 0,
+        );
+      } catch (e) {
+        console.warn('[IncomingCall] local notification failed', e);
+      }
     },
     [shouldIgnoreDuplicate],
   );

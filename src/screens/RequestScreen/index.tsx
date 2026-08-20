@@ -93,33 +93,36 @@ const RequestScreen: React.FC = () => {
     });
   }, [navigation, showSearch, searchTxt, active]);
 
+  const isFocused = useIsFocused();
+
   useEffect(() => {
     getApi();
-  }, [active]);
+  }, [active, isFocused]);
 
   const getApi = async () => {
     setLoading(true);
-    if (active == 1) {
-      await getRequestFollow().then(res => {
+    try {
+      if (active == 1) {
+        const res = await getRequestFollow();
         if (res?.data) {
-          setData(res?.data?.data?.data);
-          setLoading(false);
+          setData(res?.data?.data?.data || res?.data?.data || []);
         }
-      });
-    } else if (active == 2) {
-      await getFollowersList().then(res => {
+      } else if (active == 2) {
+        const res = await getFollowersList();
         if (res?.data) {
-          setData(res?.data?.data?.data);
-          setLoading(false);
+          setData(res?.data?.data?.data || res?.data?.data || []);
         }
-      });
-    } else {
-      await getFollowingList().then(res => {
+      } else {
+        const res = await getFollowingList();
         if (res?.data) {
-          setData(res?.data?.data?.data);
-          setLoading(false);
+          setData(res?.data?.data?.data || res?.data?.data || []);
         }
-      });
+      }
+    } catch (e) {
+      console.log('Following list error', e);
+      setData([]);
+    } finally {
+      setLoading(false);
     }
   };
 

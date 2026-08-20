@@ -21,7 +21,9 @@ import {
   getProductShareDisplayText,
   parseProductShareMessage,
 } from '../../utils/productSharePayload';
+import {parsePostShareMessage} from '../../utils/postSharePayload';
 import ChatProductCard from './ChatProductCard';
+import ChatPostCard from './ChatPostCard';
 
 function resolveMessageImageUri(uri: string): string {
   return uri.startsWith('http://') ||
@@ -174,21 +176,39 @@ export const renderSystemMessage: React.FC<SystemMessageProps> = props => (
 
 export function createRenderCustomView(navigation: any): React.FC<any> {
   const ChatMessageCustomView = ({currentMessage}: any) => {
-    const payload = parseProductShareMessage(currentMessage?.text);
-    if (!payload) {
-      return null;
+    const productPayload = parseProductShareMessage(currentMessage?.text);
+    if (productPayload) {
+      return (
+        <ChatProductCard
+          payload={productPayload}
+          onViewProduct={() =>
+            navigation?.navigate?.('ProductView', {
+              productId: productPayload.product_id,
+            })
+          }
+        />
+      );
     }
 
-    return (
-      <ChatProductCard
-        payload={payload}
-        onViewProduct={() =>
-          navigation?.navigate?.('ProductView', {
-            productId: payload.product_id,
-          })
-        }
-      />
-    );
+    const postPayload = parsePostShareMessage(currentMessage?.text);
+    if (postPayload) {
+      return (
+        <ChatPostCard
+          payload={postPayload}
+          onPress={() => {
+            if (postPayload.type === 'video_share' && postPayload.video_id) {
+              navigation?.navigate?.('Videos');
+              return;
+            }
+            if (postPayload.post_id) {
+              // Profile/post detail is opened from feed; keep share visible in chat.
+            }
+          }}
+        />
+      );
+    }
+
+    return null;
   };
   ChatMessageCustomView.displayName = 'ChatMessageCustomView';
   return ChatMessageCustomView;
@@ -196,7 +216,7 @@ export function createRenderCustomView(navigation: any): React.FC<any> {
 
 export const renderMessageText: React.FC<MessageTextProps> = props => {
   const rawText = props.currentMessage?.text;
-  if (parseProductShareMessage(rawText)) {
+  if (parseProductShareMessage(rawText) || parsePostShareMessage(rawText)) {
     return null;
   }
 

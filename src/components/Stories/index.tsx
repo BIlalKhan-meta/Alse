@@ -22,6 +22,7 @@ import {
   TrackStoryAnalytics,
   StoryAnalyticsEvent,
 } from '../../api/stories';
+import store from '../../store';
 import * as DropdownMenu from 'zeego/dropdown-menu';
 import Toast from 'react-native-toast-message';
 import useImagePicker from '../../hooks/useImagePicker-story';
@@ -242,7 +243,7 @@ const Stories = forwardRef<StoriesRef>((_, ref) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const uploadFile = async (file: any) => {
+  const uploadFile = async (file: any, attempt = 1) => {
     setIsUploading(true);
     setUploadProgress(0);
     Toast.show({
@@ -252,10 +253,13 @@ const Stories = forwardRef<StoriesRef>((_, ref) => {
     });
 
     const formData = new FormData();
-
     formData.append('file', file);
 
     try {
+      const token = store.getState().auth.token;
+      if (!token) {
+        throw new Error('Not authenticated');
+      }
       await AddStory(formData, setUploadProgress);
 
       Toast.show({
@@ -263,15 +267,21 @@ const Stories = forwardRef<StoriesRef>((_, ref) => {
         text1: t('toast.storyUploadSuccess'),
       });
 
-      // Refresh stories after successful upload
       await getStories(false);
     } catch (err: any) {
       console.error('Upload error:', err);
-      const serverMessage = err?.response?.data?.message;
       const isNetworkError =
         err?.code === 'ECONNABORTED' ||
         err?.message === 'Network request timeout' ||
+        err?.message === 'Network request failed' ||
         (isAxiosError(err) && err?.message === 'Network Error');
+
+      if (attempt < 2 && isNetworkError) {
+        await new Promise(r => setTimeout(r, 600));
+        return uploadFile(file, attempt + 1);
+      }
+
+      const serverMessage = err?.response?.data?.message;
       const message =
         serverMessage ||
         (isNetworkError ? t('checkInternet') : t('toast.storyUploadFailed'));

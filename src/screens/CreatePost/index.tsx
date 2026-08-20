@@ -144,11 +144,9 @@ const CreatePost: React.FC = () => {
   }, [route.params?.draftId, t, user?.id]);
 
   useEffect(() => {
-    const invalidMusicState =
-      selectedMediaList.length === 0 ||
-      selectedMediaList.some(media => media?.kind === 'video');
+    const hasVideo = selectedMediaList.some(media => media?.kind === 'video');
 
-    if (invalidMusicState && selectedMusic) {
+    if (hasVideo && selectedMusic) {
       setSelectedMusic(null);
     }
   }, [selectedMediaList, selectedMusic]);
@@ -298,10 +296,6 @@ const CreatePost: React.FC = () => {
   const handleAddMusic = () => {
     if (hasVideoSelected) {
       Toast.error(t('musicNotWithVideo'));
-      return;
-    }
-    if (selectedMediaList.length === 0) {
-      Toast.error(t('musicRequiresImages'));
       return;
     }
 

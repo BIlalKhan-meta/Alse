@@ -11,9 +11,9 @@ const useImagePicker = () => {
 
   let globalOptions = {
     mediaType: 'photo', // 'photo' or 'video' or 'mixed'
-    maxWidth: 2048,
-    maxHeight: 2048,
-    quality: 0.92,
+    maxWidth: 4096,
+    maxHeight: 4096,
+    quality: 1,
   };
 
   // Function to handle image selection from gallery

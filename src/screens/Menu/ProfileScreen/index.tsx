@@ -6,6 +6,9 @@ import {
   ScrollView,
   FlatList,
   TouchableOpacity,
+  Modal,
+  SafeAreaView,
+  StyleSheet,
 } from 'react-native';
 import styles from './styles';
 import {images} from '../../../utils/images';
@@ -39,6 +42,25 @@ import {selectUserProfile} from '../../../store/slices/authSlice';
 import {useSelector} from 'react-redux';
 import {vh} from '../../../constant';
 import GlobalHeader from '../../../components/GlobalHeader';
+import {X} from 'lucide-react-native';
+
+const getPostMediaUri = (post: any): string | null => {
+  const media = post?.media?.[0];
+  if (!media) {
+    return null;
+  }
+  const uri =
+    media.thumbnail_path ||
+    media.medium_path ||
+    media.path ||
+    media.full_path ||
+    media.url ||
+    null;
+  if (!uri || typeof uri !== 'string' || !uri.trim()) {
+    return null;
+  }
+  return uri.trim();
+};
 
 const ProfileScreen: React.FC = ({navigation}) => {
   const dispatch = useAppDispatch();
@@ -92,6 +114,7 @@ const ProfileScreen: React.FC = ({navigation}) => {
     setCurrentID(id);
   };
   const [focusedIndex, setFocusedIndex] = useState(0);
+  const [selectedPost, setSelectedPost] = useState<any>(null);
 
   const handleDotPress = (postId: number) => {
     setActivePostId(activePostId == null ? postId : null);
@@ -214,10 +237,16 @@ const ProfileScreen: React.FC = ({navigation}) => {
     openComments(id);
   };
   const handleSave = async (id: number, isSaved: boolean) => {
-    const arr = [...data?.posts];
+    const arr = [...(data?.posts || [])];
     let index = arr.findIndex(item => item.id == id);
-    arr[index].is_saved = !arr[index].is_saved;
+    if (index < 0) {
+      return;
+    }
+    arr[index] = {...arr[index], is_saved: !arr[index].is_saved};
     setData({...data, posts: arr});
+    if (selectedPost?.id === id) {
+      setSelectedPost(arr[index]);
+    }
     dispatch(postSave(id));
     const payload = {
       item_id: id,
@@ -236,9 +265,16 @@ const ProfileScreen: React.FC = ({navigation}) => {
   const user = useSelector(selectUserProfile);
 
   const handleLikePress = (id: number) => {
-    const arr = [...data?.posts];
+    const arr = [...(data?.posts || [])];
     let index = arr.findIndex(item => item.id == id);
-    arr[index].is_liked = !arr[index].is_liked;
+    if (index < 0) {
+      return;
+    }
+    arr[index] = {
+      ...arr[index],
+      is_liked: !arr[index].is_liked,
+      likes: Array.isArray(arr[index].likes) ? [...arr[index].likes] : [],
+    };
 
     const tempData = {
       id: Math.random(),
@@ -248,14 +284,19 @@ const ProfileScreen: React.FC = ({navigation}) => {
         full_name: user?.full_name ? user?.full_name : '',
       },
     };
-    const find = arr[index]?.likes.findIndex(val => val?.user?.id == user?.id);
+    const find = arr[index].likes.findIndex(
+      (val: any) => val?.user?.id == user?.id,
+    );
 
     if (find > -1) {
-      arr[index]?.likes.splice(find, 1);
+      arr[index].likes.splice(find, 1);
     } else {
-      arr[index]?.likes.push(tempData);
+      arr[index].likes.push(tempData);
     }
     setData({...data, posts: arr});
+    if (selectedPost?.id === id) {
+      setSelectedPost(arr[index]);
+    }
     dispatch(updateLike(id));
     dispatch(likePost(id));
   };
@@ -331,7 +372,8 @@ const ProfileScreen: React.FC = ({navigation}) => {
 
   // First, divide your posts into rows
   const renderPosts = () => {
-    if (!data?.posts || data.posts.length === 0) {
+    const posts = Array.isArray(data?.posts) ? data.posts : [];
+    if (posts.length === 0) {
       return <EmptyComponent text={'No Posts Found'} />;
     }
 
@@ -339,53 +381,41 @@ const ProfileScreen: React.FC = ({navigation}) => {
     const rows = [];
     let postIndex = 0;
 
-    while (postIndex < data.posts.length) {
+    const renderGridImage = (post: any, itemStyle: any) => {
+      const uri = getPostMediaUri(post);
+      return (
+        <TouchableOpacity
+          style={itemStyle}
+          onPress={() => handleImagePress(post)}
+          activeOpacity={0.85}>
+          {uri ? (
+            <Image
+              source={{uri}}
+              style={styles.gridImage}
+              resizeMode="cover"
+            />
+          ) : (
+            <View style={[styles.gridImage, profileExtraStyles.placeholder]}>
+              <Text style={profileExtraStyles.placeholderText}>No media</Text>
+            </View>
+          )}
+        </TouchableOpacity>
+      );
+    };
+
+    while (postIndex < posts.length) {
       // Every other row follows a different pattern
       if (rows.length % 2 === 0) {
         // Pattern 1: One large, two small
         rows.push(
           <View key={`row-${rows.length}`} style={styles.gridRow}>
-            {/* Large image on the left */}
-            {postIndex < data.posts.length && (
-              <TouchableOpacity
-                style={styles.largeGridItem}
-                onPress={() => handleImagePress(data.posts[postIndex])}>
-                <Image
-                  source={{uri: data.posts[postIndex].media?.[0]?.path || ''}}
-                  style={styles.gridImage}
-                  resizeMode="cover"
-                />
-              </TouchableOpacity>
-            )}
+            {postIndex < posts.length &&
+              renderGridImage(posts[postIndex], styles.largeGridItem)}
             <View style={styles.smallImagesColumn}>
-              {/* Small image top right */}
-              {postIndex + 1 < data.posts.length && (
-                <TouchableOpacity
-                  style={styles.smallGridItem}
-                  onPress={() => handleImagePress(data.posts[postIndex + 1])}>
-                  <Image
-                    source={{
-                      uri: data.posts[postIndex + 1].media?.[0]?.path || '',
-                    }}
-                    style={styles.gridImage}
-                    resizeMode="cover"
-                  />
-                </TouchableOpacity>
-              )}
-              {/* Small image bottom right */}
-              {postIndex + 2 < data.posts.length && (
-                <TouchableOpacity
-                  style={styles.smallGridItem}
-                  onPress={() => handleImagePress(data.posts[postIndex + 2])}>
-                  <Image
-                    source={{
-                      uri: data.posts[postIndex + 2].media?.[0]?.path || '',
-                    }}
-                    style={styles.gridImage}
-                    resizeMode="cover"
-                  />
-                </TouchableOpacity>
-              )}
+              {postIndex + 1 < posts.length &&
+                renderGridImage(posts[postIndex + 1], styles.smallGridItem)}
+              {postIndex + 2 < posts.length &&
+                renderGridImage(posts[postIndex + 2], styles.smallGridItem)}
             </View>
           </View>,
         );
@@ -395,47 +425,13 @@ const ProfileScreen: React.FC = ({navigation}) => {
         rows.push(
           <View key={`row-${rows.length}`} style={styles.gridRow}>
             <View style={styles.smallImagesColumn}>
-              {/* Small image top left */}
-              {postIndex < data.posts.length && (
-                <TouchableOpacity
-                  style={styles.smallGridItem}
-                  onPress={() => handleImagePress(data.posts[postIndex])}>
-                  <Image
-                    source={{uri: data.posts[postIndex].media?.[0]?.path || ''}}
-                    style={styles.gridImage}
-                    resizeMode="cover"
-                  />
-                </TouchableOpacity>
-              )}
-              {/* Small image bottom left */}
-              {postIndex + 1 < data.posts.length && (
-                <TouchableOpacity
-                  style={styles.smallGridItem}
-                  onPress={() => handleImagePress(data.posts[postIndex + 1])}>
-                  <Image
-                    source={{
-                      uri: data.posts[postIndex + 1].media?.[0]?.path || '',
-                    }}
-                    style={styles.gridImage}
-                    resizeMode="cover"
-                  />
-                </TouchableOpacity>
-              )}
+              {postIndex < posts.length &&
+                renderGridImage(posts[postIndex], styles.smallGridItem)}
+              {postIndex + 1 < posts.length &&
+                renderGridImage(posts[postIndex + 1], styles.smallGridItem)}
             </View>
-            {/* Large image on the right */}
-            {postIndex + 2 < data.posts.length && (
-              <TouchableOpacity
-                style={styles.largeGridItem}
-                onPress={() => handleImagePress(data.posts[postIndex + 2])}>
-                <Image
-                  source={{
-                    uri: data.posts[postIndex + 2].media?.[0]?.path || '',
-                  }}
-                  style={styles.gridImage}
-                  resizeMode="cover"
-                />
-              </TouchableOpacity>
-            )}
+            {postIndex + 2 < posts.length &&
+              renderGridImage(posts[postIndex + 2], styles.largeGridItem)}
           </View>,
         );
         postIndex += 3;
@@ -446,10 +442,11 @@ const ProfileScreen: React.FC = ({navigation}) => {
   };
 
   // Add this function to handle image press
-  const handleImagePress = item => {
-    // Navigate to post detail or show modal with full post content
-    // This preserves the ability to interact with posts when needed
-    console.log('Post pressed:', item.id);
+  const handleImagePress = (item: any) => {
+    if (!item?.id) {
+      return;
+    }
+    setSelectedPost(item);
   };
   const onViewableItemsChanged = ({viewableItems}) => {
     // Play only the currently focused video
@@ -482,18 +479,18 @@ const ProfileScreen: React.FC = ({navigation}) => {
               data?.full_name ||
               capitalize(data?.first_name) + ' ' + capitalize(data?.last_name)
             }
-            // description="A Freelance Photographer living best life"
-            stats={`${data?.posts?.length} posts   ${data?.followers?.length} followers   ${data?.following?.length} following`}
+            description={data?.bio || ''}
+            stats={`${data?.posts?.length || 0} posts   ${data?.followers?.length || 0} followers   ${data?.following?.length || 0} following`}
             avatar={data?.avatar}
             onPress={handleOpen}
             isFollowing={data?.is_following}
             isRequested={data?.is_follow_requested}
             private={data?.is_private}
             id={data?.id}
-            username={data?.username || '@alsedaise'}
-            location={data?.location || 'Jersey, NY'}
-            postsCount={data?.posts.length}
-            followersCount={data?.followers?.length || 0} // Use actual followers count
+            username={data?.username || ''}
+            location={data?.location_name || data?.location || ''}
+            postsCount={data?.posts?.length || 0}
+            followersCount={data?.followers?.length || 0}
             followingCount={data?.following?.length || 0}
           />
           <ReportBlockModal
@@ -515,14 +512,15 @@ const ProfileScreen: React.FC = ({navigation}) => {
                 data?.full_name ||
                 capitalize(data?.first_name) + ' ' + capitalize(data?.last_name)
               }
+              description={data?.bio || ''}
               avatar={data?.avatar}
               onPress={handleOpen}
               isFollowing={data?.is_following}
               isRequested={data?.is_follow_requested}
               private={data?.is_private}
               id={data?.id}
-              username={data?.username || '@alsedaise'}
-              location={data?.location || 'Jersey, NY'}
+              username={data?.username || ''}
+              location={data?.location_name || data?.location || ''}
               postsCount={data?.posts?.length || 0}
               followersCount={data?.followers?.length || 0}
               followingCount={data?.following?.length || 0}
@@ -700,8 +698,102 @@ const ProfileScreen: React.FC = ({navigation}) => {
         }}
         primaryBtn={true}
       />
+      <Modal
+        visible={!!selectedPost}
+        animationType="slide"
+        onRequestClose={() => setSelectedPost(null)}>
+        <SafeAreaView style={profileExtraStyles.postModal}>
+          <View style={profileExtraStyles.postModalHeader}>
+            <Text style={profileExtraStyles.postModalTitle}>Post</Text>
+            <TouchableOpacity
+              onPress={() => setSelectedPost(null)}
+              hitSlop={{top: 12, bottom: 12, left: 12, right: 12}}>
+              <X color="#111" size={24} />
+            </TouchableOpacity>
+          </View>
+          <ScrollView>
+            {selectedPost ? (
+              <PostComponent
+                id={selectedPost.id}
+                avatar={selectedPost.avatar || data?.avatar}
+                name={
+                  selectedPost.fullname ||
+                  selectedPost.name ||
+                  data?.full_name ||
+                  ''
+                }
+                country={selectedPost.username || data?.username || ''}
+                time={timeFormat(selectedPost.date) || ''}
+                postText={selectedPost.description || ''}
+                postImage={getPostMediaUri(selectedPost) || ''}
+                mediaType={
+                  String(selectedPost?.media?.[0]?.type || 'image').toLowerCase()
+                }
+                mediaList={selectedPost.media || []}
+                likes={
+                  selectedPost.total_likes ?? selectedPost.likes?.length ?? 0
+                }
+                comments={
+                  selectedPost.total_comments ??
+                  selectedPost.comments?.length ??
+                  0
+                }
+                share={0}
+                account={account}
+                onCommnetPress={() => handleCommentPress(selectedPost.id)}
+                onSavePress={() =>
+                  handleSave(selectedPost.id, !!selectedPost.is_saved)
+                }
+                onLikePress={() => handleLikePress(selectedPost.id)}
+                onDotPress={() => handleDotPress(selectedPost.id)}
+                handleReportPress={handleReportPress}
+                handleBlockPress={handleBlockPress}
+                handleReportPost={() =>
+                  setReportVisible({visibility: true, id: selectedPost.id})
+                }
+                modalVisible={activePostId === selectedPost.id}
+                isLiked={!!selectedPost.is_liked}
+                isSaved={!!selectedPost.is_saved}
+                onCardPress={() => setSelectedPost(null)}
+                isFocused={true}
+                sharePost={sharePost}
+              />
+            ) : null}
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
     </View>
   );
 };
+
+const profileExtraStyles = StyleSheet.create({
+  placeholder: {
+    backgroundColor: '#E8ECF0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  placeholderText: {
+    color: '#8A94A6',
+    fontSize: 12,
+  },
+  postModal: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  postModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#E5E7EB',
+  },
+  postModalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#111',
+  },
+});
 
 export default ProfileScreen;

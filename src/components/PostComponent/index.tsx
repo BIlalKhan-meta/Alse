@@ -2,7 +2,6 @@
 import {useNavigation} from '@react-navigation/native';
 import {
   MoreVertical,
-  Heart,
   MessageCircle,
   Bookmark,
   ThumbsUp,
@@ -47,9 +46,13 @@ import {
   buildSharedDescription,
   changeUrlForData,
   createVideoFile,
+  getMessage,
   parseSharedFrom,
+  Toast,
 } from '../../utils/helpers';
 import {FeedLabelType} from '../../utils/feedLabels';
+import {createMessage} from '../../api/home';
+import {serializePostShare} from '../../utils/postSharePayload';
 
 /**
  * Insets the native video view so scaled frames don’t draw past the layout box.
@@ -580,7 +583,7 @@ const PostComponent: React.FC<PostProps> = ({
         <View style={styles.textPostActions}>
             <View style={styles.countsRow}>
               <View style={styles.countsLeft}>
-                <Heart color="#FF3B30" size={16} fill="#FF3B30" />
+                <ThumbsUp color="#1877F2" size={16} fill="#1877F2" />
                 <Text style={styles.countText}>{numberLikes}</Text>
                 
                 <MessageCircle color="#65676B" size={16} style={styles.countIconMargin} />
@@ -638,9 +641,37 @@ const PostComponent: React.FC<PostProps> = ({
             setShareModalVisible(false);
             postShare();
           }}
-          onSendToChats={selectedIds => {
+          onSendToChats={async selectedIds => {
             setShareModalVisible(false);
-            console.log('Sending to chats:', selectedIds);
+            if (!selectedIds?.length) {
+              return;
+            }
+            const message = serializePostShare({
+              v: 1,
+              type: mediaType === 'video' ? 'video_share' : 'post_share',
+              post_id: typeof id === 'number' ? id : Number(id) || undefined,
+              title: name,
+              description: postText,
+              image: postImage,
+              author: name,
+            });
+            try {
+              await Promise.all(
+                selectedIds.map(async chatId => {
+                  const form = new FormData();
+                  form.append('chat_id', String(chatId));
+                  form.append('message', message);
+                  await createMessage(form);
+                }),
+              );
+              Toast.success(
+                selectedIds.length === 1
+                  ? 'Post sent to chat.'
+                  : `Post sent to ${selectedIds.length} chats.`,
+              );
+            } catch (error: any) {
+              Toast.error(getMessage(error?.message || error));
+            }
           }}
         />
       ) : null}

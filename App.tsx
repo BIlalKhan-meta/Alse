@@ -31,6 +31,7 @@ import NetworkLoggerFAB from './src/components/NetworkLoggerFAB';
 import {AppQueryProvider} from './src/providers/AppQueryProvider';
 import ErrorBoundary from './src/components/ErrorBoundary';
 import UploadProgressBanner from './src/components/UploadProgressBanner';
+import {configureGoogleSignin} from './src/components/GoogleAuth/GoogleService';
 
 const theme = {
   ...DefaultTheme,
@@ -52,6 +53,11 @@ function App(): React.JSX.Element {
     const RNBootSplash = NativeModules.RNBootSplash;
     if (RNBootSplash?.hide) {
       RNBootSplash.hide(false);
+    }
+    try {
+      configureGoogleSignin();
+    } catch (e) {
+      console.warn('[GoogleSignIn] configure failed:', e);
     }
     requestPushPermissionAndToken().catch(error => {
       console.warn('[FCM] push setup failed:', error);

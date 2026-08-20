@@ -179,14 +179,14 @@ const Home: React.FC = () => {
 
   const onCreatePostLayout = useCallback((event: LayoutChangeEvent) => {
     const {height} = event.nativeEvent.layout;
-    if (height > createPostHeight.value) {
+    if (height > 0) {
       createPostHeight.value = height;
     }
   }, []);
 
   const onStoriesLayout = useCallback((event: LayoutChangeEvent) => {
     const {height} = event.nativeEvent.layout;
-    if (height > storiesHeight.value) {
+    if (height > 0) {
       storiesHeight.value = height;
       setStoriesContentHeight(height);
     }
@@ -850,7 +850,7 @@ const Home: React.FC = () => {
               ListFooterComponent={renderFooter}
               onEndReached={loadMorePosts}
               onEndReachedThreshold={0.5}
-              estimatedItemSize={420}
+              estimatedItemSize={480}
               drawDistance={vh * 120}
               removeClippedSubviews
               maintainVisibleContentPosition={{

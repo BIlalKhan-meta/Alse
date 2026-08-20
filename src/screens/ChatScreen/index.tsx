@@ -202,7 +202,9 @@ const ChatScreen: React.FC = () => {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Chat</Text>
         <View style={styles.headerIcons}>
-          <TouchableOpacity style={styles.manageTemplatesButton}>
+          <TouchableOpacity
+            style={styles.manageTemplatesButton}
+            onPress={() => navigation.navigate('SavedScripts')}>
             <Text style={styles.manageTemplatesText}>Manage Templates</Text>
           </TouchableOpacity>
           <TouchableOpacity

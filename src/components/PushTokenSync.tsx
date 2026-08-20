@@ -3,6 +3,7 @@ import {AppState} from 'react-native';
 import {useSelector} from 'react-redux';
 import {syncFcmTokenWithBackend} from '../services/pushNotificationService';
 import {refreshNotificationBadgeFromApi} from '../utils/notificationBadge';
+import axiosInstance from '../api';
 
 /**
  * Registers FCM device with backend whenever the user is authenticated
@@ -15,16 +16,29 @@ const PushTokenSync: React.FC = () => {
     if (!token) {
       return;
     }
+
+    const syncPresence = () => {
+      axiosInstance.post('/presence/heartbeat').catch(() => {});
+    };
+
     syncFcmTokenWithBackend().catch(() => {});
     refreshNotificationBadgeFromApi().catch(() => {});
+    syncPresence();
 
     const sub = AppState.addEventListener('change', nextState => {
       if (nextState === 'active') {
         syncFcmTokenWithBackend().catch(() => {});
         refreshNotificationBadgeFromApi().catch(() => {});
+        syncPresence();
       }
     });
-    return () => sub.remove();
+
+    const intervalId = setInterval(syncPresence, 60_000);
+
+    return () => {
+      sub.remove();
+      clearInterval(intervalId);
+    };
   }, [token]);
 
   return null;

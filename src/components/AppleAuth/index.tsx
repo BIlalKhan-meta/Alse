@@ -11,6 +11,7 @@ import {colors} from '../../utils/theme';
 import {vh} from '../../constant';
 import Icon from 'react-native-vector-icons/FontAwesome6';
 import {useTranslation} from 'react-i18next';
+import Toast from 'react-native-toast-message';
 
 const AppleAuth = ({
   onSuccess,
@@ -27,29 +28,52 @@ const AppleAuth = ({
         requestedScopes: [appleAuth.Scope.FULL_NAME, appleAuth.Scope.EMAIL],
       });
 
-      let userName = '';
+      const {
+        user: appleUserId,
+        email,
+        fullName,
+        identityToken,
+        authorizationCode,
+      } = appleAuthRequestResponse;
 
-      let {email, fullName} = appleAuthRequestResponse;
-
-      if (!fullName || !fullName.givenName) {
-        userName = `Apple User ${appleAuthRequestResponse.user.substring(
-          0,
-          8,
-        )}`;
-      } else {
-        userName = fullName.givenName;
+      if (!identityToken || !appleUserId) {
+        Toast.show({
+          type: 'error',
+          text1: t('error'),
+          text2: 'Apple Sign In failed. Missing identity token.',
+        });
+        return;
       }
 
-      console.log('appleAuthRequestResponse', appleAuthRequestResponse);
+      let userName = '';
+      if (!fullName || !fullName.givenName) {
+        userName = `Apple User ${appleUserId.substring(0, 8)}`;
+      } else {
+        userName = [fullName.givenName, fullName.familyName]
+          .filter(Boolean)
+          .join(' ');
+      }
 
       onSuccess({
-        apple_id: appleAuthRequestResponse.user,
-        email,
+        apple_id: appleUserId,
+        email: email || '',
         fullName: userName,
+        givenName: fullName?.givenName || '',
+        familyName: fullName?.familyName || '',
+        identityToken,
+        authorizationCode: authorizationCode || '',
         isAppleLogin: true,
       });
-    } catch (error) {
+    } catch (error: any) {
+      if (error?.code === appleAuth.Error.CANCELED) {
+        return;
+      }
       console.error('Apple Sign In Error:', error);
+      Toast.show({
+        type: 'error',
+        text1: t('error'),
+        text2: error?.message || 'Apple Sign In failed.',
+      });
     }
   };
 
@@ -81,43 +105,39 @@ const AppleAuth = ({
   );
 };
 
+export default AppleAuth;
+
 const styles = StyleSheet.create({
   appleButton: {
-    borderWidth: 0,
-    marginTop: vh * 2,
-    backgroundColor: '#0C959B1A',
-    width: '100%',
-    paddingLeft: 20,
-    paddingVertical: 16,
-    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    height: vh * 5.5,
     justifyContent: 'center',
     alignItems: 'center',
+    marginTop: vh * 1.5,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  appleButtonLoading: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    height: vh * 5.5,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: vh * 1.5,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
   },
   buttonContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
   },
   appleIcon: {
     marginRight: 10,
   },
   buttonText: {
+    color: '#000',
     fontSize: 16,
     fontWeight: '600',
-    color: '#1c1c1c',
-  },
-  appleButtonLoading: {
-    borderWidth: 0,
-    marginTop: vh * 2,
-    backgroundColor: '#0C959B1A',
-    width: '100%',
-    paddingLeft: 20,
-    paddingTop: 5,
-    borderRadius: 20,
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
 });
-
-export default AppleAuth;

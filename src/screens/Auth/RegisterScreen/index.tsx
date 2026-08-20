@@ -181,30 +181,55 @@ const SignupScreen: React.FC = () => {
 
     setIsAppleSubmitted(true);
 
-    const {email, fullName, isAppleLogin, apple_id} = user;
+    const {
+      email,
+      fullName,
+      givenName,
+      familyName,
+      isAppleLogin,
+      apple_id,
+      identityToken,
+      authorizationCode,
+    } = user;
 
     const ids = await getDeviceIdsForAuth();
 
     const apiData = {
       email,
       fullName,
+      givenName,
+      familyName,
       isAppleLogin,
       apple_id,
+      identityToken,
+      authorizationCode,
       deviceId: ids.deviceId,
       fcmToken: ids.fcmToken,
     };
 
     appleLogin(apiData)
       .then(res => {
-        console.log(res.data, 'Res');
-
-        navigation.navigate('Onboarding', {
-          user: res?.data?.data,
-        });
+        const resData = res?.data;
+        const payload = resData?.data ?? resData;
+        if (resData?.status || resData?.success || payload?.user) {
+          navigation.navigate('Onboarding', {
+            user: payload,
+          });
+        } else {
+          Toast.show({
+            type: 'error',
+            text1: t('error'),
+            text2: resData?.message || 'Apple Sign In failed.',
+          });
+        }
       })
       .catch(err => {
-        console.log(err, 'Err');
-        setIsAppleSubmitted(false);
+        const errData = err?.response?.data ?? err;
+        Toast.show({
+          type: 'error',
+          text1: t('error'),
+          text2: errData?.message || err?.message || 'Apple Sign In failed.',
+        });
       })
       .finally(() => {
         setIsAppleSubmitted(false);

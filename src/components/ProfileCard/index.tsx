@@ -269,8 +269,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
       </View>
 
       <InterRegular style={styles.bio}>
-        {description ||
-          'Lorem Ipsum is simply dummy text of the printing and typesetting industry.'}
+        {description?.trim() ? description : ''}
       </InterRegular>
       {/* Stats row */}
       <View style={styles.statsContainer}>

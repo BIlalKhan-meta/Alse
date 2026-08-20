@@ -12,6 +12,8 @@ export type MusicPickerRouteParams = {
   imageUri?: string;
   imageName?: string;
   existingMusic?: SelectedMusic;
+  /** Screen to return to with selectedMusic (default CreatePost). */
+  returnTo?: string;
 };
 
 export const MAX_MUSIC_CLIP_SECONDS = 30;

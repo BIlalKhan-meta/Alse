@@ -380,6 +380,11 @@ const Settings = ({navigation}: any) => {
                 setIsEditing={() => setIsEditing(false)}
                 onProfileUpdateSuccess={() => {
                   dispatch(GetUserProfile());
+                  if (isEditMode && navigation.canGoBack()) {
+                    navigation.goBack();
+                  } else {
+                    setIsEditing(false);
+                  }
                 }}
               />
             </View>

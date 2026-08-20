@@ -1,6 +1,6 @@
 // CreateReel.tsx
 import {CameraRoll} from '@react-native-camera-roll/camera-roll';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import {ArrowRight, Video as VideoIcon} from 'lucide-react-native';
 import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {
@@ -26,6 +26,9 @@ import useImagePicker from '../../hooks/useImagePicker-story';
 import {images} from '../../utils/images';
 import moment from 'moment';
 import {createVideo, getVideoCategories} from '../../api/reels';
+import RNFS from 'react-native-fs';
+
+const MAX_VIDEO_UPLOAD_BYTES = 100 * 1024 * 1024; // 100MB (matches backend)
 
 const PRIVACY_OPTIONS = [
   {label: 'Public', value: 'public'},
@@ -35,6 +38,7 @@ const PRIVACY_OPTIONS = [
 
 const CreateReel: React.FC = () => {
   const navigation = useNavigation();
+  const route = useRoute<any>();
   const dispatch = useAppDispatch();
 
   const [step, setStep] = useState<'select' | 'details'>('select');
@@ -47,8 +51,21 @@ const CreateReel: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [categories, setCategories] = useState<{id: number; title: string}[]>([]);
   const [categoryId, setCategoryId] = useState<number | null>(null);
+  const [selectedMusicLabel, setSelectedMusicLabel] = useState<string | null>(
+    null,
+  );
 
   const {imageData, chooseImageFromLibrary} = useImagePicker();
+
+  useEffect(() => {
+    const music = route.params?.selectedMusic;
+    if (music) {
+      setSelectedMusicLabel(
+        music.title || music.fileName || music.name || 'Selected track',
+      );
+      navigation.setParams({selectedMusic: undefined} as never);
+    }
+  }, [route.params?.selectedMusic, navigation]);
 
   // console.log('=-=-=', selectedVideo);
   // console.log('=-=-=', imageData);
@@ -89,33 +106,39 @@ const CreateReel: React.FC = () => {
   }, [navigation]);
 
   const loadRecentVideos = async () => {
-    const granted = await ensurePhotoPermission();
-    if (!granted) {
-      console.log('Permission denied');
-      return;
-    }
-
     try {
+      const granted = await ensurePhotoPermission();
+      if (!granted) {
+        console.log('Permission denied');
+        setRecentVideos([]);
+        return;
+      }
+
       const videos = await CameraRoll.getPhotos({
         first: 6,
         assetType: 'Videos',
       });
-      // console.log('Videos loaded:', JSON.stringify(videos.edges));
 
       setRecentVideos(
-        videos.edges.map((edge, index) => ({
-          id: edge.node.timestamp + '_' + index, // Unique ID
-          uri: edge.node.image.uri,
-          thumbnail: edge.node.image.uri,
-          // duration: '00000',
-          // duration: timeHelper(
-          //   moment(edge.node.timestamp || 0).format('YYYY-MM-DD HH:mm:ss'),
-          // ).toString(),
-          filename: edge.node.image.filename || 'video.mp4',
-        })),
+        (videos?.edges || [])
+          .map((edge, index) => {
+            const uri = edge?.node?.image?.uri;
+            if (!uri) {
+              return null;
+            }
+            return {
+              id: `${edge.node.timestamp || index}_${index}`,
+              uri,
+              thumbnail: uri,
+              filename: edge.node.image.filename || 'video.mp4',
+            };
+          })
+          .filter(Boolean) as any[],
       );
     } catch (error) {
       console.log('Error loading videos:', error);
+      setRecentVideos([]);
+      Toast.error('Unable to load recent videos. You can still pick from library.');
     }
   };
 
@@ -143,10 +166,25 @@ const CreateReel: React.FC = () => {
       return;
     }
 
+    try {
+      const path = selectedVideo.uri?.replace(/^file:\/\//, '') || selectedVideo.uri;
+      if (path) {
+        const stat = await RNFS.stat(path).catch(() => null);
+        if (stat?.size && Number(stat.size) > MAX_VIDEO_UPLOAD_BYTES) {
+          Toast.error(
+            'Video must be smaller than 100 MB. Please compress or trim the video before uploading.',
+          );
+          return;
+        }
+      }
+    } catch {
+      // continue; server will validate if size unknown
+    }
+
     const formData = new FormData();
     formData.append('title', title);
     formData.append('category_id', categoryId.toString());
-    formData.append('content', content);
+    formData.append('content', content || title);
     formData.append('privacy', privacy);
     formData.append('video_file', {
       uri: selectedVideo.uri,
@@ -169,19 +207,6 @@ const CreateReel: React.FC = () => {
         const errorBody = err?.response?.data ?? err?.message ?? err;
         Toast.error(getMessage(errorBody));
       });
-
-    // dispatch(videoCreate({formData, categoryId: 1}))
-    //   .unwrap()
-    //   .then(res => {
-    //     setIsLoading(false);
-    //     Toast.success('Video uploaded successfully');
-    //     navigation.goBack();
-    //   })
-    //   .catch(err => {
-    //     console.log('=-=-=', err);
-    //     setIsLoading(false);
-    //     Toast.error(getMessage(err?.message));
-    //   });
   };
 
   const handleBack = () => {
@@ -211,18 +236,21 @@ const CreateReel: React.FC = () => {
   const renderVideoItem = ({item}: {item: any}) => {
     const id = item.id;
     const duration = durations[id] || 0;
+    if (!item?.uri) {
+      return null;
+    }
 
     return (
       <TouchableOpacity
         style={styles.videoContainer}
         onPress={() => setSelectedVideo(item)}>
-        {/* Using Video component for thumbnail preview */}
         <Video
           source={{uri: item.uri}}
           style={styles.videoThumbnail}
           paused={true}
           resizeMode="cover"
           onLoad={data => handleLoad(id, data)}
+          onError={() => {}}
         />
         <View style={styles.durationBadge}>
           <Text style={styles.durationText}>{formatDuration(duration)}</Text>
@@ -365,6 +393,28 @@ const CreateReel: React.FC = () => {
                 </TouchableOpacity>
               ))}
             </View>
+          </View>
+
+          <View style={styles.inputSection}>
+            <Text style={styles.label}>Music (optional)</Text>
+            <TouchableOpacity
+              style={styles.textInput}
+              onPress={() =>
+                navigation.navigate('MusicPicker' as never, {
+                  imageUris: selectedVideo?.uri ? [selectedVideo.uri] : [],
+                  existingMusic: undefined,
+                  returnTo: 'CreateReel',
+                } as never)
+              }>
+              <Text style={{color: selectedMusicLabel ? '#111' : '#999'}}>
+                {selectedMusicLabel || 'Select music after your video'}
+              </Text>
+            </TouchableOpacity>
+            {selectedMusicLabel ? (
+              <TouchableOpacity onPress={() => setSelectedMusicLabel(null)}>
+                <Text style={{color: '#1877F2', marginTop: 8}}>Remove music</Text>
+              </TouchableOpacity>
+            ) : null}
           </View>
 
           {/* Video Preview */}

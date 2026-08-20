@@ -206,10 +206,9 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
     transform: [{translateY: sheetTranslateY.value}],
   }));
 
-  const canSend =
-    Boolean(selectedTag) && hasCommentText && !isSubmittingComment;
+  const canSend = hasCommentText && !isSubmittingComment;
   const canSendReply =
-    Boolean(replyTag) && hasReplyText && !isSubmittingReply && Boolean(replyingTo);
+    hasReplyText && !isSubmittingReply && Boolean(replyingTo);
 
   useEffect(() => {
     if (comments) {
@@ -245,13 +244,15 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
 
   const handleCommentSubmit = async () => {
     const commentText = commentDraftRef.current.trim();
-    if (!commentText || !selectedTag) {
+    if (!commentText) {
       return;
     }
 
     const form = new FormData();
     form.append('comment', commentText);
-    form.append('tag', commentTagToApiValue(selectedTag));
+    if (selectedTag) {
+      form.append('tag', commentTagToApiValue(selectedTag));
+    }
 
     const optimisticComment: Comment = {
       id: Date.now(),
@@ -317,7 +318,7 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
   };
 
   const handleReplySubmit = async () => {
-    if (!replyingTo || !replyTag) {
+    if (!replyingTo) {
       return;
     }
     const replyText = replyDraftRef.current.trim();
@@ -329,7 +330,9 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
     const parentDepth = getCommentDepth(replyingTo);
     const form = new FormData();
     form.append('comment', replyText);
-    form.append('tag', commentTagToApiValue(replyTag));
+    if (replyTag) {
+      form.append('tag', commentTagToApiValue(replyTag));
+    }
 
     const optimisticReply: Comment = {
       id: Date.now(),
@@ -400,10 +403,6 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
   };
 
   const handleSendPress = () => {
-    if (!selectedTag) {
-      Toast.error(t('comments.selectTagBeforeSend'));
-      return;
-    }
     if (!canSend) {
       return;
     }
@@ -530,10 +529,6 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
   };
 
   const handleReplySendPress = () => {
-    if (!replyTag) {
-      Toast.error(t('comments.selectTagBeforeSend'));
-      return;
-    }
     if (!hasReplyText) {
       return;
     }

@@ -17,11 +17,16 @@ import axiosInstance from '../../api';
 import endpoints from '../../api/endpoints';
 import {fontSizes} from '../../constant';
 import {colors} from '../../utils/theme';
-import {useNavigation} from '@react-navigation/native';
+import {useIsFocused, useNavigation} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
 import {selectUserProfile} from '../../store/slices/authSlice';
 import store from '../../store';
 import {BASE_URL} from '../../utils/baseurl';
+import ShareModal from '../../components/ShareModal';
+import {createMessage} from '../../api/home';
+import {saveItem, removeSavedItem} from '../../api/menu';
+import {serializePostShare} from '../../utils/postSharePayload';
+import {getMessage, Toast} from '../../utils/helpers';
 import {useTranslation} from 'react-i18next';
 
 type OverlayCtx = {
@@ -67,7 +72,8 @@ const VideosReelOverlay: React.FC<{
   onLike: (id: number) => void;
   onComment: (id: number) => void;
   onShare: (id: number) => void;
-}> = ({ctx, onLike, onComment, onShare}) => {
+  onSave: (id: number) => void;
+}> = ({ctx, onLike, onComment, onShare, onSave}) => {
   const navigation = useNavigation();
   const user = useSelector(selectUserProfile);
   const item = ctx.overlayData;
@@ -132,7 +138,7 @@ const VideosReelOverlay: React.FC<{
             <Text style={styles.timeOverlay}>{item.date || 'Just now'}</Text>
           </View>
         </View>
-        <TouchableOpacity style={styles.moreButton}>
+        <TouchableOpacity style={styles.moreButton} onPress={() => onSave(item.id)}>
           <Image
             source={images.saveIcon}
             style={[styles.threeDots, {tintColor: '#fff'}]}
@@ -189,34 +195,40 @@ const VideosReelPage: React.FC<{
   item: VideoItem;
   uri: string;
   isActive: boolean;
+  tabFocused: boolean;
   index: number;
   videoHeaders: VideoHeaders;
   onLike: (id: number) => void;
   onComment: (id: number) => void;
   onShare: (id: number) => void;
+  onSave: (id: number) => void;
 }> = ({
   item,
   uri,
   isActive,
+  tabFocused,
   index,
   videoHeaders,
   onLike,
   onComment,
   onShare,
+  onSave,
 }) => {
   const [userPaused, setUserPaused] = useState(false);
 
   useEffect(() => {
-    if (isActive) {
+    if (isActive && tabFocused) {
       setUserPaused(false);
     }
-  }, [isActive]);
+  }, [isActive, tabFocused]);
 
-  const paused = !isActive || userPaused;
+  const paused = !tabFocused || !isActive || userPaused;
   const source =
-    typeof uri === 'string' && 'Authorization' in videoHeaders
+    typeof uri === 'string' && uri.length > 0 && 'Authorization' in videoHeaders
       ? {uri, headers: videoHeaders}
-      : {uri};
+      : uri
+        ? {uri}
+        : undefined;
 
   const overlayCtx: OverlayCtx = {
     _id: item.id,
@@ -228,21 +240,23 @@ const VideosReelPage: React.FC<{
 
   return (
     <View style={styles.reelPage} collapsable={false}>
-      <Video
-        source={source}
-        style={StyleSheet.absoluteFillObject}
-        resizeMode="cover"
-        repeat
-        paused={paused}
-        muted={false}
-        playInBackground={false}
-        ignoreSilentSwitch="ignore"
-        pointerEvents="none"
-      />
+      {source ? (
+        <Video
+          source={source}
+          style={StyleSheet.absoluteFillObject}
+          resizeMode="cover"
+          repeat
+          paused={paused}
+          muted={!tabFocused}
+          playInBackground={false}
+          ignoreSilentSwitch="ignore"
+          pointerEvents="none"
+        />
+      ) : null}
       <Pressable
         style={StyleSheet.absoluteFillObject}
         onPress={() => {
-          if (isActive) {
+          if (isActive && tabFocused) {
             setUserPaused(p => !p);
           }
         }}
@@ -255,6 +269,7 @@ const VideosReelPage: React.FC<{
           onLike={onLike}
           onComment={onComment}
           onShare={onShare}
+          onSave={onSave}
         />
       </View>
     </View>
@@ -269,6 +284,14 @@ const VideosTab = () => {
   const [hasMore, setHasMore] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
   const {t} = useTranslation();
+  const isFocused = useIsFocused();
+  const [shareVideoId, setShareVideoId] = useState<number | null>(null);
+  const [savedIds, setSavedIds] = useState<Set<number>>(new Set());
+
+  const activeShareVideo = useMemo(
+    () => reels.find(r => r.id === shareVideoId) || null,
+    [reels, shareVideoId],
+  );
 
   useEffect(() => {
     fetchVideos();
@@ -378,9 +401,74 @@ const VideosTab = () => {
     );
   }, []);
 
-  const handleComment = useCallback((_videoId: number) => {}, []);
+  const handleComment = useCallback((videoId: number) => {
+    setShareVideoId(videoId);
+  }, []);
 
-  const handleShare = useCallback((_videoId: number) => {}, []);
+  const handleShare = useCallback((videoId: number) => {
+    setShareVideoId(videoId);
+  }, []);
+
+  const handleSave = useCallback(
+    async (videoId: number) => {
+      const isSaved = savedIds.has(videoId);
+      const payload = {item_id: videoId, item_type: 'video'};
+      try {
+        if (isSaved) {
+          await removeSavedItem(payload);
+          setSavedIds(prev => {
+            const next = new Set(prev);
+            next.delete(videoId);
+            return next;
+          });
+          Toast.success('Removed from saved');
+        } else {
+          await saveItem(payload);
+          setSavedIds(prev => new Set(prev).add(videoId));
+          Toast.success('Video saved');
+        }
+      } catch (error: any) {
+        Toast.error(getMessage(error?.message || error));
+      }
+    },
+    [savedIds],
+  );
+
+  const handleSendVideoToChats = useCallback(
+    async (chatIds: number[]) => {
+      if (!activeShareVideo || chatIds.length === 0) {
+        return;
+      }
+      const message = serializePostShare({
+        v: 1,
+        type: 'video_share',
+        video_id: activeShareVideo.id,
+        title: activeShareVideo.content || 'Shared video',
+        description: activeShareVideo.content,
+        author: activeShareVideo.user?.name,
+      });
+      try {
+        await Promise.all(
+          chatIds.map(async chatId => {
+            const form = new FormData();
+            form.append('chat_id', String(chatId));
+            form.append('message', message);
+            await createMessage(form);
+          }),
+        );
+        Toast.success(
+          chatIds.length === 1
+            ? 'Video sent to chat.'
+            : `Video sent to ${chatIds.length} chats.`,
+        );
+      } catch (error: any) {
+        Toast.error(getMessage(error?.message || error));
+      } finally {
+        setShareVideoId(null);
+      }
+    },
+    [activeShareVideo],
+  );
 
   const token = store.getState().auth.token;
   const videoHeaders = useMemo<VideoHeaders>(
@@ -438,15 +526,25 @@ const VideosTab = () => {
               item={item}
               uri={processVideoUrl(item.video)}
               isActive={index === activeIndex}
+              tabFocused={isFocused}
               index={index}
               videoHeaders={videoHeaders}
               onLike={handleLike}
               onComment={handleComment}
               onShare={handleShare}
+              onSave={handleSave}
             />
           </View>
         ))}
       </PagerView>
+      {shareVideoId != null ? (
+        <ShareModal
+          visible={true}
+          onClose={() => setShareVideoId(null)}
+          onShareToNewsfeed={() => setShareVideoId(null)}
+          onSendToChats={handleSendVideoToChats}
+        />
+      ) : null}
       {loadingMore ? (
         <View style={styles.loadMoreBadge} pointerEvents="none">
           <ActivityIndicator color="#fff" size="small" />

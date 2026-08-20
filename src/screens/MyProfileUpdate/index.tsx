@@ -126,7 +126,6 @@ const MyProfileUpdate: React.FC = () => {
         if (res?.data) {
           setSubmitted(false);
           setProfileUpdateModal(true);
-          // navigation.goBack();
         }
       })
       .catch(err => {

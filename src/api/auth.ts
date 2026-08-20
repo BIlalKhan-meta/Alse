@@ -22,18 +22,34 @@ export const googleLogin = (data: {
 };
 
 export const appleLogin = (data: {
-  email: string;
+  email?: string;
   fullName: string;
+  givenName?: string;
+  familyName?: string;
   isAppleLogin: boolean;
   apple_id: string;
+  identityToken: string;
+  authorizationCode?: string;
   deviceId?: string;
   fcmToken?: string;
 }) => {
   const formData = new FormData();
-  formData.append('email', data.email);
+  if (data.email) {
+    formData.append('email', data.email);
+  }
   formData.append('full_name', data.fullName);
-  formData.append('is_apple_login', data.isAppleLogin);
+  if (data.givenName) {
+    formData.append('given_name', data.givenName);
+  }
+  if (data.familyName) {
+    formData.append('family_name', data.familyName);
+  }
+  formData.append('is_apple_login', String(data.isAppleLogin));
   formData.append('apple_id', data.apple_id);
+  formData.append('identity_token', data.identityToken);
+  if (data.authorizationCode) {
+    formData.append('authorization_code', data.authorizationCode);
+  }
   if (data.deviceId) {
     formData.append('device_id', data.deviceId);
     formData.append('device_type', Platform.OS === 'ios' ? 'ios' : 'android');
