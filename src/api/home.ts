@@ -41,6 +41,31 @@ export const postCommentReply = (
   return uploadWithFetch(`/post/${postId}/comment`, formData);
 };
 
+export const getVideoComments = (id: number, page: number = 1) => {
+  return axiosInstance.get(`/video/${id}/comments`, {params: {page}});
+};
+
+export const postVideoComment = (formData: FormData, id: number) => {
+  return uploadWithFetch(`/video/${id}/comment`, formData);
+};
+
+export const postVideoCommentReply = (
+  formData: FormData,
+  videoId: number,
+  parentCommentId: number,
+) => {
+  formData.append('parent_id', String(parentCommentId));
+  return uploadWithFetch(`/video/${videoId}/comment`, formData);
+};
+
+export const videoCommentLike = (id: number, commentId: number) => {
+  return axiosInstance.post(`/video/${id}/comment/${commentId}/like`);
+};
+
+export const getVideoCommentLikes = (videoId: number, commentId: number) => {
+  return axiosInstance.get(`/video/${videoId}/comment/${commentId}/likes`);
+};
+
 export const createPost = (formData: FormData) => {
   return uploadWithFetch(
     endpoints.home.createPost,

@@ -1,9 +1,10 @@
 import {useCallback, useRef, useState} from 'react';
-import {getCommentPost} from '../store/slices/homeSlice';
-import {useAppDispatch} from './storeHooks';
+import {getPostComment, getVideoComments} from '../api/home';
 import {getMessage} from '../utils/helpers';
 import {cacheComments, getCachedComments} from '../utils/appCache';
 import {Comment, normalizeCommentTree} from '../utils/commentTree';
+
+export type CommentTarget = 'post' | 'video';
 
 type CommentsState = {
   visible: boolean;
@@ -32,8 +33,7 @@ const extractCommentsPage = (payload: any): {
   };
 };
 
-export const usePostComments = () => {
-  const dispatch = useAppDispatch();
+export const usePostComments = (target: CommentTarget = 'post') => {
   const [commentsVisible, setCommentsVisible] = useState<CommentsState>(
     emptyState,
   );
@@ -43,7 +43,7 @@ export const usePostComments = () => {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const inFlightRef = useRef(false);
-  const postIdRef = useRef<number | null>(null);
+  const entityIdRef = useRef<number | null>(null);
 
   const closeComments = useCallback(() => {
     setCommentsVisible(emptyState());
@@ -53,29 +53,29 @@ export const usePostComments = () => {
     setPage(1);
     setHasMore(false);
     inFlightRef.current = false;
-    postIdRef.current = null;
+    entityIdRef.current = null;
   }, []);
 
   const loadComments = useCallback(
-    async (postId: number, nextPage: number = 1, append: boolean = false) => {
+    async (entityId: number, nextPage: number = 1, append: boolean = false) => {
       if (inFlightRef.current && nextPage === 1 && !append) {
         return;
       }
       inFlightRef.current = true;
-      postIdRef.current = postId;
+      entityIdRef.current = entityId;
 
       if (append) {
         setIsLoadingMore(true);
       } else {
         setIsLoadingComments(true);
         setCommentsError(null);
-        const cached = getCachedComments(postId);
+        const cached = getCachedComments(entityId, undefined, target);
         setCommentsVisible({
           visible: true,
           comments: cached
             ? normalizeCommentTree(cached as any[])
             : [],
-          id: postId,
+          id: entityId,
         });
         if (cached?.length) {
           setIsLoadingComments(false);
@@ -83,10 +83,11 @@ export const usePostComments = () => {
       }
 
       try {
-        const res = await dispatch(
-          getCommentPost({id: postId, page: nextPage}),
-        ).unwrap();
-        if (postIdRef.current !== postId) {
+        const res =
+          target === 'video'
+            ? await getVideoComments(entityId, nextPage)
+            : await getPostComment(entityId, nextPage);
+        if (entityIdRef.current !== entityId) {
           return;
         }
         const {comments, currentPage, lastPage} = extractCommentsPage(res);
@@ -94,17 +95,17 @@ export const usePostComments = () => {
         setHasMore(currentPage < lastPage);
         setCommentsVisible(prev => ({
           visible: true,
-          id: postId,
+          id: entityId,
           comments: append
             ? [...prev.comments, ...comments]
             : comments,
         }));
         if (!append) {
-          cacheComments(postId, comments);
+          cacheComments(entityId, comments, target);
         }
         setCommentsError(null);
       } catch (err: any) {
-        if (postIdRef.current !== postId) {
+        if (entityIdRef.current !== entityId) {
           return;
         }
         const message = getMessage(err) || 'Failed to load comments';
@@ -113,7 +114,7 @@ export const usePostComments = () => {
           setCommentsVisible({
             visible: true,
             comments: [],
-            id: postId,
+            id: entityId,
           });
         }
       } finally {
@@ -122,12 +123,12 @@ export const usePostComments = () => {
         setIsLoadingMore(false);
       }
     },
-    [dispatch],
+    [target],
   );
 
   const openComments = useCallback(
-    (postId: number) => {
-      void loadComments(postId, 1, false);
+    (entityId: number) => {
+      void loadComments(entityId, 1, false);
     },
     [loadComments],
   );

@@ -23,11 +23,13 @@ import {selectUserProfile} from '../../store/slices/authSlice';
 import store from '../../store';
 import {BASE_URL} from '../../utils/baseurl';
 import ShareModal from '../../components/ShareModal';
+import CommentsModal from '../../components/CommentsModal';
 import {createMessage} from '../../api/home';
 import {saveItem, removeSavedItem} from '../../api/menu';
 import {serializePostShare} from '../../utils/postSharePayload';
 import {getMessage, Toast} from '../../utils/helpers';
 import {useTranslation} from 'react-i18next';
+import {usePostComments} from '../../hooks/usePostComments';
 
 type OverlayCtx = {
   _id: string | number;
@@ -202,6 +204,7 @@ const VideosReelPage: React.FC<{
   onComment: (id: number) => void;
   onShare: (id: number) => void;
   onSave: (id: number) => void;
+  commentsOpen?: boolean;
 }> = ({
   item,
   uri,
@@ -213,16 +216,17 @@ const VideosReelPage: React.FC<{
   onComment,
   onShare,
   onSave,
+  commentsOpen = false,
 }) => {
   const [userPaused, setUserPaused] = useState(false);
 
   useEffect(() => {
-    if (isActive && tabFocused) {
+    if (isActive && tabFocused && !commentsOpen) {
       setUserPaused(false);
     }
-  }, [isActive, tabFocused]);
+  }, [isActive, tabFocused, commentsOpen]);
 
-  const paused = !tabFocused || !isActive || userPaused;
+  const paused = !tabFocused || !isActive || userPaused || commentsOpen;
   const source =
     typeof uri === 'string' && uri.length > 0 && 'Authorization' in videoHeaders
       ? {uri, headers: videoHeaders}
@@ -287,6 +291,17 @@ const VideosTab = () => {
   const isFocused = useIsFocused();
   const [shareVideoId, setShareVideoId] = useState<number | null>(null);
   const [savedIds, setSavedIds] = useState<Set<number>>(new Set());
+  const {
+    commentsVisible,
+    isLoadingComments,
+    isLoadingMore: isLoadingMoreComments,
+    commentsError,
+    hasMoreComments,
+    openComments,
+    closeComments,
+    retryComments,
+    loadMoreComments,
+  } = usePostComments('video');
 
   const activeShareVideo = useMemo(
     () => reels.find(r => r.id === shareVideoId) || null,
@@ -345,7 +360,7 @@ const VideosTab = () => {
             video: finalVideoUrl,
             isLiked: video.is_liked ?? false,
             likes: video.likes ?? 0,
-            comments: video.comments ?? 0,
+            comments: video.comments_count ?? video.comments ?? 0,
             user: video.user || {
               id: video.user_id,
               name: video.user_name || `User ${video.user_id}`,
@@ -402,12 +417,26 @@ const VideosTab = () => {
   }, []);
 
   const handleComment = useCallback((videoId: number) => {
-    setShareVideoId(videoId);
-  }, []);
+    openComments(videoId);
+  }, [openComments]);
 
   const handleShare = useCallback((videoId: number) => {
     setShareVideoId(videoId);
   }, []);
+
+  const handleCommentCreated = useCallback(() => {
+    const videoId = commentsVisible.id;
+    if (videoId == null) {
+      return;
+    }
+    setReels(prev =>
+      prev.map(reel =>
+        reel.id === videoId
+          ? {...reel, comments: (reel.comments || 0) + 1}
+          : reel,
+      ),
+    );
+  }, [commentsVisible.id]);
 
   const handleSave = useCallback(
     async (videoId: number) => {
@@ -533,6 +562,7 @@ const VideosTab = () => {
               onComment={handleComment}
               onShare={handleShare}
               onSave={handleSave}
+              commentsOpen={commentsVisible.visible && commentsVisible.id === item.id}
             />
           </View>
         ))}
@@ -545,6 +575,24 @@ const VideosTab = () => {
           onSendToChats={handleSendVideoToChats}
         />
       ) : null}
+      <CommentsModal
+        visible={commentsVisible.visible}
+        closeModal={closeComments}
+        icon={images.checkedIcon}
+        title="Successfully"
+        message="Password has been updated successfully"
+        buttonText="Apply"
+        comments={commentsVisible.comments}
+        postId={commentsVisible.id || 0}
+        target="video"
+        onCommentCreated={handleCommentCreated}
+        isLoadingComments={isLoadingComments}
+        isLoadingMore={isLoadingMoreComments}
+        commentsError={commentsError}
+        onRetryComments={retryComments}
+        onLoadMoreComments={loadMoreComments}
+        hasMoreComments={hasMoreComments}
+      />
       {loadingMore ? (
         <View style={styles.loadMoreBadge} pointerEvents="none">
           <ActivityIndicator color="#fff" size="small" />

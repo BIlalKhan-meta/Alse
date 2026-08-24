@@ -14,6 +14,8 @@ import {FlashList} from '@shopify/flash-list';
 import Reanimated, {
   Extrapolation,
   interpolate,
+  runOnJS,
+  useAnimatedReaction,
   useAnimatedScrollHandler,
   useAnimatedStyle,
   useSharedValue,
@@ -113,6 +115,10 @@ const Home: React.FC = () => {
   const [storiesContentHeight, setStoriesContentHeight] = useState(
     STORIES_HEIGHT_FALLBACK,
   );
+  const [createPostContentHeight, setCreatePostContentHeight] = useState<
+    number | null
+  >(null);
+  const [composerCollapsed, setComposerCollapsed] = useState(false);
 
   const {
     commentsVisible,
@@ -179,10 +185,17 @@ const Home: React.FC = () => {
 
   const onCreatePostLayout = useCallback((event: LayoutChangeEvent) => {
     const {height} = event.nativeEvent.layout;
-    if (height > 0) {
-      createPostHeight.value = height;
+    if (height <= 0) {
+      return;
     }
-  }, []);
+    setCreatePostContentHeight(prev => {
+      if (prev != null && height + 0.5 < prev) {
+        return prev;
+      }
+      createPostHeight.value = height;
+      return height;
+    });
+  }, [createPostHeight]);
 
   const onStoriesLayout = useCallback((event: LayoutChangeEvent) => {
     const {height} = event.nativeEvent.layout;
@@ -198,23 +211,49 @@ const Home: React.FC = () => {
     },
   });
 
+  useAnimatedReaction(
+    () => {
+      const locked = createPostHeight.value;
+      return locked > 0 && scrollY.value >= locked * 0.85;
+    },
+    (collapsed, previous) => {
+      if (collapsed !== previous) {
+        runOnJS(setComposerCollapsed)(collapsed);
+      }
+    },
+  );
+
   const createPostAnimatedStyle = useAnimatedStyle(() => {
-    const maxHeight = interpolate(
+    const lockedHeight = createPostHeight.value;
+    const height = interpolate(
       scrollY.value,
-      [0, createPostHeight.value],
-      [createPostHeight.value, 0],
+      [0, lockedHeight],
+      [lockedHeight, 0],
       Extrapolation.CLAMP,
     );
     const opacity = interpolate(
       scrollY.value,
-      [0, createPostHeight.value * 0.5],
+      [0, lockedHeight * 0.5],
       [1, 0],
       Extrapolation.CLAMP,
     );
     return {
-      maxHeight,
+      height,
       opacity,
-      overflow: 'hidden',
+      overflow: 'hidden' as const,
+    };
+  });
+
+  const createPostInnerAnimatedStyle = useAnimatedStyle(() => {
+    const lockedHeight = createPostHeight.value;
+    const translateY = interpolate(
+      scrollY.value,
+      [0, lockedHeight],
+      [0, -lockedHeight],
+      Extrapolation.CLAMP,
+    );
+    return {
+      transform: [{translateY}],
     };
   });
 
@@ -649,7 +688,10 @@ const Home: React.FC = () => {
 
   const renderCreatePostSection = () => (
     <View
-      style={styles.whatsOnYourMindContainer}
+      style={[
+        styles.whatsOnYourMindContainer,
+        createPostContentHeight != null ? {height: createPostContentHeight} : null,
+      ]}
       onLayout={onCreatePostLayout}
       collapsable={false}>
       <View style={styles.whatsOnYourMindTop}>
@@ -693,8 +735,12 @@ const Home: React.FC = () => {
 
   const renderFeedTopSection = () => (
     <View style={styles.feedTopSection} collapsable={false}>
-      <Reanimated.View style={createPostAnimatedStyle} pointerEvents="box-none">
-        {renderCreatePostSection()}
+      <Reanimated.View
+        style={createPostAnimatedStyle}
+        pointerEvents={composerCollapsed ? 'none' : 'box-none'}>
+        <Reanimated.View style={createPostInnerAnimatedStyle}>
+          {renderCreatePostSection()}
+        </Reanimated.View>
       </Reanimated.View>
       <FeedFilterTabs
         activeFilter={activeFilter}
@@ -853,9 +899,6 @@ const Home: React.FC = () => {
               estimatedItemSize={480}
               drawDistance={vh * 120}
               removeClippedSubviews
-              maintainVisibleContentPosition={{
-                minIndexForVisible: 0,
-              }}
             />
           )}
 

@@ -49,16 +49,24 @@ export const appCache = {
 
 export const COMMENTS_CACHE_PREFIX = 'comments:';
 
-export function cacheComments(postId: number, comments: unknown[]) {
-  appCache.setJson(`${COMMENTS_CACHE_PREFIX}${postId}`, {
+export function cacheComments(
+  entityId: number,
+  comments: unknown[],
+  target: 'post' | 'video' = 'post',
+) {
+  appCache.setJson(`${COMMENTS_CACHE_PREFIX}${target}:${entityId}`, {
     comments,
     savedAt: Date.now(),
   });
 }
 
-export function getCachedComments(postId: number, maxAgeMs = 5 * 60 * 1000) {
+export function getCachedComments(
+  entityId: number,
+  maxAgeMs = 5 * 60 * 1000,
+  target: 'post' | 'video' = 'post',
+) {
   const cached = appCache.getJson<{comments: unknown[]; savedAt: number}>(
-    `${COMMENTS_CACHE_PREFIX}${postId}`,
+    `${COMMENTS_CACHE_PREFIX}${target}:${entityId}`,
   );
   if (!cached?.comments) {
     return null;

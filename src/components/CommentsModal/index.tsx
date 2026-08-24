@@ -33,7 +33,15 @@ import {useAppDispatch} from '../../hooks/storeHooks';
 import {selectUserProfile} from '../../store/slices/authSlice';
 import {useSelector} from 'react-redux';
 import {capitalize} from '../../utils';
-import {postComment, postCommentReply, reportPost} from '../../api/home';
+import {
+  getVideoCommentLikes,
+  postComment,
+  postCommentReply,
+  postVideoComment,
+  postVideoCommentReply,
+  reportPost,
+  videoCommentLike,
+} from '../../api/home';
 import {getMessage, Toast} from '../../utils/helpers';
 import ToastMessage from 'react-native-toast-message';
 import {vh} from '../../constant';
@@ -88,6 +96,8 @@ interface CommentsModalProps {
   buttonText: string;
   comments: Comment[];
   postId: number;
+  target?: 'post' | 'video';
+  onCommentCreated?: () => void;
   isLoadingComments?: boolean;
   isLoadingMore?: boolean;
   commentsError?: string | null;
@@ -112,6 +122,8 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
     closeModal,
     comments,
     postId,
+    target = 'post',
+    onCommentCreated,
     isLoadingComments = false,
     isLoadingMore = false,
     commentsError = null,
@@ -283,7 +295,10 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
     setIsSubmittingComment(true);
 
     try {
-      const response = await postComment(form, postId);
+      const response =
+        target === 'video'
+          ? await postVideoComment(form, postId)
+          : await postComment(form, postId);
       const createdComment =
         response?.data?.data ?? response?.data ?? response ?? null;
 
@@ -301,6 +316,7 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
           }),
         );
       }
+      onCommentCreated?.();
     } catch (err: any) {
       setCommentsData(previousComments);
       setSelectedTag(previousTag);
@@ -366,7 +382,10 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
     setIsSubmittingReply(true);
 
     try {
-      const response = await postCommentReply(form, postId, parentId);
+      const response =
+        target === 'video'
+          ? await postVideoCommentReply(form, postId, parentId)
+          : await postCommentReply(form, postId, parentId);
       const createdReply =
         response?.data?.data ?? response?.data ?? response ?? null;
 
@@ -386,6 +405,7 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
           }),
         );
       }
+      onCommentCreated?.();
     } catch (err: any) {
       setCommentsData(previousComments);
       setReplyingTo(previousReplyingTo);
@@ -429,8 +449,12 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
       })),
     );
 
-    dispatch(likeComment({id: postId, commentId: id}))
-      .unwrap()
+    const likePromise =
+      target === 'video'
+        ? videoCommentLike(postId, id)
+        : dispatch(likeComment({id: postId, commentId: id})).unwrap();
+
+    Promise.resolve(likePromise)
       .catch(err => {
         setCommentsData(previousComments);
         Toast.error(getMessage(err));
@@ -457,8 +481,12 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
       return;
     }
     setIsFetchingCommentLikes(true);
-    dispatch(getCommentLikesThunk({postId, commentId}))
-      .unwrap()
+    const likesPromise =
+      target === 'video'
+        ? getVideoCommentLikes(postId, commentId)
+        : dispatch(getCommentLikesThunk({postId, commentId})).unwrap();
+
+    Promise.resolve(likesPromise)
       .then((res: any) => {
         const likes =
           res?.data?.data?.data ?? res?.data?.data ?? res?.data ?? [];

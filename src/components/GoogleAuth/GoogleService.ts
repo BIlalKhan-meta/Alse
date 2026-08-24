@@ -12,9 +12,10 @@ export function configureGoogleSignin() {
   }
 
   GoogleSignin.configure({
-    // MUST be the Web OAuth client ID (used to mint idToken):
+    // MUST be the Web OAuth client ID (used to mint idToken).
+    // From GCP project alse-f5276 → Credentials → Web client.
     webClientId:
-      '222536459203-1lkur745cuve2kiujol18phtdvg3qd7c.apps.googleusercontent.com',
+      '1021861190165-8ifik07pk5cb0qj8h9egjg4bvv7evojv.apps.googleusercontent.com',
     offlineAccess: false,
     forceCodeForRefreshToken: false,
   });

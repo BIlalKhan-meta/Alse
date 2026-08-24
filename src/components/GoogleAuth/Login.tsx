@@ -30,20 +30,26 @@ export default function GoogleLogin({
       const idToken = tokens?.idToken;
 
       if (!idToken) {
+        console.warn('[GoogleSignIn] missing idToken', {userInfo, tokens});
         Toast.show({
           type: 'error',
           text1: t('error'),
-          text2: t('toast.failedGoogleAuth'),
+          text2: 'Google did not return an ID token. Check webClientId config.',
         });
         return;
       }
 
       return onSuccess(idToken);
-    } catch (error) {
+    } catch (error: any) {
+      console.warn('[GoogleSignIn] error', error?.code, error?.message, error);
+      const detail =
+        error?.message ||
+        error?.code ||
+        t('toast.failedGoogleAuth');
       Toast.show({
         type: 'error',
         text1: t('error'),
-        text2: t('toast.failedGoogleAuth'),
+        text2: String(detail).slice(0, 120),
       });
     }
   };
