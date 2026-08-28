@@ -1,11 +1,12 @@
-import {createSlice, createAsyncThunk} from '@reduxjs/toolkit';
+import {createSlice, createAsyncThunk, PayloadAction} from '@reduxjs/toolkit';
 import {editProfile, getUserPosts} from '../../api/profile';
-import {getPrimaryNewsfeedMedia} from '../../utils/helpers';
+import {getProfileGridThumbPath} from '../../utils/helpers';
 
 interface PostItem {
   id: string;
   uri: string;
   title?: string;
+  isVideo?: boolean;
 }
 
 interface MediaItem {
@@ -56,25 +57,37 @@ export const postCreate = createAsyncThunk(
   },
 );
 
+const mapApiPostsToGridItems = (apiPosts: ApiPost[]): PostItem[] =>
+  (apiPosts || [])
+    .filter((post: ApiPost) => post.media && post.media.length > 0)
+    .map((post: ApiPost) => {
+      const thumb = getProfileGridThumbPath(post.media);
+      const hasVideo = post.media.some(
+        m =>
+          m.type === 'video' ||
+          /\.(mp4|mov|webm|mkv)$/i.test((m.file || m.path || '').split('/').pop() || ''),
+      );
+      return {
+        id: post.id.toString(),
+        // Empty uri → client shows local placeholder (broken remote Story_/missing Post_ files)
+        uri: thumb || '',
+        title: post.description,
+        isVideo: hasVideo && !thumb,
+      };
+    });
+
 export const fetchUserPosts = createAsyncThunk(
   'profile/fetchUserPosts',
   async (userId: string, {rejectWithValue}) => {
     try {
       const response = await getUserPosts(userId);
-      // Extract posts from nested response structure: response.data.data.data
-      const apiPosts: ApiPost[] = response.data?.data?.data || [];
+      // Paginated: data.data.data | non-paginated: data.data (array)
+      const payload = response.data?.data;
+      const apiPosts: ApiPost[] = Array.isArray(payload)
+        ? payload
+        : payload?.data || [];
 
-      // Filter posts that have media (disregard posts without media) and transform to PostItem format
-      const postsWithMedia = apiPosts
-        .filter((post: ApiPost) => post.media && post.media.length > 0)
-        .map((post: ApiPost) => ({
-          id: post.id.toString(),
-          uri:
-            getPrimaryNewsfeedMedia(post.media)?.path ?? post.media[0].path,
-          title: post.description,
-        }));
-
-      return postsWithMedia;
+      return mapApiPostsToGridItems(apiPosts);
     } catch (error: any) {
       console.error('Fetch posts error:', error);
       return rejectWithValue(
@@ -94,6 +107,12 @@ const profileSlice = createSlice({
     clearError: state => {
       state.error = null;
     },
+    /** Seed grid from `/profile` (or similar) when that payload already includes posts. */
+    setPostsFromProfile: (state, action: PayloadAction<ApiPost[]>) => {
+      state.posts = mapApiPostsToGridItems(action.payload || []);
+      state.loading = false;
+      state.error = null;
+    },
   },
   extraReducers: builder => {
     builder
@@ -103,7 +122,10 @@ const profileSlice = createSlice({
       })
       .addCase(fetchUserPosts.fulfilled, (state, action) => {
         state.loading = false;
-        state.posts = action.payload || [];
+        // Keep previously seeded profile posts if the posts endpoint returned nothing
+        if (action.payload?.length) {
+          state.posts = action.payload;
+        }
       })
       .addCase(fetchUserPosts.rejected, (state, action) => {
         state.loading = false;
@@ -112,7 +134,7 @@ const profileSlice = createSlice({
   },
 });
 
-export const {clearPosts, clearError} = profileSlice.actions;
+export const {clearPosts, clearError, setPostsFromProfile} = profileSlice.actions;
 export const selectUserPosts = (state: any) => state.profile.posts;
 export const selectPostsLoading = (state: any) => state.profile.loading;
 export const selectPostsError = (state: any) => state.profile.error;

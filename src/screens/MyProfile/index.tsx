@@ -5,7 +5,6 @@ import {
   Image,
   TouchableOpacity,
   ScrollView,
-  FlatList,
   RefreshControl,
   Modal,
   StyleSheet,
@@ -30,6 +29,7 @@ import {
   fetchUserPosts,
   selectUserPosts,
   selectPostsLoading,
+  setPostsFromProfile,
 } from '../../store/slices/profileSlice';
 import {useAppDispatch} from '../../hooks/storeHooks';
 import Loader from '../../components/Loader';
@@ -41,15 +41,34 @@ import Toast from 'react-native-toast-message';
 import styles from './styles';
 import {colors} from '../../utils/theme';
 import {useTranslation} from 'react-i18next';
-import Card from '../../components/Card';
-import InterMedium from '../../components/Text/InterMedium';
 import {vw, vh} from '../../constant';
 
 interface PostItem {
   id: string;
   uri: string;
   title?: string;
+  isVideo?: boolean;
 }
+
+/** Grid cell that falls back to a local image when the remote URL 404s. */
+const ProfilePostThumb: React.FC<{item: PostItem}> = ({item}) => {
+  const [failed, setFailed] = useState(!item.uri);
+
+  return (
+    <TouchableOpacity style={styles.postItem} activeOpacity={0.85}>
+      <Image
+        source={failed || !item.uri ? images.pro1 : {uri: item.uri}}
+        style={styles.postImage}
+        onError={() => setFailed(true)}
+      />
+      {item.isVideo ? (
+        <View style={styles.videoBadge}>
+          <Text style={styles.videoBadgeText}>VIDEO</Text>
+        </View>
+      ) : null}
+    </TouchableOpacity>
+  );
+};
 
 const MyProfile: React.FC = () => {
   const navigation = useNavigation();
@@ -119,7 +138,7 @@ const MyProfile: React.FC = () => {
 
   // Statistics derived from actual data
   const stats = {
-    posts: posts.length,
+    posts: posts.length || user?.posts?.length || 0,
     followers: user?.followers?.length || user?.followers_count || 0,
     following: user?.following?.length || user?.following_count || 0,
   };
@@ -130,6 +149,16 @@ const MyProfile: React.FC = () => {
     });
   }, [navigation]);
 
+  const seedPostsFromProfilePayload = useCallback(
+    (profilePayload: any) => {
+      const embeddedPosts = profilePayload?.posts;
+      if (Array.isArray(embeddedPosts) && embeddedPosts.length > 0) {
+        dispatch(setPostsFromProfile(embeddedPosts));
+      }
+    },
+    [dispatch],
+  );
+
   // Initial data fetch - only runs once when component mounts
   const fetchInitialData = useCallback(async () => {
     if (!user || !user.id) {
@@ -139,6 +168,7 @@ const MyProfile: React.FC = () => {
         // Initialize profile data in settings slice
         if (userProfile?.data) {
           dispatch(initializeProfile(userProfile.data));
+          seedPostsFromProfilePayload(userProfile.data);
         }
 
         // Fetch posts using the user ID
@@ -148,16 +178,25 @@ const MyProfile: React.FC = () => {
       } catch (error) {
         console.error('Error fetching initial data:', error);
       }
-    } else if (user.id && posts.length === 0) {
-      // If we have user but no posts, fetch posts only
-      try {
-        await dispatch(fetchUserPosts(user.id.toString()));
-      } catch (error) {
-        console.error('Error fetching posts:', error);
+    } else {
+      seedPostsFromProfilePayload(user);
+      if (posts.length === 0 && !(user.posts?.length > 0)) {
+        try {
+          await dispatch(fetchUserPosts(user.id.toString()));
+        } catch (error) {
+          console.error('Error fetching posts:', error);
+        }
+      } else if (user.id) {
+        // Refresh from dedicated posts endpoint in background
+        try {
+          await dispatch(fetchUserPosts(user.id.toString()));
+        } catch (error) {
+          console.error('Error fetching posts:', error);
+        }
       }
     }
     setInitialLoad(true);
-  }, [dispatch, user, posts.length]);
+  }, [dispatch, user, posts.length, seedPostsFromProfilePayload]);
 
   // Manual refresh function
   const handleRefresh = useCallback(async () => {
@@ -169,6 +208,7 @@ const MyProfile: React.FC = () => {
       // Update profile data in settings slice
       if (userProfile?.data) {
         dispatch(initializeProfile(userProfile.data));
+        seedPostsFromProfilePayload(userProfile.data);
       }
 
       // Refetch posts
@@ -182,18 +222,28 @@ const MyProfile: React.FC = () => {
     } finally {
       setRefreshing(false);
     }
-  }, [dispatch, user?.id]);
+  }, [dispatch, user?.id, seedPostsFromProfilePayload]);
 
   // Fetch posts only when screen comes into focus (if user exists but posts are missing)
   const handleFocusRefetch = useCallback(async () => {
     if (user?.id && posts.length === 0 && !postsLoading && initialLoad) {
       try {
-        await dispatch(fetchUserPosts(user.id.toString()));
+        seedPostsFromProfilePayload(user);
+        if (!(user.posts?.length > 0)) {
+          await dispatch(fetchUserPosts(user.id.toString()));
+        }
       } catch (error) {
         console.error('Error fetching posts on focus:', error);
       }
     }
-  }, [dispatch, user?.id, posts.length, postsLoading, initialLoad]);
+  }, [
+    dispatch,
+    user,
+    posts.length,
+    postsLoading,
+    initialLoad,
+    seedPostsFromProfilePayload,
+  ]);
 
   // Effect for initial data load
   useEffect(() => {
@@ -255,21 +305,6 @@ const MyProfile: React.FC = () => {
     return {uri: avatar};
   }, [currentProfile.avatar, avatarError]);
 
-  const renderPostItem = useCallback(
-    ({item}: {item: PostItem}) => (
-      <TouchableOpacity style={styles.postItem}>
-        <Image
-          source={{uri: item.uri}}
-          style={styles.postImage}
-          defaultSource={images.pro1}
-        />
-      </TouchableOpacity>
-    ),
-    [],
-  );
-
-  const keyExtractor = useCallback((item: PostItem) => item.id, []);
-
   const confirmLogout = () => {
     setLogoutModalVisible(false);
     dispatch(logout());
@@ -324,7 +359,6 @@ const MyProfile: React.FC = () => {
                 <View style={[styles.notifiCon, {width: vw * 8}]}>
                   <Image source={images.logout} style={styles.imageStyle} />
                 </View>
-                {/* <InterMedium style={styles.cardHeading}>Log out</InterMedium> */}
               </View>
             </TouchableOpacity>
           </View>
@@ -364,27 +398,23 @@ const MyProfile: React.FC = () => {
           </TouchableOpacity>
         </View>
 
-        {/* Posts Grid Section */}
+        {/* Posts grid — plain Views (not FlatList) so height works inside ScrollView on iOS */}
         <View style={styles.postsSection}>
-          <FlatList
-            data={posts}
-            numColumns={2}
-            renderItem={renderPostItem}
-            keyExtractor={keyExtractor}
-            showsVerticalScrollIndicator={false}
-            scrollEnabled={false}
-            columnWrapperStyle={styles.postsRow}
-            contentContainerStyle={styles.postsContainer}
-            ListEmptyComponent={
-              <View style={styles.emptyContainer}>
-                <Text style={styles.emptyText}>
-                  {postsLoading && posts.length !== 0
-                    ? t('profileScr.loading')
-                    : t('profileScr.noPosts')}
-                </Text>
-              </View>
-            }
-          />
+          {posts.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>
+                {postsLoading
+                  ? t('profileScr.loading')
+                  : t('profileScr.noPosts')}
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.postsGrid}>
+              {posts.map((item: PostItem) => (
+                <ProfilePostThumb key={item.id} item={item} />
+              ))}
+            </View>
+          )}
         </View>
       </ScrollView>
 

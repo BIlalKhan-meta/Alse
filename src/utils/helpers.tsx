@@ -315,6 +315,37 @@ export function getPrimaryNewsfeedMedia(
   return getNewsfeedMediaList(media)[0];
 }
 
+const IMAGE_EXT = /\.(jpe?g|png|gif|webp|heic|heif)$/i;
+
+function isImageMediaItem(m: NewsfeedMediaItem): boolean {
+  if (m.type === 'image') {
+    return true;
+  }
+  if (m.type === 'video') {
+    return false;
+  }
+  return IMAGE_EXT.test(mediaBasename(m.path) || mediaBasename(m.file));
+}
+
+/**
+ * Thumbnail for profile grids: prefer a still Post_* image.
+ * Does not use Story_* companions (those are story uploads / often 404 under posts/).
+ * Returns undefined for video-only posts so the UI can show a local placeholder.
+ */
+export function getProfileGridThumbPath(
+  media: NewsfeedMediaItem[] | undefined | null,
+): string | undefined {
+  if (!media?.length) {
+    return undefined;
+  }
+  const newsfeed = getNewsfeedMediaList(media);
+  const postImage = newsfeed.find(m => m.path && isImageMediaItem(m));
+  if (postImage?.path) {
+    return postImage.path;
+  }
+  return undefined;
+}
+
 /** App convention: attribution suffix on post `description` for reshares (parse with parseSharedFrom). */
 export const SHARED_FROM_DESCRIPTION_MARKER = '\n\n— Shared from ';
 

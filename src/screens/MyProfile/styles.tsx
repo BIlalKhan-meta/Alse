@@ -121,7 +121,12 @@ const styles = StyleSheet.create({
   },
   postsSection: {
     paddingHorizontal: 16,
-    paddingBottom: 24,
+    paddingBottom: 100,
+  },
+  postsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
   },
   postsContainer: {
     paddingBottom: 80,
@@ -131,14 +136,30 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   postItem: {
-    width: '48%',
+    width: vw * 44,
+    marginBottom: 12,
     borderRadius: 8,
     overflow: 'hidden',
+    backgroundColor: '#F0F0F0',
   },
   postImage: {
     width: '100%',
-    aspectRatio: 1,
+    height: vw * 44,
     borderRadius: 8,
+  },
+  videoBadge: {
+    position: 'absolute',
+    bottom: 8,
+    left: 8,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  videoBadgeText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: '600',
   },
   emptyContainer: {
     alignItems: 'center',
