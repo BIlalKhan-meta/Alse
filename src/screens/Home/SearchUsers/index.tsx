@@ -1,62 +1,97 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {ActivityIndicator, FlatList, View} from 'react-native';
 import Card from '../../../components/Card';
 import {useIsFocused} from '@react-navigation/native';
 import styles from './styles';
 import SearchComponent from '../../../components/SearchComponent';
-import {useSelector} from 'react-redux';
-import {selectUserProfile} from '../../../store/slices/authSlice';
 import {getAllUsers, userFollow, userUnFollow} from '../../../api/home';
 import {FollowingCard} from '../../../components/FollowingCard';
 import HorizontalSeparator from '../../../components/HorizontalSeparator';
 import {EmptyComponent} from '../../../components/EmptyComponent';
 import {colors} from '../../../utils/theme';
 
+const DEBOUNCE_MS = 350;
+
+const extractUsersPage = (res: any) => {
+  const pageData = res?.data?.data ?? res?.data ?? {};
+  const list = pageData?.data ?? (Array.isArray(pageData) ? pageData : []);
+  const meta = pageData?.meta ?? res?.data?.meta ?? {};
+  return {
+    users: Array.isArray(list) ? list : [],
+    currentPage: Number(meta?.current_page ?? pageData?.current_page ?? 1),
+    lastPage: Number(meta?.last_page ?? pageData?.last_page ?? 1),
+  };
+};
+
 const SearchUsers: React.FC = () => {
-  const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const isFocused = useIsFocused();
   const [text, setText] = useState('');
+  const [debouncedText, setDebouncedText] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [lastPage, setLastPage] = useState(1);
+  const requestIdRef = useRef(0);
+  const loadingRef = useRef(false);
 
   useEffect(() => {
-    if (isFocused) {
-      resetAndFetchData();
+    const timer = setTimeout(() => {
+      setDebouncedText(text.trim());
+    }, DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [text]);
+
+  const fetchData = useCallback(async (page: number, query: string, append: boolean) => {
+    if (loadingRef.current && append) {
+      return;
     }
-  }, [isFocused, text]);
-
-  const resetAndFetchData = async () => {
-    setUsers([]);
-    setCurrentPage(1);
-    await fetchData(1);
-  };
-
-  const onLoadMore = async () => {
-    if (!loading && currentPage < lastPage) await fetchData(currentPage + 1);
-  };
-
-  const fetchData = async (page = currentPage) => {
-    if (loading) return;
-
+    const requestId = ++requestIdRef.current;
+    loadingRef.current = true;
     setLoading(true);
 
     try {
-      const res = await getAllUsers(page, text);
-      console.log('RESSSSS=====================', res?.data);
-      setUsers(prev => [...prev, ...res.data.data.data]);
-      setCurrentPage(res?.data?.data?.meta?.current_page);
-      setLastPage(res?.data?.data?.meta?.last_page);
+      const res = await getAllUsers(page, query);
+      if (requestId !== requestIdRef.current) {
+        return;
+      }
+      const {users: nextUsers, currentPage: pageNum, lastPage: last} =
+        extractUsersPage(res);
+      setUsers(prev => (append ? [...prev, ...nextUsers] : nextUsers));
+      setCurrentPage(pageNum);
+      setLastPage(last);
     } catch (error) {
-      console.error('Error fetching users:', error);
+      if (requestId === requestIdRef.current) {
+        console.error('Error fetching users:', error);
+        if (!append) {
+          setUsers([]);
+        }
+      }
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) {
+        loadingRef.current = false;
+        setLoading(false);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isFocused) {
+      return;
+    }
+    void fetchData(1, debouncedText, false);
+  }, [isFocused, debouncedText, fetchData]);
+
+  const onLoadMore = async () => {
+    if (!loading && currentPage < lastPage) {
+      await fetchData(currentPage + 1, debouncedText, true);
     }
   };
 
-  const handleActionButton = async userItem => {
+  const handleActionButton = async (userItem: any) => {
     const index = users.findIndex(item => item?.id === userItem?.id);
-    if (index === -1) return;
+    if (index === -1) {
+      return;
+    }
 
     const updatedUsers = [...users];
     try {
@@ -79,7 +114,7 @@ const SearchUsers: React.FC = () => {
     }
   };
 
-  const renderUserItem = ({item}) => (
+  const renderUserItem = ({item}: {item: any}) => (
     <>
       <FollowingCard
         item={{
@@ -106,7 +141,6 @@ const SearchUsers: React.FC = () => {
         <SearchComponent
           onSearch={searchText => {
             setText(searchText);
-            // resetAndFetchData();
           }}
           placeholder="Find Users"
         />

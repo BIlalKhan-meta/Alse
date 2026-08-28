@@ -25,6 +25,7 @@ import {EmptyComponent} from '../../components/EmptyComponent';
 import SelectUserModal from './SelectUserModal';
 import CreateGroupSheet from './CreateGroupSheet';
 import {getProductSharePreviewText} from '../../utils/productSharePayload';
+import {getPostSharePreviewText} from '../../utils/postSharePayload';
 interface ChatItem {
   id: number;
   name: string;
@@ -158,7 +159,9 @@ const ChatScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
         <Text style={styles.lastMessage} numberOfLines={3}>
-          {getProductSharePreviewText(item.last_message?.message) ||
+          {getPostSharePreviewText(item.last_message?.message) ||
+            getProductSharePreviewText(item.last_message?.message) ||
+            item.last_message?.message ||
             'No messages yet'}
         </Text>
 

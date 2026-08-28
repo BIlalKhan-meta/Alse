@@ -63,10 +63,12 @@ class ChatSocket {
       // Setup connection event listeners
       this.setupConnectionListeners();
 
-      // Log all events for debugging
-      this.socket.onAny((eventName: string, ...args: any[]) => {
-        console.log('[Socket] 📡 Event:', eventName, args?.[0]);
-      });
+      // Log all events for debugging (dev only — floods JS thread in production)
+      if (__DEV__) {
+        this.socket.onAny((eventName: string, ...args: any[]) => {
+          console.log('[Socket] 📡 Event:', eventName, args?.[0]);
+        });
+      }
     } catch (error) {
       console.error('[Socket] ❌ Failed to create connection:', error);
       throw error;

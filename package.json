@@ -84,7 +84,7 @@
     "react-native-blob-util": "^0.24.7",
     "react-native-bootsplash": "^6.3.12",
     "react-native-compressor": "1.19.4",
-    "react-native-date-picker": "^5.0.4",
+    "react-native-date-picker": "5.0.12",
     "react-native-device-info": "^15.0.2",
     "react-native-dropdown-picker": "^5.4.6",
     "react-native-encrypted-storage": "^4.0.3",
@@ -165,6 +165,6 @@
     "typescript": "5.0.4"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=18 <24"
   }
 }

@@ -36,3 +36,18 @@ export function parsePostShareMessage(
   }
   return null;
 }
+
+export function getPostSharePreviewText(
+  text?: string | null,
+): string | null {
+  const payload = parsePostShareMessage(text);
+  if (!payload) {
+    return null;
+  }
+  if (payload.type === 'video_share') {
+    return payload.title
+      ? `Shared a video: ${payload.title}`
+      : 'Shared a video';
+  }
+  return payload.title ? `Shared a post: ${payload.title}` : 'Shared a post';
+}

@@ -10,9 +10,10 @@ Usage:
 
 Environment:
   BUNDLE_ID              Bundle ID used when auto-selecting the latest archive.
-                         Defaults to com.appfnh.alenga.
+                         Defaults to com.fnhapps.alenga.
   ASC_APP_ID             App Store Connect app ID. If omitted, the script
                          resolves it from the archive bundle ID using `asc`.
+                         Default fallback for Alse: 6504941244.
   TEAM_ID                Apple Developer Team ID for export. If omitted, the
                          script reads it from the archive.
   EXPORT_METHOD          Xcode export method. Defaults to app-store-connect.
@@ -109,7 +110,8 @@ require_command asc
 require_command python3
 require_command xcodebuild
 
-DEFAULT_BUNDLE_ID="com.appfnh.alenga"
+DEFAULT_BUNDLE_ID="com.fnhapps.alenga"
+DEFAULT_ASC_APP_ID="6504941244"
 ARCHIVE_PATH="${1:-}"
 ARCHIVE_SELECTOR_BUNDLE_ID="${BUNDLE_ID:-$DEFAULT_BUNDLE_ID}"
 
@@ -148,6 +150,9 @@ ASC_LOOKUP_BUNDLE_ID="$ARCHIVE_BUNDLE_ID"
 ASC_APP_ID="${ASC_APP_ID:-}"
 if [[ -z "$ASC_APP_ID" ]]; then
   ASC_APP_ID="$(resolve_app_id "$ASC_LOOKUP_BUNDLE_ID")"
+fi
+if [[ -z "$ASC_APP_ID" && "$ASC_LOOKUP_BUNDLE_ID" == "$DEFAULT_BUNDLE_ID" ]]; then
+  ASC_APP_ID="$DEFAULT_ASC_APP_ID"
 fi
 
 if [[ -z "$ASC_APP_ID" ]]; then

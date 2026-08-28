@@ -41,14 +41,17 @@ const getDeviceLanguage = () => {
 
   try {
     if (Platform.OS === 'ios') {
+      const settings = NativeModules.SettingsManager?.settings;
       deviceLanguage =
-        NativeModules.SettingsManager.settings.AppleLocale || 'en';
+        settings?.AppleLocale ||
+        settings?.AppleLanguages?.[0] ||
+        'en';
     } else {
-      deviceLanguage = NativeModules.I18nManager.localeIdentifier || 'en';
+      deviceLanguage = NativeModules.I18nManager?.localeIdentifier || 'en';
     }
 
     // Extract language code (e.g., 'en-US' -> 'en')
-    deviceLanguage = deviceLanguage.split('-')[0];
+    deviceLanguage = String(deviceLanguage).split(/[-_]/)[0];
 
     // Check if we support the device language
     if (resources[deviceLanguage as keyof typeof resources]) {

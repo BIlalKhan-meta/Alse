@@ -32,20 +32,16 @@ import {
   getActiveStreamsFromFirestore,
   getLiveIdByStreamKey,
 } from '../../../services/activeStreamService';
+import {
+  EndLiveStream,
+  GetLiveStreams,
+  StartLiveStream,
+} from '../../../api/liveStream';
 import {colors} from '../../../utils/theme';
 import {vh, vw} from '../../../constant';
 
 const sanitizeLiveID = (value: string): string =>
   String(value || '').replace(/[^a-zA-Z0-9_]/g, '_') || `live_${Date.now()}`;
-
-const FRONTEND_TEST_STREAM_KEY = 'alsetest_stream';
-const FRONTEND_TEST_LIVE_ID = 'alsetest_live_room';
-const FRONTEND_FORCE_TEST_ROOM = false;
-
-const generateLocalStreamKey = (uid: string) => {
-  const normalizedUid = String(uid || '').replace(/[^a-zA-Z0-9_]/g, '') || 'guest';
-  return `live_${normalizedUid}_${Date.now()}`;
-};
 
 const sleep = (ms: number) =>
   new Promise(resolve => {
@@ -198,41 +194,55 @@ const LiveStreamScreen = () => {
     setChoiceStep('pickStream');
     setLoadingStreams(true);
     try {
-      const streamsFromFirestore =
-        await withTimeout(getActiveStreamsFromFirestore(), 8000);
-      const firestoreStreams: LiveStreamItem[] = streamsFromFirestore.map(
-        s => ({
-          stream_key: s.stream_key,
-          live_id: s.live_id,
-          user_id: s.user_id,
-          user_name: s.user_name,
-        }),
-      );
-      const filteredStreams = firestoreStreams.filter(s => s.stream_key);
-      const hasTestStream = filteredStreams.some(
-        stream => stream.live_id === FRONTEND_TEST_LIVE_ID,
-      );
-      if (!hasTestStream) {
-        filteredStreams.unshift({
-          stream_key: FRONTEND_TEST_STREAM_KEY,
-          live_id: FRONTEND_TEST_LIVE_ID,
-          user_id: 0,
-          user_name: 'Test Stream',
+      const byKey = new Map<string, LiveStreamItem>();
+
+      try {
+        const streamsFromFirestore =
+          await withTimeout(getActiveStreamsFromFirestore(), 8000);
+        streamsFromFirestore.forEach(s => {
+          if (!s.stream_key) {
+            return;
+          }
+          byKey.set(s.stream_key, {
+            stream_key: s.stream_key,
+            live_id: s.live_id,
+            user_id: s.user_id,
+            user_name: s.user_name,
+          });
         });
+      } catch (err: any) {
+        if (err?.message === 'request_timeout') {
+          console.warn('[LiveStream] Firestore join list timed out');
+        }
       }
-      setLiveStreams(filteredStreams);
-    } catch (err: any) {
-      setLiveStreams([
-        {
-          stream_key: FRONTEND_TEST_STREAM_KEY,
-          live_id: FRONTEND_TEST_LIVE_ID,
-          user_id: 0,
-          user_name: 'Test Stream',
-        },
-      ]);
-      if (err?.message === 'request_timeout') {
-        console.warn('[LiveStream] Join list fetch timed out');
+
+      try {
+        const apiRes: any = await GetLiveStreams();
+        const apiStreams =
+          apiRes?.data?.live_streams ??
+          apiRes?.data?.data?.live_streams ??
+          apiRes?.data?.data ??
+          [];
+        if (Array.isArray(apiStreams)) {
+          apiStreams.forEach((s: any) => {
+            const key = s?.stream_key;
+            if (!key || byKey.has(key)) {
+              return;
+            }
+            byKey.set(key, {
+              stream_key: key,
+              live_id: sanitizeLiveID(key),
+              user_id: s?.user_id ?? s?.user?.id ?? 0,
+              user_name:
+                s?.user?.full_name || s?.user_name || s?.user?.name || 'Live',
+            });
+          });
+        }
+      } catch (apiErr) {
+        console.warn('[LiveStream] GetLiveStreams failed', apiErr);
       }
+
+      setLiveStreams(Array.from(byKey.values()));
     } finally {
       setLoadingStreams(false);
     }
@@ -304,17 +314,19 @@ const LiveStreamScreen = () => {
   const startHostSession = async () => {
     try {
       setError(null);
-      const streamKey = FRONTEND_FORCE_TEST_ROOM
-        ? FRONTEND_TEST_STREAM_KEY
-        : userID
-          ? generateLocalStreamKey(userID)
-          : FRONTEND_TEST_STREAM_KEY;
-      const channelName = streamKey;
-      const liveId = FRONTEND_FORCE_TEST_ROOM
-        ? FRONTEND_TEST_LIVE_ID
-        : userID
-          ? sanitizeLiveID(streamKey)
-          : FRONTEND_TEST_LIVE_ID;
+      const res: any = await StartLiveStream();
+      const liveStream =
+        res?.data?.live_stream ?? res?.data?.data?.live_stream ?? res?.data?.data;
+      const streamKey =
+        liveStream?.stream_key ||
+        res?.data?.stream_key ||
+        res?.data?.channel_name?.replace(/^agora\./, '');
+      if (!streamKey) {
+        throw new Error('Server did not return a stream key');
+      }
+      const channelName =
+        res?.data?.channel_name || `agora.${streamKey}`;
+      const liveId = sanitizeLiveID(streamKey);
       setLiveID(liveId);
       setHostStreamKey(streamKey);
       setHostChannelName(channelName);
@@ -334,8 +346,8 @@ const LiveStreamScreen = () => {
         if (liveID) {
           await removeActiveStream(liveID);
         }
+        await EndLiveStream().catch(() => {});
       } catch {
-        // Best effort - still navigate back
         if (liveID) {
           removeActiveStream(liveID).catch(() => {});
         }
@@ -513,6 +525,8 @@ const LiveStreamScreen = () => {
           config={{
             ...config,
             onLeaveLiveStreaming: handleLeaveLiveStreaming,
+            turnOnCameraWhenJoining: effectiveIsHost,
+            turnOnMicrophoneWhenJoining: effectiveIsHost,
             // Keep in-room chat visible for host and audience (ZIM plugin).
             inRoomMessageViewConfig: {
               ...(config as any).inRoomMessageViewConfig,

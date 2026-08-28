@@ -41,6 +41,24 @@ const theme = {
   },
 };
 
+function hideBootSplash() {
+  // Prefer NativeModules over react-native-bootsplash's TurboModule import:
+  // getEnforcing("RNBootSplash") can abort JS startup (white "Downloading 100%..." screen).
+  const RNBootSplash = NativeModules.RNBootSplash;
+  try {
+    if (typeof RNBootSplash?.hide === 'function') {
+      // Some builds expect (fade: boolean); others take 0 args.
+      try {
+        RNBootSplash.hide(false);
+      } catch {
+        RNBootSplash.hide();
+      }
+    }
+  } catch (e) {
+    console.warn('[BootSplash] hide failed:', e);
+  }
+}
+
 function App(): React.JSX.Element {
   configureReanimatedLogger({
     level: ReanimatedLogLevel.warn,
@@ -48,12 +66,8 @@ function App(): React.JSX.Element {
   });
 
   useEffect(() => {
-    // Use NativeModules to avoid TurboModule HostFunction "expected 0 arguments, got 1" error
-    // when new architecture is disabled (react-native-bootsplash 5.x + RN 0.79)
-    const RNBootSplash = NativeModules.RNBootSplash;
-    if (RNBootSplash?.hide) {
-      RNBootSplash.hide(false);
-    }
+    // Fallback if PersistGate onBeforeLift never runs (e.g. rehydrate hang).
+    hideBootSplash();
     try {
       configureGoogleSignin();
     } catch (e) {
@@ -69,21 +83,6 @@ function App(): React.JSX.Element {
     };
   }, []);
 
-  // function handleNotificationPress(remoteMessage: object) {
-  //   // console.log('NTOFIIIIIIIIIIIICATIONNNNNN', remoteMessage);
-  // }
-
-  // function handleNotification(remoteMessage: any) {
-  //   console.log('Message handled in the !', remoteMessage?.notification);
-  //   if (remoteMessage?.notification) {
-  //     InAppBrowser.close();
-  //     // navigation.navigate("Home");
-  //     // navigate('DrawerNavigation1');
-  //     // RNRestart.restart();
-  //   }
-  //   // RNRestart.restart();
-  // }
-
   const appContent = (
     <Provider store={store}>
       <PersistGate
@@ -92,7 +91,8 @@ function App(): React.JSX.Element {
             <ActivityIndicator size="large" color={colors.themeColor} />
           </View>
         }
-        persistor={persistor}>
+        persistor={persistor}
+        onBeforeLift={hideBootSplash}>
         <LanguageProvider>
           <AppQueryProvider>
           <NavigationContainer ref={navigationRef} theme={theme}>

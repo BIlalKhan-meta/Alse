@@ -64,7 +64,10 @@ target 'Alenga' do
     :path => config[:reactNativePath],
     :app_path => "#{Pod::Config.instance.installation_root}/..",
     # Add Hermes configuration explicitly
-    :hermes_enabled => true
+    :hermes_enabled => true,
+    # Match android/gradle.properties newArchEnabled=false — avoids TurboModule
+    # provider crashes (e.g. RNDatePickerManager RCTModuleProvider).
+    :new_arch_enabled => false
   )
 
   # Remove this - react-native-svg should be auto-linked

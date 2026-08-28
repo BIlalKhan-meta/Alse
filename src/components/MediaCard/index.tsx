@@ -2,6 +2,7 @@
 import React, {useEffect, useState} from 'react';
 import {View, Text, Image, TouchableOpacity, StyleSheet} from 'react-native';
 import Video from 'react-native-video';
+import {useIsFocused} from '@react-navigation/native';
 import styles from './styles';
 import {images} from '../../utils/images';
 import InterRegular from '../Text/InterRegular';
@@ -36,6 +37,7 @@ const MediaCard: React.FC<MediaCardProps> = ({
   onSavePress,
 }) => {
   const user = useSelector(selectUserProfile);
+  const isFocused = useIsFocused();
   const [saved, setSaved] = useState(item?.is_saved);
 
   useEffect(() => {
@@ -71,7 +73,7 @@ const MediaCard: React.FC<MediaCardProps> = ({
       {type === 'video' ? (
         <Video
           source={{uri: source}}
-          paused={false}
+          paused={!isFocused || !control}
           style={styles.media}
           controls={control ? control : false}
           resizeMode="contain"

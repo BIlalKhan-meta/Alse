@@ -1,10 +1,10 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {View, Text, TouchableOpacity, Image, SafeAreaView} from 'react-native';
 import * as yup from 'yup';
 import styles from './styles';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import RegularTextInput from '../../../components/TextInput/RegularTextInput';
-import {Formik} from 'formik';
+import {Formik, FormikProps} from 'formik';
 import {colors} from '../../../utils/theme';
 import CustomButton from '../../../components/CustomButton';
 import {useNavigation} from '@react-navigation/native';
@@ -26,7 +26,6 @@ interface FormValues {
   password: string;
 }
 async function storeUserSession(identifier: string, password: string) {
-  // console.log('email ===>', identifier, 'Password= ===>', password);
   await EncryptedStorage.setItem(
     'user_session',
     JSON.stringify({
@@ -56,6 +55,7 @@ type LoginScreenNavigationProp = NativeStackNavigationProp<
 const LoginScreen: React.FC = () => {
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const dispatch = useAppDispatch();
+  const formikRef = useRef<FormikProps<FormValues>>(null);
 
   const [submitted, setSubmitted] = useState<boolean>(false);
   const [googleSubmitted, setGoogleSubmitted] = useState<boolean>(false);
@@ -64,9 +64,10 @@ const LoginScreen: React.FC = () => {
   const [isSelected, setIsSelected] = useState<boolean>(false);
   const [deviceId, setDeviceId] = useState<string>('');
   const [fcmToken, setFcmToken] = useState<string | undefined>('');
-  const [initialValues, setInitialValues] = useState({
-    identifier: __DEV__ ? 'kendricklazarus2@gmail.com' : '',
-    password: __DEV__ ? 'Iphone@9876' : '',
+  const [sessionReady, setSessionReady] = useState(false);
+  const [initialValues, setInitialValues] = useState<FormValues>({
+    identifier: '',
+    password: '',
   });
 
   const {t} = useTranslation();
@@ -76,7 +77,6 @@ const LoginScreen: React.FC = () => {
       const session = await EncryptedStorage.getItem('user_session');
       if (session !== null) {
         const parsedSession = JSON.parse(session);
-        console.log('parsedSession.email ===>', parsedSession?.password);
         setIsSelected(true);
         setInitialValues({
           identifier: parsedSession.identifier || '',
@@ -91,7 +91,6 @@ const LoginScreen: React.FC = () => {
   const getToken = async () => {
     try {
       const ids = await getDeviceIdsForAuth();
-      console.log('FCM Token received:', ids.fcmToken);
       setDeviceId(ids.deviceId);
       setFcmToken(ids.fcmToken || '');
     } catch (error) {
@@ -101,18 +100,39 @@ const LoginScreen: React.FC = () => {
   };
 
   useEffect(() => {
-    retrieveUserSession();
+    let cancelled = false;
+    (async () => {
+      await retrieveUserSession();
+      if (!cancelled) {
+        setSessionReady(true);
+      }
+    })();
     getToken();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const validationSchema: yup.AnySchema<FormValues> = yup.object().shape({
-    // Either email or phone number
     identifier: yup.string().required('Email or Phone Number is required'),
     password: yup
       .string()
       .min(6, 'Password must be at least 6 characters')
       .required('Password is required'),
   });
+
+  const syncFieldFromNative = (
+    field: keyof FormValues,
+    nativeText: string | undefined,
+  ) => {
+    const formik = formikRef.current;
+    if (!formik || nativeText == null) {
+      return;
+    }
+    if (formik.values[field] !== nativeText) {
+      formik.setFieldValue(field, nativeText, false);
+    }
+  };
 
   const handleSubmit = async (values: FormValues) => {
     if (submitted) {
@@ -300,10 +320,11 @@ const LoginScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.safeAreaView}>
+      {!sessionReady ? null : (
       <Formik
+        innerRef={formikRef}
         initialValues={initialValues}
         validationSchema={validationSchema}
-        enableReinitialize
         onSubmit={handleSubmit}>
         {({
           handleSubmit: formikSubmit,
@@ -356,10 +377,17 @@ const LoginScreen: React.FC = () => {
                   placeholderTextColor={colors.darkGray}
                   onChangeText={handleChange('identifier')}
                   onBlur={handleBlur('identifier')}
+                  onEndEditing={e =>
+                    syncFieldFromNative('identifier', e.nativeEvent.text)
+                  }
                   value={values.identifier}
                   submitted={submitted}
                   errors={errors.identifier}
                   style={styles.input}
+                  textContentType="username"
+                  autoComplete="username"
+                  autoCapitalize="none"
+                  keyboardType="email-address"
                 />
 
                 <RegularTextInput
@@ -368,6 +396,9 @@ const LoginScreen: React.FC = () => {
                   placeholderTextColor={colors.darkGray}
                   onChangeText={handleChange('password')}
                   onBlur={handleBlur('password')}
+                  onEndEditing={e =>
+                    syncFieldFromNative('password', e.nativeEvent.text)
+                  }
                   value={values.password}
                   submitted={submitted}
                   errors={errors.password}
@@ -376,6 +407,8 @@ const LoginScreen: React.FC = () => {
                     setSecurePassword(!securePassword)
                   }
                   style={styles.input}
+                  textContentType="password"
+                  autoComplete="password"
                 />
 
                 <RememberMeContainer
@@ -387,7 +420,10 @@ const LoginScreen: React.FC = () => {
                 <CustomButton
                   testID="login-submit"
                   style={styles.loginBtn}
-                  onPress={formikSubmit}
+                  onPress={() => {
+                    // Sync autofill that may not have fired onChangeText
+                    formikSubmit();
+                  }}
                   loading={submitted}>
                   {t('signIn.login')}
                 </CustomButton>
@@ -404,6 +440,7 @@ const LoginScreen: React.FC = () => {
           </>
         )}
       </Formik>
+      )}
     </SafeAreaView>
   );
 };

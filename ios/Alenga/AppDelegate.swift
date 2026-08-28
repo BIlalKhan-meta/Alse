@@ -2,6 +2,7 @@ import UIKit
 import React
 import React_RCTAppDelegate
 import ReactAppDependencyProvider
+import RNBootSplash
 
 import FirebaseCore
 import FirebaseMessaging
@@ -103,5 +104,11 @@ class ReactNativeDelegate: RCTDefaultReactNativeFactoryDelegate {
     #else
       Bundle.main.url(forResource: "main", withExtension: "jsbundle")
     #endif
+  }
+
+  // Keep LaunchScreen visible until JS calls BootSplash.hide (avoids white gap while Metro loads).
+  override func customizeRootView(_ rootView: RCTRootView) {
+    super.customizeRootView(rootView)
+    RNBootSplash.initWithStoryboard("LaunchScreen", rootView: rootView)
   }
 }

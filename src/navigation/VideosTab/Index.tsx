@@ -26,8 +26,11 @@ import ShareModal from '../../components/ShareModal';
 import CommentsModal from '../../components/CommentsModal';
 import {createMessage} from '../../api/home';
 import {saveItem, removeSavedItem} from '../../api/menu';
-import {serializePostShare} from '../../utils/postSharePayload';
-import {getMessage, Toast} from '../../utils/helpers';
+import {
+  serializePostShare,
+} from '../../utils/postSharePayload';
+import {getAbsoluteAvatarUrl, getMessage, Toast} from '../../utils/helpers';
+import {emitMessage} from '../../utils/socket';
 import {useTranslation} from 'react-i18next';
 import {usePostComments} from '../../hooks/usePostComments';
 
@@ -197,6 +200,7 @@ const VideosReelPage: React.FC<{
   item: VideoItem;
   uri: string;
   isActive: boolean;
+  shouldMountPlayer: boolean;
   tabFocused: boolean;
   index: number;
   videoHeaders: VideoHeaders;
@@ -209,6 +213,7 @@ const VideosReelPage: React.FC<{
   item,
   uri,
   isActive,
+  shouldMountPlayer,
   tabFocused,
   index,
   videoHeaders,
@@ -244,7 +249,7 @@ const VideosReelPage: React.FC<{
 
   return (
     <View style={styles.reelPage} collapsable={false}>
-      {source ? (
+      {source && shouldMountPlayer ? (
         <Video
           source={source}
           style={StyleSheet.absoluteFillObject}
@@ -468,12 +473,20 @@ const VideosTab = () => {
       if (!activeShareVideo || chatIds.length === 0) {
         return;
       }
+      const thumb =
+        (activeShareVideo as any)?.thumbnail ||
+        (activeShareVideo as any)?.thumb ||
+        activeShareVideo.user?.avatar;
+      const absoluteThumb = thumb
+        ? getAbsoluteAvatarUrl(thumb) || thumb
+        : undefined;
       const message = serializePostShare({
         v: 1,
         type: 'video_share',
         video_id: activeShareVideo.id,
         title: activeShareVideo.content || 'Shared video',
         description: activeShareVideo.content,
+        image: absoluteThumb,
         author: activeShareVideo.user?.name,
       });
       try {
@@ -483,6 +496,16 @@ const VideosTab = () => {
             form.append('chat_id', String(chatId));
             form.append('message', message);
             await createMessage(form);
+            emitMessage({
+              chat_id: chatId,
+              message,
+              message_type: 'text',
+              created_at: Date.now(),
+              user: {
+                _id: store.getState().auth.user?.id,
+                avatar: store.getState().auth.user?.avatar,
+              },
+            });
           }),
         );
         Toast.success(
@@ -555,6 +578,7 @@ const VideosTab = () => {
               item={item}
               uri={processVideoUrl(item.video)}
               isActive={index === activeIndex}
+              shouldMountPlayer={Math.abs(index - activeIndex) <= 1}
               tabFocused={isFocused}
               index={index}
               videoHeaders={videoHeaders}

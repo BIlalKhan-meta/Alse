@@ -112,6 +112,7 @@ const TabNavigation = () => {
         name="Videos"
         component={VideosTab}
         options={{
+          unmountOnBlur: true,
           tabBarLabel: 'Videos',
           tabBarIcon: ({color}) => (
             <View style={styles.tabButton}>

@@ -63,8 +63,8 @@ android {
         applicationId "com.blitzapp.alenga.alse"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1022
-        versionName "1.0.22"
+        versionCode 1023
+        versionName "1.0.23"
 
         if (project.hasProperty("e2eAbi")) {
             ndk {

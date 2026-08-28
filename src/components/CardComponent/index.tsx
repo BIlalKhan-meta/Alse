@@ -174,6 +174,7 @@ const CardComponent: React.FC<CardComponentProps> = ({
                   resizeMode="cover"
                   repeat
                   muted
+                  paused
                   pointerEvents="none"
                 />
               ) : (

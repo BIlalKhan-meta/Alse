@@ -253,13 +253,18 @@ export const getHeaderRight: React.FC<NavigationOptionsProps> = props => {
 
 const getHeaderLeft: React.FC<NavigationOptionsProps> = props => {
   if (backButtonRoutes[props?.route?.name]) {
+    const goBack = () => {
+      if (props?.navigation?.canGoBack?.()) {
+        props.navigation.goBack();
+      } else {
+        props?.navigation?.navigate?.('AppNavigation');
+      }
+    };
+
     if (props?.route?.name === 'ProductView') {
       return (
         <TouchableOpacity
-          onPress={() => {
-            props?.navigation.removeListener();
-            props?.navigation?.goBack();
-          }}
+          onPress={goBack}
           style={styles.productHeaderBackButton}
           hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
           accessibilityRole="button"
@@ -271,11 +276,10 @@ const getHeaderLeft: React.FC<NavigationOptionsProps> = props => {
 
     return (
       <TouchableOpacity
-        onPress={() => {
-          props?.navigation.removeListener();
-          props?.navigation?.goBack();
-        }}
-        style={styles.headericonButton}>
+        onPress={goBack}
+        style={styles.headericonButton}
+        accessibilityRole="button"
+        accessibilityLabel="Go back">
         <Image
           resizeMode="contain"
           style={styles.headericonStyle}
@@ -286,8 +290,6 @@ const getHeaderLeft: React.FC<NavigationOptionsProps> = props => {
   } else {
     return <View></View>;
   }
-
-  // return <></>;
 };
 
 const NavigationOptions: React.FC<NavigationOptionsProps> = props => {
@@ -314,6 +316,8 @@ const NavigationOptions: React.FC<NavigationOptionsProps> = props => {
     headerTitleStyle: isHomeScreen ? styles.homeTitle : styles.headerTitle,
     headerBackTitleVisible: false,
     headerBackVisible: false,
+    gestureEnabled: true,
+    fullScreenGestureEnabled: props?.route?.name === 'SearchUsers',
     title: getTitle(props),
     headerLeft: () => getHeaderLeft(props),
     headerRight: () => getHeaderRight(props),

@@ -46,6 +46,7 @@ import {
   buildSharedDescription,
   changeUrlForData,
   createVideoFile,
+  getAbsoluteAvatarUrl,
   getMessage,
   parseSharedFrom,
   Toast,
@@ -53,6 +54,7 @@ import {
 import {FeedLabelType} from '../../utils/feedLabels';
 import {createMessage} from '../../api/home';
 import {serializePostShare} from '../../utils/postSharePayload';
+import {emitMessage} from '../../utils/socket';
 
 /**
  * Insets the native video view so scaled frames don’t draw past the layout box.
@@ -646,13 +648,16 @@ const PostComponent: React.FC<PostProps> = ({
             if (!selectedIds?.length) {
               return;
             }
+            const absoluteImage = postImage
+              ? getAbsoluteAvatarUrl(postImage) || postImage
+              : undefined;
             const message = serializePostShare({
               v: 1,
               type: mediaType === 'video' ? 'video_share' : 'post_share',
               post_id: typeof id === 'number' ? id : Number(id) || undefined,
               title: name,
               description: postText,
-              image: postImage,
+              image: absoluteImage,
               author: name,
             });
             try {
@@ -662,6 +667,16 @@ const PostComponent: React.FC<PostProps> = ({
                   form.append('chat_id', String(chatId));
                   form.append('message', message);
                   await createMessage(form);
+                  emitMessage({
+                    chat_id: chatId,
+                    message,
+                    message_type: 'text',
+                    created_at: Date.now(),
+                    user: {
+                      _id: user?.id,
+                      avatar: user?.avatar,
+                    },
+                  });
                 }),
               );
               Toast.success(

@@ -18,6 +18,7 @@ import {
 import {Search, Check, MoreHorizontal, Repeat} from 'lucide-react-native';
 import styles from './styles';
 import {getProductSharePreviewText} from '../../utils/productSharePayload';
+import {getPostSharePreviewText} from '../../utils/postSharePayload';
 
 interface ShareModalProps {
   visible: boolean;
@@ -106,7 +107,9 @@ const ShareModal: React.FC<ShareModalProps> = ({
     const avatar = item?.image || item?.user?.avatar || 'https://via.placeholder.com/150';
     const name = item?.name || item?.user?.full_name || 'Unknown';
     const description =
+      getPostSharePreviewText(item?.last_message?.message) ||
       getProductSharePreviewText(item?.last_message?.message) ||
+      item?.last_message?.message ||
       'No messages yet';
     const time = item?.last_message?.created_at ? moment(item.last_message.created_at).local().fromNow() : '';
 
