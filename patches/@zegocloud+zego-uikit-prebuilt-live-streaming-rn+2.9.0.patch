@@ -1,0 +1,428 @@
+diff --git a/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/.gradle/9.2.0/checksums/checksums.lock b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/.gradle/9.2.0/checksums/checksums.lock
+new file mode 100644
+index 0000000..d47da7c
+Binary files /dev/null and b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/.gradle/9.2.0/checksums/checksums.lock differ
+diff --git a/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/.gradle/9.2.0/fileChanges/last-build.bin b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/.gradle/9.2.0/fileChanges/last-build.bin
+new file mode 100644
+index 0000000..f76dd23
+Binary files /dev/null and b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/.gradle/9.2.0/fileChanges/last-build.bin differ
+diff --git a/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/.gradle/9.2.0/fileHashes/fileHashes.bin b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/.gradle/9.2.0/fileHashes/fileHashes.bin
+new file mode 100644
+index 0000000..11e52bc
+Binary files /dev/null and b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/.gradle/9.2.0/fileHashes/fileHashes.bin differ
+diff --git a/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/.gradle/9.2.0/fileHashes/fileHashes.lock b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/.gradle/9.2.0/fileHashes/fileHashes.lock
+new file mode 100644
+index 0000000..3834997
+Binary files /dev/null and b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/.gradle/9.2.0/fileHashes/fileHashes.lock differ
+diff --git a/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/.gradle/9.2.0/gc.properties b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/.gradle/9.2.0/gc.properties
+new file mode 100644
+index 0000000..e69de29
+diff --git a/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/.gradle/buildOutputCleanup/buildOutputCleanup.lock b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/.gradle/buildOutputCleanup/buildOutputCleanup.lock
+new file mode 100644
+index 0000000..8987253
+Binary files /dev/null and b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/.gradle/buildOutputCleanup/buildOutputCleanup.lock differ
+diff --git a/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/.gradle/buildOutputCleanup/cache.properties b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/.gradle/buildOutputCleanup/cache.properties
+new file mode 100644
+index 0000000..2bb4872
+--- /dev/null
++++ b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/.gradle/buildOutputCleanup/cache.properties
+@@ -0,0 +1,2 @@
++#Mon Aug 31 15:30:09 PKT 2026
++gradle.version=9.2.0
+diff --git a/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/.gradle/vcs-1/gc.properties b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/.gradle/vcs-1/gc.properties
+new file mode 100644
+index 0000000..e69de29
+diff --git a/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/.transforms/027a17997957e965189a08ccfd9d9808/results.bin b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/.transforms/027a17997957e965189a08ccfd9d9808/results.bin
+new file mode 100644
+index 0000000..0d259dd
+--- /dev/null
++++ b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/.transforms/027a17997957e965189a08ccfd9d9808/results.bin
+@@ -0,0 +1 @@
++o/classes
+diff --git a/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/.transforms/027a17997957e965189a08ccfd9d9808/transformed/classes/classes_dex/classes.dex b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/.transforms/027a17997957e965189a08ccfd9d9808/transformed/classes/classes_dex/classes.dex
+new file mode 100644
+index 0000000..bcea0af
+Binary files /dev/null and b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/.transforms/027a17997957e965189a08ccfd9d9808/transformed/classes/classes_dex/classes.dex differ
+diff --git a/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/.transforms/cb84a2761223149521063ae7bf33c5d8/results.bin b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/.transforms/cb84a2761223149521063ae7bf33c5d8/results.bin
+new file mode 100644
+index 0000000..7ed749e
+--- /dev/null
++++ b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/.transforms/cb84a2761223149521063ae7bf33c5d8/results.bin
+@@ -0,0 +1 @@
++o/bundleLibRuntimeToDirDebug
+diff --git a/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/.transforms/cb84a2761223149521063ae7bf33c5d8/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/zegouikitprebuiltlivestreamingrn/BuildConfig.dex b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/.transforms/cb84a2761223149521063ae7bf33c5d8/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/zegouikitprebuiltlivestreamingrn/BuildConfig.dex
+new file mode 100644
+index 0000000..b767a84
+Binary files /dev/null and b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/.transforms/cb84a2761223149521063ae7bf33c5d8/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/zegouikitprebuiltlivestreamingrn/BuildConfig.dex differ
+diff --git a/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/.transforms/cb84a2761223149521063ae7bf33c5d8/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/zegouikitprebuiltlivestreamingrn/ZegoUikitPrebuiltLiveStreamingRnModule.dex b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/.transforms/cb84a2761223149521063ae7bf33c5d8/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/zegouikitprebuiltlivestreamingrn/ZegoUikitPrebuiltLiveStreamingRnModule.dex
+new file mode 100644
+index 0000000..585419c
+Binary files /dev/null and b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/.transforms/cb84a2761223149521063ae7bf33c5d8/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/zegouikitprebuiltlivestreamingrn/ZegoUikitPrebuiltLiveStreamingRnModule.dex differ
+diff --git a/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/.transforms/cb84a2761223149521063ae7bf33c5d8/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/zegouikitprebuiltlivestreamingrn/ZegoUikitPrebuiltLiveStreamingRnPackage.dex b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/.transforms/cb84a2761223149521063ae7bf33c5d8/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/zegouikitprebuiltlivestreamingrn/ZegoUikitPrebuiltLiveStreamingRnPackage.dex
+new file mode 100644
+index 0000000..16e2473
+Binary files /dev/null and b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/.transforms/cb84a2761223149521063ae7bf33c5d8/transformed/bundleLibRuntimeToDirDebug/bundleLibRuntimeToDirDebug_dex/com/zegouikitprebuiltlivestreamingrn/ZegoUikitPrebuiltLiveStreamingRnPackage.dex differ
+diff --git a/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/.transforms/cb84a2761223149521063ae7bf33c5d8/transformed/bundleLibRuntimeToDirDebug/desugar_graph.bin b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/.transforms/cb84a2761223149521063ae7bf33c5d8/transformed/bundleLibRuntimeToDirDebug/desugar_graph.bin
+new file mode 100644
+index 0000000..601f245
+Binary files /dev/null and b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/.transforms/cb84a2761223149521063ae7bf33c5d8/transformed/bundleLibRuntimeToDirDebug/desugar_graph.bin differ
+diff --git a/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/generated/source/buildConfig/debug/com/zegouikitprebuiltlivestreamingrn/BuildConfig.java b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/generated/source/buildConfig/debug/com/zegouikitprebuiltlivestreamingrn/BuildConfig.java
+new file mode 100644
+index 0000000..d934719
+--- /dev/null
++++ b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/generated/source/buildConfig/debug/com/zegouikitprebuiltlivestreamingrn/BuildConfig.java
+@@ -0,0 +1,10 @@
++/**
++ * Automatically generated file. DO NOT MODIFY
++ */
++package com.zegouikitprebuiltlivestreamingrn;
++
++public final class BuildConfig {
++  public static final boolean DEBUG = Boolean.parseBoolean("true");
++  public static final String LIBRARY_PACKAGE_NAME = "com.zegouikitprebuiltlivestreamingrn";
++  public static final String BUILD_TYPE = "debug";
++}
+diff --git a/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/AndroidManifest.xml b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/AndroidManifest.xml
+new file mode 100644
+index 0000000..a675918
+--- /dev/null
++++ b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/AndroidManifest.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<manifest xmlns:android="http://schemas.android.com/apk/res/android"
++    package="com.zegouikitprebuiltlivestreamingrn" >
++
++    <uses-sdk android:minSdkVersion="28" />
++
++    <!-- Permissions required by the SDK -->
++    <uses-permission android:name="android.permission.RECORD_AUDIO" />
++    <uses-permission android:name="android.permission.CAMERA" />
++    <uses-permission android:name="android.permission.INTERNET" />
++    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
++
++</manifest>
+\ No newline at end of file
+diff --git a/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/output-metadata.json b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/output-metadata.json
+new file mode 100644
+index 0000000..310dea2
+--- /dev/null
++++ b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/output-metadata.json
+@@ -0,0 +1,18 @@
++{
++  "version": 3,
++  "artifactType": {
++    "type": "AAPT_FRIENDLY_MERGED_MANIFESTS",
++    "kind": "Directory"
++  },
++  "applicationId": "com.zegouikitprebuiltlivestreamingrn",
++  "variantName": "debug",
++  "elements": [
++    {
++      "type": "SINGLE",
++      "filters": [],
++      "attributes": [],
++      "outputFile": "AndroidManifest.xml"
++    }
++  ],
++  "elementType": "File"
++}
+\ No newline at end of file
+diff --git a/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/aar_metadata/debug/writeDebugAarMetadata/aar-metadata.properties b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/aar_metadata/debug/writeDebugAarMetadata/aar-metadata.properties
+new file mode 100644
+index 0000000..1211b1e
+--- /dev/null
++++ b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/aar_metadata/debug/writeDebugAarMetadata/aar-metadata.properties
+@@ -0,0 +1,6 @@
++aarFormatVersion=1.0
++aarMetadataVersion=1.0
++minCompileSdk=1
++minCompileSdkExtension=0
++minAndroidGradlePluginVersion=1.0.0
++coreLibraryDesugaringEnabled=false
+diff --git a/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/annotation_processor_list/debug/javaPreCompileDebug/annotationProcessors.json b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/annotation_processor_list/debug/javaPreCompileDebug/annotationProcessors.json
+new file mode 100644
+index 0000000..9e26dfe
+--- /dev/null
++++ b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/annotation_processor_list/debug/javaPreCompileDebug/annotationProcessors.json
+@@ -0,0 +1 @@
++{}
+\ No newline at end of file
+diff --git a/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/compile_library_classes_jar/debug/bundleLibCompileToJarDebug/classes.jar b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/compile_library_classes_jar/debug/bundleLibCompileToJarDebug/classes.jar
+new file mode 100644
+index 0000000..b277792
+Binary files /dev/null and b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/compile_library_classes_jar/debug/bundleLibCompileToJarDebug/classes.jar differ
+diff --git a/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/compile_r_class_jar/debug/generateDebugRFile/R.jar b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/compile_r_class_jar/debug/generateDebugRFile/R.jar
+new file mode 100644
+index 0000000..16b00f2
+Binary files /dev/null and b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/compile_r_class_jar/debug/generateDebugRFile/R.jar differ
+diff --git a/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/compile_symbol_list/debug/generateDebugRFile/R.txt b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/compile_symbol_list/debug/generateDebugRFile/R.txt
+new file mode 100644
+index 0000000..e69de29
+diff --git a/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/incremental/debug/packageDebugResources/compile-file-map.properties b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/incremental/debug/packageDebugResources/compile-file-map.properties
+new file mode 100644
+index 0000000..1aa80e1
+--- /dev/null
++++ b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/incremental/debug/packageDebugResources/compile-file-map.properties
+@@ -0,0 +1 @@
++#Tue Sep 01 15:09:17 PKT 2026
+diff --git a/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/incremental/debug/packageDebugResources/merger.xml b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/incremental/debug/packageDebugResources/merger.xml
+new file mode 100644
+index 0000000..29c0a08
+--- /dev/null
++++ b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/incremental/debug/packageDebugResources/merger.xml
+@@ -0,0 +1,2 @@
++<?xml version="1.0" encoding="utf-8"?>
++<merger version="3"><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="main$Generated" generated="true" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/macbook/projects/Alse/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/src/main/res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="main" generated-set="main$Generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/macbook/projects/Alse/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/src/main/res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="debug$Generated" generated="true" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/macbook/projects/Alse/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/src/debug/res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="debug" generated-set="debug$Generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/macbook/projects/Alse/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/src/debug/res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="generated$Generated" generated="true" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/macbook/projects/Alse/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/generated/res/resValues/debug"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="generated" generated-set="generated$Generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/macbook/projects/Alse/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/generated/res/resValues/debug"/></dataSet><mergedItems/></merger>
+\ No newline at end of file
+diff --git a/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/incremental/mergeDebugJniLibFolders/merger.xml b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/incremental/mergeDebugJniLibFolders/merger.xml
+new file mode 100644
+index 0000000..e3fa9e5
+--- /dev/null
++++ b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/incremental/mergeDebugJniLibFolders/merger.xml
+@@ -0,0 +1,2 @@
++<?xml version="1.0" encoding="utf-8"?>
++<merger version="3"><dataSet config="main" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/macbook/projects/Alse/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/src/main/jniLibs"/></dataSet><dataSet config="debug" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/macbook/projects/Alse/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/src/debug/jniLibs"/></dataSet></merger>
+\ No newline at end of file
+diff --git a/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/incremental/mergeDebugShaders/merger.xml b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/incremental/mergeDebugShaders/merger.xml
+new file mode 100644
+index 0000000..f3bd735
+--- /dev/null
++++ b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/incremental/mergeDebugShaders/merger.xml
+@@ -0,0 +1,2 @@
++<?xml version="1.0" encoding="utf-8"?>
++<merger version="3"><dataSet config="main" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/macbook/projects/Alse/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/src/main/shaders"/></dataSet><dataSet config="debug" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/macbook/projects/Alse/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/src/debug/shaders"/></dataSet></merger>
+\ No newline at end of file
+diff --git a/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/incremental/packageDebugAssets/merger.xml b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/incremental/packageDebugAssets/merger.xml
+new file mode 100644
+index 0000000..8824752
+--- /dev/null
++++ b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/incremental/packageDebugAssets/merger.xml
+@@ -0,0 +1,2 @@
++<?xml version="1.0" encoding="utf-8"?>
++<merger version="3"><dataSet config="main" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/macbook/projects/Alse/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/src/main/assets"/></dataSet><dataSet config="debug" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/macbook/projects/Alse/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/src/debug/assets"/></dataSet><dataSet config="generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/macbook/projects/Alse/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/shader_assets/debug/compileDebugShaders/out"/></dataSet></merger>
+\ No newline at end of file
+diff --git a/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/zegouikitprebuiltlivestreamingrn/BuildConfig.class b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/zegouikitprebuiltlivestreamingrn/BuildConfig.class
+new file mode 100644
+index 0000000..124fcd5
+Binary files /dev/null and b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/zegouikitprebuiltlivestreamingrn/BuildConfig.class differ
+diff --git a/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/zegouikitprebuiltlivestreamingrn/ZegoUikitPrebuiltLiveStreamingRnModule.class b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/zegouikitprebuiltlivestreamingrn/ZegoUikitPrebuiltLiveStreamingRnModule.class
+new file mode 100644
+index 0000000..410a171
+Binary files /dev/null and b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/zegouikitprebuiltlivestreamingrn/ZegoUikitPrebuiltLiveStreamingRnModule.class differ
+diff --git a/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/zegouikitprebuiltlivestreamingrn/ZegoUikitPrebuiltLiveStreamingRnPackage.class b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/zegouikitprebuiltlivestreamingrn/ZegoUikitPrebuiltLiveStreamingRnPackage.class
+new file mode 100644
+index 0000000..8086e3b
+Binary files /dev/null and b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/zegouikitprebuiltlivestreamingrn/ZegoUikitPrebuiltLiveStreamingRnPackage.class differ
+diff --git a/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/local_only_symbol_list/debug/parseDebugLocalResources/R-def.txt b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/local_only_symbol_list/debug/parseDebugLocalResources/R-def.txt
+new file mode 100644
+index 0000000..78ac5b8
+--- /dev/null
++++ b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/local_only_symbol_list/debug/parseDebugLocalResources/R-def.txt
+@@ -0,0 +1,2 @@
++R_DEF: Internal format may change without notice
++local
+diff --git a/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/manifest_merge_blame_file/debug/processDebugManifest/manifest-merger-blame-debug-report.txt b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/manifest_merge_blame_file/debug/processDebugManifest/manifest-merger-blame-debug-report.txt
+new file mode 100644
+index 0000000..2798067
+--- /dev/null
++++ b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/manifest_merge_blame_file/debug/processDebugManifest/manifest-merger-blame-debug-report.txt
+@@ -0,0 +1,21 @@
++1<?xml version="1.0" encoding="utf-8"?>
++2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
++3    package="com.zegouikitprebuiltlivestreamingrn" >
++4
++5    <uses-sdk android:minSdkVersion="28" />
++6
++7    <!-- Permissions required by the SDK -->
++8    <uses-permission android:name="android.permission.RECORD_AUDIO" />
++8-->/Users/macbook/projects/Alse/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/src/main/AndroidManifest.xml:5:5-71
++8-->/Users/macbook/projects/Alse/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/src/main/AndroidManifest.xml:5:22-68
++9    <uses-permission android:name="android.permission.CAMERA" />
++9-->/Users/macbook/projects/Alse/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/src/main/AndroidManifest.xml:6:5-65
++9-->/Users/macbook/projects/Alse/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/src/main/AndroidManifest.xml:6:22-62
++10    <uses-permission android:name="android.permission.INTERNET" />
++10-->/Users/macbook/projects/Alse/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/src/main/AndroidManifest.xml:7:5-67
++10-->/Users/macbook/projects/Alse/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/src/main/AndroidManifest.xml:7:22-64
++11    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
++11-->/Users/macbook/projects/Alse/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/src/main/AndroidManifest.xml:8:5-79
++11-->/Users/macbook/projects/Alse/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/src/main/AndroidManifest.xml:8:22-76
++12
++13</manifest>
+diff --git a/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml
+new file mode 100644
+index 0000000..a675918
+--- /dev/null
++++ b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<manifest xmlns:android="http://schemas.android.com/apk/res/android"
++    package="com.zegouikitprebuiltlivestreamingrn" >
++
++    <uses-sdk android:minSdkVersion="28" />
++
++    <!-- Permissions required by the SDK -->
++    <uses-permission android:name="android.permission.RECORD_AUDIO" />
++    <uses-permission android:name="android.permission.CAMERA" />
++    <uses-permission android:name="android.permission.INTERNET" />
++    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
++
++</manifest>
+\ No newline at end of file
+diff --git a/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/navigation_json/debug/extractDeepLinksDebug/navigation.json b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/navigation_json/debug/extractDeepLinksDebug/navigation.json
+new file mode 100644
+index 0000000..0637a08
+--- /dev/null
++++ b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/navigation_json/debug/extractDeepLinksDebug/navigation.json
+@@ -0,0 +1 @@
++[]
+\ No newline at end of file
+diff --git a/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/nested_resources_validation_report/debug/generateDebugResources/nestedResourcesValidationReport.txt b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/nested_resources_validation_report/debug/generateDebugResources/nestedResourcesValidationReport.txt
+new file mode 100644
+index 0000000..08f4ebe
+--- /dev/null
++++ b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/nested_resources_validation_report/debug/generateDebugResources/nestedResourcesValidationReport.txt
+@@ -0,0 +1 @@
++0 Warning/Error
+\ No newline at end of file
+diff --git a/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/zegouikitprebuiltlivestreamingrn/BuildConfig.class b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/zegouikitprebuiltlivestreamingrn/BuildConfig.class
+new file mode 100644
+index 0000000..124fcd5
+Binary files /dev/null and b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/zegouikitprebuiltlivestreamingrn/BuildConfig.class differ
+diff --git a/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/zegouikitprebuiltlivestreamingrn/ZegoUikitPrebuiltLiveStreamingRnModule.class b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/zegouikitprebuiltlivestreamingrn/ZegoUikitPrebuiltLiveStreamingRnModule.class
+new file mode 100644
+index 0000000..410a171
+Binary files /dev/null and b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/zegouikitprebuiltlivestreamingrn/ZegoUikitPrebuiltLiveStreamingRnModule.class differ
+diff --git a/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/zegouikitprebuiltlivestreamingrn/ZegoUikitPrebuiltLiveStreamingRnPackage.class b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/zegouikitprebuiltlivestreamingrn/ZegoUikitPrebuiltLiveStreamingRnPackage.class
+new file mode 100644
+index 0000000..8086e3b
+Binary files /dev/null and b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/zegouikitprebuiltlivestreamingrn/ZegoUikitPrebuiltLiveStreamingRnPackage.class differ
+diff --git a/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/runtime_library_classes_jar/debug/bundleLibRuntimeToJarDebug/classes.jar b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/runtime_library_classes_jar/debug/bundleLibRuntimeToJarDebug/classes.jar
+new file mode 100644
+index 0000000..e350ef2
+Binary files /dev/null and b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/runtime_library_classes_jar/debug/bundleLibRuntimeToJarDebug/classes.jar differ
+diff --git a/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/symbol_list_with_package_name/debug/generateDebugRFile/package-aware-r.txt b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/symbol_list_with_package_name/debug/generateDebugRFile/package-aware-r.txt
+new file mode 100644
+index 0000000..d93936f
+--- /dev/null
++++ b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/intermediates/symbol_list_with_package_name/debug/generateDebugRFile/package-aware-r.txt
+@@ -0,0 +1 @@
++com.zegouikitprebuiltlivestreamingrn
+diff --git a/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/outputs/logs/manifest-merger-debug-report.txt b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/outputs/logs/manifest-merger-debug-report.txt
+new file mode 100644
+index 0000000..6340c9b
+--- /dev/null
++++ b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/outputs/logs/manifest-merger-debug-report.txt
+@@ -0,0 +1,33 @@
++-- Merging decision tree log ---
++manifest
++ADDED from /Users/macbook/projects/Alse/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/src/main/AndroidManifest.xml:1:1-10:12
++INJECTED from /Users/macbook/projects/Alse/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/src/main/AndroidManifest.xml:1:1-10:12
++	package
++		ADDED from /Users/macbook/projects/Alse/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/src/main/AndroidManifest.xml:2:11-57
++		INJECTED from /Users/macbook/projects/Alse/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/src/main/AndroidManifest.xml
++	xmlns:android
++		ADDED from /Users/macbook/projects/Alse/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/src/main/AndroidManifest.xml:1:11-69
++uses-permission#android.permission.RECORD_AUDIO
++ADDED from /Users/macbook/projects/Alse/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/src/main/AndroidManifest.xml:5:5-71
++	android:name
++		ADDED from /Users/macbook/projects/Alse/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/src/main/AndroidManifest.xml:5:22-68
++uses-permission#android.permission.CAMERA
++ADDED from /Users/macbook/projects/Alse/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/src/main/AndroidManifest.xml:6:5-65
++	android:name
++		ADDED from /Users/macbook/projects/Alse/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/src/main/AndroidManifest.xml:6:22-62
++uses-permission#android.permission.INTERNET
++ADDED from /Users/macbook/projects/Alse/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/src/main/AndroidManifest.xml:7:5-67
++	android:name
++		ADDED from /Users/macbook/projects/Alse/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/src/main/AndroidManifest.xml:7:22-64
++uses-permission#android.permission.ACCESS_NETWORK_STATE
++ADDED from /Users/macbook/projects/Alse/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/src/main/AndroidManifest.xml:8:5-79
++	android:name
++		ADDED from /Users/macbook/projects/Alse/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/src/main/AndroidManifest.xml:8:22-76
++uses-sdk
++INJECTED from /Users/macbook/projects/Alse/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/src/main/AndroidManifest.xml reason: use-sdk injection requested
++INJECTED from /Users/macbook/projects/Alse/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/src/main/AndroidManifest.xml
++INJECTED from /Users/macbook/projects/Alse/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/src/main/AndroidManifest.xml
++	android:targetSdkVersion
++		INJECTED from /Users/macbook/projects/Alse/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/src/main/AndroidManifest.xml
++	android:minSdkVersion
++		INJECTED from /Users/macbook/projects/Alse/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/src/main/AndroidManifest.xml
+diff --git a/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/tmp/compileDebugJavaWithJavac/previous-compilation-data.bin b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/tmp/compileDebugJavaWithJavac/previous-compilation-data.bin
+new file mode 100644
+index 0000000..0c94cfd
+Binary files /dev/null and b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/android/build/tmp/compileDebugJavaWithJavac/previous-compilation-data.bin differ
+diff --git a/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/lib/commonjs/index.js b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/lib/commonjs/index.js
+index 8cf845a..93a5dd9 100644
+--- a/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/lib/commonjs/index.js
++++ b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/lib/commonjs/index.js
+@@ -803,14 +803,28 @@ function ZegoUIKitPrebuiltLiveStreaming(props, ref) {
+       _minimizing_helper.default.getInstance().notifyPrebuiltInit();
+       // Register plugin callback
+       registerPluginCallback();
+-      _plugins.default.leaveAllRoom().then(result => {
+-        (0, _logger.zloginfo)('[ZegoUIKitPrebuiltLiveStreaming] Plugin leave all room success.');
+-        _plugins.default.joinRoom(liveID).then(result => {
+-          if (result) {
++      // Only leave/join signaling rooms after a successful ZIM login.
++      // Calling leaveAllRoom when not logged in triggers ZIM 6000121 and LogBox.
++      const joinSignalingRoom = () => {
++        _plugins.default.joinRoom(liveID).then(joinResult => {
++          if (joinResult) {
+             (0, _logger.zloginfo)('[ZegoUIKitPrebuiltLiveStreaming] Plugin join room success.');
+           }
++        }).catch(error => {
++          (0, _logger.zloginfo)(`[ZegoUIKitPrebuiltLiveStreaming] Plugin join room skipped: ${error && error.code ? error.code : error}`);
+         });
+-      });
++      };
++      if (result) {
++        _plugins.default.leaveAllRoom().then(() => {
++          (0, _logger.zloginfo)('[ZegoUIKitPrebuiltLiveStreaming] Plugin leave all room success.');
++          joinSignalingRoom();
++        }).catch(error => {
++          (0, _logger.zloginfo)(`[ZegoUIKitPrebuiltLiveStreaming] Plugin leave all room skipped: ${error && error.code ? error.code : error}`);
++          joinSignalingRoom();
++        });
++      } else {
++        (0, _logger.zloginfo)('[ZegoUIKitPrebuiltLiveStreaming] Signaling login failed; skip leaveAllRoom/joinRoom.');
++      }
+ 
+       // should called before ZegoUIKit.init
+       _zegoUikitRn.default.setVideoConfig(video);
+diff --git a/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/lib/module/index.js b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/lib/module/index.js
+index 2416dc8..3c65a9c 100644
+--- a/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/lib/module/index.js
++++ b/node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn/lib/module/index.js
+@@ -766,14 +766,28 @@ function ZegoUIKitPrebuiltLiveStreaming(props, ref) {
+       MinimizingHelper.getInstance().notifyPrebuiltInit();
+       // Register plugin callback
+       registerPluginCallback();
+-      ZegoPrebuiltPlugins.leaveAllRoom().then(result => {
+-        zloginfo('[ZegoUIKitPrebuiltLiveStreaming] Plugin leave all room success.');
+-        ZegoPrebuiltPlugins.joinRoom(liveID).then(result => {
+-          if (result) {
++      // Only leave/join signaling rooms after a successful ZIM login.
++      // Calling leaveAllRoom when not logged in triggers ZIM 6000121 and LogBox.
++      const joinSignalingRoom = () => {
++        ZegoPrebuiltPlugins.joinRoom(liveID).then(joinResult => {
++          if (joinResult) {
+             zloginfo('[ZegoUIKitPrebuiltLiveStreaming] Plugin join room success.');
+           }
++        }).catch(error => {
++          zloginfo(`[ZegoUIKitPrebuiltLiveStreaming] Plugin join room skipped: ${error && error.code ? error.code : error}`);
+         });
+-      });
++      };
++      if (result) {
++        ZegoPrebuiltPlugins.leaveAllRoom().then(() => {
++          zloginfo('[ZegoUIKitPrebuiltLiveStreaming] Plugin leave all room success.');
++          joinSignalingRoom();
++        }).catch(error => {
++          zloginfo(`[ZegoUIKitPrebuiltLiveStreaming] Plugin leave all room skipped: ${error && error.code ? error.code : error}`);
++          joinSignalingRoom();
++        });
++      } else {
++        zloginfo('[ZegoUIKitPrebuiltLiveStreaming] Signaling login failed; skip leaveAllRoom/joinRoom.');
++      }
+ 
+       // should called before ZegoUIKit.init
+       ZegoUIKit.setVideoConfig(video);

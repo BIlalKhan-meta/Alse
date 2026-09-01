@@ -107,8 +107,8 @@ class ReactNativeDelegate: RCTDefaultReactNativeFactoryDelegate {
   }
 
   // Keep LaunchScreen visible until JS calls BootSplash.hide (avoids white gap while Metro loads).
-  override func customizeRootView(_ rootView: RCTRootView) {
-    super.customizeRootView(rootView)
+  override func customize(_ rootView: RCTRootView) {
+    super.customize(rootView)
     RNBootSplash.initWithStoryboard("LaunchScreen", rootView: rootView)
   }
 }

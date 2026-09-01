@@ -14,6 +14,22 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     backgroundColor: '#F8FAFE',
   },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexShrink: 1,
+  },
+  backBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: '#E4E6EB',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',

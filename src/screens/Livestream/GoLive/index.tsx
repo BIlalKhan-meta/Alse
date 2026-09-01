@@ -2,7 +2,7 @@
  * Livestream screen - Zego Cloud Live Streaming Kit.
  * Supports host (Go Live tab) and viewer (joining from Stories) flows.
  */
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -38,6 +38,7 @@ import {
   StartLiveStream,
 } from '../../../api/liveStream';
 import {colors} from '../../../utils/theme';
+import {ensureCameraPermission} from '../../../utils/helpers';
 import {vh, vw} from '../../../constant';
 
 const sanitizeLiveID = (value: string): string =>
@@ -146,6 +147,9 @@ const LiveStreamScreen = () => {
     userID && zegoUserIDSuffix.current
       ? `${userID}_${zegoUserIDSuffix.current}`
       : userID;
+
+  // Stable plugin array — a new [] every render can re-init ZIM mid-session.
+  const zegoPlugins = useMemo(() => [ZIM], []);
 
   const fromTab = isHost && !streamKeyParam && !channel;
 
@@ -314,6 +318,12 @@ const LiveStreamScreen = () => {
   const startHostSession = async () => {
     try {
       setError(null);
+      const granted = await ensureCameraPermission({forVideo: true});
+      if (!granted) {
+        throw new Error(
+          'Camera and microphone permissions are required to go live',
+        );
+      }
       const res: any = await StartLiveStream();
       const liveStream =
         res?.data?.live_stream ?? res?.data?.data?.live_stream ?? res?.data?.data;
@@ -340,7 +350,7 @@ const LiveStreamScreen = () => {
     }
   };
 
-  const handleLeaveLiveStreaming = async () => {
+  const handleLeaveLiveStreaming = useCallback(async () => {
     if (effectiveIsHost && sessionCreated) {
       try {
         if (liveID) {
@@ -354,11 +364,49 @@ const LiveStreamScreen = () => {
       }
     }
     if (navigation.canGoBack()) navigation.goBack();
-  };
+  }, [effectiveIsHost, sessionCreated, liveID, navigation]);
 
-  const handleLiveStreamingEnded = () => {
+  const handleLiveStreamingEnded = useCallback(() => {
     if (navigation.canGoBack()) navigation.goBack();
-  };
+  }, [navigation]);
+
+  const handleStartLiveButtonPressed = useCallback(() => {
+    setIsLiveStarted(true);
+    if (!hostStreamKey || !liveID) {
+      return;
+    }
+    (async () => {
+      const syncArgs: [string, string, string, number, string] = [
+        hostStreamKey,
+        liveID,
+        hostChannelName ?? hostStreamKey,
+        Number(userID) || 0,
+        userName,
+      ];
+      let synced = false;
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        try {
+          await saveActiveStream(...syncArgs);
+          synced = true;
+          break;
+        } catch (syncErr) {
+          console.warn(
+            `[LiveStream] saveActiveStream attempt ${attempt} failed`,
+            syncErr,
+          );
+          if (attempt < 2) {
+            await sleep(800);
+          }
+        }
+      }
+      if (!synced) {
+        Alert.alert(
+          'Discovery sync issue',
+          'Your stream is live, but others may not see it in the list right away.',
+        );
+      }
+    })();
+  }, [hostStreamKey, liveID, hostChannelName, userID, userName]);
 
   if (!userID) {
     return (
@@ -514,9 +562,10 @@ const LiveStreamScreen = () => {
   const config = effectiveIsHost ? HOST_DEFAULT_CONFIG : AUDIENCE_DEFAULT_CONFIG;
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <View style={styles.zegoContainer}>
         <ZegoUIKitPrebuiltLiveStreaming
+          key={liveID}
           appID={ZEGO_LIVE_STREAM_APP_ID}
           appSign={ZEGO_LIVE_STREAM_APP_SIGN}
           userID={zegoUserID}
@@ -527,60 +576,23 @@ const LiveStreamScreen = () => {
             onLeaveLiveStreaming: handleLeaveLiveStreaming,
             turnOnCameraWhenJoining: effectiveIsHost,
             turnOnMicrophoneWhenJoining: effectiveIsHost,
-            // Keep in-room chat visible for host and audience (ZIM plugin).
             inRoomMessageViewConfig: {
               ...(config as any).inRoomMessageViewConfig,
               visible: true,
             },
+            logoutSignalingPluginOnLeaveLiveStreaming: false,
             ...(effectiveIsHost
               ? {
-                  onStartLiveButtonPressed: () => {
-                    setIsLiveStarted(true);
-                    if (hostStreamKey && liveID) {
-                      (async () => {
-                        const syncArgs: [string, string, string, number, string] = [
-                          hostStreamKey,
-                          liveID,
-                          hostChannelName ?? hostStreamKey,
-                          Number(userID) || 0,
-                          userName,
-                        ];
-                        let synced = false;
-                        for (let attempt = 1; attempt <= 2; attempt++) {
-                          try {
-                            await saveActiveStream(...syncArgs);
-                            synced = true;
-                            break;
-                          } catch (syncErr) {
-                            console.warn(
-                              `[LiveStream] saveActiveStream attempt ${attempt} failed`,
-                              syncErr,
-                            );
-                            if (attempt < 2) {
-                              await sleep(800);
-                            }
-                          }
-                        }
-                        if (!synced) {
-                          Alert.alert(
-                            'Discovery sync issue',
-                            'Your stream is live, but others may not see it in the list right away.',
-                          );
-                        }
-                      })();
-                    }
-                  },
+                  onStartLiveButtonPressed: handleStartLiveButtonPressed,
                   onLiveStreamingEnded: handleLeaveLiveStreaming,
                   bottomMenuBarConfig: {
                     ...config.bottomMenuBarConfig,
-                    hostExtendButtons: isLiveStarted
-                      ? [
-                          <EndLiveStreamButton
-                            key="end"
-                            onPress={handleLeaveLiveStreaming}
-                          />,
-                        ]
-                      : [],
+                    hostExtendButtons: [
+                      <EndLiveStreamButton
+                        key="end"
+                        onPress={handleLeaveLiveStreaming}
+                      />,
+                    ],
                   },
                 }
               : {
@@ -588,10 +600,10 @@ const LiveStreamScreen = () => {
                   showNoHostOnlineTipAfterSeconds: 12,
                 }),
           }}
-          plugins={[ZIM]}
+          plugins={zegoPlugins}
         />
       </View>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -602,8 +614,8 @@ const styles = StyleSheet.create({
   },
   zegoContainer: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    width: '100%',
+    height: '100%',
     zIndex: 0,
   },
   centerContent: {

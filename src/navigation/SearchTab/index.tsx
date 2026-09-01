@@ -6,16 +6,28 @@ import {
   TextInput,
   FlatList,
   TouchableOpacity,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
+import {SafeAreaView} from 'react-native-safe-area-context';
 import {Clock, Search, X} from 'lucide-react-native';
 import GlobalHeader from '../../components/GlobalHeader';
 import {useTranslation} from 'react-i18next';
 import {SearchResultsList, SearchResult} from '../../components/SearchResults';
 import searchAPI from '../../api/search';
 import {useNavigation} from '@react-navigation/native';
-import { vh } from '../../constant';
+
+const extractUsersPage = (response: any) => {
+  const body = response?.data ?? {};
+  const pageData = body?.data ?? body ?? {};
+  const list = pageData?.data ?? (Array.isArray(pageData) ? pageData : []);
+  const meta = pageData?.meta ?? body?.meta ?? {};
+  return {
+    users: Array.isArray(list) ? list : [],
+    currentPage: Number(meta?.current_page ?? pageData?.current_page ?? 1),
+    lastPage: Number(meta?.last_page ?? pageData?.last_page ?? 1),
+    ok: body?.status !== false,
+  };
+};
 
 const SearchTab = () => {
   const [searchText, setSearchText] = useState('');
@@ -42,27 +54,27 @@ const SearchTab = () => {
     setError(null);
 
     try {
-      // Search only users
       const usersResponse = await searchAPI.searchUsers({
         search: query,
         page,
         per_page: 15,
       });
 
-      const results: SearchResult[] = [];
-
-      // Process users
-      if (usersResponse.data.status && usersResponse.data.data?.data) {
-        const users = usersResponse.data.data.data.map((user: any) => ({
-          id: user.id,
-          type: 'user' as const,
-          title: user.full_name,
-          subtitle: user.username ? `@${user.username}` : user.email,
-          image: user.avatar,
-          data: user,
-        }));
-        results.push(...users);
+      const {users, lastPage, ok} = extractUsersPage(usersResponse);
+      if (!ok) {
+        throw new Error(
+          usersResponse?.data?.message || 'Search failed. Please try again.',
+        );
       }
+
+      const results: SearchResult[] = users.map((user: any) => ({
+        id: user.id,
+        type: 'user' as const,
+        title: user.full_name || [user.first_name, user.last_name].filter(Boolean).join(' ') || user.username || user.email,
+        subtitle: user.username ? `@${user.username}` : user.email,
+        image: user.avatar,
+        data: user,
+      }));
 
       if (page === 1) {
         setSearchResults(results);
@@ -72,10 +84,7 @@ const SearchTab = () => {
 
       setHasSearched(true);
       setCurrentPage(page);
-
-      // Check if there are more pages based on the API response
-      const totalPages = usersResponse.data.data?.meta?.last_page || 1;
-      setHasMore(page < totalPages);
+      setHasMore(page < lastPage);
     } catch (err: any) {
       setError(err.message || 'Search failed. Please try again.');
       console.error('Search error:', err);
@@ -155,9 +164,9 @@ const SearchTab = () => {
   );
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.headerContainer}>
-      <GlobalHeader />
+        <GlobalHeader showBack embedInSafeArea />
       </View>
 
       <View style={styles.searchInputContainer}>
@@ -216,7 +225,7 @@ const SearchTab = () => {
           )}
         </View>
       )}
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -258,7 +267,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
   },
   headerContainer: {
-    marginTop: vh * 3,
+    marginTop: 0,
   },
   separator: {
     height: 1,

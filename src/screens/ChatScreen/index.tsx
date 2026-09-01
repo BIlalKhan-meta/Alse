@@ -10,7 +10,7 @@ import {
   TextInput,
 } from 'react-native';
 import {useIsFocused, useNavigation} from '@react-navigation/native';
-import {Search, ChevronDown, MoreVertical} from 'lucide-react-native';
+import {Search, ChevronDown, MoreVertical, ChevronLeft} from 'lucide-react-native';
 import {images} from '../../utils/images';
 import styles from './styles';
 import GeneralModal from '../../components/GeneralModal';
@@ -26,6 +26,7 @@ import SelectUserModal from './SelectUserModal';
 import CreateGroupSheet from './CreateGroupSheet';
 import {getProductSharePreviewText} from '../../utils/productSharePayload';
 import {getPostSharePreviewText} from '../../utils/postSharePayload';
+import {colors} from '../../utils/theme';
 interface ChatItem {
   id: number;
   name: string;
@@ -61,11 +62,26 @@ const ChatScreen: React.FC = () => {
   const IsFocused = useIsFocused();
   const navigation = useNavigation();
 
+  const sortChatsByLatest = (chats: ChatItem[] | undefined | null): ChatItem[] => {
+    if (!Array.isArray(chats)) {
+      return [];
+    }
+    return [...chats].sort((a, b) => {
+      const aTime = a?.last_message?.created_at
+        ? moment(a.last_message.created_at).valueOf()
+        : 0;
+      const bTime = b?.last_message?.created_at
+        ? moment(b.last_message.created_at).valueOf()
+        : 0;
+      return bTime - aTime;
+    });
+  };
+
   const getData = () => {
     setLoader(true);
     getConversations({})
       .then(res => {
-        setData(res?.data?.data);
+        setData(sortChatsByLatest(res?.data?.data));
         setLoader(false);
       })
       .catch(Err => {
@@ -84,7 +100,7 @@ const ChatScreen: React.FC = () => {
     // setLoader(true)
     getConversations(searchData)
       .then(res => {
-        setData(res?.data?.data);
+        setData(sortChatsByLatest(res?.data?.data));
         setLoader(false);
       })
       .catch(Err => {
@@ -203,7 +219,23 @@ const ChatScreen: React.FC = () => {
 
       {/* Custom Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Chat</Text>
+        <View style={styles.headerLeft}>
+          <TouchableOpacity
+            style={styles.backBtn}
+            onPress={() => {
+              if (navigation.canGoBack()) {
+                navigation.goBack();
+              } else {
+                (navigation as any).navigate('HomeNavigation', {screen: 'Home'});
+              }
+            }}
+            hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
+            accessibilityRole="button"
+            accessibilityLabel="Go back">
+            <ChevronLeft size={22} color={colors.black} strokeWidth={2.5} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Chat</Text>
+        </View>
         <View style={styles.headerIcons}>
           <TouchableOpacity
             style={styles.manageTemplatesButton}

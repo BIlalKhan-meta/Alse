@@ -1,0 +1,45 @@
+diff --git a/node_modules/react-native-ios-utilities/ios/Sources/ObjcHelpers/RNIObjcUtils.mm b/node_modules/react-native-ios-utilities/ios/Sources/ObjcHelpers/RNIObjcUtils.mm
+index 38f71a7..cc7e981 100644
+--- a/node_modules/react-native-ios-utilities/ios/Sources/ObjcHelpers/RNIObjcUtils.mm
++++ b/node_modules/react-native-ios-utilities/ios/Sources/ObjcHelpers/RNIObjcUtils.mm
+@@ -100,7 +100,8 @@ + (NSMutableDictionary *)convertToMutableDictForFollyDynamicMap:(const std::unor
+   NSMutableDictionary *dict = [NSMutableDictionary new];
+   for (auto& [key, value]: stringToDynMap) {
+     NSString *keyAsObjcString = [NSString stringWithUTF8String:key.c_str()];
+-    id valueAsId = facebook::react::convertFollyDynamicToId(value);
++    // Use local converter — facebook::react::convertFollyDynamicToId is unavailable when New Arch is off
++    id valueAsId = [RNIObjcUtils convertFollyDynamicToId:&value];
+     
+     dict[keyAsObjcString] = valueAsId;
+   };
+diff --git a/node_modules/react-native-ios-utilities/ios/Sources/RNIUtilitiesModule/RNIUtilitiesFollyConvert.h b/node_modules/react-native-ios-utilities/ios/Sources/RNIUtilitiesModule/RNIUtilitiesFollyConvert.h
+index bdf7ca9..94d55e0 100644
+--- a/node_modules/react-native-ios-utilities/ios/Sources/RNIUtilitiesModule/RNIUtilitiesFollyConvert.h
++++ b/node_modules/react-native-ios-utilities/ios/Sources/RNIUtilitiesModule/RNIUtilitiesFollyConvert.h
+@@ -1,10 +1,23 @@
+-#ifdef RCT_NEW_ARCH_ENABLED
++// Import Folly converters in ObjC++ TUs even when New Arch is off.
++// Do NOT pull Folly into plain ObjC module scans (umbrella) — that breaks with
++// "cstdint file not found" under use_frameworks + Clang dependency scanner.
++#if defined(__cplusplus)
++
++#if __has_include(<react/utils/FollyConvert.h>)
++  #import <react/utils/FollyConvert.h>
++#elif __has_include(<React/RCTFollyConvert.h>)
++  #import <React/RCTFollyConvert.h>
++#elif __has_include("FollyConvert.h")
++  #import "FollyConvert.h"
++#elif __has_include("RCTFollyConvert.h")
++  #import "RCTFollyConvert.h"
++#endif
++
++#elif defined(RCT_NEW_ARCH_ENABLED)
+ 
+ #if __has_include(<react/utils/FollyConvert.h>)
+-  // static libs / header maps (no use_frameworks!)
+   #import <react/utils/FollyConvert.h>
+ #elif __has_include("FollyConvert.h")
+-  // `use_frameworks! :linkage => :static` users will need to import FollyConvert this way
+   #import "FollyConvert.h"
+ #elif __has_include("RCTFollyConvert.h")
+   #import "RCTFollyConvert.h"

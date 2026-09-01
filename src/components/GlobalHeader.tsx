@@ -4,6 +4,7 @@ import {images} from '../utils/images';
 import {vh, vw} from '../constant';
 import {useNavigation} from '@react-navigation/native';
 import {ChevronLeft} from 'lucide-react-native';
+import {colors} from '../utils/theme';
 
 interface GlobalHeaderProps {
   title?: string;
@@ -23,6 +24,16 @@ const GlobalHeader: React.FC<GlobalHeaderProps> = ({
   const handleNotificationPress = () => {
     navigation.navigate('Notifications');
   };
+
+  const handleBack = () => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+      return;
+    }
+    // Tab screens (e.g. Search) have no stack history — go Home.
+    (navigation as any).navigate('HomeNavigation', {screen: 'Home'});
+  };
+
   return (
     <View
       style={[
@@ -32,10 +43,12 @@ const GlobalHeader: React.FC<GlobalHeaderProps> = ({
       <View style={styles.leftSection}>
         {showBack && (
           <TouchableOpacity
-            onPress={() => navigation.goBack()}
+            onPress={handleBack}
             style={styles.backBtn}
-            hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
-            <ChevronLeft size={24} color="#333" />
+            hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
+            accessibilityRole="button"
+            accessibilityLabel="Go back">
+            <ChevronLeft size={22} color={colors.black} strokeWidth={2.5} />
           </TouchableOpacity>
         )}
         <Image source={images.alseLogo} style={styles.title} />
@@ -91,9 +104,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   backBtn: {
-    paddingVertical: 4,
-    paddingRight: 2,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: '#E4E6EB',
+    alignItems: 'center',
+    justifyContent: 'center',
     marginLeft: 4,
+    marginRight: 6,
   },
   title: {
     width: vw * 20,
