@@ -3823,6 +3823,30 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
+  - RNSentry (8.24.0):
+    - DoubleConversion
+    - glog
+    - hermes-engine
+    - RCT-Folly (= 2024.11.18.00)
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-hermes
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - Yoga
   - RNSound (0.11.5):
     - React-Core
     - RNSound/Core (= 0.11.5)
@@ -4055,6 +4079,7 @@ DEPENDENCIES:
   - RNPermissions (from `../node_modules/react-native-permissions`)
   - RNReanimated (from `../node_modules/react-native-reanimated`)
   - RNScreens (from `../node_modules/react-native-screens`)
+  - "RNSentry (from `../node_modules/@sentry/react-native`)"
   - RNSound (from `../node_modules/react-native-sound`)
   - RNSVG (from `../node_modules/react-native-svg`)
   - RNVectorIcons (from `../node_modules/react-native-vector-icons`)
@@ -4357,6 +4382,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-reanimated"
   RNScreens:
     :path: "../node_modules/react-native-screens"
+  RNSentry:
+    :path: "../node_modules/@sentry/react-native"
   RNSound:
     :path: "../node_modules/react-native-sound"
   RNSVG:
@@ -4538,6 +4565,7 @@ SPEC CHECKSUMS:
   RNPermissions: 294541611e08d4b14fa3c01592403c83a3b6bca2
   RNReanimated: 8de62bc2d96b9ba9ebde80bb9179889aba05ae3c
   RNScreens: 199aa0f639b5d6e8f3e0306476d576464848b7a2
+  RNSentry: 96eac86d0dfd84388c5247a47c4493d692037f1f
   RNSound: ed05ebb29f553a092179f798c9cd52aba24b455e
   RNSVG: 60affcbb320db7b83a139737d4dbe15c1068f109
   RNVectorIcons: 666d09c4d1c0e890c8b0c1609ffe1f1edf3ebaa9

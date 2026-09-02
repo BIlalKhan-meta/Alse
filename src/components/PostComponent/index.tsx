@@ -9,7 +9,7 @@ import {
   Volume2,
   VolumeX,
 } from 'lucide-react-native';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {
   ActivityIndicator,
@@ -238,9 +238,18 @@ const PostComponent: React.FC<PostProps> = ({
   const [numberLikes, setNumberLikes] = useState(likes);
   const [videoLoad, setVideoLoad] = useState(true);
   const [error, setError] = useState(false);
+  const [videoError, setVideoError] = useState(false);
   const [shareModalVisible, setShareModalVisible] = useState(false);
   const [activeMediaIndex, setActiveMediaIndex] = useState(0);
   const [mediaSlideWidth, setMediaSlideWidth] = useState(DEVICE_WIDTH);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   const resolvedMediaList: PostMediaItem[] =
     mediaList && mediaList.length > 0
@@ -263,6 +272,7 @@ const PostComponent: React.FC<PostProps> = ({
     const activeMedia = resolvedMediaList[activeMediaIndex];
     if (activeMedia && isVideoMedia(activeMedia.type)) {
       setVideoLoad(true);
+      setVideoError(false);
     }
   }, [activeMediaIndex, mediaList, postImage, mediaType]);
 
@@ -370,8 +380,11 @@ const PostComponent: React.FC<PostProps> = ({
     const isVideo = isVideoMedia(item.type);
     const isActiveSlide = activeMediaIndex === index;
     const shouldPlayVideo =
-      isVideo && isFocused === true && !videoPaused && isActiveSlide;
-    const shouldMountVideo = isVideo && isFocused === true && isActiveSlide;
+      isVideo && isFocused === true && !videoPaused && isActiveSlide && !videoError;
+    // Only mount the native player for the focused active slide to avoid
+    // Android TextureView/ExoPlayer crashes when recycled list cells tear down.
+    const shouldMountVideo =
+      isVideo && isFocused === true && isActiveSlide && !videoError;
 
     return (
       <View style={[styles.mediaSlide, {width: mediaSlideWidth}]}>
@@ -386,7 +399,11 @@ const PostComponent: React.FC<PostProps> = ({
                 ) : null}
                 <Video
                   key={`${String(item.id ?? mediaId ?? id ?? '')}-${changeUrlForData(item.path)}`}
-                  onReadyForDisplay={() => setVideoLoad(false)}
+                  onReadyForDisplay={() => {
+                    if (mountedRef.current) {
+                      setVideoLoad(false);
+                    }
+                  }}
                   source={{
                     uri: changeUrlForData(
                       item.medium_path || item.path || item.full_path,
@@ -407,6 +424,7 @@ const PostComponent: React.FC<PostProps> = ({
                   muted={!!muteInlineVideo}
                   playInBackground={false}
                   playWhenInactive={false}
+                  disableFocus={Platform.OS === 'android'}
                   useTextureView={Platform.OS === 'android'}
                   bufferConfig={{
                     minBufferMs: 2000,
@@ -416,7 +434,16 @@ const PostComponent: React.FC<PostProps> = ({
                   }}
                   maxBitRate={2_500_000}
                   onBuffer={res => {
-                    setVideoLoad(Boolean(res?.isBuffering));
+                    if (mountedRef.current) {
+                      setVideoLoad(Boolean(res?.isBuffering));
+                    }
+                  }}
+                  onError={err => {
+                    console.warn('[PostVideo] playback error:', err?.error ?? err);
+                    if (mountedRef.current) {
+                      setVideoLoad(false);
+                      setVideoError(true);
+                    }
                   }}
                   ignoreSilentSwitch="ignore"
                 />

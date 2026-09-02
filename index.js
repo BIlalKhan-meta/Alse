@@ -2,10 +2,24 @@
  * @format
  */
 
+import * as Sentry from '@sentry/react-native';
 import messaging from '@react-native-firebase/messaging';
 import {AppRegistry} from 'react-native';
 import App from './App';
 import {name as appName} from './app.json';
+import {SENTRY_DSN} from './src/config/sentry';
+
+Sentry.init({
+  dsn: SENTRY_DSN || undefined,
+  enabled: Boolean(SENTRY_DSN),
+  tracesSampleRate: 0.2,
+  enableAutoSessionTracking: true,
+  // Native crashes (Agora / FFmpeg / Zego) need this on Android.
+  enableNative: true,
+  enableNativeCrashHandling: true,
+  attachScreenshot: true,
+  environment: __DEV__ ? 'development' : 'production',
+});
 
 // Must run at app entry (not inside React). Otherwise background/quit FCM never reaches JS.
 // Lazy-require Notifee here so a bad init order cannot break FCM registration.
@@ -39,7 +53,7 @@ try {
 }
 
 // Register app first to prevent "has not been registered" error if init fails
-AppRegistry.registerComponent(appName, () => App);
+AppRegistry.registerComponent(appName, () => Sentry.wrap(App));
 
 // Defer optional init - wrap in try/catch so failures don't block app startup
 try {
@@ -50,4 +64,3 @@ try {
     console.warn('Network logger init failed:', e?.message);
   }
 }
-

@@ -134,21 +134,183 @@ async function handlePaymentNotification(remoteMessage: RemoteMessage) {
   eventEmitter.emit(EVENT_TYPES.CHECKOUT_TRIGGER, remoteMessage);
 }
 
-function navigateWhenReady(routeName: string, params?: object) {
-  const navigate = () => {
-    if (navigationRef.isReady()) {
-      navigationRef.navigate(routeName as never, params as never);
-      return true;
-    }
-    return false;
-  };
+type PendingRoute = {routeName: string; params?: object};
 
-  if (navigate()) {
+let pendingRoute: PendingRoute | null = null;
+let pendingRouteTimer: ReturnType<typeof setTimeout> | null = null;
+let authUnsubscribe: (() => void) | null = null;
+
+const NAV_RETRY_MS = [0, 500, 1500, 3000, 5000, 8000];
+const NAV_GIVE_UP_MS = 15000;
+
+function clearPendingRouteTimer() {
+  if (pendingRouteTimer) {
+    clearTimeout(pendingRouteTimer);
+    pendingRouteTimer = null;
+  }
+}
+
+function stopAuthWatch() {
+  if (authUnsubscribe) {
+    authUnsubscribe();
+    authUnsubscribe = null;
+  }
+}
+
+function tryNavigate(routeName: string, params?: object): boolean {
+  if (!navigationRef.isReady()) {
+    return false;
+  }
+  // Authenticated destinations live under AppNavigation, which only mounts
+  // once auth.token is set after PersistGate rehydrate.
+  if (!store.getState().auth.token) {
+    return false;
+  }
+  try {
+    navigationRef.navigate(routeName as never, params as never);
+    return true;
+  } catch (error) {
+    console.warn('[FCM] navigate failed:', routeName, error);
+    return false;
+  }
+}
+
+function flushPendingRoute(): boolean {
+  if (!pendingRoute) {
+    return false;
+  }
+  if (tryNavigate(pendingRoute.routeName, pendingRoute.params)) {
+    pendingRoute = null;
+    clearPendingRouteTimer();
+    stopAuthWatch();
+    return true;
+  }
+  return false;
+}
+
+function watchAuthForPendingRoute() {
+  if (authUnsubscribe) {
+    return;
+  }
+  authUnsubscribe = store.subscribe(() => {
+    if (store.getState().auth.token) {
+      flushPendingRoute();
+    }
+  });
+}
+
+/**
+ * Queue navigation until the nav container is ready AND the user is
+ * authenticated (AppNavigation mounted). Survives cold-start PersistGate lag.
+ */
+function navigateWhenReady(routeName: string, params?: object) {
+  pendingRoute = {routeName, params};
+  clearPendingRouteTimer();
+
+  if (flushPendingRoute()) {
     return;
   }
 
-  setTimeout(navigate, 500);
-  setTimeout(navigate, 1500);
+  watchAuthForPendingRoute();
+
+  const startedAt = Date.now();
+  let attempt = 0;
+
+  const scheduleNext = () => {
+    if (!pendingRoute) {
+      return;
+    }
+    if (Date.now() - startedAt >= NAV_GIVE_UP_MS) {
+      console.warn(
+        '[FCM] gave up navigating to',
+        pendingRoute.routeName,
+        'after cold-start wait',
+      );
+      pendingRoute = null;
+      stopAuthWatch();
+      return;
+    }
+    const delay = NAV_RETRY_MS[Math.min(attempt, NAV_RETRY_MS.length - 1)];
+    attempt += 1;
+    pendingRouteTimer = setTimeout(() => {
+      if (flushPendingRoute()) {
+        return;
+      }
+      scheduleNext();
+    }, delay);
+  };
+
+  scheduleNext();
+}
+
+/**
+ * Parse backend deep_link values like alse://chat/123, alse://shop/9.
+ * Returns null if the URL is missing or unrecognized.
+ */
+function parseDeepLink(deepLink: string): PendingRoute | null {
+  if (!deepLink || typeof deepLink !== 'string') {
+    return null;
+  }
+  const trimmed = deepLink.trim();
+  const match = trimmed.match(/^alse:\/\/([^/?#]+)\/?([^/?#]*)/i);
+  if (!match) {
+    return null;
+  }
+  const kind = match[1].toLowerCase();
+  const id = match[2] || '';
+
+  switch (kind) {
+    case 'chat':
+      return id
+        ? {
+            routeName: 'ChatOngoing',
+            params: {id: Number(id) || id, name: 'Chat'},
+          }
+        : null;
+    case 'call':
+      return id
+        ? {
+            routeName: 'AcknowledgeCall',
+            params: {chat_id: id, role: '0'},
+          }
+        : null;
+    case 'order':
+      return id
+        ? {
+            routeName: 'MyOrderDetail',
+            params: {id: Number(id) || id},
+          }
+        : null;
+    case 'product':
+      return id
+        ? {
+            routeName: 'ProductView',
+            params: {productId: Number(id) || id},
+          }
+        : null;
+    case 'shop':
+      return id
+        ? {
+            routeName: 'Shop',
+            params: {shopId: Number(id) || id},
+          }
+        : null;
+    case 'user':
+      return id
+        ? {
+            routeName: 'Profile',
+            params: {id: Number(id) || id},
+          }
+        : null;
+    case 'post':
+    case 'video':
+    case 'story':
+    case 'live':
+    case 'notifications':
+      return {routeName: 'Notifications'};
+    default:
+      return null;
+  }
 }
 
 function trackOpenAndClick(remoteMessage: RemoteMessage, fromUserPress: boolean) {
@@ -206,6 +368,7 @@ function routeNotification(remoteMessage: RemoteMessage, fromUserPress: boolean)
     dataString(data, 'shop_id') ||
     dataString(data, 'user_id');
   const chatId = dataString(data, 'chat_id') || (objectType === 'chat' ? objectId : '');
+  const deepLinkRoute = parseDeepLink(dataString(data, 'deep_link'));
 
   if (isIncomingCall(remoteMessage) && chatId) {
     navigateWhenReady('AcknowledgeCall', {
@@ -262,6 +425,12 @@ function routeNotification(remoteMessage: RemoteMessage, fromUserPress: boolean)
   if (objectType === 'post' && objectId) {
     // No dedicated post-detail route; open notifications inbox for context
     navigateWhenReady('Notifications');
+    return;
+  }
+
+  // Fallback: backend deep_link when object_* fields are incomplete
+  if (deepLinkRoute) {
+    navigateWhenReady(deepLinkRoute.routeName, deepLinkRoute.params);
     return;
   }
 

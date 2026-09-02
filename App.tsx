@@ -132,3 +132,4 @@ const styles = StyleSheet.create({
 });
 
 export default App;
+// Root is also wrapped with Sentry.wrap in index.js for native + JS coverage.

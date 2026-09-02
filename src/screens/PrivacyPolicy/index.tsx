@@ -5,7 +5,7 @@ import WebView from "react-native-webview";
 const PrivacyPolicy: React.FC = () => {
  
   return (
-    <WebView source={{ uri: 'https://alse.site/privacy-policy/' }} style={{ flex: 1 }} />
+    <WebView source={{ uri: 'https://alse.app/alse-backend/privacy-policy' }} style={{ flex: 1 }} />
   );
 };
 

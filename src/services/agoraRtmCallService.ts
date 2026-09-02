@@ -31,9 +31,23 @@ const CONN_STATE_NAMES: Record<number, string> = {
 };
 
 let rtmEngine: RtmEngine | null = null;
-/** Ensures only one native `release()` runs at a time (concurrent calls crash Android JNI). */
+/**
+ * Serialize all native init/release work. Concurrent createInstance/release
+ * crashes Android JNI (SIGSEGV) with no JS stack.
+ */
+let nativeLock: Promise<void> = Promise.resolve();
+let initInFlight: Promise<void> | null = null;
 let releaseInFlight: Promise<void> | null = null;
 let isInitialized = false;
+
+function runExclusive<T>(fn: () => Promise<T>): Promise<T> {
+  const next = nativeLock.then(fn, fn);
+  nativeLock = next.then(
+    () => undefined,
+    () => undefined,
+  );
+  return next;
+}
 let currentRemoteInvitation: RemoteInvitation | null = null;
 /** Last sent local invitation (caller side) – used to cancel when receiver doesn't pick up */
 let currentLocalInvitation: LocalInvitation | null = null;
@@ -81,150 +95,184 @@ export async function initAgoraRtm(
     return;
   }
 
-  const engine = getEngine();
+  // Always refresh callbacks even while another init is in flight.
+  onIncomingCallCallback = onIncomingCall ?? null;
+  onInvitationEndedCallback = onInvitationEnded ?? null;
 
   if (isInitialized) {
     console.log(TAG, 'already initialized, updating callbacks');
+    return;
+  }
+
+  if (initInFlight) {
+    await initInFlight;
     onIncomingCallCallback = onIncomingCall ?? null;
     onInvitationEndedCallback = onInvitationEnded ?? null;
     return;
   }
 
+  initInFlight = runExclusive(async () => {
+    // Release may have finished while we waited for the lock.
+    if (isInitialized) {
+      return;
+    }
+
+    let engine: RtmEngine | null = null;
+    try {
+      engine = getEngine();
+      await engine.createInstance(AGORA_APP_ID);
+      console.log(TAG, 'createInstance ok');
+
+      // RTM SDK requires a token field; use empty string if not using app certificate
+      const rtmToken = (token ?? AGORA_SIGNALING_TOKEN ?? '').trim();
+      await engine.loginV2(userId, rtmToken || undefined);
+      console.log(TAG, 'loginV2 ok for user:', userId);
+
+      isInitialized = true;
+
+      // Set up RTM call manager–style listeners (events are on RtmEngine in this SDK)
+      const subReceived = engine.addListener(
+        'RemoteInvitationReceived',
+        (remoteInvitation: RemoteInvitation) => {
+          console.log(TAG, 'Incoming call from:', remoteInvitation.callerId);
+          currentRemoteInvitation = remoteInvitation;
+          if (onIncomingCallCallback) {
+            onIncomingCallCallback(remoteInvitation);
+          }
+        }
+      );
+      subscriptions.push(subReceived);
+
+      const subAccepted = engine.addListener(
+        'RemoteInvitationAccepted',
+        (_remoteInvitation: RemoteInvitation) => {
+          console.log(TAG, 'Callee accepted the call');
+          currentRemoteInvitation = null;
+        }
+      );
+      subscriptions.push(subAccepted);
+
+      const subRefused = engine.addListener(
+        'RemoteInvitationRefused',
+        (_remoteInvitation: RemoteInvitation) => {
+          console.log(TAG, 'Callee refused the call');
+          currentRemoteInvitation = null;
+        }
+      );
+      subscriptions.push(subRefused);
+
+      const subCanceled = engine.addListener(
+        'RemoteInvitationCanceled',
+        (_remoteInvitation: RemoteInvitation) => {
+          console.log(TAG, 'Caller canceled the call');
+          currentRemoteInvitation = null;
+          onInvitationEndedCallback?.();
+        }
+      );
+      subscriptions.push(subCanceled);
+
+      const subFailure = engine.addListener(
+        'RemoteInvitationFailure',
+        (_remoteInvitation: RemoteInvitation, reason: number) => {
+          console.log(TAG, 'Call invitation failed, reason:', reason);
+          currentRemoteInvitation = null;
+          onInvitationEndedCallback?.();
+        }
+      );
+      subscriptions.push(subFailure);
+
+      // Caller side: clear local invitation when callee responds or invitation ends
+      const subLocalAccepted = engine.addListener(
+        'LocalInvitationAccepted',
+        (_localInvitation: LocalInvitation) => {
+          console.log(TAG, 'Callee accepted – call connected');
+          localInvitationAccepted = true;
+          currentLocalInvitation = null;
+          console.log(TAG, 'Calling onLocalInvitationAcceptedCallback, callback exists:', !!onLocalInvitationAcceptedCallback);
+          if (onLocalInvitationAcceptedCallback) {
+            try {
+              onLocalInvitationAcceptedCallback();
+              console.log(TAG, '✅ onLocalInvitationAcceptedCallback executed successfully');
+            } catch (err) {
+              console.error(TAG, '❌ Error in onLocalInvitationAcceptedCallback:', err);
+            }
+          }
+        }
+      );
+      subscriptions.push(subLocalAccepted);
+
+      const subLocalRefused = engine.addListener(
+        'LocalInvitationRefused',
+        (_localInvitation: LocalInvitation) => {
+          console.log(TAG, 'Callee refused the call');
+          currentLocalInvitation = null;
+          // Notify caller UI that callee declined
+          if (onLocalInvitationRefusedCallback) {
+            try {
+              onLocalInvitationRefusedCallback();
+              console.log(TAG, '✅ onLocalInvitationRefusedCallback executed successfully');
+            } catch (err) {
+              console.error(TAG, '❌ Error in onLocalInvitationRefusedCallback:', err);
+            }
+          }
+        }
+      );
+      subscriptions.push(subLocalRefused);
+
+      const subLocalCanceled = engine.addListener(
+        'LocalInvitationCanceled',
+        (_localInvitation: LocalInvitation) => {
+          currentLocalInvitation = null;
+        }
+      );
+      subscriptions.push(subLocalCanceled);
+
+      const subLocalFailure = engine.addListener(
+        'LocalInvitationFailure',
+        (_localInvitation: LocalInvitation, _errorCode: number) => {
+          currentLocalInvitation = null;
+        }
+      );
+      subscriptions.push(subLocalFailure);
+
+      // Log connection state so you can verify signaling is working
+      const subConn = engine.addListener(
+        'ConnectionStateChanged',
+        (state: RtmConnectionState, _reason: number) => {
+          const name = CONN_STATE_NAMES[state] ?? `UNKNOWN(${state})`;
+          console.log(TAG, 'Connection state:', name);
+          if (state === RtmConnectionState.CONNECTED) {
+            console.log(TAG, '✅ Agora RTM signaling is connected and ready');
+          }
+        }
+      );
+      subscriptions.push(subConn);
+
+      console.log(TAG, 'RTM call listeners set up');
+    } catch (err) {
+      console.error(TAG, 'init error:', err);
+      // Tear down half-initialized native engine so the next init can retry safely.
+      isInitialized = false;
+      subscriptions.forEach(sub => {
+        try {
+          sub.remove();
+        } catch (_) {}
+      });
+      subscriptions.length = 0;
+      if (engine || rtmEngine) {
+        try {
+          await (engine ?? rtmEngine)!.release();
+        } catch (_) {}
+        rtmEngine = null;
+      }
+      throw err;
+    }
+  });
+
   try {
-    await engine.createInstance(AGORA_APP_ID);
-    console.log(TAG, 'createInstance ok');
-
-    // RTM SDK requires a token field; use empty string if not using app certificate
-    const rtmToken = token ?? AGORA_SIGNALING_TOKEN ?? '';
-    await engine.loginV2(userId, rtmToken || undefined);
-    console.log(TAG, 'loginV2 ok for user:', userId);
-
-    isInitialized = true;
-    onIncomingCallCallback = onIncomingCall ?? null;
-    onInvitationEndedCallback = onInvitationEnded ?? null;
-
-    // Set up RTM call manager–style listeners (events are on RtmEngine in this SDK)
-    const subReceived = engine.addListener(
-      'RemoteInvitationReceived',
-      (remoteInvitation: RemoteInvitation) => {
-        console.log(TAG, 'Incoming call from:', remoteInvitation.callerId);
-        currentRemoteInvitation = remoteInvitation;
-        if (onIncomingCallCallback) {
-          onIncomingCallCallback(remoteInvitation);
-        }
-      }
-    );
-    subscriptions.push(subReceived);
-
-    const subAccepted = engine.addListener(
-      'RemoteInvitationAccepted',
-      (_remoteInvitation: RemoteInvitation) => {
-        console.log(TAG, 'Callee accepted the call');
-        currentRemoteInvitation = null;
-      }
-    );
-    subscriptions.push(subAccepted);
-
-    const subRefused = engine.addListener(
-      'RemoteInvitationRefused',
-      (_remoteInvitation: RemoteInvitation) => {
-        console.log(TAG, 'Callee refused the call');
-        currentRemoteInvitation = null;
-      }
-    );
-    subscriptions.push(subRefused);
-
-    const subCanceled = engine.addListener(
-      'RemoteInvitationCanceled',
-      (_remoteInvitation: RemoteInvitation) => {
-        console.log(TAG, 'Caller canceled the call');
-        currentRemoteInvitation = null;
-        onInvitationEndedCallback?.();
-      }
-    );
-    subscriptions.push(subCanceled);
-
-    const subFailure = engine.addListener(
-      'RemoteInvitationFailure',
-      (_remoteInvitation: RemoteInvitation, reason: number) => {
-        console.log(TAG, 'Call invitation failed, reason:', reason);
-        currentRemoteInvitation = null;
-        onInvitationEndedCallback?.();
-      }
-    );
-    subscriptions.push(subFailure);
-
-    // Caller side: clear local invitation when callee responds or invitation ends
-    const subLocalAccepted = engine.addListener(
-      'LocalInvitationAccepted',
-      (_localInvitation: LocalInvitation) => {
-        console.log(TAG, 'Callee accepted – call connected');
-        localInvitationAccepted = true;
-        currentLocalInvitation = null;
-        console.log(TAG, 'Calling onLocalInvitationAcceptedCallback, callback exists:', !!onLocalInvitationAcceptedCallback);
-        if (onLocalInvitationAcceptedCallback) {
-          try {
-            onLocalInvitationAcceptedCallback();
-            console.log(TAG, '✅ onLocalInvitationAcceptedCallback executed successfully');
-          } catch (err) {
-            console.error(TAG, '❌ Error in onLocalInvitationAcceptedCallback:', err);
-          }
-        }
-      }
-    );
-    subscriptions.push(subLocalAccepted);
-
-    const subLocalRefused = engine.addListener(
-      'LocalInvitationRefused',
-      (_localInvitation: LocalInvitation) => {
-        console.log(TAG, 'Callee refused the call');
-        currentLocalInvitation = null;
-        // Notify caller UI that callee declined
-        if (onLocalInvitationRefusedCallback) {
-          try {
-            onLocalInvitationRefusedCallback();
-            console.log(TAG, '✅ onLocalInvitationRefusedCallback executed successfully');
-          } catch (err) {
-            console.error(TAG, '❌ Error in onLocalInvitationRefusedCallback:', err);
-          }
-        }
-      }
-    );
-    subscriptions.push(subLocalRefused);
-
-    const subLocalCanceled = engine.addListener(
-      'LocalInvitationCanceled',
-      (_localInvitation: LocalInvitation) => {
-        currentLocalInvitation = null;
-      }
-    );
-    subscriptions.push(subLocalCanceled);
-
-    const subLocalFailure = engine.addListener(
-      'LocalInvitationFailure',
-      (_localInvitation: LocalInvitation, _errorCode: number) => {
-        currentLocalInvitation = null;
-      }
-    );
-    subscriptions.push(subLocalFailure);
-
-    // Log connection state so you can verify signaling is working
-    const subConn = engine.addListener(
-      'ConnectionStateChanged',
-      (state: RtmConnectionState, _reason: number) => {
-        const name = CONN_STATE_NAMES[state] ?? `UNKNOWN(${state})`;
-        console.log(TAG, 'Connection state:', name);
-        if (state === RtmConnectionState.CONNECTED) {
-          console.log(TAG, '✅ Agora RTM signaling is connected and ready');
-        }
-      }
-    );
-    subscriptions.push(subConn);
-
-    console.log(TAG, 'RTM call listeners set up');
-  } catch (err) {
-    console.error(TAG, 'init error:', err);
-    throw err;
+    await initInFlight;
+  } finally {
+    initInFlight = null;
   }
 }
 
@@ -390,13 +438,14 @@ export async function cancelLocalInvitation(): Promise<void> {
 /**
  * Release RTM and remove all listeners. Call on logout.
  * Safe to call from multiple places concurrently (e.g. Redux listener + useEffect cleanup).
+ * Shares the same exclusive lock as init so Android JNI never sees overlapping create/release.
  */
 export async function releaseAgoraRtm(): Promise<void> {
   if (releaseInFlight) {
     return releaseInFlight;
   }
-  releaseInFlight = (async () => {
-    subscriptions.forEach((sub) => {
+  releaseInFlight = runExclusive(async () => {
+    subscriptions.forEach(sub => {
       try {
         sub.remove();
       } catch (_) {}
@@ -419,7 +468,7 @@ export async function releaseAgoraRtm(): Promise<void> {
         console.log(TAG, 'released');
       }
     }
-  })();
+  });
   try {
     await releaseInFlight;
   } finally {

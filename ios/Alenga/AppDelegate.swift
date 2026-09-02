@@ -6,11 +6,9 @@ import RNBootSplash
 
 import FirebaseCore
 import FirebaseMessaging
-import UserNotifications
 
 @main
-class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterDelegate,
-  MessagingDelegate
+class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate
 {
   var window: UIWindow?
 
@@ -23,7 +21,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
   ) -> Bool {
     FirebaseApp.configure()
 
-    UNUserNotificationCenter.current().delegate = self
+    // Do NOT set UNUserNotificationCenter.delegate here.
+    // Owning the center swallows taps so RN Firebase / Notifee never receive
+    // onNotificationOpenedApp / getInitialNotification. Foreground banners are
+    // shown via Notifee from JS (messaging().onMessage).
     Messaging.messaging().delegate = self
 
     // Register with APNs early so FCM can map the device token.
@@ -66,26 +67,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
     didFailToRegisterForRemoteNotificationsWithError error: Error
   ) {
     print("[APNs] didFailToRegisterForRemoteNotifications error=\(error.localizedDescription)")
-  }
-
-  // Show banner/sound/badge while app is foregrounded.
-  func userNotificationCenter(
-    _ center: UNUserNotificationCenter,
-    willPresent notification: UNNotification,
-    withCompletionHandler completionHandler:
-      @escaping (UNNotificationPresentationOptions) -> Void
-  ) {
-    print("[APNs] willPresent: \(notification.request.content.userInfo)")
-    completionHandler([.banner, .list, .sound, .badge])
-  }
-
-  func userNotificationCenter(
-    _ center: UNUserNotificationCenter,
-    didReceive response: UNNotificationResponse,
-    withCompletionHandler completionHandler: @escaping () -> Void
-  ) {
-    print("[APNs] didReceive response: \(response.notification.request.content.userInfo)")
-    completionHandler()
   }
 
   func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
