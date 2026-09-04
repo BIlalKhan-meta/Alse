@@ -5,8 +5,12 @@ import {getProfileGridMedia} from '../../utils/helpers';
 interface PostItem {
   id: string;
   uri: string;
+  /** Fullscreen playback URL (video file or original image). */
+  playbackUrl: string;
   title?: string;
   isVideo?: boolean;
+  userName?: string;
+  date?: string;
 }
 
 interface MediaItem {
@@ -68,8 +72,11 @@ const mapApiPostsToGridItems = (apiPosts: ApiPost[]): PostItem[] =>
       return {
         id: post.id.toString(),
         uri: grid?.uri || '',
+        playbackUrl: grid?.playbackUrl || grid?.uri || '',
         title: post.description,
         isVideo: !!grid?.isVideo,
+        userName: post.fullname || post.name || post.username || '',
+        date: post.date,
       };
     });
 

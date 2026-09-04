@@ -452,6 +452,7 @@ function isStillImageUrl(url?: string | null): boolean {
  * Thumbnail for profile grids: prefer a still Post_* image.
  * For video-only posts, prefer a real image thumbnail when present; otherwise
  * return the video URL so the grid can render a paused Video frame.
+ * `playbackUrl` is always the asset to open fullscreen (video file or image).
  */
 export function getProfileGridThumbPath(
   media: NewsfeedMediaItem[] | undefined | null,
@@ -461,7 +462,7 @@ export function getProfileGridThumbPath(
 
 export function getProfileGridMedia(
   media: NewsfeedMediaItem[] | undefined | null,
-): {uri: string; isVideo: boolean} | undefined {
+): {uri: string; playbackUrl: string; isVideo: boolean} | undefined {
   if (!media?.length) {
     return undefined;
   }
@@ -472,23 +473,32 @@ export function getProfileGridMedia(
       (isStillImageUrl(postImage.thumbnail_path) && postImage.thumbnail_path) ||
       (isStillImageUrl(postImage.medium_path) && postImage.medium_path) ||
       postImage.path;
-    return {uri: still, isVideo: false};
+    return {uri: still, playbackUrl: postImage.path, isVideo: false};
   }
 
   const video = newsfeed.find(m => m.path && isVideoMediaItem(m));
   if (video?.path) {
     if (isStillImageUrl(video.thumbnail_path) && video.thumbnail_path) {
-      return {uri: video.thumbnail_path, isVideo: true};
+      return {
+        uri: video.thumbnail_path,
+        playbackUrl: video.path,
+        isVideo: true,
+      };
     }
     if (isStillImageUrl(video.medium_path) && video.medium_path) {
-      return {uri: video.medium_path, isVideo: true};
+      return {uri: video.medium_path, playbackUrl: video.path, isVideo: true};
     }
-    return {uri: video.path, isVideo: true};
+    return {uri: video.path, playbackUrl: video.path, isVideo: true};
   }
 
   const fallback = newsfeed.find(m => m.path);
   if (fallback?.path) {
-    return {uri: fallback.path, isVideo: isVideoMediaItem(fallback)};
+    const isVideo = isVideoMediaItem(fallback);
+    return {
+      uri: fallback.path,
+      playbackUrl: fallback.path,
+      isVideo,
+    };
   }
   return undefined;
 }

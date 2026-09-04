@@ -6,8 +6,6 @@ import {
   ScrollView,
   FlatList,
   TouchableOpacity,
-  Modal,
-  SafeAreaView,
   StyleSheet,
 } from 'react-native';
 import styles from './styles';
@@ -15,7 +13,6 @@ import {images} from '../../../utils/images';
 import Card from '../../../components/Card';
 import InterMedium from '../../../components/Text/InterMedium';
 import ProfileCard from '../../../components/ProfileCard';
-import PostComponent from '../../../components/PostComponent';
 import {useIsFocused, useRoute} from '@react-navigation/native';
 import ReportBlockModal from '../../../components/ReportBlockModal';
 import GeneralModal from '../../../components/GeneralModal';
@@ -43,8 +40,8 @@ import {selectUserProfile} from '../../../store/slices/authSlice';
 import {useSelector} from 'react-redux';
 import {vh} from '../../../constant';
 import GlobalHeader from '../../../components/GlobalHeader';
-import {X} from 'lucide-react-native';
 import Video from 'react-native-video';
+import MediaModal from '../../../components/MediaModal';
 
 const isVideoUri = (uri?: string | null, type?: string | null): boolean => {
   if (type === 'video') {
@@ -58,29 +55,32 @@ const isVideoUri = (uri?: string | null, type?: string | null): boolean => {
 
 const getPostGridMedia = (
   post: any,
-): {uri: string | null; isVideo: boolean} => {
+): {uri: string | null; playbackUrl: string | null; isVideo: boolean} => {
   const fromHelper = getProfileGridMedia(post?.media);
   if (fromHelper?.uri) {
-    return fromHelper;
+    return {
+      uri: fromHelper.uri,
+      playbackUrl: fromHelper.playbackUrl || fromHelper.uri,
+      isVideo: fromHelper.isVideo,
+    };
   }
   const media = post?.media?.[0];
   if (!media) {
-    return {uri: null, isVideo: false};
+    return {uri: null, playbackUrl: null, isVideo: false};
   }
-  const uri =
+  const path = media.path || media.full_path || media.url || null;
+  const thumb =
     (media.thumbnail_path &&
-    !isVideoUri(media.thumbnail_path, null) &&
-    media.thumbnail_path) ||
-    media.path ||
-    media.full_path ||
-    media.url ||
-    null;
-  if (!uri || typeof uri !== 'string' || !uri.trim()) {
-    return {uri: null, isVideo: false};
+      !isVideoUri(media.thumbnail_path, null) &&
+      media.thumbnail_path) ||
+    path;
+  if (!path || typeof path !== 'string' || !path.trim()) {
+    return {uri: null, playbackUrl: null, isVideo: false};
   }
-  const trimmed = uri.trim();
+  const trimmed = path.trim();
   return {
-    uri: trimmed,
+    uri: (typeof thumb === 'string' && thumb.trim()) || trimmed,
+    playbackUrl: trimmed,
     isVideo: isVideoUri(trimmed, media.type),
   };
 };
@@ -138,7 +138,19 @@ const ProfileScreen: React.FC = ({navigation}) => {
     setCurrentID(id);
   };
   const [focusedIndex, setFocusedIndex] = useState(0);
-  const [selectedPost, setSelectedPost] = useState<any>(null);
+  const [mediaModal, setMediaModal] = useState<{
+    visible: boolean;
+    mediaUrl: string;
+    mediaType: 'image' | 'video';
+    userName: string;
+    postTime: string;
+  }>({
+    visible: false,
+    mediaUrl: '',
+    mediaType: 'image',
+    userName: '',
+    postTime: '',
+  });
 
   const handleDotPress = (postId: number) => {
     setActivePostId(activePostId == null ? postId : null);
@@ -283,9 +295,6 @@ const ProfileScreen: React.FC = ({navigation}) => {
     }
     arr[index] = {...arr[index], is_saved: !arr[index].is_saved};
     setData({...data, posts: arr});
-    if (selectedPost?.id === id) {
-      setSelectedPost(arr[index]);
-    }
     dispatch(postSave(id));
     const payload = {
       item_id: id,
@@ -333,9 +342,6 @@ const ProfileScreen: React.FC = ({navigation}) => {
       arr[index].likes.push(tempData);
     }
     setData({...data, posts: arr});
-    if (selectedPost?.id === id) {
-      setSelectedPost(arr[index]);
-    }
     dispatch(updateLike(id));
     dispatch(likePost(id));
   };
@@ -432,7 +438,7 @@ const ProfileScreen: React.FC = ({navigation}) => {
           style={itemStyle}
           onPress={() => handleImagePress(post)}
           activeOpacity={0.85}>
-          {uri && isVideo ? (
+          {uri && isVideo && isVideoUri(uri, null) ? (
             <Video
               source={{uri}}
               style={styles.gridImage}
@@ -498,12 +504,27 @@ const ProfileScreen: React.FC = ({navigation}) => {
     return rows;
   };
 
-  // Add this function to handle image press
+  // Open post media fullscreen (same MediaModal as feed)
   const handleImagePress = (item: any) => {
     if (!item?.id) {
       return;
     }
-    setSelectedPost(item);
+    const {playbackUrl, isVideo} = getPostGridMedia(item);
+    if (!playbackUrl) {
+      return;
+    }
+    setMediaModal({
+      visible: true,
+      mediaUrl: playbackUrl,
+      mediaType: isVideo ? 'video' : 'image',
+      userName:
+        item.fullname ||
+        item.name ||
+        data?.full_name ||
+        `${capitalize(data?.first_name)} ${capitalize(data?.last_name)}`.trim() ||
+        '',
+      postTime: item.date ? timeFormat(item.date, true) : '',
+    });
   };
   const onViewableItemsChanged = ({viewableItems}) => {
     // Play only the currently focused video
@@ -757,70 +778,20 @@ const ProfileScreen: React.FC = ({navigation}) => {
         }}
         primaryBtn={true}
       />
-      <Modal
-        visible={!!selectedPost}
-        animationType="slide"
-        onRequestClose={() => setSelectedPost(null)}>
-        <SafeAreaView style={profileExtraStyles.postModal}>
-          <View style={profileExtraStyles.postModalHeader}>
-            <Text style={profileExtraStyles.postModalTitle}>Post</Text>
-            <TouchableOpacity
-              onPress={() => setSelectedPost(null)}
-              hitSlop={{top: 12, bottom: 12, left: 12, right: 12}}>
-              <X color="#111" size={24} />
-            </TouchableOpacity>
-          </View>
-          <ScrollView>
-            {selectedPost ? (
-              <PostComponent
-                id={selectedPost.id}
-                avatar={selectedPost.avatar || data?.avatar}
-                name={
-                  selectedPost.fullname ||
-                  selectedPost.name ||
-                  data?.full_name ||
-                  ''
-                }
-                country={selectedPost.username || data?.username || ''}
-                time={timeFormat(selectedPost.date) || ''}
-                postText={selectedPost.description || ''}
-                postImage={getPostMediaUri(selectedPost) || ''}
-                mediaType={
-                  String(selectedPost?.media?.[0]?.type || 'image').toLowerCase()
-                }
-                mediaList={selectedPost.media || []}
-                likes={
-                  selectedPost.total_likes ?? selectedPost.likes?.length ?? 0
-                }
-                comments={
-                  selectedPost.total_comments ??
-                  selectedPost.comments?.length ??
-                  0
-                }
-                share={0}
-                account={account}
-                onCommnetPress={() => handleCommentPress(selectedPost.id)}
-                onSavePress={() =>
-                  handleSave(selectedPost.id, !!selectedPost.is_saved)
-                }
-                onLikePress={() => handleLikePress(selectedPost.id)}
-                onDotPress={() => handleDotPress(selectedPost.id)}
-                handleReportPress={handleReportPress}
-                handleBlockPress={handleBlockPress}
-                handleReportPost={() =>
-                  setReportVisible({visibility: true, id: selectedPost.id})
-                }
-                modalVisible={activePostId === selectedPost.id}
-                isLiked={!!selectedPost.is_liked}
-                isSaved={!!selectedPost.is_saved}
-                onCardPress={() => setSelectedPost(null)}
-                isFocused={true}
-                sharePost={sharePost}
-              />
-            ) : null}
-          </ScrollView>
-        </SafeAreaView>
-      </Modal>
+      <MediaModal
+        visible={mediaModal.visible}
+        onClose={() =>
+          setMediaModal(prev => ({
+            ...prev,
+            visible: false,
+            mediaUrl: '',
+          }))
+        }
+        mediaUrl={mediaModal.mediaUrl}
+        mediaType={mediaModal.mediaType}
+        userName={mediaModal.userName}
+        postTime={mediaModal.postTime}
+      />
     </View>
   );
 };

@@ -106,6 +106,7 @@ const MediaModal: React.FC<MediaModalProps> = ({
             bufferForPlaybackMs: 1000,
             bufferForPlaybackAfterRebufferMs: 2000,
           }}
+          paused={false}
           onLoad={handleVideoLoad}
           onReadyForDisplay={handleVideoLoad}
           onError={handleVideoError}

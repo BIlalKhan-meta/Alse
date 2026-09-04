@@ -38,6 +38,8 @@ import GlobalHeader from '../../components/GlobalHeader';
 import GeneralModal from '../../components/GeneralModal';
 import {shareProfile} from '../../api/profile';
 import Toast from 'react-native-toast-message';
+import MediaModal from '../../components/MediaModal';
+import {timeFormat} from '../../utils';
 
 import styles from './styles';
 import {colors} from '../../utils/theme';
@@ -47,17 +49,26 @@ import {vw, vh} from '../../constant';
 interface PostItem {
   id: string;
   uri: string;
+  playbackUrl?: string;
   title?: string;
   isVideo?: boolean;
+  userName?: string;
+  date?: string;
 }
 
 /** Grid cell that falls back to a local image when the remote URL 404s. */
-const ProfilePostThumb: React.FC<{item: PostItem}> = ({item}) => {
+const ProfilePostThumb: React.FC<{
+  item: PostItem;
+  onPress: (item: PostItem) => void;
+}> = ({item, onPress}) => {
   const [failed, setFailed] = useState(!item.uri);
   const showVideo = !!item.isVideo && !!item.uri && !failed;
 
   return (
-    <TouchableOpacity style={styles.postItem} activeOpacity={0.85}>
+    <TouchableOpacity
+      style={styles.postItem}
+      activeOpacity={0.85}
+      onPress={() => onPress(item)}>
       {showVideo ? (
         <Video
           source={{uri: item.uri}}
@@ -105,6 +116,19 @@ const MyProfile: React.FC = () => {
   const [shareLoading, setShareLoading] = useState(false);
   const [shareSuccessModal, setShareSuccessModal] = useState(false);
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
+  const [mediaModal, setMediaModal] = useState<{
+    visible: boolean;
+    mediaUrl: string;
+    mediaType: 'image' | 'video';
+    userName: string;
+    postTime: string;
+  }>({
+    visible: false,
+    mediaUrl: '',
+    mediaType: 'image',
+    userName: '',
+    postTime: '',
+  });
 
   // Initialize profile data when user is available
   useEffect(() => {
@@ -142,6 +166,23 @@ const MyProfile: React.FC = () => {
 
   // Get current profile info
   const currentProfile = getProfileInfo();
+
+  const openPostMedia = useCallback(
+    (item: PostItem) => {
+      const url = item.playbackUrl || item.uri;
+      if (!url) {
+        return;
+      }
+      setMediaModal({
+        visible: true,
+        mediaUrl: url,
+        mediaType: item.isVideo ? 'video' : 'image',
+        userName: item.userName || currentProfile.fullName || '',
+        postTime: item.date ? timeFormat(item.date, true) : '',
+      });
+    },
+    [currentProfile.fullName],
+  );
 
   // Reset avatar error when avatar changes
   useEffect(() => {
@@ -425,7 +466,11 @@ const MyProfile: React.FC = () => {
           ) : (
             <View style={styles.postsGrid}>
               {posts.map((item: PostItem) => (
-                <ProfilePostThumb key={item.id} item={item} />
+                <ProfilePostThumb
+                  key={item.id}
+                  item={item}
+                  onPress={openPostMedia}
+                />
               ))}
             </View>
           )}
@@ -474,6 +519,21 @@ const MyProfile: React.FC = () => {
         secondaryBtn
         SecondaryText1="Yes"
         SecondaryText2="No"
+      />
+
+      <MediaModal
+        visible={mediaModal.visible}
+        onClose={() =>
+          setMediaModal(prev => ({
+            ...prev,
+            visible: false,
+            mediaUrl: '',
+          }))
+        }
+        mediaUrl={mediaModal.mediaUrl}
+        mediaType={mediaModal.mediaType}
+        userName={mediaModal.userName}
+        postTime={mediaModal.postTime}
       />
     </View>
   );
