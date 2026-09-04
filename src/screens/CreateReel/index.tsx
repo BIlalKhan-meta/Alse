@@ -18,7 +18,7 @@ import Video from 'react-native-video';
 import GlobalHeader from '../../components/GlobalHeader';
 import {useAppDispatch} from '../../hooks/storeHooks';
 import {videoCreate} from '../../store/slices/videoSlice'; // You'll create this
-import {ensurePhotoPermission, getMessage, Toast} from '../../utils/helpers';
+import {ensurePhotoPermission, getMessage, Toast, prepareVideoUriForUpload, createVideoFile} from '../../utils/helpers';
 import styles from './styles';
 import * as imageStyles from '../CreatePost/styles';
 import {timeHelper} from '../../utils';
@@ -27,13 +27,14 @@ import {images} from '../../utils/images';
 import moment from 'moment';
 import {createVideo, getVideoCategories} from '../../api/reels';
 import RNFS from 'react-native-fs';
+import {compressVideoIfNeeded} from '../../utils/directMediaUpload';
 
 const MAX_VIDEO_UPLOAD_BYTES = 100 * 1024 * 1024; // 100MB (matches backend)
 
 const PRIVACY_OPTIONS = [
   {label: 'Public', value: 'public'},
-  {label: 'Friends', value: 'friends'},
-  {label: 'Private', value: 'private'},
+  {label: 'Children', value: 'children'},
+  {label: 'Adult', value: 'adult'},
 ];
 
 const CreateReel: React.FC = () => {
@@ -166,47 +167,53 @@ const CreateReel: React.FC = () => {
       return;
     }
 
-    try {
-      const path = selectedVideo.uri?.replace(/^file:\/\//, '') || selectedVideo.uri;
-      if (path) {
-        const stat = await RNFS.stat(path).catch(() => null);
-        if (stat?.size && Number(stat.size) > MAX_VIDEO_UPLOAD_BYTES) {
-          Toast.error(
-            'Video must be smaller than 100 MB. Please compress or trim the video before uploading.',
-          );
-          return;
-        }
-      }
-    } catch {
-      // continue; server will validate if size unknown
-    }
-
-    const formData = new FormData();
-    formData.append('title', title);
-    formData.append('category_id', categoryId.toString());
-    formData.append('content', content || title);
-    formData.append('privacy', privacy);
-    formData.append('video_file', {
-      uri: selectedVideo.uri,
-      type: 'video/mp4',
-      name: selectedVideo.filename || 'video.mp4',
-    });
-
     setIsLoading(true);
 
-    createVideo(formData)
-      .then(res => {
-        console.log('=-=-=>>>', JSON.stringify(res));
+    try {
+      let uploadUri = await prepareVideoUriForUpload(selectedVideo.uri);
+      uploadUri = await compressVideoIfNeeded(uploadUri);
+
+      const path = uploadUri.replace(/^file:\/\//, '');
+      const stat = await RNFS.stat(path).catch(() => null);
+      if (stat?.size && Number(stat.size) > MAX_VIDEO_UPLOAD_BYTES) {
+        Toast.error(
+          'Video must be smaller than 100 MB. Please compress or trim the video before uploading.',
+        );
         setIsLoading(false);
-        Toast.success('Video uploaded successfully');
-        navigation.goBack();
-      })
-      .catch(err => {
-        console.log('=-=-= error: ', err);
-        setIsLoading(false);
-        const errorBody = err?.response?.data ?? err?.message ?? err;
+        return;
+      }
+
+      const videoFile = createVideoFile(
+        uploadUri,
+        selectedVideo.filename || 'video.mp4',
+        'video/mp4',
+      );
+
+      const formData = new FormData();
+      formData.append('title', title.trim());
+      formData.append('category_id', categoryId.toString());
+      formData.append('content', (content || title).trim());
+      formData.append('privacy', privacy);
+      formData.append('video_file', videoFile as any);
+
+      const res = await createVideo(formData);
+      console.log('=-=-=>>>', JSON.stringify(res));
+      Toast.success('Video uploaded successfully');
+      navigation.goBack();
+    } catch (err: any) {
+      console.log('=-=-= error: ', err);
+      const status = err?.response?.status;
+      const errorBody = err?.response?.data ?? err?.message ?? err;
+      if (status === 413 || errorBody?.exception?.includes?.('PostTooLarge')) {
+        Toast.error(
+          'Video is too large for the server. Please use a shorter or more compressed clip (under 100 MB).',
+        );
+      } else {
         Toast.error(getMessage(errorBody));
-      });
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleBack = () => {

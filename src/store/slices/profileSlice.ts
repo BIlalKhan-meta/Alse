@@ -1,6 +1,6 @@
 import {createSlice, createAsyncThunk, PayloadAction} from '@reduxjs/toolkit';
 import {editProfile, getUserPosts} from '../../api/profile';
-import {getProfileGridThumbPath} from '../../utils/helpers';
+import {getProfileGridMedia} from '../../utils/helpers';
 
 interface PostItem {
   id: string;
@@ -16,6 +16,9 @@ interface MediaItem {
   type: 'image' | 'video';
   path: string;
   date: string;
+  thumbnail_path?: string;
+  medium_path?: string;
+  thumbnail_file?: string;
 }
 
 interface ApiPost {
@@ -61,18 +64,12 @@ const mapApiPostsToGridItems = (apiPosts: ApiPost[]): PostItem[] =>
   (apiPosts || [])
     .filter((post: ApiPost) => post.media && post.media.length > 0)
     .map((post: ApiPost) => {
-      const thumb = getProfileGridThumbPath(post.media);
-      const hasVideo = post.media.some(
-        m =>
-          m.type === 'video' ||
-          /\.(mp4|mov|webm|mkv)$/i.test((m.file || m.path || '').split('/').pop() || ''),
-      );
+      const grid = getProfileGridMedia(post.media);
       return {
         id: post.id.toString(),
-        // Empty uri → client shows local placeholder (broken remote Story_/missing Post_ files)
-        uri: thumb || '',
+        uri: grid?.uri || '',
         title: post.description,
-        isVideo: hasVideo && !thumb,
+        isVideo: !!grid?.isVideo,
       };
     });
 

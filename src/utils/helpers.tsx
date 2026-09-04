@@ -348,6 +348,9 @@ export type NewsfeedMediaItem = {
   type?: string;
   file?: string;
   date?: string;
+  thumbnail_path?: string;
+  medium_path?: string;
+  thumbnail_file?: string;
 };
 
 function mediaBasename(fileOrPath?: string | null): string {
@@ -366,9 +369,17 @@ function isStoryMediaItem(m: NewsfeedMediaItem): boolean {
   );
 }
 
+function isPostUploadBasename(base: string): boolean {
+  return (
+    base.startsWith('post_') ||
+    base.startsWith('postvid') ||
+    base.startsWith('postimg')
+  );
+}
+
 /**
  * All newsfeed post media for display: drops story attachments (`Story_*`), then
- * returns every `Post_*` upload (oldest first), or all remaining items by date.
+ * returns every `Post_*` / `PostVid*` / `PostImg*` upload (oldest first), or all remaining items by date.
  */
 export function getNewsfeedMediaList(
   media: NewsfeedMediaItem[] | undefined | null,
@@ -382,7 +393,7 @@ export function getNewsfeedMediaList(
   }
 
   const postUploads = postOnly.filter(m =>
-    mediaBasename(m.file).startsWith('post_'),
+    isPostUploadBasename(mediaBasename(m.file)),
   );
   if (postUploads.length) {
     return [...postUploads].sort(
@@ -408,6 +419,7 @@ export function getPrimaryNewsfeedMedia(
 }
 
 const IMAGE_EXT = /\.(jpe?g|png|gif|webp|heic|heif)$/i;
+const VIDEO_EXT = /\.(mp4|mov|webm|mkv|m4v|3gp)$/i;
 
 function isImageMediaItem(m: NewsfeedMediaItem): boolean {
   if (m.type === 'image') {
@@ -419,21 +431,64 @@ function isImageMediaItem(m: NewsfeedMediaItem): boolean {
   return IMAGE_EXT.test(mediaBasename(m.path) || mediaBasename(m.file));
 }
 
+function isVideoMediaItem(m: NewsfeedMediaItem): boolean {
+  if (m.type === 'video') {
+    return true;
+  }
+  if (m.type === 'image') {
+    return false;
+  }
+  return VIDEO_EXT.test(mediaBasename(m.path) || mediaBasename(m.file));
+}
+
+function isStillImageUrl(url?: string | null): boolean {
+  if (!url) {
+    return false;
+  }
+  return IMAGE_EXT.test(url.split('?')[0] || '');
+}
+
 /**
  * Thumbnail for profile grids: prefer a still Post_* image.
- * Does not use Story_* companions (those are story uploads / often 404 under posts/).
- * Returns undefined for video-only posts so the UI can show a local placeholder.
+ * For video-only posts, prefer a real image thumbnail when present; otherwise
+ * return the video URL so the grid can render a paused Video frame.
  */
 export function getProfileGridThumbPath(
   media: NewsfeedMediaItem[] | undefined | null,
 ): string | undefined {
+  return getProfileGridMedia(media)?.uri;
+}
+
+export function getProfileGridMedia(
+  media: NewsfeedMediaItem[] | undefined | null,
+): {uri: string; isVideo: boolean} | undefined {
   if (!media?.length) {
     return undefined;
   }
   const newsfeed = getNewsfeedMediaList(media);
   const postImage = newsfeed.find(m => m.path && isImageMediaItem(m));
   if (postImage?.path) {
-    return postImage.path;
+    const still =
+      (isStillImageUrl(postImage.thumbnail_path) && postImage.thumbnail_path) ||
+      (isStillImageUrl(postImage.medium_path) && postImage.medium_path) ||
+      postImage.path;
+    return {uri: still, isVideo: false};
+  }
+
+  const video = newsfeed.find(m => m.path && isVideoMediaItem(m));
+  if (video?.path) {
+    if (isStillImageUrl(video.thumbnail_path) && video.thumbnail_path) {
+      return {uri: video.thumbnail_path, isVideo: true};
+    }
+    if (isStillImageUrl(video.medium_path) && video.medium_path) {
+      return {uri: video.medium_path, isVideo: true};
+    }
+    return {uri: video.path, isVideo: true};
+  }
+
+  const fallback = newsfeed.find(m => m.path);
+  if (fallback?.path) {
+    return {uri: fallback.path, isVideo: isVideoMediaItem(fallback)};
   }
   return undefined;
 }
@@ -533,9 +588,21 @@ export async function prepareVideoUriForUpload(uri: string): Promise<string> {
     return normalizeFormDataUri(dest);
   }
 
-  if (decoded.startsWith('content://')) {
+  if (
+    decoded.startsWith('content://') ||
+    decoded.startsWith('ph://') ||
+    decoded.startsWith('assets-library://')
+  ) {
     const dest = `${RNFS.CachesDirectoryPath}/upload-video-${Date.now()}.mp4`;
-    await RNFS.copyFile(decoded, dest);
+    if (
+      Platform.OS === 'ios' &&
+      (decoded.startsWith('ph://') || decoded.startsWith('assets-library://')) &&
+      typeof (RNFS as any).copyAssetsVideoIOS === 'function'
+    ) {
+      await (RNFS as any).copyAssetsVideoIOS(decoded, dest);
+    } else {
+      await RNFS.copyFile(decoded, dest);
+    }
     return normalizeFormDataUri(dest);
   }
 

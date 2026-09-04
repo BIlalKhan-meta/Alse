@@ -354,7 +354,7 @@ const Notifications: React.FC = () => {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <GlobalHeader icon={true} showBack embedInSafeArea />
+        <GlobalHeader /* icon={true} */ showBack embedInSafeArea />
       </View>
 
       <View style={styles.notificationCounter}>

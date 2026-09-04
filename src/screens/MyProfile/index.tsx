@@ -10,6 +10,7 @@ import {
   StyleSheet,
   Platform,
 } from 'react-native';
+import Video from 'react-native-video';
 import {BlurView} from '@react-native-community/blur';
 import Clipboard from '@react-native-clipboard/clipboard';
 import {useIsFocused, useNavigation} from '@react-navigation/native';
@@ -53,14 +54,27 @@ interface PostItem {
 /** Grid cell that falls back to a local image when the remote URL 404s. */
 const ProfilePostThumb: React.FC<{item: PostItem}> = ({item}) => {
   const [failed, setFailed] = useState(!item.uri);
+  const showVideo = !!item.isVideo && !!item.uri && !failed;
 
   return (
     <TouchableOpacity style={styles.postItem} activeOpacity={0.85}>
-      <Image
-        source={failed || !item.uri ? images.pro1 : {uri: item.uri}}
-        style={styles.postImage}
-        onError={() => setFailed(true)}
-      />
+      {showVideo ? (
+        <Video
+          source={{uri: item.uri}}
+          style={styles.postImage}
+          paused
+          muted
+          resizeMode="cover"
+          posterResizeMode="cover"
+          onError={() => setFailed(true)}
+        />
+      ) : (
+        <Image
+          source={failed || !item.uri ? images.pro1 : {uri: item.uri}}
+          style={styles.postImage}
+          onError={() => setFailed(true)}
+        />
+      )}
       {item.isVideo ? (
         <View style={styles.videoBadge}>
           <Text style={styles.videoBadgeText}>VIDEO</Text>

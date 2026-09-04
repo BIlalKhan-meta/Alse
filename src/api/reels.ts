@@ -3,7 +3,7 @@ import endpoints from './endpoints';
 import store from '../store';
 import {BASE_URL} from '../utils/baseurl';
 
-const UPLOAD_TIMEOUT_MS = 120000; // 2 min for video uploads
+const UPLOAD_TIMEOUT_MS = 5 * 60 * 1000; // 5 min for compressed video uploads
 
 /**
  * Upload FormData via fetch. Avoids axios FormData/Android Network Error issues.

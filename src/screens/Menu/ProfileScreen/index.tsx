@@ -31,9 +31,10 @@ import {
 } from '../../../store/slices/homeSlice';
 import {useAppDispatch} from '../../../hooks/storeHooks';
 import Loader from '../../../components/Loader';
-import {getMessage, Toast} from '../../../utils/helpers';
+import {getMessage, Toast, getProfileGridMedia} from '../../../utils/helpers';
 import {capitalize, timeFormat} from '../../../utils';
 import {createPost, fetchProfileById, reportPost} from '../../../api/home';
+import {getUserPosts} from '../../../api/profile';
 import {removeSavedItem, saveItem} from '../../../api/menu';
 import {usePostComments} from '../../../hooks/usePostComments';
 import {EmptyComponent} from '../../../components/EmptyComponent';
@@ -43,23 +44,45 @@ import {useSelector} from 'react-redux';
 import {vh} from '../../../constant';
 import GlobalHeader from '../../../components/GlobalHeader';
 import {X} from 'lucide-react-native';
+import Video from 'react-native-video';
 
-const getPostMediaUri = (post: any): string | null => {
+const isVideoUri = (uri?: string | null, type?: string | null): boolean => {
+  if (type === 'video') {
+    return true;
+  }
+  if (!uri) {
+    return false;
+  }
+  return /\.(mp4|mov|webm|mkv|m4v|3gp)(\?|$)/i.test(uri);
+};
+
+const getPostGridMedia = (
+  post: any,
+): {uri: string | null; isVideo: boolean} => {
+  const fromHelper = getProfileGridMedia(post?.media);
+  if (fromHelper?.uri) {
+    return fromHelper;
+  }
   const media = post?.media?.[0];
   if (!media) {
-    return null;
+    return {uri: null, isVideo: false};
   }
   const uri =
-    media.thumbnail_path ||
-    media.medium_path ||
+    (media.thumbnail_path &&
+    !isVideoUri(media.thumbnail_path, null) &&
+    media.thumbnail_path) ||
     media.path ||
     media.full_path ||
     media.url ||
     null;
   if (!uri || typeof uri !== 'string' || !uri.trim()) {
-    return null;
+    return {uri: null, isVideo: false};
   }
-  return uri.trim();
+  const trimmed = uri.trim();
+  return {
+    uri: trimmed,
+    isVideo: isVideoUri(trimmed, media.type),
+  };
 };
 
 const ProfileScreen: React.FC = ({navigation}) => {
@@ -99,6 +122,7 @@ const ProfileScreen: React.FC = ({navigation}) => {
   } = usePostComments();
   const [activePostId, setActivePostId] = useState<number | null>(null);
   const [data, setData] = useState<any>({});
+  const [profilePosts, setProfilePosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [blockUserLoader, setBlockUserLoader] = useState(false);
   const [reportLoader, setReportLoader] = useState(false);
@@ -122,18 +146,33 @@ const ProfileScreen: React.FC = ({navigation}) => {
 
   const getData = async () => {
     setLoading(true);
-    await fetchProfileById(id)
-      .then(res => {
-        if (res?.data?.data) {
-          console.log('res?.data?.data ====>', res?.data?.data);
+    try {
+      const res = await fetchProfileById(id);
+      if (res?.data?.data) {
+        setData(res.data.data);
+      }
 
-          setData(res?.data?.data);
-        }
-      })
-      .catch(err => console.log('ERRORRRRRR', err))
-      .finally(() => {
-        setLoading(false);
-      });
+      try {
+        const postsRes = await getUserPosts(String(id));
+        const payload = postsRes?.data?.data;
+        const list = Array.isArray(payload)
+          ? payload
+          : Array.isArray(payload?.data)
+            ? payload.data
+            : [];
+        setProfilePosts(list);
+      } catch (postsErr: any) {
+        // Private account / forbidden — fall back to embedded posts from profile.
+        console.log('Profile posts fetch error:', postsErr?.response?.status);
+        const embedded = res?.data?.data?.posts;
+        setProfilePosts(Array.isArray(embedded) ? embedded : []);
+      }
+    } catch (err) {
+      console.log('ERRORRRRRR', err);
+      setProfilePosts([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -372,7 +411,12 @@ const ProfileScreen: React.FC = ({navigation}) => {
 
   // First, divide your posts into rows
   const renderPosts = () => {
-    const posts = Array.isArray(data?.posts) ? data.posts : [];
+    const posts =
+      profilePosts.length > 0
+        ? profilePosts
+        : Array.isArray(data?.posts)
+          ? data.posts
+          : [];
     if (posts.length === 0) {
       return <EmptyComponent text={'No Posts Found'} />;
     }
@@ -382,13 +426,21 @@ const ProfileScreen: React.FC = ({navigation}) => {
     let postIndex = 0;
 
     const renderGridImage = (post: any, itemStyle: any) => {
-      const uri = getPostMediaUri(post);
+      const {uri, isVideo} = getPostGridMedia(post);
       return (
         <TouchableOpacity
           style={itemStyle}
           onPress={() => handleImagePress(post)}
           activeOpacity={0.85}>
-          {uri ? (
+          {uri && isVideo ? (
+            <Video
+              source={{uri}}
+              style={styles.gridImage}
+              paused
+              muted
+              resizeMode="cover"
+            />
+          ) : uri ? (
             <Image
               source={{uri}}
               style={styles.gridImage}
@@ -399,6 +451,11 @@ const ProfileScreen: React.FC = ({navigation}) => {
               <Text style={profileExtraStyles.placeholderText}>No media</Text>
             </View>
           )}
+          {isVideo ? (
+            <View style={profileExtraStyles.videoBadge}>
+              <Text style={profileExtraStyles.videoBadgeText}>VIDEO</Text>
+            </View>
+          ) : null}
         </TouchableOpacity>
       );
     };
@@ -489,7 +546,7 @@ const ProfileScreen: React.FC = ({navigation}) => {
             id={data?.id}
             username={data?.username || ''}
             location={data?.location_name || data?.location || ''}
-            postsCount={data?.posts?.length || 0}
+            postsCount={profilePosts.length || data?.posts?.length || 0}
             followersCount={data?.followers?.length || 0}
             followingCount={data?.following?.length || 0}
           />
@@ -521,7 +578,9 @@ const ProfileScreen: React.FC = ({navigation}) => {
               id={data?.id}
               username={data?.username || ''}
               location={data?.location_name || data?.location || ''}
-              postsCount={data?.posts?.length || 0}
+              postsCount={
+                profilePosts.length || data?.posts?.length || 0
+              }
               followersCount={data?.followers?.length || 0}
               followingCount={data?.following?.length || 0}
             />
@@ -775,6 +834,20 @@ const profileExtraStyles = StyleSheet.create({
   placeholderText: {
     color: '#8A94A6',
     fontSize: 12,
+  },
+  videoBadge: {
+    position: 'absolute',
+    bottom: 8,
+    left: 8,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  videoBadgeText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: '600',
   },
   postModal: {
     flex: 1,

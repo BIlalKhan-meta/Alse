@@ -188,9 +188,10 @@ const CreatePost: React.FC = () => {
       return;
     }
 
-    let privacyValue = '2';
+    // Backend: PRIVATE=0, MYFOLLOWERS=1, PUBLIC=2
+    let privacyValue = '1'; // Only Friends (default)
     if (privacy === 'public') {
-      privacyValue = '1';
+      privacyValue = '2';
     }
     if (privacy === 'only_me') {
       privacyValue = '0';

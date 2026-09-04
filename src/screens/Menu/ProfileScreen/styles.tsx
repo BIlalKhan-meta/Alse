@@ -32,11 +32,15 @@ const styles = StyleSheet.create({
     width: (vw * 100 - 12) / 3,
     height: (vw * 100 - 12) / 3,
     margin: 1,
+    overflow: 'hidden',
+    borderRadius: 10,
   },
   largeGridItem: {
     width: ((vw * 100 - 12) / 3) * 2,
     height: ((vw * 100 - 8) / 3) * 2,
     margin: 1,
+    overflow: 'hidden',
+    borderRadius: 10,
   },
   gridImage: {
     width: '100%',
