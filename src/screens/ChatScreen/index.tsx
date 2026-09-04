@@ -5,10 +5,10 @@ import {
   FlatList,
   Image,
   TouchableOpacity,
-  SafeAreaView,
   StatusBar,
   TextInput,
 } from 'react-native';
+import {SafeAreaView} from 'react-native-safe-area-context';
 import {useIsFocused, useNavigation} from '@react-navigation/native';
 import {Search, ChevronDown, MoreVertical, ChevronLeft} from 'lucide-react-native';
 import {images} from '../../utils/images';
@@ -214,7 +214,7 @@ const ChatScreen: React.FC = () => {
   });
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <StatusBar backgroundColor="#F8FAFE" barStyle="dark-content" />
 
       {/* Custom Header */}

@@ -180,18 +180,13 @@ const styles = StyleSheet.create({
   },
   whatsOnYourMindContainer: {
     paddingHorizontal: 15,
-    paddingTop: 15,
-    paddingBottom: vh * 1.5,
+    overflow: 'hidden',
   },
   whatsOnYourMindTop: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 15,
   },
   profilePic: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
     marginRight: 10,
   },
   whatsOnYourMindInput: {
@@ -199,7 +194,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#F0F2F5',
     borderRadius: 20,
     paddingHorizontal: 15,
-    paddingVertical: 10,
   },
   whatsOnYourMindText: {
     color: '#65676B',
@@ -207,7 +201,7 @@ const styles = StyleSheet.create({
   },
   whatsOnYourMindBottom: {
     flexDirection: 'row',
-    paddingTop: 8,
+    overflow: 'hidden',
   },
   whatsOnYourMindButton: {
     flexDirection: 'row',

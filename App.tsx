@@ -8,6 +8,7 @@ import {
   View,
 } from 'react-native';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
+import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {DefaultTheme, NavigationContainer} from '@react-navigation/native';
 import {colors} from './src/utils/theme';
 import {Provider} from 'react-redux';
@@ -131,10 +132,12 @@ function App(): React.JSX.Element {
 
   return (
     <GestureHandlerRootView style={styles.container}>
-      <ErrorBoundary>
-        {appContent}
-        <UploadProgressBanner />
-      </ErrorBoundary>
+      <SafeAreaProvider>
+        <ErrorBoundary>
+          {appContent}
+          <UploadProgressBanner />
+        </ErrorBoundary>
+      </SafeAreaProvider>
     </GestureHandlerRootView>
   );
 }

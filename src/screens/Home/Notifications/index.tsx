@@ -6,8 +6,8 @@ import {
   Image,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
 } from 'react-native';
+import {SafeAreaView} from 'react-native-safe-area-context';
 import GlobalHeader from '../../../components/GlobalHeader';
 import {colors} from '../../../utils/theme';
 import {getNotifications, markAllRead, markRead} from '../../../api/home';
@@ -352,7 +352,7 @@ const Notifications: React.FC = () => {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <GlobalHeader icon={true} showBack embedInSafeArea />
       </View>

@@ -6,7 +6,6 @@ import {
   Modal,
   ActivityIndicator,
   Text,
-  Image,
   RefreshControl,
 } from 'react-native';
 import {FlashList} from '@shopify/flash-list';
@@ -144,6 +143,93 @@ const Home: React.FC = () => {
 
   const [isFabOpen, setIsFabOpen] = useState(false);
   const animation = useRef(new Animated.Value(0)).current;
+  /** 0 = expanded composer, 1 = minimized while scrolling the feed */
+  const composerCollapse = useRef(new Animated.Value(0)).current;
+  const lastScrollY = useRef(0);
+  const collapseTargetRef = useRef(false);
+
+  const composerAnim = useMemo(
+    () => ({
+      containerPaddingTop: composerCollapse.interpolate({
+        inputRange: [0, 1],
+        outputRange: [15, 8],
+      }),
+      containerPaddingBottom: composerCollapse.interpolate({
+        inputRange: [0, 1],
+        outputRange: [vh * 1.5, 8],
+      }),
+      topMarginBottom: composerCollapse.interpolate({
+        inputRange: [0, 1],
+        outputRange: [15, 0],
+      }),
+      avatarSize: composerCollapse.interpolate({
+        inputRange: [0, 1],
+        outputRange: [40, 32],
+      }),
+      avatarRadius: composerCollapse.interpolate({
+        inputRange: [0, 1],
+        outputRange: [20, 16],
+      }),
+      inputPaddingVertical: composerCollapse.interpolate({
+        inputRange: [0, 1],
+        outputRange: [10, 6],
+      }),
+      actionsMaxHeight: composerCollapse.interpolate({
+        inputRange: [0, 1],
+        outputRange: [48, 0],
+      }),
+      actionsOpacity: composerCollapse.interpolate({
+        inputRange: [0, 0.4, 1],
+        outputRange: [1, 0, 0],
+      }),
+      actionsPaddingTop: composerCollapse.interpolate({
+        inputRange: [0, 1],
+        outputRange: [8, 0],
+      }),
+    }),
+    [composerCollapse],
+  );
+
+  const setComposerCollapsed = useCallback(
+    (collapsed: boolean) => {
+      if (collapseTargetRef.current === collapsed) {
+        return;
+      }
+      collapseTargetRef.current = collapsed;
+      Animated.timing(composerCollapse, {
+        toValue: collapsed ? 1 : 0,
+        duration: 220,
+        useNativeDriver: false,
+      }).start();
+    },
+    [composerCollapse],
+  );
+
+  const onFeedScroll = useCallback(
+    (event: {nativeEvent: {contentOffset: {y: number}}}) => {
+      const y = event.nativeEvent.contentOffset.y;
+      const dy = y - lastScrollY.current;
+      lastScrollY.current = y;
+
+      // Always expand near the top of the feed.
+      if (y <= 24) {
+        setComposerCollapsed(false);
+        return;
+      }
+
+      // Ignore tiny jitter so Android/iOS don't flicker.
+      if (Math.abs(dy) < 3) {
+        return;
+      }
+
+      if (dy > 0 && y > 48) {
+        setComposerCollapsed(true);
+      } else if (dy < 0) {
+        setComposerCollapsed(false);
+      }
+    },
+    [setComposerCollapsed],
+  );
 
   const [mediaModalVisible, setMediaModalVisible] = useState<{
     visible: boolean;
@@ -569,26 +655,57 @@ const Home: React.FC = () => {
   };
 
   const renderCreatePostSection = () => (
-    <View style={styles.whatsOnYourMindContainer} collapsable={false}>
-      <View style={styles.whatsOnYourMindTop}>
-        <Image
+    <Animated.View
+      style={[
+        styles.whatsOnYourMindContainer,
+        {
+          paddingTop: composerAnim.containerPaddingTop,
+          paddingBottom: composerAnim.containerPaddingBottom,
+        },
+      ]}
+      collapsable={false}>
+      <Animated.View
+        style={[
+          styles.whatsOnYourMindTop,
+          {marginBottom: composerAnim.topMarginBottom},
+        ]}>
+        <Animated.Image
           source={
             user?.avatar
               ? {uri: getAbsoluteAvatarUrl(user?.avatar)}
               : images.profile
           }
-          style={styles.profilePic}
+          style={[
+            styles.profilePic,
+            {
+              width: composerAnim.avatarSize,
+              height: composerAnim.avatarSize,
+              borderRadius: composerAnim.avatarRadius,
+            },
+          ]}
         />
         <TouchableOpacity
           testID="feed-create-post"
           style={styles.whatsOnYourMindInput}
-          onPress={() => navigation.navigate('CreatePost')}>
-          <InterRegular style={styles.whatsOnYourMindText}>
-            What's on your mind?
-          </InterRegular>
+          onPress={() => navigation.navigate('CreatePost')}
+          activeOpacity={0.7}>
+          <Animated.View
+            style={{paddingVertical: composerAnim.inputPaddingVertical}}>
+            <InterRegular style={styles.whatsOnYourMindText}>
+              What's on your mind?
+            </InterRegular>
+          </Animated.View>
         </TouchableOpacity>
-      </View>
-      <View style={styles.whatsOnYourMindBottom}>
+      </Animated.View>
+      <Animated.View
+        style={[
+          styles.whatsOnYourMindBottom,
+          {
+            maxHeight: composerAnim.actionsMaxHeight,
+            opacity: composerAnim.actionsOpacity,
+            paddingTop: composerAnim.actionsPaddingTop,
+          },
+        ]}>
         <TouchableOpacity
           style={styles.whatsOnYourMindButton}
           onPress={() => navigation.navigate('CreatePost')}>
@@ -605,8 +722,8 @@ const Home: React.FC = () => {
             Photo
           </InterRegular>
         </TouchableOpacity>
-      </View>
-    </View>
+      </Animated.View>
+    </Animated.View>
   );
 
   const renderFeedTopSection = () => (
@@ -743,6 +860,8 @@ const Home: React.FC = () => {
                 viewabilityConfigCallbackPairs={viewabilityConfigCallbackPairs}
                 data={filteredPosts}
                 keyboardShouldPersistTaps="handled"
+                onScroll={onFeedScroll}
+                scrollEventThrottle={16}
                 refreshControl={
                   <RefreshControl
                     refreshing={refreshing}
