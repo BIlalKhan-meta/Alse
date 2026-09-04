@@ -12,13 +12,14 @@ import {
   ActivityIndicator,
   Modal,
   FlatList,
-  Alert,
   Platform,
   InteractionManager,
 } from 'react-native';
 import {
+  AudienceLatencyLevelType,
   ClientRoleType,
   ConnectionStateType,
+  RemoteVideoState,
   RtcSurfaceView,
   RtcTextureView,
   RtcConnection,
@@ -63,17 +64,13 @@ import {vh, vw} from '../../../constant';
 import KeepAwake from '@sayem314/react-native-keep-awake';
 
 const LocalVideoView = Platform.OS === 'android' ? RtcTextureView : RtcSurfaceView;
+const RemoteVideoView = Platform.OS === 'android' ? RtcTextureView : RtcSurfaceView;
 
 const JOIN_TIMEOUT_MS = 30000;
 const FIRST_FRAME_FALLBACK_MS = Platform.OS === 'android' ? 12000 : 400;
 
 const sanitizeLiveID = (value: string): string =>
   String(value || '').replace(/[^a-zA-Z0-9_]/g, '_') || `live_${Date.now()}`;
-
-const sleep = (ms: number) =>
-  new Promise(resolve => {
-    setTimeout(resolve, ms);
-  });
 
 const withTimeout = async <T,>(
   promise: Promise<T>,
@@ -129,6 +126,7 @@ const LiveStreamScreen = () => {
   const [engineReady, setEngineReady] = useState(false);
   const [previewStarted, setPreviewStarted] = useState(false);
   const [remoteUid, setRemoteUid] = useState<number | null>(null);
+  const [remoteVideoStarted, setRemoteVideoStarted] = useState(false);
   const [micMuted, setMicMuted] = useState(false);
   const [showChoiceModal, setShowChoiceModal] = useState(false);
   const [liveStreams, setLiveStreams] = useState<LiveStreamItem[]>([]);
@@ -141,6 +139,7 @@ const LiveStreamScreen = () => {
     stream_key?: string;
     streamerName?: string;
     channel_name?: string;
+    hostUid?: number;
   } | null>(null);
 
   const engineRef = useRef<IRtcEngine | null>(null);
@@ -152,9 +151,11 @@ const LiveStreamScreen = () => {
     chName: string;
     uid: number;
     asHost: boolean;
+    hostUid?: number;
     previewLaunched: boolean;
     joinLaunched: boolean;
   } | null>(null);
+  const leavePromiseRef = useRef<Promise<void> | null>(null);
   const surfaceReadyRef = useRef(false);
   const joinTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const surfaceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -228,6 +229,7 @@ const LiveStreamScreen = () => {
     setPreviewStarted(false);
     setJoined(false);
     setRemoteUid(null);
+    setRemoteVideoStarted(false);
     const engine = engineRef.current;
     const handler = handlerRef.current;
     handlerRef.current = null;
@@ -275,6 +277,12 @@ const LiveStreamScreen = () => {
         publishCameraTrack: pending.asHost,
         autoSubscribeAudio: true,
         autoSubscribeVideo: true,
+        ...(pending.asHost
+          ? {}
+          : {
+              audienceLatencyLevel:
+                AudienceLatencyLevelType.AudienceLatencyLevelLowLatency,
+            }),
       };
       console.log(
         '[LiveStream] joinChannel',
@@ -312,6 +320,18 @@ const LiveStreamScreen = () => {
         throw new Error(`joinChannel failed with code ${joinResult}`);
       }
       markLiveChannelJoined();
+      if (!pending.asHost) {
+        try {
+          engine.muteAllRemoteVideoStreams(false);
+          engine.muteAllRemoteAudioStreams(false);
+          if (pending.hostUid) {
+            engine.muteRemoteVideoStream(pending.hostUid, false);
+          }
+          engine.setEnableSpeakerphone(true);
+        } catch {
+          // older native builds may not expose these
+        }
+      }
       if (joinTimeoutRef.current) {
         clearTimeout(joinTimeoutRef.current);
         joinTimeoutRef.current = null;
@@ -396,6 +416,12 @@ const LiveStreamScreen = () => {
         engine.startPreview();
         setPreviewStarted(true);
         setLoading(false);
+        // iOS can join as soon as preview starts. Android waits for the first
+        // camera frame (or 12s) so MediaTek HAL is not still opening.
+        if (Platform.OS !== 'android') {
+          joinPendingChannel();
+          return;
+        }
         firstFrameFallbackRef.current = setTimeout(() => {
           if (pendingJoinRef.current && !pendingJoinRef.current.joinLaunched) {
             console.warn(
@@ -424,56 +450,82 @@ const LiveStreamScreen = () => {
     setTimeout(() => launchPendingPreview(), 250);
   }, [launchPendingPreview]);
 
-  const handleLeave = useCallback(async () => {
+  const handleLeave = useCallback(() => {
     if (leavingRef.current) {
       return;
     }
     leavingRef.current = true;
     hostEndedRef.current = true;
+    joiningRef.current = false;
     joinedRef.current = false;
+    pendingJoinRef.current = null;
+    surfaceReadyRef.current = false;
+    clearJoinTimeout();
+
+    const wasHost = effectiveIsHostRef.current && sessionCreatedRef.current;
+    const liveId = hostStreamKeyRef.current
+      ? sanitizeLiveID(hostStreamKeyRef.current)
+      : channelNameRef.current;
+
+    const engine = engineRef.current;
+    try {
+      engine?.stopPreview();
+    } catch {
+      // preview may not have started
+    }
+    try {
+      engine?.enableLocalVideo(false);
+      engine?.enableLocalAudio(false);
+    } catch {
+      // engine may already be idle
+    }
+
+    // Tear down the camera UI immediately — do not wait for EndLiveStream.
     setJoined(false);
     setLoading(false);
-    try {
-      if (effectiveIsHostRef.current && sessionCreatedRef.current) {
-        const liveId = hostStreamKeyRef.current
-          ? sanitizeLiveID(hostStreamKeyRef.current)
-          : channelNameRef.current;
-        if (liveId) {
-          await removeActiveStream(liveId).catch(() => {});
-        }
-        try {
-          await EndLiveStream();
-        } catch (endErr) {
-          console.warn('[LiveStream] EndLiveStream failed', endErr);
-        }
-        setSessionCreated(false);
-      }
-      await withTimeout(cleanupEngine(), 2500).catch(() => {
-        cleanupEngine();
-      });
-    } finally {
-      setPreviewStarted(false);
-      setEngineReady(false);
-      setEffectiveMode(null);
-      setHostStreamKey(null);
-      setChannelName(null);
-      setError(null);
-      sessionCreatedRef.current = false;
-      if (fromTab) {
-        setShowChoiceModal(true);
-        setChoiceStep('initial');
-        leavingRef.current = false;
-        hostEndedRef.current = false;
-      } else if (navigation.canGoBack()) {
-        navigation.goBack();
-      } else {
-        setShowChoiceModal(true);
-        setChoiceStep('initial');
-        leavingRef.current = false;
-        hostEndedRef.current = false;
-      }
+    setPreviewStarted(false);
+    setEngineReady(false);
+    setRemoteUid(null);
+    setRemoteVideoStarted(false);
+    setEffectiveMode(null);
+    setHostStreamKey(null);
+    setChannelName(null);
+    setError(null);
+    setSessionCreated(false);
+    sessionCreatedRef.current = false;
+
+    if (fromTab) {
+      setShowChoiceModal(true);
+      setChoiceStep('initial');
+    } else if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      setShowChoiceModal(true);
+      setChoiceStep('initial');
     }
-  }, [cleanupEngine, fromTab, navigation]);
+
+    const done = (async () => {
+      try {
+        if (wasHost) {
+          if (liveId) {
+            await removeActiveStream(liveId).catch(() => {});
+          }
+          try {
+            await EndLiveStream();
+          } catch (endErr) {
+            console.warn('[LiveStream] EndLiveStream failed', endErr);
+          }
+        }
+        await withTimeout(cleanupEngine(), 2500).catch(() => {
+          void cleanupEngine();
+        });
+      } finally {
+        leavingRef.current = false;
+        hostEndedRef.current = false;
+      }
+    })();
+    leavePromiseRef.current = done;
+  }, [cleanupEngine, clearJoinTimeout, fromTab, navigation]);
 
   const joinAgoraChannel = useCallback(
     async (
@@ -481,9 +533,14 @@ const LiveStreamScreen = () => {
       chName: string,
       uid: number,
       asHost: boolean,
+      hostUid?: number,
     ) => {
       if (!AGORA_APP_ID) {
         throw new Error('Agora App ID is not configured');
+      }
+      if (leavePromiseRef.current) {
+        await leavePromiseRef.current.catch(() => {});
+        leavePromiseRef.current = null;
       }
       if (joiningRef.current) {
         console.warn('[LiveStream] join already in progress, skip');
@@ -510,7 +567,20 @@ const LiveStreamScreen = () => {
         handlerRef.current = null;
       }
 
+      const applyRemoteUid = (uidJoined: number) => {
+        if (leavingRef.current || hostEndedRef.current) {
+          return;
+        }
+        if (!uidJoined || uidJoined === uid) {
+          return;
+        }
+        setRemoteUid(uidJoined);
+      };
+
       const markJoined = (source: string, channelId?: string) => {
+        if (leavingRef.current || hostEndedRef.current) {
+          return;
+        }
         console.log('[LiveStream] event', source, channelId ?? '');
         joiningRef.current = false;
         clearJoinTimeout();
@@ -519,6 +589,12 @@ const LiveStreamScreen = () => {
         setPreviewStarted(true);
         setLoading(false);
         setError(null);
+        if (!asHost) {
+          const hint = hostUid || pendingJoinRef.current?.hostUid;
+          if (hint && hint !== uid) {
+            setRemoteUid(prev => prev ?? hint);
+          }
+        }
       };
       markJoinedRef.current = markJoined;
 
@@ -541,11 +617,43 @@ const LiveStreamScreen = () => {
         },
         onUserJoined: (_connection: RtcConnection, uidJoined: number) => {
           console.log('[LiveStream] event onUserJoined', uidJoined);
-          setRemoteUid(uidJoined);
+          applyRemoteUid(uidJoined);
         },
         onUserOffline: (_connection: RtcConnection, uidOffline: number) => {
           console.log('[LiveStream] event onUserOffline', uidOffline);
           setRemoteUid(prev => (prev === uidOffline ? null : prev));
+          setRemoteVideoStarted(false);
+        },
+        onFirstRemoteVideoFrame: (
+          _connection: RtcConnection,
+          uidJoined: number,
+        ) => {
+          console.log('[LiveStream] event onFirstRemoteVideoFrame', uidJoined);
+          applyRemoteUid(uidJoined);
+          setRemoteVideoStarted(true);
+        },
+        onRemoteVideoStateChanged: (
+          _connection: RtcConnection,
+          uidJoined: number,
+          state: RemoteVideoState,
+        ) => {
+          console.log(
+            '[LiveStream] event onRemoteVideoStateChanged',
+            uidJoined,
+            state,
+          );
+          if (
+            state === RemoteVideoState.RemoteVideoStateDecoding ||
+            state === RemoteVideoState.RemoteVideoStateStarting
+          ) {
+            applyRemoteUid(uidJoined);
+            setRemoteVideoStarted(true);
+          } else if (
+            state === RemoteVideoState.RemoteVideoStateStopped ||
+            state === RemoteVideoState.RemoteVideoStateFailed
+          ) {
+            setRemoteVideoStarted(false);
+          }
         },
         onError: (err: number, msg: string) => {
           console.warn('[LiveStream] event onError', err, msg);
@@ -599,6 +707,8 @@ const LiveStreamScreen = () => {
       listen('onFirstLocalVideoFrame', handler.onFirstLocalVideoFrame!);
       listen('onUserJoined', handler.onUserJoined!);
       listen('onUserOffline', handler.onUserOffline!);
+      listen('onFirstRemoteVideoFrame', handler.onFirstRemoteVideoFrame!);
+      listen('onRemoteVideoStateChanged', handler.onRemoteVideoStateChanged!);
 
       // Do NOT call enableVideo/startPreview here for hosts — wait until
       // RtcSurfaceView has laid out (see launchPendingPreview).
@@ -607,10 +717,12 @@ const LiveStreamScreen = () => {
         chName,
         uid,
         asHost,
+        hostUid: hostUid && hostUid > 0 ? hostUid : undefined,
         previewLaunched: false,
         joinLaunched: false,
       };
       surfaceReadyRef.current = false;
+      setRemoteVideoStarted(false);
       setEngineReady(true);
 
       if (!asHost) {
@@ -639,6 +751,10 @@ const LiveStreamScreen = () => {
   const startHostSession = useCallback(async () => {
     try {
       setError(null);
+      if (leavePromiseRef.current) {
+        await leavePromiseRef.current.catch(() => {});
+        leavePromiseRef.current = null;
+      }
       leavingRef.current = false;
       hostStartLockRef.current = true;
       // Block FCM/notifee from stacking GrantPermissionsActivity while we
@@ -714,40 +830,7 @@ const LiveStreamScreen = () => {
       setSessionCreated(true);
       setEffectiveMode({isHost: true, stream_key: streamKey});
 
-      const liveId = sanitizeLiveID(streamKey);
-      const syncArgs: [string, string, string, number, string] = [
-        streamKey,
-        liveId,
-        chName,
-        Number(userID) || 0,
-        userName,
-      ];
-      // Discoverable immediately — do not wait for Agora join.
-      saveActiveStream(...syncArgs).catch(syncErr => {
-        console.warn('[LiveStream] saveActiveStream failed', syncErr);
-      });
-
       await joinAgoraChannel(token, chName, uid, true);
-
-      for (let attempt = 1; attempt <= 2; attempt++) {
-        try {
-          await saveActiveStream(...syncArgs);
-          break;
-        } catch (syncErr) {
-          console.warn(
-            `[LiveStream] saveActiveStream attempt ${attempt} failed`,
-            syncErr,
-          );
-          if (attempt < 2) {
-            await sleep(800);
-          } else {
-            Alert.alert(
-              'Discovery sync issue',
-              'Your stream is live, but others may not see it in the list right away.',
-            );
-          }
-        }
-      }
     } catch (err: any) {
       hostStartLockRef.current = false;
       setSuppressAndroidPermissionPrompts(false);
@@ -758,13 +841,21 @@ const LiveStreamScreen = () => {
       setError(msg);
       setLoading(false);
     }
-  }, [joinAgoraChannel, numericUid, userID, userName]);
+  }, [joinAgoraChannel, numericUid]);
 
   const startViewerSession = useCallback(
-    async (streamKey: string, preferredChannel?: string) => {
+    async (
+      streamKey: string,
+      preferredChannel?: string,
+      knownHostUid?: number,
+    ) => {
       try {
         setError(null);
         setLoading(true);
+        if (leavePromiseRef.current) {
+          await leavePromiseRef.current.catch(() => {});
+          leavePromiseRef.current = null;
+        }
         const chName =
           preferredChannel ||
           (streamKey.startsWith('agora.')
@@ -776,6 +867,12 @@ const LiveStreamScreen = () => {
         const uid = Number(
           tokenRes?.data?.uid ?? tokenRes?.data?.data?.uid ?? numericUid,
         );
+        const hostUid = Number(
+          tokenRes?.data?.host_uid ??
+            tokenRes?.data?.data?.host_uid ??
+            knownHostUid ??
+            0,
+        );
         if (!token) {
           throw new Error('Could not get audience token for this stream');
         }
@@ -786,17 +883,39 @@ const LiveStreamScreen = () => {
             'Agora App ID on the server does not match this app. Update AGORA_APP_ID in the server .env.',
           );
         }
+        const audienceUid = uid || numericUid;
+        const resolvedHostUid = hostUid || knownHostUid || 0;
+        if (resolvedHostUid && audienceUid === resolvedHostUid) {
+          throw new Error(
+            'This device joined with the host account. Agora cannot show the host camera to the same uid — use another login, or update the server so audience tokens use a different uid.',
+          );
+        }
         setChannelName(chName);
         setHostStreamKey(streamKey.replace(/^agora\./, ''));
+        setEffectiveMode(prev => ({
+          isHost: false,
+          stream_key: streamKey,
+          streamerName: prev?.streamerName,
+          channel_name: chName,
+          hostUid: resolvedHostUid || prev?.hostUid,
+        }));
         console.log(
           '[LiveStream] audience joining',
           chName,
           'uid',
-          uid || numericUid,
+          audienceUid,
+          'hostUid',
+          resolvedHostUid || '(unknown)',
           'stream_key',
           streamKey,
         );
-        await joinAgoraChannel(token, chName, uid || numericUid, false);
+        await joinAgoraChannel(
+          token,
+          chName,
+          audienceUid,
+          false,
+          resolvedHostUid || undefined,
+        );
       } catch (err: any) {
         const msg =
           err?.response?.data?.message ||
@@ -930,10 +1049,12 @@ const LiveStreamScreen = () => {
         stream_key: pending.stream.stream_key,
         streamerName: pending.stream.user_name,
         channel_name: pending.stream.channel_name,
+        hostUid: pending.stream.user_id || undefined,
       });
       startViewerSession(
         pending.stream.stream_key,
         pending.stream.channel_name || `agora.${pending.stream.stream_key}`,
+        pending.stream.user_id || undefined,
       );
     };
     if (Platform.OS === 'android') {
@@ -1074,6 +1195,16 @@ const LiveStreamScreen = () => {
     loading && !previewStarted && !joined && !error;
   const showControls =
     (previewStarted || joined || (engineReady && effectiveIsHost)) && !error;
+  const remoteCanvasUid =
+    !effectiveIsHost && (joined || remoteUid != null)
+      ? remoteUid ?? effectiveMode?.hostUid ?? null
+      : null;
+  const showWaitingForHost =
+    !effectiveIsHost &&
+    joined &&
+    !remoteVideoStarted &&
+    !error &&
+    !showChoiceModal;
 
   return (
     <View style={styles.container}>
@@ -1085,26 +1216,26 @@ const LiveStreamScreen = () => {
             canvas={{uid: 0}}
             onLayout={onHostSurfaceLayout}
           />
-        ) : engineReady && remoteUid != null ? (
-          <RtcSurfaceView style={styles.video} canvas={{uid: remoteUid}} />
+        ) : remoteCanvasUid != null ? (
+          <RemoteVideoView
+            style={styles.video}
+            canvas={{uid: remoteCanvasUid}}
+          />
         ) : (
-          <View style={styles.waitingRemote}>
-            {showChoiceModal ? null : (
-              <>
-                <ActivityIndicator color={colors.white} />
-                <Text style={styles.waitingText}>
-                  {effectiveIsHost
-                    ? 'Starting camera…'
-                    : `Waiting for host${
-                        streamerName || effectiveMode?.streamerName
-                          ? ` (${streamerName || effectiveMode?.streamerName})`
-                          : ''
-                      }…`}
-                </Text>
-              </>
-            )}
-          </View>
+          <View style={styles.video} />
         )}
+        {showWaitingForHost ? (
+          <View style={styles.waitingOverlay} pointerEvents="none">
+            <ActivityIndicator color={colors.white} />
+            <Text style={styles.waitingText}>
+              {`Waiting for host${
+                streamerName || effectiveMode?.streamerName
+                  ? ` (${streamerName || effectiveMode?.streamerName})`
+                  : ''
+              }…`}
+            </Text>
+          </View>
+        ) : null}
       </View>
 
       {showBlockingLoader ? (
@@ -1285,11 +1416,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: vw * 8,
   },
-  waitingRemote: {
-    flex: 1,
+  waitingOverlay: {
+    ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: vw * 8,
+    backgroundColor: 'rgba(0,0,0,0.35)',
   },
   waitingText: {
     color: colors.white,

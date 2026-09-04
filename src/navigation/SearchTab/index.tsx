@@ -21,6 +21,32 @@ import {useTranslation} from 'react-i18next';
 import {SearchResultsList, SearchResult} from '../../components/SearchResults';
 import searchAPI from '../../api/search';
 
+const applySearchSoftInputMode = () => {
+  if (Platform.OS !== 'android') {
+    return;
+  }
+  try {
+    // Top search field never needs resize. adjustResize + tab/list layout
+    // changes causes Android to blur/refocus the input in a loop.
+    KeyboardController.setInputMode(
+      AndroidSoftInputModes.SOFT_INPUT_ADJUST_PAN,
+    );
+  } catch (e) {
+    console.warn('[Search] setInputMode failed', e);
+  }
+};
+
+const restoreDefaultSoftInputMode = () => {
+  if (Platform.OS !== 'android') {
+    return;
+  }
+  try {
+    KeyboardController.setDefaultMode();
+  } catch {
+    // ignore
+  }
+};
+
 const extractUsersPage = (response: any) => {
   const body = response?.data ?? {};
   const pageData = body?.data ?? body ?? {};
@@ -43,31 +69,17 @@ const SearchTab = () => {
   const [hasSearched, setHasSearched] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
+  const hasSearchText = searchText.length > 0;
 
   const {t} = useTranslation();
   const navigation = useNavigation();
 
-  // Search field sits at the top. adjustResize + hiding the tab bar makes the
-  // field bounce. Pan the window instead and keep the tab bar mounted.
+  // Search field sits at the top. Pan (do not resize) so Android does not
+  // blur/refocus the input when the window or tab bar layout changes.
   useFocusEffect(
     useCallback(() => {
-      if (Platform.OS !== 'android') {
-        return;
-      }
-      try {
-        KeyboardController.setInputMode(
-          AndroidSoftInputModes.SOFT_INPUT_ADJUST_NOTHING,
-        );
-      } catch (e) {
-        console.warn('[Search] setInputMode failed', e);
-      }
-      return () => {
-        try {
-          KeyboardController.setDefaultMode();
-        } catch {
-          // ignore
-        }
-      };
+      applySearchSoftInputMode();
+      return restoreDefaultSoftInputMode;
     }, []),
   );
 
@@ -176,14 +188,6 @@ const SearchTab = () => {
     </TouchableOpacity>
   );
 
-  const renderLoadingScreen = () => (
-    <View style={styles.loadingContainer}>
-      <ActivityIndicator size="large" color="#007AFF" />
-      <Text style={styles.loadingText}>Searching...</Text>
-      <Text style={styles.loadingSubtext}>Finding users</Text>
-    </View>
-  );
-
   const renderEmptyRecentSearches = () => (
     <View style={styles.emptyRecentContainer}>
       <Search size={48} color="#E0E0E0" />
@@ -198,7 +202,8 @@ const SearchTab = () => {
         <GlobalHeader showBack embedInSafeArea />
       </View>
 
-      <View style={styles.searchInputContainer}>
+      {/* collapsable=false: Android may drop focus when this row re-renders */}
+      <View style={styles.searchInputContainer} collapsable={false}>
         <Search style={styles.searchIcon} />
 
         <TextInput
@@ -206,16 +211,29 @@ const SearchTab = () => {
           placeholder={t('search')}
           value={searchText}
           onChangeText={handleSearchTextChange}
+          onFocus={applySearchSoftInputMode}
           placeholderTextColor="#888"
           autoCapitalize="none"
           autoCorrect={false}
+          blurOnSubmit={false}
+          returnKeyType="search"
         />
 
-        {searchText.length > 0 && (
-          <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
+        <TouchableOpacity
+          onPress={clearSearch}
+          style={styles.clearButton}
+          disabled={!hasSearchText}
+          hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
+          accessibilityRole="button"
+          accessibilityLabel="Clear search"
+          accessibilityElementsHidden={!hasSearchText}
+          importantForAccessibility={
+            hasSearchText ? 'yes' : 'no-hide-descendants'
+          }>
+          <View style={{opacity: hasSearchText ? 1 : 0}}>
             <X size={18} color="#888" />
-          </TouchableOpacity>
-        )}
+          </View>
+        </TouchableOpacity>
       </View>
 
       {/* Helper text */}
@@ -224,9 +242,9 @@ const SearchTab = () => {
       {/* Separator line */}
       <View style={styles.separator} />
 
-      {loading && !hasSearched ? (
-        renderLoadingScreen()
-      ) : hasSearched ? (
+      {/* Keep body structure stable while typing — swapping to a full-screen
+          loader unmounts lists and can bounce the Android keyboard. */}
+      {hasSearched ? (
         <SearchResultsList
           results={searchResults}
           loading={loading}
@@ -237,6 +255,11 @@ const SearchTab = () => {
         />
       ) : (
         <View style={styles.recentSearchesContainer}>
+          {loading ? (
+            <View style={styles.inlineLoading}>
+              <ActivityIndicator size="small" color="#007AFF" />
+            </View>
+          ) : null}
           {recentSearches.length > 0 ? (
             <>
               <Text style={styles.recentSearchesTitle}>
@@ -247,6 +270,8 @@ const SearchTab = () => {
                 renderItem={renderRecentSearchItem}
                 keyExtractor={item => item.id}
                 style={styles.recentSearchesList}
+                keyboardShouldPersistTaps="always"
+                keyboardDismissMode="none"
               />
             </>
           ) : (
@@ -287,6 +312,14 @@ const styles = StyleSheet.create({
   clearButton: {
     padding: 4,
     marginLeft: 8,
+    width: 26,
+    height: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  inlineLoading: {
+    alignItems: 'center',
+    paddingVertical: 12,
   },
   helperText: {
     fontSize: 14,
@@ -329,25 +362,6 @@ const styles = StyleSheet.create({
   recentSearchText: {
     fontSize: 15,
     color: '#333',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 60,
-  },
-  loadingText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  loadingSubtext: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
-    paddingHorizontal: 40,
   },
   emptyRecentContainer: {
     flex: 1,

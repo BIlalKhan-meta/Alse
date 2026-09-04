@@ -64,13 +64,18 @@ const TabNavigation = () => {
         options={{
           tabBarLabel: 'Search',
           tabBarTestID: 'tab-search',
+          // Keep tab bar mounted on Android. Hiding it while adjustResize runs
+          // makes the search field/keyboard bounce in a loop.
           tabBarHideOnKeyboard: false,
+          tabBarVisibilityAnimationConfig: {
+            show: {animation: 'timing', config: {duration: 0}},
+            hide: {animation: 'timing', config: {duration: 0}},
+          },
           tabBarIcon: ({color}) => (
             <View style={styles.tabButton}>
               <Search color={color} size={22} />
             </View>
           ),
-          ...NavigationOptions,
         }}
       />
       <Tab.Screen
