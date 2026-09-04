@@ -174,7 +174,15 @@ export const renderSystemMessage: React.FC<SystemMessageProps> = props => (
   />
 );
 
-export function createRenderCustomView(navigation: any): React.FC<any> {
+export function createRenderCustomView(
+  navigation: any,
+  onOpenSharedPost?: (payload: {
+    postId?: number;
+    image?: string;
+    title?: string;
+    author?: string;
+  }) => void,
+): React.FC<any> {
   const ChatMessageCustomView = ({currentMessage}: any) => {
     const productPayload = parseProductShareMessage(currentMessage?.text);
     if (productPayload) {
@@ -196,12 +204,22 @@ export function createRenderCustomView(navigation: any): React.FC<any> {
         <ChatPostCard
           payload={postPayload}
           onPress={() => {
+            // Reels from Videos tab → Videos tab with bottom bar.
             if (postPayload.type === 'video_share' && postPayload.video_id) {
-              navigation?.navigate?.('Videos');
+              navigation?.navigate?.('TabNavigation', {
+                screen: 'Videos',
+                params: {videoId: postPayload.video_id},
+              });
               return;
             }
-            if (postPayload.post_id) {
-              // Profile/post detail is opened from feed; keep share visible in chat.
+            // Newsfeed posts → fullscreen media (same MediaModal as feed).
+            if (postPayload.post_id || postPayload.image) {
+              onOpenSharedPost?.({
+                postId: postPayload.post_id,
+                image: postPayload.image,
+                title: postPayload.title,
+                author: postPayload.author,
+              });
             }
           }}
         />

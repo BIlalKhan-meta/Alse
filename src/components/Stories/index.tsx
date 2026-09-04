@@ -384,8 +384,8 @@ const Stories = forwardRef<StoriesRef>((_, ref) => {
                       style={styles.addStoryAvatar}
                     />
                   </GradientBorderView>
+                  <Text style={styles.storyName}>{t('stories.addStory')}</Text>
                 </View>
-                <Text style={styles.storyName}>{t('stories.addStory')}</Text>
               </DropdownMenu.Trigger>
               <DropdownMenu.Content>
                 <DropdownMenu.Item

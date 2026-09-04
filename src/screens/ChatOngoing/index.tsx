@@ -18,6 +18,7 @@ import {
   Pressable,
   SafeAreaView,
   StatusBar,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
@@ -41,6 +42,7 @@ import {useSelector} from 'react-redux';
 import {
   createMessage,
   getChat,
+  getPost,
   uploadImages,
   uploadVideo,
 } from '../../api/home';
@@ -65,8 +67,10 @@ import Video from 'react-native-video';
 import {
   createFile,
   createVideoFile,
+  changeUrlForData,
   getAbsoluteAvatarUrl,
   getMessage,
+  getNewsfeedMediaList,
   Toast,
 } from '../../utils/helpers';
 import {
@@ -160,6 +164,7 @@ const ChatOngoing: React.FC<Props> = props => {
   const [fullscreenVideoUri, setFullscreenVideoUri] = useState<string | null>(
     null,
   );
+  const [isOpeningSharedPost, setIsOpeningSharedPost] = useState(false);
   const [isMediaUploading, setIsMediaUploading] = useState(false);
   const [mediaUploadLabel, setMediaUploadLabel] = useState('Sending media...');
   /** Optimistic message ids not yet confirmed by the API — survive the 3s poll. */
@@ -174,9 +179,82 @@ const ChatOngoing: React.FC<Props> = props => {
     () => createRenderMessageVideo(uri => setFullscreenVideoUri(uri)),
     [],
   );
+
+  const openSharedPost = useCallback(
+    async (payload: {
+      postId?: number;
+      image?: string;
+      title?: string;
+      author?: string;
+    }) => {
+      const resolveUri = (url: string) =>
+        getAbsoluteAvatarUrl(url) || changeUrlForData(url) || url;
+
+      const isVideoUrl = (url: string, typeHint?: string) =>
+        String(typeHint || '')
+          .toLowerCase()
+          .includes('video') ||
+        /\.(mp4|mov|webm|m4v)(\?|#|$)/i.test(String(url));
+
+      // Fast path: share card already shows payload.image — open that URI directly
+      // instead of waiting on getPost (old shares also stored user_id as post_id).
+      if (payload.image && !isVideoUrl(payload.image)) {
+        setFullscreenImageUri(resolveUri(payload.image));
+        return;
+      }
+
+      setIsOpeningSharedPost(true);
+      try {
+        if (payload.postId) {
+          const res: any = await getPost(payload.postId);
+          const post = res?.data?.data;
+          const mediaList = getNewsfeedMediaList(post?.media);
+          const primary =
+            mediaList[0] ||
+            (Array.isArray(post?.media) ? post.media[0] : null);
+          const path =
+            primary?.path ||
+            primary?.full_path ||
+            primary?.medium_path ||
+            payload.image;
+          if (path) {
+            const uri = resolveUri(path);
+            if (isVideoUrl(path, primary?.type)) {
+              setFullscreenVideoUri(uri);
+            } else {
+              setFullscreenImageUri(uri);
+            }
+            return;
+          }
+        }
+
+        if (payload.image) {
+          const uri = resolveUri(payload.image);
+          if (isVideoUrl(payload.image)) {
+            setFullscreenVideoUri(uri);
+          } else {
+            setFullscreenImageUri(uri);
+          }
+          return;
+        }
+
+        Toast.error('Could not open this post');
+      } catch (err: any) {
+        if (payload.image) {
+          setFullscreenImageUri(resolveUri(payload.image));
+          return;
+        }
+        Toast.error(getMessage(err) || 'Could not open this post');
+      } finally {
+        setIsOpeningSharedPost(false);
+      }
+    },
+    [],
+  );
+
   const renderProductCustomView = useMemo(
-    () => createRenderCustomView(navigation),
-    [navigation],
+    () => createRenderCustomView(navigation, openSharedPost),
+    [navigation, openSharedPost],
   );
 
   const toggleOption = () => setOptionVisible(!optionVisibal);
@@ -1049,6 +1127,19 @@ const ChatOngoing: React.FC<Props> = props => {
       </Modal>
 
       <Modal
+        visible={isOpeningSharedPost}
+        transparent
+        animationType="fade"
+        statusBarTranslucent>
+        <View style={styles.uploadLoaderOverlay} pointerEvents="box-none">
+          <View style={styles.uploadLoaderCard}>
+            <ActivityIndicator size="large" color={colors.themeColor} />
+            <Text style={styles.uploadLoaderLabel}>Opening post...</Text>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
         visible={!!fullscreenVideoUri}
         transparent
         animationType="fade"
@@ -1087,13 +1178,18 @@ const ChatOngoing: React.FC<Props> = props => {
         <View style={styles.fullscreenModalRoot}>
           <StatusBar barStyle="light-content" backgroundColor="#000" />
           <Pressable
-            style={{flex: 1, justifyContent: 'center'}}
+            style={StyleSheet.absoluteFill}
             onPress={() => setFullscreenImageUri(null)}>
             {fullscreenImageUri ? (
               <Image
+                key={fullscreenImageUri}
                 source={{uri: fullscreenImageUri}}
                 style={styles.fullscreenImage}
                 resizeMode="contain"
+                onError={() => {
+                  Toast.error('Failed to load image');
+                  setFullscreenImageUri(null);
+                }}
               />
             ) : null}
           </Pressable>

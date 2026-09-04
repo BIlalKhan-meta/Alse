@@ -15,7 +15,7 @@ import Video from 'react-native-video';
 import {X} from 'lucide-react-native';
 import InterRegular from '../Text/InterRegular';
 import {vh, vw} from '../../constant';
-import {changeUrlForData} from '../../utils/helpers';
+import {changeUrlForData, getAbsoluteAvatarUrl} from '../../utils/helpers';
 
 interface MediaModalProps {
   visible: boolean;
@@ -41,10 +41,12 @@ const MediaModal: React.FC<MediaModalProps> = ({
   const [videoError, setVideoError] = useState(false);
   const videoRef = useRef<typeof Video | any>(null);
 
-  const resolvedUrl = useMemo(
-    () => (mediaUrl ? changeUrlForData(mediaUrl) : ''),
-    [mediaUrl],
-  );
+  const resolvedUrl = useMemo(() => {
+    if (!mediaUrl) {
+      return '';
+    }
+    return getAbsoluteAvatarUrl(mediaUrl) || changeUrlForData(mediaUrl) || mediaUrl;
+  }, [mediaUrl]);
 
   useEffect(() => {
     if (visible) {
@@ -148,12 +150,12 @@ const MediaModal: React.FC<MediaModalProps> = ({
       <View style={styles.container}>
         <View style={styles.header}>
           <View style={styles.headerInfo}>
-            {userName && (
+            {userName ? (
               <InterRegular style={styles.userName}>{userName}</InterRegular>
-            )}
-            {postTime && (
+            ) : null}
+            {postTime ? (
               <InterRegular style={styles.postTime}>{postTime}</InterRegular>
-            )}
+            ) : null}
           </View>
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>
             <X size={24} color="#fff" />

@@ -538,18 +538,18 @@ const PostComponent: React.FC<PostProps> = ({
         </View>
 
         {/* Post text content */}
-        {(postText || sharedFromName) && (
+        {postText || sharedFromName ? (
           <View style={styles.postContent}>
             {postText ? (
               <Text
                 style={styles.postText}
                 numberOfLines={showFullText ? undefined : 2}>
                 {postText}
-                {postText.length > maxTextLength && !showFullText && (
+                {postText.length > maxTextLength && !showFullText ? (
                   <Text style={styles.readMoreText} onPress={handleReadMoreToggle}>
                     ...Read More
                   </Text>
-                )}
+                ) : null}
               </Text>
             ) : null}
             {sharedFromName ? (
@@ -558,8 +558,7 @@ const PostComponent: React.FC<PostProps> = ({
               </Text>
             ) : null}
           </View>
-        )}
-
+        ) : null}
         {/* Post media section */}
         {resolvedMediaList.length > 0 ? (
           <View
@@ -680,10 +679,14 @@ const PostComponent: React.FC<PostProps> = ({
             const absoluteImage = postImage
               ? getAbsoluteAvatarUrl(postImage) || postImage
               : undefined;
+            const postId =
+              typeof mediaId === 'number'
+                ? mediaId
+                : Number(mediaId) || undefined;
             const message = serializePostShare({
               v: 1,
               type: mediaType === 'video' ? 'video_share' : 'post_share',
-              post_id: typeof id === 'number' ? id : Number(id) || undefined,
+              post_id: postId,
               title: name,
               description: postText,
               image: absoluteImage,

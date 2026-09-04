@@ -352,11 +352,11 @@ const styles = StyleSheet.create({
   },
   fullscreenImage: {
     width: '100%',
-    flex: 1,
+    height: '100%',
   },
   fullscreenVideo: {
     width: '100%',
-    flex: 1,
+    height: '100%',
     backgroundColor: '#000',
   },
   fullscreenCloseBtn: {

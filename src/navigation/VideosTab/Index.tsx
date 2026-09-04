@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -17,14 +17,14 @@ import axiosInstance from '../../api';
 import endpoints from '../../api/endpoints';
 import {fontSizes} from '../../constant';
 import {colors} from '../../utils/theme';
-import {useIsFocused, useNavigation} from '@react-navigation/native';
+import {useIsFocused, useNavigation, useRoute} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
 import {selectUserProfile} from '../../store/slices/authSlice';
 import store from '../../store';
 import {BASE_URL} from '../../utils/baseurl';
 import ShareModal from '../../components/ShareModal';
 import CommentsModal from '../../components/CommentsModal';
-import {createMessage} from '../../api/home';
+import {createMessage, getVideoById} from '../../api/home';
 import {saveItem, removeSavedItem} from '../../api/menu';
 import {
   serializePostShare,
@@ -57,6 +57,32 @@ interface VideoItem {
   likes: number;
   comments: number;
   privacy?: string;
+}
+
+function transformApiVideo(video: any): VideoItem {
+  const videoUrl =
+    video.video ||
+    video.video_url ||
+    video.url ||
+    video.media_url ||
+    video.file;
+  const finalVideoUrl =
+    videoUrl ||
+    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
+
+  return {
+    ...video,
+    id: video.id,
+    video: finalVideoUrl,
+    isLiked: video.is_liked ?? false,
+    likes: video.likes ?? 0,
+    comments: video.comments_count ?? video.comments ?? 0,
+    user: video.user || {
+      id: video.user_id,
+      name: video.user_name || `User ${video.user_id}`,
+      avatar: video.user_avatar || null,
+    },
+  } as VideoItem;
 }
 
 function processVideoUrl(url: string) {
@@ -294,6 +320,12 @@ const VideosTab = () => {
   const [activeIndex, setActiveIndex] = useState(0);
   const {t} = useTranslation();
   const isFocused = useIsFocused();
+  const route = useRoute<any>();
+  const navigation = useNavigation<any>();
+  const pagerRef = useRef<PagerView>(null);
+  const focusedVideoIdRef = useRef<number | null>(null);
+  const reelsRef = useRef<VideoItem[]>([]);
+  reelsRef.current = reels;
   const [shareVideoId, setShareVideoId] = useState<number | null>(null);
   const [savedIds, setSavedIds] = useState<Set<number>>(new Set());
   const {
@@ -316,6 +348,60 @@ const VideosTab = () => {
   useEffect(() => {
     fetchVideos();
   }, []);
+
+  // Open a specific reel when navigated from chat (with bottom tab bar).
+  useEffect(() => {
+    const videoId = Number(route.params?.videoId);
+    if (!Number.isFinite(videoId) || videoId <= 0 || loading) {
+      return;
+    }
+    if (focusedVideoIdRef.current === videoId) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const focusVideo = async () => {
+      const existingIndex = reelsRef.current.findIndex(
+        r => Number(r.id) === videoId,
+      );
+      if (existingIndex >= 0) {
+        focusedVideoIdRef.current = videoId;
+        setActiveIndex(existingIndex);
+        setTimeout(() => pagerRef.current?.setPage(existingIndex), 50);
+        navigation.setParams?.({videoId: undefined});
+        return;
+      }
+
+      try {
+        const res = await getVideoById(videoId);
+        if (cancelled) {
+          return;
+        }
+        const video = res?.data?.data ?? res?.data;
+        if (!video?.id) {
+          return;
+        }
+        const item = transformApiVideo(video);
+        focusedVideoIdRef.current = videoId;
+        setReels(prev => [
+          item,
+          ...prev.filter(r => Number(r.id) !== videoId),
+        ]);
+        setActiveIndex(0);
+        setTimeout(() => pagerRef.current?.setPage(0), 50);
+        navigation.setParams?.({videoId: undefined});
+      } catch (error) {
+        console.warn('Failed to open shared video', error);
+        Toast.error('Could not open this video');
+      }
+    };
+
+    void focusVideo();
+    return () => {
+      cancelled = true;
+    };
+  }, [route.params?.videoId, loading, navigation]);
 
   const fetchVideos = async (page = 1, append = false) => {
     try {
@@ -348,31 +434,9 @@ const VideosTab = () => {
       const videoData = apiData.data || [];
 
       if (videoData.length > 0) {
-        const transformedReels = videoData.map((video: any) => {
-          const videoUrl =
-            video.video ||
-            video.video_url ||
-            video.url ||
-            video.media_url ||
-            video.file;
-          const finalVideoUrl =
-            videoUrl ||
-            'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
-
-          return {
-            ...video,
-            id: video.id,
-            video: finalVideoUrl,
-            isLiked: video.is_liked ?? false,
-            likes: video.likes ?? 0,
-            comments: video.comments_count ?? video.comments ?? 0,
-            user: video.user || {
-              id: video.user_id,
-              name: video.user_name || `User ${video.user_id}`,
-              avatar: video.user_avatar || null,
-            },
-          } as VideoItem;
-        });
+        const transformedReels = videoData.map((video: any) =>
+          transformApiVideo(video),
+        );
 
         if (append) {
           setReels(prevReels => [...prevReels, ...transformedReels]);
@@ -564,6 +628,7 @@ const VideosTab = () => {
   return (
     <View style={styles.container}>
       <PagerView
+        ref={pagerRef}
         style={styles.pager}
         initialPage={0}
         orientation="vertical"

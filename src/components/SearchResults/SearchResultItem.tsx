@@ -85,29 +85,27 @@ const SearchResultItem: React.FC<SearchResultItemProps> = ({
             {title}
           </Text>
 
-          {subtitle && (
+          {subtitle ? (
             <Text style={styles.subtitle} numberOfLines={1}>
               {subtitle}
             </Text>
-          )}
+          ) : null}
 
-          {description && (
+          {item.description ? (
             <Text style={styles.description} numberOfLines={2}>
-              {description}
+              {item.description}
             </Text>
-          )}
-
-          {(price || status) && (
+          ) : null}
+          {price || status ? (
             <View style={styles.footer}>
-              {price && <Text style={styles.price}>{formatPrice(price)}</Text>}
-              {status && (
+              {price ? <Text style={styles.price}>{formatPrice(price)}</Text> : null}
+              {status ? (
                 <View style={[styles.statusBadge, getStatusStyle(status)]}>
                   <Text style={styles.statusText}>{status}</Text>
                 </View>
-              )}
+              ) : null}
             </View>
-          )}
-        </View>
+          ) : null}        </View>
       </View>
     </TouchableOpacity>
   );

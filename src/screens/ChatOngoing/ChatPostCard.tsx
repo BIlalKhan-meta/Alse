@@ -1,6 +1,7 @@
 import React from 'react';
 import {Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import type {PostSharePayload} from '../../utils/postSharePayload';
+import {getAbsoluteAvatarUrl} from '../../utils/helpers';
 
 type Props = {
   payload: PostSharePayload;
@@ -8,14 +9,18 @@ type Props = {
 };
 
 const ChatPostCard: React.FC<Props> = ({payload, onPress}) => {
+  const imageUri = payload.image
+    ? getAbsoluteAvatarUrl(payload.image) || payload.image
+    : null;
+
   return (
     <TouchableOpacity
       style={styles.card}
       activeOpacity={0.85}
       onPress={onPress}
       disabled={!onPress}>
-      {payload.image ? (
-        <Image source={{uri: payload.image}} style={styles.image} />
+      {imageUri ? (
+        <Image source={{uri: imageUri}} style={styles.image} />
       ) : (
         <View style={[styles.image, styles.placeholder]} />
       )}

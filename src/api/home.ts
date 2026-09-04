@@ -28,6 +28,14 @@ export const getPostComment = (id: number, page: number = 1) => {
   return axiosInstance.get(`/post/${id}/comments`, {params: {page}});
 };
 
+export const getPost = (id: number) => {
+  return axiosInstance.get(`/post/${id}`);
+};
+
+export const getVideoById = (id: number) => {
+  return axiosInstance.get(`/video/${id}`);
+};
+
 export const postComment = (formData: FormData, id: number) => {
   return uploadWithFetch(`/post/${id}/comment`, formData);
 };
