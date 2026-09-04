@@ -7,14 +7,19 @@ import {
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
+import {
+  AndroidSoftInputModes,
+  KeyboardController,
+} from 'react-native-keyboard-controller';
 import {Clock, Search, X} from 'lucide-react-native';
 import GlobalHeader from '../../components/GlobalHeader';
 import {useTranslation} from 'react-i18next';
 import {SearchResultsList, SearchResult} from '../../components/SearchResults';
 import searchAPI from '../../api/search';
-import {useNavigation} from '@react-navigation/native';
 
 const extractUsersPage = (response: any) => {
   const body = response?.data ?? {};
@@ -41,6 +46,30 @@ const SearchTab = () => {
 
   const {t} = useTranslation();
   const navigation = useNavigation();
+
+  // Search field sits at the top. adjustResize + hiding the tab bar makes the
+  // field bounce. Pan the window instead and keep the tab bar mounted.
+  useFocusEffect(
+    useCallback(() => {
+      if (Platform.OS !== 'android') {
+        return;
+      }
+      try {
+        KeyboardController.setInputMode(
+          AndroidSoftInputModes.SOFT_INPUT_ADJUST_NOTHING,
+        );
+      } catch (e) {
+        console.warn('[Search] setInputMode failed', e);
+      }
+      return () => {
+        try {
+          KeyboardController.setDefaultMode();
+        } catch {
+          // ignore
+        }
+      };
+    }, []),
+  );
 
   // Debounced search function - focus only on users
   const performSearch = useCallback(async (query: string, page: number = 1) => {

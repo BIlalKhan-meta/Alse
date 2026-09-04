@@ -17,8 +17,8 @@ import {
   registerPushNotificationHandlers,
   requestPushPermissionAndToken,
 } from './src/services/pushNotificationService';
-import MainNavigation from './src/navigation';
 import IncomingCallHandler from './src/components/IncomingCallHandler';
+import MainNavigation from './src/navigation';
 import PushTokenSync from './src/components/PushTokenSync';
 import {navigationRef} from './src/utils/navigationRef';
 import {
@@ -41,6 +41,17 @@ const theme = {
   },
 };
 
+// Call once at import — never inside render. configureProps JNI aborts on some
+// MediaTek/TECNO devices when this runs on every App re-render.
+try {
+  configureReanimatedLogger({
+    level: ReanimatedLogLevel.warn,
+    strict: false,
+  });
+} catch (e) {
+  console.warn('[Reanimated] configureReanimatedLogger failed:', e);
+}
+
 function hideBootSplash() {
   // Prefer NativeModules over react-native-bootsplash's TurboModule import:
   // getEnforcing("RNBootSplash") can abort JS startup (white "Downloading 100%..." screen).
@@ -60,11 +71,6 @@ function hideBootSplash() {
 }
 
 function App(): React.JSX.Element {
-  configureReanimatedLogger({
-    level: ReanimatedLogLevel.warn,
-    strict: false,
-  });
-
   useEffect(() => {
     // Fallback if PersistGate onBeforeLift never runs (e.g. rehydrate hang).
     hideBootSplash();

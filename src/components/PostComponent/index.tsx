@@ -420,6 +420,8 @@ const PostComponent: React.FC<PostProps> = ({
                   ]}
                   resizeMode="cover"
                   repeat
+                  controls={false}
+                  hideShutterView
                   paused={!shouldPlayVideo}
                   muted={!!muteInlineVideo}
                   playInBackground={false}

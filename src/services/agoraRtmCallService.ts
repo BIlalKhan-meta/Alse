@@ -7,13 +7,12 @@
  *
  * Uses RtmEngine from agora-react-native-rtm (call invitations are on the
  * engine, not a separate "RtmCallManager" in this SDK).
+ *
+ * IMPORTANT: Do not top-level import agora-react-native-rtm — constructing
+ * NativeEventEmitter before native methods exist floods Metro with warnings
+ * and can contribute to flaky native crashes. Lazy-require only in init/release.
  */
 
-import RtmEngine, {
-  type LocalInvitation,
-  type RemoteInvitation,
-  RtmConnectionState,
-} from 'agora-react-native-rtm';
 import {AGORA_APP_ID, AGORA_SIGNALING_TOKEN} from '../config/agora';
 
 /** Agora RTM/Signaling requires channelId to be ≤64 bytes. Use short channel names. */
@@ -21,14 +20,61 @@ const RTM_CHANNEL_MAX_BYTES = 64;
 
 const TAG = '[AgoraRtmCallService]';
 
-/** Connection state names for logging */
-const CONN_STATE_NAMES: Record<number, string> = {
-  [RtmConnectionState.DISCONNECTED]: 'DISCONNECTED',
-  [RtmConnectionState.CONNECTING]: 'CONNECTING',
-  [RtmConnectionState.CONNECTED]: 'CONNECTED',
-  [RtmConnectionState.RECONNECTING]: 'RECONNECTING',
-  [RtmConnectionState.ABORTED]: 'ABORTED',
+/** Opaque invitation objects from the RTM SDK (avoid eager native import). */
+type LocalInvitation = any;
+type RemoteInvitation = any;
+type RtmEngine = {
+  createInstance: (appId: string) => Promise<void>;
+  loginV2: (userId: string, token?: string) => Promise<void>;
+  addListener: (
+    event: string,
+    cb: (...args: any[]) => void,
+  ) => {remove: () => void};
+  acceptRemoteInvitationV2: (inv: RemoteInvitation) => Promise<void>;
+  refuseRemoteInvitationV2: (inv: RemoteInvitation) => Promise<void>;
+  createLocalInvitation: (
+    calleeId: string,
+    content?: string,
+    channelId?: string,
+  ) => Promise<LocalInvitation>;
+  sendLocalInvitationV2: (inv: LocalInvitation) => Promise<void>;
+  cancelLocalInvitationV2: (inv: LocalInvitation) => Promise<void>;
+  release: () => Promise<void>;
 };
+
+type RtmModule = {
+  default: new () => RtmEngine;
+  RtmConnectionState: {
+    DISCONNECTED: number;
+    CONNECTING: number;
+    CONNECTED: number;
+    RECONNECTING: number;
+    ABORTED: number;
+  };
+};
+
+let rtmModule: RtmModule | null = null;
+
+function loadRtmModule(): RtmModule {
+  if (!rtmModule) {
+    // Lazy require — only when starting/ending call signaling.
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    rtmModule = require('agora-react-native-rtm') as RtmModule;
+  }
+  return rtmModule;
+}
+
+function connectionStateName(state: number): string {
+  const S = loadRtmModule().RtmConnectionState;
+  const names: Record<number, string> = {
+    [S.DISCONNECTED]: 'DISCONNECTED',
+    [S.CONNECTING]: 'CONNECTING',
+    [S.CONNECTED]: 'CONNECTED',
+    [S.RECONNECTING]: 'RECONNECTING',
+    [S.ABORTED]: 'ABORTED',
+  };
+  return names[state] ?? `UNKNOWN(${state})`;
+}
 
 let rtmEngine: RtmEngine | null = null;
 /**
@@ -39,6 +85,40 @@ let nativeLock: Promise<void> = Promise.resolve();
 let initInFlight: Promise<void> | null = null;
 let releaseInFlight: Promise<void> | null = null;
 let isInitialized = false;
+/**
+ * Bumped on every release so late native callbacks (e.g. after Metro reload /
+ * bridge destroy) no-op instead of emitting into a dead JS bridge.
+ */
+let sessionGeneration = 0;
+
+const g = globalThis as typeof globalThis & {
+  __ALSE_AGORA_RTM_CREATED__?: boolean;
+  __ALSE_AGORA_RTM_ENGINE__?: RtmEngine | null;
+};
+
+function nativeRtmAlreadyCreated(): boolean {
+  return !!g.__ALSE_AGORA_RTM_CREATED__;
+}
+
+function markNativeRtmCreated(engine: RtmEngine): void {
+  g.__ALSE_AGORA_RTM_CREATED__ = true;
+  g.__ALSE_AGORA_RTM_ENGINE__ = engine;
+}
+
+function clearNativeRtmCreated(): void {
+  g.__ALSE_AGORA_RTM_CREATED__ = false;
+  g.__ALSE_AGORA_RTM_ENGINE__ = null;
+}
+
+function isAlreadyCreatedError(err: unknown): boolean {
+  const msg = String((err as {message?: string})?.message ?? err).toLowerCase();
+  return (
+    msg.includes('already') ||
+    msg.includes('exist') ||
+    msg.includes('created') ||
+    msg.includes('duplicate')
+  );
+}
 
 function runExclusive<T>(fn: () => Promise<T>): Promise<T> {
   const next = nativeLock.then(fn, fn);
@@ -47,6 +127,18 @@ function runExclusive<T>(fn: () => Promise<T>): Promise<T> {
     () => undefined,
   );
   return next;
+}
+
+/** Guard for native listener callbacks — skip if this session was released. */
+function ifLiveSession(gen: number, fn: () => void): void {
+  if (!isInitialized || gen !== sessionGeneration) {
+    return;
+  }
+  try {
+    fn();
+  } catch (err) {
+    console.warn(TAG, 'listener callback error (ignored):', err);
+  }
 }
 let currentRemoteInvitation: RemoteInvitation | null = null;
 /** Last sent local invitation (caller side) – used to cancel when receiver doesn't pick up */
@@ -66,11 +158,17 @@ const CALL_HANDLED_COOLDOWN_MS = 5000;
 const subscriptions: Array<{ remove: () => void }> = [];
 
 /**
- * Get or create the RtmEngine instance.
+ * Get or create the RtmEngine instance (loads native module on first use).
  */
 function getEngine(): RtmEngine {
+  if (g.__ALSE_AGORA_RTM_ENGINE__) {
+    rtmEngine = g.__ALSE_AGORA_RTM_ENGINE__;
+    return rtmEngine;
+  }
   if (!rtmEngine) {
-    rtmEngine = new RtmEngine();
+    const RtmEngineCtor = loadRtmModule().default;
+    rtmEngine = new RtmEngineCtor();
+    g.__ALSE_AGORA_RTM_ENGINE__ = rtmEngine;
   }
   return rtmEngine;
 }
@@ -120,64 +218,106 @@ export async function initAgoraRtm(
     let engine: RtmEngine | null = null;
     try {
       engine = getEngine();
-      await engine.createInstance(AGORA_APP_ID);
-      console.log(TAG, 'createInstance ok');
+
+      if (nativeRtmAlreadyCreated()) {
+        console.log(TAG, 'native RTM already created this process, skip createInstance');
+      } else {
+        try {
+          await engine.createInstance(AGORA_APP_ID);
+          console.log(TAG, 'createInstance ok');
+        } catch (createErr) {
+          if (!isAlreadyCreatedError(createErr)) {
+            throw createErr;
+          }
+          console.warn(TAG, 'createInstance already ran this process, reusing');
+        }
+        markNativeRtmCreated(engine);
+      }
 
       // RTM SDK requires a token field; use empty string if not using app certificate
       const rtmToken = (token ?? AGORA_SIGNALING_TOKEN ?? '').trim();
-      await engine.loginV2(userId, rtmToken || undefined);
-      console.log(TAG, 'loginV2 ok for user:', userId);
+      try {
+        await engine.loginV2(userId, rtmToken || undefined);
+        console.log(TAG, 'loginV2 ok for user:', userId);
+      } catch (loginErr) {
+        const loginMsg = String(
+          (loginErr as {message?: string})?.message ?? loginErr,
+        ).toLowerCase();
+        if (
+          isAlreadyCreatedError(loginErr) ||
+          loginMsg.includes('logged in') ||
+          loginMsg.includes('already login')
+        ) {
+          console.warn(TAG, 'login already done this process, continuing');
+        } else {
+          throw loginErr;
+        }
+      }
 
+      const gen = sessionGeneration;
       isInitialized = true;
+
+      if (subscriptions.length > 0) {
+        console.log(TAG, 'RTM listeners already attached');
+        return;
+      }
 
       // Set up RTM call manager–style listeners (events are on RtmEngine in this SDK)
       const subReceived = engine.addListener(
         'RemoteInvitationReceived',
         (remoteInvitation: RemoteInvitation) => {
-          console.log(TAG, 'Incoming call from:', remoteInvitation.callerId);
-          currentRemoteInvitation = remoteInvitation;
-          if (onIncomingCallCallback) {
-            onIncomingCallCallback(remoteInvitation);
-          }
-        }
+          ifLiveSession(gen, () => {
+            console.log(TAG, 'Incoming call from:', remoteInvitation.callerId);
+            currentRemoteInvitation = remoteInvitation;
+            onIncomingCallCallback?.(remoteInvitation);
+          });
+        },
       );
       subscriptions.push(subReceived);
 
       const subAccepted = engine.addListener(
         'RemoteInvitationAccepted',
         (_remoteInvitation: RemoteInvitation) => {
-          console.log(TAG, 'Callee accepted the call');
-          currentRemoteInvitation = null;
-        }
+          ifLiveSession(gen, () => {
+            console.log(TAG, 'Callee accepted the call');
+            currentRemoteInvitation = null;
+          });
+        },
       );
       subscriptions.push(subAccepted);
 
       const subRefused = engine.addListener(
         'RemoteInvitationRefused',
         (_remoteInvitation: RemoteInvitation) => {
-          console.log(TAG, 'Callee refused the call');
-          currentRemoteInvitation = null;
-        }
+          ifLiveSession(gen, () => {
+            console.log(TAG, 'Callee refused the call');
+            currentRemoteInvitation = null;
+          });
+        },
       );
       subscriptions.push(subRefused);
 
       const subCanceled = engine.addListener(
         'RemoteInvitationCanceled',
         (_remoteInvitation: RemoteInvitation) => {
-          console.log(TAG, 'Caller canceled the call');
-          currentRemoteInvitation = null;
-          onInvitationEndedCallback?.();
-        }
+          ifLiveSession(gen, () => {
+            console.log(TAG, 'Caller canceled the call');
+            currentRemoteInvitation = null;
+            onInvitationEndedCallback?.();
+          });
+        },
       );
       subscriptions.push(subCanceled);
 
       const subFailure = engine.addListener(
         'RemoteInvitationFailure',
         (_remoteInvitation: RemoteInvitation, reason: number) => {
-          console.log(TAG, 'Call invitation failed, reason:', reason);
-          currentRemoteInvitation = null;
-          onInvitationEndedCallback?.();
-        }
+          ifLiveSession(gen, () => {
+            console.log(TAG, 'Call invitation failed, reason:', reason);
+            currentRemoteInvitation = null;
+            onInvitationEndedCallback?.();
+          });
+        },
       );
       subscriptions.push(subFailure);
 
@@ -185,73 +325,85 @@ export async function initAgoraRtm(
       const subLocalAccepted = engine.addListener(
         'LocalInvitationAccepted',
         (_localInvitation: LocalInvitation) => {
-          console.log(TAG, 'Callee accepted – call connected');
-          localInvitationAccepted = true;
-          currentLocalInvitation = null;
-          console.log(TAG, 'Calling onLocalInvitationAcceptedCallback, callback exists:', !!onLocalInvitationAcceptedCallback);
-          if (onLocalInvitationAcceptedCallback) {
-            try {
-              onLocalInvitationAcceptedCallback();
-              console.log(TAG, '✅ onLocalInvitationAcceptedCallback executed successfully');
-            } catch (err) {
-              console.error(TAG, '❌ Error in onLocalInvitationAcceptedCallback:', err);
+          ifLiveSession(gen, () => {
+            console.log(TAG, 'Callee accepted – call connected');
+            localInvitationAccepted = true;
+            currentLocalInvitation = null;
+            if (onLocalInvitationAcceptedCallback) {
+              try {
+                onLocalInvitationAcceptedCallback();
+              } catch (err) {
+                console.error(TAG, 'onLocalInvitationAcceptedCallback error:', err);
+              }
             }
-          }
-        }
+          });
+        },
       );
       subscriptions.push(subLocalAccepted);
 
       const subLocalRefused = engine.addListener(
         'LocalInvitationRefused',
         (_localInvitation: LocalInvitation) => {
-          console.log(TAG, 'Callee refused the call');
-          currentLocalInvitation = null;
-          // Notify caller UI that callee declined
-          if (onLocalInvitationRefusedCallback) {
-            try {
-              onLocalInvitationRefusedCallback();
-              console.log(TAG, '✅ onLocalInvitationRefusedCallback executed successfully');
-            } catch (err) {
-              console.error(TAG, '❌ Error in onLocalInvitationRefusedCallback:', err);
+          ifLiveSession(gen, () => {
+            console.log(TAG, 'Callee refused the call');
+            currentLocalInvitation = null;
+            if (onLocalInvitationRefusedCallback) {
+              try {
+                onLocalInvitationRefusedCallback();
+              } catch (err) {
+                console.error(TAG, 'onLocalInvitationRefusedCallback error:', err);
+              }
             }
-          }
-        }
+          });
+        },
       );
       subscriptions.push(subLocalRefused);
 
       const subLocalCanceled = engine.addListener(
         'LocalInvitationCanceled',
         (_localInvitation: LocalInvitation) => {
-          currentLocalInvitation = null;
-        }
+          ifLiveSession(gen, () => {
+            currentLocalInvitation = null;
+          });
+        },
       );
       subscriptions.push(subLocalCanceled);
 
       const subLocalFailure = engine.addListener(
         'LocalInvitationFailure',
         (_localInvitation: LocalInvitation, _errorCode: number) => {
-          currentLocalInvitation = null;
-        }
+          ifLiveSession(gen, () => {
+            currentLocalInvitation = null;
+          });
+        },
       );
       subscriptions.push(subLocalFailure);
 
       // Log connection state so you can verify signaling is working
       const subConn = engine.addListener(
         'ConnectionStateChanged',
-        (state: RtmConnectionState, _reason: number) => {
-          const name = CONN_STATE_NAMES[state] ?? `UNKNOWN(${state})`;
-          console.log(TAG, 'Connection state:', name);
-          if (state === RtmConnectionState.CONNECTED) {
-            console.log(TAG, '✅ Agora RTM signaling is connected and ready');
-          }
-        }
+        (state: number, _reason: number) => {
+          ifLiveSession(gen, () => {
+            console.log(TAG, 'Connection state:', connectionStateName(state));
+            const connected = loadRtmModule().RtmConnectionState.CONNECTED;
+            if (state === connected) {
+              console.log(TAG, 'Agora RTM signaling is connected and ready');
+            }
+          });
+        },
       );
       subscriptions.push(subConn);
 
       console.log(TAG, 'RTM call listeners set up');
     } catch (err) {
       console.error(TAG, 'init error:', err);
+      if (nativeRtmAlreadyCreated()) {
+        isInitialized = true;
+        console.warn(TAG, 'keeping existing native RTM after init error');
+        return;
+      }
       // Tear down half-initialized native engine so the next init can retry safely.
+      sessionGeneration += 1;
       isInitialized = false;
       subscriptions.forEach(sub => {
         try {
@@ -264,6 +416,7 @@ export async function initAgoraRtm(
           await (engine ?? rtmEngine)!.release();
         } catch (_) {}
         rtmEngine = null;
+        clearNativeRtmCreated();
       }
       throw err;
     }
@@ -436,7 +589,7 @@ export async function cancelLocalInvitation(): Promise<void> {
 }
 
 /**
- * Release RTM and remove all listeners. Call on logout.
+ * Release RTM and remove all listeners. Call on logout / App unmount (Metro reload).
  * Safe to call from multiple places concurrently (e.g. Redux listener + useEffect cleanup).
  * Shares the same exclusive lock as init so Android JNI never sees overlapping create/release.
  */
@@ -445,26 +598,35 @@ export async function releaseAgoraRtm(): Promise<void> {
     return releaseInFlight;
   }
   releaseInFlight = runExclusive(async () => {
-    subscriptions.forEach(sub => {
+    // Invalidate first so any in-flight native → JS emits no-op.
+    sessionGeneration += 1;
+    isInitialized = false;
+    localInvitationAccepted = false;
+
+    const subs = subscriptions.splice(0, subscriptions.length);
+    for (const sub of subs) {
       try {
         sub.remove();
       } catch (_) {}
-    });
-    subscriptions.length = 0;
+    }
+
     currentRemoteInvitation = null;
     currentLocalInvitation = null;
     onIncomingCallCallback = null;
     onInvitationEndedCallback = null;
     onLocalInvitationAcceptedCallback = null;
     onLocalInvitationRefusedCallback = null;
-    isInitialized = false;
-    if (rtmEngine) {
+
+    const engine = rtmEngine;
+    rtmEngine = null;
+    clearNativeRtmCreated();
+    if (engine) {
       try {
-        await rtmEngine.release();
+        await engine.release();
       } catch (err) {
         console.warn(TAG, 'release error (ignored):', err);
-      } finally {
-        rtmEngine = null;
+      }
+      if (__DEV__) {
         console.log(TAG, 'released');
       }
     }

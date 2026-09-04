@@ -1,8 +1,8 @@
 /**
- * Livestream screen - Zego Cloud Live Streaming Kit.
- * Supports host (Go Live tab) and viewer (joining from Stories) flows.
+ * Livestream screen — Agora RTC Live Broadcasting.
+ * Host (Go Live tab) and viewer (join from list / Stories) flows.
  */
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -13,33 +13,53 @@ import {
   Modal,
   FlatList,
   Alert,
+  Platform,
+  InteractionManager,
 } from 'react-native';
-import {useNavigation, useRoute} from '@react-navigation/native';
-import {useSelector} from 'react-redux';
-import * as ZIM from 'zego-zim-react-native';
-import ZegoUIKitPrebuiltLiveStreaming, {
-  HOST_DEFAULT_CONFIG,
-  AUDIENCE_DEFAULT_CONFIG,
-} from '@zegocloud/zego-uikit-prebuilt-live-streaming-rn';
-import {selectUserProfile} from '../../../store/slices/authSlice';
 import {
-  ZEGO_LIVE_STREAM_APP_ID,
-  ZEGO_LIVE_STREAM_APP_SIGN,
-} from '../../../config/zego';
+  ClientRoleType,
+  RtcSurfaceView,
+  RtcTextureView,
+  RtcConnection,
+  IRtcEngine,
+  IRtcEngineEventHandler,
+} from 'react-native-agora';
+import {useFocusEffect, useNavigation, useRoute} from '@react-navigation/native';
+import {useSelector} from 'react-redux';
+import {
+  Mic,
+  MicOff,
+  SwitchCamera,
+  PhoneOff,
+} from 'lucide-react-native';
+import {selectUserProfile} from '../../../store/slices/authSlice';
+import {AGORA_APP_ID} from '../../../config/agora';
 import {
   saveActiveStream,
   removeActiveStream,
   getActiveStreamsFromFirestore,
-  getLiveIdByStreamKey,
 } from '../../../services/activeStreamService';
 import {
   EndLiveStream,
   GetLiveStreams,
+  GetLiveStreamToken,
   StartLiveStream,
 } from '../../../api/liveStream';
 import {colors} from '../../../utils/theme';
-import {ensureCameraPermission} from '../../../utils/helpers';
+import {
+  ensureCameraPermission,
+  hasCameraAndMicPermission,
+} from '../../../utils/helpers';
+import {
+  ensureLiveRtcInitialized,
+  leaveLiveChannel,
+  markLiveChannelJoined,
+  releaseLiveRtcEngine,
+} from '../../../services/agoraRtcLiveEngine';
 import {vh, vw} from '../../../constant';
+import KeepAwake from '@sayem314/react-native-keep-awake';
+
+const LocalVideoView = Platform.OS === 'android' ? RtcTextureView : RtcSurfaceView;
 
 const sanitizeLiveID = (value: string): string =>
   String(value || '').replace(/[^a-zA-Z0-9_]/g, '_') || `live_${Date.now()}`;
@@ -49,7 +69,10 @@ const sleep = (ms: number) =>
     setTimeout(resolve, ms);
   });
 
-const withTimeout = async <T,>(promise: Promise<T>, timeoutMs: number): Promise<T> => {
+const withTimeout = async <T,>(
+  promise: Promise<T>,
+  timeoutMs: number,
+): Promise<T> => {
   return Promise.race([
     promise,
     new Promise<T>((_, reject) =>
@@ -57,35 +80,6 @@ const withTimeout = async <T,>(promise: Promise<T>, timeoutMs: number): Promise<
     ),
   ]);
 };
-
-const EndLiveStreamButton = ({
-  onPress,
-}: {
-  onPress: () => void;
-}) => (
-  <TouchableOpacity
-    style={endButtonStyles.button}
-    onPress={onPress}
-    activeOpacity={0.8}>
-    <Text style={endButtonStyles.buttonText}>End</Text>
-  </TouchableOpacity>
-);
-
-const endButtonStyles = StyleSheet.create({
-  button: {
-    backgroundColor: '#E53935',
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: colors.white,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-});
 
 type RouteParams = {
   isHost?: boolean;
@@ -98,9 +92,14 @@ type RouteParams = {
 interface LiveStreamItem {
   stream_key: string;
   live_id?: string;
+  channel_name?: string;
   user_id: number;
   user_name: string;
 }
+
+type PendingAfterModal =
+  | {kind: 'start'}
+  | {kind: 'join'; stream: LiveStreamItem};
 
 const LiveStreamScreen = () => {
   const navigation = useNavigation();
@@ -113,16 +112,18 @@ const LiveStreamScreen = () => {
     stream_key: streamKeyParam,
     channel = '',
     streamerName = '',
-    streamerAvatar = '',
   } = params;
 
-  const [liveID, setLiveID] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sessionCreated, setSessionCreated] = useState(false);
   const [hostStreamKey, setHostStreamKey] = useState<string | null>(null);
-  const [hostChannelName, setHostChannelName] = useState<string | null>(null);
-  const [isLiveStarted, setIsLiveStarted] = useState(false);
+  const [channelName, setChannelName] = useState<string | null>(null);
+  const [joined, setJoined] = useState(false);
+  const [engineReady, setEngineReady] = useState(false);
+  const [previewStarted, setPreviewStarted] = useState(false);
+  const [remoteUid, setRemoteUid] = useState<number | null>(null);
+  const [micMuted, setMicMuted] = useState(false);
   const [showChoiceModal, setShowChoiceModal] = useState(false);
   const [liveStreams, setLiveStreams] = useState<LiveStreamItem[]>([]);
   const [loadingStreams, setLoadingStreams] = useState(false);
@@ -133,25 +134,476 @@ const LiveStreamScreen = () => {
     isHost: boolean;
     stream_key?: string;
     streamerName?: string;
+    channel_name?: string;
   } | null>(null);
+
+  const engineRef = useRef<IRtcEngine | null>(null);
+  const handlerRef = useRef<IRtcEngineEventHandler | null>(null);
+  const joiningRef = useRef(false);
+  const leavingRef = useRef(false);
+  const pendingJoinRef = useRef<{
+    token: string;
+    chName: string;
+    uid: number;
+    asHost: boolean;
+    launched: boolean;
+  } | null>(null);
+  const surfaceReadyRef = useRef(false);
+  const joinTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const surfaceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const joinedRef = useRef(false);
+  const pendingAfterModalRef = useRef<PendingAfterModal | null>(null);
+  const sessionCreatedRef = useRef(false);
+  const hostStreamKeyRef = useRef<string | null>(null);
+  const channelNameRef = useRef<string | null>(null);
+  const effectiveIsHostRef = useRef(false);
+  const hostEndedRef = useRef(false);
 
   const userID = user?.id != null ? String(user.id) : '';
   const userName = user?.full_name || user?.name || `user_${userID}`;
-
-  // Unique Zego userID per device - prevents "no host" when same user joins as viewer on 2nd device
-  const zegoUserIDSuffix = useRef<string | null>(null);
-  if (zegoUserIDSuffix.current === null && userID) {
-    zegoUserIDSuffix.current = Math.random().toString(36).slice(2, 12);
-  }
-  const zegoUserID =
-    userID && zegoUserIDSuffix.current
-      ? `${userID}_${zegoUserIDSuffix.current}`
-      : userID;
-
-  // Stable plugin array — a new [] every render can re-init ZIM mid-session.
-  const zegoPlugins = useMemo(() => [ZIM], []);
+  const numericUid = Number(userID) || 0;
 
   const fromTab = isHost && !streamKeyParam && !channel;
+  const effectiveIsHost = effectiveMode?.isHost ?? isHost;
+  sessionCreatedRef.current = sessionCreated;
+  hostStreamKeyRef.current = hostStreamKey;
+  channelNameRef.current = channelName;
+  effectiveIsHostRef.current = effectiveIsHost;
+
+  const clearJoinTimeout = useCallback(() => {
+    if (joinTimeoutRef.current) {
+      clearTimeout(joinTimeoutRef.current);
+      joinTimeoutRef.current = null;
+    }
+    if (surfaceTimeoutRef.current) {
+      clearTimeout(surfaceTimeoutRef.current);
+      surfaceTimeoutRef.current = null;
+    }
+  }, []);
+
+  const cleanupEngine = useCallback(async () => {
+    clearJoinTimeout();
+    pendingJoinRef.current = null;
+    surfaceReadyRef.current = false;
+    joinedRef.current = false;
+    setEngineReady(false);
+    setPreviewStarted(false);
+    setJoined(false);
+    setRemoteUid(null);
+    const engine = engineRef.current;
+    const handler = handlerRef.current;
+    handlerRef.current = null;
+    joiningRef.current = false;
+    if (engine && handler) {
+      try {
+        engine.unregisterEventHandler(handler);
+      } catch {
+        // handler may already be gone
+      }
+    }
+    try {
+      (engine as {removeAllListeners?: () => void})?.removeAllListeners?.();
+    } catch {
+      // older SDK builds may not expose this
+    }
+    // Android: leave only — never release() between sessions (Iris singleton race).
+    await leaveLiveChannel();
+    if (Platform.OS !== 'android') {
+      engineRef.current = null;
+      await releaseLiveRtcEngine();
+    }
+  }, [clearJoinTimeout]);
+
+  const launchPendingJoin = useCallback(() => {
+    const pending = pendingJoinRef.current;
+    const engine = engineRef.current;
+    if (!pending || pending.launched || !engine) {
+      return;
+    }
+    // Host must have a mounted video view before enableVideo/startPreview on
+    // MediaTek/TECNO — otherwise camera HAL can SIGSEGV during the loader.
+    if (pending.asHost && !surfaceReadyRef.current) {
+      return;
+    }
+    pending.launched = true;
+    try {
+      engine.enableVideo();
+      engine.enableAudio();
+      if (pending.asHost) {
+        engine.enableLocalVideo(true);
+        engine.enableLocalAudio(true);
+      }
+      engine.setClientRole(
+        pending.asHost
+          ? ClientRoleType.ClientRoleBroadcaster
+          : ClientRoleType.ClientRoleAudience,
+      );
+      if (pending.asHost) {
+        engine.startPreview();
+        // Camera is live — drop the opaque loader even if channel join is slow.
+        setPreviewStarted(true);
+        setLoading(false);
+      }
+      const joinResult = engine.joinChannel(
+        pending.token,
+        pending.chName,
+        pending.uid,
+        {
+          clientRoleType: pending.asHost
+            ? ClientRoleType.ClientRoleBroadcaster
+            : ClientRoleType.ClientRoleAudience,
+          publishMicrophoneTrack: pending.asHost,
+          publishCameraTrack: pending.asHost,
+          autoSubscribeAudio: true,
+          autoSubscribeVideo: true,
+        },
+      );
+      if (typeof joinResult === 'number' && joinResult < 0) {
+        throw new Error(`joinChannel failed with code ${joinResult}`);
+      }
+      markLiveChannelJoined();
+      clearJoinTimeout();
+      joinTimeoutRef.current = setTimeout(() => {
+        if (!joinedRef.current) {
+          joiningRef.current = false;
+          setError(
+            'Could not join the Agora channel in time. Check network and that the server token matches this App ID.',
+          );
+          setLoading(false);
+        }
+      }, 15000);
+    } catch (err: any) {
+      joiningRef.current = false;
+      console.warn('[LiveStream] join launch failed', err);
+      setError(err?.message || 'Failed to join Agora channel');
+      setLoading(false);
+    }
+  }, [clearJoinTimeout]);
+
+  const onHostSurfaceLayout = useCallback(() => {
+    if (surfaceReadyRef.current) {
+      return;
+    }
+    surfaceReadyRef.current = true;
+    // Let the native view attach to Iris before enableVideo/startPreview.
+    setTimeout(() => launchPendingJoin(), 250);
+  }, [launchPendingJoin]);
+
+  const handleLeave = useCallback(async () => {
+    if (leavingRef.current) {
+      return;
+    }
+    leavingRef.current = true;
+    hostEndedRef.current = true;
+    joinedRef.current = false;
+    setJoined(false);
+    setLoading(false);
+    try {
+      if (effectiveIsHostRef.current && sessionCreatedRef.current) {
+        const liveId = hostStreamKeyRef.current
+          ? sanitizeLiveID(hostStreamKeyRef.current)
+          : channelNameRef.current;
+        if (liveId) {
+          await removeActiveStream(liveId).catch(() => {});
+        }
+        try {
+          await EndLiveStream();
+        } catch (endErr) {
+          console.warn('[LiveStream] EndLiveStream failed', endErr);
+        }
+        setSessionCreated(false);
+      }
+      await withTimeout(cleanupEngine(), 2500).catch(() => {
+        cleanupEngine();
+      });
+    } finally {
+      setPreviewStarted(false);
+      setEngineReady(false);
+      setEffectiveMode(null);
+      setHostStreamKey(null);
+      setChannelName(null);
+      setError(null);
+      sessionCreatedRef.current = false;
+      if (fromTab) {
+        setShowChoiceModal(true);
+        setChoiceStep('initial');
+        leavingRef.current = false;
+        hostEndedRef.current = false;
+      } else if (navigation.canGoBack()) {
+        navigation.goBack();
+      } else {
+        setShowChoiceModal(true);
+        setChoiceStep('initial');
+        leavingRef.current = false;
+        hostEndedRef.current = false;
+      }
+    }
+  }, [cleanupEngine, fromTab, navigation]);
+
+  const joinAgoraChannel = useCallback(
+    async (
+      token: string,
+      chName: string,
+      uid: number,
+      asHost: boolean,
+    ) => {
+      if (!AGORA_APP_ID) {
+        throw new Error('Agora App ID is not configured');
+      }
+      if (joiningRef.current) {
+        console.warn('[LiveStream] join already in progress, skip');
+        return;
+      }
+      joiningRef.current = true;
+
+      try {
+      // Leave any prior channel on the process singleton — do not release().
+      await leaveLiveChannel();
+      leavingRef.current = false;
+
+      const engine = await ensureLiveRtcInitialized();
+      engineRef.current = engine;
+      if (handlerRef.current) {
+        try {
+          engine.unregisterEventHandler(handlerRef.current);
+        } catch {
+          // previous handler may already be gone
+        }
+        handlerRef.current = null;
+      }
+
+      const handler: IRtcEngineEventHandler = {
+        onJoinChannelSuccess: (_connection: RtcConnection) => {
+          console.log('[LiveStream] joined channel', _connection?.channelId);
+          joiningRef.current = false;
+          clearJoinTimeout();
+          joinedRef.current = true;
+          setJoined(true);
+          setPreviewStarted(true);
+          setLoading(false);
+          setError(null);
+        },
+        onUserJoined: (_connection: RtcConnection, uidJoined: number) => {
+          setRemoteUid(uidJoined);
+        },
+        onUserOffline: (_connection: RtcConnection, uidOffline: number) => {
+          setRemoteUid(prev => (prev === uidOffline ? null : prev));
+        },
+        onError: (err: number, msg: string) => {
+          console.warn('[LiveStream] Agora error', err, msg);
+          // already in channel — ignore
+          if (err === -17 || err === 17) {
+            return;
+          }
+          if (err === 110 || err === -110 || /token/i.test(String(msg))) {
+            joiningRef.current = false;
+            clearJoinTimeout();
+            setError(
+              'Invalid Agora token. Confirm AGORA_APP_ID / AGORA_APP_CERTIFICATE on the server match this app.',
+            );
+            setLoading(false);
+          }
+        },
+        onConnectionStateChanged: (
+          _connection: RtcConnection,
+          state: number,
+          reason: number,
+        ) => {
+          console.log('[LiveStream] connection state', state, 'reason', reason);
+          // CONNECTION_STATE_CONNECTED = 3
+          if (state === 3) {
+            joiningRef.current = false;
+            clearJoinTimeout();
+            joinedRef.current = true;
+            setJoined(true);
+            setLoading(false);
+            setError(null);
+            return;
+          }
+          // CONNECTION_STATE_FAILED = 5
+          // reason 8 = invalid token, 9 = token expired
+          if (state === 5) {
+            joiningRef.current = false;
+            clearJoinTimeout();
+            const tokenHint =
+              reason === 8 || reason === 9
+                ? ' Invalid/expired Agora token on the API server.'
+                : '';
+            setError(`Agora connection failed (reason ${reason}).${tokenHint}`);
+            setLoading(false);
+          }
+        },
+      };
+      engine.registerEventHandler(handler);
+      handlerRef.current = handler;
+
+      // Do NOT call enableVideo/startPreview here for hosts — wait until
+      // RtcSurfaceView has laid out (see launchPendingJoin).
+      pendingJoinRef.current = {
+        token,
+        chName,
+        uid,
+        asHost,
+        launched: false,
+      };
+      surfaceReadyRef.current = false;
+      setEngineReady(true);
+
+      if (!asHost) {
+        setTimeout(() => launchPendingJoin(), 50);
+      } else {
+        // Do NOT force startPreview if onLayout never fires — that SIGSEGVs the
+        // camera HAL on MediaTek/TECNO. Show an error instead of a blind join.
+        surfaceTimeoutRef.current = setTimeout(() => {
+          if (!pendingJoinRef.current?.launched) {
+            joiningRef.current = false;
+            setError(
+              'Camera preview did not start. Close Go Live and try again.',
+            );
+            setLoading(false);
+          }
+        }, 8000);
+      }
+    } catch (joinSetupErr) {
+      joiningRef.current = false;
+      throw joinSetupErr;
+    }
+    },
+    [clearJoinTimeout, launchPendingJoin],
+  );
+
+  const startHostSession = useCallback(async () => {
+    try {
+      setError(null);
+      leavingRef.current = false;
+      // Ask for permissions before the loader so a permission dialog does not
+      // sit on top of "Starting livestream..." and look like a hang/crash.
+      const alreadyGranted = await hasCameraAndMicPermission({forVideo: true});
+      const granted = alreadyGranted
+        ? true
+        : await ensureCameraPermission({forVideo: true});
+      if (!granted) {
+        throw new Error(
+          'Camera and microphone permissions are required to go live',
+        );
+      }
+      setLoading(true);
+      const res: any = await StartLiveStream();
+      const body = res?.data?.data ?? res?.data ?? {};
+      if (res?.status >= 400 || body?.message && !body?.agora_token) {
+        throw new Error(
+          body?.message ||
+            'Server did not return an Agora token. Check AGORA_APP_ID / AGORA_APP_CERTIFICATE on the backend.',
+        );
+      }
+      const liveStream =
+        body?.live_stream ??
+        res?.data?.live_stream ??
+        res?.data?.data?.live_stream ??
+        res?.data?.data;
+      const streamKey =
+        liveStream?.stream_key ||
+        body?.stream_key ||
+        res?.data?.stream_key ||
+        body?.channel_name?.replace(/^agora\./, '');
+      if (!streamKey) {
+        throw new Error('Server did not return a stream key');
+      }
+      const chName =
+        body?.channel_name ||
+        res?.data?.channel_name ||
+        `agora.${streamKey}`;
+      const token = body?.agora_token || res?.data?.agora_token;
+      if (!token) {
+        throw new Error(
+          body?.message ||
+            'Server did not return an Agora token. Set AGORA_APP_ID and AGORA_APP_CERTIFICATE on the server.',
+        );
+      }
+      const uid = Number(body?.uid ?? res?.data?.uid ?? numericUid) || numericUid;
+
+      setHostStreamKey(streamKey);
+      setChannelName(chName);
+      setSessionCreated(true);
+      setEffectiveMode({isHost: true, stream_key: streamKey});
+
+      const liveId = sanitizeLiveID(streamKey);
+      const syncArgs: [string, string, string, number, string] = [
+        streamKey,
+        liveId,
+        chName,
+        Number(userID) || 0,
+        userName,
+      ];
+      // Discoverable immediately — do not wait for Agora join.
+      saveActiveStream(...syncArgs).catch(syncErr => {
+        console.warn('[LiveStream] saveActiveStream failed', syncErr);
+      });
+
+      await joinAgoraChannel(token, chName, uid, true);
+
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        try {
+          await saveActiveStream(...syncArgs);
+          break;
+        } catch (syncErr) {
+          console.warn(
+            `[LiveStream] saveActiveStream attempt ${attempt} failed`,
+            syncErr,
+          );
+          if (attempt < 2) {
+            await sleep(800);
+          } else {
+            Alert.alert(
+              'Discovery sync issue',
+              'Your stream is live, but others may not see it in the list right away.',
+            );
+          }
+        }
+      }
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        'Failed to start livestream';
+      setError(msg);
+      setLoading(false);
+    }
+  }, [joinAgoraChannel, numericUid, userID, userName]);
+
+  const startViewerSession = useCallback(
+    async (streamKey: string, preferredChannel?: string) => {
+      try {
+        setError(null);
+        setLoading(true);
+        const chName =
+          preferredChannel ||
+          (streamKey.startsWith('agora.')
+            ? streamKey
+            : `agora.${streamKey}`);
+        const tokenRes: any = await GetLiveStreamToken(chName);
+        const token =
+          tokenRes?.data?.agora_token ?? tokenRes?.data?.data?.agora_token;
+        const uid = Number(
+          tokenRes?.data?.uid ?? tokenRes?.data?.data?.uid ?? numericUid,
+        );
+        if (!token) {
+          throw new Error('Could not get audience token for this stream');
+        }
+        setChannelName(chName);
+        setHostStreamKey(streamKey.replace(/^agora\./, ''));
+        await joinAgoraChannel(token, chName, uid || numericUid, false);
+      } catch (err: any) {
+        const msg =
+          err?.response?.data?.message ||
+          err?.message ||
+          'Failed to join livestream';
+        setError(msg);
+        setLoading(false);
+      }
+    },
+    [joinAgoraChannel, numericUid],
+  );
 
   useEffect(() => {
     if (!userID) {
@@ -160,38 +612,151 @@ const LiveStreamScreen = () => {
     }
 
     if (fromTab) {
-      setShowChoiceModal(true);
       return;
     }
 
     if (isHost) {
-      setLoading(true);
       startHostSession();
     } else {
       const key =
-        streamKeyParam ?? (channel ? channel.replace(/^live\./, '') : '');
+        streamKeyParam ??
+        (channel ? channel.replace(/^(live\.|agora\.)/, '') : '');
       if (!key) {
         setError('Invalid stream. Missing stream key.');
         return;
       }
-      setLoading(true);
-      (async () => {
-        try {
-          const resolvedLiveId = await getLiveIdByStreamKey(key);
-          setLiveID(resolvedLiveId ?? sanitizeLiveID(key));
-        } finally {
-          setLoading(false);
-        }
-      })();
+      const preferred =
+        channel ||
+        (key.startsWith('agora.') ? key : `agora.${key}`);
+      startViewerSession(key, preferred);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isHost, userID, fromTab]);
 
+  useFocusEffect(
+    useCallback(() => {
+      if (!fromTab || !userID) {
+        return;
+      }
+      if (sessionCreatedRef.current || joinedRef.current) {
+        return;
+      }
+      let cancelled = false;
+      (async () => {
+        const already = await hasCameraAndMicPermission({forVideo: true});
+        if (!already) {
+          await ensureCameraPermission({forVideo: true});
+        }
+        if (!cancelled && !sessionCreatedRef.current) {
+          setShowChoiceModal(true);
+        }
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }, [fromTab, userID]),
+  );
+
+  useEffect(() => {
+    if (!effectiveIsHost || !joined || !hostStreamKey || !channelName) {
+      return;
+    }
+    let cancelled = false;
+    const liveId = sanitizeLiveID(hostStreamKey);
+    const syncArgs: [string, string, string, number, string] = [
+      hostStreamKey,
+      liveId,
+      channelName,
+      Number(userID) || 0,
+      userName,
+    ];
+    const heartbeat = async () => {
+      if (cancelled || hostEndedRef.current) {
+        return;
+      }
+      try {
+        await saveActiveStream(...syncArgs);
+      } catch (err) {
+        if (!cancelled && !hostEndedRef.current) {
+          console.warn('[LiveStream] heartbeat failed', err);
+        }
+      }
+    };
+    heartbeat();
+    const intervalId = setInterval(heartbeat, 15000);
+    return () => {
+      cancelled = true;
+      clearInterval(intervalId);
+    };
+  }, [
+    effectiveIsHost,
+    joined,
+    hostStreamKey,
+    channelName,
+    userID,
+    userName,
+  ]);
+
+  useEffect(() => {
+    return () => {
+      // Tab switch no longer unmounts this screen. Real unmount (logout /
+      // leaving the tab navigator) should leave the channel but must not
+      // EndLiveStream — that is only for explicit hang-up. Never release()
+      // on Android from here.
+      cleanupEngine();
+    };
+  }, [cleanupEngine]);
+
+  // Kick off start/join only after the choice Modal is gone. Requesting camera
+  // while the Modal still owns focus hangs on Android (no /live-stream/start).
+  useEffect(() => {
+    if (showChoiceModal) {
+      return;
+    }
+    const pending = pendingAfterModalRef.current;
+    if (!pending) {
+      return;
+    }
+    let cancelled = false;
+    const kickOff = () => {
+      if (cancelled) {
+        return;
+      }
+      pendingAfterModalRef.current = null;
+      if (pending.kind === 'start') {
+        startHostSession();
+        return;
+      }
+      setEffectiveMode({
+        isHost: false,
+        stream_key: pending.stream.stream_key,
+        streamerName: pending.stream.user_name,
+        channel_name: pending.stream.channel_name,
+      });
+      startViewerSession(
+        pending.stream.stream_key,
+        pending.stream.channel_name || `agora.${pending.stream.stream_key}`,
+      );
+    };
+    if (Platform.OS === 'android') {
+      const task = InteractionManager.runAfterInteractions(() => {
+        kickOff();
+      });
+      return () => {
+        cancelled = true;
+        task.cancel();
+      };
+    }
+    kickOff();
+    return () => {
+      cancelled = true;
+    };
+  }, [showChoiceModal, startHostSession, startViewerSession]);
+
   const handleStartNew = () => {
-    setShowChoiceModal(false);
+    pendingAfterModalRef.current = {kind: 'start'};
     setChoiceStep('initial');
-    setLoading(true);
-    startHostSession();
+    setShowChoiceModal(false);
   };
 
   const handleJoinTap = async () => {
@@ -201,8 +766,10 @@ const LiveStreamScreen = () => {
       const byKey = new Map<string, LiveStreamItem>();
 
       try {
-        const streamsFromFirestore =
-          await withTimeout(getActiveStreamsFromFirestore(), 8000);
+        const streamsFromFirestore = await withTimeout(
+          getActiveStreamsFromFirestore(),
+          8000,
+        );
         streamsFromFirestore.forEach(s => {
           if (!s.stream_key) {
             return;
@@ -210,6 +777,7 @@ const LiveStreamScreen = () => {
           byKey.set(s.stream_key, {
             stream_key: s.stream_key,
             live_id: s.live_id,
+            channel_name: s.channel_name || `agora.${s.stream_key}`,
             user_id: s.user_id,
             user_name: s.user_name,
           });
@@ -227,21 +795,25 @@ const LiveStreamScreen = () => {
           apiRes?.data?.data?.live_streams ??
           apiRes?.data?.data ??
           [];
-        if (Array.isArray(apiStreams)) {
-          apiStreams.forEach((s: any) => {
-            const key = s?.stream_key;
-            if (!key || byKey.has(key)) {
-              return;
-            }
-            byKey.set(key, {
-              stream_key: key,
-              live_id: sanitizeLiveID(key),
-              user_id: s?.user_id ?? s?.user?.id ?? 0,
-              user_name:
-                s?.user?.full_name || s?.user_name || s?.user?.name || 'Live',
-            });
+        const list = Array.isArray(apiStreams)
+          ? apiStreams
+          : Array.isArray(apiStreams?.data)
+            ? apiStreams.data
+            : [];
+        list.forEach((s: any) => {
+          const key = s?.stream_key;
+          if (!key || byKey.has(key)) {
+            return;
+          }
+          byKey.set(key, {
+            stream_key: key,
+            live_id: sanitizeLiveID(key),
+            channel_name: `agora.${key}`,
+            user_id: s?.user_id ?? s?.user?.id ?? 0,
+            user_name:
+              s?.user?.full_name || s?.user_name || s?.user?.name || 'Live',
           });
-        }
+        });
       } catch (apiErr) {
         console.warn('[LiveStream] GetLiveStreams failed', apiErr);
       }
@@ -253,160 +825,33 @@ const LiveStreamScreen = () => {
   };
 
   const handleSelectStream = (stream: LiveStreamItem) => {
-    setShowChoiceModal(false);
+    pendingAfterModalRef.current = {kind: 'join', stream};
     setChoiceStep('initial');
-    const liveId = stream.live_id ?? sanitizeLiveID(stream.stream_key);
-    setEffectiveMode({
-      isHost: false,
-      stream_key: stream.stream_key,
-      streamerName: stream.user_name,
-    });
-    setLiveID(liveId);
+    setShowChoiceModal(false);
   };
 
   const handleCloseModal = () => {
+    pendingAfterModalRef.current = null;
     setShowChoiceModal(false);
     setChoiceStep('initial');
-    if (navigation.canGoBack()) navigation.goBack();
-  };
-
-  const effectiveIsHost = effectiveMode?.isHost ?? isHost;
-  const effectiveStreamKey =
-    effectiveMode?.stream_key ?? streamKeyParam ?? (channel ? channel.replace(/^live\./, '') : '');
-
-  useEffect(() => {
-    if (!effectiveIsHost || !isLiveStarted || !hostStreamKey || !liveID) {
-      return;
-    }
-
-    let cancelled = false;
-    const syncArgs: [string, string, string, number, string] = [
-      hostStreamKey,
-      liveID,
-      hostChannelName ?? hostStreamKey,
-      Number(userID) || 0,
-      userName,
-    ];
-
-    const heartbeat = async () => {
-      if (cancelled) return;
-      try {
-        await saveActiveStream(...syncArgs);
-      } catch (err) {
-        if (!cancelled) {
-          console.warn('[LiveStream] heartbeat saveActiveStream failed', err);
-        }
-      }
-    };
-
-    heartbeat();
-    const intervalId = setInterval(heartbeat, 15000);
-    return () => {
-      cancelled = true;
-      clearInterval(intervalId);
-    };
-  }, [
-    effectiveIsHost,
-    isLiveStarted,
-    hostStreamKey,
-    liveID,
-    hostChannelName,
-    userID,
-    userName,
-  ]);
-
-  const startHostSession = async () => {
-    try {
-      setError(null);
-      const granted = await ensureCameraPermission({forVideo: true});
-      if (!granted) {
-        throw new Error(
-          'Camera and microphone permissions are required to go live',
-        );
-      }
-      const res: any = await StartLiveStream();
-      const liveStream =
-        res?.data?.live_stream ?? res?.data?.data?.live_stream ?? res?.data?.data;
-      const streamKey =
-        liveStream?.stream_key ||
-        res?.data?.stream_key ||
-        res?.data?.channel_name?.replace(/^agora\./, '');
-      if (!streamKey) {
-        throw new Error('Server did not return a stream key');
-      }
-      const channelName =
-        res?.data?.channel_name || `agora.${streamKey}`;
-      const liveId = sanitizeLiveID(streamKey);
-      setLiveID(liveId);
-      setHostStreamKey(streamKey);
-      setHostChannelName(channelName);
-      setSessionCreated(true);
-      setLoading(false);
-    } catch (err: any) {
-      const msg =
-        err?.response?.data?.message || err?.message || 'Failed to start livestream';
-      setError(msg);
-      setLoading(false);
+    if (navigation.canGoBack()) {
+      navigation.goBack();
     }
   };
 
-  const handleLeaveLiveStreaming = useCallback(async () => {
-    if (effectiveIsHost && sessionCreated) {
-      try {
-        if (liveID) {
-          await removeActiveStream(liveID);
-        }
-        await EndLiveStream().catch(() => {});
-      } catch {
-        if (liveID) {
-          removeActiveStream(liveID).catch(() => {});
-        }
-      }
-    }
-    if (navigation.canGoBack()) navigation.goBack();
-  }, [effectiveIsHost, sessionCreated, liveID, navigation]);
-
-  const handleLiveStreamingEnded = useCallback(() => {
-    if (navigation.canGoBack()) navigation.goBack();
-  }, [navigation]);
-
-  const handleStartLiveButtonPressed = useCallback(() => {
-    setIsLiveStarted(true);
-    if (!hostStreamKey || !liveID) {
+  const toggleMic = () => {
+    const engine = engineRef.current;
+    if (!engine || !effectiveIsHost) {
       return;
     }
-    (async () => {
-      const syncArgs: [string, string, string, number, string] = [
-        hostStreamKey,
-        liveID,
-        hostChannelName ?? hostStreamKey,
-        Number(userID) || 0,
-        userName,
-      ];
-      let synced = false;
-      for (let attempt = 1; attempt <= 2; attempt++) {
-        try {
-          await saveActiveStream(...syncArgs);
-          synced = true;
-          break;
-        } catch (syncErr) {
-          console.warn(
-            `[LiveStream] saveActiveStream attempt ${attempt} failed`,
-            syncErr,
-          );
-          if (attempt < 2) {
-            await sleep(800);
-          }
-        }
-      }
-      if (!synced) {
-        Alert.alert(
-          'Discovery sync issue',
-          'Your stream is live, but others may not see it in the list right away.',
-        );
-      }
-    })();
-  }, [hostStreamKey, liveID, hostChannelName, userID, userName]);
+    const next = !micMuted;
+    engine.muteLocalAudioStream(next);
+    setMicMuted(next);
+  };
+
+  const flipCamera = () => {
+    engineRef.current?.switchCamera();
+  };
 
   if (!userID) {
     return (
@@ -423,186 +868,198 @@ const LiveStreamScreen = () => {
     );
   }
 
-  if (showChoiceModal) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <Modal
-          visible={showChoiceModal}
-          transparent
-          animationType="fade"
-          onRequestClose={handleCloseModal}>
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Live Stream</Text>
-              {choiceStep === 'initial' ? (
-                <>
-                  <TouchableOpacity
-                    style={styles.modalPrimaryButton}
-                    onPress={handleStartNew}
-                    activeOpacity={0.8}>
-                    <Text style={styles.modalButtonText}>
-                      Start New Live Stream
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.modalSecondaryButton}
-                    onPress={handleJoinTap}
-                    disabled={loadingStreams}
-                    activeOpacity={0.8}>
-                    {loadingStreams ? (
-                      <ActivityIndicator size="small" color={colors.white} />
-                    ) : (
-                      <Text style={styles.modalButtonText}>
-                        Join Running Stream
-                      </Text>
-                    )}
-                  </TouchableOpacity>
-                </>
-              ) : (
-                <>
-                  <Text style={styles.modalSubtitle}>
-                    {loadingStreams
-                      ? 'Loading streams...'
-                      : liveStreams.length === 0
-                        ? 'No live streams at the moment'
-                        : 'Select a stream to join'}
-                  </Text>
-                  {!loadingStreams && liveStreams.length > 0 && (
-                    <FlatList
-                      data={liveStreams}
-                      keyExtractor={item => item.stream_key}
-                      style={styles.streamList}
-                      renderItem={({item}) => (
-                        <TouchableOpacity
-                          style={styles.streamItem}
-                          onPress={() => handleSelectStream(item)}
-                          activeOpacity={0.8}>
-                          <View style={styles.streamAvatar}>
-                            <Text style={styles.streamAvatarText}>
-                              {item.user_name?.charAt(0)?.toUpperCase() || '?'}
-                            </Text>
-                          </View>
-                          <Text style={styles.streamName} numberOfLines={1}>
-                            {item.user_name}
-                          </Text>
-                        </TouchableOpacity>
-                      )}
-                    />
-                  )}
-                  <TouchableOpacity
-                    style={styles.modalBackButton}
-                    onPress={() => setChoiceStep('initial')}>
-                    <Text style={styles.modalBackButtonText}>Back</Text>
-                  </TouchableOpacity>
-                </>
-              )}
-              <TouchableOpacity
-                style={styles.modalCancelButton}
-                onPress={handleCloseModal}>
-                <Text style={styles.modalCancelText}>Cancel</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
-      </SafeAreaView>
-    );
-  }
-
-  if (loading) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.centerContent}>
-          <ActivityIndicator size="large" color={colors.themeColor} />
-          <Text style={styles.loadingText}>
-            {effectiveIsHost ? 'Starting livestream...' : 'Loading...'}
-          </Text>
-          <TouchableOpacity
-            style={styles.loadingBackButton}
-            onPress={() => {
-              setLoading(false);
-              if (navigation.canGoBack()) navigation.goBack();
-            }}>
-            <Text style={styles.modalCancelText}>Cancel</Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  if (error) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.centerContent}>
-          <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.canGoBack() && navigation.goBack()}>
-            <Text style={styles.backButtonText}>Go Back</Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  if (!liveID) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.centerContent}>
-          <Text style={styles.errorText}>Invalid stream</Text>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.canGoBack() && navigation.goBack()}>
-            <Text style={styles.backButtonText}>Go Back</Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  const config = effectiveIsHost ? HOST_DEFAULT_CONFIG : AUDIENCE_DEFAULT_CONFIG;
+  // Keep video mounted under overlays so host preview has a real native view
+  // before Agora startPreview (TECNO/MediaTek crash fix).
+  const showBlockingLoader =
+    loading && !previewStarted && !joined && !error;
+  const showControls =
+    (previewStarted || joined || (engineReady && effectiveIsHost)) && !error;
 
   return (
     <View style={styles.container}>
-      <View style={styles.zegoContainer}>
-        <ZegoUIKitPrebuiltLiveStreaming
-          key={liveID}
-          appID={ZEGO_LIVE_STREAM_APP_ID}
-          appSign={ZEGO_LIVE_STREAM_APP_SIGN}
-          userID={zegoUserID}
-          userName={userName}
-          liveID={liveID}
-          config={{
-            ...config,
-            onLeaveLiveStreaming: handleLeaveLiveStreaming,
-            turnOnCameraWhenJoining: effectiveIsHost,
-            turnOnMicrophoneWhenJoining: effectiveIsHost,
-            inRoomMessageViewConfig: {
-              ...(config as any).inRoomMessageViewConfig,
-              visible: true,
-            },
-            logoutSignalingPluginOnLeaveLiveStreaming: false,
-            ...(effectiveIsHost
-              ? {
-                  onStartLiveButtonPressed: handleStartLiveButtonPressed,
-                  onLiveStreamingEnded: handleLeaveLiveStreaming,
-                  bottomMenuBarConfig: {
-                    ...config.bottomMenuBarConfig,
-                    hostExtendButtons: [
-                      <EndLiveStreamButton
-                        key="end"
-                        onPress={handleLeaveLiveStreaming}
-                      />,
-                    ],
-                  },
-                }
-              : {
-                  onLiveStreamingEnded: handleLiveStreamingEnded,
-                  showNoHostOnlineTipAfterSeconds: 12,
-                }),
-          }}
-          plugins={zegoPlugins}
-        />
+      {(joined || previewStarted) && <KeepAwake />}
+      <View style={styles.videoContainer}>
+        {engineReady && effectiveIsHost ? (
+          <LocalVideoView
+            style={styles.video}
+            canvas={{uid: 0}}
+            onLayout={onHostSurfaceLayout}
+          />
+        ) : engineReady && remoteUid != null ? (
+          <RtcSurfaceView style={styles.video} canvas={{uid: remoteUid}} />
+        ) : (
+          <View style={styles.waitingRemote}>
+            {showChoiceModal ? null : (
+              <>
+                <ActivityIndicator color={colors.white} />
+                <Text style={styles.waitingText}>
+                  {effectiveIsHost
+                    ? 'Starting camera…'
+                    : `Waiting for host${
+                        streamerName || effectiveMode?.streamerName
+                          ? ` (${streamerName || effectiveMode?.streamerName})`
+                          : ''
+                      }…`}
+                </Text>
+              </>
+            )}
+          </View>
+        )}
       </View>
+
+      {showBlockingLoader ? (
+        <View style={styles.joiningOverlay} pointerEvents="box-none">
+          <ActivityIndicator size="large" color={colors.themeColor} />
+          <Text style={styles.loadingText}>
+            {effectiveIsHost ? 'Starting livestream...' : 'Joining stream...'}
+          </Text>
+          <TouchableOpacity
+            style={styles.loadingBackButton}
+            onPress={handleLeave}>
+            <Text style={styles.modalCancelText}>Cancel</Text>
+          </TouchableOpacity>
+        </View>
+      ) : null}
+
+      {error ? (
+        <View style={styles.joiningOverlay}>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity style={styles.backButton} onPress={handleLeave}>
+            <Text style={styles.backButtonText}>Go Back</Text>
+          </TouchableOpacity>
+        </View>
+      ) : null}
+
+      {showControls ? (
+        <SafeAreaView style={styles.controlsSafe} pointerEvents="box-none">
+          <View style={styles.topBar}>
+            <View style={styles.liveBadge}>
+              <View style={styles.liveDot} />
+              <Text style={styles.liveBadgeText}>
+                {joined ? 'LIVE' : 'PREVIEW'}
+              </Text>
+            </View>
+            <Text style={styles.channelHint} numberOfLines={1}>
+              {joined
+                ? effectiveIsHost
+                  ? 'You are live'
+                  : 'Watching'
+                : 'Connecting to channel…'}
+            </Text>
+          </View>
+
+          <View style={styles.controlsBar}>
+            {effectiveIsHost ? (
+              <>
+                <TouchableOpacity
+                  style={[
+                    styles.controlBtn,
+                    micMuted && styles.controlBtnActive,
+                  ]}
+                  onPress={toggleMic}
+                  accessibilityLabel={micMuted ? 'Unmute mic' : 'Mute mic'}>
+                  {micMuted ? (
+                    <MicOff size={22} color={colors.white} />
+                  ) : (
+                    <Mic size={22} color={colors.white} />
+                  )}
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.controlBtn}
+                  onPress={flipCamera}
+                  accessibilityLabel="Switch camera">
+                  <SwitchCamera size={22} color={colors.white} />
+                </TouchableOpacity>
+              </>
+            ) : null}
+            <TouchableOpacity
+              style={[styles.controlBtn, styles.endBtn]}
+              onPress={handleLeave}
+              accessibilityLabel="End live stream">
+              <PhoneOff size={22} color={colors.white} />
+            </TouchableOpacity>
+          </View>
+        </SafeAreaView>
+      ) : null}
+
+      <Modal
+        visible={showChoiceModal}
+        transparent
+        animationType="fade"
+        onRequestClose={handleCloseModal}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Live Stream</Text>
+            {choiceStep === 'initial' ? (
+              <>
+                <TouchableOpacity
+                  style={styles.modalPrimaryButton}
+                  onPress={handleStartNew}
+                  activeOpacity={0.8}>
+                  <Text style={styles.modalButtonText}>
+                    Start New Live Stream
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.modalSecondaryButton}
+                  onPress={handleJoinTap}
+                  disabled={loadingStreams}
+                  activeOpacity={0.8}>
+                  {loadingStreams ? (
+                    <ActivityIndicator size="small" color={colors.white} />
+                  ) : (
+                    <Text style={styles.modalButtonText}>
+                      Join Running Stream
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                <Text style={styles.modalSubtitle}>
+                  {loadingStreams
+                    ? 'Loading streams...'
+                    : liveStreams.length === 0
+                      ? 'No live streams at the moment'
+                      : 'Select a stream to join'}
+                </Text>
+                {!loadingStreams && liveStreams.length > 0 && (
+                  <FlatList
+                    data={liveStreams}
+                    keyExtractor={item => item.stream_key}
+                    style={styles.streamList}
+                    renderItem={({item}) => (
+                      <TouchableOpacity
+                        style={styles.streamItem}
+                        onPress={() => handleSelectStream(item)}
+                        activeOpacity={0.8}>
+                        <View style={styles.streamAvatar}>
+                          <Text style={styles.streamAvatarText}>
+                            {item.user_name?.charAt(0)?.toUpperCase() || '?'}
+                          </Text>
+                        </View>
+                        <Text style={styles.streamName} numberOfLines={1}>
+                          {item.user_name}
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                  />
+                )}
+                <TouchableOpacity
+                  style={styles.modalBackButton}
+                  onPress={() => setChoiceStep('initial')}>
+                  <Text style={styles.modalBackButtonText}>Back</Text>
+                </TouchableOpacity>
+              </>
+            )}
+            <TouchableOpacity
+              style={styles.modalCancelButton}
+              onPress={handleCloseModal}>
+              <Text style={styles.modalCancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -612,11 +1069,91 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.black,
   },
-  zegoContainer: {
+  videoContainer: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#111',
+  },
+  video: {
     flex: 1,
     width: '100%',
     height: '100%',
-    zIndex: 0,
+  },
+  joiningOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.72)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: vw * 8,
+  },
+  waitingRemote: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: vw * 8,
+  },
+  waitingText: {
+    color: colors.white,
+    marginTop: 12,
+    textAlign: 'center',
+    opacity: 0.85,
+  },
+  controlsSafe: {
+    flex: 1,
+    justifyContent: 'space-between',
+  },
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: Platform.OS === 'android' ? 16 : 8,
+    gap: 10,
+  },
+  liveBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E53935',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+    gap: 6,
+  },
+  liveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.white,
+  },
+  liveBadgeText: {
+    color: colors.white,
+    fontWeight: '700',
+    fontSize: 12,
+  },
+  channelHint: {
+    color: colors.white,
+    opacity: 0.85,
+    fontSize: 13,
+    flex: 1,
+  },
+  controlsBar: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 20,
+    paddingBottom: Platform.OS === 'android' ? 28 : 16,
+  },
+  controlBtn: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  controlBtnActive: {
+    backgroundColor: 'rgba(229,57,53,0.85)',
+  },
+  endBtn: {
+    backgroundColor: '#E53935',
   },
   centerContent: {
     flex: 1,

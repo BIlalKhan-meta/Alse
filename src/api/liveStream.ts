@@ -6,17 +6,23 @@ export const GetLiveStreams = () => {
 };
 
 export const StartLiveStream = async () => {
-  return axiosInstance.post(`${ endpoints.liveStream.createLiveStreams }`);
-}
+  // Empty JSON body so OkHttp on Android actually sends the POST.
+  return axiosInstance.post(`${endpoints.liveStream.createLiveStreams}`, {});
+};
 
 export const EndLiveStream = async () => {
-    return axiosInstance.get(`${endpoints.liveStream.endLiveStreams}`);
-}
+  // POST so iOS does not cache this mutation (GET /live-stream/end was ignored).
+  return axiosInstance.post(`${endpoints.liveStream.endLiveStreams}`, {});
+};
 
 export const GetLiveStreamToken = async (channel: string) => {
-  return axiosInstance.get(`${ endpoints.liveStream.getToken }/${ channel }`);
-} 
+  return axiosInstance.get(
+    `${endpoints.liveStream.getToken}/${encodeURIComponent(channel)}`,
+  );
+};
 
 export const GetLiveStreamUsers = async (channel: string) => {
-  return axiosInstance.get(`${ endpoints.liveStream.getUsers }/${ channel }`);
-}
+  return axiosInstance.get(
+    `${endpoints.liveStream.getUsers}/${encodeURIComponent(channel)}`,
+  );
+};

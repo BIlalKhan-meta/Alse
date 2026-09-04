@@ -678,7 +678,7 @@ const Stories = forwardRef<StoriesRef>((_, ref) => {
       {renderMediaPreview()}
 
       <InstagramStories
-        key={currentUser?.avatar || 'stories'}
+        key="stories-tray"
         stories={stories}
         avatarBorderColors={['#FF7A51', '#FFDB5C']}
         saveProgress

@@ -2,7 +2,7 @@ import notifee, {EventType} from '@notifee/react-native';
 import messaging, {
   FirebaseMessagingTypes,
 } from '@react-native-firebase/messaging';
-import {AppState, Platform} from 'react-native';
+import {Platform} from 'react-native';
 import {
   checkNotifications,
   requestNotifications,
@@ -27,9 +27,10 @@ type RemoteMessage = FirebaseMessagingTypes.RemoteMessage;
 
 let handlersRegistered = false;
 let backgroundHandlerRegistered = false;
-let appStateSubscription: {remove: () => void} | null = null;
 let pendingSyncRetry: ReturnType<typeof setTimeout> | null = null;
 let syncAttempt = 0;
+/** Last FCM token successfully registered with the backend — skip duplicate POSTs. */
+let lastSyncedFcmToken: string | null = null;
 
 const MAX_SYNC_RETRIES = 5;
 const BASE_RETRY_MS = 2000;
@@ -492,7 +493,9 @@ export async function requestPushPermissionAndToken() {
     }
 
     const token = await messaging().getToken();
-    console.log('[FCM] token', token);
+    if (__DEV__) {
+      console.log('[FCM] token acquired');
+    }
     return token;
   } catch (error) {
     console.warn('[FCM] permission/token failed:', error);
@@ -526,6 +529,7 @@ export async function getDeviceIdsForAuth(): Promise<{
 
 /**
  * Register current FCM token with backend (requires auth).
+ * Skips network call when the token is unchanged since last successful sync.
  * Retries with exponential backoff on failure.
  */
 export async function syncFcmTokenWithBackend(): Promise<void> {
@@ -537,13 +541,21 @@ export async function syncFcmTokenWithBackend(): Promise<void> {
   try {
     const fcmToken = await requestPushPermissionAndToken();
     if (!fcmToken) {
-      console.warn('[FCM] No token to sync');
+      if (__DEV__) {
+        console.warn('[FCM] No token to sync');
+      }
       scheduleFcmSyncRetry();
+      return;
+    }
+    if (lastSyncedFcmToken === fcmToken) {
       return;
     }
     const payload = await buildFcmDevicePayload(fcmToken);
     await registerFcmDevice(payload);
-    console.log('[FCM] device registered with backend', payload.device_id);
+    lastSyncedFcmToken = fcmToken;
+    if (__DEV__) {
+      console.log('[FCM] device registered with backend', payload.device_id);
+    }
     syncAttempt = 0;
     clearPendingSyncRetry();
     refreshNotificationBadgeFromApi().catch(() => {});
@@ -560,7 +572,10 @@ async function refreshFcmTokenWithBackend(fcmToken: string): Promise<void> {
   try {
     const payload = await buildFcmDevicePayload(fcmToken);
     await refreshFcmDevice(payload);
-    console.log('[FCM] device refreshed with backend', payload.device_id);
+    lastSyncedFcmToken = fcmToken;
+    if (__DEV__) {
+      console.log('[FCM] device refreshed with backend', payload.device_id);
+    }
     syncAttempt = 0;
     clearPendingSyncRetry();
   } catch (error) {
@@ -574,7 +589,10 @@ export async function unregisterFcmDeviceFromBackend(
 ): Promise<void> {
   try {
     await removeFcmDevice(undefined, authTokenOverride);
-    console.log('[FCM] device removed from backend');
+    lastSyncedFcmToken = null;
+    if (__DEV__) {
+      console.log('[FCM] device removed from backend');
+    }
   } catch (error) {
     console.warn('[FCM] remove device failed:', error);
   }
@@ -695,26 +713,18 @@ export function registerPushNotificationHandlers() {
   }
 
   const unsubscribeTokenRefresh = messaging().onTokenRefresh(token => {
-    console.log('[FCM] token refreshed', token);
+    if (__DEV__) {
+      console.log('[FCM] token refreshed');
+    }
     refreshFcmTokenWithBackend(token).catch(() => {});
   });
 
-  if (!appStateSubscription) {
-    appStateSubscription = AppState.addEventListener('change', nextState => {
-      if (nextState === 'active' && store.getState().auth.token) {
-        syncFcmTokenWithBackend().catch(() => {});
-        refreshNotificationBadgeFromApi().catch(() => {});
-      }
-    });
-  }
-
+  // AppState FCM sync lives in PushTokenSync only — avoid duplicate listeners.
   return () => {
     unsubscribeOnMessage();
     unsubscribeOpenedApp();
     unsubscribeNotifeeForeground();
     unsubscribeTokenRefresh();
-    appStateSubscription?.remove();
-    appStateSubscription = null;
     clearPendingSyncRetry();
     handlersRegistered = false;
   };

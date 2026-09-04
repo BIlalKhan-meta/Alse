@@ -17,27 +17,31 @@ class ChatSocket {
    * @param {string} authToken - Authentication token
    */
   connect(userId: string, authToken?: string) {
-    // If already connected with same user, skip reconnect.
-    // This is your CONNECTION IDENTITY (user), NOT the watch room. Each device has its own user (249 vs 213).
-    // The WATCH ROOM is wt-{chatId} and is joined in joinWatchRoom(chatId). Both devices must use the SAME chatId
-    // to join the same room so video/chat sync. Look for "Joining WATCH ROOM: wt-X" — both must show the SAME X.
-    if (this.socket && this.isConnected && this.userId === userId) {
-      console.log('[Socket] ✅ Already connected as user', userId, '(identity only; room=wt-{chatId}, joined in joinWatchRoom — both devices need same chatId)');
+    // If a socket already exists for this user (connected or still connecting),
+    // do not create another io() client — that was flooding Metro / JS thread.
+    if (this.socket && this.userId === userId) {
+      if (__DEV__) {
+        console.log(
+          '[Socket] Already have socket for user',
+          userId,
+          this.isConnected || this.socket.connected ? '(connected)' : '(connecting)',
+        );
+      }
       return;
     }
 
-    // Disconnect existing socket if connecting with different user
-    if (this.socket && this.userId !== userId) {
-      console.log('[Socket] 🔄 Switching user, disconnecting old socket...');
+    // Disconnect previous socket before creating a new one
+    if (this.socket) {
+      if (__DEV__) {
+        console.log('[Socket] Replacing existing socket for user switch/reconnect');
+      }
       this.disconnect();
     }
 
     this.userId = userId;
 
-    console.log('[Socket] 🔌 Connecting to:', SOCKET_URL);
-    console.log('[Socket] 🔌 User ID:', userId);
-    if (!authToken) {
-      console.log('[Socket] ⚠️ No auth token provided, attempting unauthenticated socket connection');
+    if (__DEV__) {
+      console.log('[Socket] Connecting to:', SOCKET_URL, 'user:', userId);
     }
 
     try {
@@ -66,11 +70,11 @@ class ChatSocket {
       // Log all events for debugging (dev only — floods JS thread in production)
       if (__DEV__) {
         this.socket.onAny((eventName: string, ...args: any[]) => {
-          console.log('[Socket] 📡 Event:', eventName, args?.[0]);
+          console.log('[Socket] Event:', eventName, args?.[0]);
         });
       }
     } catch (error) {
-      console.error('[Socket] ❌ Failed to create connection:', error);
+      console.error('[Socket] Failed to create connection:', error);
       throw error;
     }
   }

@@ -512,7 +512,7 @@ const ExistingSeller: React.FC = () => {
         onRequestClose={closeModal}>
         <SafeAreaView style={styles.modalContainer}>
           <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             style={styles.modalContent}>
             {/* Modal Header */}
             <View style={styles.modalHeader}>

@@ -14,7 +14,7 @@ Sentry.init({
   enabled: Boolean(SENTRY_DSN),
   tracesSampleRate: 0.2,
   enableAutoSessionTracking: true,
-  // Native crashes (Agora / FFmpeg / Zego) need this on Android.
+  // Native crashes (Agora / FFmpeg) need this on Android.
   enableNative: true,
   enableNativeCrashHandling: true,
   attachScreenshot: true,

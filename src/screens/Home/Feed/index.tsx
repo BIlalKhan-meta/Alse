@@ -8,18 +8,8 @@ import {
   Text,
   Image,
   RefreshControl,
-  LayoutChangeEvent,
 } from 'react-native';
 import {FlashList} from '@shopify/flash-list';
-import Reanimated, {
-  Extrapolation,
-  interpolate,
-  runOnJS,
-  useAnimatedReaction,
-  useAnimatedScrollHandler,
-  useAnimatedStyle,
-  useSharedValue,
-} from 'react-native-reanimated';
 import {images} from '../../../utils/images';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import styles from './styles';
@@ -58,6 +48,7 @@ import {
   selectUserProfile,
 } from '../../../store/slices/authSlice';
 import LikesModal from '../../../components/LikesModal';
+import ErrorBoundary from '../../../components/ErrorBoundary';
 import Stories, {StoriesRef} from '../../../components/Stories';
 import {Plus, Video, Image as ImageIcon} from 'lucide-react-native';
 import PostSkeleton from '../../../components/SkeletonLoaders';
@@ -76,16 +67,8 @@ import AdFeedCard from '../../../components/AdFeedCard';
 import {recordImpression} from '../../../api/advertising';
 import {usePostComments} from '../../../hooks/usePostComments';
 
-const AnimatedFlashList = Reanimated.createAnimatedComponent(FlashList);
-
-const CREATE_POST_HEIGHT_FALLBACK = 110;
-const STORIES_HEIGHT_FALLBACK = 112;
-
 const Home: React.FC = () => {
   const flatListRef = useRef<FlashList<any>>(null);
-  const scrollY = useSharedValue(0);
-  const createPostHeight = useSharedValue(CREATE_POST_HEIGHT_FALLBACK);
-  const storiesHeight = useSharedValue(STORIES_HEIGHT_FALLBACK);
   const storiesRef = useRef<StoriesRef>(null);
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
   const [feedVideoMuted, setFeedVideoMuted] = useState(true);
@@ -112,13 +95,6 @@ const Home: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState<FeedFilterTab>('all');
   const [hiddenAdIds, setHiddenAdIds] = useState<Set<number>>(new Set());
   const impressedAdIds = useRef<Set<number>>(new Set());
-  const [storiesContentHeight, setStoriesContentHeight] = useState(
-    STORIES_HEIGHT_FALLBACK,
-  );
-  const [createPostContentHeight, setCreatePostContentHeight] = useState<
-    number | null
-  >(null);
-  const [composerCollapsed, setComposerCollapsed] = useState(false);
 
   const {
     commentsVisible,
@@ -181,100 +157,6 @@ const Home: React.FC = () => {
     mediaType: 'image',
     userName: '',
     postTime: '',
-  });
-
-  const onCreatePostLayout = useCallback((event: LayoutChangeEvent) => {
-    const {height} = event.nativeEvent.layout;
-    if (height <= 0) {
-      return;
-    }
-    setCreatePostContentHeight(prev => {
-      if (prev != null && height + 0.5 < prev) {
-        return prev;
-      }
-      createPostHeight.value = height;
-      return height;
-    });
-  }, [createPostHeight]);
-
-  const onStoriesLayout = useCallback((event: LayoutChangeEvent) => {
-    const {height} = event.nativeEvent.layout;
-    if (height > 0) {
-      storiesHeight.value = height;
-      setStoriesContentHeight(height);
-    }
-  }, []);
-
-  const scrollHandler = useAnimatedScrollHandler({
-    onScroll: event => {
-      scrollY.value = event.contentOffset.y;
-    },
-  });
-
-  useAnimatedReaction(
-    () => {
-      const locked = createPostHeight.value;
-      return locked > 0 && scrollY.value >= locked * 0.85;
-    },
-    (collapsed, previous) => {
-      if (collapsed !== previous) {
-        runOnJS(setComposerCollapsed)(collapsed);
-      }
-    },
-  );
-
-  const createPostAnimatedStyle = useAnimatedStyle(() => {
-    const lockedHeight = createPostHeight.value;
-    const height = interpolate(
-      scrollY.value,
-      [0, lockedHeight],
-      [lockedHeight, 0],
-      Extrapolation.CLAMP,
-    );
-    const opacity = interpolate(
-      scrollY.value,
-      [0, lockedHeight * 0.5],
-      [1, 0],
-      Extrapolation.CLAMP,
-    );
-    return {
-      height,
-      opacity,
-      overflow: 'hidden' as const,
-    };
-  });
-
-  const createPostInnerAnimatedStyle = useAnimatedStyle(() => {
-    const lockedHeight = createPostHeight.value;
-    const translateY = interpolate(
-      scrollY.value,
-      [0, lockedHeight],
-      [0, -lockedHeight],
-      Extrapolation.CLAMP,
-    );
-    return {
-      transform: [{translateY}],
-    };
-  });
-
-  const storiesAnimatedStyle = useAnimatedStyle(() => {
-    const maxHeight = interpolate(
-      scrollY.value,
-      [0, storiesHeight.value],
-      [storiesHeight.value, 0],
-      Extrapolation.CLAMP,
-    );
-    const opacity = interpolate(
-      scrollY.value,
-      [0, storiesHeight.value * 0.5],
-      [1, 0],
-      Extrapolation.CLAMP,
-    );
-    return {
-      maxHeight,
-      opacity,
-      overflow: 'hidden',
-    };
   });
 
   const toggleFab = () => {
@@ -687,13 +569,7 @@ const Home: React.FC = () => {
   };
 
   const renderCreatePostSection = () => (
-    <View
-      style={[
-        styles.whatsOnYourMindContainer,
-        createPostContentHeight != null ? {height: createPostContentHeight} : null,
-      ]}
-      onLayout={onCreatePostLayout}
-      collapsable={false}>
+    <View style={styles.whatsOnYourMindContainer} collapsable={false}>
       <View style={styles.whatsOnYourMindTop}>
         <Image
           source={
@@ -735,13 +611,7 @@ const Home: React.FC = () => {
 
   const renderFeedTopSection = () => (
     <View style={styles.feedTopSection} collapsable={false}>
-      <Reanimated.View
-        style={createPostAnimatedStyle}
-        pointerEvents={composerCollapsed ? 'none' : 'box-none'}>
-        <Reanimated.View style={createPostInnerAnimatedStyle}>
-          {renderCreatePostSection()}
-        </Reanimated.View>
-      </Reanimated.View>
+      {renderCreatePostSection()}
       <FeedFilterTabs
         activeFilter={activeFilter}
         onFilterChange={handleFilterChange} />
@@ -855,16 +725,11 @@ const Home: React.FC = () => {
         </View>
       </Modal>
       <View style={styles.contentContainer}>
-        <Reanimated.View
-          style={[styles.storiesWrap, storiesAnimatedStyle]}
-          pointerEvents="box-none">
-          <View
-            onLayout={onStoriesLayout}
-            style={{height: storiesContentHeight}}
-            collapsable={false}>
+        <View style={styles.storiesWrap} pointerEvents="box-none">
+          <ErrorBoundary fallbackTitle="Stories unavailable">
             <Stories ref={storiesRef} />
-          </View>
-        </Reanimated.View>
+          </ErrorBoundary>
+        </View>
 
         {renderFeedTopSection()}
 
@@ -872,34 +737,35 @@ const Home: React.FC = () => {
           {initialLoading && posts.length === 0 ? (
             <View style={styles.feedList}>{renderSkeletonLoaders()}</View>
           ) : (
-            <AnimatedFlashList
-              ref={flatListRef}
-              style={styles.feedList}
-              viewabilityConfigCallbackPairs={viewabilityConfigCallbackPairs}
-              data={filteredPosts}
-              keyboardShouldPersistTaps="handled"
-              onScroll={scrollHandler}
-              scrollEventThrottle={16}
-              refreshControl={
-                <RefreshControl
-                  refreshing={refreshing}
-                  onRefresh={handleRefresh}
-                  colors={[colors.themeColor]}
-                  tintColor={colors.themeColor}
-                />
-              }
-              renderItem={renderPost}
-              contentContainerStyle={styles.feedListContent}
-              keyExtractor={item => String(item?.id ?? item?.advertisement_id)}
-              showsVerticalScrollIndicator={false}
-              ListEmptyComponent={renderEmpty}
-              ListFooterComponent={renderFooter}
-              onEndReached={loadMorePosts}
-              onEndReachedThreshold={0.5}
-              estimatedItemSize={480}
-              drawDistance={vh * 120}
-              removeClippedSubviews
-            />
+            <View style={styles.feedList}>
+              <FlashList
+                ref={flatListRef}
+                viewabilityConfigCallbackPairs={viewabilityConfigCallbackPairs}
+                data={filteredPosts}
+                keyboardShouldPersistTaps="handled"
+                refreshControl={
+                  <RefreshControl
+                    refreshing={refreshing}
+                    onRefresh={handleRefresh}
+                    colors={[colors.themeColor]}
+                    tintColor={colors.themeColor}
+                  />
+                }
+                renderItem={renderPost}
+                contentContainerStyle={styles.feedListContent}
+                keyExtractor={item =>
+                  String(item?.id ?? item?.advertisement_id)
+                }
+                showsVerticalScrollIndicator={false}
+                ListEmptyComponent={renderEmpty}
+                ListFooterComponent={renderFooter}
+                onEndReached={loadMorePosts}
+                onEndReachedThreshold={0.5}
+                estimatedItemSize={480}
+                drawDistance={vh * 120}
+                removeClippedSubviews={false}
+              />
+            </View>
           )}
 
           {/* FAB Container */}

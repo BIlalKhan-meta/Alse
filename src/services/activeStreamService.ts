@@ -102,16 +102,20 @@ export const getActiveStreamsFromFirestore = async (): Promise<
   try {
     const snapshot = await firestore()
       .collection(ACTIVE_STREAMS_COLLECTION)
-      .where('active', '==', true)
       .get();
 
     const now = Date.now();
     const streams: ActiveStreamInfo[] = [];
     snapshot.forEach(doc => {
       const data = doc.data();
+      if (data?.active === false) {
+        return;
+      }
       const liveId = data?.live_id ?? data?.stream_key;
-      const startedAt = Number(data?.started_at) || 0;
-      if (data?.stream_key && liveId && now - startedAt <= STREAM_STALE_AFTER_MS) {
+      const startedAt = Number(data?.started_at) || now;
+      const isFresh =
+        !data?.started_at || now - startedAt <= STREAM_STALE_AFTER_MS;
+      if (data?.stream_key && liveId && isFresh) {
         streams.push({
           stream_key: data.stream_key,
           live_id: liveId,

@@ -64,6 +64,7 @@ const TabNavigation = () => {
         options={{
           tabBarLabel: 'Search',
           tabBarTestID: 'tab-search',
+          tabBarHideOnKeyboard: false,
           tabBarIcon: ({color}) => (
             <View style={styles.tabButton}>
               <Search color={color} size={22} />
@@ -94,7 +95,6 @@ const TabNavigation = () => {
         component={LiveStreamScreen}
         initialParams={{isHost: true, channel: ''}}
         options={{
-          unmountOnBlur: true,
           tabBarLabel: 'Go Live',
           tabBarIcon: ({color}) => (
             <View style={styles.tabButton}>

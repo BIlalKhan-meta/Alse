@@ -17,7 +17,9 @@ class MainActivity : ReactActivity() {
 
   override fun onCreate(savedInstanceState: Bundle?) {
     RNBootSplash.init(this, R.style.BootTheme)
-    super.onCreate(savedInstanceState)
+    // Prevent ScreenStackFragment restore crash after process death / config restore.
+    // See https://github.com/software-mansion/react-native-screens/issues/17
+    super.onCreate(null)
   }
 
   /**

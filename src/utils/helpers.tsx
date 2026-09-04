@@ -60,6 +60,51 @@ export async function ensurePhotoPermission() {
   return result === RESULTS.GRANTED;
 }
 
+const PERMISSION_REQUEST_TIMEOUT_MS = 20000;
+
+async function requestPermissionWithTimeout(permission: any): Promise<string> {
+  return Promise.race([
+    request(permission),
+    new Promise<string>((_, reject) =>
+      setTimeout(
+        () => reject(new Error('permission_timeout')),
+        PERMISSION_REQUEST_TIMEOUT_MS,
+      ),
+    ),
+  ]);
+}
+
+/** True if camera (and mic when forVideo) are already granted — no system dialog. */
+export async function hasCameraAndMicPermission(
+  options: {forVideo?: boolean} = {},
+): Promise<boolean> {
+  const {forVideo = false} = options;
+  try {
+    if (Platform.OS === 'ios') {
+      const cam = await check(PERMISSIONS.IOS.CAMERA);
+      if (cam !== RESULTS.GRANTED) {
+        return false;
+      }
+      if (!forVideo) {
+        return true;
+      }
+      const mic = await check(PERMISSIONS.IOS.MICROPHONE);
+      return mic === RESULTS.GRANTED;
+    }
+    const cam = await check(PERMISSIONS.ANDROID.CAMERA);
+    if (cam !== RESULTS.GRANTED) {
+      return false;
+    }
+    if (!forVideo) {
+      return true;
+    }
+    const mic = await check(PERMISSIONS.ANDROID.RECORD_AUDIO);
+    return mic === RESULTS.GRANTED;
+  } catch {
+    return false;
+  }
+}
+
 export async function ensureCameraPermission(
   options: {forVideo?: boolean} = {},
 ): Promise<boolean> {
@@ -73,11 +118,22 @@ export async function ensureCameraPermission(
     return permissions.every(permission => statuses[permission] === RESULTS.GRANTED);
   }
 
+  // Sequential on Android: requestMultiple often never resolves when a RN Modal
+  // still owns focus (OEM / TECNO). One-at-a-time + timeout avoids a silent hang.
   const permissions = forVideo
     ? [PERMISSIONS.ANDROID.CAMERA, PERMISSIONS.ANDROID.RECORD_AUDIO]
     : [PERMISSIONS.ANDROID.CAMERA];
-  const statuses = await requestMultiple(permissions);
-  return permissions.every(permission => statuses[permission] === RESULTS.GRANTED);
+  try {
+    for (const permission of permissions) {
+      const status = await requestPermissionWithTimeout(permission);
+      if (status !== RESULTS.GRANTED) {
+        return false;
+      }
+    }
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export async function ensureAudioPermission(): Promise<boolean> {

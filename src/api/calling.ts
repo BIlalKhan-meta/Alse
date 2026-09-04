@@ -51,7 +51,7 @@ export const startLiveStream = async (): Promise<LiveStreamResponse> => {
  * End the current live stream
  */
 export const endLiveStream = async () => {
-  return axiosInstance.get(endpoints.liveStream.endLiveStreams);
+  return axiosInstance.post(endpoints.liveStream.endLiveStreams, {});
 };
 
 /**

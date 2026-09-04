@@ -779,12 +779,21 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
             onPress={animateDismiss}
             accessibilityRole="button"
             accessibilityLabel="Close comments">
-            <BlurView
-              style={StyleSheet.absoluteFillObject}
-              blurType="dark"
-              blurAmount={1}
-              reducedTransparencyFallbackColor="white"
-            />
+            {Platform.OS === 'ios' ? (
+              <BlurView
+                style={StyleSheet.absoluteFillObject}
+                blurType="dark"
+                blurAmount={1}
+                reducedTransparencyFallbackColor="rgba(0,0,0,0.55)"
+              />
+            ) : (
+              <View
+                style={[
+                  StyleSheet.absoluteFillObject,
+                  {backgroundColor: 'rgba(0,0,0,0.55)'},
+                ]}
+              />
+            )}
           </Pressable>
           <Animated.View style={[styles.container, sheetAnimatedStyle]}>
             <GestureDetector gesture={panGesture}>
@@ -794,8 +803,8 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
             </GestureDetector>
             <KeyboardAvoidingView
               style={styles.sheetContent}
-              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-              keyboardVerticalOffset={Platform.OS === 'ios' ? vh : vh * 0.2}>
+              behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+              keyboardVerticalOffset={Platform.OS === 'ios' ? vh : 0}>
               {isLoadingComments ? (
                 <View style={styles.commentsLoader}>
                   <ActivityIndicator size="large" color={colors.themeColor} />

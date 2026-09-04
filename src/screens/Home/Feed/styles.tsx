@@ -151,8 +151,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   feedListContent: {
-    flexGrow: 1,
     paddingBottom: vh * 10,
+    backgroundColor: colors.white,
   },
   loadMoreFooter: {
     paddingVertical: vh * 2,

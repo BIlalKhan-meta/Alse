@@ -164,7 +164,9 @@ const IncomingCallHandler: React.FC = () => {
       });
     return () => {
       mounted = false;
-      agoraRtmCallService.releaseAgoraRtm().catch(() => {});
+      // Do not release native RTM on unmount — Metro/App remount would emit
+      // ConnectionStateChanged into a destroyed JS bridge (Android abort).
+      // Logout still calls releaseAgoraRtm via callCleanupListener.
     };
   }, [userId, token]);
 

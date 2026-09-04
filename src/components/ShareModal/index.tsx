@@ -150,7 +150,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
       onRequestClose={onClose}>
       <KeyboardAvoidingView
         style={styles.modalBackground}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <TouchableOpacity
           style={StyleSheet.absoluteFill}
           activeOpacity={1}
