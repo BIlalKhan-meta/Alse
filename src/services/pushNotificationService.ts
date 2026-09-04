@@ -22,6 +22,10 @@ import {displayFcmWithNotifee} from '../utils/displayFcmWithNotifee';
 import eventEmitter, {EVENT_TYPES} from '../utils/EventEmitter';
 import {navigationRef} from '../utils/navigationRef';
 import {refreshNotificationBadgeFromApi} from '../utils/notificationBadge';
+import {
+  areAndroidPermissionPromptsSuppressed,
+  withAndroidPermissionGate,
+} from '../utils/helpers';
 
 type RemoteMessage = FirebaseMessagingTypes.RemoteMessage;
 
@@ -31,6 +35,11 @@ let pendingSyncRetry: ReturnType<typeof setTimeout> | null = null;
 let syncAttempt = 0;
 /** Last FCM token successfully registered with the backend — skip duplicate POSTs. */
 let lastSyncedFcmToken: string | null = null;
+/** One POST_NOTIFICATIONS dialog per process. Re-prompting on AppState is what
+ *  stacks GrantPermissionsActivity and triggers Android 16 rapidActivityLaunch. */
+let androidPushPromptedThisProcess = false;
+let pushPermissionInFlight: Promise<string | undefined> | null = null;
+let loggedFcmTokenOnce = false;
 
 const MAX_SYNC_RETRIES = 5;
 const BASE_RETRY_MS = 2000;
@@ -466,40 +475,70 @@ async function waitForApnsToken(maxAttempts = 10, delayMs = 500): Promise<string
 }
 
 export async function requestPushPermissionAndToken() {
-  try {
-    const permissionStatus = await checkNotifications();
-    if (permissionStatus.status !== 'granted') {
-      await requestNotifications(['alert', 'sound', 'badge']);
-    }
-
-    const authStatus = await messaging().requestPermission();
-    const enabled =
-      authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-      authStatus === messaging.AuthorizationStatus.PROVISIONAL;
-
-    if (Platform.OS === 'ios') {
-      await messaging().registerDeviceForRemoteMessages();
-      const apnsToken = await waitForApnsToken();
-      if (!apnsToken) {
-        // Still try getToken for diagnostics, but warn hard.
-        console.warn('[FCM] Continuing without APNs token — delivery will fail on iOS');
+  if (pushPermissionInFlight) {
+    return pushPermissionInFlight;
+  }
+  const pending = (async () => {
+    try {
+      if (Platform.OS === 'ios') {
+        const permissionStatus = await checkNotifications();
+        if (permissionStatus.status !== 'granted') {
+          await requestNotifications(['alert', 'sound', 'badge']);
+        }
+        const authStatus = await messaging().requestPermission();
+        const enabled =
+          authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+          authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+        await messaging().registerDeviceForRemoteMessages();
+        const apnsToken = await waitForApnsToken();
+        if (!apnsToken) {
+          console.warn('[FCM] Continuing without APNs token — delivery will fail on iOS');
+        }
+        await notifee.requestPermission();
+        if (!enabled) {
+          return undefined;
+        }
+        const token = await messaging().getToken();
+        if (__DEV__ && token && !loggedFcmTokenOnce) {
+          loggedFcmTokenOnce = true;
+          console.log('[FCM] token acquired');
+        }
+        return token;
       }
-    }
 
-    await notifee.requestPermission();
-
-    if (!enabled && Platform.OS === 'ios') {
+      return withAndroidPermissionGate(async () => {
+        const permissionStatus = await checkNotifications();
+        const alreadyGranted = permissionStatus.status === 'granted';
+        if (
+          !alreadyGranted &&
+          !androidPushPromptedThisProcess &&
+          !areAndroidPermissionPromptsSuppressed()
+        ) {
+          androidPushPromptedThisProcess = true;
+          await requestNotifications(['alert', 'sound', 'badge']);
+        }
+        // Do not also call messaging().requestPermission() or
+        // notifee.requestPermission() — each one starts another
+        // GrantPermissionsActivity even when already granted on TECNO.
+        const token = await messaging().getToken();
+        if (__DEV__ && token && !loggedFcmTokenOnce) {
+          loggedFcmTokenOnce = true;
+          console.log('[FCM] token acquired');
+        }
+        return token;
+      });
+    } catch (error) {
+      console.warn('[FCM] permission/token failed:', error);
       return undefined;
     }
-
-    const token = await messaging().getToken();
-    if (__DEV__) {
-      console.log('[FCM] token acquired');
+  })();
+  pushPermissionInFlight = pending;
+  try {
+    return await pending;
+  } finally {
+    if (pushPermissionInFlight === pending) {
+      pushPermissionInFlight = null;
     }
-    return token;
-  } catch (error) {
-    console.warn('[FCM] permission/token failed:', error);
-    return undefined;
   }
 }
 
@@ -539,7 +578,12 @@ export async function syncFcmTokenWithBackend(): Promise<void> {
   }
 
   try {
-    const fcmToken = await requestPushPermissionAndToken();
+    // AppState 'active' fires every time a permission dialog closes. Never
+    // re-prompt here — getToken is enough after the first grant.
+    let fcmToken = await getFcmToken();
+    if (!fcmToken) {
+      fcmToken = await requestPushPermissionAndToken();
+    }
     if (!fcmToken) {
       if (__DEV__) {
         console.warn('[FCM] No token to sync');

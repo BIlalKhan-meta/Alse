@@ -11,6 +11,34 @@ import {
 } from 'react-native-permissions';
 import ReactNativeToastMessage from 'react-native-toast-message';
 
+/**
+ * TECNO/Android 16 kills MainActivity (rapidActivityLaunch) if more than one
+ * GrantPermissionsActivity is started in a short window. Serialize every
+ * runtime permission prompt in the process.
+ */
+let androidPermissionGate: Promise<unknown> = Promise.resolve();
+let suppressAndroidPermissionPrompts = false;
+
+export function setSuppressAndroidPermissionPrompts(suppress: boolean): void {
+  suppressAndroidPermissionPrompts = suppress;
+}
+
+export function areAndroidPermissionPromptsSuppressed(): boolean {
+  return suppressAndroidPermissionPrompts;
+}
+
+export function withAndroidPermissionGate<T>(fn: () => Promise<T>): Promise<T> {
+  if (Platform.OS !== 'android') {
+    return fn();
+  }
+  const run = androidPermissionGate.then(fn, fn);
+  androidPermissionGate = run.then(
+    () => undefined,
+    () => undefined,
+  );
+  return run;
+}
+
 // This function can be used anywhere as it supports multiple permissions.
 // It checks for permissions and then requests for it.
 export async function checkMultiplePermissions(permissions) {
@@ -62,18 +90,6 @@ export async function ensurePhotoPermission() {
 
 const PERMISSION_REQUEST_TIMEOUT_MS = 20000;
 
-async function requestPermissionWithTimeout(permission: any): Promise<string> {
-  return Promise.race([
-    request(permission),
-    new Promise<string>((_, reject) =>
-      setTimeout(
-        () => reject(new Error('permission_timeout')),
-        PERMISSION_REQUEST_TIMEOUT_MS,
-      ),
-    ),
-  ]);
-}
-
 /** True if camera (and mic when forVideo) are already granted — no system dialog. */
 export async function hasCameraAndMicPermission(
   options: {forVideo?: boolean} = {},
@@ -118,22 +134,42 @@ export async function ensureCameraPermission(
     return permissions.every(permission => statuses[permission] === RESULTS.GRANTED);
   }
 
-  // Sequential on Android: requestMultiple often never resolves when a RN Modal
-  // still owns focus (OEM / TECNO). One-at-a-time + timeout avoids a silent hang.
-  const permissions = forVideo
-    ? [PERMISSIONS.ANDROID.CAMERA, PERMISSIONS.ANDROID.RECORD_AUDIO]
-    : [PERMISSIONS.ANDROID.CAMERA];
-  try {
-    for (const permission of permissions) {
-      const status = await requestPermissionWithTimeout(permission);
-      if (status !== RESULTS.GRANTED) {
-        return false;
+  return withAndroidPermissionGate(async () => {
+    // One GrantPermissionsActivity for all missing perms. Sequential request()
+    // opens two dialogs in <200ms; TECNO/Android 16 then kills the app with
+    // rapidActivityLaunch / Force remove MainActivity.
+    const permissions = forVideo
+      ? [PERMISSIONS.ANDROID.CAMERA, PERMISSIONS.ANDROID.RECORD_AUDIO]
+      : [PERMISSIONS.ANDROID.CAMERA];
+    try {
+      const needed = [];
+      for (const permission of permissions) {
+        const current = await check(permission);
+        if (current === RESULTS.GRANTED || current === RESULTS.LIMITED) {
+          continue;
+        }
+        if (current === RESULTS.BLOCKED || current === RESULTS.UNAVAILABLE) {
+          return false;
+        }
+        needed.push(permission);
       }
+      if (needed.length === 0) {
+        return true;
+      }
+      const statuses = await Promise.race([
+        requestMultiple(needed),
+        new Promise((_, reject) =>
+          setTimeout(
+            () => reject(new Error('permission_timeout')),
+            PERMISSION_REQUEST_TIMEOUT_MS,
+          ),
+        ),
+      ]);
+      return needed.every(permission => statuses[permission] === RESULTS.GRANTED);
+    } catch {
+      return false;
     }
-    return true;
-  } catch {
-    return false;
-  }
+  });
 }
 
 export async function ensureAudioPermission(): Promise<boolean> {

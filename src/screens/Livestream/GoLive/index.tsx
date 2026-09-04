@@ -49,9 +49,11 @@ import {colors} from '../../../utils/theme';
 import {
   ensureCameraPermission,
   hasCameraAndMicPermission,
+  setSuppressAndroidPermissionPrompts,
 } from '../../../utils/helpers';
 import {
   ensureLiveRtcInitialized,
+  isLiveChannelJoined,
   leaveLiveChannel,
   markLiveChannelJoined,
   releaseLiveRtcEngine,
@@ -158,6 +160,7 @@ const LiveStreamScreen = () => {
   const channelNameRef = useRef<string | null>(null);
   const effectiveIsHostRef = useRef(false);
   const hostEndedRef = useRef(false);
+  const hostStartLockRef = useRef(false);
 
   const userID = user?.id != null ? String(user.id) : '';
   const userName = user?.full_name || user?.name || `user_${userID}`;
@@ -194,6 +197,8 @@ const LiveStreamScreen = () => {
     const handler = handlerRef.current;
     handlerRef.current = null;
     joiningRef.current = false;
+    hostStartLockRef.current = false;
+    setSuppressAndroidPermissionPrompts(false);
     if (engine && handler) {
       try {
         engine.unregisterEventHandler(handler);
@@ -207,14 +212,14 @@ const LiveStreamScreen = () => {
       // older SDK builds may not expose this
     }
     // Android: leave only — never release() between sessions (Iris singleton race).
-    await leaveLiveChannel();
+    await leaveLiveChannel(true);
     if (Platform.OS !== 'android') {
       engineRef.current = null;
       await releaseLiveRtcEngine();
     }
   }, [clearJoinTimeout]);
 
-  const launchPendingJoin = useCallback(() => {
+  const launchPendingJoin = useCallback(async () => {
     const pending = pendingJoinRef.current;
     const engine = engineRef.current;
     if (!pending || pending.launched || !engine) {
@@ -244,21 +249,42 @@ const LiveStreamScreen = () => {
         setPreviewStarted(true);
         setLoading(false);
       }
-      const joinResult = engine.joinChannel(
+      const joinOptions = {
+        clientRoleType: pending.asHost
+          ? ClientRoleType.ClientRoleBroadcaster
+          : ClientRoleType.ClientRoleAudience,
+        publishMicrophoneTrack: pending.asHost,
+        publishCameraTrack: pending.asHost,
+        autoSubscribeAudio: true,
+        autoSubscribeVideo: true,
+      };
+      let joinResult = engine.joinChannel(
         pending.token,
         pending.chName,
         pending.uid,
-        {
-          clientRoleType: pending.asHost
-            ? ClientRoleType.ClientRoleBroadcaster
-            : ClientRoleType.ClientRoleAudience,
-          publishMicrophoneTrack: pending.asHost,
-          publishCameraTrack: pending.asHost,
-          autoSubscribeAudio: true,
-          autoSubscribeVideo: true,
-        },
+        joinOptions,
       );
-      if (typeof joinResult === 'number' && joinResult < 0) {
+      // -17 ERR_JOIN_CHANNEL_REJECTED: already in a channel or leave still
+      // in flight. Leave once, then retry. If still -17, the first join is
+      // in progress — wait for onJoinChannelSuccess instead of failing.
+      if (joinResult === -17 || joinResult === 17) {
+        console.warn(
+          '[LiveStream] joinChannel -17, leaving leftover channel and retrying',
+        );
+        markLiveChannelJoined();
+        await leaveLiveChannel();
+        joinResult = engine.joinChannel(
+          pending.token,
+          pending.chName,
+          pending.uid,
+          joinOptions,
+        );
+      }
+      if (joinResult === -17 || joinResult === 17) {
+        console.warn(
+          '[LiveStream] joinChannel still -17, treating as join in progress',
+        );
+      } else if (typeof joinResult === 'number' && joinResult < 0) {
         throw new Error(`joinChannel failed with code ${joinResult}`);
       }
       markLiveChannelJoined();
@@ -357,8 +383,11 @@ const LiveStreamScreen = () => {
       joiningRef.current = true;
 
       try {
-      // Leave any prior channel on the process singleton — do not release().
-      await leaveLiveChannel();
+      // Only leave when we actually joined. leaveChannel() while idle makes
+      // the next joinChannel return -17 on Android.
+      if (isLiveChannelJoined()) {
+        await leaveLiveChannel();
+      }
       leavingRef.current = false;
 
       const engine = await ensureLiveRtcInitialized();
@@ -476,13 +505,19 @@ const LiveStreamScreen = () => {
     try {
       setError(null);
       leavingRef.current = false;
+      hostStartLockRef.current = true;
+      // Block FCM/notifee from stacking GrantPermissionsActivity while we
+      // request camera/mic. Android 16 treats that as rapidActivityLaunch.
+      setSuppressAndroidPermissionPrompts(true);
       // Ask for permissions before the loader so a permission dialog does not
       // sit on top of "Starting livestream..." and look like a hang/crash.
       const alreadyGranted = await hasCameraAndMicPermission({forVideo: true});
       const granted = alreadyGranted
         ? true
         : await ensureCameraPermission({forVideo: true});
+      setSuppressAndroidPermissionPrompts(false);
       if (!granted) {
+        hostStartLockRef.current = false;
         throw new Error(
           'Camera and microphone permissions are required to go live',
         );
@@ -562,6 +597,8 @@ const LiveStreamScreen = () => {
         }
       }
     } catch (err: any) {
+      hostStartLockRef.current = false;
+      setSuppressAndroidPermissionPrompts(false);
       const msg =
         err?.response?.data?.message ||
         err?.message ||
@@ -638,22 +675,16 @@ const LiveStreamScreen = () => {
       if (!fromTab || !userID) {
         return;
       }
-      if (sessionCreatedRef.current || joinedRef.current) {
+      if (
+        sessionCreatedRef.current ||
+        joinedRef.current ||
+        joiningRef.current ||
+        hostStartLockRef.current ||
+        pendingAfterModalRef.current
+      ) {
         return;
       }
-      let cancelled = false;
-      (async () => {
-        const already = await hasCameraAndMicPermission({forVideo: true});
-        if (!already) {
-          await ensureCameraPermission({forVideo: true});
-        }
-        if (!cancelled && !sessionCreatedRef.current) {
-          setShowChoiceModal(true);
-        }
-      })();
-      return () => {
-        cancelled = true;
-      };
+      setShowChoiceModal(true);
     }, [fromTab, userID]),
   );
 
@@ -740,7 +771,9 @@ const LiveStreamScreen = () => {
     };
     if (Platform.OS === 'android') {
       const task = InteractionManager.runAfterInteractions(() => {
-        kickOff();
+        // Let the choice Modal finish closing before a single permission
+        // activity — overlapping dialogs get Force-removed on TECNO.
+        setTimeout(kickOff, 250);
       });
       return () => {
         cancelled = true;

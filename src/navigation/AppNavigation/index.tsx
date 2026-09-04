@@ -41,8 +41,6 @@ import MyOrders from '../../screens/MyOrders';
 import ProfileScreen from '../../screens/Menu/ProfileScreen';
 import AddStory from '../../screens/AddStory';
 import AcknowledgeCall from '../../screens/AcknowledgeCall';
-import VideoCall from '../../screens/VideoCall';
-import AudioCall from '../../screens/AudioCall';
 import NetworkLogger from 'react-native-network-logger';
 import Groups from '../../screens/Groups';
 import GroupDetailsScreen from '../../screens/Groups/GroupDetailsScreen';
@@ -68,6 +66,20 @@ import CreateCampaign from '../../screens/CreateCampaign';
 import CampaignStats from '../../screens/CampaignStats';
 import AuctionDetail from '../../screens/AuctionDetail';
 import CreateReel from '../../screens/CreateReel';
+
+/** Load AgoraUIKit only when a 1:1 call starts — importing it at app boot
+ *  constructs NativeEventEmitter and can occupy the RTC singleton so
+ *  livestream joinChannel returns -17. */
+function VideoCallScreen(props: object) {
+  const Screen = require('../../screens/VideoCall').default;
+  return <Screen {...props} />;
+}
+
+function AudioCallScreen(props: object) {
+  const Screen = require('../../screens/AudioCall').default;
+  return <Screen {...props} />;
+}
+
 const AppNavigation = () => {
   const Stack = createNativeStackNavigator();
   return (
@@ -243,12 +255,12 @@ const AppNavigation = () => {
         />
         <Stack.Screen
           name="VideoCall"
-          component={VideoCall}
+          component={VideoCallScreen}
           options={{headerShown: false}}
         />
         <Stack.Screen
           name="AudioCall"
-          component={AudioCall}
+          component={AudioCallScreen}
           options={{headerShown: false}}
         />
         <Stack.Screen

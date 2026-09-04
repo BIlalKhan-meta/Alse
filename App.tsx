@@ -3,6 +3,7 @@ import React, {useEffect} from 'react';
 import {
   ActivityIndicator,
   NativeModules,
+  Platform,
   StyleSheet,
   View,
 } from 'react-native';
@@ -42,14 +43,17 @@ const theme = {
 };
 
 // Call once at import — never inside render. configureProps JNI aborts on some
-// MediaTek/TECNO devices when this runs on every App re-render.
-try {
-  configureReanimatedLogger({
-    level: ReanimatedLogLevel.warn,
-    strict: false,
-  });
-} catch (e) {
-  console.warn('[Reanimated] configureReanimatedLogger failed:', e);
+// MediaTek/TECNO devices (java_object == null in NativeProxy::configureProps).
+// Skip entirely on Android; the logger is only for Reanimated strict warnings.
+if (Platform.OS !== 'android') {
+  try {
+    configureReanimatedLogger({
+      level: ReanimatedLogLevel.warn,
+      strict: false,
+    });
+  } catch (e) {
+    console.warn('[Reanimated] configureReanimatedLogger failed:', e);
+  }
 }
 
 function hideBootSplash() {

@@ -59,11 +59,20 @@ export function markLiveChannelJoined(): void {
   g.__ALSE_AGORA_RTC_IN_CHANNEL__ = true;
 }
 
-export async function leaveLiveChannel(): Promise<void> {
+export function isLiveChannelJoined(): boolean {
+  return !!g.__ALSE_AGORA_RTC_IN_CHANNEL__;
+}
+
+export async function leaveLiveChannel(force = false): Promise<void> {
   return runExclusive(async () => {
     const engine = g.__ALSE_AGORA_RTC_ENGINE__;
     if (!engine || !g.__ALSE_AGORA_RTC_INITIALIZED__) {
       g.__ALSE_AGORA_RTC_IN_CHANNEL__ = false;
+      return;
+    }
+    // leaveChannel() while idle puts Iris in a leaving state; the next
+    // joinChannel then returns -17 (ERR_JOIN_CHANNEL_REJECTED).
+    if (!force && !g.__ALSE_AGORA_RTC_IN_CHANNEL__) {
       return;
     }
     try {
