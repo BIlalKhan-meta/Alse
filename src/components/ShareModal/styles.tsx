@@ -1,6 +1,5 @@
 import {StyleSheet} from 'react-native';
 import {colors} from '../../utils/theme';
-import {vh, vw} from '../../constant';
 
 const styles = StyleSheet.create({
   modalBackground: {
@@ -12,8 +11,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    height: vh * 85,
     paddingTop: 20,
+    width: '100%',
   },
   header: {
     flexDirection: 'row',

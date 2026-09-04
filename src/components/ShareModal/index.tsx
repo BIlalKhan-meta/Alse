@@ -1,9 +1,8 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useMemo} from 'react';
 import {getConversations} from '../../api/home';
 import moment from 'moment';
-import {ActivityIndicator} from 'react-native';
-import {colors} from '../../utils/theme';
 import {
+  ActivityIndicator,
   View,
   Text,
   Modal,
@@ -11,14 +10,18 @@ import {
   TextInput,
   FlatList,
   Image,
-  KeyboardAvoidingView,
   Platform,
   StyleSheet,
+  Keyboard,
+  Dimensions,
 } from 'react-native';
+import {colors} from '../../utils/theme';
 import {Search, Check, MoreHorizontal, Repeat} from 'lucide-react-native';
 import styles from './styles';
 import {getProductSharePreviewText} from '../../utils/productSharePayload';
 import {getPostSharePreviewText} from '../../utils/postSharePayload';
+import {getAbsoluteAvatarUrl} from '../../utils/helpers';
+import {vh} from '../../constant';
 
 interface ShareModalProps {
   visible: boolean;
@@ -43,6 +46,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [chats, setChats] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   useEffect(() => {
     if (visible) {
@@ -50,22 +54,33 @@ const ShareModal: React.FC<ShareModalProps> = ({
     } else {
       setSearchQuery('');
       setSelectedIds([]);
+      setKeyboardHeight(0);
     }
   }, [visible]);
 
   useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
-      if (visible) {
-        fetchChats(searchQuery);
-      }
-    }, 500);
+    if (!visible) {
+      return;
+    }
+    const showEvent =
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent =
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const onShow = (e: any) => {
+      setKeyboardHeight(e?.endCoordinates?.height ?? 0);
+    };
+    const onHide = () => setKeyboardHeight(0);
+    const subShow = Keyboard.addListener(showEvent, onShow);
+    const subHide = Keyboard.addListener(hideEvent, onHide);
+    return () => {
+      subShow.remove();
+      subHide.remove();
+    };
+  }, [visible]);
 
-    return () => clearTimeout(delayDebounceFn);
-  }, [searchQuery, visible]);
-
-  const fetchChats = (search = '') => {
+  const fetchChats = () => {
     setLoading(true);
-    getConversations({search})
+    getConversations({})
       .then(res => {
         setChats(res?.data?.data || []);
       })
@@ -76,6 +91,20 @@ const ShareModal: React.FC<ShareModalProps> = ({
         setLoading(false);
       });
   };
+
+  const filteredChats = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) {
+      return chats;
+    }
+    return chats.filter((item: any) => {
+      const name = String(
+        item?.name || item?.user?.full_name || item?.user?.username || '',
+      ).toLowerCase();
+      const username = String(item?.user?.username || '').toLowerCase();
+      return name.includes(q) || username.includes(q);
+    });
+  }, [chats, searchQuery]);
 
   if (!visible) {
     return null;
@@ -102,16 +131,29 @@ const ShareModal: React.FC<ShareModalProps> = ({
     }
   };
 
+  const windowHeight = Dimensions.get('window').height;
+  const sheetHeight = Math.min(
+    vh * 85,
+    Math.max(320, windowHeight - keyboardHeight - (Platform.OS === 'ios' ? 8 : 0)),
+  );
+
   const renderItem = ({item}: {item: any}) => {
     const isSelected = selectedIds.includes(item.id);
-    const avatar = item?.image || item?.user?.avatar || 'https://via.placeholder.com/150';
+    const rawAvatar =
+      item?.image || item?.user?.avatar || '';
+    const avatar =
+      getAbsoluteAvatarUrl(rawAvatar) ||
+      rawAvatar ||
+      'https://via.placeholder.com/150';
     const name = item?.name || item?.user?.full_name || 'Unknown';
     const description =
       getPostSharePreviewText(item?.last_message?.message) ||
       getProductSharePreviewText(item?.last_message?.message) ||
       item?.last_message?.message ||
       'No messages yet';
-    const time = item?.last_message?.created_at ? moment(item.last_message.created_at).local().fromNow() : '';
+    const time = item?.last_message?.created_at
+      ? moment(item.last_message.created_at).local().fromNow()
+      : '';
 
     return (
       <TouchableOpacity
@@ -119,7 +161,8 @@ const ShareModal: React.FC<ShareModalProps> = ({
         activeOpacity={0.7}
         onPress={() => toggleSelection(item.id)}>
         <View style={styles.checkboxContainer}>
-          <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
+          <View
+            style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
             {isSelected && <Check color="white" size={14} strokeWidth={3} />}
           </View>
         </View>
@@ -129,7 +172,8 @@ const ShareModal: React.FC<ShareModalProps> = ({
         <View style={styles.contentContainer}>
           <View style={styles.nameRow}>
             <Text style={styles.name}>{name}</Text>
-            <TouchableOpacity hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+            <TouchableOpacity
+              hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
               <MoreHorizontal color="#000" size={20} />
             </TouchableOpacity>
           </View>
@@ -147,17 +191,19 @@ const ShareModal: React.FC<ShareModalProps> = ({
       visible={visible}
       transparent
       animationType="slide"
-      onRequestClose={onClose}>
-      <KeyboardAvoidingView
-        style={styles.modalBackground}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      onRequestClose={onClose}
+      statusBarTranslucent>
+      <View style={styles.modalBackground}>
         <TouchableOpacity
           style={StyleSheet.absoluteFill}
           activeOpacity={1}
-          onPress={onClose}
+          onPress={() => {
+            Keyboard.dismiss();
+            onClose();
+          }}
         />
 
-        <View style={styles.container}>
+        <View style={[styles.container, {height: sheetHeight}]}>
           <View style={styles.header}>
             <Text style={styles.title}>{title}</Text>
             <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
@@ -173,6 +219,10 @@ const ShareModal: React.FC<ShareModalProps> = ({
               placeholderTextColor="#9CA3AF"
               value={searchQuery}
               onChangeText={setSearchQuery}
+              autoCorrect={false}
+              autoCapitalize="none"
+              returnKeyType="search"
+              blurOnSubmit={false}
             />
           </View>
 
@@ -191,25 +241,34 @@ const ShareModal: React.FC<ShareModalProps> = ({
           ) : null}
 
           {loading && chats.length === 0 ? (
-            <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+            <View
+              style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
               <ActivityIndicator size="large" color={colors.themeColor} />
             </View>
           ) : (
             <FlatList
-              data={chats}
-              keyExtractor={(item, index) => item?.id?.toString() || index.toString()}
+              data={filteredChats}
+              keyExtractor={(item, index) =>
+                item?.id?.toString() || index.toString()
+              }
               renderItem={renderItem}
               style={styles.listContainer}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
               showsVerticalScrollIndicator={false}
               ListEmptyComponent={
                 <View style={{padding: 20, alignItems: 'center'}}>
-                  <Text style={{color: '#65676B'}}>No chats found</Text>
+                  <Text style={{color: '#65676B'}}>
+                    {searchQuery.trim()
+                      ? 'No chats match your search'
+                      : 'No chats found'}
+                  </Text>
                 </View>
               }
             />
           )}
         </View>
-      </KeyboardAvoidingView>
+      </View>
     </Modal>
   );
 };

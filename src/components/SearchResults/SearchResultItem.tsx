@@ -8,6 +8,7 @@ import {
   Video,
   MessageCircle,
 } from 'lucide-react-native';
+import {getAbsoluteAvatarUrl} from '../../utils/helpers';
 
 export type SearchResultType =
   | 'user'
@@ -40,6 +41,10 @@ const SearchResultItem: React.FC<SearchResultItemProps> = ({
   status,
   onPress,
 }) => {
+  const imageUri = image
+    ? getAbsoluteAvatarUrl(image) || image
+    : null;
+
   const getIcon = () => {
     switch (type) {
       case 'user':
@@ -71,8 +76,8 @@ const SearchResultItem: React.FC<SearchResultItemProps> = ({
     <TouchableOpacity style={styles.container} onPress={onPress}>
       <View style={styles.content}>
         <View style={styles.iconContainer}>
-          {image ? (
-            <Image source={{uri: image}} style={styles.image} />
+          {imageUri ? (
+            <Image source={{uri: imageUri}} style={styles.image} />
           ) : (
             <View style={styles.defaultImageContainer}>
               {getIcon()}
@@ -91,9 +96,9 @@ const SearchResultItem: React.FC<SearchResultItemProps> = ({
             </Text>
           ) : null}
 
-          {item.description ? (
+          {description ? (
             <Text style={styles.description} numberOfLines={2}>
-              {item.description}
+              {description}
             </Text>
           ) : null}
           {price || status ? (
@@ -105,7 +110,8 @@ const SearchResultItem: React.FC<SearchResultItemProps> = ({
                 </View>
               ) : null}
             </View>
-          ) : null}        </View>
+          ) : null}
+        </View>
       </View>
     </TouchableOpacity>
   );

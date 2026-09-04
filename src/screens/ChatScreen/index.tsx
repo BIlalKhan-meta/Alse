@@ -237,11 +237,11 @@ const ChatScreen: React.FC = () => {
           <Text style={styles.headerTitle}>Chat</Text>
         </View>
         <View style={styles.headerIcons}>
-          <TouchableOpacity
+          {/* <TouchableOpacity
             style={styles.manageTemplatesButton}
             onPress={() => navigation.navigate('SavedScripts')}>
             <Text style={styles.manageTemplatesText}>Manage Templates</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
           <TouchableOpacity
             style={styles.newGroupButton}
             onPress={() => setCreateGroupModalVisible(true)}>

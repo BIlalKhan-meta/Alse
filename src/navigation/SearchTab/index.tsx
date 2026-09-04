@@ -8,6 +8,8 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Platform,
+  Keyboard,
+  Pressable,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
@@ -20,6 +22,7 @@ import GlobalHeader from '../../components/GlobalHeader';
 import {useTranslation} from 'react-i18next';
 import {SearchResultsList, SearchResult} from '../../components/SearchResults';
 import searchAPI from '../../api/search';
+import {getAbsoluteAvatarUrl} from '../../utils/helpers';
 
 const applySearchSoftInputMode = () => {
   if (Platform.OS !== 'android') {
@@ -113,7 +116,11 @@ const SearchTab = () => {
         type: 'user' as const,
         title: user.full_name || [user.first_name, user.last_name].filter(Boolean).join(' ') || user.username || user.email,
         subtitle: user.username ? `@${user.username}` : user.email,
-        image: user.avatar,
+        image:
+          getAbsoluteAvatarUrl(user.avatar) ||
+          getAbsoluteAvatarUrl(user.profile_image) ||
+          user.avatar ||
+          undefined,
         data: user,
       }));
 
@@ -242,43 +249,50 @@ const SearchTab = () => {
       {/* Separator line */}
       <View style={styles.separator} />
 
-      {/* Keep body structure stable while typing — swapping to a full-screen
-          loader unmounts lists and can bounce the Android keyboard. */}
-      {hasSearched ? (
-        <SearchResultsList
-          results={searchResults}
-          loading={loading}
-          error={error || undefined}
-          onResultPress={handleResultPress}
-          onLoadMore={handleLoadMore}
-          hasMore={hasMore}
-        />
-      ) : (
-        <View style={styles.recentSearchesContainer}>
-          {loading ? (
-            <View style={styles.inlineLoading}>
-              <ActivityIndicator size="small" color="#007AFF" />
-            </View>
-          ) : null}
-          {recentSearches.length > 0 ? (
-            <>
-              <Text style={styles.recentSearchesTitle}>
-                {t('searchScr.recent')}
-              </Text>
-              <FlatList
-                data={recentSearches}
-                renderItem={renderRecentSearchItem}
-                keyExtractor={item => item.id}
-                style={styles.recentSearchesList}
-                keyboardShouldPersistTaps="always"
-                keyboardDismissMode="none"
-              />
-            </>
-          ) : (
-            renderEmptyRecentSearches()
-          )}
-        </View>
-      )}
+      {/* Tap outside the field dismisses keyboard (needed on iOS). */}
+      <Pressable style={styles.body} onPress={Keyboard.dismiss}>
+        {/* Keep body structure stable while typing — swapping to a full-screen
+            loader unmounts lists and can bounce the Android keyboard. */}
+        {hasSearched ? (
+          <SearchResultsList
+            results={searchResults}
+            loading={loading}
+            error={error || undefined}
+            onResultPress={handleResultPress}
+            onLoadMore={handleLoadMore}
+            hasMore={hasMore}
+          />
+        ) : (
+          <View style={styles.recentSearchesContainer}>
+            {loading ? (
+              <View style={styles.inlineLoading}>
+                <ActivityIndicator size="small" color="#007AFF" />
+              </View>
+            ) : null}
+            {recentSearches.length > 0 ? (
+              <>
+                <Text style={styles.recentSearchesTitle}>
+                  {t('searchScr.recent')}
+                </Text>
+                <FlatList
+                  data={recentSearches}
+                  renderItem={renderRecentSearchItem}
+                  keyExtractor={item => item.id}
+                  style={styles.recentSearchesList}
+                  keyboardShouldPersistTaps={
+                    Platform.OS === 'ios' ? 'handled' : 'always'
+                  }
+                  keyboardDismissMode={
+                    Platform.OS === 'ios' ? 'on-drag' : 'none'
+                  }
+                />
+              </>
+            ) : (
+              renderEmptyRecentSearches()
+            )}
+          </View>
+        )}
+      </Pressable>
     </SafeAreaView>
   );
 };
@@ -338,7 +352,11 @@ const styles = StyleSheet.create({
     marginTop: 15,
     marginBottom: 5,
   },
+  body: {
+    flex: 1,
+  },
   recentSearchesContainer: {
+    flex: 1,
     marginTop: 20,
     marginHorizontal: 16,
   },

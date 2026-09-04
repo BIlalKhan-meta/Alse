@@ -26,7 +26,7 @@ import chatSocket from '../../services/chatSocket';
 import {connectSocket} from '../../utils/socket';
 import agoraRtmCallService from '../../services/agoraRtmCallService';
 import type {AgoraCallRouteParams} from '../../types/agoraCall';
-import {GetLiveStreamToken} from '../../api/liveStream';
+import {GetCallRtcToken} from '../../api/liveStream';
 
 const VideoCall = () => {
   const route = useRoute();
@@ -42,12 +42,17 @@ const VideoCall = () => {
   } = params;
 
   const currentUserId = user?.id != null ? String(user.id) : '';
+  const fallbackUid =
+    typeof user?.id === 'number' ? user.id : Number(user?.id) || 0;
 
   const [hasPermission, setHasPermission] = useState(Platform.OS !== 'android');
   const [callActive, setCallActive] = useState(true);
   const [rtcToken, setRtcToken] = useState<string | undefined>(
     AGORA_TEMP_TOKEN || undefined,
   );
+  const [rtcUid, setRtcUid] = useState<number>(fallbackUid);
+  const [tokenReady, setTokenReady] = useState(Boolean(AGORA_TEMP_TOKEN));
+  const [tokenError, setTokenError] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(
     !isReceiver && Platform.OS !== 'ios',
   );
@@ -170,34 +175,56 @@ const VideoCall = () => {
   useEffect(() => {
     let cancelled = false;
     if (AGORA_TEMP_TOKEN || !chatId) {
+      setTokenReady(Boolean(AGORA_TEMP_TOKEN) || !chatId);
       return;
     }
-    GetLiveStreamToken(`chat_${chatId}`)
+    setTokenReady(false);
+    setTokenError(null);
+    GetCallRtcToken(`chat_${chatId}`)
       .then((res: any) => {
+        const data = res?.data?.data ?? res?.data ?? {};
         const token =
-          res?.data?.data?.token ||
-          res?.data?.data?.rtcToken ||
-          res?.data?.token ||
-          res?.data?.data;
-        if (!cancelled && typeof token === 'string' && token.length > 0) {
+          data?.agora_token ||
+          data?.token ||
+          data?.rtcToken ||
+          (typeof data === 'string' ? data : null);
+        const uidRaw = data?.uid;
+        const uid =
+          typeof uidRaw === 'number'
+            ? uidRaw
+            : Number(uidRaw) || fallbackUid;
+        if (cancelled) {
+          return;
+        }
+        if (typeof token === 'string' && token.length > 0) {
           setRtcToken(token);
+          if (uid > 0) {
+            setRtcUid(uid);
+          }
+          setTokenReady(true);
+        } else {
+          setTokenError('Could not get call token');
         }
       })
       .catch(err => {
         console.warn('[VideoCall] token fetch failed', err);
+        if (!cancelled) {
+          setTokenError('Could not get call token');
+        }
       });
     return () => {
       cancelled = true;
     };
-  }, [chatId]);
+  }, [chatId, fallbackUid]);
 
   const connectionData = useMemo(
     () => ({
       appId: AGORA_APP_ID,
       channel: channelName,
       rtcToken: rtcToken,
+      rtcUid: rtcUid > 0 ? rtcUid : undefined,
     }),
-    [channelName, rtcToken],
+    [channelName, rtcToken, rtcUid],
   );
 
   const settings = useMemo(
@@ -363,6 +390,27 @@ const VideoCall = () => {
 
   if (!callActive) {
     return null;
+  }
+
+  if (tokenError) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="light-content" backgroundColor="#000" />
+        <Text style={styles.permissionText}>{tokenError}</Text>
+      </SafeAreaView>
+    );
+  }
+
+  if (!tokenReady || !rtcToken) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="light-content" backgroundColor="#000" />
+        <View style={styles.connectingOverlay}>
+          <ActivityIndicator size="large" color="#fff" />
+          <Text style={styles.connectingText}>Connecting...</Text>
+        </View>
+      </SafeAreaView>
+    );
   }
 
   return (

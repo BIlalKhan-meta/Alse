@@ -5,6 +5,7 @@ import {
   StyleSheet,
   FlatList,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import SearchResultItem, {SearchResultType} from './SearchResultItem';
 
@@ -96,8 +97,10 @@ const SearchResultsList: React.FC<SearchResultsListProps> = ({
         style={styles.list}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="always"
-        keyboardDismissMode="none"
+        keyboardShouldPersistTaps={
+          Platform.OS === 'ios' ? 'handled' : 'always'
+        }
+        keyboardDismissMode={Platform.OS === 'ios' ? 'on-drag' : 'none'}
         onEndReached={hasMore ? onLoadMore : undefined}
         onEndReachedThreshold={0.5}
         ListFooterComponent={renderFooter}

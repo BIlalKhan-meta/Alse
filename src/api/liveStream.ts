@@ -21,6 +21,13 @@ export const GetLiveStreamToken = async (channel: string) => {
   );
 };
 
+/** Publisher RTC token for 1:1 audio/video calls (uid = auth user). */
+export const GetCallRtcToken = async (channel: string) => {
+  return axiosInstance.get(
+    `${endpoints.liveStream.getRtcToken}/${encodeURIComponent(channel)}`,
+  );
+};
+
 export const GetAgoraRtmToken = async () => {
   return axiosInstance.get(endpoints.liveStream.getRtmToken);
 };

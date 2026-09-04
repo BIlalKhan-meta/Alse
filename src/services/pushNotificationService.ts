@@ -381,11 +381,29 @@ function routeNotification(remoteMessage: RemoteMessage, fromUserPress: boolean)
   const deepLinkRoute = parseDeepLink(dataString(data, 'deep_link'));
 
   if (isIncomingCall(remoteMessage) && chatId) {
+    const callTypeRaw =
+      dataString(data, 'call_type') ||
+      dataString(data, 'callType') ||
+      dataString(data, 'is_video');
+    const callType =
+      String(callTypeRaw).toLowerCase() === 'audio' ||
+      callTypeRaw === '0' ||
+      callTypeRaw === 'false'
+        ? 'audio'
+        : 'video';
     navigateWhenReady('AcknowledgeCall', {
       chat_id: chatId,
       role: '0',
       name: data.name,
       image: data.avatar,
+      callType,
+      call_type: callType,
+      callId: dataString(data, 'call_id') || dataString(data, 'callId'),
+      callerId:
+        dataString(data, 'caller_id') ||
+        dataString(data, 'callerId') ||
+        dataString(data, 'sender_id'),
+      isVideo: callType === 'video',
     });
     return;
   }
