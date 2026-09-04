@@ -155,9 +155,15 @@ export const getConversations = search => {
 export const getChat = id => {
   return axiosInstance.get(`${endpoints.chat.fetchChat}/${id}`);
 };
-export const createMessage = formData => {
-  return axiosInstance.post(`${endpoints.chat.send}`, formData, {
-    formData: true,
+
+/** Text chat message — JSON body (avoid RN axios FormData issues). */
+export const createMessage = (payload: {
+  chat_id: string | number;
+  message: string;
+}) => {
+  return axiosInstance.post(endpoints.chat.send, {
+    chat_id: payload.chat_id,
+    message: payload.message,
   });
 };
 export const createGroup = (formData: FormData) => {

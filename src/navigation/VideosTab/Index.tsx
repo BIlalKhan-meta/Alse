@@ -492,10 +492,10 @@ const VideosTab = () => {
       try {
         await Promise.all(
           chatIds.map(async chatId => {
-            const form = new FormData();
-            form.append('chat_id', String(chatId));
-            form.append('message', message);
-            await createMessage(form);
+            await createMessage({
+              chat_id: chatId,
+              message,
+            });
             emitMessage({
               chat_id: chatId,
               message,

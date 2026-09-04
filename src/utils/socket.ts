@@ -71,6 +71,7 @@ export const emitMessage = (payload: {
   video?: string;
   message_type?: 'text' | 'image' | 'video' | 'call';
   created_at?: number;
+  id?: string | number;
   user?: {_id: string | number; avatar?: string};
 }) => {
   const auth = ensureAuthConnect();

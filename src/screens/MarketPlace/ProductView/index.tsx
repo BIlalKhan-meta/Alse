@@ -265,10 +265,10 @@ const ProductView: React.FC = () => {
       try {
         await Promise.all(
           chatIds.map(async chatId => {
-            const form = new FormData();
-            form.append('chat_id', String(chatId));
-            form.append('message', message);
-            await createMessage(form);
+            await createMessage({
+              chat_id: chatId,
+              message,
+            });
           }),
         );
 
@@ -426,10 +426,10 @@ const ProductView: React.FC = () => {
         throw new Error('Unable to start chat with this store.');
       }
 
-      const messageForm = new FormData();
-      messageForm.append('chat_id', String(chatId));
-      messageForm.append('message', offerMessage);
-      await createMessage(messageForm);
+      await createMessage({
+        chat_id: chatId,
+        message: offerMessage,
+      });
 
       setOfferModalVisible(false);
       Toast.success('Your offer has been sent to the store.');

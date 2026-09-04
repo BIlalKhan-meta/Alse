@@ -4,6 +4,7 @@ import React, {
   useEffect,
   useLayoutEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import {
@@ -65,6 +66,8 @@ import {
   createFile,
   createVideoFile,
   getAbsoluteAvatarUrl,
+  getMessage,
+  Toast,
 } from '../../utils/helpers';
 import {
   normalizeChatMessageText,
@@ -159,6 +162,9 @@ const ChatOngoing: React.FC<Props> = props => {
   );
   const [isMediaUploading, setIsMediaUploading] = useState(false);
   const [mediaUploadLabel, setMediaUploadLabel] = useState('Sending media...');
+  /** Optimistic message ids not yet confirmed by the API — survive the 3s poll. */
+  const pendingOptimisticIds = useRef<Set<string>>(new Set());
+  const isSendingRef = useRef(false);
 
   const renderMessageImageFullscreen = useMemo(
     () => createRenderMessageImage(uri => setFullscreenImageUri(uri)),
@@ -344,12 +350,10 @@ const ChatOngoing: React.FC<Props> = props => {
         },
       });
 
-      const fd = new FormData();
-      fd.append('chat_id', String(chatId));
-      fd.append(
-        'message',
-        callType === 'video' ? 'Video call' : 'Voice call',
-      );
+      const fd = {
+        chat_id: chatId,
+        message: callType === 'video' ? 'Video call' : 'Voice call',
+      };
       createMessage(fd).catch((err: any) => {
         console.warn('createMessage call invite', err);
       });
@@ -582,6 +586,10 @@ const ChatOngoing: React.FC<Props> = props => {
     if (!props?.route?.params?.id) {
       return;
     }
+    // Don't clobber the list mid-send — poll will catch up after.
+    if (isSendingRef.current) {
+      return;
+    }
 
     getChat(props?.route?.params?.id)
       .then((res: any) => {
@@ -589,28 +597,46 @@ const ChatOngoing: React.FC<Props> = props => {
         const formattedMessages = messagesData
           .filter((item: any) => {
             const t = normalizeChatMessageText(item?.message, item?.text);
-            return !shouldOmitCallDeclineFromChat(t) && !shouldOmitCallDeclineFromChat(item?.message);
+            return (
+              !shouldOmitCallDeclineFromChat(t) &&
+              !shouldOmitCallDeclineFromChat(item?.message)
+            );
           })
           .map((item: any) => {
-          const {imageUrl, videoUrl} = resolveChatAttachmentUrls(item);
-          const text = normalizeChatMessageText(item?.message, item?.text);
-          return {
-            _id: item?.id || Math.random(),
-            chat_id: item?.chat_id,
-            text,
-            image: imageUrl,
-            video: videoUrl,
-            createdAt: new Date(item?.created_at || Date.now()),
-            user: {
-              _id: item?.user_id,
-              avatar:
-                getAbsoluteAvatarUrl(
-                  item?.user_image || item?.avatar || item?.sender_image,
-                ) || images.profile,
-            },
-          };
+            const {imageUrl, videoUrl} = resolveChatAttachmentUrls(item);
+            const text = normalizeChatMessageText(item?.message, item?.text);
+            return {
+              _id: item?.id || Math.random(),
+              chat_id: item?.chat_id,
+              text,
+              image: imageUrl,
+              video: videoUrl,
+              createdAt: new Date(item?.created_at || Date.now()),
+              user: {
+                _id: item?.user_id,
+                avatar:
+                  getAbsoluteAvatarUrl(
+                    item?.user_image || item?.avatar || item?.sender_image,
+                  ) || images.profile,
+              },
+            };
+          });
+
+        setMessages(previousMessages => {
+          const pending = previousMessages.filter(m =>
+            pendingOptimisticIds.current.has(String(m._id)),
+          );
+          if (pending.length === 0) {
+            return formattedMessages;
+          }
+          const serverIds = new Set(
+            formattedMessages.map(m => String(m._id)),
+          );
+          const stillPending = pending.filter(
+            m => !serverIds.has(String(m._id)),
+          );
+          return [...stillPending, ...formattedMessages];
         });
-        setMessages(formattedMessages);
       })
       .catch((Err: any) => {
         console.log('Error from get Conversation:', Err);
@@ -645,45 +671,70 @@ const ChatOngoing: React.FC<Props> = props => {
   }, [props?.route?.params?.id, appendIncomingMessage]);
 
   const onSend = useCallback(
-    (newMessages: IMessage[] = []) => {
-      // Immediately update the UI with optimistic update
+    async (newMessages: IMessage[] = []) => {
+      const message = newMessages?.[0];
+      const chatId = props?.route?.params?.id;
+      if (!message?.text || !user?.id || !chatId) {
+        return;
+      }
+
+      const tempId = message._id;
+      pendingOptimisticIds.current.add(String(tempId));
       setMessages(previousMessages =>
         GiftedChat.append(previousMessages, newMessages),
       );
 
-      const message = newMessages?.[0];
-      if (!message?.text || !user?.id || !props?.route?.params?.id) {
-        return;
-      }
+      isSendingRef.current = true;
       setIsSendingMessage(true);
+      connectSocket();
 
-      const form = new FormData();
-      form.append('chat_id', String(props.route.params.id));
-      form.append('message', message.text);
-
-      emitMessage({
-        chat_id: props.route.params.id,
-        message: message.text,
-        created_at: Date.now(),
-        user: {
-          _id: user.id,
-          avatar: user?.avatar ? user.avatar : images.profile,
-        },
-      });
-
-      // Save to backend (async, doesn't block UI)
-      createMessage(form)
-        .then((_res: any) => {
-          console.log('Message saved successfully');
-        })
-        .catch((Err: any) => {
-          console.log('Error saving message:', Err);
-        })
-        .finally(() => {
-          setIsSendingMessage(false);
+      try {
+        const res: any = await createMessage({
+          chat_id: chatId,
+          message: message.text,
         });
+        const saved = res?.data?.data;
+
+        emitMessage({
+          chat_id: chatId,
+          message: message.text,
+          created_at: Date.now(),
+          user: {
+            _id: user.id,
+            avatar: user?.avatar ? user.avatar : images.profile,
+          },
+          ...(saved?.id != null ? {id: saved.id} : {}),
+        });
+
+        if (saved?.id != null) {
+          pendingOptimisticIds.current.delete(String(tempId));
+          setMessages(prev =>
+            prev.map(m =>
+              String(m._id) === String(tempId)
+                ? {
+                    ...m,
+                    _id: saved.id,
+                    createdAt: new Date(saved.created_at || Date.now()),
+                  }
+                : m,
+            ),
+          );
+        } else {
+          pendingOptimisticIds.current.delete(String(tempId));
+          getData();
+        }
+      } catch (err: any) {
+        pendingOptimisticIds.current.delete(String(tempId));
+        setMessages(prev =>
+          prev.filter(m => String(m._id) !== String(tempId)),
+        );
+        Toast.error(getMessage(err) || 'Failed to send message');
+      } finally {
+        isSendingRef.current = false;
+        setIsSendingMessage(false);
+      }
     },
-    [props?.route?.params?.id, user?.id, user?.avatar],
+    [props?.route?.params?.id, user?.id, user?.avatar, getData],
   );
 
   useLayoutEffect(() => {

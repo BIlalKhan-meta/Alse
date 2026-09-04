@@ -293,7 +293,7 @@ class ChatSocket {
    * Check if socket is connected
    */
   isSocketConnected() {
-    return this.socket && this.isConnected;
+    return !!(this.socket && (this.isConnected || this.socket.connected));
   }
 
   /**
@@ -311,7 +311,7 @@ class ChatSocket {
    * Run when socket is connected (immediately if already connected).
    */
   onceConnected(fn: () => void) {
-    if (this.socket && this.isConnected) {
+    if (this.socket && (this.isConnected || this.socket.connected)) {
       fn();
       return;
     }
@@ -331,9 +331,10 @@ class ChatSocket {
     audio?: string;
     message_type?: string;
     created_at?: number;
+    id?: string | number;
     user?: {_id: string | number; avatar?: string};
   }) {
-    if (!this.socket || !this.isConnected) {
+    if (!this.socket || !(this.isConnected || this.socket.connected)) {
       console.error('[Socket] ❌ Cannot emitAlseChatMessage: not connected');
       return false;
     }
@@ -342,6 +343,12 @@ class ChatSocket {
       ...payload,
       chat_id: String(payload.chat_id),
       text:
+        typeof payload.message === 'string'
+          ? payload.message
+          : payload.message != null
+            ? String(payload.message)
+            : '',
+      message:
         typeof payload.message === 'string'
           ? payload.message
           : payload.message != null
