@@ -20,6 +20,8 @@ import {
   ClientRoleType,
   ConnectionStateType,
   RemoteVideoState,
+  RenderModeType,
+  VideoSourceType,
   RtcSurfaceView,
   RtcTextureView,
   RtcConnection,
@@ -68,6 +70,36 @@ const RemoteVideoView = Platform.OS === 'android' ? RtcTextureView : RtcSurfaceV
 
 const JOIN_TIMEOUT_MS = 30000;
 const FIRST_FRAME_FALLBACK_MS = Platform.OS === 'android' ? 12000 : 400;
+
+const toUid = (value: unknown): number => {
+  const n = Number(value);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+};
+
+/** Agora events sometimes pack uid into the connection object. */
+const extractRemoteUid = (...args: unknown[]): number => {
+  if (typeof args[1] === 'number') {
+    const n = toUid(args[1]);
+    if (n) {
+      return n;
+    }
+  }
+  if (typeof args[0] === 'number') {
+    const n = toUid(args[0]);
+    if (n) {
+      return n;
+    }
+  }
+  for (const arg of args) {
+    if (arg && typeof arg === 'object') {
+      const n = toUid((arg as Record<string, unknown>).remoteUid);
+      if (n) {
+        return n;
+      }
+    }
+  }
+  return 0;
+};
 
 const sanitizeLiveID = (value: string): string =>
   String(value || '').replace(/[^a-zA-Z0-9_]/g, '_') || `live_${Date.now()}`;
@@ -571,10 +603,12 @@ const LiveStreamScreen = () => {
         if (leavingRef.current || hostEndedRef.current) {
           return;
         }
-        if (!uidJoined || uidJoined === uid) {
+        const remote = toUid(uidJoined);
+        if (!remote || remote === uid) {
           return;
         }
-        setRemoteUid(uidJoined);
+        setRemoteUid(remote);
+        setRemoteVideoStarted(true);
       };
 
       const markJoined = (source: string, channelId?: string) => {
@@ -590,9 +624,12 @@ const LiveStreamScreen = () => {
         setLoading(false);
         setError(null);
         if (!asHost) {
-          const hint = hostUid || pendingJoinRef.current?.hostUid;
+          const hint = toUid(hostUid || pendingJoinRef.current?.hostUid);
           if (hint && hint !== uid) {
             setRemoteUid(prev => prev ?? hint);
+            // Host is already in the channel; don't keep the waiting overlay
+            // up until onFirstRemoteVideoFrame (often missing on Android).
+            setRemoteVideoStarted(true);
           }
         }
       };
@@ -615,39 +652,36 @@ const LiveStreamScreen = () => {
           console.log('[LiveStream] event onFirstLocalVideoFrame');
           joinPendingChannel();
         },
-        onUserJoined: (_connection: RtcConnection, uidJoined: number) => {
-          console.log('[LiveStream] event onUserJoined', uidJoined);
+        onUserJoined: (...args: any[]) => {
+          const uidJoined = extractRemoteUid(...args);
+          console.log('[LiveStream] event onUserJoined', uidJoined, args?.[0]);
           applyRemoteUid(uidJoined);
         },
-        onUserOffline: (_connection: RtcConnection, uidOffline: number) => {
+        onUserOffline: (...args: any[]) => {
+          const uidOffline = extractRemoteUid(...args);
           console.log('[LiveStream] event onUserOffline', uidOffline);
           setRemoteUid(prev => (prev === uidOffline ? null : prev));
           setRemoteVideoStarted(false);
         },
-        onFirstRemoteVideoFrame: (
-          _connection: RtcConnection,
-          uidJoined: number,
-        ) => {
+        onFirstRemoteVideoFrame: (...args: any[]) => {
+          const uidJoined = extractRemoteUid(...args);
           console.log('[LiveStream] event onFirstRemoteVideoFrame', uidJoined);
           applyRemoteUid(uidJoined);
-          setRemoteVideoStarted(true);
         },
-        onRemoteVideoStateChanged: (
-          _connection: RtcConnection,
-          uidJoined: number,
-          state: RemoteVideoState,
-        ) => {
+        onRemoteVideoStateChanged: (...args: any[]) => {
+          const uidJoined = extractRemoteUid(...args);
+          const state = typeof args[2] === 'number' ? args[2] : undefined;
           console.log(
             '[LiveStream] event onRemoteVideoStateChanged',
             uidJoined,
             state,
           );
           if (
+            state === undefined ||
             state === RemoteVideoState.RemoteVideoStateDecoding ||
             state === RemoteVideoState.RemoteVideoStateStarting
           ) {
             applyRemoteUid(uidJoined);
-            setRemoteVideoStarted(true);
           } else if (
             state === RemoteVideoState.RemoteVideoStateStopped ||
             state === RemoteVideoState.RemoteVideoStateFailed
@@ -717,7 +751,7 @@ const LiveStreamScreen = () => {
         chName,
         uid,
         asHost,
-        hostUid: hostUid && hostUid > 0 ? hostUid : undefined,
+        hostUid: toUid(hostUid) || undefined,
         previewLaunched: false,
         joinLaunched: false,
       };
@@ -1049,12 +1083,12 @@ const LiveStreamScreen = () => {
         stream_key: pending.stream.stream_key,
         streamerName: pending.stream.user_name,
         channel_name: pending.stream.channel_name,
-        hostUid: pending.stream.user_id || undefined,
+        hostUid: toUid(pending.stream.user_id) || undefined,
       });
       startViewerSession(
         pending.stream.stream_key,
         pending.stream.channel_name || `agora.${pending.stream.stream_key}`,
-        pending.stream.user_id || undefined,
+        pending.stream.user_id ? toUid(pending.stream.user_id) : undefined,
       );
     };
     if (Platform.OS === 'android') {
@@ -1195,16 +1229,15 @@ const LiveStreamScreen = () => {
     loading && !previewStarted && !joined && !error;
   const showControls =
     (previewStarted || joined || (engineReady && effectiveIsHost)) && !error;
-  const remoteCanvasUid =
-    !effectiveIsHost && (joined || remoteUid != null)
-      ? remoteUid ?? effectiveMode?.hostUid ?? null
-      : null;
+  const remoteCanvasUid = !effectiveIsHost
+    ? toUid(remoteUid ?? effectiveMode?.hostUid)
+    : 0;
   const showWaitingForHost =
     !effectiveIsHost &&
-    joined &&
-    !remoteVideoStarted &&
     !error &&
-    !showChoiceModal;
+    !showChoiceModal &&
+    !showBlockingLoader &&
+    remoteCanvasUid === 0;
 
   return (
     <View style={styles.container}>
@@ -1216,10 +1249,14 @@ const LiveStreamScreen = () => {
             canvas={{uid: 0}}
             onLayout={onHostSurfaceLayout}
           />
-        ) : remoteCanvasUid != null ? (
+        ) : engineReady && remoteCanvasUid > 0 ? (
           <RemoteVideoView
             style={styles.video}
-            canvas={{uid: remoteCanvasUid}}
+            canvas={{
+              uid: remoteCanvasUid,
+              sourceType: VideoSourceType.VideoSourceRemote,
+              renderMode: RenderModeType.RenderModeHidden,
+            }}
           />
         ) : (
           <View style={styles.video} />
