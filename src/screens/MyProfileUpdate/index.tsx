@@ -83,43 +83,40 @@ const MyProfileUpdate: React.FC = () => {
     {resetForm}: {resetForm: () => void},
   ) => {
     setSubmitted(true);
-    const data = {
-      full_name: values?.username,
-      // dialing_code: values?.countryCode,
-      // phone_number: values?.contactNo,
-      // dob: dayjs(values?.birthdate).format('YYYY-MM-DD'),
-    };
-    if (profileImage.type !== '') {
-      // let imagePath = image.split('/');
+    const data: Record<string, any> = {};
 
-      const uploadedImage = {
-        uri: profileImage?.uri,
-        name: profileImage?.name,
-        type: profileImage?.type,
-      };
-
-      console.log('uploadedImage= ==>', uploadedImage);
-      // console.log('uploadedCover= ==>', uploadedCover);
-
-      data['avatar'] = uploadedImage;
+    const nextName = String((values as any)?.username ?? '').trim();
+    const prevName = String(user?.full_name ?? '').trim();
+    if (nextName && nextName !== prevName) {
+      data.full_name = nextName;
     }
 
-    if (bannerImage && updatingBanner) {
-      const uploadedCover = {
-        uri: bannerImage.uri,
-        name: bannerImage?.name,
-        type: bannerImage?.type,
+    // Backend expects file field name `image` for avatar uploads.
+    if (profileImage.type !== '') {
+      data.image = {
+        uri: profileImage?.uri,
+        name: profileImage?.name || `avatar-${Date.now()}.jpg`,
+        type: profileImage?.type || 'image/jpeg',
       };
-      data['cover_image'] = uploadedCover;
+    }
+
+    if (bannerImage && updatingBanner && bannerImage.type) {
+      data.cover_image = {
+        uri: bannerImage.uri,
+        name: bannerImage?.name || `cover-${Date.now()}.jpg`,
+        type: bannerImage?.type || 'image/jpeg',
+      };
+    }
+
+    if (Object.keys(data).length === 0) {
+      setSubmitted(false);
+      return;
     }
 
     let formData = new FormData();
-
-    Object.entries(data).forEach(item => {
-      formData.append(item[0], item[1]);
+    Object.entries(data).forEach(([key, value]) => {
+      formData.append(key, value);
     });
-
-    console.log('CHECKKKKKKKKKKKK', JSON.stringify(formData, null, 4));
 
     await editProfile(formData)
       .then(res => {
@@ -132,7 +129,6 @@ const MyProfileUpdate: React.FC = () => {
         setSubmitted(false);
         console.log('ERORRRRRR', err);
       });
-    // resetForm();
   };
 
   const handleImageCapture = (isBanner: boolean) => {

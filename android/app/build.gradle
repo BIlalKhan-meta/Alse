@@ -67,8 +67,8 @@ android {
         applicationId "com.blitzapp.alenga.alse"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1027
-        versionName "1.0.27"
+        versionCode 1029
+        versionName "1.0.29"
 
         if (project.hasProperty("e2eAbi")) {
             ndk {
@@ -131,6 +131,12 @@ android {
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }
+    }
+
+    // Avoid AGP lintVital Metaspace OOMs on large RN deps (e.g. react-native-video).
+    lint {
+        checkReleaseBuilds false
+        abortOnError false
     }
 }
 

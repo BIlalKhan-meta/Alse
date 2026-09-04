@@ -424,9 +424,13 @@ export async function initAgoraRtm(
       console.log(TAG, 'RTM call listeners set up');
     } catch (err) {
       console.error(TAG, 'init error:', err);
+      // Never mark initialized on failure — that lets callers hit native
+      // LocalInvitation NPEs (ALSE-H) while RTM login/call manager is not ready.
       if (nativeRtmAlreadyCreated()) {
-        isInitialized = true;
-        console.warn(TAG, 'keeping existing native RTM after init error');
+        console.warn(
+          TAG,
+          'native RTM exists but init failed; leaving isInitialized=false for retry',
+        );
         return;
       }
       // Tear down half-initialized native engine so the next init can retry safely.
@@ -571,16 +575,32 @@ export async function sendLocalInvitation(
     channelId =
       options?.chatId != null ? `chat_${options.chatId}` : 'default';
   }
-  const content = options?.content ?? '';
+  let content = options?.content ?? '';
   if (content.length > 8 * 1024) {
     console.warn(TAG, 'sendLocalInvitation: content exceeds 8 KB, truncating');
+    content = content.slice(0, 8 * 1024);
   }
   try {
     const localInvitation = await rtmEngine.createLocalInvitation(
       String(calleeId),
       content || undefined,
-      channelId
+      channelId,
     );
+    // Native Android used to NPE in getLocalInvitation when the invitation
+    // map lookup failed (ALSE-H). Refuse to send unless we have a usable invite.
+    if (
+      !localInvitation ||
+      typeof localInvitation !== 'object' ||
+      !localInvitation.calleeId ||
+      localInvitation.hash == null
+    ) {
+      console.warn(
+        TAG,
+        'sendLocalInvitation: invalid local invitation from SDK, skipping',
+        localInvitation,
+      );
+      return;
+    }
     localInvitationAccepted = false; // New call – not yet accepted
     currentLocalInvitation = localInvitation;
     await rtmEngine.sendLocalInvitationV2(localInvitation);
@@ -588,7 +608,7 @@ export async function sendLocalInvitation(
   } catch (err) {
     currentLocalInvitation = null;
     console.error(TAG, 'sendLocalInvitation error:', err);
-    throw err;
+    // Do not rethrow — socket/push invite paths still deliver the call.
   }
 }
 

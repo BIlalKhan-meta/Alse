@@ -126,6 +126,7 @@ const Settings = ({navigation}: any) => {
     storeName: user?.store_name || '',
     storeDescription: user?.store_description || '',
   });
+  const [profileBaseline, setProfileBaseline] = useState(localProfileData);
 
   useEffect(() => {
     dispatch(fetchAllSettings());
@@ -133,7 +134,7 @@ const Settings = ({navigation}: any) => {
 
   useEffect(() => {
     if (user) {
-      setLocalProfileData({
+      const next = {
         firstName: user?.first_name || user?.full_name?.split(' ')[0] || '',
         lastName: user?.last_name || user?.full_name?.split(' ')[1] || '',
         userName: user?.username || user?.full_name || '',
@@ -142,7 +143,9 @@ const Settings = ({navigation}: any) => {
         pronouns: user?.pronouns || '',
         storeName: user?.store_name || '',
         storeDescription: user?.store_description || '',
-      });
+      };
+      setLocalProfileData(next);
+      setProfileBaseline(next);
       if (user?.avatar) {
         setAvatarUri(user.avatar);
       }
@@ -376,9 +379,11 @@ const Settings = ({navigation}: any) => {
 
               <ProfileForm
                 profileData={localProfileData}
+                initialProfileData={profileBaseline}
                 handleProfileUpdate={handleProfileUpdate}
                 setIsEditing={() => setIsEditing(false)}
                 onProfileUpdateSuccess={() => {
+                  setProfileBaseline(localProfileData);
                   dispatch(GetUserProfile());
                   if (isEditMode && navigation.canGoBack()) {
                     navigation.goBack();

@@ -1,0 +1,116 @@
+diff --git a/node_modules/agora-react-native-rtm/android/src/main/java/io/agora/agora_rtm/AgoraRTMModule.java b/node_modules/agora-react-native-rtm/android/src/main/java/io/agora/agora_rtm/AgoraRTMModule.java
+index 52ca3b0..3c7a37e 100644
+--- a/node_modules/agora-react-native-rtm/android/src/main/java/io/agora/agora_rtm/AgoraRTMModule.java
++++ b/node_modules/agora-react-native-rtm/android/src/main/java/io/agora/agora_rtm/AgoraRTMModule.java
+@@ -400,6 +400,9 @@ public class AgoraRTMModule extends ReactContextBaseJavaModule
+     } else {
+       ret = localInvitations.get(hash);
+     }
++    if (ret == null) {
++      return null;
++    }
+     String content = Extensions.getString(localInvitation, "content");
+     if (!TextUtils.isEmpty(content))
+       ret.setContent(content);
+@@ -424,6 +427,9 @@ public class AgoraRTMModule extends ReactContextBaseJavaModule
+     } else {
+       ret = remoteInvitations.get(hash);
+     }
++    if (ret == null) {
++      return null;
++    }
+     String response = Extensions.getString(remoteInvitation, "response");
+     if (!TextUtils.isEmpty(response))
+       ret.setResponse(response);
+@@ -432,29 +438,57 @@ public class AgoraRTMModule extends ReactContextBaseJavaModule
+ 
+   @ReactMethod
+   public void createLocalInvitation(ReadableMap params, Promise promise) {
++    if (rtmClient == null || rtmClient.getRtmCallManager() == null) {
++      promise.reject("E_RTM_NOT_READY", "RTM client is not ready to create invitations");
++      return;
++    }
+     LocalInvitation localInvitation = Extensions.mapToLocalInvitation(params.toHashMap(), rtmClient.getRtmCallManager());
++    if (localInvitation == null) {
++      promise.reject("E_RTM_INVITE_NULL", "Failed to create local invitation");
++      return;
++    }
+     localInvitations.put(System.identityHashCode(localInvitation), localInvitation);
+     promise.resolve(Arguments.makeNativeMap(Extensions.toMap(localInvitation)));
+   }
+ 
+   @ReactMethod
+   public void sendLocalInvitation(ReadableMap params, Promise promise) {
+-    rtmClient.getRtmCallManager().sendLocalInvitation(getLocalInvitation(params), new BaseResultCallback<>(promise));
++    LocalInvitation invitation = getLocalInvitation(params);
++    if (invitation == null) {
++      promise.reject("E_RTM_INVITE_NOT_FOUND", "Local invitation not found");
++      return;
++    }
++    rtmClient.getRtmCallManager().sendLocalInvitation(invitation, new BaseResultCallback<>(promise));
+   }
+ 
+   @ReactMethod
+   public void cancelLocalInvitation(ReadableMap params, Promise promise) {
+-    rtmClient.getRtmCallManager().cancelLocalInvitation(getLocalInvitation(params), new BaseResultCallback<>(promise));
++    LocalInvitation invitation = getLocalInvitation(params);
++    if (invitation == null) {
++      promise.reject("E_RTM_INVITE_NOT_FOUND", "Local invitation not found");
++      return;
++    }
++    rtmClient.getRtmCallManager().cancelLocalInvitation(invitation, new BaseResultCallback<>(promise));
+   }
+ 
+   @ReactMethod
+   public void acceptRemoteInvitation(ReadableMap params, Promise promise) {
+-    rtmClient.getRtmCallManager().acceptRemoteInvitation(getRemoteInvitation(params), new BaseResultCallback<>(promise));
++    RemoteInvitation invitation = getRemoteInvitation(params);
++    if (invitation == null) {
++      promise.reject("E_RTM_INVITE_NOT_FOUND", "Remote invitation not found");
++      return;
++    }
++    rtmClient.getRtmCallManager().acceptRemoteInvitation(invitation, new BaseResultCallback<>(promise));
+   }
+ 
+   @ReactMethod
+   public void refuseRemoteInvitation(ReadableMap params, Promise promise) {
+-    rtmClient.getRtmCallManager().refuseRemoteInvitation(getRemoteInvitation(params), new BaseResultCallback<>(promise));
++    RemoteInvitation invitation = getRemoteInvitation(params);
++    if (invitation == null) {
++      promise.reject("E_RTM_INVITE_NOT_FOUND", "Remote invitation not found");
++      return;
++    }
++    rtmClient.getRtmCallManager().refuseRemoteInvitation(invitation, new BaseResultCallback<>(promise));
+   }
+ 
+   /* RtmClientListener */
+diff --git a/node_modules/agora-react-native-rtm/android/src/main/java/io/agora/agora_rtm/Extensions.java b/node_modules/agora-react-native-rtm/android/src/main/java/io/agora/agora_rtm/Extensions.java
+index 3eec7f3..6bb0432 100644
+--- a/node_modules/agora-react-native-rtm/android/src/main/java/io/agora/agora_rtm/Extensions.java
++++ b/node_modules/agora-react-native-rtm/android/src/main/java/io/agora/agora_rtm/Extensions.java
+@@ -137,9 +137,22 @@ public class Extensions {
+   }
+ 
+   public static LocalInvitation mapToLocalInvitation(Map<?, ?> map, @Nonnull RtmCallManager rtmCallManager) {
+-    LocalInvitation ret = rtmCallManager.createLocalInvitation(getString(map, "calleeId"));
+-    ret.setContent(getString(map, "content"));
+-    ret.setChannelId(getString(map, "channelId"));
++    String calleeId = getString(map, "calleeId");
++    if (calleeId == null || calleeId.isEmpty()) {
++      return null;
++    }
++    LocalInvitation ret = rtmCallManager.createLocalInvitation(calleeId);
++    if (ret == null) {
++      return null;
++    }
++    String content = getString(map, "content");
++    if (content != null) {
++      ret.setContent(content);
++    }
++    String channelId = getString(map, "channelId");
++    if (channelId != null) {
++      ret.setChannelId(channelId);
++    }
+     return ret;
+   }
+ 

@@ -8,10 +8,10 @@ buildscript {
         // kotlinVersion = "2.0.0"
 
 
-        buildToolsVersion = "35.0.0"
+        buildToolsVersion = "36.0.0"
         // minSdkVersion = 24
-        compileSdkVersion = 35
-        targetSdkVersion = 35
+        compileSdkVersion = 36
+        targetSdkVersion = 36
         ndkVersion = "27.1.12297006"
         kotlinVersion = "2.0.21"
     }
@@ -28,3 +28,15 @@ buildscript {
 }
 
 apply plugin: "com.facebook.react.rootproject"
+
+// Disable AGP lintVital tasks — they OOM Metaspace on large RN deps (e.g. react-native-video).
+gradle.projectsEvaluated {
+    rootProject.subprojects.each { subproject ->
+        subproject.tasks.matching { it.name.toLowerCase().contains("lintvital") }.configureEach {
+            enabled = false
+        }
+    }
+    rootProject.tasks.matching { it.name.toLowerCase().contains("lintvital") }.configureEach {
+        enabled = false
+    }
+}

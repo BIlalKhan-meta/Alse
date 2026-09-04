@@ -3173,12 +3173,6 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-zego-express-engine (3.22.0):
-    - React
-    - ZegoExpressEngine (= 3.22.0)
-  - react-native-zego-zim (2.27.0):
-    - React
-    - ZIM (= 2.27.0)
   - React-NativeModulesApple (0.79.6):
     - glog
     - hermes-engine
@@ -3942,15 +3936,6 @@ PODS:
   - VisionCamera/React (4.7.3):
     - React-Core
   - Yoga (0.0.0)
-  - zego-uikit-prebuilt-live-streaming-rn (2.9.0):
-    - React-Core
-    - zego-uikit-rn
-  - zego-uikit-rn (2.19.2):
-    - React-Core
-    - ZegoUIKitReport (= 0.5.1)
-  - ZegoExpressEngine (3.22.0)
-  - ZegoUIKitReport (0.5.1)
-  - ZIM (2.27.0)
 
 DEPENDENCIES:
   - agora-react-native-rtm (from `../node_modules/agora-react-native-rtm`)
@@ -4022,8 +4007,6 @@ DEPENDENCIES:
   - react-native-video (from `../node_modules/react-native-video`)
   - react-native-view-shot (from `../node_modules/react-native-view-shot`)
   - react-native-webview (from `../node_modules/react-native-webview`)
-  - react-native-zego-express-engine (from `../node_modules/zego-express-engine-reactnative`)
-  - react-native-zego-zim (from `../node_modules/zego-zim-react-native`)
   - React-NativeModulesApple (from `../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios`)
   - React-oscompat (from `../node_modules/react-native/ReactCommon/oscompat`)
   - React-perflogger (from `../node_modules/react-native/ReactCommon/reactperflogger`)
@@ -4087,8 +4070,6 @@ DEPENDENCIES:
   - VideoTrim (from `../node_modules/react-native-video-trim`)
   - VisionCamera (from `../node_modules/react-native-vision-camera`)
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
-  - "zego-uikit-prebuilt-live-streaming-rn (from `../node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn`)"
-  - "zego-uikit-rn (from `../node_modules/@zegocloud/zego-uikit-rn`)"
 
 SPEC REPOS:
   trunk:
@@ -4128,9 +4109,6 @@ SPEC REPOS:
     - SDWebImageWebPCoder
     - SocketRocket
     - TOCropViewController
-    - ZegoExpressEngine
-    - ZegoUIKitReport
-    - ZIM
 
 EXTERNAL SOURCES:
   agora-react-native-rtm:
@@ -4268,10 +4246,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-view-shot"
   react-native-webview:
     :path: "../node_modules/react-native-webview"
-  react-native-zego-express-engine:
-    :path: "../node_modules/zego-express-engine-reactnative"
-  react-native-zego-zim:
-    :path: "../node_modules/zego-zim-react-native"
   React-NativeModulesApple:
     :path: "../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios"
   React-oscompat:
@@ -4398,10 +4372,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-vision-camera"
   Yoga:
     :path: "../node_modules/react-native/ReactCommon/yoga"
-  zego-uikit-prebuilt-live-streaming-rn:
-    :path: "../node_modules/@zegocloud/zego-uikit-prebuilt-live-streaming-rn"
-  zego-uikit-rn:
-    :path: "../node_modules/@zegocloud/zego-uikit-rn"
 
 CHECKOUT OPTIONS:
   BoringSSL-GRPC:
@@ -4508,8 +4478,6 @@ SPEC CHECKSUMS:
   react-native-video: 41d663743bf085a2ac31b6e5f43313372b11dacb
   react-native-view-shot: 32575e729d1811cb0b99c35ab759a5d49e1a2c56
   react-native-webview: d3eba75cc401adb2e6ab8e696727842b85ac8e89
-  react-native-zego-express-engine: c98aba974ed97a4dc4c38370b8759e47787e2d6b
-  react-native-zego-zim: 448785874a6094d42be5723eb1b7d9afa1563b55
   React-NativeModulesApple: 3e3e6bf35c6ba5d0aa785e899087385821fa78bd
   React-oscompat: 56b4766e96b06843a3af49a6763ef40992e720aa
   React-perflogger: 8fe9ec5f9ddbab1b8906c1aec159aa946e0ba041
@@ -4577,11 +4545,6 @@ SPEC CHECKSUMS:
   VideoTrim: e2e3707c573c2c14ce82b8438b569a4735640d34
   VisionCamera: 7187b3dac1ff3071234ead959ce311875748e14f
   Yoga: b37eeaa6148984cac70ecaf8022bb209e03296cb
-  zego-uikit-prebuilt-live-streaming-rn: d740862a15e8d6ec9c789b13b5124b2784fbb98b
-  zego-uikit-rn: a1db458fc370663f768a338af3a9d70d3cf0d6d4
-  ZegoExpressEngine: c1b01551fc817e6fd32b3a877a9d15de6d93f68e
-  ZegoUIKitReport: 36f4bc9a02a4fdd5d1eda1bf665b42c54cbbfd89
-  ZIM: b39b9a5a2ddff4d60de51c3bd6a5574cedbcdf03
 
 PODFILE CHECKSUM: 00c25439bb04f60977e6dbf2860fc03d981e4e93
 
