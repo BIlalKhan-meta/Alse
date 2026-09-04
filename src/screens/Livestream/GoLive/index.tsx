@@ -18,6 +18,7 @@ import {
 } from 'react-native';
 import {
   ClientRoleType,
+  ConnectionStateType,
   RtcSurfaceView,
   RtcTextureView,
   RtcConnection,
@@ -62,6 +63,9 @@ import {vh, vw} from '../../../constant';
 import KeepAwake from '@sayem314/react-native-keep-awake';
 
 const LocalVideoView = Platform.OS === 'android' ? RtcTextureView : RtcSurfaceView;
+
+const JOIN_TIMEOUT_MS = 30000;
+const FIRST_FRAME_FALLBACK_MS = Platform.OS === 'android' ? 12000 : 400;
 
 const sanitizeLiveID = (value: string): string =>
   String(value || '').replace(/[^a-zA-Z0-9_]/g, '_') || `live_${Date.now()}`;
@@ -148,11 +152,22 @@ const LiveStreamScreen = () => {
     chName: string;
     uid: number;
     asHost: boolean;
-    launched: boolean;
+    previewLaunched: boolean;
+    joinLaunched: boolean;
   } | null>(null);
   const surfaceReadyRef = useRef(false);
   const joinTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const surfaceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const firstFrameFallbackRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+  const connectionPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const markJoinedRef = useRef<(source: string, channelId?: string) => void>(
+    () => {},
+  );
+  const emitterListenersRef = useRef<
+    {event: string; listener: (...args: any[]) => void}[]
+  >([]);
   const joinedRef = useRef(false);
   const pendingAfterModalRef = useRef<PendingAfterModal | null>(null);
   const sessionCreatedRef = useRef(false);
@@ -182,6 +197,26 @@ const LiveStreamScreen = () => {
       clearTimeout(surfaceTimeoutRef.current);
       surfaceTimeoutRef.current = null;
     }
+    if (firstFrameFallbackRef.current) {
+      clearTimeout(firstFrameFallbackRef.current);
+      firstFrameFallbackRef.current = null;
+    }
+    if (connectionPollRef.current) {
+      clearInterval(connectionPollRef.current);
+      connectionPollRef.current = null;
+    }
+  }, []);
+
+  const detachEmitterListeners = useCallback(() => {
+    const engine = engineRef.current;
+    for (const {event, listener} of emitterListenersRef.current) {
+      try {
+        engine?.removeListener(event as any, listener);
+      } catch {
+        // listener may already be gone
+      }
+    }
+    emitterListenersRef.current = [];
   }, []);
 
   const cleanupEngine = useCallback(async () => {
@@ -199,6 +234,7 @@ const LiveStreamScreen = () => {
     joiningRef.current = false;
     hostStartLockRef.current = false;
     setSuppressAndroidPermissionPrompts(false);
+    detachEmitterListeners();
     if (engine && handler) {
       try {
         engine.unregisterEventHandler(handler);
@@ -207,7 +243,7 @@ const LiveStreamScreen = () => {
       }
     }
     try {
-      (engine as {removeAllListeners?: () => void})?.removeAllListeners?.();
+      engine?.removeAllListeners?.();
     } catch {
       // older SDK builds may not expose this
     }
@@ -217,12 +253,125 @@ const LiveStreamScreen = () => {
       engineRef.current = null;
       await releaseLiveRtcEngine();
     }
-  }, [clearJoinTimeout]);
+  }, [clearJoinTimeout, detachEmitterListeners]);
 
-  const launchPendingJoin = useCallback(async () => {
+  const joinPendingChannel = useCallback(async () => {
     const pending = pendingJoinRef.current;
     const engine = engineRef.current;
-    if (!pending || pending.launched || !engine) {
+    if (!pending || pending.joinLaunched || !engine) {
+      return;
+    }
+    pending.joinLaunched = true;
+    if (firstFrameFallbackRef.current) {
+      clearTimeout(firstFrameFallbackRef.current);
+      firstFrameFallbackRef.current = null;
+    }
+    try {
+      const joinOptions = {
+        clientRoleType: pending.asHost
+          ? ClientRoleType.ClientRoleBroadcaster
+          : ClientRoleType.ClientRoleAudience,
+        publishMicrophoneTrack: pending.asHost,
+        publishCameraTrack: pending.asHost,
+        autoSubscribeAudio: true,
+        autoSubscribeVideo: true,
+      };
+      console.log(
+        '[LiveStream] joinChannel',
+        pending.asHost ? 'host' : 'audience',
+        pending.chName,
+        'uid',
+        pending.uid,
+      );
+      try {
+        const preState = engine.getConnectionState();
+        console.log('[LiveStream] pre-join connection state', preState);
+        if (
+          preState === ConnectionStateType.ConnectionStateConnecting ||
+          preState === ConnectionStateType.ConnectionStateConnected ||
+          preState === ConnectionStateType.ConnectionStateReconnecting
+        ) {
+          await leaveLiveChannel(true);
+        }
+      } catch {
+        // getConnectionState may be missing on older native builds
+      }
+      const joinResult = engine.joinChannel(
+        pending.token,
+        pending.chName,
+        pending.uid,
+        joinOptions,
+      );
+      // -17 ERR_JOIN_CHANNEL_REJECTED usually means join is already in
+      // progress. Leaving here aborts that join and causes the 30s timeout.
+      if (joinResult === -17 || joinResult === 17) {
+        console.warn(
+          '[LiveStream] joinChannel -17, waiting for join success (not leaving)',
+        );
+      } else if (typeof joinResult === 'number' && joinResult < 0) {
+        throw new Error(`joinChannel failed with code ${joinResult}`);
+      }
+      markLiveChannelJoined();
+      if (joinTimeoutRef.current) {
+        clearTimeout(joinTimeoutRef.current);
+        joinTimeoutRef.current = null;
+      }
+      if (connectionPollRef.current) {
+        clearInterval(connectionPollRef.current);
+      }
+      connectionPollRef.current = setInterval(() => {
+        if (joinedRef.current) {
+          if (connectionPollRef.current) {
+            clearInterval(connectionPollRef.current);
+            connectionPollRef.current = null;
+          }
+          return;
+        }
+        try {
+          const state = engine.getConnectionState();
+          console.log('[LiveStream] poll connection state', state);
+          if (state === ConnectionStateType.ConnectionStateConnected) {
+            markJoinedRef.current('poll-connected', pending.chName);
+          }
+        } catch {
+          // ignore
+        }
+      }, 1000);
+      joinTimeoutRef.current = setTimeout(() => {
+        if (!joinedRef.current) {
+          joiningRef.current = false;
+          if (connectionPollRef.current) {
+            clearInterval(connectionPollRef.current);
+            connectionPollRef.current = null;
+          }
+          let state: number | string = 'unknown';
+          try {
+            state = engine.getConnectionState();
+          } catch {
+            // ignore
+          }
+          console.warn(
+            '[LiveStream] join timed out waiting for Agora',
+            pending.chName,
+            'state',
+            state,
+          );
+          setError('Could not reach Agora. Check network and try again.');
+          setLoading(false);
+        }
+      }, JOIN_TIMEOUT_MS);
+    } catch (err: any) {
+      joiningRef.current = false;
+      console.warn('[LiveStream] join launch failed', err);
+      setError(err?.message || 'Failed to join Agora channel');
+      setLoading(false);
+    }
+  }, []);
+
+  const launchPendingPreview = useCallback(() => {
+    const pending = pendingJoinRef.current;
+    const engine = engineRef.current;
+    if (!pending || pending.previewLaunched || !engine) {
       return;
     }
     // Host must have a mounted video view before enableVideo/startPreview on
@@ -230,7 +379,7 @@ const LiveStreamScreen = () => {
     if (pending.asHost && !surfaceReadyRef.current) {
       return;
     }
-    pending.launched = true;
+    pending.previewLaunched = true;
     try {
       engine.enableVideo();
       engine.enableAudio();
@@ -245,66 +394,26 @@ const LiveStreamScreen = () => {
       );
       if (pending.asHost) {
         engine.startPreview();
-        // Camera is live — drop the opaque loader even if channel join is slow.
         setPreviewStarted(true);
         setLoading(false);
+        firstFrameFallbackRef.current = setTimeout(() => {
+          if (pendingJoinRef.current && !pendingJoinRef.current.joinLaunched) {
+            console.warn(
+              '[LiveStream] first frame fallback, joining anyway',
+            );
+            joinPendingChannel();
+          }
+        }, FIRST_FRAME_FALLBACK_MS);
+        return;
       }
-      const joinOptions = {
-        clientRoleType: pending.asHost
-          ? ClientRoleType.ClientRoleBroadcaster
-          : ClientRoleType.ClientRoleAudience,
-        publishMicrophoneTrack: pending.asHost,
-        publishCameraTrack: pending.asHost,
-        autoSubscribeAudio: true,
-        autoSubscribeVideo: true,
-      };
-      let joinResult = engine.joinChannel(
-        pending.token,
-        pending.chName,
-        pending.uid,
-        joinOptions,
-      );
-      // -17 ERR_JOIN_CHANNEL_REJECTED: already in a channel or leave still
-      // in flight. Leave once, then retry. If still -17, the first join is
-      // in progress — wait for onJoinChannelSuccess instead of failing.
-      if (joinResult === -17 || joinResult === 17) {
-        console.warn(
-          '[LiveStream] joinChannel -17, leaving leftover channel and retrying',
-        );
-        markLiveChannelJoined();
-        await leaveLiveChannel();
-        joinResult = engine.joinChannel(
-          pending.token,
-          pending.chName,
-          pending.uid,
-          joinOptions,
-        );
-      }
-      if (joinResult === -17 || joinResult === 17) {
-        console.warn(
-          '[LiveStream] joinChannel still -17, treating as join in progress',
-        );
-      } else if (typeof joinResult === 'number' && joinResult < 0) {
-        throw new Error(`joinChannel failed with code ${joinResult}`);
-      }
-      markLiveChannelJoined();
-      clearJoinTimeout();
-      joinTimeoutRef.current = setTimeout(() => {
-        if (!joinedRef.current) {
-          joiningRef.current = false;
-          setError(
-            'Could not join the Agora channel in time. Check network and that the server token matches this App ID.',
-          );
-          setLoading(false);
-        }
-      }, 15000);
+      joinPendingChannel();
     } catch (err: any) {
       joiningRef.current = false;
-      console.warn('[LiveStream] join launch failed', err);
-      setError(err?.message || 'Failed to join Agora channel');
+      console.warn('[LiveStream] preview launch failed', err);
+      setError(err?.message || 'Failed to start camera preview');
       setLoading(false);
     }
-  }, [clearJoinTimeout]);
+  }, [joinPendingChannel]);
 
   const onHostSurfaceLayout = useCallback(() => {
     if (surfaceReadyRef.current) {
@@ -312,8 +421,8 @@ const LiveStreamScreen = () => {
     }
     surfaceReadyRef.current = true;
     // Let the native view attach to Iris before enableVideo/startPreview.
-    setTimeout(() => launchPendingJoin(), 250);
-  }, [launchPendingJoin]);
+    setTimeout(() => launchPendingPreview(), 250);
+  }, [launchPendingPreview]);
 
   const handleLeave = useCallback(async () => {
     if (leavingRef.current) {
@@ -401,36 +510,50 @@ const LiveStreamScreen = () => {
         handlerRef.current = null;
       }
 
+      const markJoined = (source: string, channelId?: string) => {
+        console.log('[LiveStream] event', source, channelId ?? '');
+        joiningRef.current = false;
+        clearJoinTimeout();
+        joinedRef.current = true;
+        setJoined(true);
+        setPreviewStarted(true);
+        setLoading(false);
+        setError(null);
+      };
+      markJoinedRef.current = markJoined;
+
+      const onTokenInvalid = () => {
+        joiningRef.current = false;
+        clearJoinTimeout();
+        setError(
+          'Invalid Agora token. Confirm AGORA_APP_ID / AGORA_APP_CERTIFICATE on the server match this app.',
+        );
+        setLoading(false);
+      };
+
       const handler: IRtcEngineEventHandler = {
         onJoinChannelSuccess: (_connection: RtcConnection) => {
-          console.log('[LiveStream] joined channel', _connection?.channelId);
-          joiningRef.current = false;
-          clearJoinTimeout();
-          joinedRef.current = true;
-          setJoined(true);
-          setPreviewStarted(true);
-          setLoading(false);
-          setError(null);
+          markJoined('onJoinChannelSuccess', _connection?.channelId);
+        },
+        onFirstLocalVideoFrame: () => {
+          console.log('[LiveStream] event onFirstLocalVideoFrame');
+          joinPendingChannel();
         },
         onUserJoined: (_connection: RtcConnection, uidJoined: number) => {
+          console.log('[LiveStream] event onUserJoined', uidJoined);
           setRemoteUid(uidJoined);
         },
         onUserOffline: (_connection: RtcConnection, uidOffline: number) => {
+          console.log('[LiveStream] event onUserOffline', uidOffline);
           setRemoteUid(prev => (prev === uidOffline ? null : prev));
         },
         onError: (err: number, msg: string) => {
-          console.warn('[LiveStream] Agora error', err, msg);
-          // already in channel — ignore
+          console.warn('[LiveStream] event onError', err, msg);
           if (err === -17 || err === 17) {
             return;
           }
-          if (err === 110 || err === -110 || /token/i.test(String(msg))) {
-            joiningRef.current = false;
-            clearJoinTimeout();
-            setError(
-              'Invalid Agora token. Confirm AGORA_APP_ID / AGORA_APP_CERTIFICATE on the server match this app.',
-            );
-            setLoading(false);
+          if (err === 110 || err === -110) {
+            onTokenInvalid();
           }
         },
         onConnectionStateChanged: (
@@ -438,53 +561,65 @@ const LiveStreamScreen = () => {
           state: number,
           reason: number,
         ) => {
-          console.log('[LiveStream] connection state', state, 'reason', reason);
-          // CONNECTION_STATE_CONNECTED = 3
+          console.log(
+            '[LiveStream] event onConnectionStateChanged',
+            state,
+            'reason',
+            reason,
+          );
           if (state === 3) {
-            joiningRef.current = false;
-            clearJoinTimeout();
-            joinedRef.current = true;
-            setJoined(true);
-            setLoading(false);
-            setError(null);
+            markJoined('connectionState=3');
             return;
           }
-          // CONNECTION_STATE_FAILED = 5
-          // reason 8 = invalid token, 9 = token expired
           if (state === 5) {
             joiningRef.current = false;
             clearJoinTimeout();
-            const tokenHint =
-              reason === 8 || reason === 9
-                ? ' Invalid/expired Agora token on the API server.'
-                : '';
-            setError(`Agora connection failed (reason ${reason}).${tokenHint}`);
+            if (reason === 8 || reason === 9) {
+              onTokenInvalid();
+              return;
+            }
+            setError(`Agora connection failed (reason ${reason}).`);
             setLoading(false);
           }
         },
       };
       engine.registerEventHandler(handler);
       handlerRef.current = handler;
+      detachEmitterListeners();
+      const listen = (
+        event: keyof IRtcEngineEventHandler,
+        listener: (...args: any[]) => void,
+      ) => {
+        engine.addListener(event as any, listener as any);
+        emitterListenersRef.current.push({event, listener});
+      };
+      listen('onJoinChannelSuccess', handler.onJoinChannelSuccess!);
+      listen('onConnectionStateChanged', handler.onConnectionStateChanged!);
+      listen('onError', handler.onError!);
+      listen('onFirstLocalVideoFrame', handler.onFirstLocalVideoFrame!);
+      listen('onUserJoined', handler.onUserJoined!);
+      listen('onUserOffline', handler.onUserOffline!);
 
       // Do NOT call enableVideo/startPreview here for hosts — wait until
-      // RtcSurfaceView has laid out (see launchPendingJoin).
+      // RtcSurfaceView has laid out (see launchPendingPreview).
       pendingJoinRef.current = {
         token,
         chName,
         uid,
         asHost,
-        launched: false,
+        previewLaunched: false,
+        joinLaunched: false,
       };
       surfaceReadyRef.current = false;
       setEngineReady(true);
 
       if (!asHost) {
-        setTimeout(() => launchPendingJoin(), 50);
+        setTimeout(() => launchPendingPreview(), 50);
       } else {
         // Do NOT force startPreview if onLayout never fires — that SIGSEGVs the
         // camera HAL on MediaTek/TECNO. Show an error instead of a blind join.
         surfaceTimeoutRef.current = setTimeout(() => {
-          if (!pendingJoinRef.current?.launched) {
+          if (!pendingJoinRef.current?.previewLaunched) {
             joiningRef.current = false;
             setError(
               'Camera preview did not start. Close Go Live and try again.',
@@ -498,7 +633,7 @@ const LiveStreamScreen = () => {
       throw joinSetupErr;
     }
     },
-    [clearJoinTimeout, launchPendingJoin],
+    [clearJoinTimeout, detachEmitterListeners, joinPendingChannel, launchPendingPreview],
   );
 
   const startHostSession = useCallback(async () => {
@@ -555,7 +690,24 @@ const LiveStreamScreen = () => {
             'Server did not return an Agora token. Set AGORA_APP_ID and AGORA_APP_CERTIFICATE on the server.',
         );
       }
+      const serverAppId =
+        body?.agora_app_id || res?.data?.agora_app_id || '';
+      if (serverAppId && AGORA_APP_ID && serverAppId !== AGORA_APP_ID) {
+        throw new Error(
+          'Agora App ID on the server does not match this app. Update AGORA_APP_ID in the server .env.',
+        );
+      }
       const uid = Number(body?.uid ?? res?.data?.uid ?? numericUid) || numericUid;
+      console.log(
+        '[LiveStream] host starting',
+        chName,
+        'uid',
+        uid,
+        'appId',
+        AGORA_APP_ID,
+        'serverAppId',
+        serverAppId || '(not returned — deploy backend)',
+      );
 
       setHostStreamKey(streamKey);
       setChannelName(chName);
@@ -627,8 +779,23 @@ const LiveStreamScreen = () => {
         if (!token) {
           throw new Error('Could not get audience token for this stream');
         }
+        const serverAppId =
+          tokenRes?.data?.agora_app_id ?? tokenRes?.data?.data?.agora_app_id;
+        if (serverAppId && AGORA_APP_ID && serverAppId !== AGORA_APP_ID) {
+          throw new Error(
+            'Agora App ID on the server does not match this app. Update AGORA_APP_ID in the server .env.',
+          );
+        }
         setChannelName(chName);
         setHostStreamKey(streamKey.replace(/^agora\./, ''));
+        console.log(
+          '[LiveStream] audience joining',
+          chName,
+          'uid',
+          uid || numericUid,
+          'stream_key',
+          streamKey,
+        );
         await joinAgoraChannel(token, chName, uid || numericUid, false);
       } catch (err: any) {
         const msg =

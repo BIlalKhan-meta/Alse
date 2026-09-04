@@ -54,6 +54,17 @@ if (Platform.OS !== 'android') {
   } catch (e) {
     console.warn('[Reanimated] configureReanimatedLogger failed:', e);
   }
+} else {
+  // Do not call configureReanimatedLogger on Android (JNI abort). Still turn
+  // off strict-mode spam from Feed/Stories shared values.
+  const g = globalThis as typeof globalThis & {
+    __reanimatedLoggerConfig?: {strict?: boolean; level?: number};
+  };
+  g.__reanimatedLoggerConfig = {
+    ...(g.__reanimatedLoggerConfig ?? {}),
+    strict: false,
+    level: ReanimatedLogLevel.warn,
+  };
 }
 
 function hideBootSplash() {

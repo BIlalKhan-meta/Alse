@@ -21,6 +21,10 @@ export const GetLiveStreamToken = async (channel: string) => {
   );
 };
 
+export const GetAgoraRtmToken = async () => {
+  return axiosInstance.get(endpoints.liveStream.getRtmToken);
+};
+
 export const GetLiveStreamUsers = async (channel: string) => {
   return axiosInstance.get(
     `${endpoints.liveStream.getUsers}/${encodeURIComponent(channel)}`,

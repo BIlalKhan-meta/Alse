@@ -14,6 +14,7 @@
  */
 
 import {AGORA_APP_ID, AGORA_SIGNALING_TOKEN} from '../config/agora';
+import {GetAgoraRtmToken} from '../api/liveStream';
 
 /** Agora RTM/Signaling requires channelId to be ≤64 bytes. Use short channel names. */
 const RTM_CHANNEL_MAX_BYTES = 64;
@@ -234,10 +235,36 @@ export async function initAgoraRtm(
         markNativeRtmCreated(engine);
       }
 
-      // RTM SDK requires a token field; use empty string if not using app certificate
-      const rtmToken = (token ?? AGORA_SIGNALING_TOKEN ?? '').trim();
+      // App Certificate is enabled on the Agora project — loginV2 with an
+      // empty token is LOGIN_ERR_INVALID_TOKEN. Fetch a Signaling token.
+      let rtmToken = (token ?? AGORA_SIGNALING_TOKEN ?? '').trim();
+      if (!rtmToken) {
+        try {
+          const tokenRes: any = await GetAgoraRtmToken();
+          rtmToken = String(
+            tokenRes?.data?.rtm_token ?? tokenRes?.data?.data?.rtm_token ?? '',
+          ).trim();
+          const serverAppId = String(
+            tokenRes?.data?.agora_app_id ??
+              tokenRes?.data?.data?.agora_app_id ??
+              '',
+          );
+          if (serverAppId && AGORA_APP_ID && serverAppId !== AGORA_APP_ID) {
+            throw new Error(
+              'Agora App ID on the server does not match this app',
+            );
+          }
+        } catch (tokenErr) {
+          console.warn(TAG, 'failed to fetch RTM token', tokenErr);
+        }
+      }
+      if (!rtmToken) {
+        throw new Error(
+          'Agora RTM token missing. App Certificate is enabled — cannot login with an empty token.',
+        );
+      }
       try {
-        await engine.loginV2(userId, rtmToken || undefined);
+        await engine.loginV2(userId, rtmToken);
         console.log(TAG, 'loginV2 ok for user:', userId);
       } catch (loginErr) {
         const loginMsg = String(

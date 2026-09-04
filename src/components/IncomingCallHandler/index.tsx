@@ -15,7 +15,6 @@ import {
 import CallIncomingModal from '../CallIncomingModal';
 import chatSocket from '../../services/chatSocket';
 import agoraRtmCallService from '../../services/agoraRtmCallService';
-import {AGORA_SIGNALING_TOKEN} from '../../config/agora';
 import callNotificationService from '../../services/callNotificationService';
 
 type IncomingState = null | {
@@ -147,7 +146,7 @@ const IncomingCallHandler: React.FC = () => {
     agoraRtmCallService
       .initAgoraRtm(
         userId,
-        AGORA_SIGNALING_TOKEN || undefined,
+        undefined,
         inv => {
           if (mounted) {
             onRtmIncomingRef.current(inv);

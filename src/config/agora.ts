@@ -1,5 +1,5 @@
 /** Replace with your Agora App ID (must match RTM + RTC project). */
-export const AGORA_APP_ID = '202b3fa92dbf44dc84f2925c9c6aee69';
+export const AGORA_APP_ID = '15f9dbf361a54ed1943a49ea9807e53b';
 
 /**
  * IMPORTANT: Agora tokens are channel-specific!
@@ -21,12 +21,8 @@ export const AGORA_TOKEN_CHANNEL = 'test';
 export const AGORA_TEMP_TOKEN = '';
 
 /**
- * Signaling (RTM/Signaling SDK) token.
- *
- * IMPORTANT: The RTM SDK requires a token field (cannot be nil/undefined).
- * - If your Agora project has App Certificate disabled, you can use a placeholder token
- * - For production, generate a Signaling token server-side and provide it here
- * - Placeholder token below is for development/testing only
+ * Signaling (RTM) tokens are minted by GET /agora/rtm-token.
+ * App Certificate is enabled — do not login with an empty hardcoded token.
  */
 export const AGORA_SIGNALING_TOKEN = '';
 

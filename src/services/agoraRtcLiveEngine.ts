@@ -18,6 +18,7 @@ const g = globalThis as typeof globalThis & {
   __ALSE_AGORA_RTC_ENGINE__?: IRtcEngine | null;
   __ALSE_AGORA_RTC_INITIALIZED__?: boolean;
   __ALSE_AGORA_RTC_IN_CHANNEL__?: boolean;
+  __ALSE_AGORA_RTC_APP_ID__?: string;
 };
 
 let nativeLock: Promise<void> = Promise.resolve();
@@ -40,16 +41,39 @@ export function getLiveRtcEngine(): IRtcEngine {
 
 export async function ensureLiveRtcInitialized(): Promise<IRtcEngine> {
   return runExclusive(async () => {
+    if (!AGORA_APP_ID) {
+      throw new Error('Agora App ID is not configured');
+    }
+    // App ID rotated (Metro reload) — native engine is bound to the old project.
+    if (
+      g.__ALSE_AGORA_RTC_INITIALIZED__ &&
+      g.__ALSE_AGORA_RTC_APP_ID__ &&
+      g.__ALSE_AGORA_RTC_APP_ID__ !== AGORA_APP_ID
+    ) {
+      const stale = g.__ALSE_AGORA_RTC_ENGINE__;
+      try {
+        stale?.leaveChannel();
+      } catch {
+        // ignore
+      }
+      try {
+        stale?.release();
+      } catch {
+        // ignore
+      }
+      g.__ALSE_AGORA_RTC_ENGINE__ = null;
+      g.__ALSE_AGORA_RTC_INITIALIZED__ = false;
+      g.__ALSE_AGORA_RTC_IN_CHANNEL__ = false;
+      g.__ALSE_AGORA_RTC_APP_ID__ = undefined;
+    }
     const engine = getLiveRtcEngine();
     if (!g.__ALSE_AGORA_RTC_INITIALIZED__) {
-      if (!AGORA_APP_ID) {
-        throw new Error('Agora App ID is not configured');
-      }
       engine.initialize({
         appId: AGORA_APP_ID,
         channelProfile: ChannelProfileType.ChannelProfileLiveBroadcasting,
       });
       g.__ALSE_AGORA_RTC_INITIALIZED__ = true;
+      g.__ALSE_AGORA_RTC_APP_ID__ = AGORA_APP_ID;
     }
     return engine;
   });

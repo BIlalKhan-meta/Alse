@@ -139,6 +139,7 @@ const endpoints = {
     createLiveStreams: '/live-stream/start',
     endLiveStreams: '/live-stream/end',
     getToken: '/live-stream/getToken',
+    getRtmToken: '/agora/rtm-token',
     getUsers: '/live-stream/users',
   },
   rider: {

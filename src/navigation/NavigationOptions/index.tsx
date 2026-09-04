@@ -1,6 +1,6 @@
 import React, {useCallback, useEffect, useState} from 'react';
 import {Image, Text, TouchableOpacity, View} from 'react-native';
-import {ChevronLeft, Search} from 'lucide-react-native';
+import {ChevronLeft} from 'lucide-react-native';
 import {useFocusEffect} from '@react-navigation/native';
 import styles from './styles';
 import {images} from '../../utils/images';
@@ -221,26 +221,6 @@ const HomeHeaderRight = ({navigation}: {navigation: any}) => {
           ) : null}
         </View>
       </TouchableOpacity>
-      <TouchableOpacity
-        style={[styles.iconContainer, {marginRight: 4}]}
-        onPress={() => navigation.navigate('SearchUsers')}
-        accessibilityRole="button"
-        accessibilityLabel="Search users">
-        <View
-          style={[
-            styles.notificationcontainer,
-            {
-              backgroundColor: '#fff',
-              borderWidth: 1,
-              borderColor: '#E4E6EB',
-              width: 40,
-              height: 40,
-              borderRadius: 20,
-            },
-          ]}>
-          <Search color="#0C959B" size={20} strokeWidth={2.25} />
-        </View>
-      </TouchableOpacity>
     </View>
   );
 };
@@ -287,9 +267,10 @@ const getHeaderLeft: React.FC<NavigationOptionsProps> = props => {
         />
       </TouchableOpacity>
     );
-  } else {
-    return <View></View>;
   }
+
+  // Empty View becomes a blank circular button on iOS native-stack headers.
+  return null;
 };
 
 const NavigationOptions: React.FC<NavigationOptionsProps> = props => {
@@ -319,7 +300,9 @@ const NavigationOptions: React.FC<NavigationOptionsProps> = props => {
     gestureEnabled: true,
     fullScreenGestureEnabled: props?.route?.name === 'SearchUsers',
     title: getTitle(props),
-    headerLeft: () => getHeaderLeft(props),
+    // Omit headerLeft on Home so iOS does not render an empty circular slot
+    // before "News Feed".
+    ...(isHomeScreen ? {} : {headerLeft: () => getHeaderLeft(props)}),
     headerRight: () => getHeaderRight(props),
   };
 };
