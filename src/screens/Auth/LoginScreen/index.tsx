@@ -26,17 +26,26 @@ interface FormValues {
   password: string;
 }
 async function storeUserSession(identifier: string, password: string) {
-  await EncryptedStorage.setItem(
-    'user_session',
-    JSON.stringify({
-      identifier,
-      password,
-    }),
-  );
+  try {
+    await EncryptedStorage.setItem(
+      'user_session',
+      JSON.stringify({
+        identifier,
+        password,
+      }),
+    );
+  } catch (err) {
+    console.warn('EncryptedStorage setItem failed', err);
+  }
 }
 
 async function removeUserSession() {
-  await EncryptedStorage.removeItem('user_session');
+  try {
+    await EncryptedStorage.removeItem('user_session');
+  } catch (err) {
+    // Key missing / Keychain locked — safe to ignore.
+    console.warn('EncryptedStorage removeItem failed', err);
+  }
 }
 
 type AuthStackParamList = {
@@ -177,9 +186,9 @@ const LoginScreen: React.FC = () => {
 
         if (isSuccess && hasAuthData) {
           if (isSelected) {
-            storeUserSession(values?.identifier, values?.password);
+            void storeUserSession(values?.identifier, values?.password);
           } else {
-            removeUserSession();
+            void removeUserSession();
           }
           dispatch(setUser({user, access_token: token}));
           syncFcmTokenWithBackend().catch(() => {});

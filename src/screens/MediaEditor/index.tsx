@@ -210,7 +210,7 @@ const MediaEditor: React.FC = () => {
 
   const handleSelectCrop = async () => {
     if (currentItem.kind === 'video') {
-      Toast.show(t('videoCropOnDone'));
+      Toast.success(t('videoCropOnDone'));
       setActiveTool(prev => (prev === 'crop' ? 'none' : 'crop'));
       return;
     }

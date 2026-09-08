@@ -18,6 +18,8 @@ Sentry.init({
   enableNative: true,
   enableNativeCrashHandling: true,
   attachScreenshot: true,
+  // Default ~2s flags keyboard/system stalls as hangs (ALSE-M). Keep real hangs.
+  appHangTimeoutInterval: 4,
   environment: __DEV__ ? 'development' : 'production',
 });
 

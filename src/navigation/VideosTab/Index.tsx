@@ -324,8 +324,27 @@ const VideosTab = () => {
   const navigation = useNavigation<any>();
   const pagerRef = useRef<PagerView>(null);
   const focusedVideoIdRef = useRef<number | null>(null);
+  const pagerScrollStateRef = useRef<'idle' | 'dragging' | 'settling'>('idle');
   const reelsRef = useRef<VideoItem[]>([]);
   reelsRef.current = reels;
+
+  /** Avoid UIPageViewController crash when setPage runs mid-gesture/unmount (ALSE-J). */
+  const safeSetPage = useCallback((page: number) => {
+    requestAnimationFrame(() => {
+      if (pagerScrollStateRef.current !== 'idle') {
+        return;
+      }
+      try {
+        if (typeof pagerRef.current?.setPageWithoutAnimation === 'function') {
+          pagerRef.current.setPageWithoutAnimation(page);
+        } else {
+          pagerRef.current?.setPage(page);
+        }
+      } catch (err) {
+        console.warn('[VideosTab] setPage failed', err);
+      }
+    });
+  }, []);
   const [shareVideoId, setShareVideoId] = useState<number | null>(null);
   const [savedIds, setSavedIds] = useState<Set<number>>(new Set());
   const {
@@ -368,7 +387,7 @@ const VideosTab = () => {
       if (existingIndex >= 0) {
         focusedVideoIdRef.current = videoId;
         setActiveIndex(existingIndex);
-        setTimeout(() => pagerRef.current?.setPage(existingIndex), 50);
+        setTimeout(() => safeSetPage(existingIndex), 50);
         navigation.setParams?.({videoId: undefined});
         return;
       }
@@ -389,7 +408,7 @@ const VideosTab = () => {
           ...prev.filter(r => Number(r.id) !== videoId),
         ]);
         setActiveIndex(0);
-        setTimeout(() => pagerRef.current?.setPage(0), 50);
+        setTimeout(() => safeSetPage(0), 50);
         navigation.setParams?.({videoId: undefined});
       } catch (error) {
         console.warn('Failed to open shared video', error);
@@ -401,7 +420,7 @@ const VideosTab = () => {
     return () => {
       cancelled = true;
     };
-  }, [route.params?.videoId, loading, navigation]);
+  }, [route.params?.videoId, loading, navigation, safeSetPage]);
 
   const fetchVideos = async (page = 1, append = false) => {
     try {
@@ -598,12 +617,23 @@ const VideosTab = () => {
   const onPageSelected = useCallback(
     (e: {nativeEvent: {position: number}}) => {
       const pos = Math.round(e.nativeEvent.position);
+      pagerScrollStateRef.current = 'idle';
       setActiveIndex(pos);
       if (pos >= reels.length - 2) {
         handleLoadMore();
       }
     },
     [reels.length, handleLoadMore],
+  );
+
+  const onPageScrollStateChanged = useCallback(
+    (e: {nativeEvent: {pageScrollState: string}}) => {
+      const state = e?.nativeEvent?.pageScrollState;
+      if (state === 'idle' || state === 'dragging' || state === 'settling') {
+        pagerScrollStateRef.current = state;
+      }
+    },
+    [],
   );
 
   if (loading && reels.length === 0) {
@@ -633,7 +663,8 @@ const VideosTab = () => {
         initialPage={0}
         orientation="vertical"
         offscreenPageLimit={1}
-        onPageSelected={onPageSelected}>
+        onPageSelected={onPageSelected}
+        onPageScrollStateChanged={onPageScrollStateChanged}>
         {reels.map((item, index) => (
           <View
             key={`reel-${item.id}-${index}`}
