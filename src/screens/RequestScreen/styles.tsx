@@ -77,6 +77,17 @@ const styles = StyleSheet.create({
     height: 30,
     marginLeft: 20,
   },
+  headerBackButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: '#E4E6EB',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
+  },
   title: {
     fontSize: fontSizes.f24,
     color: colors.black,

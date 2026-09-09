@@ -28,10 +28,13 @@ interface ProfileCardProps {
   id: number;
   username?: string;
   location?: string;
+  pronouns?: string;
   postsCount?: number;
   followersCount?: number;
   followingCount?: number;
   phoneNumber?: string;
+  onFollowersPress?: () => void;
+  onFollowingPress?: () => void;
 }
 
 const ProfileCard: React.FC<ProfileCardProps> = ({
@@ -46,10 +49,13 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
   id,
   username = '@alsedaise',
   location = 'Jersey, NY',
+  pronouns,
   postsCount,
   followersCount = 582,
   followingCount = 321,
   phoneNumber,
+  onFollowersPress,
+  onFollowingPress,
 }) => {
   const navigation = useNavigation();
   const user = useSelector(selectUserProfile);
@@ -262,6 +268,9 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
             <View>
               <InterBold style={styles.name}>{name}</InterBold>
               <InterRegular style={styles.username}>{username}</InterRegular>
+              {pronouns ? (
+                <InterRegular style={styles.pronouns}>{pronouns}</InterRegular>
+              ) : null}
             </View>
             <InterRegular style={styles.location}>{location}</InterRegular>
           </View>
@@ -278,15 +287,25 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
           <InterRegular style={styles.statLabel}>Posts</InterRegular>
         </View>
         <View style={styles.verticalDivider} />
-        <View style={styles.statItem}>
+        <TouchableOpacity
+          style={styles.statItem}
+          onPress={onFollowersPress}
+          disabled={!onFollowersPress}
+          accessibilityRole="button"
+          accessibilityLabel="Followers">
           <InterBold style={styles.statNumber}>{followersCount}</InterBold>
           <InterRegular style={styles.statLabel}>Followers</InterRegular>
-        </View>
+        </TouchableOpacity>
         <View style={styles.verticalDivider} />
-        <View style={styles.statItem}>
+        <TouchableOpacity
+          style={styles.statItem}
+          onPress={onFollowingPress}
+          disabled={!onFollowingPress}
+          accessibilityRole="button"
+          accessibilityLabel="Following">
           <InterBold style={styles.statNumber}>{followingCount}</InterBold>
           <InterRegular style={styles.statLabel}>Following</InterRegular>
-        </View>
+        </TouchableOpacity>
       </View>
 
       {/* Buttons */}

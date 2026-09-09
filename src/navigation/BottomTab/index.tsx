@@ -118,6 +118,7 @@ const TabNavigation = () => {
         component={VideosTab}
         options={{
           unmountOnBlur: true,
+          headerShown: false,
           tabBarLabel: 'Videos',
           tabBarIcon: ({color}) => (
             <View style={styles.tabButton}>
@@ -127,7 +128,6 @@ const TabNavigation = () => {
               />
             </View>
           ),
-          ...NavigationOptions,
         }}
       />
       <Tab.Screen

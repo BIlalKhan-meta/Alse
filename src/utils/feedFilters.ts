@@ -41,8 +41,10 @@ const getRawMedia = (post: Record<string, unknown>): NewsfeedMediaItem[] =>
   Array.isArray(post.media) ? (post.media as NewsfeedMediaItem[]) : [];
 
 const isFollowingPost = (post: Record<string, unknown>): boolean => {
+  if (typeof post.is_following === 'boolean') {
+    return post.is_following;
+  }
   if (
-    post.is_following === true ||
     post.user_is_following === true ||
     post.from_following === true
   ) {
@@ -108,7 +110,16 @@ export const filterFeedPosts = <T extends Record<string, unknown>>(
 
     switch (filter) {
       case 'following':
-        return isFollowingPost(post);
+        // Server already scopes ?filter=following; trust API when flags absent.
+        if (
+          typeof post.is_following === 'boolean' ||
+          post.user_is_following === true ||
+          post.from_following === true ||
+          resolveFeedLabel(post) === 'following'
+        ) {
+          return isFollowingPost(post);
+        }
+        return true;
       case 'videos':
         return isVideoPost(post);
       case 'images':

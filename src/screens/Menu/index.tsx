@@ -213,28 +213,39 @@ const Menu: React.FC = () => {
         <View style={styles.bottomCon}>
           <Card style={styles.cardContainer2}>
             <TouchableOpacity onPress={() => navigation.navigate('Saved')}>
-              <View style={styles.cardContent5}>
-                <View style={styles.notifiCon}>
+              <View style={styles.cardContentBottom}>
+                <View style={styles.notifiConBottom}>
                   <Image
                     source={images.save}
                     style={styles.imageStyle}
                     tintColor={colors.themeColor}
                   />
                 </View>
-                <InterMedium style={styles.cardHeading}>
-                  Saved Items
+                <InterMedium style={styles.cardHeadingCompact} lines={2}>
+                  Saved Posts
                 </InterMedium>
               </View>
             </TouchableOpacity>
           </Card>
 
           <Card style={styles.cardContainer2}>
-            <TouchableOpacity onPress={() => navigation.navigate('ContactUs')}>
-              <View style={styles.cardContent5}>
-                <View style={[styles.notifiCon, {width: vw * 8}]}>
-                  <Image source={images.phone} style={styles.imageStyle} />
+            <TouchableOpacity
+              onPress={() =>
+                (navigation as any)
+                  .getParent?.()
+                  ?.navigate('SavedReels') ?? navigation.navigate('SavedReels')
+              }>
+              <View style={styles.cardContentBottom}>
+                <View style={styles.notifiConBottom}>
+                  <Image
+                    source={images.saveIcon}
+                    style={styles.imageStyle}
+                    tintColor={colors.themeColor}
+                  />
                 </View>
-                <InterMedium style={styles.cardHeading}>Contact</InterMedium>
+                <InterMedium style={styles.cardHeadingCompact} lines={2}>
+                  Reels & Videos
+                </InterMedium>
               </View>
             </TouchableOpacity>
           </Card>
@@ -242,23 +253,36 @@ const Menu: React.FC = () => {
 
         <View style={styles.bottomCon}>
           <Card style={styles.cardContainer2}>
-            <TouchableOpacity onPress={() => navigation.navigate('AboutUs')}>
-              <View style={styles.cardContent5}>
-                <View style={[styles.notifiCon, {width: vw * 8}]}>
-                  <Image source={images.help} style={styles.imageStyle} />
+            <TouchableOpacity onPress={() => navigation.navigate('ContactUs')}>
+              <View style={styles.cardContentBottom}>
+                <View style={styles.notifiConBottom}>
+                  <Image source={images.phone} style={styles.imageStyle} />
                 </View>
-                <InterMedium style={styles.cardHeading}>About Us</InterMedium>
+                <InterMedium style={styles.cardHeadingCompact}>Contact</InterMedium>
               </View>
             </TouchableOpacity>
           </Card>
 
           <Card style={styles.cardContainer2}>
+            <TouchableOpacity onPress={() => navigation.navigate('AboutUs')}>
+              <View style={styles.cardContentBottom}>
+                <View style={styles.notifiConBottom}>
+                  <Image source={images.help} style={styles.imageStyle} />
+                </View>
+                <InterMedium style={styles.cardHeadingCompact}>About Us</InterMedium>
+              </View>
+            </TouchableOpacity>
+          </Card>
+        </View>
+
+        <View style={styles.bottomCon}>
+          <Card style={styles.cardContainer2}>
             <TouchableOpacity onPress={() => setLogoutModalVisible(true)}>
-              <View style={styles.cardContent5}>
-                <View style={[styles.notifiCon, {width: vw * 8}]}>
+              <View style={styles.cardContentBottom}>
+                <View style={styles.notifiConBottom}>
                   <Image source={images.logout} style={styles.imageStyle} />
                 </View>
-                <InterMedium style={styles.cardHeading}>Log out</InterMedium>
+                <InterMedium style={styles.cardHeadingCompact}>Log out</InterMedium>
               </View>
             </TouchableOpacity>
           </Card>

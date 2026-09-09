@@ -22,6 +22,7 @@ import {
 import IncomingCallHandler from './src/components/IncomingCallHandler';
 import MainNavigation from './src/navigation';
 import PushTokenSync from './src/components/PushTokenSync';
+import DeepLinkHandler from './src/components/DeepLinkHandler';
 import {navigationRef} from './src/utils/navigationRef';
 import {
   configureReanimatedLogger,
@@ -119,6 +120,7 @@ function App(): React.JSX.Element {
           <AppQueryProvider>
           <NavigationContainer ref={navigationRef} theme={theme}>
             <PushTokenSync />
+            <DeepLinkHandler />
             <MainNavigation />
             <IncomingCallHandler />
           </NavigationContainer>

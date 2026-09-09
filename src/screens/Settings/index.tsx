@@ -24,7 +24,7 @@ import {images} from '../../utils/images';
 import styles from './styles';
 import {colors} from '../../utils/theme';
 import {useAppDispatch} from '../../hooks/storeHooks';
-import {fetchAllSettings, updateProfile} from '../../store/slices/settingsSlice';
+import {fetchAllSettings, updateProfile, initializeProfile} from '../../store/slices/settingsSlice';
 import ProfileForm from './components/profileForm';
 import {
   launchImageLibrary,
@@ -77,9 +77,10 @@ interface MenuIconRowProps {
 
 interface MenuHeaderProps {
   onBackPress: () => void;
+  title?: string;
 }
 
-const MenuHeader = ({onBackPress}: MenuHeaderProps) => (
+const MenuHeader = ({onBackPress, title = 'Menu'}: MenuHeaderProps) => (
   <View style={styles.menuHeader}>
     <TouchableOpacity
       style={styles.backButton}
@@ -87,7 +88,7 @@ const MenuHeader = ({onBackPress}: MenuHeaderProps) => (
       hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
       <Image source={images.backicon} style={styles.backIcon} />
     </TouchableOpacity>
-    <InterBoldLabel style={styles.menuTitle}>Menu</InterBoldLabel>
+    <InterBoldLabel style={styles.menuTitle}>{title}</InterBoldLabel>
   </View>
 );
 
@@ -319,6 +320,11 @@ const Settings = ({navigation}: any) => {
 
   const handleBackPress = () => {
     if (isEditing) {
+      // Opened via My Profile (or similar) with isEditMode — return there, not Menu
+      if (isEditMode && navigation.canGoBack()) {
+        navigation.goBack();
+        return;
+      }
       setIsEditing(false);
       return;
     }
@@ -345,7 +351,10 @@ const Settings = ({navigation}: any) => {
           <ScrollView
             style={styles.scrollContainer}
             showsVerticalScrollIndicator={false}>
-            <MenuHeader onBackPress={handleBackPress} />
+            <MenuHeader
+              onBackPress={handleBackPress}
+              title="Edit Profile"
+            />
 
             <View style={styles.profileSection}>
               <View style={styles.profileImageContainer}>
@@ -384,7 +393,33 @@ const Settings = ({navigation}: any) => {
                 setIsEditing={() => setIsEditing(false)}
                 onProfileUpdateSuccess={() => {
                   setProfileBaseline(localProfileData);
-                  dispatch(GetUserProfile());
+                  dispatch(GetUserProfile())
+                    .unwrap()
+                    .then((res: any) => {
+                      const data = res?.data;
+                      if (data) {
+                        dispatch(initializeProfile(data));
+                        const next = {
+                          firstName:
+                            data.first_name ||
+                            data.full_name?.split(' ')[0] ||
+                            '',
+                          lastName:
+                            data.last_name ||
+                            data.full_name?.split(' ')[1] ||
+                            '',
+                          userName: data.username || data.full_name || '',
+                          location: data.location_name || '',
+                          description: data.bio || '',
+                          pronouns: data.pronouns || '',
+                          storeName: data.store_name || '',
+                          storeDescription: data.store_description || '',
+                        };
+                        setLocalProfileData(next);
+                        setProfileBaseline(next);
+                      }
+                    })
+                    .catch(() => {});
                   if (isEditMode && navigation.canGoBack()) {
                     navigation.goBack();
                   } else {
@@ -570,15 +605,15 @@ const Settings = ({navigation}: any) => {
             <View style={styles.bottomCon}>
               <Card style={styles.cardContainer2}>
                 <TouchableOpacity onPress={() => navigation.navigate('Saved')}>
-                  <View style={styles.cardContent5}>
-                    <View style={styles.notifiCon}>
+                  <View style={styles.cardContentBottom}>
+                    <View style={styles.notifiConBottom}>
                       <Image
                         source={images.save}
                         style={styles.iconImage}
                       />
                     </View>
-                    <InterMedium style={styles.cardHeading}>
-                      Saved Items
+                    <InterMedium style={styles.cardHeadingCompact} lines={2}>
+                      Saved Posts
                     </InterMedium>
                   </View>
                 </TouchableOpacity>
@@ -586,15 +621,18 @@ const Settings = ({navigation}: any) => {
 
               <Card style={styles.cardContainer2}>
                 <TouchableOpacity
-                  onPress={() => navigation.navigate('ContactUs')}>
-                  <View style={styles.cardContent5}>
-                    <View style={[styles.notifiCon, {width: vw * 8}]}>
+                  onPress={() => navigation.navigate('SavedReels')}>
+                  <View style={styles.cardContentBottom}>
+                    <View style={styles.notifiConBottom}>
                       <Image
-                        source={images.phone}
+                        source={images.saveIcon}
                         style={styles.iconImage}
+                        tintColor={colors.themeColor}
                       />
                     </View>
-                    <InterMedium style={styles.cardHeading}>Contact</InterMedium>
+                    <InterMedium style={styles.cardHeadingCompact} lines={2}>
+                      Reels & Videos
+                    </InterMedium>
                   </View>
                 </TouchableOpacity>
               </Card>
@@ -602,31 +640,48 @@ const Settings = ({navigation}: any) => {
 
             <View style={styles.bottomCon}>
               <Card style={styles.cardContainer2}>
-                <TouchableOpacity onPress={() => navigation.navigate('AboutUs')}>
-                  <View style={styles.cardContent5}>
-                    <View style={[styles.notifiCon, {width: vw * 8}]}>
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('ContactUs')}>
+                  <View style={styles.cardContentBottom}>
+                    <View style={styles.notifiConBottom}>
                       <Image
-                        source={images.help}
+                        source={images.phone}
                         style={styles.iconImage}
                       />
                     </View>
-                    <InterMedium style={styles.cardHeading}>About Us</InterMedium>
+                    <InterMedium style={styles.cardHeadingCompact}>Contact</InterMedium>
                   </View>
                 </TouchableOpacity>
               </Card>
 
               <Card style={styles.cardContainer2}>
+                <TouchableOpacity onPress={() => navigation.navigate('AboutUs')}>
+                  <View style={styles.cardContentBottom}>
+                    <View style={styles.notifiConBottom}>
+                      <Image
+                        source={images.help}
+                        style={styles.iconImage}
+                      />
+                    </View>
+                    <InterMedium style={styles.cardHeadingCompact}>About Us</InterMedium>
+                  </View>
+                </TouchableOpacity>
+              </Card>
+            </View>
+
+            <View style={styles.bottomCon}>
+              <Card style={styles.cardContainer2}>
                 <TouchableOpacity
                   testID="settings-logout"
                   onPress={() => setLogoutModalVisible(true)}>
-                  <View style={styles.cardContent5}>
-                    <View style={[styles.notifiCon, {width: vw * 8}]}>
+                  <View style={styles.cardContentBottom}>
+                    <View style={styles.notifiConBottom}>
                       <Image
                         source={images.logout}
                         style={styles.iconImage}
                       />
                     </View>
-                    <InterMedium style={styles.cardHeading}>Log out</InterMedium>
+                    <InterMedium style={styles.cardHeadingCompact}>Log out</InterMedium>
                   </View>
                 </TouchableOpacity>
               </Card>

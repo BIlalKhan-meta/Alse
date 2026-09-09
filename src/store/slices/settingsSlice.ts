@@ -264,6 +264,9 @@ export const settingsSlice = createSlice({
 
     builder.addCase(GetUserProfile.fulfilled, (state, action) => {
       const apiData = action.payload?.data;
+      if (!apiData) {
+        return;
+      }
       const avatar =
         apiData?.avatar ??
         apiData?.profile_picture ??
@@ -272,7 +275,24 @@ export const settingsSlice = createSlice({
         state.profile?.avatar;
       state.profile = {
         ...state.profile,
-        ...apiData,
+        firstName:
+          apiData.first_name ||
+          apiData.full_name?.split(' ')[0] ||
+          state.profile?.firstName ||
+          '',
+        lastName:
+          apiData.last_name ||
+          apiData.full_name?.split(' ')[1] ||
+          state.profile?.lastName ||
+          '',
+        userName:
+          apiData.username || apiData.full_name || state.profile?.userName || '',
+        location: apiData.location_name || state.profile?.location || '',
+        description: apiData.bio ?? state.profile?.description ?? '',
+        pronouns: apiData.pronouns ?? state.profile?.pronouns ?? '',
+        storeName: apiData.store_name || state.profile?.storeName || '',
+        storeDescription:
+          apiData.store_description || state.profile?.storeDescription || '',
         avatar: avatar ?? state.profile?.avatar,
       };
     });

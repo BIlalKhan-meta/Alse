@@ -2,6 +2,7 @@ import React from 'react';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import TabNavigation from '../BottomTab';
 import Saved from '../../screens/Saved';
+import SavedReels from '../../screens/SavedReels';
 import Shop from '../../screens/MarketPlace/Shop';
 import CreatePost from '../../screens/CreatePost';
 import ImageCrop from '../../screens/ImageCrop';
@@ -90,6 +91,11 @@ const AppNavigation = () => {
         <Stack.Screen
           name="Saved"
           component={Saved}
+          options={NavigationOptions}
+        />
+        <Stack.Screen
+          name="SavedReels"
+          component={SavedReels}
           options={NavigationOptions}
         />
         <Stack.Screen

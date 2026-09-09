@@ -29,6 +29,16 @@
 		<dict>
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>com.alse.app</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>alse</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>com.googleusercontent.apps.1021861190165-ucqrbg3ro44b164gutp0g8ic3jh2chh6</string>

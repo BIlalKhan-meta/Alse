@@ -59,8 +59,9 @@ const titles: {[key: string]: string} = {
   AboutUs: 'About Us',
   PrivacyPolicy: 'Privacy Policy',
   TermsConditions: 'Terms & Conditions',
-  RequestScreen: 'RequestScreen',
-  Saved: 'Saved',
+  RequestScreen: 'Followers',
+  Saved: 'Saved Posts',
+  SavedReels: 'Reels & Videos',
   EditShop: 'Edit Shop',
   SearchUsers: 'Search User',
   Videos: 'Videos',
@@ -83,6 +84,7 @@ const backButtonRoutes: {[key: string]: boolean} = {
   MyProfileUpdate: true,
   MyProfilePassword: true,
   Payment: true,
+  SubscriptionPlan: true,
   SubscriptionLogs: true,
   ViewBlog: true,
   MyBlogs: true,
@@ -112,6 +114,7 @@ const backButtonRoutes: {[key: string]: boolean} = {
   Withdrawal: true,
   ContactUs: true,
   RequestScreen: true,
+  SavedReels: true,
   SearchUsers: true,
   ChatScreen: true,
   Videos: true,
@@ -236,12 +239,18 @@ const getHeaderLeft: React.FC<NavigationOptionsProps> = props => {
     const goBack = () => {
       if (props?.navigation?.canGoBack?.()) {
         props.navigation.goBack();
-      } else {
-        props?.navigation?.navigate?.('AppNavigation');
+        return;
       }
+      // Fallback when opened without stack history (e.g. deep link).
+      props?.navigation?.navigate?.('TabNavigation');
     };
 
-    if (props?.route?.name === 'ProductView') {
+    if (
+      props?.route?.name === 'ProductView' ||
+      props?.route?.name === 'SubscriptionPlan' ||
+      props?.route?.name === 'RequestScreen' ||
+      props?.route?.name === 'SavedReels'
+    ) {
       return (
         <TouchableOpacity
           onPress={goBack}

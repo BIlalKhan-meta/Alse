@@ -1,39 +1,28 @@
-// Home.tsx
-import {useNavigation} from '@react-navigation/native';
-import React, {useEffect, useLayoutEffect, useRef, useState} from 'react';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
+import React, {useCallback, useMemo, useRef, useState} from 'react';
 import {
   ActivityIndicator,
   FlatList,
-  Image,
   Modal,
-  ScrollView,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import Toast from 'react-native-toast-message';
 import {useSelector} from 'react-redux';
+import {Bookmark} from 'lucide-react-native';
 import {createPost, reportPost} from '../../api/home';
-import {getSavedItems, removeSavedItem, saveItem} from '../../api/menu';
-import Card from '../../components/Card';
+import {getSavedItems, removeSavedItem} from '../../api/menu';
 import CommentsModal from '../../components/CommentsModal';
-import ContentSavedScreen from '../../components/ContentSaved';
-import {EmptyComponent} from '../../components/EmptyComponent';
 import GeneralModal from '../../components/GeneralModal';
 import LikesModal from '../../components/LikesModal';
 import Loader from '../../components/Loader';
-import MediaCard from '../../components/MediaCard';
 import PostComponent from '../../components/PostComponent';
 import ReactModal from '../../components/ReactModal';
 import InterRegular from '../../components/Text/InterRegular';
-import WishlistScreen from '../../components/WishList';
 import {reactions} from '../../dummyData';
 import {useAppDispatch} from '../../hooks/storeHooks';
 import {selectUserProfile} from '../../store/slices/authSlice';
-import {
-  likePost,
-  PostDelete,
-} from '../../store/slices/homeSlice';
+import {likePost, PostDelete} from '../../store/slices/homeSlice';
 import {timeFormat} from '../../utils';
 import {getMessage, parseSharedFrom} from '../../utils/helpers';
 import {useTranslation} from 'react-i18next';
@@ -42,19 +31,38 @@ import {colors} from '../../utils/theme';
 import styles from './styles';
 import {usePostComments} from '../../hooks/usePostComments';
 
-const productFilter = [
-  {name: 'a', id: 1},
-  {name: 'b', id: 2},
-];
-
 const Saved: React.FC = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const {t} = useTranslation();
-  const [reactVisible, setrRactVisible] = useState(false);
-  const [active, setActive] = useState<number>(1);
-  const [loading, setLoading] = useState(false);
-  const [displayPost, setDisplayPost] = useState([]);
   const dispatch = useAppDispatch();
+  const user = useSelector(selectUserProfile);
+
+  const [reactVisible, setReactVisible] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [posts, setPosts] = useState<any[]>([]);
+  const [focusedIndex, setFocusedIndex] = useState(0);
+  const [activePostId, setActivePostId] = useState<number | null>(null);
+  const [pause, setPause] = useState(false);
+  const [currentId, setCurrentId] = useState(0);
+  const [shareLoader, setShareLoader] = useState(false);
+  const [reportLoader, setReportLoader] = useState(false);
+  const [deleteVisible, setDeleteVisible] = useState({
+    visibility: false,
+    id: null as number | null,
+  });
+  const [reportVisible, setReportVisible] = useState({
+    visibility: false,
+    id: null as number | null,
+  });
+  const [likesVisible, setLikesVisible] = useState({
+    visibility: false,
+    likes: [] as any[],
+    id: null as number | null,
+  });
+  const [reportSuccess, setReportSuccess] = useState(false);
+  const [deleteSuccess, setDeleteSuccess] = useState(false);
+
   const {
     commentsVisible,
     isLoadingComments,
@@ -66,174 +74,64 @@ const Saved: React.FC = () => {
     retryComments,
     loadMoreComments,
   } = usePostComments();
-  const [deleteVisible, setDeleteVisible] = useState({
-    visibility: false,
-    id: null,
-  });
-  const [reportVisible, setReportVisible] = useState({
-    visibility: false,
-    id: null,
-  });
-  const [likesVisible, setLikesVisible] = useState({
-    visiblity: false,
-    likes: [],
-    id: null,
-  });
 
-  const [reportSuccess, setReportSuccess] = useState(false);
-  const [deleteSuccess, setDeleteSuccess] = useState(false);
-  const [reportLoader, setReportLoader] = useState(false);
-  const [shareLoader, setShareLoader] = useState(false);
-  const [focusedIndex, setFocusedIndex] = useState(0);
-
-  const [activePostId, setActivePostId] = useState<number | null>(null);
-  const [pause, setPause] = useState(false);
-  const [currendId, setCurrentID] = useState(0);
-  const handleVideoPause = id => {
-    setPause(!pause);
-    setCurrentID(id);
-  };
-  console.log('DISSPLAYYYYYYYYYYYYYY', displayPost);
-
-  const fetchData = async () => {
-    setLoading(true);
-    await getSavedItems()
-      .then(res => {
-        if (res?.data) {
-          console.log('RESSSSSSSSSS', res?.data?.data?.data[0]);
-          if (active == 1) {
-            setDisplayPost(
-              res?.data?.data?.data?.filter(
-                item => item?.savable_type == `App\\Models\\Post`,
-              ),
-            );
-          } else if (active == 2) {
-            setDisplayPost(
-              res?.data?.data?.data?.filter(
-                item => item?.savable_type == `App\\Models\\Product`,
-              ),
-            );
-          } else if (active == 4) {
-            setDisplayPost(
-              res?.data?.data?.data?.filter(
-                item => item?.savable_type == `App\\Models\\Shop`,
-              ),
-            );
-          } else {
-            setDisplayPost(
-              res?.data?.data?.data?.filter(
-                item =>
-                  item?.savable_type != `App\\Models\\Product` &&
-                  item?.savable_type != `App\\Models\\Post` &&
-                  item?.savable_type != `App\\Models\\Shop`,
-              ),
-            );
-          }
-        }
-      })
-      .catch(err => {
-        console.log('ERRRRRRORRRRR SAVEDDDDDDDDDDDD', err);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, [active]);
-
-  const handleRemoveFromWishlist = async (
-    productId: number,
-    saved: boolean,
-  ) => {
-    if (saved) {
-      // console.log('CHECKKKKKKKKKKKKKKKKKKKKK', productId);
-      let index = displayPost.findIndex(
-        item => item?.savable_item?.id == productId,
-      );
-      // console.log('INDEXXXXXXXXXXXXXXXXXX', index);
-      let arr = [...displayPost];
-      arr.splice(index, 1);
-      setDisplayPost(arr);
-      const payload = {
-        item_id: displayPost[index].savable_id,
-        item_type: 'product',
-      };
-      await removeSavedItem(payload);
+  const fetchData = useCallback(async (isRefresh = false) => {
+    if (isRefresh) {
+      setRefreshing(true);
     } else {
-      const payload = {
-        item_id: productId,
-        item_type: 'product',
-      };
-
-      await saveItem(payload)
-        .then(res => {
-          if (res?.data) {
-            //   console.log('RESSSSSSSSSS SAVEEEEEEEEEEEEEEE', res?.data);
-          }
-        })
-        .catch(err => {
-          console.log('ERRRRRORRR SAVEEEEEEEEEEEEEEEEE', err);
-        });
+      setLoading(true);
     }
+    try {
+      const res = await getSavedItems({type: 'post'});
+      const rows = res?.data?.data?.data ?? res?.data?.data ?? [];
+      const savedPosts = (Array.isArray(rows) ? rows : [])
+        .map((item: any) => item?.savable_item)
+        .filter(Boolean);
+      setPosts(savedPosts);
+    } catch (err) {
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: getMessage((err as any)?.message) || 'Failed to load saved posts',
+      });
+      setPosts([]);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchData();
+    }, [fetchData]),
+  );
+
+  const handleVideoPause = (id: number) => {
+    setPause(prev => !prev);
+    setCurrentId(id);
   };
 
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      headerStyle: {
-        backgroundColor: colors.headerColor,
-      },
-      headerRight: () => (
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => {
-              // setModalVisible(true)
-              navigation.navigate('Notifications');
-            }}>
-            <Image source={images.bellicon} style={styles.threeDots} />
-          </TouchableOpacity>
-        </View>
-      ),
-    });
-  }, [navigation]);
-
-  const handleCommentPress = id => {
+  const handleCommentPress = (id: number) => {
     openComments(id);
   };
 
-  console.log('POSTSSSSSSSSSSSSSSSS', displayPost);
-  const user = useSelector(selectUserProfile);
-
-  // const handleLikePress = (id: number) => {
-  //   console.log('POSTSSSSSSSSSSSSSSSSSSSSSSSS', id);
-  //   // dispatch(updateLike(id));
-
-  //   dispatch(likePost(id))
-  //     .then(res => {
-  //       console.log('response from like post ---->', res);
-  //       // getApi();
-  //     })
-  //     .catch(err => {
-  //       console.log('error from like post', err);
-  //     });
-  // };
   const handleLikePress = (id: number) => {
-    console.log('id -', id);
-    let temp = [...displayPost];
-    let index = temp.findIndex(item => item?.savable_item?.id == id);
-    const postFound = displayPost[index].savable_item;
+    const temp = [...posts];
+    const index = temp.findIndex(item => item?.id === id);
+    if (index < 0) return;
 
+    const postFound = temp[index];
     const tempData = {
       id: Math.random(),
       user: {
         id: user?.id,
-        avatar: user?.avatar ? user?.avatar : images.profile,
-        full_name: user?.full_name ? user?.full_name : '',
+        avatar: user?.avatar ? user.avatar : images.profile,
+        full_name: user?.full_name ? user.full_name : '',
       },
     };
-    const clone = JSON.parse(JSON.stringify(postFound?.likes));
-    const find = clone.findIndex(val => val?.user?.id == user?.id);
+    const clone = JSON.parse(JSON.stringify(postFound?.likes ?? []));
+    const find = clone.findIndex((val: any) => val?.user?.id === user?.id);
 
     if (find > -1) {
       clone.splice(find, 1);
@@ -242,38 +140,28 @@ const Saved: React.FC = () => {
     }
     postFound.is_liked = !postFound?.is_liked;
     postFound.likes = clone;
-
-    setDisplayPost(temp);
+    setPosts(temp);
     dispatch(likePost(id));
   };
 
-  const handleSave = async (id: number, isSaved: boolean) => {
-    let index = displayPost.findIndex(item => item?.savable_item?.id == id);
-    const arr = [...displayPost];
-    arr.splice(index, 1);
-    setDisplayPost(arr);
-    const payload = {
-      item_id: id,
-      item_type: 'post',
-    };
-    await removeSavedItem(payload).catch(err =>
-      console.log('ERRRORRRRRRRRR SAVEDDDDDDDDDDD', err),
+  const handleSave = async (id: number) => {
+    setPosts(prev => prev.filter(item => item?.id !== id));
+    await removeSavedItem({item_id: id, item_type: 'post'}).catch(err =>
+      console.log('Error removing saved post', err),
     );
   };
 
-  const handleDotPress = (postId: number) => {
-    setActivePostId(postId ? postId : null);
+  const handleDotPress = (postId: number | null) => {
+    setActivePostId(postId);
   };
 
   const handleDelete = () => {
+    if (!deleteVisible.id) return;
     setReportLoader(true);
-    dispatch(PostDelete(deleteVisible?.id))
+    dispatch(PostDelete(deleteVisible.id))
       .unwrap()
-      .then(res => {
-        setDeleteVisible({
-          visibility: false,
-          id: null,
-        });
+      .then(() => {
+        setDeleteVisible({visibility: false, id: null});
         setReportLoader(false);
         fetchData();
         setDeleteSuccess(true);
@@ -281,37 +169,32 @@ const Saved: React.FC = () => {
       })
       .catch(err => {
         setReportLoader(false);
-        setDeleteVisible({
-          visibility: false,
-          id: null,
-        });
+        setDeleteVisible({visibility: false, id: null});
         handleDotPress(null);
-        Toast.error(getMessage(err?.message));
-
-        console.log('Errorr  errerrerrerrerrerrerrerrerrfrom ', err);
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: getMessage(err?.message),
+        });
       });
   };
 
   const handleReport = async () => {
-    console.log(reportVisible.id, 'Reportttt idddddd');
+    if (!reportVisible.id) return;
     setReportLoader(true);
     const data = {
       reportable_type: 'Post',
-      reportable_id: reportVisible?.id,
+      reportable_id: reportVisible.id,
       reason: 'testingg',
     };
-
-    let formData = new FormData();
-    Object.entries(data).forEach(item => {
-      formData.append(item[0], item[1]);
+    const formData = new FormData();
+    Object.entries(data).forEach(([key, value]) => {
+      formData.append(key, value);
     });
+
     await reportPost(formData)
-      // .unwrap()
-      .then(res => {
-        setReportVisible({
-          visibility: false,
-          id: null,
-        });
+      .then(() => {
+        setReportVisible({visibility: false, id: null});
         setReportLoader(false);
         fetchData();
         setReportSuccess(true);
@@ -319,115 +202,135 @@ const Saved: React.FC = () => {
       })
       .catch(err => {
         setReportLoader(false);
-        setReportVisible({
-          visibility: false,
-          id: null,
-        });
+        setReportVisible({visibility: false, id: null});
         handleDotPress(null);
-        Toast.error(getMessage(err?.message));
-
-        console.log('Errorr  errerrerrerrerrerrerrerrerrfrom ', err);
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: getMessage(err?.message),
+        });
       });
   };
 
-  const sharePost = async form => {
+  const sharePost = async (form: FormData) => {
     setShareLoader(true);
     await createPost(form)
       .then(res => {
         if (res?.data) {
-          //  navigation.goBack()
           Toast.show({
             type: 'success',
             text1: 'Post shared successfully',
           });
-          console.log('POSTTTTTT SHAREDDDDDDDDDDDDDDDD');
         }
       })
-      .catch(err => console.log('ERORRRRRRR', err))
-      .finally(() => {
-        setShareLoader(false);
-        // setLoading(false);
-      });
+      .catch(err => console.log('Share error', err))
+      .finally(() => setShareLoader(false));
   };
 
-  const handelSave = (id: number) => {
-    let arr = [...displayPost];
-    let index = arr.findIndex(item => item.id === id);
-    arr.splice(index, 1);
-    setDisplayPost(arr);
-  };
-
-  const onViewableItemsChanged = ({viewableItems}) => {
-    // Play only the currently focused video
-    console.log('ITEMSSSSSSSSS', viewableItems);
-    const focusedIndex = viewableItems[0]?.index;
-    setFocusedIndex(focusedIndex);
-  };
+  const onViewableItemsChanged = useRef(({viewableItems}: any) => {
+    setFocusedIndex(viewableItems[0]?.index ?? 0);
+  }).current;
 
   const viewabilityConfig = useRef({
     waitForInteraction: true,
-    // At least one of the viewAreaCoveragePercentThreshold or itemVisiblePercentThreshold is required.
-    // viewAreaCoveragePercentThreshold: 95,
     itemVisiblePercentThreshold: 75,
-  });
+  }).current;
 
-  const renderPost = ({item, index}: any) => {
+  const countLabel = useMemo(() => {
+    const n = posts.length;
+    return n === 1 ? '1 post' : `${n} posts`;
+  }, [posts.length]);
+
+  const renderHeader = () => (
+    <View style={styles.introCard}>
+      <View style={styles.introIconWrap}>
+        <Bookmark size={22} color={colors.themeColor} strokeWidth={2.2} />
+      </View>
+      <View style={styles.introTextWrap}>
+        <Text style={styles.introTitle}>Saved Posts</Text>
+        <InterRegular style={styles.introSubtitle}>
+          Posts you bookmarked from the feed appear here.
+        </InterRegular>
+      </View>
+      {posts.length > 0 ? (
+        <View style={styles.countPill}>
+          <Text style={styles.countPillText}>{countLabel}</Text>
+        </View>
+      ) : null}
+    </View>
+  );
+
+  const renderEmpty = () => (
+    <View style={styles.emptyWrap}>
+      <View style={styles.emptyIconWrap}>
+        <Bookmark size={32} color={colors.themeColor} strokeWidth={2} />
+      </View>
+      <Text style={styles.emptyTitle}>No saved posts yet</Text>
+      <InterRegular style={styles.emptySubtitle}>
+        Tap the save icon on any post in your feed and it will show up here.
+      </InterRegular>
+    </View>
+  );
+
+  const renderPost = ({item, index}: {item: any; index: number}) => {
     const isFocused = focusedIndex === index;
     const postDescriptionRaw = item?.description ?? item?.content ?? '';
     const {caption, sharedFromName} = parseSharedFrom(postDescriptionRaw);
+
     return (
-      <PostComponent
-        id={item?.user_id}
-        isFocused={isFocused}
-        // postID={item?.media[0]?.post_id}
-        isPaused={pause && currendId == item?.id}
-        handleVideoPause={() => handleVideoPause(item?.id)}
-        avatar={item?.avatar}
-        name={item?.fullname}
-        country={item?.country ? item?.country : ''}
-        time={timeFormat(item?.date, true)}
-        postText={caption}
-        sharedFromName={sharedFromName}
-        postImage={item?.media?.[0]?.path}
-        mediaType={
-          String(item?.media?.[0]?.type ?? 'image').toLowerCase() === 'video'
-            ? 'video'
-            : 'image'
-        }
-        likes={item?.total_likes}
-        comments={item?.total_comments}
-        share={item?.share}
-        account={item?.privacy}
-        sharePost={sharePost}
-        // onCommnetPress={() => setCommentsVisible(true)}
-        onCommnetPress={() => handleCommentPress(item?.id)}
-        onLikePress={() => handleLikePress(item?.id)}
-        onLikesModal={() =>
-          setLikesVisible({visiblity: true, likes: item?.likes, id: item?.id})
-        }
-        onSavePress={() => handleSave(item?.id, item?.is_saved)}
-        // onLikePress={() => setrRactVisible(true)}
-        onDotPress={() => handleDotPress(item?.id)}
-        modalVisible={activePostId === item?.id}
-        onCardPress={() => setActivePostId(null)}
-        handleBlockPress={() => {
-          // handleDotPress();
-          // setDeleteVisible(true);
-          setDeleteVisible({visibility: true, id: item?.id});
-        }}
-        handleReportPost={() => {
-          setReportVisible({visibility: true, id: item?.id});
-        }}
-        handleReportPress={() => {
-          const {caption} = parseSharedFrom(postDescriptionRaw);
-          navigation.navigate('CreatePostEdit', {
-            title: 'Edit Post',
-            data: {...item, description: caption},
-          });
-        }}
-        isLiked={item?.is_liked}
-        isSaved={item?.is_saved}
-      />
+      <View style={styles.postCard}>
+        <PostComponent
+          id={item?.user_id}
+          isFocused={isFocused}
+          isPaused={pause && currentId === item?.id}
+          handleVideoPause={() => handleVideoPause(item?.id)}
+          avatar={item?.avatar}
+          name={item?.fullname}
+          country={item?.country ? item.country : ''}
+          time={timeFormat(item?.date, true)}
+          postText={caption}
+          sharedFromName={sharedFromName}
+          postImage={item?.media?.[0]?.path}
+          mediaType={
+            String(item?.media?.[0]?.type ?? 'image').toLowerCase() === 'video'
+              ? 'video'
+              : 'image'
+          }
+          likes={item?.total_likes}
+          comments={item?.total_comments}
+          share={item?.share}
+          account={item?.privacy}
+          sharePost={sharePost}
+          onCommnetPress={() => handleCommentPress(item?.id)}
+          onLikePress={() => handleLikePress(item?.id)}
+          onLikesModal={() =>
+            setLikesVisible({
+              visibility: true,
+              likes: item?.likes,
+              id: item?.id,
+            })
+          }
+          onSavePress={() => handleSave(item?.id)}
+          onDotPress={() => handleDotPress(item?.id)}
+          modalVisible={activePostId === item?.id}
+          onCardPress={() => setActivePostId(null)}
+          handleBlockPress={() =>
+            setDeleteVisible({visibility: true, id: item?.id})
+          }
+          handleReportPost={() =>
+            setReportVisible({visibility: true, id: item?.id})
+          }
+          handleReportPress={() => {
+            const {caption: editCaption} = parseSharedFrom(postDescriptionRaw);
+            navigation.navigate('CreatePostEdit', {
+              title: 'Edit Post',
+              data: {...item, description: editCaption},
+            });
+          }}
+          isLiked={item?.is_liked}
+          isSaved={item?.is_saved}
+        />
+      </View>
     );
   };
 
@@ -445,311 +348,102 @@ const Saved: React.FC = () => {
           </View>
         </View>
       </Modal>
-      <ScrollView showsVerticalScrollIndicator={false}>
-      <View style={styles.container}>
-        <Card style={styles.activeContainer}>
-          <TouchableOpacity
-            style={active == 1 ? styles.activeBtn : styles.InactiveBtn}
-            onPress={() => setActive(1)}>
-            <InterRegular
-              style={active == 1 ? styles.activeTxt : styles.InactiveTxt}>
-              Post Saved
-            </InterRegular>
-          </TouchableOpacity>
 
-          <TouchableOpacity
-            style={active == 2 ? styles.activeBtn : styles.InactiveBtn}
-            onPress={() => setActive(2)}>
-            <InterRegular
-              style={active == 2 ? styles.activeTxt : styles.InactiveTxt}>
-              Wishlist
-            </InterRegular>
-          </TouchableOpacity>
+      <FlatList
+        style={styles.container}
+        data={posts}
+        keyExtractor={item => String(item?.id)}
+        renderItem={renderPost}
+        contentContainerStyle={
+          posts.length === 0 ? styles.emptyList : styles.list
+        }
+        ListHeaderComponent={posts.length > 0 ? renderHeader : null}
+        ListEmptyComponent={renderEmpty}
+        refreshing={refreshing}
+        onRefresh={() => fetchData(true)}
+        viewabilityConfig={viewabilityConfig}
+        onViewableItemsChanged={onViewableItemsChanged}
+        showsVerticalScrollIndicator={false}
+        removeClippedSubviews={false}
+      />
 
-          <TouchableOpacity
-            style={active == 3 ? styles.activeBtn : styles.InactiveBtn}
-            onPress={() => setActive(3)}>
-            <InterRegular
-              style={active == 3 ? styles.activeTxt : styles.InactiveTxt}>
-              Content Saved
-            </InterRegular>
-          </TouchableOpacity>
+      <CommentsModal
+        visible={commentsVisible.visible}
+        closeModal={closeComments}
+        title="Successfully"
+        message="Password has been updated successfully"
+        buttonText="Apply"
+        comments={commentsVisible?.comments}
+        postId={commentsVisible?.id || 0}
+        isLoadingComments={isLoadingComments}
+        isLoadingMore={isLoadingMoreComments}
+        commentsError={commentsError}
+        onRetryComments={retryComments}
+        onLoadMoreComments={loadMoreComments}
+        hasMoreComments={hasMoreComments}
+      />
 
-          <TouchableOpacity
-            style={active == 4 ? styles.activeBtn : styles.InactiveBtn}
-            onPress={() => setActive(4)}>
-            <InterRegular
-              style={active == 4 ? styles.activeTxt : styles.InactiveTxt}>
-              Stores
-            </InterRegular>
-          </TouchableOpacity>
-        </Card>
-        {active == 1 && (
-          <View>
-            <FlatList
-              data={displayPost.map(item => {
-                return item?.savable_item;
-              })}
-              onRefresh={fetchData}
-              refreshing={loading}
-              renderItem={renderPost}
-              viewabilityConfig={viewabilityConfig.current}
-              onViewableItemsChanged={onViewableItemsChanged}
-              //   keyExtractor={item => item?.id.toString()}
-              showsVerticalScrollIndicator={false}
-              removeClippedSubviews={false}
-              ListEmptyComponent={() => (
-                <EmptyComponent text={'No Posts Saved'} />
-              )}
-            />
+      <ReactModal
+        visible={reactVisible}
+        closeModal={() => setReactVisible(false)}
+        reactions={reactions}
+      />
 
-            <CommentsModal
-              visible={commentsVisible.visible}
-              closeModal={closeComments}
-              // icon={CheckedIcon}
-              title="Successfully"
-              message="Password has been updated successfully"
-              buttonText="Apply"
-              comments={commentsVisible?.comments}
-              postId={commentsVisible?.id || 0}
-              isLoadingComments={isLoadingComments}
-              isLoadingMore={isLoadingMoreComments}
-              commentsError={commentsError}
-              onRetryComments={retryComments}
-              onLoadMoreComments={loadMoreComments}
-              hasMoreComments={hasMoreComments}
-            />
+      <LikesModal
+        visible={likesVisible.visibility}
+        likes={likesVisible.likes}
+        closeModal={() =>
+          setLikesVisible({visibility: false, likes: [], id: null})
+        }
+      />
 
-            <ReactModal
-              visible={reactVisible}
-              closeModal={() => setrRactVisible(false)}
-              reactions={reactions}
-            />
-            <LikesModal
-              visible={likesVisible.visiblity}
-              likes={likesVisible.likes}
-              closeModal={() => {
-                setLikesVisible({visiblity: false, likes: [], id: null});
-              }}
-            />
-            <GeneralModal
-              visible={deleteVisible.visibility}
-              closeModal={() =>
-                setDeleteVisible({
-                  visibility: false,
-                  id: null,
-                })
-              }
-              icon={images.qmark}
-              title="Delete Post"
-              message="Are you sure you want to delete this Post?"
-              SecondaryText1="Yes"
-              SecondaryText2="No"
-              onPress={handleDelete}
-              secondaryBtn={true}
-              loading={reportLoader}
-            />
+      <GeneralModal
+        visible={deleteVisible.visibility}
+        closeModal={() => setDeleteVisible({visibility: false, id: null})}
+        icon={images.qmark}
+        title="Delete Post"
+        message="Are you sure you want to delete this Post?"
+        SecondaryText1="Yes"
+        SecondaryText2="No"
+        onPress={handleDelete}
+        secondaryBtn
+        loading={reportLoader}
+      />
 
-            <GeneralModal
-              visible={deleteSuccess}
-              closeModal={() => setDeleteSuccess(false)}
-              icon={images.checkedIcon}
-              title="Delete Post"
-              message="Post has been deleted successfully."
-              buttonText="Ok"
-              onPress={() => {
-                setDeleteSuccess(false);
-              }}
-              primaryBtn={true}
-            />
+      <GeneralModal
+        visible={deleteSuccess}
+        closeModal={() => setDeleteSuccess(false)}
+        icon={images.checkedIcon}
+        title="Delete Post"
+        message="Post has been deleted successfully."
+        buttonText="Ok"
+        onPress={() => setDeleteSuccess(false)}
+        primaryBtn
+      />
 
-            <GeneralModal
-              visible={reportVisible.visibility}
-              closeModal={() =>
-                setReportVisible({
-                  visibility: false,
-                  id: null,
-                })
-              }
-              icon={images.qmark}
-              title="Report Post"
-              message="Are you sure you want to report this post?"
-              SecondaryText1="Yes"
-              SecondaryText2="No"
-              onPress={handleReport}
-              secondaryBtn={true}
-              loading={reportLoader}
-            />
+      <GeneralModal
+        visible={reportVisible.visibility}
+        closeModal={() => setReportVisible({visibility: false, id: null})}
+        icon={images.qmark}
+        title="Report Post"
+        message="Are you sure you want to report this post?"
+        SecondaryText1="Yes"
+        SecondaryText2="No"
+        onPress={handleReport}
+        secondaryBtn
+        loading={reportLoader}
+      />
 
-            <GeneralModal
-              visible={reportSuccess}
-              closeModal={() => setReportSuccess(false)}
-              icon={images.checkedIcon}
-              title="Report Post"
-              message="Post has been reported successfully!"
-              buttonText="Ok"
-              onPress={() => {
-                setReportSuccess(false);
-                // navigation.navigate("Profile", { account: account })
-              }}
-              primaryBtn={true}
-            />
-          </View>
-        )}
-
-        {active == 2 && (
-          <Card style={styles.contentContainer}>
-            <WishlistScreen
-              wishlist={displayPost.map(item => {
-                return item?.savable_item;
-              })}
-              handleRemove={handleRemoveFromWishlist}
-              heart={true}
-              // addCart={true}
-              vendor={true}
-              product={true}
-              onPress={id => {
-                navigation.navigate('ProductView', {
-                  productId: id,
-                });
-              }}
-            />
-          </Card>
-        )}
-
-        {active == 3 && (
-          <Card style={styles.contentContainer}>
-            <FlatList
-              data={displayPost}
-              onRefresh={fetchData}
-              refreshing={loading}
-              ListEmptyComponent={() => (
-                <EmptyComponent text={'No Saved Content'} />
-              )}
-              renderItem={({item}) => (
-                <Card style={styles.itemCard}>
-                  {item?.savable_type == 'App\\Models\\Video' ? (
-                    <MediaCard
-                      item={item?.savable_item}
-                      onSavePress={() => handelSave(item?.id)}
-                      type={'video'}
-                      source={item?.savable_item?.video}
-                      title={item?.savable_item?.title}
-                      description={item?.savable_item?.content}
-                      category={item?.savable_item?.category?.title}
-                      onItemPress={() =>
-                        navigation.navigate('ViewBlog', {
-                          id: item?.savable_item?.id,
-                          title: item?.savable_item?.title,
-                          type: 'video',
-                        })
-                      }
-                    />
-                  ) : (
-                    <ContentSavedScreen
-                      onSavePress={() => handelSave(item?.id)}
-                      item={item?.savable_item}
-                      userId={item?.savable_item?.id}
-                      viewBtn={
-                        item?.savable_type == 'App\\Models\\Article'
-                          ? 'View Full Article'
-                          : 'View Full Blog'
-                      }
-                      type={
-                        item?.savable_type == 'App\\Models\\Article'
-                          ? 'article'
-                          : 'blog'
-                      }
-                      onItemPress={() =>
-                        navigation.navigate('ViewBlog', {
-                          id: item?.savable_item?.id,
-                          title: item?.savable_item?.title,
-                          type:
-                            item?.savable_type == 'App\\Models\\Article'
-                              ? 'article'
-                              : 'blog',
-                        })
-                      }
-                    />
-                  )}
-                </Card>
-              )}
-              keyExtractor={item => item?.id?.toString()}
-            />
-          </Card>
-        )}
-
-        {active == 4 && (
-          <Card style={styles.contentContainer}>
-            <FlatList
-              data={displayPost}
-              onRefresh={fetchData}
-              refreshing={loading}
-              ListEmptyComponent={() => (
-                <EmptyComponent text={'No saved stores'} />
-              )}
-              renderItem={({item}) => {
-                const shop = item?.savable_item;
-                return (
-                  <TouchableOpacity
-                    style={styles.itemCard}
-                    onPress={() =>
-                      (navigation as any).navigate('Shop', {
-                        shopId: shop?.id || item?.savable_id,
-                      })
-                    }>
-                    <View style={{flexDirection: 'row', alignItems: 'center'}}>
-                      {shop?.avatar || shop?.banner ? (
-                        <Image
-                          source={{uri: shop.avatar || shop.banner}}
-                          style={{
-                            width: 56,
-                            height: 56,
-                            borderRadius: 8,
-                            marginRight: 12,
-                          }}
-                        />
-                      ) : null}
-                      <View style={{flex: 1}}>
-                        <InterRegular style={{fontWeight: '600', color: '#222'}}>
-                          {shop?.shop_name || 'Store'}
-                        </InterRegular>
-                        {shop?.city || shop?.address ? (
-                          <InterRegular style={{color: '#666', fontSize: 12}}>
-                            {[shop.city, shop.address].filter(Boolean).join(' · ')}
-                          </InterRegular>
-                        ) : null}
-                      </View>
-                      <TouchableOpacity
-                        onPress={async () => {
-                          try {
-                            await removeSavedItem({
-                              item_id: item?.savable_id,
-                              item_type: 'shop',
-                            });
-                            fetchData();
-                          } catch (e) {
-                            Toast.show({
-                              type: 'error',
-                              text1: 'Error',
-                              text2: 'Could not remove store',
-                            });
-                          }
-                        }}>
-                        <InterRegular style={{color: colors.redText || '#c0392b'}}>
-                          Remove
-                        </InterRegular>
-                      </TouchableOpacity>
-                    </View>
-                  </TouchableOpacity>
-                );
-              }}
-              keyExtractor={item => item?.id?.toString()}
-            />
-          </Card>
-        )}
-      </View>
-    </ScrollView>
+      <GeneralModal
+        visible={reportSuccess}
+        closeModal={() => setReportSuccess(false)}
+        icon={images.checkedIcon}
+        title="Report Post"
+        message="Post has been reported successfully!"
+        buttonText="Ok"
+        onPress={() => setReportSuccess(false)}
+        primaryBtn
+      />
     </>
   );
 };

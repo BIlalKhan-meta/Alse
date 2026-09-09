@@ -7,8 +7,6 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingBottom: vh * 4,
     backgroundColor: colors.headerColor,
-    // alignItems: 'center',
-    // justifyContent: 'center',
   },
   cardContainer: {
     width: vw * 90,
@@ -29,7 +27,6 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.f16,
     color: colors.black,
     marginLeft: vw * 3,
-    // fontWeight: 'bold',
   },
   imageStyle: {
     width: '100%',
@@ -37,8 +34,17 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
   },
   cardHeading: {
-    fontSize: fontSizes.f14,
+    fontSize: fontSizes.f13,
     color: colors.black,
+    flexShrink: 1,
+  },
+  cardHeadingCompact: {
+    fontSize: fontSizes.f12,
+    color: colors.black,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginTop: vh * 0.6,
+    lineHeight: fontSizes.f12 * 1.25,
   },
   cardText: {
     fontSize: fontSizes.f14,
@@ -53,10 +59,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  cardContentBottom: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   notifiCon: {
     width: vw * 7,
     height: vh * 4,
     marginRight: vw * 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  notifiConBottom: {
+    width: vw * 7,
+    height: vh * 3.5,
+    marginRight: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   bottomCon: {
     flexDirection: 'row',
@@ -64,10 +84,11 @@ const styles = StyleSheet.create({
     width: vw * 90,
     justifyContent: 'space-between',
   },
-
   cardContainer2: {
     width: vw * 43,
     marginTop: vh * 2,
+    paddingHorizontal: vw * 2,
+    overflow: 'hidden',
   },
 });
 

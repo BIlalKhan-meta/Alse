@@ -26,13 +26,15 @@ export const FollowingCard = ({onPress, text, item}) => {
           <InterRegular style={styles.userName}>{item?.name}</InterRegular>
         </Row>
       </TouchableOpacity>
-      <CustomButton
-        onPress={onPress}
-        style={styles.secondaryBtn1}
-        containerStyle={styles.buttonContainerStyle}
-        txtstyle={styles.btnTxt}>
-        {text}
-      </CustomButton>
+      {text ? (
+        <CustomButton
+          onPress={onPress}
+          style={styles.secondaryBtn1}
+          containerStyle={styles.buttonContainerStyle}
+          txtstyle={styles.btnTxt}>
+          {text}
+        </CustomButton>
+      ) : null}
     </Row>
   );
 };

@@ -6,6 +6,7 @@ import {
   ScrollView,
   FlatList,
   TouchableOpacity,
+  Pressable,
   StyleSheet,
 } from 'react-native';
 import styles from './styles';
@@ -28,10 +29,10 @@ import {
 } from '../../../store/slices/homeSlice';
 import {useAppDispatch} from '../../../hooks/storeHooks';
 import Loader from '../../../components/Loader';
-import {getMessage, Toast, getProfileGridMedia} from '../../../utils/helpers';
+import {getMessage, Toast, getProfileGridMedia, resolvePlayableMediaUrl} from '../../../utils/helpers';
 import {capitalize, timeFormat} from '../../../utils';
 import {createPost, fetchProfileById, reportPost} from '../../../api/home';
-import {getUserPosts} from '../../../api/profile';
+import {getUserPosts, getUserVideos} from '../../../api/profile';
 import {removeSavedItem, saveItem} from '../../../api/menu';
 import {usePostComments} from '../../../hooks/usePostComments';
 import {EmptyComponent} from '../../../components/EmptyComponent';
@@ -40,8 +41,8 @@ import {selectUserProfile} from '../../../store/slices/authSlice';
 import {useSelector} from 'react-redux';
 import {vh} from '../../../constant';
 import GlobalHeader from '../../../components/GlobalHeader';
-import Video from 'react-native-video';
 import MediaModal from '../../../components/MediaModal';
+import {Play} from 'lucide-react-native';
 
 const isVideoUri = (uri?: string | null, type?: string | null): boolean => {
   if (type === 'video') {
@@ -164,21 +165,70 @@ const ProfileScreen: React.FC = ({navigation}) => {
         setData(res.data.data);
       }
 
+      const extractList = (response: any): any[] => {
+        const payload = response?.data?.data;
+        if (Array.isArray(payload)) {
+          return payload;
+        }
+        if (Array.isArray(payload?.data)) {
+          return payload.data;
+        }
+        return [];
+      };
+
+      const videoToGridPost = (video: any) => {
+        const raw =
+          video?.video ||
+          video?.video_url ||
+          video?.url ||
+          video?.media_url ||
+          video?.file;
+        const url = resolvePlayableMediaUrl(raw);
+        if (!url) {
+          return null;
+        }
+        return {
+          id: `reel-${video.id}`,
+          description: video.title || video.content || '',
+          date: video.date || video.created_at,
+          media: [
+            {
+              type: 'video',
+              path: url,
+              file: url,
+              full_path: url,
+            },
+          ],
+        };
+      };
+
+      let postsList: any[] = [];
       try {
         const postsRes = await getUserPosts(String(id));
-        const payload = postsRes?.data?.data;
-        const list = Array.isArray(payload)
-          ? payload
-          : Array.isArray(payload?.data)
-            ? payload.data
-            : [];
-        setProfilePosts(list);
+        postsList = extractList(postsRes);
       } catch (postsErr: any) {
         // Private account / forbidden — fall back to embedded posts from profile.
         console.log('Profile posts fetch error:', postsErr?.response?.status);
         const embedded = res?.data?.data?.posts;
-        setProfilePosts(Array.isArray(embedded) ? embedded : []);
+        postsList = Array.isArray(embedded) ? embedded : [];
       }
+
+      let reelPosts: any[] = [];
+      try {
+        const videosRes = await getUserVideos(String(id));
+        reelPosts = extractList(videosRes)
+          .map(videoToGridPost)
+          .filter(Boolean);
+      } catch (videosErr: any) {
+        console.log('Profile videos fetch error:', videosErr?.response?.status);
+      }
+
+      const merged = [...postsList, ...reelPosts].sort((a, b) => {
+        const da = a?.date ? Date.parse(a.date) : 0;
+        const db = b?.date ? Date.parse(b.date) : 0;
+        return db - da;
+      });
+      setProfilePosts(merged);
     } catch (err) {
       console.log('ERRORRRRRR', err);
       setProfilePosts([]);
@@ -433,28 +483,24 @@ const ProfileScreen: React.FC = ({navigation}) => {
 
     const renderGridImage = (post: any, itemStyle: any) => {
       const {uri, isVideo} = getPostGridMedia(post);
+      const stillThumb =
+        !!uri && /\.(jpe?g|png|gif|webp|heic|heif)(\?|$)/i.test(uri);
       return (
-        <TouchableOpacity
-          style={itemStyle}
-          onPress={() => handleImagePress(post)}
-          activeOpacity={0.85}>
-          {uri && isVideo && isVideoUri(uri, null) ? (
-            <Video
-              source={{uri}}
-              style={styles.gridImage}
-              paused
-              muted
-              resizeMode="cover"
-            />
-          ) : uri ? (
-            <Image
-              source={{uri}}
-              style={styles.gridImage}
-              resizeMode="cover"
-            />
+        <View style={itemStyle}>
+          {stillThumb ? (
+            <Image source={{uri}} style={styles.gridImage} resizeMode="cover" />
           ) : (
-            <View style={[styles.gridImage, profileExtraStyles.placeholder]}>
-              <Text style={profileExtraStyles.placeholderText}>No media</Text>
+            <View
+              style={[
+                styles.gridImage,
+                profileExtraStyles.placeholder,
+                isVideo && profileExtraStyles.videoPlaceholder,
+              ]}>
+              {isVideo ? (
+                <Play size={28} color="#fff" fill="#fff" />
+              ) : (
+                <Text style={profileExtraStyles.placeholderText}>No media</Text>
+              )}
             </View>
           )}
           {isVideo ? (
@@ -462,7 +508,13 @@ const ProfileScreen: React.FC = ({navigation}) => {
               <Text style={profileExtraStyles.videoBadgeText}>VIDEO</Text>
             </View>
           ) : null}
-        </TouchableOpacity>
+          <Pressable
+            style={StyleSheet.absoluteFillObject}
+            onPress={() => handleImagePress(post)}
+            accessibilityRole="button"
+            accessibilityLabel={isVideo ? 'Play video' : 'View photo'}
+          />
+        </View>
       );
     };
 
@@ -506,16 +558,18 @@ const ProfileScreen: React.FC = ({navigation}) => {
 
   // Open post media fullscreen (same MediaModal as feed)
   const handleImagePress = (item: any) => {
-    if (!item?.id) {
+    if (!item) {
       return;
     }
-    const {playbackUrl, isVideo} = getPostGridMedia(item);
-    if (!playbackUrl) {
+    const {playbackUrl, uri, isVideo} = getPostGridMedia(item);
+    const raw = playbackUrl || uri;
+    if (!raw) {
       return;
     }
+    const url = resolvePlayableMediaUrl(raw) || raw;
     setMediaModal({
       visible: true,
-      mediaUrl: playbackUrl,
+      mediaUrl: url,
       mediaType: isVideo ? 'video' : 'image',
       userName:
         item.fullname ||
@@ -547,6 +601,26 @@ const ProfileScreen: React.FC = ({navigation}) => {
 
   // console.log('-------', data);
 
+  const openFollowersList = () => {
+    if (!data?.id) {
+      return;
+    }
+    navigation.navigate('RequestScreen', {
+      initialTab: 2,
+      userId: data.id,
+    });
+  };
+
+  const openFollowingList = () => {
+    if (!data?.id) {
+      return;
+    }
+    navigation.navigate('RequestScreen', {
+      initialTab: 3,
+      userId: data.id,
+    });
+  };
+
   return (
     <View style={styles.container}>
       <GlobalHeader icon={true} />
@@ -563,13 +637,16 @@ const ProfileScreen: React.FC = ({navigation}) => {
             onPress={handleOpen}
             isFollowing={data?.is_following}
             isRequested={data?.is_follow_requested}
-            private={data?.is_private}
+            is_private={data?.is_private}
             id={data?.id}
             username={data?.username || ''}
             location={data?.location_name || data?.location || ''}
+            pronouns={data?.pronouns || ''}
             postsCount={profilePosts.length || data?.posts?.length || 0}
             followersCount={data?.followers?.length || 0}
             followingCount={data?.following?.length || 0}
+            onFollowersPress={openFollowersList}
+            onFollowingPress={openFollowingList}
           />
           <ReportBlockModal
             isVisible={modalVisible}
@@ -595,15 +672,18 @@ const ProfileScreen: React.FC = ({navigation}) => {
               onPress={handleOpen}
               isFollowing={data?.is_following}
               isRequested={data?.is_follow_requested}
-              private={data?.is_private}
+              is_private={data?.is_private}
               id={data?.id}
               username={data?.username || ''}
               location={data?.location_name || data?.location || ''}
+              pronouns={data?.pronouns || ''}
               postsCount={
                 profilePosts.length || data?.posts?.length || 0
               }
               followersCount={data?.followers?.length || 0}
               followingCount={data?.following?.length || 0}
+              onFollowersPress={openFollowersList}
+              onFollowingPress={openFollowingList}
             />
 
             <ReportBlockModal
@@ -802,6 +882,9 @@ const profileExtraStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  videoPlaceholder: {
+    backgroundColor: '#1C1C1E',
+  },
   placeholderText: {
     color: '#8A94A6',
     fontSize: 12,
@@ -814,6 +897,7 @@ const profileExtraStyles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
+    zIndex: 2,
   },
   videoBadgeText: {
     color: '#fff',

@@ -7,12 +7,10 @@ import {
 } from 'react-native';
 import styles from '../styles';
 import {editProfileWithJson, EditProfilePayload} from '../../../api/profile';
-import {colors} from '../../../utils/theme';
 import {getMessage} from '../../../utils/helpers';
 import InterRegular from '../../../components/Text/InterRegular';
 import {useAppTranslation} from '../../../i18n/hooks/useAppTranslation';
 import Toast from 'react-native-toast-message';
-import {LocationEdit} from 'lucide-react-native';
 
 interface ProfileData {
   firstName: string;
@@ -143,17 +141,12 @@ const ProfileForm = ({
         <InterRegular style={styles.inputLabel}>
           {t('settings.location')}
         </InterRegular>
-        <View style={styles.textInputWithIcon}>
-          <TextInput
-            style={[styles.textInput, styles.textInputWithIconInput]}
-            value={profileData.location}
-            onChangeText={text => handleProfileUpdate('location', text)}
-            placeholder={t('settings.location')}
-          />
-          <TouchableOpacity style={styles.inputIcon}>
-            <LocationEdit size={20} color={colors.inputText} />
-          </TouchableOpacity>
-        </View>
+        <TextInput
+          style={styles.textInput}
+          value={profileData.location}
+          onChangeText={text => handleProfileUpdate('location', text)}
+          placeholder={t('settings.location')}
+        />
       </View>
 
       <View style={styles.inputContainer}>

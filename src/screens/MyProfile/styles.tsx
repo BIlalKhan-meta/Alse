@@ -63,6 +63,12 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
 
+  pronouns: {
+    fontSize: 13,
+    color: '#888',
+    marginBottom: 2,
+  },
+
   location: {
     fontSize: 14,
     color: '#666',
@@ -141,11 +147,17 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     overflow: 'hidden',
     backgroundColor: '#F0F0F0',
+    position: 'relative',
   },
   postImage: {
     width: '100%',
     height: vw * 44,
     borderRadius: 8,
+  },
+  postVideoPlaceholder: {
+    backgroundColor: '#1C1C1E',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   videoBadge: {
     position: 'absolute',
@@ -155,6 +167,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
+    zIndex: 2,
   },
   videoBadgeText: {
     color: '#fff',

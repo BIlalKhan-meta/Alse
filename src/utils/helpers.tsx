@@ -341,6 +341,51 @@ export const getAbsoluteAvatarUrl = (
   return absolute;
 };
 
+/**
+ * Resolve a playable media URL (posts / reels / local storage / S3).
+ * Prefer this over getAbsoluteAvatarUrl for Video sources.
+ */
+export const resolvePlayableMediaUrl = (
+  url: string | null | undefined,
+): string => {
+  if (!url || url === 'null') {
+    return '';
+  }
+  const normalized = changeUrlForData(String(url).trim());
+  if (!normalized) {
+    return '';
+  }
+  if (
+    normalized.startsWith('http://') ||
+    normalized.startsWith('https://') ||
+    normalized.startsWith('file://') ||
+    normalized.startsWith('content://')
+  ) {
+    return normalized;
+  }
+
+  const base = BASE_URL.replace(/\/api\/?$/, '');
+  if (normalized.startsWith('/')) {
+    return `${base}${normalized}`;
+  }
+  if (normalized.startsWith('storage/')) {
+    return `${base}/${normalized}`;
+  }
+  // Filenames / folder-relative paths from media accessors
+  if (
+    /^(videos|posts|upload|stories|blogs|articles|products|chat)\//i.test(
+      normalized,
+    )
+  ) {
+    return `${base}/storage/${normalized}`;
+  }
+  // Bare video filename (reels often store VID_*.mp4)
+  if (/\.(mp4|mov|webm|mkv|m4v|3gp)$/i.test(normalized)) {
+    return `${base}/storage/videos/${normalized}`;
+  }
+  return `${base}/storage/${normalized}`;
+};
+
 export type NewsfeedMediaItem = {
   id?: number;
   post_id?: number;

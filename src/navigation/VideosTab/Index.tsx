@@ -18,6 +18,7 @@ import endpoints from '../../api/endpoints';
 import {fontSizes} from '../../constant';
 import {colors} from '../../utils/theme';
 import {useIsFocused, useNavigation, useRoute} from '@react-navigation/native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useSelector} from 'react-redux';
 import {selectUserProfile} from '../../store/slices/authSlice';
 import store from '../../store';
@@ -54,6 +55,7 @@ interface VideoItem {
   user_id?: number;
   date?: string;
   isLiked: boolean;
+  isSaved?: boolean;
   likes: number;
   comments: number;
   privacy?: string;
@@ -75,6 +77,7 @@ function transformApiVideo(video: any): VideoItem {
     id: video.id,
     video: finalVideoUrl,
     isLiked: video.is_liked ?? false,
+    isSaved: video.is_saved ?? false,
     likes: video.likes ?? 0,
     comments: video.comments_count ?? video.comments ?? 0,
     user: video.user || {
@@ -104,8 +107,10 @@ const VideosReelOverlay: React.FC<{
   onComment: (id: number) => void;
   onShare: (id: number) => void;
   onSave: (id: number) => void;
-}> = ({ctx, onLike, onComment, onShare, onSave}) => {
+  isSaved?: boolean;
+}> = ({ctx, onLike, onComment, onShare, onSave, isSaved = false}) => {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const user = useSelector(selectUserProfile);
   const item = ctx.overlayData;
   const {t} = useTranslation();
@@ -152,7 +157,12 @@ const VideosReelOverlay: React.FC<{
 
   return (
     <>
-      <View style={styles.headerOverlay} pointerEvents="box-none">
+      <View
+        style={[
+          styles.headerOverlay,
+          {paddingTop: Math.max(insets.top, 12) + 8},
+        ]}
+        pointerEvents="box-none">
         <View style={styles.userInfo}>
           <TouchableOpacity disabled={myAccount} onPress={goToProfile}>
             <Image
@@ -169,9 +179,14 @@ const VideosReelOverlay: React.FC<{
             <Text style={styles.timeOverlay}>{item.date || 'Just now'}</Text>
           </View>
         </View>
-        <TouchableOpacity style={styles.moreButton} onPress={() => onSave(item.id)}>
+        <TouchableOpacity
+          style={styles.moreButton}
+          onPress={() => onSave(item.id)}
+          hitSlop={{top: 12, bottom: 12, left: 12, right: 12}}
+          accessibilityRole="button"
+          accessibilityLabel={isSaved ? 'Unsave reel' : 'Save reel'}>
           <Image
-            source={images.saveIcon}
+            source={isSaved ? images.unsave : images.saveIcon}
             style={[styles.threeDots, {tintColor: '#fff'}]}
           />
         </TouchableOpacity>
@@ -234,6 +249,7 @@ const VideosReelPage: React.FC<{
   onComment: (id: number) => void;
   onShare: (id: number) => void;
   onSave: (id: number) => void;
+  isSaved?: boolean;
   commentsOpen?: boolean;
 }> = ({
   item,
@@ -247,6 +263,7 @@ const VideosReelPage: React.FC<{
   onComment,
   onShare,
   onSave,
+  isSaved = false,
   commentsOpen = false,
 }) => {
   const [userPaused, setUserPaused] = useState(false);
@@ -305,6 +322,7 @@ const VideosReelPage: React.FC<{
           onComment={onComment}
           onShare={onShare}
           onSave={onSave}
+          isSaved={isSaved}
         />
       </View>
     </View>
@@ -457,6 +475,16 @@ const VideosTab = () => {
           transformApiVideo(video),
         );
 
+        setSavedIds(prev => {
+          const next = append ? new Set(prev) : new Set<number>();
+          transformedReels.forEach((reel: VideoItem) => {
+            if (reel.isSaved) {
+              next.add(reel.id);
+            }
+          });
+          return next;
+        });
+
         if (append) {
           setReels(prevReels => [...prevReels, ...transformedReels]);
         } else {
@@ -538,14 +566,30 @@ const VideosTab = () => {
             next.delete(videoId);
             return next;
           });
+          setReels(prev =>
+            prev.map(r => (r.id === videoId ? {...r, isSaved: false} : r)),
+          );
           Toast.success('Removed from saved');
         } else {
           await saveItem(payload);
           setSavedIds(prev => new Set(prev).add(videoId));
+          setReels(prev =>
+            prev.map(r => (r.id === videoId ? {...r, isSaved: true} : r)),
+          );
           Toast.success('Video saved');
         }
       } catch (error: any) {
-        Toast.error(getMessage(error?.message || error));
+        const apiMsg = getMessage(error?.response?.data ?? error);
+        const lower = String(apiMsg || '').toLowerCase();
+        if (!isSaved && lower.includes('already saved')) {
+          setSavedIds(prev => new Set(prev).add(videoId));
+          setReels(prev =>
+            prev.map(r => (r.id === videoId ? {...r, isSaved: true} : r)),
+          );
+          Toast.success('Video saved');
+          return;
+        }
+        Toast.error(apiMsg);
       }
     },
     [savedIds],
@@ -682,6 +726,7 @@ const VideosTab = () => {
               onComment={handleComment}
               onShare={handleShare}
               onSave={handleSave}
+              isSaved={savedIds.has(item.id) || !!item.isSaved}
               commentsOpen={commentsVisible.visible && commentsVisible.id === item.id}
             />
           </View>
@@ -784,18 +829,21 @@ const styles = StyleSheet.create({
   },
   headerOverlay: {
     position: 'absolute',
-    top: 12,
+    top: 0,
     left: 0,
     right: 0,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 12,
+    paddingHorizontal: 12,
+    paddingBottom: 12,
     zIndex: 10,
   },
   userInfo: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
+    marginRight: 8,
   },
   avatar: {
     width: 40,
@@ -819,11 +867,15 @@ const styles = StyleSheet.create({
     textShadowRadius: 10,
   },
   moreButton: {
-    padding: 8,
+    padding: 10,
+    minWidth: 44,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   threeDots: {
-    width: 16,
-    height: 16,
+    width: 20,
+    height: 20,
     resizeMode: 'contain',
   },
   sideInteractions: {

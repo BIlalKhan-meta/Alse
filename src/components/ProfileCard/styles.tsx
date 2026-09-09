@@ -46,6 +46,11 @@ const styles = StyleSheet.create({
     color: colors.darkGray,
     marginTop: vh * 0.3,
   },
+  pronouns: {
+    fontSize: vh * 1.4,
+    color: colors.darkGray,
+    marginTop: vh * 0.2,
+  },
   location: {
     fontSize: vh * 1.6,
     color: colors.darkGray,

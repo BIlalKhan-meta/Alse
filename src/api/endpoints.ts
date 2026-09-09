@@ -53,6 +53,7 @@ const endpoints = {
     changePassword: '/change-password',
     deleteAccount: '/delete-my-account',
     getUserPosts: '/get-user/{id}/posts',
+    getUserVideos: '/get-user/{id}/videos',
     share: '/profile/share',
   },
   subscription: {

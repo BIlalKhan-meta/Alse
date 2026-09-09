@@ -1,6 +1,6 @@
 import {createSlice, createAsyncThunk, PayloadAction} from '@reduxjs/toolkit';
-import {editProfile, getUserPosts} from '../../api/profile';
-import {getProfileGridMedia} from '../../utils/helpers';
+import {editProfile, getUserPosts, getUserVideos} from '../../api/profile';
+import {getProfileGridMedia, resolvePlayableMediaUrl} from '../../utils/helpers';
 
 interface PostItem {
   id: string;
@@ -44,6 +44,17 @@ interface ApiPost {
   comments: any[];
 }
 
+interface ApiVideo {
+  id: number;
+  title?: string;
+  content?: string;
+  video?: string;
+  date?: string;
+  fullname?: string;
+  username?: string;
+  created_at?: string;
+}
+
 interface ProfileState {
   posts: PostItem[];
   loading: boolean;
@@ -64,15 +75,30 @@ export const postCreate = createAsyncThunk(
   },
 );
 
+const extractPaginatedList = (response: any): any[] => {
+  const payload = response?.data?.data;
+  if (Array.isArray(payload)) {
+    return payload;
+  }
+  if (Array.isArray(payload?.data)) {
+    return payload.data;
+  }
+  return [];
+};
+
 const mapApiPostsToGridItems = (apiPosts: ApiPost[]): PostItem[] =>
   (apiPosts || [])
     .filter((post: ApiPost) => post.media && post.media.length > 0)
     .map((post: ApiPost) => {
       const grid = getProfileGridMedia(post.media);
+      const uri = resolvePlayableMediaUrl(grid?.uri || '');
+      const playbackUrl = resolvePlayableMediaUrl(
+        grid?.playbackUrl || grid?.uri || '',
+      );
       return {
-        id: post.id.toString(),
-        uri: grid?.uri || '',
-        playbackUrl: grid?.playbackUrl || grid?.uri || '',
+        id: `post-${post.id}`,
+        uri,
+        playbackUrl: playbackUrl || uri,
         title: post.description,
         isVideo: !!grid?.isVideo,
         userName: post.fullname || post.name || post.username || '',
@@ -80,18 +106,70 @@ const mapApiPostsToGridItems = (apiPosts: ApiPost[]): PostItem[] =>
       };
     });
 
+const mapApiVideosToGridItems = (apiVideos: ApiVideo[]): PostItem[] =>
+  (apiVideos || [])
+    .map(video => {
+      const raw =
+        video.video ||
+        (video as any).video_url ||
+        (video as any).url ||
+        (video as any).media_url ||
+        (video as any).file;
+      const url = resolvePlayableMediaUrl(raw);
+      if (!url) {
+        return null;
+      }
+      return {
+        id: `reel-${video.id}`,
+        uri: url,
+        playbackUrl: url,
+        title: video.title || video.content || '',
+        isVideo: true,
+        userName: video.fullname || video.username || '',
+        date: video.date || video.created_at,
+      };
+    })
+    .filter(Boolean) as PostItem[];
+
+const sortByDateDesc = (items: PostItem[]): PostItem[] =>
+  [...items].sort((a, b) => {
+    const da = a.date ? Date.parse(a.date) : 0;
+    const db = b.date ? Date.parse(b.date) : 0;
+    return db - da;
+  });
+
 export const fetchUserPosts = createAsyncThunk(
   'profile/fetchUserPosts',
   async (userId: string, {rejectWithValue}) => {
     try {
-      const response = await getUserPosts(userId);
-      // Paginated: data.data.data | non-paginated: data.data (array)
-      const payload = response.data?.data;
-      const apiPosts: ApiPost[] = Array.isArray(payload)
-        ? payload
-        : payload?.data || [];
+      const [postsRes, videosRes] = await Promise.all([
+        getUserPosts(userId).catch(err => {
+          console.error('Fetch posts error:', err);
+          return null;
+        }),
+        getUserVideos(userId).catch(err => {
+          console.error('Fetch profile videos error:', err);
+          return null;
+        }),
+      ]);
 
-      return mapApiPostsToGridItems(apiPosts);
+      const apiPosts: ApiPost[] = postsRes
+        ? extractPaginatedList(postsRes)
+        : [];
+      const apiVideos: ApiVideo[] = videosRes
+        ? extractPaginatedList(videosRes)
+        : [];
+
+      const merged = sortByDateDesc([
+        ...mapApiPostsToGridItems(apiPosts),
+        ...mapApiVideosToGridItems(apiVideos),
+      ]);
+
+      if (!postsRes && !videosRes) {
+        return rejectWithValue('Failed to fetch posts');
+      }
+
+      return merged;
     } catch (error: any) {
       console.error('Fetch posts error:', error);
       return rejectWithValue(

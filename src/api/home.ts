@@ -134,12 +134,16 @@ export const getRequestFollow = () => {
   return axiosInstance.get(endpoints.home.followRequest);
 };
 
-export const getFollowersList = () => {
-  return axiosInstance.get(endpoints.home.followers);
+export const getFollowersList = (userId?: number | string) => {
+  return axiosInstance.get(endpoints.home.followers, {
+    params: userId != null ? {user_id: userId} : undefined,
+  });
 };
 
-export const getFollowingList = () => {
-  return axiosInstance.get(endpoints.home.following);
+export const getFollowingList = (userId?: number | string) => {
+  return axiosInstance.get(endpoints.home.following, {
+    params: userId != null ? {user_id: userId} : undefined,
+  });
 };
 
 export const userFollow = (id: number) => {

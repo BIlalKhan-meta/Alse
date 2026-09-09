@@ -1,50 +1,73 @@
-import {Platform, StyleSheet} from 'react-native';
+import {StyleSheet} from 'react-native';
 import {fontSizes, vh, vw} from '../../constant';
 import {colors} from '../../utils/theme';
-import fonts from '../../assets/fonts';
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.headerColor,
-    paddingHorizontal: 15,
-    paddingTop: vh * 1,
+    backgroundColor: '#F4F7F7',
   },
-
-  itemCard: {
-    marginBottom: vh * 2,
-    width: vw * 94,
-    alignSelf: 'center',
-    padding: 0,
+  list: {
+    paddingHorizontal: 16,
+    paddingBottom: vh * 4,
   },
-  emptyContainer: {
+  emptyList: {
     flexGrow: 1,
-    height: '100%',
+    paddingHorizontal: 16,
   },
-  emptyText: {
-    marginVertical: vh * 4,
-  },
-  activeContainer: {
+  introCard: {
+    backgroundColor: colors.white,
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    marginTop: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#E8ECEF',
     flexDirection: 'row',
-    justifyContent: 'space-around',
     alignItems: 'center',
   },
-  activeBtn: {
-    backgroundColor: colors.themeColor,
-    paddingHorizontal: vw * 3,
-    paddingVertical: vw * 2,
-    borderRadius: 5,
+  introIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#EAF6F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
   },
-  activeTxt: {
-    fontSize: fontSizes.f14,
-    color: colors.white,
+  introTextWrap: {
+    flex: 1,
   },
-  InactiveBtn: {
-    // backgroundColor: colors.themeColor
-  },
-  InactiveTxt: {
-    fontSize: fontSizes.f14,
+  introTitle: {
+    fontSize: fontSizes.f16,
     color: colors.black,
+    fontWeight: '700',
+  },
+  introSubtitle: {
+    marginTop: 2,
+    fontSize: fontSizes.f12,
+    color: colors.lightGrey,
+    lineHeight: 18,
+  },
+  countPill: {
+    backgroundColor: '#EAF6F6',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  countPillText: {
+    fontSize: fontSizes.f12,
+    color: colors.themeColor,
+    fontWeight: '700',
+  },
+  postCard: {
+    backgroundColor: colors.white,
+    borderRadius: 16,
+    marginBottom: 14,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#E8ECEF',
   },
   shareLoaderOverlay: {
     flex: 1,
@@ -66,45 +89,34 @@ const styles = StyleSheet.create({
     color: colors.black,
     fontWeight: '500',
   },
-  contentContainer: {
-    marginTop: vh * 2,
-    marginBottom: vh * 4,
+  emptyWrap: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+    paddingTop: vh * 8,
   },
-  itemStyle: {
-    padding: 0,
-    paddingBottom: vh * 2,
+  emptyIconWrap: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: '#EAF6F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
   },
-  heading: {
-    color: colors.inputText,
-    fontSize: fontSizes.f14,
-  },
-  label: {
-    // fontSize:fontSizes.f14,
-    alignSelf: 'flex-start',
-    // marginLeft:vw*8,
-    marginTop: vh * 2,
+  emptyTitle: {
+    fontSize: fontSizes.f18,
     color: colors.black,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  emptySubtitle: {
     fontSize: fontSizes.f14,
-  },
-  pickercontainer: {
-    fontFamily: fonts.Inter.Bold,
-    color: colors.inputText,
-    fontSize: fontSizes.f11,
-    height: vh * 6,
-    marginTop: vh * 2,
-    width: vw * 55,
-    fontWeight: '300',
-    borderColor: colors.inputcolor,
-    borderWidth: 1,
-    borderRadius: 5,
-    paddingHorizontal: 10,
-    backgroundColor: colors.inputcolor,
-    // backgroundColor: "yellow"
-  },
-  threeDots: {
-    width: vw * 10,
-    height: vh * 5,
-    // marginLeft: 20,
+    color: colors.lightGrey,
+    textAlign: 'center',
+    lineHeight: 22,
   },
 });
 

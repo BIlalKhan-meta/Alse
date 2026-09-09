@@ -3,18 +3,20 @@ import {
   View,
   Text,
   Image,
+  Pressable,
   TouchableOpacity,
   ScrollView,
   RefreshControl,
   Modal,
   StyleSheet,
   Platform,
+  Share,
 } from 'react-native';
-import Video from 'react-native-video';
 import {BlurView} from '@react-native-community/blur';
 import Clipboard from '@react-native-clipboard/clipboard';
 import {useIsFocused, useNavigation} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
+import {Play} from 'lucide-react-native';
 import {images} from '../../utils/images';
 import {
   selectUserProfile,
@@ -40,6 +42,7 @@ import {shareProfile} from '../../api/profile';
 import Toast from 'react-native-toast-message';
 import MediaModal from '../../components/MediaModal';
 import {timeFormat} from '../../utils';
+import {resolvePlayableMediaUrl} from '../../utils/helpers';
 
 import styles from './styles';
 import {colors} from '../../utils/theme';
@@ -56,42 +59,49 @@ interface PostItem {
   date?: string;
 }
 
-/** Grid cell that falls back to a local image when the remote URL 404s. */
+const STILL_IMAGE_EXT = /\.(jpe?g|png|gif|webp|heic|heif)(\?|$)/i;
+
+/** Grid cell — Image only (no Video) so Android surfaces don't bleed between cells. */
 const ProfilePostThumb: React.FC<{
   item: PostItem;
   onPress: (item: PostItem) => void;
 }> = ({item, onPress}) => {
-  const [failed, setFailed] = useState(!item.uri);
-  const showVideo = !!item.isVideo && !!item.uri && !failed;
+  const [failed, setFailed] = useState(false);
+  const thumbUri = item.uri;
+  const stillThumb =
+    !!thumbUri && STILL_IMAGE_EXT.test(thumbUri) && !failed;
+  const showImage = stillThumb;
 
   return (
-    <TouchableOpacity
-      style={styles.postItem}
-      activeOpacity={0.85}
-      onPress={() => onPress(item)}>
-      {showVideo ? (
-        <Video
-          source={{uri: item.uri}}
+    <View style={styles.postItem}>
+      {showImage ? (
+        <Image
+          source={{uri: thumbUri}}
           style={styles.postImage}
-          paused
-          muted
-          resizeMode="cover"
-          posterResizeMode="cover"
           onError={() => setFailed(true)}
         />
       ) : (
-        <Image
-          source={failed || !item.uri ? images.pro1 : {uri: item.uri}}
-          style={styles.postImage}
-          onError={() => setFailed(true)}
-        />
+        <View style={[styles.postImage, styles.postVideoPlaceholder]}>
+          {item.isVideo ? (
+            <Play size={28} color="#fff" fill="#fff" />
+          ) : (
+            <Image source={images.pro1} style={styles.postImage} />
+          )}
+        </View>
       )}
       {item.isVideo ? (
         <View style={styles.videoBadge}>
           <Text style={styles.videoBadgeText}>VIDEO</Text>
         </View>
       ) : null}
-    </TouchableOpacity>
+      {/* Absolute press target so taps always open fullscreen */}
+      <Pressable
+        style={StyleSheet.absoluteFillObject}
+        onPress={() => onPress(item)}
+        accessibilityRole="button"
+        accessibilityLabel={item.isVideo ? 'Play video' : 'View photo'}
+      />
+    </View>
   );
 };
 
@@ -155,6 +165,8 @@ const MyProfile: React.FC = () => {
       location:
         profileData?.location || user?.location_name || user?.city || '',
 
+      pronouns: profileData?.pronouns || user?.pronouns || '',
+
       bio:
         profileData?.description ||
         user?.bio ||
@@ -169,14 +181,18 @@ const MyProfile: React.FC = () => {
 
   const openPostMedia = useCallback(
     (item: PostItem) => {
-      const url = item.playbackUrl || item.uri;
-      if (!url) {
+      const raw = (item.playbackUrl || item.uri || '').trim();
+      if (!raw) {
+        console.warn('[MyProfile] no media url for item', item.id);
         return;
       }
+      const url = resolvePlayableMediaUrl(raw) || raw;
       setMediaModal({
         visible: true,
         mediaUrl: url,
-        mediaType: item.isVideo ? 'video' : 'image',
+        mediaType: item.isVideo || /\.(mp4|mov|webm|mkv|m4v|3gp)(\?|$)/i.test(url)
+          ? 'video'
+          : 'image',
         userName: item.userName || currentProfile.fullName || '',
         postTime: item.date ? timeFormat(item.date, true) : '',
       });
@@ -329,6 +345,16 @@ const MyProfile: React.FC = () => {
         data?.link ?? data?.share_url ?? data?.url ?? data?.share_link ?? '';
       if (link) {
         Clipboard.setString(link);
+        try {
+          await Share.share(
+            Platform.OS === 'ios'
+              ? {url: link, message: link}
+              : {message: link, title: t('profileScr.share')},
+          );
+        } catch (shareErr) {
+          // User dismissed the sheet — link is still on clipboard.
+          console.log('[MyProfile] share sheet dismissed', shareErr);
+        }
         setShareSuccessModal(true);
       } else {
         Toast.show({
@@ -402,6 +428,9 @@ const MyProfile: React.FC = () => {
             <View style={styles.profileInfo}>
               <Text style={styles.userName}>{currentProfile.fullName}</Text>
               <Text style={styles.userHandle}>@{currentProfile.username}</Text>
+              {currentProfile.pronouns ? (
+                <Text style={styles.pronouns}>{currentProfile.pronouns}</Text>
+              ) : null}
               {currentProfile.location ? (
                 <Text style={styles.location}>{currentProfile.location}</Text>
               ) : null}
@@ -429,14 +458,26 @@ const MyProfile: React.FC = () => {
             <Text style={styles.statNumber}>{stats.posts}</Text>
             <Text style={styles.statLabel}>{t('profileScr.posts')}</Text>
           </View>
-          <View style={styles.statItem}>
+          <TouchableOpacity
+            style={styles.statItem}
+            onPress={() =>
+              (navigation as any).navigate('RequestScreen', {initialTab: 2})
+            }
+            accessibilityRole="button"
+            accessibilityLabel="Followers">
             <Text style={styles.statNumber}>{stats.followers}</Text>
             <Text style={styles.statLabel}>{t('profileScr.followers')}</Text>
-          </View>
-          <View style={styles.statItem}>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.statItem}
+            onPress={() =>
+              (navigation as any).navigate('RequestScreen', {initialTab: 3})
+            }
+            accessibilityRole="button"
+            accessibilityLabel="Following">
             <Text style={styles.statNumber}>{stats.following}</Text>
             <Text style={styles.statLabel}>{t('profileScr.following')}</Text>
-          </View>
+          </TouchableOpacity>
         </View>
 
         {/* Action Buttons */}
