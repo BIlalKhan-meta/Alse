@@ -1,5 +1,6 @@
 package com.blitzapp.alenga
 
+import android.content.Intent
 import android.os.Bundle
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
@@ -20,6 +21,16 @@ class MainActivity : ReactActivity() {
     // Prevent ScreenStackFragment restore crash after process death / config restore.
     // See https://github.com/software-mansion/react-native-screens/issues/17
     super.onCreate(null)
+  }
+
+  /**
+   * singleTask activities receive subsequent deep links here. Without setIntent,
+   * RN Linking keeps the old intent and the app just resumes on the previous
+   * screen (e.g. Chat) instead of opening Profile.
+   */
+  override fun onNewIntent(intent: Intent) {
+    super.onNewIntent(intent)
+    setIntent(intent)
   }
 
   /**

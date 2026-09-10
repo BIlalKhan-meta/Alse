@@ -8,6 +8,7 @@ import {
   CornerUpRight,
   Volume2,
   VolumeX,
+  Play,
 } from 'lucide-react-native';
 import React, {useEffect, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
@@ -390,6 +391,20 @@ const PostComponent: React.FC<PostProps> = ({
       <View style={[styles.mediaSlide, {width: mediaSlideWidth}]}>
         {isVideo ? (
           <View style={styles.videoInlineWrap} collapsable={false}>
+            {/* Poster under player / for inactive slides */}
+            <View style={styles.videoPoster} pointerEvents="none">
+              <CustomImage
+                media={item}
+                variant="medium"
+                style={styles.postImage}
+                resizeMode="cover"
+              />
+              {!shouldMountVideo ? (
+                <View style={styles.playAffordance} pointerEvents="none">
+                  <Play color="#fff" size={28} fill="#fff" />
+                </View>
+              ) : null}
+            </View>
             {shouldMountVideo ? (
               <>
                 {videoLoad ? (
@@ -406,7 +421,7 @@ const PostComponent: React.FC<PostProps> = ({
                   }}
                   source={{
                     uri: changeUrlForData(
-                      item.medium_path || item.path || item.full_path,
+                      item.medium_path || item.path || item.full_path || '',
                     ),
                   }}
                   style={[
@@ -452,10 +467,9 @@ const PostComponent: React.FC<PostProps> = ({
               </>
             ) : (
               <Pressable
-                style={styles.mediaInnerFill}
-                onPress={() => onMediaPress?.(item, index)}>
-                <View style={styles.videoPoster} />
-              </Pressable>
+                style={[styles.mediaInnerFill, styles.videoTouchOverlay]}
+                onPress={() => onMediaPress?.(item, index)}
+              />
             )}
             {onMediaPress && shouldMountVideo ? (
               <Pressable
@@ -487,10 +501,10 @@ const PostComponent: React.FC<PostProps> = ({
             style={styles.mediaInnerFill}
             onPress={() => onMediaPress?.(item, index)}>
             <CustomImage
-              source={{
-                uri: changeUrlForData(item.path || item.full_path || item.medium_path),
-              }}
+              media={item}
+              variant="medium"
               style={styles.postImage}
+              resizeMode="cover"
             />
           </Pressable>
         )}
@@ -962,6 +976,7 @@ const styles = StyleSheet.create({
   /** Position absolute; insets applied in JSX to trim decode/scaling bleed at edges. */
   postVideo: {
     position: 'absolute',
+    zIndex: 2,
   },
   logoOverlay: {
     position: 'absolute',
@@ -1032,8 +1047,16 @@ const styles = StyleSheet.create({
     zIndex: 3,
   },
   videoPoster: {
-    flex: 1,
+    ...StyleSheet.absoluteFillObject,
     backgroundColor: '#E4E6EB',
+    zIndex: 1,
+  },
+  playAffordance: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.25)',
+    zIndex: 2,
   },
   muteButton: {
     position: 'absolute',

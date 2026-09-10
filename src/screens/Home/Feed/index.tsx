@@ -53,6 +53,7 @@ import {Plus, Video, Image as ImageIcon} from 'lucide-react-native';
 import PostSkeleton from '../../../components/SkeletonLoaders';
 import {useTranslation} from 'react-i18next';
 import MediaModal from '../../../components/MediaModal';
+import {preloadRemoteImages} from '../../../components/CustomeImage';
 import FeedWellnessModal from '../../../components/FeedWellnessModal';
 import FeedFilterTabs from '../../../components/FeedFilterTabs';
 import {useFeedSessionTracking} from '../../../hooks/useFeedSessionTracking';
@@ -237,12 +238,14 @@ const Home: React.FC = () => {
     mediaType: 'image' | 'video';
     userName: string;
     postTime: string;
+    previewUrl?: string;
   }>({
     visible: false,
     mediaUrl: '',
     mediaType: 'image',
     userName: '',
     postTime: '',
+    previewUrl: '',
   });
 
   const toggleFab = () => {
@@ -309,6 +312,40 @@ const Home: React.FC = () => {
       return !hiddenAdIds.has(Number(item.advertisement_id));
     });
   }, [posts, activeFilter, hiddenAdIds]);
+
+  // Prefetch next focused post's primary medium image (cheap ahead-of-time)
+  useEffect(() => {
+    if (focusedIndex == null || focusedIndex < 0) {
+      return;
+    }
+    const next = filteredPosts[focusedIndex + 1];
+    if (!next) {
+      return;
+    }
+    const isAd =
+      next?.feed_item_type === 'advertisement' ||
+      next?.type === 'advertisement' ||
+      next?.is_ad === true;
+    if (isAd) {
+      return;
+    }
+    const mediaList = getNewsfeedMediaList(
+      (next?.media as Parameters<typeof getNewsfeedMediaList>[0]) ?? null,
+    );
+    const primary = mediaList[0];
+    if (!primary) {
+      return;
+    }
+    const mediumUri =
+      primary.medium_path ||
+      primary.thumbnail_path ||
+      (String(primary.type ?? '').toLowerCase() !== 'video'
+        ? primary.path
+        : undefined);
+    if (mediumUri) {
+      preloadRemoteImages([mediumUri]);
+    }
+  }, [focusedIndex, filteredPosts]);
 
   const handleFilterChange = useCallback((filter: FeedFilterTab) => {
     setActiveFilter(filter);
@@ -542,18 +579,40 @@ const Home: React.FC = () => {
   const handleMediaPress = (item: any, mediaIndex = 0) => {
     const mediaList = getNewsfeedMediaList(item?.media);
     const selected = mediaList[mediaIndex] ?? mediaList[0];
-    if (selected?.path) {
-      setMediaModalVisible({
-        visible: true,
-        mediaUrl: selected.path,
-        mediaType:
-          String(selected.type ?? 'image').toLowerCase() === 'video'
-            ? 'video'
-            : 'image',
-        userName: item.fullname || '',
-        postTime: timeFormat(item.date, true),
-      });
+    if (!selected?.path) {
+      return;
     }
+
+    const mediaUrl =
+      selected.full_path || selected.path || selected.medium_path || '';
+    const previewUrl =
+      selected.thumbnail_path ||
+      selected.medium_path ||
+      (String(selected.type ?? '').toLowerCase() === 'video'
+        ? selected.thumbnail_path
+        : '') ||
+      '';
+    const mediaType =
+      String(selected.type ?? 'image').toLowerCase() === 'video'
+        ? 'video'
+        : 'image';
+
+    // Prefetch fullscreen (+ preview if different) before/while modal opens
+    if (mediaType === 'image') {
+      preloadRemoteImages([mediaUrl, previewUrl].filter(Boolean));
+    } else if (previewUrl) {
+      preloadRemoteImages([previewUrl]);
+    }
+
+    setMediaModalVisible({
+      visible: true,
+      mediaUrl,
+      previewUrl:
+        previewUrl && previewUrl !== mediaUrl ? previewUrl : undefined,
+      mediaType,
+      userName: item.fullname || '',
+      postTime: timeFormat(item.date, true),
+    });
   };
 
   const handleAdRemoved = useCallback((advertisementId: number) => {
@@ -605,6 +664,9 @@ const Home: React.FC = () => {
           id: media.id,
           path: media.path ?? '',
           type: media.type ?? 'image',
+          thumbnail_path: media.thumbnail_path,
+          medium_path: media.medium_path,
+          full_path: media.full_path,
         }))}
         postImage={primaryMedia?.path ?? ''}
         mediaType={
@@ -882,7 +944,7 @@ const Home: React.FC = () => {
                 onEndReachedThreshold={0.5}
                 estimatedItemSize={480}
                 drawDistance={vh * 120}
-                removeClippedSubviews={false}
+                removeClippedSubviews={true}
               />
             </View>
           )}
@@ -1051,9 +1113,11 @@ const Home: React.FC = () => {
                 mediaType: 'image',
                 userName: '',
                 postTime: '',
+                previewUrl: '',
               })
             }
             mediaUrl={mediaModalVisible.mediaUrl}
+            previewUrl={mediaModalVisible.previewUrl}
             mediaType={mediaModalVisible.mediaType}
             userName={mediaModalVisible.userName}
             postTime={mediaModalVisible.postTime}

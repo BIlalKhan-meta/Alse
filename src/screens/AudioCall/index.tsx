@@ -9,8 +9,6 @@ import React, {
 import {
   ActivityIndicator,
   Image,
-  PermissionsAndroid,
-  Platform,
   SafeAreaView,
   StatusBar,
   StyleSheet,
@@ -41,6 +39,7 @@ import {connectSocket} from '../../utils/socket';
 import agoraRtmCallService from '../../services/agoraRtmCallService';
 import type {AgoraCallRouteParams} from '../../types/agoraCall';
 import {GetCallRtcToken} from '../../api/liveStream';
+import {ensureCameraPermission} from '../../utils/helpers';
 
 const VideoDisabler: React.FC<{children: React.ReactNode}> = ({children}) => {
   const rtcContext = useContext(RtcContext);
@@ -157,7 +156,7 @@ const AudioCall = () => {
   const fallbackUid =
     typeof user?.id === 'number' ? user.id : Number(user?.id) || 0;
 
-  const [hasPermission, setHasPermission] = useState(Platform.OS !== 'android');
+  const [hasPermission, setHasPermission] = useState(false);
   const [callActive, setCallActive] = useState(true);
   const [rtcToken, setRtcToken] = useState<string | undefined>(
     AGORA_TEMP_TOKEN || undefined,
@@ -165,9 +164,7 @@ const AudioCall = () => {
   const [rtcUid, setRtcUid] = useState<number>(fallbackUid);
   const [tokenReady, setTokenReady] = useState(Boolean(AGORA_TEMP_TOKEN));
   const [tokenError, setTokenError] = useState<string | null>(null);
-  const [isConnecting, setIsConnecting] = useState(
-    !isReceiver && Platform.OS !== 'ios',
-  );
+  const [isConnecting, setIsConnecting] = useState(!isReceiver);
   const [remoteUserJoined, setRemoteUserJoined] = useState(false);
 
   const remoteUserJoinedRef = useRef(false);
@@ -244,13 +241,22 @@ const AudioCall = () => {
       }
       agoraRtmCallService.cancelLocalInvitation().catch(() => {});
       setCallActive(false);
-      if (chatId && otherUserId && chatSocket.isSocketConnected()) {
-        chatSocket.sendCallEndedToChat({
+      if (chatId && chatSocket.isSocketConnected()) {
+        const payload = {
           chat_id: chatId,
-          callId: callId ?? '',
+          callId: callId || `timeout_${Date.now()}`,
           userId: currentUserId,
-          callType: 'audio',
-        });
+          callType: 'audio' as const,
+        };
+        chatSocket.sendCallCancelToChat(payload);
+        chatSocket.sendCallEndedToChat(payload);
+        if (otherUserId) {
+          chatSocket.sendCallEnded({
+            callId: payload.callId,
+            userId: currentUserId,
+            otherUserId: String(otherUserId),
+          });
+        }
       }
       if (navigation.canGoBack()) {
         navigation.goBack();
@@ -360,15 +366,10 @@ const AudioCall = () => {
 
   useEffect(() => {
     const req = async () => {
-      if (Platform.OS !== 'android') {
-        setHasPermission(true);
-        return;
-      }
       try {
-        const g = await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
-        );
-        setHasPermission(g === PermissionsAndroid.RESULTS.GRANTED);
+        // Audio call only needs mic; reuse helper with forVideo so mic is requested.
+        const granted = await ensureCameraPermission({forVideo: true});
+        setHasPermission(granted);
       } catch (e) {
         console.warn(e);
         setHasPermission(false);
@@ -379,21 +380,33 @@ const AudioCall = () => {
 
   const handleEndCall = useCallback(() => {
     setCallActive(false);
-    if (
+    const unansweredCancel =
       !isReceiver &&
       !hasRemoteEverJoinedThisCallRef.current &&
-      !rtmInvitationAcceptedRef.current
-    ) {
+      !rtmInvitationAcceptedRef.current;
+
+    if (unansweredCancel) {
       agoraRtmCallService.cancelLocalInvitation().catch(() => {});
     }
     connectSocket();
-    if (callId && otherUserId && chatSocket.isSocketConnected()) {
-      chatSocket.sendCallEndedToChat({
+    if (chatId && chatSocket.isSocketConnected()) {
+      const payload = {
         chat_id: chatId,
-        callId,
+        callId: callId || `ended_${Date.now()}`,
         userId: currentUserId,
-        callType: 'audio',
-      });
+        callType: 'audio' as const,
+      };
+      if (unansweredCancel) {
+        chatSocket.sendCallCancelToChat(payload);
+      }
+      chatSocket.sendCallEndedToChat(payload);
+      if (otherUserId) {
+        chatSocket.sendCallEnded({
+          callId: payload.callId,
+          userId: currentUserId,
+          otherUserId: String(otherUserId),
+        });
+      }
     }
     if (navigation.canGoBack()) {
       navigation.goBack();
@@ -410,9 +423,15 @@ const AudioCall = () => {
       RemoteUserJoined: handleRemoteUserDetected,
       UserOffline: () => {
         setRemoteUserJoined(false);
+        if (hasRemoteEverJoinedThisCallRef.current) {
+          setCallActive(false);
+          if (navigation.canGoBack()) {
+            navigation.goBack();
+          }
+        }
       },
     }),
-    [handleEndCall, handleRemoteUserDetected],
+    [handleEndCall, handleRemoteUserDetected, navigation],
   );
 
   const agoraProps = useMemo(
@@ -426,24 +445,57 @@ const AudioCall = () => {
     }
     connectSocket();
     const t0 = Date.now();
-    const cleanupFn = chatSocket.onCallEndedByChat(String(chatId), (data: any) => {
-      if (Date.now() - t0 < 2000) {
-        return;
+    const endPeerCall = () => {
+      setCallActive(false);
+      if (navigation.canGoBack()) {
+        navigation.goBack();
       }
-      const isOther =
-        data?.userId && String(data.userId) !== String(currentUserId);
-      const dId = data?.callId || '';
-      const ours = callId || '';
-      const same = !ours || !dId || dId === ours;
-      if (isOther && same) {
-        setCallActive(false);
-        if (navigation.canGoBack()) {
-          navigation.goBack();
+    };
+    const cleanupEnded = chatSocket.onCallEndedByChat(
+      String(chatId),
+      (data: any) => {
+        if (Date.now() - t0 < 2000) {
+          return;
         }
-      }
-    });
-    return () => cleanupFn?.();
-  }, [chatId, callId, callActive, currentUserId, navigation]);
+        const isOther =
+          data?.userId && String(data.userId) !== String(currentUserId);
+        if (isOther) {
+          endPeerCall();
+        }
+      },
+    );
+    const cleanupDecline = chatSocket.onCallDeclineByChat(
+      String(chatId),
+      (data: any) => {
+        if (Date.now() - t0 < 2000) {
+          return;
+        }
+        const isOther =
+          data?.userId && String(data.userId) !== String(currentUserId);
+        if (isOther) {
+          endPeerCall();
+        }
+      },
+    );
+    const cleanupCancel = chatSocket.onCallCancelByChat(
+      String(chatId),
+      (data: any) => {
+        if (Date.now() - t0 < 2000) {
+          return;
+        }
+        const isOther =
+          data?.userId && String(data.userId) !== String(currentUserId);
+        if (isOther) {
+          endPeerCall();
+        }
+      },
+    );
+    return () => {
+      cleanupEnded?.();
+      cleanupDecline?.();
+      cleanupCancel?.();
+    };
+  }, [chatId, callActive, currentUserId, navigation, isReceiver]);
 
   useEffect(() => {
     if (!chatId || !callActive || isReceiver) {
@@ -477,7 +529,7 @@ const AudioCall = () => {
     return null;
   }
 
-  if (!hasPermission && Platform.OS === 'android') {
+  if (!hasPermission) {
     return (
       <SafeAreaView style={styles.container}>
         <StatusBar barStyle="light-content" backgroundColor="#000" />

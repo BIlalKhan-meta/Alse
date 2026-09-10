@@ -942,6 +942,8 @@ class ChatSocket {
     extraD?: string;
     callType?: 'video' | 'audio';
     callId?: string;
+    callerUserId?: string;
+    callerName?: string;
   }) {
     if (!this.socket || !this.isConnected) {
       console.error('[Socket] ❌ Cannot send call request: not connected');
@@ -1069,13 +1071,100 @@ class ChatSocket {
 
     console.log('[Socket] 📞 Sending call ended:', payload);
     try {
-      this.socket.emit('callEnded', payload);
+      // Backend relays callEnded-<id> via onAny — target the peer user id.
+      this.socket.emit(`callEnded-${payload.otherUserId}`, payload);
       console.log('[Socket] ✅ Call ended event sent');
       return true;
     } catch (error) {
       console.error('[Socket] ❌ Error sending call ended:', error);
       return false;
     }
+  }
+
+  /**
+   * Caller canceled before answer — clear ringing on receiver.
+   */
+  sendCallCancelToChat(payload: {
+    chat_id: string | number;
+    callId: string;
+    userId: string;
+    callType?: 'audio' | 'video';
+  }) {
+    if (!this.socket || !this.isConnected) {
+      console.error('[Socket] ❌ Cannot send call cancel: not connected');
+      return false;
+    }
+
+    const chatId = String(payload.chat_id);
+    const eventName = `callCancel-${chatId}`;
+    console.log('[Socket] 📞 Sending call cancel:', eventName, payload);
+    try {
+      this.socket.emit(eventName, payload);
+      return true;
+    } catch (error) {
+      console.error('[Socket] ❌ Error sending call cancel:', error);
+      return false;
+    }
+  }
+
+  onCallCancelByChat(chatId: string, callback: (data: any) => void) {
+    if (!this.socket) {
+      return () => {};
+    }
+    const eventName = `callCancel-${chatId}`;
+    const wrappedCallback = (data: any) => {
+      console.log('[Socket] 📞 Call cancel received for chat:', chatId, data);
+      callback(data);
+    };
+    this.socket.on(eventName, wrappedCallback);
+    return () => {
+      if (this.socket) {
+        this.socket.off(eventName, wrappedCallback);
+      }
+    };
+  }
+
+  /**
+   * Receiver declined the invite.
+   */
+  sendCallDeclineToChat(payload: {
+    chat_id: string | number;
+    callId: string;
+    userId: string;
+    callType?: 'audio' | 'video';
+  }) {
+    if (!this.socket || !this.isConnected) {
+      console.error('[Socket] ❌ Cannot send call decline: not connected');
+      return false;
+    }
+
+    const chatId = String(payload.chat_id);
+    const eventName = `callDecline-${chatId}`;
+    console.log('[Socket] 📞 Sending call decline:', eventName, payload);
+    try {
+      this.socket.emit(eventName, payload);
+      return true;
+    } catch (error) {
+      console.error('[Socket] ❌ Error sending call decline:', error);
+      return false;
+    }
+  }
+
+  onCallDeclineByChat(chatId: string, callback: (data: any) => void) {
+    if (!this.socket) {
+      return () => {};
+    }
+    const eventName = `callDecline-${chatId}`;
+    const wrappedCallback = (data: any) => {
+      console.log('[Socket] 📞 Call decline received for chat:', chatId, data);
+      callback(data);
+    };
+    this.socket.on(eventName, wrappedCallback);
+    return () => {
+      if (this.socket) {
+        this.socket.off(eventName, wrappedCallback);
+      }
+    };
   }
 
   /**

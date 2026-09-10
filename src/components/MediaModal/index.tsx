@@ -2,7 +2,6 @@ import React, {useState, useEffect, useMemo} from 'react';
 import {
   Modal,
   View,
-  Image,
   TouchableOpacity,
   StyleSheet,
   Dimensions,
@@ -11,11 +10,12 @@ import {
   Text,
   Platform,
 } from 'react-native';
+import FastImage from 'react-native-fast-image';
 import Video from 'react-native-video';
 import {X} from 'lucide-react-native';
 import InterRegular from '../Text/InterRegular';
 import {vh, vw} from '../../constant';
-import {resolvePlayableMediaUrl} from '../../utils/helpers';
+import {changeUrlForData, resolvePlayableMediaUrl} from '../../utils/helpers';
 
 interface MediaModalProps {
   visible: boolean;
@@ -24,6 +24,8 @@ interface MediaModalProps {
   mediaType: 'image' | 'video';
   userName?: string;
   postTime?: string;
+  /** Smaller URL shown immediately while full media loads */
+  previewUrl?: string;
 }
 
 const {width: screenWidth} = Dimensions.get('window');
@@ -36,10 +38,12 @@ const MediaModal: React.FC<MediaModalProps> = ({
   mediaType,
   userName,
   postTime,
+  previewUrl,
 }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [retryKey, setRetryKey] = useState(0);
+  const [fullImageReady, setFullImageReady] = useState(false);
 
   const resolvedUrl = useMemo(() => {
     if (!mediaUrl) {
@@ -48,6 +52,13 @@ const MediaModal: React.FC<MediaModalProps> = ({
     return resolvePlayableMediaUrl(mediaUrl) || mediaUrl;
   }, [mediaUrl]);
 
+  const resolvedPreview = useMemo(() => {
+    if (!previewUrl) {
+      return '';
+    }
+    return changeUrlForData(previewUrl) || previewUrl;
+  }, [previewUrl]);
+
   const playAsVideo =
     mediaType === 'video' || VIDEO_EXT.test(resolvedUrl || mediaUrl || '');
 
@@ -55,8 +66,14 @@ const MediaModal: React.FC<MediaModalProps> = ({
     if (visible) {
       setLoading(true);
       setError(false);
+      setFullImageReady(false);
     }
-  }, [visible, mediaUrl, mediaType, retryKey]);
+  }, [visible, mediaUrl, mediaType, previewUrl, retryKey]);
+
+  const showPreview =
+    Boolean(resolvedPreview) &&
+    resolvedPreview !== resolvedUrl &&
+    (playAsVideo ? loading : !fullImageReady);
 
   return (
     <Modal
@@ -103,7 +120,18 @@ const MediaModal: React.FC<MediaModalProps> = ({
               </View>
             ) : (
               <View style={styles.videoContainer}>
-                {loading ? (
+                {showPreview ? (
+                  <FastImage
+                    source={{
+                      uri: resolvedPreview,
+                      priority: FastImage.priority.high,
+                      cache: FastImage.cacheControl.immutable,
+                    }}
+                    style={styles.previewImage}
+                    resizeMode={FastImage.resizeMode.contain}
+                  />
+                ) : null}
+                {loading && !resolvedPreview ? (
                   <ActivityIndicator
                     size="large"
                     color="#fff"
@@ -142,21 +170,46 @@ const MediaModal: React.FC<MediaModalProps> = ({
             )
           ) : (
             <View style={styles.imageWrap}>
-              {loading ? (
+              {showPreview ? (
+                <FastImage
+                  source={{
+                    uri: resolvedPreview,
+                    priority: FastImage.priority.high,
+                    cache: FastImage.cacheControl.immutable,
+                  }}
+                  style={styles.previewImage}
+                  resizeMode={FastImage.resizeMode.contain}
+                />
+              ) : null}
+              {loading && !resolvedPreview ? (
                 <ActivityIndicator
                   size="large"
                   color="#fff"
                   style={styles.loader}
                 />
               ) : null}
-              <Image
+              <FastImage
                 key={resolvedUrl}
-                source={{uri: resolvedUrl}}
-                style={styles.image}
-                resizeMode="contain"
-                onLoad={() => setLoading(false)}
-                onLoadEnd={() => setLoading(false)}
-                onError={() => setLoading(false)}
+                source={{
+                  uri: resolvedUrl,
+                  priority: FastImage.priority.high,
+                  cache: FastImage.cacheControl.immutable,
+                }}
+                style={[
+                  styles.image,
+                  !fullImageReady && resolvedPreview
+                    ? styles.fullImageHidden
+                    : null,
+                ]}
+                resizeMode={FastImage.resizeMode.contain}
+                onLoad={() => {
+                  setFullImageReady(true);
+                  setLoading(false);
+                }}
+                onError={() => {
+                  setFullImageReady(true);
+                  setLoading(false);
+                }}
               />
             </View>
           )}
@@ -207,6 +260,14 @@ const styles = StyleSheet.create({
   image: {
     width: '100%',
     height: '100%',
+    zIndex: 2,
+  },
+  fullImageHidden: {
+    opacity: 0,
+  },
+  previewImage: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 1,
   },
   videoContainer: {
     flex: 1,
@@ -217,7 +278,8 @@ const styles = StyleSheet.create({
   video: {
     width: screenWidth,
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: 'transparent',
+    zIndex: 2,
   },
   loader: {
     position: 'absolute',

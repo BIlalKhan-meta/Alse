@@ -37,6 +37,7 @@
 		AA2B525CB0084DEEA6FFF967 /* Inter-Light-BETA.otf in Resources */ = {isa = PBXBuildFile; fileRef = CA040788CFD74CC589FE063F /* Inter-Light-BETA.otf */; };
 		AB034B0286A18270A0B93F09 /* Pods_Alenga.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7C672BE8170858E493D5499F /* Pods_Alenga.framework */; };
 		B15A8A0262D94D7BA0528F71 /* Inter-Thin-BETA.otf in Resources */ = {isa = PBXBuildFile; fileRef = 9163DBCA10B84A88B218BBC3 /* Inter-Thin-BETA.otf */; };
+		B2C3D4E5F60718293A4B5C6D /* incoming_call.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A4B5C /* incoming_call.mp3 */; };
 		B7DA85E3767349409187E4BD /* Poppins-MediumItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = E7198924A06E49BC8A40FB8E /* Poppins-MediumItalic.ttf */; };
 		BA09851C20A14C91B8E7232A /* Inter-SemiBoldItalic.otf in Resources */ = {isa = PBXBuildFile; fileRef = D6AF32C94DAE443FBDA85122 /* Inter-SemiBoldItalic.otf */; };
 		BC0ACF15A7C243A288DBD8A8 /* Inter-Black.otf in Resources */ = {isa = PBXBuildFile; fileRef = 87848DE4626C4DA2BCCB17D6 /* Inter-Black.otf */; };
@@ -87,6 +88,7 @@
 		9163DBCA10B84A88B218BBC3 /* Inter-Thin-BETA.otf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Inter-Thin-BETA.otf"; path = "../src/assets/fonts/Inter-Thin-BETA.otf"; sourceTree = "<group>"; };
 		9DD59F02687242F3890F4A86 /* Inter-BlackItalic.otf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Inter-BlackItalic.otf"; path = "../src/assets/fonts/Inter-BlackItalic.otf"; sourceTree = "<group>"; };
 		A1671806E6164EAF919F0825 /* Inter-Medium.otf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Inter-Medium.otf"; path = "../src/assets/fonts/Inter-Medium.otf"; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A4B5C /* incoming_call.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; name = incoming_call.mp3; path = Alenga/incoming_call.mp3; sourceTree = "<group>"; };
 		A4B7AAE9D31647F4A2CBC22F /* Inter-SemiBold.otf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Inter-SemiBold.otf"; path = "../src/assets/fonts/Inter-SemiBold.otf"; sourceTree = "<group>"; };
 		A6964CC6CC0F45209A527A59 /* Poppins-BlackItalic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Poppins-BlackItalic.ttf"; path = "../src/assets/fonts/Poppins-BlackItalic.ttf"; sourceTree = "<group>"; };
 		AAE602A1FE0241D4A2F63FB4 /* Poppins-ExtraBoldItalic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Poppins-ExtraBoldItalic.ttf"; path = "../src/assets/fonts/Poppins-ExtraBoldItalic.ttf"; sourceTree = "<group>"; };
@@ -128,6 +130,7 @@
 				B0E94AD92F17850F004BD30C /* Alenga-Bridging-Header.h */,
 				045931042CE4A5F000219CCA /* Alenga.entitlements */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
+				A1B2C3D4E5F60718293A4B5C /* incoming_call.mp3 */,
 				761780EC2CA45674006654EE /* AppDelegate.swift */,
 				PMC0MO02BA68108700A75B9A /* PhotoMusicComposer.m */,
 				PMC0SW01BA68108700A75B9A /* PhotoMusicComposer.swift */,
@@ -296,6 +299,7 @@
 				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
 				041138032D26ACDA00AB2AEC /* GoogleService-Info.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
+				B2C3D4E5F60718293A4B5C6D /* incoming_call.mp3 in Resources */,
 				111AC37F8029812AE524AC15 /* PrivacyInfo.xcprivacy in Resources */,
 				BC0ACF15A7C243A288DBD8A8 /* Inter-Black.otf in Resources */,
 				1DFF4B66C4934709B4691BDF /* Inter-BlackItalic.otf in Resources */,
@@ -450,7 +454,7 @@
 				CODE_SIGN_ENTITLEMENTS = Alenga/Alenga.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1029;
+				CURRENT_PROJECT_VERSION = 1032;
 				DEVELOPMENT_TEAM = SPXJB5J6LJ;
 				ENABLE_BITCODE = NO;
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = "$(inherited)";
@@ -794,7 +798,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.29;
+				MARKETING_VERSION = 1.0.32;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -830,7 +834,7 @@
 				CODE_SIGN_ENTITLEMENTS = Alenga/Alenga.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1029;
+				CURRENT_PROJECT_VERSION = 1032;
 				DEVELOPMENT_TEAM = SPXJB5J6LJ;
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = "$(inherited)";
 				GCC_PREPROCESSOR_DEFINITIONS = (
@@ -1022,7 +1026,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.29;
+				MARKETING_VERSION = 1.0.32;
 				OTHER_CFLAGS = (
 					"$(inherited)",
 					"-include",

@@ -58,6 +58,8 @@ class CallNotificationService {
             importance: channel.importance,
             vibrate: channel.vibrate,
             playSound: channel.playSound,
+            soundName:
+              channel.channelId === 'calls' ? 'incoming_call' : 'default',
           },
           created => {
             console.log(
@@ -85,7 +87,7 @@ class CallNotificationService {
       title: `Incoming ${callType === 'video' ? 'Video' : 'Voice'} Call`,
       message: `${callerName} is calling you`,
       playSound: true,
-      soundName: 'default',
+      soundName: Platform.OS === 'android' ? 'incoming_call' : 'default',
       vibrate: true,
       vibration: 300,
       priority: 'high',

@@ -178,7 +178,24 @@ function tryNavigate(routeName: string, params?: object): boolean {
     return false;
   }
   try {
-    navigationRef.navigate(routeName as never, params as never);
+    // Prefer nested navigate so we push Profile/Chat on top of the current
+    // stack (e.g. user is sitting in ChatOngoing after tapping a share link).
+    if (
+      routeName === 'Profile' ||
+      routeName === 'ChatOngoing' ||
+      routeName === 'ProductView' ||
+      routeName === 'Shop' ||
+      routeName === 'MyOrderDetail' ||
+      routeName === 'Notifications' ||
+      routeName === 'AcknowledgeCall'
+    ) {
+      (navigationRef as any).navigate('AppNavigation', {
+        screen: routeName,
+        params,
+      });
+    } else {
+      navigationRef.navigate(routeName as never, params as never);
+    }
     return true;
   } catch (error) {
     console.warn('[FCM] navigate failed:', routeName, error);
@@ -260,8 +277,10 @@ export function navigateWhenReady(routeName: string, params?: object) {
 export function handleIncomingDeepLink(url: string | null | undefined) {
   const route = parseDeepLink(url);
   if (!route) {
+    console.warn('[DeepLink] unhandled url', url);
     return false;
   }
+  console.log('[DeepLink] navigating', route.routeName, route.params, 'from', url);
   navigateWhenReady(route.routeName, route.params);
   return true;
 }

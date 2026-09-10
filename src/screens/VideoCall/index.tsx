@@ -1,9 +1,6 @@
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
   ActivityIndicator,
-  PermissionsAndroid,
-  Platform,
-  SafeAreaView,
   StatusBar,
   StyleSheet,
   Text,
@@ -27,6 +24,7 @@ import {connectSocket} from '../../utils/socket';
 import agoraRtmCallService from '../../services/agoraRtmCallService';
 import type {AgoraCallRouteParams} from '../../types/agoraCall';
 import {GetCallRtcToken} from '../../api/liveStream';
+import {ensureCameraPermission} from '../../utils/helpers';
 
 const VideoCall = () => {
   const route = useRoute();
@@ -45,7 +43,7 @@ const VideoCall = () => {
   const fallbackUid =
     typeof user?.id === 'number' ? user.id : Number(user?.id) || 0;
 
-  const [hasPermission, setHasPermission] = useState(Platform.OS !== 'android');
+  const [hasPermission, setHasPermission] = useState(false);
   const [callActive, setCallActive] = useState(true);
   const [rtcToken, setRtcToken] = useState<string | undefined>(
     AGORA_TEMP_TOKEN || undefined,
@@ -53,9 +51,7 @@ const VideoCall = () => {
   const [rtcUid, setRtcUid] = useState<number>(fallbackUid);
   const [tokenReady, setTokenReady] = useState(Boolean(AGORA_TEMP_TOKEN));
   const [tokenError, setTokenError] = useState<string | null>(null);
-  const [isConnecting, setIsConnecting] = useState(
-    !isReceiver && Platform.OS !== 'ios',
-  );
+  const [isConnecting, setIsConnecting] = useState(!isReceiver);
   const [remoteUserJoined, setRemoteUserJoined] = useState(false);
 
   const remoteUserJoinedRef = useRef(false);
@@ -132,13 +128,22 @@ const VideoCall = () => {
       }
       agoraRtmCallService.cancelLocalInvitation().catch(() => {});
       setCallActive(false);
-      if (chatId && otherUserId && chatSocket.isSocketConnected()) {
-        chatSocket.sendCallEndedToChat({
+      if (chatId && chatSocket.isSocketConnected()) {
+        const payload = {
           chat_id: chatId,
-          callId: callId ?? '',
+          callId: callId || `timeout_${Date.now()}`,
           userId: currentUserId,
-          callType: 'video',
-        });
+          callType: 'video' as const,
+        };
+        chatSocket.sendCallCancelToChat(payload);
+        chatSocket.sendCallEndedToChat(payload);
+        if (otherUserId) {
+          chatSocket.sendCallEnded({
+            callId: payload.callId,
+            userId: currentUserId,
+            otherUserId: String(otherUserId),
+          });
+        }
       }
       if (navigation.canGoBack()) {
         navigation.goBack();
@@ -240,22 +245,9 @@ const VideoCall = () => {
 
   useEffect(() => {
     const requestPermissions = async () => {
-      if (Platform.OS !== 'android') {
-        setHasPermission(true);
-        return;
-      }
       try {
-        const granted = await PermissionsAndroid.requestMultiple([
-          PermissionsAndroid.PERMISSIONS.CAMERA,
-          PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
-        ]);
-        const cam =
-          granted['android.permission.CAMERA'] ===
-          PermissionsAndroid.RESULTS.GRANTED;
-        const mic =
-          granted['android.permission.RECORD_AUDIO'] ===
-          PermissionsAndroid.RESULTS.GRANTED;
-        setHasPermission(cam && mic);
+        const granted = await ensureCameraPermission({forVideo: true});
+        setHasPermission(granted);
       } catch (e) {
         console.warn(e);
         setHasPermission(false);
@@ -266,21 +258,33 @@ const VideoCall = () => {
 
   const handleEndCall = useCallback(async () => {
     setCallActive(false);
-    if (
+    const unansweredCancel =
       !isReceiver &&
       !hasRemoteEverJoinedThisCallRef.current &&
-      !rtmInvitationAcceptedRef.current
-    ) {
+      !rtmInvitationAcceptedRef.current;
+
+    if (unansweredCancel) {
       agoraRtmCallService.cancelLocalInvitation().catch(() => {});
     }
     connectSocket();
-    if (callId && otherUserId && chatSocket.isSocketConnected()) {
-      chatSocket.sendCallEndedToChat({
+    if (chatId && chatSocket.isSocketConnected()) {
+      const payload = {
         chat_id: chatId,
-        callId,
+        callId: callId || `ended_${Date.now()}`,
         userId: currentUserId,
-        callType: 'video',
-      });
+        callType: 'video' as const,
+      };
+      if (unansweredCancel) {
+        chatSocket.sendCallCancelToChat(payload);
+      }
+      chatSocket.sendCallEndedToChat(payload);
+      if (otherUserId) {
+        chatSocket.sendCallEnded({
+          callId: payload.callId,
+          userId: currentUserId,
+          otherUserId: String(otherUserId),
+        });
+      }
     }
     if (navigation.canGoBack()) {
       navigation.goBack();
@@ -294,24 +298,57 @@ const VideoCall = () => {
     connectSocket();
     const listenerReadyAt = Date.now();
     const GRACE_MS = 2000;
-    const cleanupFn = chatSocket.onCallEndedByChat(String(chatId), (data: any) => {
-      if (Date.now() - listenerReadyAt < GRACE_MS) {
-        return;
+    const endPeerCall = () => {
+      setCallActive(false);
+      if (navigation.canGoBack()) {
+        navigation.goBack();
       }
-      const isOther =
-        data?.userId && String(data.userId) !== String(currentUserId);
-      const dataCallId = data?.callId || '';
-      const ourCallId = callId || '';
-      const same = !ourCallId || !dataCallId || dataCallId === ourCallId;
-      if (isOther && same) {
-        setCallActive(false);
-        if (navigation.canGoBack()) {
-          navigation.goBack();
+    };
+    const cleanupEnded = chatSocket.onCallEndedByChat(
+      String(chatId),
+      (data: any) => {
+        if (Date.now() - listenerReadyAt < GRACE_MS) {
+          return;
         }
-      }
-    });
-    return () => cleanupFn?.();
-  }, [chatId, callId, callActive, currentUserId, navigation]);
+        const isOther =
+          data?.userId && String(data.userId) !== String(currentUserId);
+        if (isOther) {
+          endPeerCall();
+        }
+      },
+    );
+    const cleanupDecline = chatSocket.onCallDeclineByChat(
+      String(chatId),
+      (data: any) => {
+        if (Date.now() - listenerReadyAt < GRACE_MS) {
+          return;
+        }
+        const isOther =
+          data?.userId && String(data.userId) !== String(currentUserId);
+        if (isOther) {
+          endPeerCall();
+        }
+      },
+    );
+    const cleanupCancel = chatSocket.onCallCancelByChat(
+      String(chatId),
+      (data: any) => {
+        if (Date.now() - listenerReadyAt < GRACE_MS) {
+          return;
+        }
+        const isOther =
+          data?.userId && String(data.userId) !== String(currentUserId);
+        if (isOther) {
+          endPeerCall();
+        }
+      },
+    );
+    return () => {
+      cleanupEnded?.();
+      cleanupDecline?.();
+      cleanupCancel?.();
+    };
+  }, [chatId, callActive, currentUserId, navigation, isReceiver]);
 
   useEffect(() => {
     if (!chatId || !callActive || isReceiver) {
@@ -377,14 +414,14 @@ const VideoCall = () => {
     return null;
   }
 
-  if (!hasPermission && Platform.OS === 'android') {
+  if (!hasPermission) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
         <StatusBar barStyle="light-content" backgroundColor="#000" />
         <Text style={styles.permissionText}>
           Camera and microphone permission are required.
         </Text>
-      </SafeAreaView>
+      </View>
     );
   }
 
@@ -394,45 +431,64 @@ const VideoCall = () => {
 
   if (tokenError) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
         <StatusBar barStyle="light-content" backgroundColor="#000" />
         <Text style={styles.permissionText}>{tokenError}</Text>
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (!tokenReady || !rtcToken) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
         <StatusBar barStyle="light-content" backgroundColor="#000" />
         <View style={styles.connectingOverlay}>
           <ActivityIndicator size="large" color="#fff" />
           <Text style={styles.connectingText}>Connecting...</Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
+  const peerLabel = String(params.userName || params.name || 'User');
+
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#000" />
-      {isConnecting ? (
+      <View style={styles.agoraWrap}>
+        <AgoraUIKit
+          connectionData={connectionData}
+          settings={settings}
+          rtcCallbacks={rtcCallbacks}
+        />
+      </View>
+      {(isConnecting || !remoteUserJoined) && !isReceiver ? (
+        <View style={styles.connectingOverlay} pointerEvents="box-none">
+          <Text style={styles.callingTitle}>Calling</Text>
+          <Text style={styles.callingName}>{peerLabel}</Text>
+          <ActivityIndicator
+            size="large"
+            color="#fff"
+            style={styles.callingSpinner}
+          />
+          <Text style={styles.connectingText}>
+            Waiting for {peerLabel} to answer…
+          </Text>
+        </View>
+      ) : null}
+      {isConnecting && isReceiver ? (
         <View style={styles.connectingOverlay}>
           <ActivityIndicator size="large" color="#fff" />
           <Text style={styles.connectingText}>Connecting...</Text>
         </View>
       ) : null}
-      <AgoraUIKit
-        connectionData={connectionData}
-        settings={settings}
-        rtcCallbacks={rtcCallbacks}
-      />
-    </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {flex: 1, backgroundColor: '#000'},
+  agoraWrap: {flex: 1, backgroundColor: '#000'},
   permissionText: {
     flex: 1,
     color: '#fff',
@@ -444,10 +500,29 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.7)',
+    backgroundColor: 'rgba(0,0,0,0.72)',
     zIndex: 10,
+    paddingHorizontal: 24,
   },
-  connectingText: {color: '#fff', marginTop: 16, fontSize: 18},
+  callingTitle: {
+    color: 'rgba(255,255,255,0.75)',
+    fontSize: 16,
+    marginBottom: 8,
+  },
+  callingName: {
+    color: '#fff',
+    fontSize: 28,
+    fontWeight: '700',
+    marginBottom: 24,
+    textAlign: 'center',
+  },
+  callingSpinner: {marginBottom: 16},
+  connectingText: {
+    color: '#fff',
+    marginTop: 8,
+    fontSize: 16,
+    textAlign: 'center',
+  },
 });
 
 export default VideoCall;

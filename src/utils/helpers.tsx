@@ -395,6 +395,7 @@ export type NewsfeedMediaItem = {
   date?: string;
   thumbnail_path?: string;
   medium_path?: string;
+  full_path?: string;
   thumbnail_file?: string;
 };
 

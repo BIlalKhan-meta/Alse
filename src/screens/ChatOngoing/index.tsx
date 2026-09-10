@@ -394,6 +394,7 @@ const ChatOngoing: React.FC<Props> = props => {
           chatId,
           content: JSON.stringify({
             chatId: String(chatId),
+            callId: String(callId),
             callType: callType === 'video' ? 'video' : 'audio',
             name: String(callerName),
           }),
@@ -406,6 +407,8 @@ const ChatOngoing: React.FC<Props> = props => {
           extraD: 'Calling...',
           callType: callType === 'video' ? 'video' : 'audio',
           callId,
+          callerUserId: String(user.id),
+          callerName: String(callerName),
         });
       }
 

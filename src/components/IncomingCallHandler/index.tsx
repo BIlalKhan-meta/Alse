@@ -16,6 +16,7 @@ import CallIncomingModal from '../CallIncomingModal';
 import chatSocket from '../../services/chatSocket';
 import agoraRtmCallService from '../../services/agoraRtmCallService';
 import callNotificationService from '../../services/callNotificationService';
+import ringtoneService from '../../services/ringtoneService';
 
 type IncomingState = null | {
   callId: string;
@@ -61,6 +62,7 @@ const IncomingCallHandler: React.FC = () => {
       }
       setIncoming(payload);
       Vibration.vibrate([0, 600, 400, 600], true);
+      ringtoneService.start();
       try {
         callNotificationService.initialize();
         callNotificationService.showIncomingCallNotification(
@@ -78,6 +80,12 @@ const IncomingCallHandler: React.FC = () => {
 
   const clearIncoming = useCallback(() => {
     Vibration.cancel();
+    ringtoneService.stop();
+    try {
+      callNotificationService.cancelIncomingCallNotification();
+    } catch {
+      /* ignore */
+    }
     setIncoming(null);
   }, []);
 
@@ -97,11 +105,15 @@ const IncomingCallHandler: React.FC = () => {
       );
       let callType: 'audio' | 'video' = 'audio';
       let callerName = '';
+      let callIdFromInvite = '';
       try {
         if (remoteInvitation.content) {
           const parsed = JSON.parse(remoteInvitation.content);
           if (parsed.chatId != null) {
             chatId = String(parsed.chatId);
+          }
+          if (parsed.callId != null) {
+            callIdFromInvite = String(parsed.callId);
           }
           if (parsed.callType === 'video') {
             callType = 'video';
@@ -116,7 +128,7 @@ const IncomingCallHandler: React.FC = () => {
       if (!chatId) {
         return;
       }
-      const callId = generateCallId();
+      const callId = callIdFromInvite || generateCallId();
       showIncoming({
         callId,
         chatId,
@@ -183,6 +195,21 @@ const IncomingCallHandler: React.FC = () => {
       try {
         const parsed = JSON.parse(text);
         if (
+          parsed?.type === 'call_ended' ||
+          parsed?.type === 'call_declined' ||
+          parsed?.type === 'call_rejected' ||
+          parsed?.type === 'call_cancel'
+        ) {
+          const senderId = String(
+            res?.user_id || res?.userId || res?.user?._id || parsed?.declinedBy || '',
+          );
+          if (senderId && senderId === userId) {
+            return;
+          }
+          clearIncoming();
+          return;
+        }
+        if (
           parsed?.type === 'call_invite' &&
           parsed?.callId &&
           (parsed?.callType === 'audio' || parsed?.callType === 'video')
@@ -215,6 +242,10 @@ const IncomingCallHandler: React.FC = () => {
       }
 
       const legacy = parseAlseCallMessage(text);
+      if (legacy?.type === 'call_ended' || legacy?.type === 'call_rejected') {
+        clearIncoming();
+        return;
+      }
       if (legacy?.type === 'call_invite' && legacy.call_id) {
         const senderId = String(res?.user_id || res?.user?._id || '');
         if (senderId && senderId === userId) {
@@ -231,7 +262,7 @@ const IncomingCallHandler: React.FC = () => {
         });
       }
     },
-    [showIncoming, userId],
+    [showIncoming, userId, clearIncoming],
   );
 
   const wireListeners = useCallback(async () => {
@@ -274,12 +305,14 @@ const IncomingCallHandler: React.FC = () => {
               (r: any) => String(r.id ?? r.chat_id) === String(cid),
             );
             const callerId = String(
-              data.callerUserId ?? row?.user_id ?? '',
+              data.callerUserId ?? data.caller_id ?? row?.user_id ?? '',
             );
             if (!callerId || callerId === userId) {
               return;
             }
-            const callerName = String(row?.name || row?.full_name || 'Someone');
+            const callerName = String(
+              data.callerName || row?.name || row?.full_name || 'Someone',
+            );
             showIncoming({
               callId,
               chatId: cid,
@@ -296,15 +329,33 @@ const IncomingCallHandler: React.FC = () => {
               if (!cur || String(cur.chatId) !== String(cid)) {
                 return cur;
               }
-              const endedId = data?.callId;
-              if (
-                endedId &&
-                cur.callId &&
-                String(endedId) !== String(cur.callId)
-              ) {
+              // While ringing, any end/cancel for this chat from the peer must stop
+              // the ringtone + notification — do not require callId equality
+              // (RTM and socket paths historically used different ids).
+              Vibration.cancel();
+              ringtoneService.stop();
+              try {
+                callNotificationService.cancelIncomingCallNotification();
+              } catch {
+                /* ignore */
+              }
+              return null;
+            });
+          }),
+        );
+        unsubsRef.current.push(
+          chatSocket.onCallCancelByChat(cid, () => {
+            setIncoming(cur => {
+              if (!cur || String(cur.chatId) !== String(cid)) {
                 return cur;
               }
               Vibration.cancel();
+              ringtoneService.stop();
+              try {
+                callNotificationService.cancelIncomingCallNotification();
+              } catch {
+                /* ignore */
+              }
               return null;
             });
           }),
@@ -349,6 +400,12 @@ const IncomingCallHandler: React.FC = () => {
       /* socket-only */
     }
     if (chatSocket.isSocketConnected()) {
+      chatSocket.sendCallDeclineToChat({
+        chat_id: incoming.chatId,
+        callId: incoming.callId,
+        userId: String(user.id),
+        callType: incoming.callType,
+      });
       chatSocket.sendCallEndedToChat({
         chat_id: incoming.chatId,
         callId: incoming.callId,
@@ -361,6 +418,20 @@ const IncomingCallHandler: React.FC = () => {
         otherUserId: incoming.callerId,
       });
     }
+    emitMessage({
+      chat_id: incoming.chatId,
+      message: JSON.stringify({
+        type: 'call_declined',
+        callId: incoming.callId,
+        declinedBy: String(user.id),
+        chatId: incoming.chatId,
+      }),
+      message_type: 'call',
+      user: {_id: user.id, avatar: user?.avatar} as {
+        _id: string | number;
+        avatar?: string;
+      },
+    });
     clearIncoming();
   }, [clearIncoming, incoming, user?.avatar, user?.id]);
 
@@ -374,6 +445,12 @@ const IncomingCallHandler: React.FC = () => {
       at: Date.now(),
     };
     Vibration.cancel();
+    ringtoneService.stop();
+    try {
+      callNotificationService.cancelIncomingCallNotification();
+    } catch {
+      /* ignore */
+    }
     connectSocket();
     emitMessage({
       chat_id: incoming.chatId,
