@@ -37,6 +37,7 @@ import {selectUserProfile} from '../../store/slices/authSlice';
 import chatSocket from '../../services/chatSocket';
 import {connectSocket} from '../../utils/socket';
 import agoraRtmCallService from '../../services/agoraRtmCallService';
+import ringbackService from '../../services/ringbackService';
 import type {AgoraCallRouteParams} from '../../types/agoraCall';
 import {GetCallRtcToken} from '../../api/liveStream';
 import {ensureCameraPermission} from '../../utils/helpers';
@@ -211,6 +212,22 @@ const AudioCall = () => {
       agoraRtmCallService.setOnLocalInvitationRefused(null);
     };
   }, [isReceiver, callAccepted]);
+
+  // Ringback tone while the caller waits for answer
+  useEffect(() => {
+    if (isReceiver) {
+      return;
+    }
+    const waiting = callActive && !callAccepted && !remoteUserJoined;
+    if (waiting) {
+      ringbackService.start();
+    } else {
+      ringbackService.stop();
+    }
+    return () => {
+      ringbackService.stop();
+    };
+  }, [isReceiver, callActive, callAccepted, remoteUserJoined]);
 
   useEffect(() => {
     if (isReceiver) {
