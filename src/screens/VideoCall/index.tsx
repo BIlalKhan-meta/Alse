@@ -25,6 +25,7 @@ import ringbackService from '../../services/ringbackService';
 import type {AgoraCallRouteParams} from '../../types/agoraCall';
 import {GetCallRtcToken} from '../../api/liveStream';
 import {ensureCameraPermission} from '../../utils/helpers';
+import {broadcastCallEnd} from '../../utils/callSignaling';
 import useAgoraCallSession from '../../hooks/useAgoraCallSession';
 import AgoraVideoView from '../../components/AgoraVideoView';
 
@@ -54,6 +55,9 @@ const VideoCall = () => {
   const noAnswerTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const navigationRef = useRef(navigation);
   navigationRef.current = navigation;
+  // Set as soon as this call is resolved by any path, so the unmount catch-all
+  // below never double-signals and never signals a call the peer already ended.
+  const endSignalledRef = useRef(false);
 
   const channelName = chatId ? `chat_${chatId}` : null;
 
@@ -61,40 +65,61 @@ const VideoCall = () => {
     () => !isReceiver && agoraRtmCallService.isLocalInvitationAccepted(),
   );
 
-  const handleEndCall = useCallback(async () => {
-    setCallActive(false);
-    const unansweredCancel =
+  const signalEnd = useCallback(() => {
+    if (endSignalledRef.current) {
+      return;
+    }
+    endSignalledRef.current = true;
+    const unanswered =
       !isReceiver &&
       !hasRemoteEverJoinedThisCallRef.current &&
       !rtmInvitationAcceptedRef.current;
-
-    if (unansweredCancel) {
+    if (unanswered) {
       agoraRtmCallService.cancelLocalInvitation().catch(() => {});
     }
-    connectSocket();
-    if (chatId && chatSocket.isSocketConnected()) {
-      const payload = {
-        chat_id: chatId,
-        callId: callId || `ended_${Date.now()}`,
-        userId: currentUserId,
-        callType: 'video' as const,
-      };
-      if (unansweredCancel) {
-        chatSocket.sendCallCancelToChat(payload);
-      }
-      chatSocket.sendCallEndedToChat(payload);
-      if (otherUserId) {
-        chatSocket.sendCallEnded({
-          callId: payload.callId,
-          userId: currentUserId,
-          otherUserId: String(otherUserId),
-        });
-      }
-    }
+    broadcastCallEnd({
+      chatId,
+      callId,
+      currentUserId,
+      otherUserId,
+      callType: 'video',
+      unanswered,
+      userAvatar: user?.avatar,
+    });
+  }, [
+    isReceiver,
+    chatId,
+    callId,
+    currentUserId,
+    otherUserId,
+    user?.avatar,
+  ]);
+
+  // The peer resolved the call, so there is nothing left to tell them.
+  const markEndedRemotely = useCallback(() => {
+    endSignalledRef.current = true;
+  }, []);
+
+  const handleEndCall = useCallback(() => {
+    setCallActive(false);
+    signalEnd();
     if (navigation.canGoBack()) {
       navigation.goBack();
     }
-  }, [navigation, callId, otherUserId, currentUserId, chatId, isReceiver]);
+  }, [navigation, signalEnd]);
+
+  const signalEndRef = useRef(signalEnd);
+  signalEndRef.current = signalEnd;
+
+  // Catch-all for every exit that is not the end-call button: hardware back,
+  // the back gesture, or any other navigation away while the peer is ringing.
+  // Without this the callee's incoming-call screen is never dismissed. Runs on
+  // unmount only — it must not re-fire when signalEnd's identity changes.
+  useEffect(() => {
+    return () => {
+      signalEndRef.current();
+    };
+  }, []);
 
   const fetchRtcToken = useCallback(async (): Promise<string | null> => {
     if (!chatId) {
@@ -185,6 +210,7 @@ const VideoCall = () => {
       }
     };
     const onRefused = () => {
+      markEndedRemotely();
       setCallActive(false);
       if (navigationRef.current?.canGoBack()) {
         navigationRef.current.goBack();
@@ -196,7 +222,7 @@ const VideoCall = () => {
       agoraRtmCallService.setOnLocalInvitationAccepted(null);
       agoraRtmCallService.setOnLocalInvitationRefused(null);
     };
-  }, [isReceiver, callAccepted]);
+  }, [isReceiver, callAccepted, markEndedRemotely]);
 
   // Ringback tone while the caller waits for answer
   useEffect(() => {
@@ -240,25 +266,8 @@ const VideoCall = () => {
       ) {
         return;
       }
-      agoraRtmCallService.cancelLocalInvitation().catch(() => {});
       setCallActive(false);
-      if (chatId && chatSocket.isSocketConnected()) {
-        const payload = {
-          chat_id: chatId,
-          callId: callId || `timeout_${Date.now()}`,
-          userId: currentUserId,
-          callType: 'video' as const,
-        };
-        chatSocket.sendCallCancelToChat(payload);
-        chatSocket.sendCallEndedToChat(payload);
-        if (otherUserId) {
-          chatSocket.sendCallEnded({
-            callId: payload.callId,
-            userId: currentUserId,
-            otherUserId: String(otherUserId),
-          });
-        }
-      }
+      signalEnd();
       if (navigation.canGoBack()) {
         navigation.goBack();
       }
@@ -278,6 +287,7 @@ const VideoCall = () => {
     callId,
     currentUserId,
     navigation,
+    signalEnd,
   ]);
 
   useEffect(() => {
@@ -343,6 +353,7 @@ const VideoCall = () => {
     const listenerReadyAt = Date.now();
     const GRACE_MS = 2000;
     const endPeerCall = () => {
+      markEndedRemotely();
       setCallActive(false);
       if (navigation.canGoBack()) {
         navigation.goBack();
@@ -392,7 +403,7 @@ const VideoCall = () => {
       cleanupDecline?.();
       cleanupCancel?.();
     };
-  }, [chatId, callActive, currentUserId, navigation, isReceiver]);
+  }, [chatId, callActive, currentUserId, navigation, isReceiver, markEndedRemotely]);
 
   useEffect(() => {
     if (!chatId || !callActive || isReceiver) {
@@ -408,6 +419,7 @@ const VideoCall = () => {
           if (parsed?.type === 'call_declined') {
             const declinedBy = parsed?.declinedBy || '';
             if (declinedBy && String(declinedBy) !== String(currentUserId)) {
+              markEndedRemotely();
               setCallActive(false);
               if (navigationRef.current?.canGoBack()) {
                 navigationRef.current.goBack();
@@ -420,7 +432,7 @@ const VideoCall = () => {
       },
     );
     return () => cleanupFn?.();
-  }, [chatId, callActive, isReceiver, currentUserId]);
+  }, [chatId, callActive, isReceiver, currentUserId, markEndedRemotely]);
 
   if (!chatId) {
     if (navigation.canGoBack()) {

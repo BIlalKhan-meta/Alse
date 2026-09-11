@@ -37,6 +37,10 @@ const IncomingCallHandler: React.FC = () => {
   const user = useSelector(selectUserProfile);
   const token = useSelector(selectBearerToken);
   const [incoming, setIncoming] = useState<IncomingState>(null);
+  // Socket callbacks are registered once per chat and outlive any given render,
+  // so they read the live value here instead of a captured `incoming`.
+  const incomingRef = useRef<IncomingState>(null);
+  incomingRef.current = incoming;
   const lastDismissRef = useRef<{key: string; at: number} | null>(null);
   const unsubsRef = useRef<Array<() => void>>([]);
 
@@ -265,10 +269,25 @@ const IncomingCallHandler: React.FC = () => {
     [showIncoming, userId, clearIncoming],
   );
 
+  /**
+   * Stop ringing for a chat. While ringing, any end/decline/cancel for this
+   * chat from the peer must dismiss us — callId equality is deliberately not
+   * required, because the RTM and socket paths use different ids.
+   */
+  const dismissRinging = useCallback(
+    (cid: string) => {
+      if (!incomingRef.current || String(incomingRef.current.chatId) !== cid) {
+        return;
+      }
+      clearIncoming();
+    },
+    [clearIncoming],
+  );
+
   const wireListeners = useCallback(async () => {
-    unsubsRef.current.forEach(u => u());
-    unsubsRef.current = [];
     if (!token || !userId) {
+      unsubsRef.current.forEach(u => u());
+      unsubsRef.current = [];
       return;
     }
     try {
@@ -287,11 +306,15 @@ const IncomingCallHandler: React.FC = () => {
         .filter((id): id is string => id != null);
       const unique = [...new Set(chatIds)];
 
+      // Build the new subscriptions before dropping the old ones. Tearing down
+      // first would leave this device deaf for the whole getConversations round
+      // trip, and a cancel arriving in that window would never stop the ring.
+      const next: Array<() => void> = [];
       unique.forEach(cid => {
-        unsubsRef.current.push(
+        next.push(
           listenMessage(cid, payload => handleSocketPayload(payload, cid)),
         );
-        unsubsRef.current.push(
+        next.push(
           chatSocket.onCallRequest(cid, (data: any) => {
             if (!data || String(data.chat_id || data.chatId) !== String(cid)) {
               return;
@@ -323,48 +346,32 @@ const IncomingCallHandler: React.FC = () => {
             });
           }),
         );
-        unsubsRef.current.push(
-          chatSocket.onCallEndedByChat(cid, (data: any) => {
-            setIncoming(cur => {
-              if (!cur || String(cur.chatId) !== String(cid)) {
-                return cur;
-              }
-              // While ringing, any end/cancel for this chat from the peer must stop
-              // the ringtone + notification — do not require callId equality
-              // (RTM and socket paths historically used different ids).
-              Vibration.cancel();
-              ringtoneService.stop();
-              try {
-                callNotificationService.cancelIncomingCallNotification();
-              } catch {
-                /* ignore */
-              }
-              return null;
-            });
+        next.push(
+          chatSocket.onCallEndedByChat(cid, () => {
+            dismissRinging(cid);
           }),
         );
-        unsubsRef.current.push(
+        next.push(
           chatSocket.onCallCancelByChat(cid, () => {
-            setIncoming(cur => {
-              if (!cur || String(cur.chatId) !== String(cid)) {
-                return cur;
-              }
-              Vibration.cancel();
-              ringtoneService.stop();
-              try {
-                callNotificationService.cancelIncomingCallNotification();
-              } catch {
-                /* ignore */
-              }
-              return null;
-            });
+            dismissRinging(cid);
+          }),
+        );
+        // A decline can also arrive for a chat that is still ringing here (for
+        // example the peer answered on another device), so it must dismiss too.
+        next.push(
+          chatSocket.onCallDeclineByChat(cid, () => {
+            dismissRinging(cid);
           }),
         );
       });
+
+      const previous = unsubsRef.current;
+      unsubsRef.current = next;
+      previous.forEach(u => u());
     } catch (e) {
       console.warn('[IncomingCallHandler] getConversations', e);
     }
-  }, [token, userId, handleSocketPayload, showIncoming, clearIncoming]);
+  }, [token, userId, handleSocketPayload, showIncoming, dismissRinging]);
 
   useEffect(() => {
     if (!token || !userId) {
