@@ -13,6 +13,8 @@
  */
 import {Platform} from 'react-native';
 import {
+  AudioProfileType,
+  AudioScenarioType,
   ChannelProfileType,
   ClientRoleType,
   createAgoraRtcEngine,
@@ -140,6 +142,18 @@ export async function ensureCallRtcInitialized(
       engine.setClientRole(ClientRoleType.ClientRoleBroadcaster);
     } catch {
       // ignore
+    }
+    // Re-assert a speech profile every call. The shared engine may previously
+    // have been configured for livestream music/high-quality audio.
+    try {
+      engine.setAudioProfile(
+        AudioProfileType.AudioProfileSpeechStandard,
+        AudioScenarioType.AudioScenarioDefault,
+      );
+      engine.adjustRecordingSignalVolume(100);
+      engine.adjustPlaybackSignalVolume(100);
+    } catch (e) {
+      console.warn('[AgoraRtc] audio configuration failed', e);
     }
     if (isVideo) {
       try {

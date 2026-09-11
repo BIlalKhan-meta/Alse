@@ -19,7 +19,7 @@ import agoraRtmCallService from '../../services/agoraRtmCallService';
 import ringbackService from '../../services/ringbackService';
 import type {AgoraCallRouteParams} from '../../types/agoraCall';
 import {GetCallRtcToken} from '../../api/liveStream';
-import {ensureCameraPermission} from '../../utils/helpers';
+import {ensureMicrophonePermission} from '../../utils/helpers';
 import useAgoraCallSession from '../../hooks/useAgoraCallSession';
 
 const AudioCall = () => {
@@ -313,8 +313,7 @@ const AudioCall = () => {
   useEffect(() => {
     const req = async () => {
       try {
-        // Audio call only needs mic; reuse helper with forVideo so mic is requested.
-        const granted = await ensureCameraPermission({forVideo: true});
+        const granted = await ensureMicrophonePermission();
         setHasPermission(granted);
       } catch (e) {
         console.warn(e);

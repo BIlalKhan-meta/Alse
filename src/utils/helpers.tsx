@@ -172,6 +172,49 @@ export async function ensureCameraPermission(
   });
 }
 
+/** Microphone permission for RTC voice calls (no unnecessary camera prompt). */
+export async function ensureMicrophonePermission(): Promise<boolean> {
+  const permission =
+    Platform.OS === 'ios'
+      ? PERMISSIONS.IOS.MICROPHONE
+      : PERMISSIONS.ANDROID.RECORD_AUDIO;
+
+  if (Platform.OS === 'ios') {
+    const current = await check(permission);
+    if (current === RESULTS.GRANTED || current === RESULTS.LIMITED) {
+      return true;
+    }
+    if (current === RESULTS.BLOCKED || current === RESULTS.UNAVAILABLE) {
+      return false;
+    }
+    return (await request(permission)) === RESULTS.GRANTED;
+  }
+
+  return withAndroidPermissionGate(async () => {
+    try {
+      const current = await check(permission);
+      if (current === RESULTS.GRANTED || current === RESULTS.LIMITED) {
+        return true;
+      }
+      if (current === RESULTS.BLOCKED || current === RESULTS.UNAVAILABLE) {
+        return false;
+      }
+      const result = await Promise.race([
+        request(permission),
+        new Promise<never>((_, reject) =>
+          setTimeout(
+            () => reject(new Error('permission_timeout')),
+            PERMISSION_REQUEST_TIMEOUT_MS,
+          ),
+        ),
+      ]);
+      return result === RESULTS.GRANTED;
+    } catch {
+      return false;
+    }
+  });
+}
+
 export async function ensureAudioPermission(): Promise<boolean> {
   if (Platform.OS === 'ios') {
     return true;

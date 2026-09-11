@@ -154,6 +154,18 @@ const VideoCall = () => {
   } = session;
 
   const remoteUserJoined = primaryRemoteUid !== null;
+  const hintedRemoteUid = Number(otherUserId);
+  // RTC uid is the authenticated user id. Once the native connection is
+  // confirmed, this route param is a safe rendering fallback for Android
+  // devices that carry media but drop onUserJoined/video-state callbacks.
+  const renderRemoteUid =
+    primaryRemoteUid ??
+    (joined &&
+    Number.isSafeInteger(hintedRemoteUid) &&
+    hintedRemoteUid > 0 &&
+    hintedRemoteUid !== rtcUid
+      ? hintedRemoteUid
+      : null);
 
   useEffect(() => {
     if (isReceiver) {
@@ -469,15 +481,15 @@ const VideoCall = () => {
       <StatusBar barStyle="light-content" backgroundColor="#000" />
 
       {/* Remote (full screen). Mounted as soon as the peer is in the channel. */}
-      {primaryRemoteUid !== null && !remoteVideoOff ? (
+      {renderRemoteUid !== null && !remoteVideoOff ? (
         <AgoraVideoView
-          key={`remote_${primaryRemoteUid}`}
-          uid={primaryRemoteUid}
+          key={`remote_${renderRemoteUid}`}
+          uid={renderRemoteUid}
           style={styles.remoteVideo}
         />
       ) : (
         <View style={[styles.remoteVideo, styles.remotePlaceholder]}>
-          {primaryRemoteUid !== null ? (
+          {renderRemoteUid !== null ? (
             <>
               <VideoOff size={44} color="rgba(255,255,255,0.5)" />
               <Text style={styles.placeholderText}>

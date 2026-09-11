@@ -33,6 +33,7 @@ import {
 } from '../services/agoraRtcEngine';
 
 const JOIN_TIMEOUT_MS = 20000;
+const CONNECTION_POLL_MS = 300;
 /** Local view normally lays out in well under 100ms; this is a safety net. */
 const SURFACE_WAIT_MS = 3000;
 
@@ -111,7 +112,9 @@ export default function useAgoraCallSession(
   const [remoteVideoOff, setRemoteVideoOff] = useState(false);
   const [micMuted, setMicMuted] = useState(false);
   const [cameraOff, setCameraOff] = useState(!isVideo);
-  const [speakerOn, setSpeakerOn] = useState(isVideo);
+  // Start audibly on both platforms. Users can still switch an audio call to
+  // the earpiece with the existing Speaker control.
+  const [speakerOn, setSpeakerOn] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const engineRef = useRef<IRtcEngine | null>(null);
@@ -131,6 +134,7 @@ export default function useAgoraCallSession(
     joinLaunched: boolean;
   } | null>(null);
   const joinTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const connectionPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const surfaceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Callbacks change identity every render; keep them in refs so the session
@@ -142,6 +146,10 @@ export default function useAgoraCallSession(
     if (joinTimeoutRef.current) {
       clearTimeout(joinTimeoutRef.current);
       joinTimeoutRef.current = null;
+    }
+    if (connectionPollRef.current) {
+      clearInterval(connectionPollRef.current);
+      connectionPollRef.current = null;
     }
   }, []);
 
@@ -168,6 +176,42 @@ export default function useAgoraCallSession(
     setError(message);
     cbRef.current.onError?.(message);
   }, []);
+
+  const activateAudio = useCallback((engine: IRtcEngine) => {
+    // leaveRtcChannel() disables local audio on the process-wide native
+    // engine. Re-enable it both before and after join; Android/iOS can reset
+    // the track while transitioning into the channel.
+    engine.enableAudio();
+    engine.enableLocalAudio(true);
+    engine.muteLocalAudioStream(false);
+    engine.muteAllRemoteAudioStreams(false);
+    engine.adjustRecordingSignalVolume(100);
+    engine.adjustPlaybackSignalVolume(100);
+    engine.setEnableSpeakerphone(true);
+  }, []);
+
+  const markSessionJoined = useCallback(
+    (source: string) => {
+      if (joinedRef.current || teardownRef.current) {
+        return;
+      }
+      log('joined via', source);
+      joinedRef.current = true;
+      clearJoinTimeout();
+      setJoined(true);
+      setError(null);
+      const engine = engineRef.current;
+      if (engine) {
+        try {
+          activateAudio(engine);
+        } catch (e) {
+          log('post-join audio activation failed', e);
+        }
+      }
+      cbRef.current.onJoined?.();
+    },
+    [activateAudio, clearJoinTimeout],
+  );
 
   /** joinChannel + explicit subscribe/route. Idempotent. */
   const joinPending = useCallback(() => {
@@ -204,18 +248,25 @@ export default function useAgoraCallSession(
       // The UIKit never did this, and a stale global mute from a previous
       // livestream session is enough to produce a black remote view.
       try {
-        engine.muteAllRemoteAudioStreams(false);
         engine.muteAllRemoteVideoStreams(false);
+        activateAudio(engine);
       } catch {
         // older native builds may not expose these
       }
-      try {
-        engine.setEnableSpeakerphone(isVideo);
-      } catch {
-        // ignore
-      }
 
       clearJoinTimeout();
+      // Android can carry media while dropping both the join callback and the
+      // JS emitter event. Native connection state is authoritative, so poll it
+      // briefly instead of leaving an opaque loader over a working call.
+      connectionPollRef.current = setInterval(() => {
+        try {
+          if (engine.getConnectionState() === 3) {
+            markSessionJoined('getConnectionState=3');
+          }
+        } catch {
+          // ignore
+        }
+      }, CONNECTION_POLL_MS);
       joinTimeoutRef.current = setTimeout(() => {
         if (!joinedRef.current && !teardownRef.current) {
           fail('Could not connect the call. Check your network and try again.');
@@ -225,7 +276,13 @@ export default function useAgoraCallSession(
       log('join failed', e);
       fail(e?.message || 'Failed to join the call');
     }
-  }, [isVideo, clearJoinTimeout, fail]);
+  }, [
+    isVideo,
+    activateAudio,
+    clearJoinTimeout,
+    fail,
+    markSessionJoined,
+  ]);
 
   /** enableVideo/startPreview then join. Gated on local view layout for video. */
   const launchPending = useCallback(() => {
@@ -243,9 +300,7 @@ export default function useAgoraCallSession(
       surfaceTimeoutRef.current = null;
     }
     try {
-      engine.enableAudio();
-      engine.enableLocalAudio(true);
-      engine.muteLocalAudioStream(false);
+      activateAudio(engine);
       if (isVideo) {
         engine.enableVideo();
         engine.enableLocalVideo(true);
@@ -268,7 +323,7 @@ export default function useAgoraCallSession(
       return;
     }
     joinPending();
-  }, [isVideo, joinPending, fail]);
+  }, [isVideo, activateAudio, joinPending, fail]);
 
   const onLocalViewLayout = useCallback(() => {
     if (surfaceReadyRef.current) {
@@ -307,22 +362,11 @@ export default function useAgoraCallSession(
         engineRef.current = engine;
 
         try {
-          engine.setDefaultAudioRouteToSpeakerphone(isVideo);
-        } catch {
-          // ignore
+          engine.setDefaultAudioRouteToSpeakerphone(true);
+          activateAudio(engine);
+        } catch (e) {
+          log('initial audio activation failed', e);
         }
-
-        const markJoined = (source: string) => {
-          if (joinedRef.current || teardownRef.current) {
-            return;
-          }
-          log('joined via', source);
-          joinedRef.current = true;
-          clearJoinTimeout();
-          setJoined(true);
-          setError(null);
-          cbRef.current.onJoined?.();
-        };
 
         // onUserJoined, onFirstRemoteVideoFrame and onRemoteVideoStateChanged
         // all report the same peer, so dedupe before notifying the screen.
@@ -349,10 +393,12 @@ export default function useAgoraCallSession(
         };
 
         const handler: IRtcEngineEventHandler = {
-          onJoinChannelSuccess: () => markJoined('onJoinChannelSuccess'),
+          onJoinChannelSuccess: () =>
+            markSessionJoined('onJoinChannelSuccess'),
           onUserJoined: (...args: any[]) => {
             const remote = extractRemoteUid(...args);
             log('onUserJoined', remote);
+            markSessionJoined('onUserJoined');
             // Render immediately — do not wait for a video state event.
             setRemoteVideoOff(false);
             addRemote(remote);
@@ -366,6 +412,7 @@ export default function useAgoraCallSession(
           onFirstRemoteVideoFrame: (...args: any[]) => {
             const remote = extractRemoteUid(...args);
             log('onFirstRemoteVideoFrame', remote);
+            markSessionJoined('onFirstRemoteVideoFrame');
             setRemoteVideoOff(false);
             addRemote(remote);
           },
@@ -374,6 +421,7 @@ export default function useAgoraCallSession(
             const state = typeof args[2] === 'number' ? args[2] : undefined;
             const reason = typeof args[3] === 'number' ? args[3] : undefined;
             log('onRemoteVideoStateChanged', remote, 'state', state, 'reason', reason);
+            markSessionJoined('onRemoteVideoStateChanged');
             if (reason === RemoteVideoStateReason.RemoteVideoStateReasonCodecNotSupport) {
               // Should be impossible now that H.264 is pinned, but never fail
               // silently into a black rectangle again.
@@ -393,6 +441,28 @@ export default function useAgoraCallSession(
           onLocalVideoStateChanged: (...args: any[]) => {
             log('onLocalVideoStateChanged', args[1], 'reason', args[2]);
           },
+          onLocalAudioStateChanged: (...args: any[]) => {
+            log('onLocalAudioStateChanged', args[1], 'reason', args[2]);
+          },
+          onRemoteAudioStateChanged: (...args: any[]) => {
+            const remote = extractRemoteUid(...args);
+            log(
+              'onRemoteAudioStateChanged',
+              remote,
+              'state',
+              args[2],
+              'reason',
+              args[3],
+            );
+            markSessionJoined('onRemoteAudioStateChanged');
+            addRemote(remote);
+          },
+          onAudioPublishStateChanged: (...args: any[]) => {
+            log('onAudioPublishStateChanged', args);
+          },
+          onAudioSubscribeStateChanged: (...args: any[]) => {
+            log('onAudioSubscribeStateChanged', args);
+          },
           onError: (err: number, msg: string) => {
             log('onError', err, msg);
             if (err === -17 || err === 17) {
@@ -409,7 +479,7 @@ export default function useAgoraCallSession(
           ) => {
             log('onConnectionStateChanged state', state, 'reason', reason);
             if (state === 3) {
-              markJoined('connectionState=3');
+              markSessionJoined('connectionState=3');
               return;
             }
             if (state === 5) {
@@ -464,6 +534,10 @@ export default function useAgoraCallSession(
         listen('onFirstRemoteVideoFrame');
         listen('onRemoteVideoStateChanged');
         listen('onLocalVideoStateChanged');
+        listen('onLocalAudioStateChanged');
+        listen('onRemoteAudioStateChanged');
+        listen('onAudioPublishStateChanged');
+        listen('onAudioSubscribeStateChanged');
         listen('onTokenPrivilegeWillExpire');
 
         pendingRef.current = {
@@ -539,6 +613,8 @@ export default function useAgoraCallSession(
     detachEmitterListeners,
     clearJoinTimeout,
     fail,
+    activateAudio,
+    markSessionJoined,
   ]);
 
   const toggleMic = useCallback(() => {
