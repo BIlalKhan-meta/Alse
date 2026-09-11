@@ -10,7 +10,7 @@
  * drift again.
  */
 import React from 'react';
-import {Platform, StyleProp, ViewStyle} from 'react-native';
+import {Platform, StyleProp, StyleSheet, View, ViewStyle} from 'react-native';
 import {
   RenderModeType,
   RtcSurfaceView,
@@ -60,7 +60,19 @@ const AgoraVideoView: React.FC<AgoraVideoViewProps> = ({
   };
 
   if (Platform.OS === 'android') {
-    return <RtcTextureView style={style} canvas={canvas} onLayout={onLayout} />;
+    // A native TextureView cannot display a background drawable and throws
+    // ("error while updating property 'backgroundColor'") if React Native sets
+    // one. Give the style to a plain wrapper View and let the renderer fill it,
+    // so callers can style this component like any other view.
+    return (
+      <View style={style}>
+        <RtcTextureView
+          style={StyleSheet.absoluteFill}
+          canvas={canvas}
+          onLayout={onLayout}
+        />
+      </View>
+    );
   }
 
   return (

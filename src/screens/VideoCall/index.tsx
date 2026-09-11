@@ -142,6 +142,7 @@ const VideoCall = () => {
 
   const {
     joined,
+    engineReady,
     primaryRemoteUid,
     remoteVideoOff,
     micMuted,
@@ -480,8 +481,9 @@ const VideoCall = () => {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#000" />
 
-      {/* Remote (full screen). Mounted as soon as the peer is in the channel. */}
-      {renderRemoteUid !== null && !remoteVideoOff ? (
+      {/* Remote (full screen). Mounted as soon as the peer is in the channel,
+          but never before the engine exists. */}
+      {engineReady && renderRemoteUid !== null && !remoteVideoOff ? (
         <AgoraVideoView
           key={`remote_${renderRemoteUid}`}
           uid={renderRemoteUid}
@@ -500,18 +502,22 @@ const VideoCall = () => {
         </View>
       )}
 
-      {/* Local preview stays mounted for the whole call: onLayout must fire
-          before startPreview (the camera HAL needs an attached native view on
-          MediaTek/TECNO), and unmounting it on a camera toggle would tear down
-          Agora's canvas. Camera-off just covers it. */}
+      {/* Local preview mounts only once the engine is initialized — binding a
+          TextureView to a dead engine leaves it black on Android. From then on
+          it stays mounted: onLayout must fire before startPreview (the camera
+          HAL needs an attached native view on MediaTek/TECNO), and unmounting
+          it on a camera toggle would tear down Agora's canvas, so camera-off
+          just covers it. */}
       <View style={styles.localWrap} pointerEvents="none">
-        <AgoraVideoView
-          uid={0}
-          style={styles.localVideo}
-          mirror
-          overlay
-          onLayout={onLocalViewLayout}
-        />
+        {engineReady ? (
+          <AgoraVideoView
+            uid={0}
+            style={styles.localVideo}
+            mirror
+            overlay
+            onLayout={onLocalViewLayout}
+          />
+        ) : null}
         {cameraOff ? (
           <View style={[StyleSheet.absoluteFillObject, styles.localOff]}>
             <VideoOff size={20} color="rgba(255,255,255,0.6)" />

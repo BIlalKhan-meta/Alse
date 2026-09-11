@@ -14,6 +14,12 @@
  * 2. For video, startPreview() only runs once the local video view has laid
  *    out. Starting the camera with no attached native view SIGSEGVs the camera
  *    HAL on MediaTek/TECNO devices.
+ * 3. Video views may only mount after the engine is initialized (engineReady).
+ *    RtcTextureView issues setupLocalVideo/setupRemoteVideo the moment it
+ *    mounts; on Android, doing that against an uninitialized engine binds the
+ *    TextureView to nothing and it stays black for the whole call. iOS's
+ *    RtcSurfaceView happens to tolerate it, which is why this only ever showed
+ *    up on Android.
  */
 import {useCallback, useEffect, useRef, useState} from 'react';
 import {Platform} from 'react-native';
@@ -84,6 +90,12 @@ export type UseAgoraCallSessionOptions = {
 
 export type AgoraCallSession = {
   joined: boolean;
+  /**
+   * The native engine is initialized and safe to bind video views to.
+   * Video views MUST NOT be mounted before this is true — see the note on
+   * rule 3 at the top of this file.
+   */
+  engineReady: boolean;
   remoteUids: number[];
   primaryRemoteUid: number | null;
   /** Remote is in the channel but publishing no decodable video. */
@@ -108,6 +120,7 @@ export default function useAgoraCallSession(
   const {channel, token, uid, isVideo, enabled} = options;
 
   const [joined, setJoined] = useState(false);
+  const [engineReady, setEngineReady] = useState(false);
   const [remoteUids, setRemoteUids] = useState<number[]>([]);
   const [remoteVideoOff, setRemoteVideoOff] = useState(false);
   const [micMuted, setMicMuted] = useState(false);
@@ -344,6 +357,8 @@ export default function useAgoraCallSession(
     }
     startedRef.current = true;
     teardownRef.current = false;
+    // Video views only mount once engineReady flips true below, so the local
+    // view's onLayout always lands after this reset.
     surfaceReadyRef.current = false;
     joinedRef.current = false;
 
@@ -548,16 +563,16 @@ export default function useAgoraCallSession(
           joinLaunched: false,
         };
 
-        // Engine setup is async (an Android leaveChannel settles for 400ms),
-        // so the local view may already have laid out and called
-        // onLocalViewLayout while we were still initializing. Attempt the
-        // launch now — it no-ops until the surface is ready.
-        launchPending();
+        // Engine + handlers are live, so video views can now safely bind.
+        // This is what releases the local view for mounting on Android.
+        setEngineReady(true);
+
         if (!isVideo) {
+          launchPending();
           return;
         }
-        // Video: otherwise wait for the local view to lay out. It is mounted on
-        // first render under any overlay, so this normally fires immediately.
+        // Video: wait for the local view to lay out. It mounts as soon as
+        // engineReady propagates, so this normally fires within a frame or two.
         surfaceTimeoutRef.current = setTimeout(() => {
           if (!pendingRef.current?.previewLaunched) {
             log('local view never laid out; joining without preview');
@@ -586,6 +601,7 @@ export default function useAgoraCallSession(
         surfaceTimeoutRef.current = null;
       }
       pendingRef.current = null;
+      setEngineReady(false);
       const engine = engineRef.current;
       detachEmitterListeners();
       if (engine) {
@@ -692,6 +708,7 @@ export default function useAgoraCallSession(
 
   return {
     joined,
+    engineReady,
     remoteUids,
     primaryRemoteUid: remoteUids.length > 0 ? remoteUids[0] : null,
     remoteVideoOff,
