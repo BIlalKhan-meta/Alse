@@ -9,9 +9,9 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-  KeyboardAvoidingView,
-  Platform,
 } from 'react-native';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import {SafeAreaView} from 'react-native-safe-area-context';
 import Video from 'react-native-video';
 import {useSelector} from 'react-redux';
 import useImagePicker, {
@@ -46,7 +46,7 @@ const CreatePost: React.FC = () => {
   const user = useSelector(selectUserProfile);
 
   const [description, setDescription] = useState<string>('');
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading] = useState<boolean>(false);
   const [selectedMediaList, setSelectedMediaList] = useState<SelectedMedia[]>([]);
   const [selectedMusic, setSelectedMusic] = useState<SelectedMusic | null>(null);
   const [privacy, setPrivacy] = useState<'friends' | 'public' | 'only_me'>('friends');
@@ -348,10 +348,7 @@ const CreatePost: React.FC = () => {
   const userName = user?.full_name || user?.first_name + ' ' + user?.last_name || 'User';
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <Modal visible={isLoading || isSavingDraft} transparent animationType="fade">
         <View style={styles.loaderOverlay}>
           <View style={styles.loaderContent}>
@@ -366,10 +363,15 @@ const CreatePost: React.FC = () => {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+          <TouchableOpacity
+            style={styles.headerIconButton}
+            onPress={() => navigation.goBack()}
+            hitSlop={{top: 4, bottom: 4, left: 4, right: 4}}>
             <ChevronLeft color="#000" size={28} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Create Post</Text>
+          <Text style={styles.headerTitle} numberOfLines={1}>
+            Create Post
+          </Text>
         </View>
         <View style={styles.headerActions}>
           <TouchableOpacity
@@ -396,8 +398,17 @@ const CreatePost: React.FC = () => {
         </View>
       </View>
 
-      {/* Main Card */}
-      <View style={styles.card}>
+      <KeyboardAwareScrollView
+        style={styles.contentScroll}
+        contentContainerStyle={styles.contentScrollContainer}
+        enableOnAndroid
+        enableAutomaticScroll
+        extraScrollHeight={24}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        showsVerticalScrollIndicator={false}>
+        {/* Main Card */}
+        <View style={styles.card}>
         <View style={styles.userInfo}>
           <Image source={avatarUrl} style={styles.avatar} />
           <View style={styles.inputContainer}>
@@ -421,6 +432,7 @@ const CreatePost: React.FC = () => {
                 <TouchableOpacity
                   style={styles.musicRemoveButton}
                   onPress={handleRemoveMusic}
+                  hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
                   accessibilityLabel={t('removeMusic')}>
                   <View style={styles.musicRemoveIconContainer}>
                     <X color="#333" size={10} />
@@ -464,7 +476,8 @@ const CreatePost: React.FC = () => {
               )}
               <TouchableOpacity
                 style={styles.removeMediaButton}
-                onPress={() => removeMedia(0)}>
+                onPress={() => removeMedia(0)}
+                hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
                 <X color="#fff" size={14} />
               </TouchableOpacity>
             </View>
@@ -497,7 +510,8 @@ const CreatePost: React.FC = () => {
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={styles.removeThumbnailButton}
-                      onPress={() => removeMedia(index + 1)}>
+                      onPress={() => removeMedia(index + 1)}
+                      hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
                       <X color="#fff" size={10} />
                     </TouchableOpacity>
                   </View>
@@ -506,7 +520,8 @@ const CreatePost: React.FC = () => {
             )}
           </View>
         ) : null}
-      </View>
+        </View>
+      </KeyboardAwareScrollView>
 
       {/* Bottom Sheet Options */}
       <View style={styles.bottomSheet}>
@@ -549,7 +564,7 @@ const CreatePost: React.FC = () => {
           {renderPrivacyOption('only_me', 'Only Me')}
         </View>
       </View>
-    </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 

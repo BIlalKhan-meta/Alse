@@ -70,7 +70,6 @@ import {
   changeUrlForData,
   getAbsoluteAvatarUrl,
   getMessage,
-  getNewsfeedMediaList,
   Toast,
 } from '../../utils/helpers';
 import {
@@ -195,35 +194,37 @@ const ChatOngoing: React.FC<Props> = props => {
           .toLowerCase()
           .includes('video') ||
         /\.(mp4|mov|webm|m4v)(\?|#|$)/i.test(String(url));
-
-      // Fast path: share card already shows payload.image — open that URI directly
-      // instead of waiting on getPost (old shares also stored user_id as post_id).
-      if (payload.image && !isVideoUrl(payload.image)) {
-        setFullscreenImageUri(resolveUri(payload.image));
-        return;
-      }
+      const mediaBasename = (url: string) =>
+        String(url || '')
+          .split(/[?#]/)[0]
+          .split('/')
+          .pop()
+          ?.toLowerCase();
 
       setIsOpeningSharedPost(true);
       try {
         if (payload.postId) {
           const res: any = await getPost(payload.postId);
           const post = res?.data?.data;
-          const mediaList = getNewsfeedMediaList(post?.media);
-          const primary =
-            mediaList[0] ||
-            (Array.isArray(post?.media) ? post.media[0] : null);
-          const path =
-            primary?.path ||
-            primary?.full_path ||
-            primary?.medium_path ||
-            payload.image;
-          if (path) {
-            const uri = resolveUri(path);
-            if (isVideoUrl(path, primary?.type)) {
-              setFullscreenVideoUri(uri);
-            } else {
-              setFullscreenImageUri(uri);
-            }
+          const payloadBasename = payload.image
+            ? mediaBasename(payload.image)
+            : undefined;
+          const postContainsSharedMedia =
+            !payloadBasename ||
+            (Array.isArray(post?.media) &&
+              post.media.some((item: any) =>
+                [
+                  item?.path,
+                  item?.full_path,
+                  item?.medium_path,
+                  item?.thumbnail_path,
+                ].some(path => mediaBasename(path) === payloadBasename),
+              ));
+          if (post?.id && postContainsSharedMedia) {
+            navigation.navigate('PostDetail', {
+              postId: post.id,
+              prefetchedPost: post,
+            });
             return;
           }
         }
@@ -249,7 +250,7 @@ const ChatOngoing: React.FC<Props> = props => {
         setIsOpeningSharedPost(false);
       }
     },
-    [],
+    [navigation],
   );
 
   const renderProductCustomView = useMemo(

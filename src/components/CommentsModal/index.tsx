@@ -4,7 +4,6 @@ import {
   Image,
   ImageSourcePropType,
   Keyboard,
-  KeyboardAvoidingView,
   Modal,
   Platform,
   Pressable,
@@ -13,6 +12,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from 'react-native';
 
@@ -55,6 +55,7 @@ import {
   MessageCircle,
   Send,
   MoreVertical,
+  X,
 } from 'lucide-react-native';
 import {useTranslation} from 'react-i18next';
 import {
@@ -83,6 +84,7 @@ import Animated, {
 import ReportBlockModal from '../ReportBlockModal';
 import GeneralModal from '../GeneralModal';
 import Clipboard from '@react-native-clipboard/clipboard';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 const DISMISS_DRAG_THRESHOLD = 120;
 const DISMISS_VELOCITY = 800;
@@ -116,6 +118,7 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
   const dispatch = useAppDispatch();
   const user = useSelector(selectUserProfile);
   const {t} = useTranslation();
+  const insets = useSafeAreaInsets();
 
   const {
     visible,
@@ -134,6 +137,7 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
   const commentDraftRef = useRef('');
   const commentInputRef = useRef<TextInput>(null);
   const replyDraftRef = useRef('');
+  const replyInputRef = useRef<TextInput>(null);
   const [commentsData, setCommentsData] = useState<Comment[]>([]);
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [selectedTag, setSelectedTag] = useState<CommentTag | null>(null);
@@ -159,9 +163,41 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
   const [replyTag, setReplyTag] = useState<CommentTag | null>(null);
   const [hasReplyText, setHasReplyText] = useState(false);
   const [isSubmittingReply, setIsSubmittingReply] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [rootHeight, setRootHeight] = useState(0);
   const navigation = useNavigation();
   const sheetTranslateY = useSharedValue(0);
   const isClosingRef = useRef(false);
+  const {height: windowHeight} = useWindowDimensions();
+
+  useEffect(() => {
+    const showEvent =
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent =
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const showSub = Keyboard.addListener(showEvent, event => {
+      setKeyboardHeight(event.endCoordinates?.height ?? 0);
+    });
+    const hideSub = Keyboard.addListener(hideEvent, () => {
+      setKeyboardHeight(0);
+    });
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
+
+  // The sheet lives in a Modal, whose window does not always resize for the
+  // keyboard, so KeyboardAvoidingView cannot lift the composer. Shrink and
+  // offset the sheet manually, and skip it when the window did resize.
+  const modalWindowResized =
+    rootHeight > 0 && windowHeight - rootHeight > keyboardHeight / 2;
+  const keyboardOffset =
+    keyboardHeight > 0 && !modalWindowResized ? keyboardHeight : 0;
+  const sheetMaxHeight = Math.max(
+    vh * 40,
+    (rootHeight || windowHeight) - keyboardOffset,
+  );
 
   useEffect(() => {
     if (visible) {
@@ -238,6 +274,7 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
       setActiveMenuCommentId(null);
       setReportVisible({visibility: false, id: null});
       setReportSuccess(false);
+      setKeyboardHeight(0);
       commentDraftRef.current = '';
       replyDraftRef.current = '';
       commentInputRef.current?.clear();
@@ -376,6 +413,7 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
 
     setCommentsData(current => appendReplyToComment(current, parentId, optimisticReply));
     replyDraftRef.current = '';
+    replyInputRef.current?.clear();
     setHasReplyText(false);
     setReplyTag(null);
     setReplyingTo(null);
@@ -411,6 +449,7 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
       setReplyingTo(previousReplyingTo);
       setReplyTag(previousReplyTag);
       replyDraftRef.current = previousReplyText;
+      replyInputRef.current?.setNativeProps({text: previousReplyText});
       setHasReplyText(previousReplyText.length > 0);
       const message =
         err?.message === 'Network Error'
@@ -554,6 +593,7 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
     setReplyTag(parentTag ?? 'answer');
     replyDraftRef.current = '';
     setHasReplyText(false);
+    setTimeout(() => replyInputRef.current?.focus(), 100);
   };
 
   const handleReplySendPress = () => {
@@ -561,68 +601,6 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
       return;
     }
     void handleReplySubmit();
-  };
-
-  const renderInlineReplyComposer = (item: Comment) => {
-    if (replyingTo?.id !== item.id) {
-      return null;
-    }
-
-    return (
-      <View style={styles.inlineReplyContainer}>
-        <Text style={styles.inlineReplyLabel}>
-          {t('comments.replyingTo', {name: getDisplayName(item.user)})}
-        </Text>
-        <View style={styles.inlineReplyTagRow}>
-          {COMMENT_TAGS.map(tag => {
-            const isActive = replyTag === tag;
-            const tagColor = COMMENT_TAG_CONFIG[tag].color;
-            return (
-              <TouchableOpacity
-                key={tag}
-                activeOpacity={0.7}
-                onPress={() => setReplyTag(tag)}
-                style={[
-                  styles.inlineReplyTagPill,
-                  isActive && {
-                    backgroundColor: tagColor,
-                    borderColor: tagColor,
-                  },
-                ]}>
-                <Text
-                  style={[
-                    styles.inlineReplyTagPillText,
-                    isActive && styles.tagPillTextActive,
-                  ]}>
-                  {t(`comments.tags.${tag}`)}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-        <View style={styles.inlineReplyInputRow}>
-          <TextInput
-            testID={`reply-input-${item.id}`}
-            placeholder={t('writeComment')}
-            style={styles.inlineReplyInput}
-            placeholderTextColor={colors.inputText}
-            onChangeText={syncReplyDraft}
-            autoFocus
-          />
-          <TouchableOpacity
-            testID={`reply-send-${item.id}`}
-            style={[styles.inlineReplySend, !canSendReply && styles.sendDisabled]}
-            onPress={handleReplySendPress}
-            disabled={isSubmittingReply}>
-            <Send
-              color={canSendReply ? '#169BD5' : '#B0B3B8'}
-              size={18}
-              fill={canSendReply ? '#169BD5' : '#B0B3B8'}
-            />
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
   };
 
   const renderComment = (item: Comment) => {
@@ -756,8 +734,6 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
           ]}
         />
 
-        {renderInlineReplyComposer(item)}
-
         {item.replies?.map(reply => renderComment(reply))}
 
         {depth === 0 ? <View style={styles.separator} /> : null}
@@ -773,7 +749,9 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
         animationType="fade"
         transparent>
         <ToastMessage topOffset={Platform.OS === 'ios' ? 54 : 24} />
-        <View style={styles.modalRoot}>
+        <View
+          style={styles.modalRoot}
+          onLayout={event => setRootHeight(event.nativeEvent.layout.height)}>
           <Pressable
             style={styles.backdrop}
             onPress={animateDismiss}
@@ -795,16 +773,18 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
               />
             )}
           </Pressable>
-          <Animated.View style={[styles.container, sheetAnimatedStyle]}>
+          <Animated.View
+            style={[
+              styles.container,
+              {maxHeight: sheetMaxHeight, marginBottom: keyboardOffset},
+              sheetAnimatedStyle,
+            ]}>
             <GestureDetector gesture={panGesture}>
               <View style={styles.dragHandleArea}>
                 <View style={styles.dragHandle} />
               </View>
             </GestureDetector>
-            <KeyboardAvoidingView
-              style={styles.sheetContent}
-              behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-              keyboardVerticalOffset={Platform.OS === 'ios' ? vh : 0}>
+            <View style={styles.sheetContent}>
               {isLoadingComments ? (
                 <View style={styles.commentsLoader}>
                   <ActivityIndicator size="large" color={colors.themeColor} />
@@ -835,6 +815,8 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
                   ListEmptyComponent={<EmptyComponent text={'No Comments'} />}
                   renderItem={({item}) => renderComment(item)}
                   onScrollBeginDrag={closeCommentMenu}
+                  keyboardShouldPersistTaps="handled"
+                  keyboardDismissMode="on-drag"
                   onEndReached={() => {
                     if (hasMoreComments && onLoadMoreComments) {
                       onLoadMoreComments();
@@ -853,20 +835,53 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
                   }
                 />
               )}
-              {!isLoadingComments && !commentsError && !replyingTo ? (
-                <View style={styles.inputConatiner}>
+              {!isLoadingComments && !commentsError ? (
+                <View
+                  style={[
+                    styles.inputConatiner,
+                    {
+                      paddingBottom:
+                        keyboardOffset > 0 ? 10 : Math.max(insets.bottom, 12),
+                    },
+                  ]}>
+                  {replyingTo ? (
+                    <View style={styles.replyingHeader}>
+                      <Text style={styles.inlineReplyLabel} numberOfLines={1}>
+                        {t('comments.replyingTo', {
+                          name: getDisplayName(replyingTo.user),
+                        })}
+                      </Text>
+                      <TouchableOpacity
+                        style={styles.cancelReplyButton}
+                        onPress={() => {
+                          Keyboard.dismiss();
+                          setReplyingTo(null);
+                          setReplyTag(null);
+                          replyDraftRef.current = '';
+                          replyInputRef.current?.clear();
+                          setHasReplyText(false);
+                        }}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('cancel')}>
+                        <X color="#65676B" size={18} />
+                      </TouchableOpacity>
+                    </View>
+                  ) : null}
                   <View style={styles.tagSelectorRow}>
                     {COMMENT_TAGS.map(tag => {
-                      const isActive = selectedTag === tag;
+                      const activeTag = replyingTo ? replyTag : selectedTag;
+                      const isActive = activeTag === tag;
                       const tagColor = COMMENT_TAG_CONFIG[tag].color;
                       return (
                         <TouchableOpacity
                           key={tag}
-                          testID={`comment-tag-${tag}`}
+                          testID={`${replyingTo ? 'reply' : 'comment'}-tag-${tag}`}
                           accessibilityRole="button"
                           accessibilityState={{selected: isActive}}
                           activeOpacity={0.7}
-                          onPress={() => setSelectedTag(tag)}
+                          onPress={() =>
+                            replyingTo ? setReplyTag(tag) : setSelectedTag(tag)
+                          }
                           style={[
                             styles.tagPill,
                             isActive && {
@@ -887,34 +902,71 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
                   </View>
                   <View style={styles.inputRow}>
                     <View style={styles.inputCon}>
-                      <TextInput
-                        ref={commentInputRef}
-                        testID="comment-input"
-                        placeholder={t('writeComment')}
-                        style={styles.input}
-                        placeholderTextColor={colors.inputText}
-                        onChangeText={syncCommentDraft}
-                        onEndEditing={e =>
-                          syncCommentDraft(e.nativeEvent.text || '')
-                        }
-                        onSubmitEditing={handleCommentSubmit}
-                      />
+                      {replyingTo ? (
+                        <TextInput
+                          ref={replyInputRef}
+                          testID={`reply-input-${replyingTo.id}`}
+                          placeholder={t('writeComment')}
+                          style={styles.input}
+                          placeholderTextColor={colors.inputText}
+                          onChangeText={syncReplyDraft}
+                          onSubmitEditing={handleReplySendPress}
+                          autoFocus
+                        />
+                      ) : (
+                        <TextInput
+                          ref={commentInputRef}
+                          testID="comment-input"
+                          placeholder={t('writeComment')}
+                          style={styles.input}
+                          placeholderTextColor={colors.inputText}
+                          onChangeText={syncCommentDraft}
+                          onEndEditing={e =>
+                            syncCommentDraft(e.nativeEvent.text || '')
+                          }
+                          onSubmitEditing={handleCommentSubmit}
+                        />
+                      )}
                     </View>
                     <TouchableOpacity
-                      testID="comment-send"
-                      style={[styles.send, !canSend && styles.sendDisabled]}
-                      onPress={handleSendPress}
-                      disabled={isSubmittingComment}>
+                      testID={replyingTo ? `reply-send-${replyingTo.id}` : 'comment-send'}
+                      style={[
+                        styles.send,
+                        !(replyingTo ? canSendReply : canSend) &&
+                          styles.sendDisabled,
+                      ]}
+                      onPress={
+                        replyingTo ? handleReplySendPress : handleSendPress
+                      }
+                      disabled={
+                        replyingTo ? isSubmittingReply : isSubmittingComment
+                      }>
                       <Send
-                        color={canSend ? '#169BD5' : '#B0B3B8'}
+                        color={
+                          replyingTo
+                            ? canSendReply
+                              ? '#169BD5'
+                              : '#B0B3B8'
+                            : canSend
+                              ? '#169BD5'
+                              : '#B0B3B8'
+                        }
                         size={20}
-                        fill={canSend ? '#169BD5' : '#B0B3B8'}
+                        fill={
+                          replyingTo
+                            ? canSendReply
+                              ? '#169BD5'
+                              : '#B0B3B8'
+                            : canSend
+                              ? '#169BD5'
+                              : '#B0B3B8'
+                        }
                       />
                     </TouchableOpacity>
                   </View>
                 </View>
               ) : null}
-            </KeyboardAvoidingView>
+            </View>
           </Animated.View>
         </View>
       </Modal>

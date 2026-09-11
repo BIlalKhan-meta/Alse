@@ -10,7 +10,7 @@ import {
   VolumeX,
   Play,
 } from 'lucide-react-native';
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {
   ActivityIndicator,
@@ -193,6 +193,7 @@ interface PostProps {
   muteInlineVideo?: boolean;
   onToggleVideoMute?: () => void;
   feedLabel?: FeedLabelType | null;
+  showMenuButton?: boolean;
 }
 
 const PostComponent: React.FC<PostProps> = ({
@@ -225,11 +226,11 @@ const PostComponent: React.FC<PostProps> = ({
   sharedFromName,
   isFocused,
   isPaused,
-  handleVideoPause,
   onMediaPress,
   muteInlineVideo,
   onToggleVideoMute,
   feedLabel,
+  showMenuButton = true,
 }) => {
   const navigation = useNavigation();
   const user = useSelector(selectUserProfile);
@@ -252,12 +253,15 @@ const PostComponent: React.FC<PostProps> = ({
     };
   }, []);
 
-  const resolvedMediaList: PostMediaItem[] =
-    mediaList && mediaList.length > 0
-      ? mediaList
-      : postImage
-        ? [{path: postImage, type: mediaType}]
-        : [];
+  const resolvedMediaList: PostMediaItem[] = useMemo(
+    () =>
+      mediaList && mediaList.length > 0
+        ? mediaList
+        : postImage
+          ? [{path: postImage, type: mediaType}]
+          : [],
+    [mediaList, mediaType, postImage],
+  );
 
   const isVideoMedia = (type: string) =>
     String(type ?? '').toLowerCase() === 'video';
@@ -275,7 +279,7 @@ const PostComponent: React.FC<PostProps> = ({
       setVideoLoad(true);
       setVideoError(false);
     }
-  }, [activeMediaIndex, mediaList, postImage, mediaType]);
+  }, [activeMediaIndex, resolvedMediaList]);
 
   const {t} = useTranslation();
   const videoPaused = isPaused !== undefined ? isPaused : !isFocused;
@@ -546,9 +550,11 @@ const PostComponent: React.FC<PostProps> = ({
               </InterRegular>
             </View>
           </View>
-          <TouchableOpacity style={styles.moreButton} onPress={onDotPress}>
-            <MoreVertical color="#000" size={20} />
-          </TouchableOpacity>
+          {showMenuButton ? (
+            <TouchableOpacity style={styles.moreButton} onPress={onDotPress}>
+              <MoreVertical color="#000" size={20} />
+            </TouchableOpacity>
+          ) : null}
         </View>
 
         {/* Post text content */}
@@ -668,7 +674,7 @@ const PostComponent: React.FC<PostProps> = ({
         </View>
       </Card>
 
-      {modalVisible && (
+      {showMenuButton && modalVisible && (
         <ReportBlockModal
           isVisible={modalVisible}
           options={options}

@@ -11,7 +11,7 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
   },
   container: {
-    width: vw * 100,
+    width: '100%',
     height: vh * 85,
     backgroundColor: 'white',
     borderTopLeftRadius: vw * 7,
@@ -20,9 +20,7 @@ const styles = StyleSheet.create({
   },
   sheetContent: {
     flex: 1,
-    alignItems: 'center',
-    paddingBottom: vh * 3,
-    paddingHorizontal: vh * 2,
+    minHeight: 0,
   },
   dragHandleArea: {
     width: '100%',
@@ -39,6 +37,7 @@ const styles = StyleSheet.create({
   flatList: {
     flex: 1,
     width: '100%',
+    paddingHorizontal: 16,
   },
   commentsLoader: {
     flex: 1,
@@ -244,7 +243,24 @@ const styles = StyleSheet.create({
   },
   inputConatiner: {
     width: '100%',
-    marginTop: 10,
+    flexShrink: 0,
+    paddingTop: 10,
+    paddingHorizontal: 16,
+    backgroundColor: colors.white,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#E4E6EB',
+  },
+  replyingHeader: {
+    minHeight: 32,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  cancelReplyButton: {
+    width: 36,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   tagSelectorRow: {
     flexDirection: 'row',

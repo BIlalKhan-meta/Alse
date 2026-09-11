@@ -212,7 +212,8 @@ export function createRenderCustomView(
               });
               return;
             }
-            // Newsfeed posts → fullscreen media (same MediaModal as feed).
+            // Newsfeed posts → validate and open the original PostDetail.
+            // Legacy image-only shares still fall back to fullscreen media.
             if (postPayload.post_id || postPayload.image) {
               onOpenSharedPost?.({
                 postId: postPayload.post_id,

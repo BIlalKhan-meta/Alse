@@ -13,6 +13,7 @@ import Notifications from '../../screens/Home/Notifications';
 import ContactUs from '../../screens/ContactUs';
 import AboutUs from '../../screens/AboutUs';
 import ChatOngoing from '../../screens/ChatOngoing';
+import PostDetail from '../../screens/PostDetail';
 import NavigationOptions from '../NavigationOptions';
 import ProductView from '../../screens/MarketPlace/ProductView';
 import ProductDetail from '../../screens/ProductDetail';
@@ -202,6 +203,11 @@ const AppNavigation = () => {
           name="CreatePost"
           component={CreatePost}
           // options={NavigationOptions}
+        />
+        <Stack.Screen
+          name="PostDetail"
+          component={PostDetail}
+          options={{headerShown: false}}
         />
         <Stack.Screen
           name="MediaEditor"

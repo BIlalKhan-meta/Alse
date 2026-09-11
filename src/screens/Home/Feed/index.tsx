@@ -38,7 +38,7 @@ import {colors} from '../../../utils/theme';
 import {createPost, getCountriesList, reportPost} from '../../../api/home';
 import {removeSavedItem, saveItem} from '../../../api/menu';
 import {checkIsSeller} from '../../../api/shop';
-import {vh, vw} from '../../../constant';
+import {vh} from '../../../constant';
 import {getCountries} from '../../../store/slices/generalSlice';
 import {timeFormat} from '../../../utils';
 import {useSelector} from 'react-redux';
@@ -396,12 +396,6 @@ const Home: React.FC = () => {
     }
   }, [navigation, user]);
 
-  const scrollToTop = () => {
-    if (flatListRef.current) {
-      flatListRef.current.scrollToOffset({animated: true, offset: 0});
-    }
-  };
-
   const handleCommentPress = (id: any) => {
     openComments(id);
   };
@@ -651,6 +645,7 @@ const Home: React.FC = () => {
     return (
       <PostComponent
         feedLabel={feedLabel}
+        showMenuButton={false}
         isFocused={isFocused}
         id={item?.user_id}
         mediaId={item?.id}
