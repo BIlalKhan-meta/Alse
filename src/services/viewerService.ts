@@ -1,182 +1,313 @@
 import firestore from '@react-native-firebase/firestore';
 
-/**
- * Service for managing real-time livestream viewer statistics
- */
-
 const STATS_COLLECTION = 'liveStreamStats';
+const VIEWER_STALE_AFTER_MS = 90_000;
+const STALE_CHECK_INTERVAL_MS = 30_000;
+
+export type ViewerIdentity = {
+  userId: string | number;
+  username: string;
+  avatarUrl?: string | null;
+};
+
+export type ViewerActivityType = 'joined' | 'left';
+
+export type ViewerActivityEvent = ViewerIdentity & {
+  id: string;
+  type: ViewerActivityType;
+  createdAt: Date | null;
+};
+
+type FirestoreDateValue = {
+  toDate?: () => Date;
+  toMillis?: () => number;
+};
+
+const statsRef = (streamId: string) =>
+  firestore().collection(STATS_COLLECTION).doc(streamId);
+
+const viewerRef = (streamId: string, userId: string | number) =>
+  statsRef(streamId).collection('viewers').doc(String(userId));
+
+const toDate = (value: FirestoreDateValue | Date | null | undefined) => {
+  if (!value) {
+    return null;
+  }
+  if (value instanceof Date) {
+    return value;
+  }
+  if (typeof value.toDate === 'function') {
+    return value.toDate();
+  }
+  if (typeof value.toMillis === 'function') {
+    return new Date(value.toMillis());
+  }
+  return null;
+};
+
+const writeLeaveTransition = async (
+  streamId: string,
+  identity: ViewerIdentity,
+) => {
+  const userViewerRef = viewerRef(streamId, identity.userId);
+  const eventRef = statsRef(streamId).collection('events').doc();
+
+  await firestore().runTransaction(async transaction => {
+    const current = await transaction.get(userViewerRef);
+    if (!current.exists || current.data()?.active !== true) {
+      return;
+    }
+
+    const timestamp = firestore.FieldValue.serverTimestamp();
+    transaction.set(
+      userViewerRef,
+      {
+        active: false,
+        leftAt: timestamp,
+        lastActive: timestamp,
+      },
+      {merge: true},
+    );
+    transaction.set(eventRef, {
+      userId: identity.userId,
+      username: identity.username,
+      avatarUrl: identity.avatarUrl ?? null,
+      type: 'left',
+      createdAt: timestamp,
+    });
+  });
+};
 
 /**
- * Initialize viewer tracking for a channel
- * This is called by the host when a stream starts
- * 
- * @param channelId The channel ID
- * @returns Cleanup function
+ * Initializes host-side tracking and returns a cleanup function for the stale
+ * viewer sweep. Ending the stream is handled separately by endViewerTracking.
  */
-export const initializeViewerTracking = (channelId: string): (() => void) => {
-  if (!channelId) {
-    console.error('No channel ID provided for viewer tracking');
+export const initializeViewerTracking = (
+  streamId: string,
+  hostId?: string | number,
+): (() => void) => {
+  if (!streamId) {
     return () => {};
   }
-  
-  console.log(`Initializing viewer tracking for channel: ${channelId}`);
-  
-  // Create initial document
-  firestore()
-    .collection(STATS_COLLECTION)
-    .doc(channelId)
-    .set({
-      channelId,
-      viewerCount: 0, // Start with 0 viewers
-      lastUpdated: firestore.FieldValue.serverTimestamp(),
-      viewerPeak: 0,
-      trackingStarted: firestore.FieldValue.serverTimestamp(),
-      active: true
-    }, { merge: true })
-    .catch(err => console.error('Error initializing viewer stats:', err));
-  
-  // Set up periodic cleanup to ensure accuracy - remove disconnected viewers
-  const intervalId = setInterval(async () => {
+
+  statsRef(streamId)
+    .set(
+      {
+        streamId,
+        hostId: hostId ?? null,
+        active: true,
+        trackingStarted: firestore.FieldValue.serverTimestamp(),
+        lastUpdated: firestore.FieldValue.serverTimestamp(),
+      },
+      {merge: true},
+    )
+    .catch(error =>
+      console.error('[ViewerPresence] Failed to initialize tracking', error),
+    );
+
+  const removeStaleViewers = async () => {
     try {
-      // Get all viewers and check their timestamps
-      const fiveMinutesAgo = new Date();
-      fiveMinutesAgo.setMinutes(fiveMinutesAgo.getMinutes() - 5);
-      
-      const viewersRef = firestore()
-        .collection(STATS_COLLECTION)
-        .doc(channelId)
-        .collection('viewers');
-      
-      // Get viewers who haven't updated in 5 minutes (likely disconnected)
-      const staleViewers = await viewersRef
-        .where('lastActive', '<', fiveMinutesAgo)
-        .get();
-        
-      // Count how many we're removing
-      const staleCount = staleViewers.size;
-      
-      if (staleCount > 0) {
-        console.log(`Removing ${staleCount} stale viewers from ${channelId}`);
-        
-        // Create a batch for efficient updates
-        const batch = firestore().batch();
-        
-        // Add all deletions to batch
-        staleViewers.forEach(doc => {
-          batch.delete(doc.ref);
-        });
-        
-        // Decrement the viewer count
-        const statsRef = firestore().collection(STATS_COLLECTION).doc(channelId);
-        batch.update(statsRef, {
-          viewerCount: firestore.FieldValue.increment(-staleCount),
-          lastUpdated: firestore.FieldValue.serverTimestamp()
-        });
-        
-        // Commit the batch
-        await batch.commit();
-      }
-    } catch (error) {
-      console.error('Error cleaning up stale viewers:', error);
-    }
-  }, 60000); // Check every minute
-  
-  // Return cleanup function
-  return () => {
-    clearInterval(intervalId);
-    console.log(`Stopped viewer tracking for channel: ${channelId}`);
-    
-    // Mark the stream as inactive
-    firestore()
-      .collection(STATS_COLLECTION)
-      .doc(channelId)
-      .update({
-        active: false,
-        lastUpdated: firestore.FieldValue.serverTimestamp()
-      })
-      .catch(err => console.error('Error marking stream inactive:', err));
-  };
-};
+      const snapshot = await statsRef(streamId).collection('viewers').get();
+      const staleBefore = Date.now() - VIEWER_STALE_AFTER_MS;
 
-/**
- * Update a user's "last active" timestamp to prevent being counted as stale
- * Call this periodically from viewers to maintain accurate counts
- * 
- * @param channelId The channel ID
- * @param userId The user ID
- */
-export const updateViewerActivity = async (channelId: string, userId: string | number): Promise<void> => {
-  if (!channelId || !userId) return;
-  
-  try {
-    await firestore()
-      .collection(STATS_COLLECTION)
-      .doc(channelId)
-      .collection('viewers')
-      .doc(userId.toString())
-      .update({
-        lastActive: firestore.FieldValue.serverTimestamp()
-      });
-  } catch (error) {
-    console.error('Error updating viewer activity:', error);
-  }
-};
-
-/**
- * Archive stream statistics when a stream ends
- * 
- * @param channelId The channel ID
- * @param hostId ID of the stream host
- */
-export const archiveStreamStats = async (channelId: string, hostId: string | number): Promise<void> => {
-  if (!channelId) return;
-  
-  try {
-    // Get current stats document
-    const statsDoc = await firestore()
-      .collection(STATS_COLLECTION)
-      .doc(channelId)
-      .get();
-    
-    if (statsDoc.exists) {
-      const statsData = statsDoc.data() || {};
-      
-      // Get current viewer count by counting viewers collection
-      const viewersSnapshot = await firestore()
-        .collection(STATS_COLLECTION)
-        .doc(channelId)
-        .collection('viewers')
-        .get();
-      
-      const currentViewerCount = viewersSnapshot.size;
-      
-      // Create an archive record
-      await firestore()
-        .collection('streamArchives')
-        .add({
-          channelId,
-          hostId,
-          archivedAt: firestore.FieldValue.serverTimestamp(),
-          stats: {
-            ...statsData,
-            finalViewerCount: currentViewerCount,
-            peakViewerCount: Math.max(statsData.viewerPeak || 0, currentViewerCount)
+      await Promise.all(
+        snapshot.docs.map(async document => {
+          const data = document.data();
+          const lastActive = toDate(data.lastActive)?.getTime() ?? 0;
+          if (data.active !== true || lastActive >= staleBefore) {
+            return;
           }
-        });
-      
-      // Reset the live stats document
-      await firestore()
-        .collection(STATS_COLLECTION)
-        .doc(channelId)
-        .update({
-          viewerCount: 0,
-          active: false,
-          endedAt: firestore.FieldValue.serverTimestamp()
-        });
-      
-      console.log('Archived stream stats for channel:', channelId);
+          await writeLeaveTransition(streamId, {
+            userId: data.userId ?? document.id,
+            username: data.username || 'Viewer',
+            avatarUrl: data.avatarUrl ?? null,
+          });
+        }),
+      );
+    } catch (error) {
+      console.error('[ViewerPresence] Stale viewer cleanup failed', error);
     }
-  } catch (error) {
-    console.error('Error archiving stream stats:', error);
+  };
+
+  const intervalId = setInterval(removeStaleViewers, STALE_CHECK_INTERVAL_MS);
+  return () => clearInterval(intervalId);
+};
+
+export const joinViewer = async (
+  streamId: string,
+  identity: ViewerIdentity,
+): Promise<void> => {
+  if (!streamId || !identity.userId) {
+    return;
   }
+
+  const userViewerRef = viewerRef(streamId, identity.userId);
+  const eventRef = statsRef(streamId).collection('events').doc();
+  await firestore().runTransaction(async transaction => {
+    const current = await transaction.get(userViewerRef);
+    const timestamp = firestore.FieldValue.serverTimestamp();
+
+    if (current.exists && current.data()?.active === true) {
+      transaction.set(
+        userViewerRef,
+        {
+          username: identity.username,
+          avatarUrl: identity.avatarUrl ?? null,
+          lastActive: timestamp,
+        },
+        {merge: true},
+      );
+      return;
+    }
+
+    transaction.set(
+      userViewerRef,
+      {
+        userId: identity.userId,
+        username: identity.username,
+        avatarUrl: identity.avatarUrl ?? null,
+        active: true,
+        joinedAt: timestamp,
+        lastActive: timestamp,
+        leftAt: null,
+      },
+      {merge: true},
+    );
+    transaction.set(eventRef, {
+      userId: identity.userId,
+      username: identity.username,
+      avatarUrl: identity.avatarUrl ?? null,
+      type: 'joined',
+      createdAt: timestamp,
+    });
+  });
+};
+
+export const leaveViewer = async (
+  streamId: string,
+  identity: ViewerIdentity,
+): Promise<void> => {
+  if (!streamId || !identity.userId) {
+    return;
+  }
+  await writeLeaveTransition(streamId, identity);
+};
+
+export const updateViewerActivity = async (
+  streamId: string,
+  userId: string | number,
+): Promise<void> => {
+  if (!streamId || !userId) {
+    return;
+  }
+  try {
+    await viewerRef(streamId, userId).set(
+      {
+        lastActive: firestore.FieldValue.serverTimestamp(),
+      },
+      {merge: true},
+    );
+  } catch (error) {
+    console.error('[ViewerPresence] Heartbeat failed', error);
+  }
+};
+
+export const subscribeToActiveViewerCount = (
+  streamId: string,
+  onCount: (count: number) => void,
+  onError?: (error: Error) => void,
+) =>
+  statsRef(streamId)
+    .collection('viewers')
+    .onSnapshot(
+      snapshot => {
+        const activeCount = snapshot.docs.reduce(
+          (count, document) => count + (document.data().active === true ? 1 : 0),
+          0,
+        );
+        onCount(activeCount);
+      },
+      error => onError?.(error),
+    );
+
+export const subscribeToViewerActivity = (
+  streamId: string,
+  onEvents: (events: ViewerActivityEvent[]) => void,
+  onError?: (error: Error) => void,
+) =>
+  statsRef(streamId)
+    .collection('events')
+    .orderBy('createdAt', 'desc')
+    .limit(100)
+    .onSnapshot(
+      snapshot => {
+        onEvents(
+          snapshot.docs.map(document => {
+            const data = document.data();
+            return {
+              id: document.id,
+              userId: data.userId,
+              username: data.username || 'Viewer',
+              avatarUrl: data.avatarUrl ?? null,
+              type: data.type === 'left' ? 'left' : 'joined',
+              createdAt: toDate(data.createdAt),
+            };
+          }),
+        );
+      },
+      error => onError?.(error),
+    );
+
+export const endViewerTracking = async (streamId: string): Promise<void> => {
+  if (!streamId) {
+    return;
+  }
+
+  try {
+    const viewers = await statsRef(streamId).collection('viewers').get();
+    await Promise.all(
+      viewers.docs.map(document => {
+        const data = document.data();
+        if (data.active !== true) {
+          return Promise.resolve();
+        }
+        return writeLeaveTransition(streamId, {
+          userId: data.userId ?? document.id,
+          username: data.username || 'Viewer',
+          avatarUrl: data.avatarUrl ?? null,
+        });
+      }),
+    );
+    await statsRef(streamId).set(
+      {
+        active: false,
+        endedAt: firestore.FieldValue.serverTimestamp(),
+        lastUpdated: firestore.FieldValue.serverTimestamp(),
+      },
+      {merge: true},
+    );
+  } catch (error) {
+    console.error('[ViewerPresence] Failed to end tracking', error);
+  }
+};
+
+export const archiveStreamStats = async (
+  streamId: string,
+  hostId: string | number,
+): Promise<void> => {
+  if (!streamId) {
+    return;
+  }
+  const statsDocument = await statsRef(streamId).get();
+  const viewers = await statsRef(streamId).collection('viewers').get();
+  await firestore()
+    .collection('streamArchives')
+    .add({
+      streamId,
+      hostId,
+      archivedAt: firestore.FieldValue.serverTimestamp(),
+      stats: statsDocument.data() || {},
+      uniqueViewerCount: viewers.size,
+    });
+  await endViewerTracking(streamId);
 };

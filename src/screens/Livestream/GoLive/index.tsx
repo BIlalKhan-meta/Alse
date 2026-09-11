@@ -52,6 +52,7 @@ import {
 import {colors} from '../../../utils/theme';
 import {
   ensureCameraPermission,
+  getAbsoluteAvatarUrl,
   hasCameraAndMicPermission,
   setSuppressAndroidPermissionPrompts,
 } from '../../../utils/helpers';
@@ -64,12 +65,22 @@ import {
 } from '../../../services/agoraRtcLiveEngine';
 import {vh, vw} from '../../../constant';
 import KeepAwake from '@sayem314/react-native-keep-awake';
+import ViewerCounter from '../../../components/ViewerCounter';
+import {
+  endViewerTracking,
+  initializeViewerTracking,
+  joinViewer,
+  leaveViewer,
+  updateViewerActivity,
+  ViewerIdentity,
+} from '../../../services/viewerService';
 
 const LocalVideoView = Platform.OS === 'android' ? RtcTextureView : RtcSurfaceView;
 const RemoteVideoView = Platform.OS === 'android' ? RtcTextureView : RtcSurfaceView;
 
 const JOIN_TIMEOUT_MS = 30000;
 const FIRST_FRAME_FALLBACK_MS = Platform.OS === 'android' ? 12000 : 400;
+const VIEWER_HEARTBEAT_MS = 30_000;
 
 const toUid = (value: unknown): number => {
   const n = Number(value);
@@ -158,7 +169,7 @@ const LiveStreamScreen = () => {
   const [engineReady, setEngineReady] = useState(false);
   const [previewStarted, setPreviewStarted] = useState(false);
   const [remoteUid, setRemoteUid] = useState<number | null>(null);
-  const [remoteVideoStarted, setRemoteVideoStarted] = useState(false);
+  const [, setRemoteVideoStarted] = useState(false);
   const [micMuted, setMicMuted] = useState(false);
   const [showChoiceModal, setShowChoiceModal] = useState(false);
   const [liveStreams, setLiveStreams] = useState<LiveStreamItem[]>([]);
@@ -212,10 +223,14 @@ const LiveStreamScreen = () => {
 
   const userID = user?.id != null ? String(user.id) : '';
   const userName = user?.full_name || user?.name || `user_${userID}`;
+  const userAvatar = getAbsoluteAvatarUrl(user?.avatar);
   const numericUid = Number(userID) || 0;
 
   const fromTab = isHost && !streamKeyParam && !channel;
   const effectiveIsHost = effectiveMode?.isHost ?? isHost;
+  const viewerStreamId = hostStreamKey
+    ? sanitizeLiveID(hostStreamKey)
+    : '';
   sessionCreatedRef.current = sessionCreated;
   hostStreamKeyRef.current = hostStreamKey;
   channelNameRef.current = channelName;
@@ -540,7 +555,10 @@ const LiveStreamScreen = () => {
       try {
         if (wasHost) {
           if (liveId) {
-            await removeActiveStream(liveId).catch(() => {});
+            await Promise.all([
+              removeActiveStream(liveId).catch(() => {}),
+              endViewerTracking(liveId).catch(() => {}),
+            ]);
           }
           try {
             await EndLiveStream();
@@ -1049,6 +1067,50 @@ const LiveStreamScreen = () => {
   ]);
 
   useEffect(() => {
+    if (!joined || !viewerStreamId || !userID) {
+      return;
+    }
+
+    if (effectiveIsHost) {
+      return initializeViewerTracking(viewerStreamId, userID);
+    }
+
+    const identity: ViewerIdentity = {
+      userId: userID,
+      username: userName,
+      avatarUrl: userAvatar,
+    };
+    let disposed = false;
+    const registration = joinViewer(viewerStreamId, identity).catch(
+      presenceError => {
+        console.warn('[LiveStream] viewer presence join failed', presenceError);
+      },
+    );
+    const heartbeatId = setInterval(() => {
+      if (!disposed) {
+        updateViewerActivity(viewerStreamId, userID).catch(() => {});
+      }
+    }, VIEWER_HEARTBEAT_MS);
+
+    return () => {
+      disposed = true;
+      clearInterval(heartbeatId);
+      // Wait for registration so a quick leave cannot race and recreate an
+      // active viewer after its leave transition.
+      registration
+        .then(() => leaveViewer(viewerStreamId, identity))
+        .catch(() => {});
+    };
+  }, [
+    effectiveIsHost,
+    joined,
+    userAvatar,
+    userID,
+    userName,
+    viewerStreamId,
+  ]);
+
+  useEffect(() => {
     return () => {
       // Tab switch no longer unmounts this screen. Real unmount (logout /
       // leaving the tab navigator) should leave the channel but must not
@@ -1307,6 +1369,7 @@ const LiveStreamScreen = () => {
                 {joined ? 'LIVE' : 'PREVIEW'}
               </Text>
             </View>
+            <ViewerCounter isLive={joined} channelId={viewerStreamId} />
             <Text style={styles.channelHint} numberOfLines={1}>
               {joined
                 ? effectiveIsHost
