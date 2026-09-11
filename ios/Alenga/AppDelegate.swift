@@ -16,6 +16,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate, PKPush
   var reactNativeDelegate: ReactNativeDelegate?
   var reactNativeFactory: RCTReactNativeFactory?
 
+  /// PushKit only delivers while something owns the registry, so keep it here
+  /// rather than relying on RNVoipPushNotificationManager's local instance.
+  private var voipRegistry: PKPushRegistry?
+
   func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
@@ -37,7 +41,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate, PKPush
       "maximumCallsPerCallGroup": "1",
       "supportsVideo": true,
     ])
-    RNVoipPushNotificationManager.voipRegistration()
+    let registry = PKPushRegistry(queue: .main)
+    registry.delegate = self
+    registry.desiredPushTypes = [.voIP]
+    voipRegistry = registry
+    print("[VoIP] PushKit registry created")
 
     let delegate = ReactNativeDelegate()
     let factory = RCTReactNativeFactory(delegate: delegate)
@@ -121,6 +129,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate, PKPush
     didUpdate credentials: PKPushCredentials,
     for type: PKPushType
   ) {
+    let token = credentials.token.map { String(format: "%02.2hhx", $0) }.joined()
+    print("[VoIP] didUpdatePushCredentials token=\(token)")
     RNVoipPushNotificationManager.didUpdate(
       credentials,
       forType: type.rawValue
