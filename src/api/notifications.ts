@@ -10,6 +10,7 @@ export type FcmDevicePayload = {
   device_id: string;
   device_type: 'android' | 'ios' | 'web';
   device_name?: string;
+  voip_token?: string;
 };
 
 let cachedDeviceId: string | null = null;
@@ -33,6 +34,7 @@ export function getDeviceType(): 'android' | 'ios' {
 
 export async function buildFcmDevicePayload(
   fcmToken: string,
+  voipToken?: string | null,
 ): Promise<FcmDevicePayload> {
   const device_id = await getStableDeviceId();
   let device_name: string | undefined;
@@ -41,12 +43,16 @@ export async function buildFcmDevicePayload(
   } catch {
     device_name = undefined;
   }
-  return {
+  const payload: FcmDevicePayload = {
     fcm_token: fcmToken,
     device_id,
     device_type: getDeviceType(),
     device_name,
   };
+  if (voipToken) {
+    payload.voip_token = voipToken;
+  }
+  return payload;
 }
 
 export const registerFcmDevice = (payload: FcmDevicePayload) => {

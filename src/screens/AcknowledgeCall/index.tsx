@@ -5,6 +5,10 @@ import {images} from '../../utils/images';
 import {vh, vw} from '../../constant';
 import {colors} from '../../utils/theme';
 import Row from '../../components/Row';
+import {
+  acceptIncomingCall,
+  rejectIncomingCall,
+} from '../../services/incomingCallActions';
 
 type AcknowledgeParams = {
   chat_id?: string | number;
@@ -40,29 +44,36 @@ const AcknowledgeCall = ({navigation, route}: any) => {
   ).toLowerCase();
   const isVideo = resolvedCallType !== 'audio';
 
+  const incoming = {
+    callId: String(callId || call_id || chat_id || ''),
+    chatId: chat_id != null ? String(chat_id) : '',
+    callerId: String(callerId ?? caller_id ?? ''),
+    callerName: String(name || 'Call'),
+    callType: (isVideo ? 'video' : 'audio') as 'audio' | 'video',
+  };
+
   const onDecline = useCallback(() => {
+    if (incoming.chatId) {
+      rejectIncomingCall(incoming).catch(() => {});
+    }
     if (navigation.canGoBack()) {
       navigation.goBack();
     }
-  }, [navigation]);
+  }, [incoming, navigation]);
 
   const onAccept = useCallback(() => {
-    const chatId = chat_id != null ? String(chat_id) : '';
+    const chatId = incoming.chatId;
     if (!chatId) {
       onDecline();
       return;
     }
+    acceptIncomingCall(incoming).catch(() => {});
     const navParams = {
       chatId,
-      callId: callId || call_id || undefined,
-      userName: String(name || 'Call'),
-      name: String(name || 'Call'),
-      otherUserId:
-        callerId != null
-          ? String(callerId)
-          : caller_id != null
-            ? String(caller_id)
-            : undefined,
+      callId: incoming.callId || undefined,
+      userName: incoming.callerName,
+      name: incoming.callerName,
+      otherUserId: incoming.callerId || undefined,
       isReceiver: true,
       isVideo,
       image,

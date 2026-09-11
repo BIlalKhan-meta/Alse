@@ -6,9 +6,10 @@ import RNBootSplash
 
 import FirebaseCore
 import FirebaseMessaging
+import PushKit
 
 @main
-class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate
+class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate, PKPushRegistryDelegate
 {
   var window: UIWindow?
 
@@ -29,6 +30,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate
 
     // Register with APNs early so FCM can map the device token.
     application.registerForRemoteNotifications()
+
+    RNCallKeep.setup([
+      "appName": "Alse",
+      "maximumCallGroups": "1",
+      "maximumCallsPerCallGroup": "1",
+      "supportsVideo": true,
+    ])
+    RNVoipPushNotificationManager.voipRegistration()
 
     let delegate = ReactNativeDelegate()
     let factory = RCTReactNativeFactory(delegate: delegate)
@@ -79,6 +88,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate
     open url: URL,
     options: [UIApplication.OpenURLOptionsKey: Any] = [:]
   ) -> Bool {
+    if RNCallKeep.application(app, open: url, options: options) {
+      return true
+    }
     return RCTLinkingManager.application(app, open: url, options: options)
   }
 
@@ -87,11 +99,86 @@ class AppDelegate: UIResponder, UIApplicationDelegate, MessagingDelegate
     continue userActivity: NSUserActivity,
     restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void
   ) -> Bool {
+    let callKeepHandled = RNCallKeep.application(
+      application,
+      continue: userActivity,
+      restorationHandler: { objects in
+        restorationHandler(objects as? [UIUserActivityRestoring])
+      }
+    )
+    if callKeepHandled {
+      return true
+    }
     return RCTLinkingManager.application(
       application,
       continue: userActivity,
       restorationHandler: restorationHandler
     )
+  }
+
+  func pushRegistry(
+    _ registry: PKPushRegistry,
+    didUpdate credentials: PKPushCredentials,
+    for type: PKPushType
+  ) {
+    RNVoipPushNotificationManager.didUpdate(
+      credentials,
+      forType: type.rawValue
+    )
+  }
+
+  func pushRegistry(
+    _ registry: PKPushRegistry,
+    didInvalidatePushTokenFor type: PKPushType
+  ) {}
+
+  func pushRegistry(
+    _ registry: PKPushRegistry,
+    didReceiveIncomingPushWith payload: PKPushPayload,
+    for type: PKPushType,
+    completion: @escaping () -> Void
+  ) {
+    let data = payload.dictionaryPayload
+    let uuid = (data["uuid"] as? String)
+      ?? (data["call_id"] as? String)
+      ?? UUID().uuidString
+    let notificationType = (
+      (data["notification_type"] as? String) ?? (data["type"] as? String) ?? ""
+    ).lowercased()
+    let callerName = (data["name"] as? String)
+      ?? (data["callerName"] as? String)
+      ?? "Incoming Call"
+    let handle = (data["handle"] as? String)
+      ?? (data["caller_id"] as? String)
+      ?? "alse"
+    let callType = (
+      (data["call_type"] as? String) ?? (data["callType"] as? String) ?? "video"
+    ).lowercased()
+    let hasVideo = callType != "audio"
+
+    // JS releases this via VoipPushNotification.onVoipNotificationCompleted.
+    // PushKit's completion must run exactly once, so CallKeep gets nil below.
+    RNVoipPushNotificationManager.addCompletionHandler(uuid, completionHandler: completion)
+    RNVoipPushNotificationManager.didReceiveIncomingPush(with: payload, forType: type.rawValue)
+
+    RNCallKeep.reportNewIncomingCall(
+      uuid,
+      handle: handle,
+      handleType: "generic",
+      hasVideo: hasVideo,
+      localizedCallerName: callerName,
+      supportsHolding: true,
+      supportsDTMF: true,
+      supportsGrouping: false,
+      supportsUngrouping: false,
+      fromPushKit: true,
+      payload: data,
+      withCompletionHandler: nil
+    )
+
+    if notificationType == "call_cancelled" || notificationType == "call_cancel" {
+      RNCallKeep.endCall(withUUID: uuid, reason: 2)
+    }
   }
 }
 

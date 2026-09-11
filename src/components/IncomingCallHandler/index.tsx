@@ -1,22 +1,32 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
-import {Vibration} from 'react-native';
+import {AppState, Vibration} from 'react-native';
 import {useSelector} from 'react-redux';
 import {
   selectUserProfile,
   selectBearerToken,
 } from '../../store/slices/authSlice';
 import {getConversations} from '../../api/home';
-import {connectSocket, emitMessage, listenMessage} from '../../utils/socket';
-import {navigationRef} from '../../utils/navigationRef';
+import {connectSocket, listenMessage} from '../../utils/socket';
 import {
   parseAlseCallMessage,
-  serializeAlseCall,
 } from '../../utils/callPayload';
 import CallIncomingModal from '../CallIncomingModal';
 import chatSocket from '../../services/chatSocket';
 import agoraRtmCallService from '../../services/agoraRtmCallService';
 import callNotificationService from '../../services/callNotificationService';
 import ringtoneService from '../../services/ringtoneService';
+import {
+  acceptIncomingCall,
+  navigateToIncomingCall,
+  rejectIncomingCall,
+  setIncomingCallUiDismisser,
+} from '../../services/incomingCallActions';
+import {
+  displayNativeIncomingCall,
+  endNativeIncomingCall,
+  setInAppCallUiActive,
+} from '../../services/nativeCallKeepService';
+import {generateCallUuid} from '../../utils/callUuid';
 
 type IncomingState = null | {
   callId: string;
@@ -30,7 +40,7 @@ type IncomingState = null | {
 const DEDUPE_MS = 3000;
 
 function generateCallId(): string {
-  return `call_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+  return generateCallUuid();
 }
 
 const IncomingCallHandler: React.FC = () => {
@@ -64,6 +74,21 @@ const IncomingCallHandler: React.FC = () => {
       if (agoraRtmCallService.wasCallRecentlyHandled()) {
         return;
       }
+      if (AppState.currentState !== 'active') {
+        setInAppCallUiActive(false);
+        displayNativeIncomingCall({
+          uuid: payload.callId,
+          call_id: payload.callId,
+          chat_id: payload.chatId,
+          caller_id: payload.callerId,
+          name: payload.callerName,
+          call_type: payload.callType,
+          notification_type: 'incoming_call',
+        }).catch(err =>
+          console.warn('[IncomingCall] system UI failed', err),
+        );
+        return;
+      }
       setIncoming(payload);
       Vibration.vibrate([0, 600, 400, 600], true);
       ringtoneService.start();
@@ -91,6 +116,26 @@ const IncomingCallHandler: React.FC = () => {
       /* ignore */
     }
     setIncoming(null);
+  }, []);
+
+  useEffect(() => {
+    setIncomingCallUiDismisser(clearIncoming);
+    return () => setIncomingCallUiDismisser(null);
+  }, [clearIncoming]);
+
+  /**
+   * Tell the native layer whether this modal can ring. AppState alone is not
+   * enough: it can report `active` inside the Android headless task, which
+   * would suppress the system call UI when nothing is actually on screen.
+   */
+  useEffect(() => {
+    const sync = (state: string) => setInAppCallUiActive(state === 'active');
+    sync(AppState.currentState);
+    const sub = AppState.addEventListener('change', sync);
+    return () => {
+      setInAppCallUiActive(false);
+      sub.remove();
+    };
   }, []);
 
   const onRtmIncoming = useCallback(
@@ -146,6 +191,9 @@ const IncomingCallHandler: React.FC = () => {
   );
 
   const onRtmInvitationEnded = useCallback(() => {
+    if (incomingRef.current?.callId) {
+      endNativeIncomingCall(incomingRef.current.callId);
+    }
     clearIncoming();
   }, [clearIncoming]);
 
@@ -209,6 +257,9 @@ const IncomingCallHandler: React.FC = () => {
           );
           if (senderId && senderId === userId) {
             return;
+          }
+          if (incomingRef.current?.callId) {
+            endNativeIncomingCall(incomingRef.current.callId);
           }
           clearIncoming();
           return;
@@ -276,9 +327,11 @@ const IncomingCallHandler: React.FC = () => {
    */
   const dismissRinging = useCallback(
     (cid: string) => {
-      if (!incomingRef.current || String(incomingRef.current.chatId) !== cid) {
+      const ringing = incomingRef.current;
+      if (!ringing || String(ringing.chatId) !== cid) {
         return;
       }
+      endNativeIncomingCall(ringing.callId);
       clearIncoming();
     },
     [clearIncoming],
@@ -391,111 +444,30 @@ const IncomingCallHandler: React.FC = () => {
   }, [token, userId, wireListeners]);
 
   const onReject = useCallback(async () => {
-    if (!incoming || !user?.id) {
+    if (!incoming) {
       clearIncoming();
       return;
     }
-    agoraRtmCallService.markCallHandled();
     lastDismissRef.current = {
       key: `${incoming.chatId}-${incoming.callerId}-${incoming.callId}`,
       at: Date.now(),
     };
-    connectSocket();
-    try {
-      await agoraRtmCallService.refuseRemoteInvitation();
-    } catch {
-      /* socket-only */
-    }
-    if (chatSocket.isSocketConnected()) {
-      chatSocket.sendCallDeclineToChat({
-        chat_id: incoming.chatId,
-        callId: incoming.callId,
-        userId: String(user.id),
-        callType: incoming.callType,
-      });
-      chatSocket.sendCallEndedToChat({
-        chat_id: incoming.chatId,
-        callId: incoming.callId,
-        userId: String(user.id),
-        callType: incoming.callType,
-      });
-      chatSocket.sendCallEnded({
-        callId: incoming.callId,
-        userId: String(user.id),
-        otherUserId: incoming.callerId,
-      });
-    }
-    emitMessage({
-      chat_id: incoming.chatId,
-      message: JSON.stringify({
-        type: 'call_declined',
-        callId: incoming.callId,
-        declinedBy: String(user.id),
-        chatId: incoming.chatId,
-      }),
-      message_type: 'call',
-      user: {_id: user.id, avatar: user?.avatar} as {
-        _id: string | number;
-        avatar?: string;
-      },
-    });
+    await rejectIncomingCall(incoming);
     clearIncoming();
-  }, [clearIncoming, incoming, user?.avatar, user?.id]);
+  }, [clearIncoming, incoming]);
 
   const onAccept = useCallback(async () => {
-    if (!incoming || !user?.id) {
+    if (!incoming) {
       return;
     }
-    agoraRtmCallService.markCallHandled();
     lastDismissRef.current = {
       key: `${incoming.chatId}-${incoming.callerId}-${incoming.callId}`,
       at: Date.now(),
     };
-    Vibration.cancel();
-    ringtoneService.stop();
-    try {
-      callNotificationService.cancelIncomingCallNotification();
-    } catch {
-      /* ignore */
-    }
-    connectSocket();
-    emitMessage({
-      chat_id: incoming.chatId,
-      message: serializeAlseCall({
-        v: 1,
-        type: 'call_accepted',
-        call_id: incoming.callId,
-      }),
-      message_type: 'call',
-      user: {_id: user.id, avatar: user?.avatar} as {
-        _id: string | number;
-        avatar?: string;
-      },
-    });
-    try {
-      await agoraRtmCallService.acceptRemoteInvitation();
-    } catch {
-      /* socket-only path */
-    }
+    await acceptIncomingCall(incoming);
     setIncoming(null);
-    if (!navigationRef.isReady()) {
-      return;
-    }
-    const navParams = {
-      chatId: incoming.chatId,
-      callId: incoming.callId,
-      userName: String(incoming.callerName),
-      name: String(incoming.callerName),
-      otherUserId: incoming.callerId,
-      isReceiver: true,
-      isVideo: incoming.callType === 'video',
-    };
-    if (incoming.callType === 'audio') {
-      (navigationRef as any).navigate('AudioCall', navParams);
-    } else {
-      (navigationRef as any).navigate('VideoCall', navParams);
-    }
-  }, [incoming, user?.avatar, user?.id]);
+    navigateToIncomingCall(incoming);
+  }, [incoming]);
 
   if (!userId) {
     return null;

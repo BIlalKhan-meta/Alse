@@ -3499,6 +3499,8 @@ PODS:
     - React-Core
   - RNBootSplash (6.3.12):
     - React-Core
+  - RNCallKeep (4.3.16):
+    - React
   - RNCAsyncStorage (2.2.0):
     - React-Core
   - RNCClipboard (1.16.3):
@@ -3872,6 +3874,8 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
+  - RNVoipPushNotification (3.3.3):
+    - React-Core
   - SDWebImage (5.11.1):
     - SDWebImage/Core (= 5.11.1)
   - SDWebImage/Core (5.11.1)
@@ -4040,6 +4044,7 @@ DEPENDENCIES:
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
   - "RNAppleAuthentication (from `../node_modules/@invertase/react-native-apple-authentication`)"
   - RNBootSplash (from `../node_modules/react-native-bootsplash`)
+  - RNCallKeep (from `../node_modules/react-native-callkeep`)
   - "RNCAsyncStorage (from `../node_modules/@react-native-async-storage/async-storage`)"
   - "RNCClipboard (from `../node_modules/@react-native-clipboard/clipboard`)"
   - "RNCMaskedView (from `../node_modules/@react-native-masked-view/masked-view`)"
@@ -4066,6 +4071,7 @@ DEPENDENCIES:
   - RNSound (from `../node_modules/react-native-sound`)
   - RNSVG (from `../node_modules/react-native-svg`)
   - RNVectorIcons (from `../node_modules/react-native-vector-icons`)
+  - RNVoipPushNotification (from `../node_modules/react-native-voip-push-notification`)
   - VideoLab (from `../node_modules/react-native-video-lab`)
   - VideoTrim (from `../node_modules/react-native-video-trim`)
   - VisionCamera (from `../node_modules/react-native-vision-camera`)
@@ -4312,6 +4318,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@invertase/react-native-apple-authentication"
   RNBootSplash:
     :path: "../node_modules/react-native-bootsplash"
+  RNCallKeep:
+    :path: "../node_modules/react-native-callkeep"
   RNCAsyncStorage:
     :path: "../node_modules/@react-native-async-storage/async-storage"
   RNCClipboard:
@@ -4364,6 +4372,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-svg"
   RNVectorIcons:
     :path: "../node_modules/react-native-vector-icons"
+  RNVoipPushNotification:
+    :path: "../node_modules/react-native-voip-push-notification"
   VideoLab:
     :path: "../node_modules/react-native-video-lab"
   VideoTrim:
@@ -4511,6 +4521,7 @@ SPEC CHECKSUMS:
   ReactCommon: 4c22936ee38ecf885efc95ac5832f430f27e0271
   RNAppleAuthentication: a89c9804592b38ed4ab11f0aee68d05ba12ad432
   RNBootSplash: cf2099b76af3eeacbd5dc26ac95347a30f561fb1
+  RNCallKeep: 1930a01d8caf48f018be4f2db0c9f03405c2f977
   RNCAsyncStorage: b44e8a4e798c3e1f56bffccd0f591f674fb9198f
   RNCClipboard: f6679d470d0da2bce2a37b0af7b9e0bf369ecda5
   RNCMaskedView: 473e5fa854913eff0eef18c09b1328e60b3bf3f7
@@ -4537,6 +4548,7 @@ SPEC CHECKSUMS:
   RNSound: ed05ebb29f553a092179f798c9cd52aba24b455e
   RNSVG: 60affcbb320db7b83a139737d4dbe15c1068f109
   RNVectorIcons: 666d09c4d1c0e890c8b0c1609ffe1f1edf3ebaa9
+  RNVoipPushNotification: 4998fe6724d421da616dca765da7dc421ff54c4e
   SDWebImage: a7f831e1a65eb5e285e3fb046a23fcfbf08e696d
   SDWebImageWebPCoder: 908b83b6adda48effe7667cd2b7f78c897e5111d
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748

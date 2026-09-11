@@ -135,6 +135,8 @@
 	</array>
 	<key>UIBackgroundModes</key>
 	<array>
+		<string>audio</string>
+		<string>voip</string>
 		<string>remote-notification</string>
 		<string>processing</string>
 	</array>

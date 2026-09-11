@@ -10,6 +10,8 @@
  */
 import chatSocket from '../services/chatSocket';
 import {connectSocket, emitMessage} from './socket';
+import {cancelCallInvite} from '../api/calls';
+import {endNativeIncomingCall} from '../services/nativeCallKeepService';
 
 type BroadcastCallEndArgs = {
   chatId?: string | number | null;
@@ -58,6 +60,8 @@ export function broadcastCallEnd({
     }
   }
 
+  endNativeIncomingCall(resolvedCallId);
+
   if (!unanswered) {
     // An answered call ends on both call screens via callEnded-<chatId>;
     // emitting a chat message here would only add noise to the thread.
@@ -75,4 +79,13 @@ export function broadcastCallEnd({
     message_type: 'call',
     user: {_id: currentUserId, avatar: userAvatar},
   });
+
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(resolvedCallId)) {
+    cancelCallInvite({
+      chat_id: String(chatId),
+      call_id: resolvedCallId,
+      call_type: callType,
+    }).catch(() => {});
+  }
+  endNativeIncomingCall(resolvedCallId);
 }

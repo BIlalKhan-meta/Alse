@@ -61,6 +61,8 @@ import ReportBlockModal from '../../components/ReportBlockModal';
 import {navigationRef} from '../../utils/navigationRef';
 import chatSocket from '../../services/chatSocket';
 import agoraRtmCallService from '../../services/agoraRtmCallService';
+import {inviteCall} from '../../api/calls';
+import {generateCallUuid} from '../../utils/callUuid';
 import {DEVICE_HEIGHT} from '../../constant';
 import useImagePicker from '../../hooks/useImagePicker-story';
 import Video from 'react-native-video';
@@ -128,7 +130,7 @@ function resolveChatAttachmentUrls(item: any): {
 }
 
 function generateAgoraCallId(): string {
-  return `call_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+  return generateCallUuid();
 }
 
 interface Props {
@@ -431,6 +433,20 @@ const ChatOngoing: React.FC<Props> = props => {
           avatar: user?.avatar,
         },
       });
+
+      inviteCall({
+        chat_id: chatId,
+        call_id: callId,
+        call_type: callType === 'video' ? 'video' : 'audio',
+      })
+        .then(() => console.log('[ChatOngoing] call invite push sent', callId))
+        .catch(err =>
+          console.warn(
+            '[ChatOngoing] call invite push failed',
+            err?.response?.status,
+            err?.response?.data ?? err?.message,
+          ),
+        );
 
       const fd = {
         chat_id: chatId,

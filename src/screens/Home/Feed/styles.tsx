@@ -132,10 +132,26 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 0,
   },
-  feedTopSection: {
-    zIndex: 20,
-    elevation: 20,
-    flexShrink: 0,
+  filterTabsCard: {
+    backgroundColor: colors.white,
+    borderRadius: 16,
+    marginBottom: vh * 1.5,
+    // FeedFilterTabs already pads its own bottom by vh * 0.8, so the padding
+    // here is split unevenly to land on even spacing around the chips.
+    paddingTop: vh * 1.2,
+    paddingBottom: vh * 0.4,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  /** Scrolls away with the feed. Opaque so it covers feedListContent's white. */
+  feedScrollHeader: {
+    backgroundColor: '#EAF6F6',
+  },
+  composerCard: {
     backgroundColor: colors.white,
     borderRadius: 16,
     marginTop: 10,
@@ -145,7 +161,7 @@ const styles = StyleSheet.create({
     shadowOffset: {width: 0, height: 1},
     shadowOpacity: 0.1,
     shadowRadius: 3,
-    gap: vh * 0.8,
+    elevation: 2,
   },
   feedList: {
     flex: 1,
@@ -180,13 +196,19 @@ const styles = StyleSheet.create({
   },
   whatsOnYourMindContainer: {
     paddingHorizontal: 15,
+    paddingTop: 15,
+    paddingBottom: vh * 1.5,
     overflow: 'hidden',
   },
   whatsOnYourMindTop: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: 15,
   },
   profilePic: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     marginRight: 10,
   },
   whatsOnYourMindInput: {
@@ -195,12 +217,16 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     paddingHorizontal: 15,
   },
+  whatsOnYourMindInputInner: {
+    paddingVertical: 10,
+  },
   whatsOnYourMindText: {
     color: '#65676B',
     fontSize: 14,
   },
   whatsOnYourMindBottom: {
     flexDirection: 'row',
+    paddingTop: 8,
     overflow: 'hidden',
   },
   whatsOnYourMindButton: {

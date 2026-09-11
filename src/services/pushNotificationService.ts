@@ -27,6 +27,16 @@ import {
   withAndroidPermissionGate,
 } from '../utils/helpers';
 import {parseDeepLink} from '../utils/deepLink';
+import {
+  answerNativeCall,
+  declineNativeCall,
+  displayNativeIncomingCall,
+  getVoipPushToken,
+} from './nativeCallKeepService';
+import {
+  CALL_ACTION_ANSWER,
+  CALL_ACTION_DECLINE,
+} from './androidCallNotification';
 
 type RemoteMessage = FirebaseMessagingTypes.RemoteMessage;
 
@@ -34,8 +44,9 @@ let handlersRegistered = false;
 let backgroundHandlerRegistered = false;
 let pendingSyncRetry: ReturnType<typeof setTimeout> | null = null;
 let syncAttempt = 0;
-/** Last FCM token successfully registered with the backend — skip duplicate POSTs. */
+/** Last FCM+VoIP pair successfully registered with the backend — skip duplicate POSTs. */
 let lastSyncedFcmToken: string | null = null;
+let lastSyncedVoipToken: string | null = null;
 /** One POST_NOTIFICATIONS dialog per process. Re-prompting on AppState is what
  *  stacks GrantPermissionsActivity and triggers Android 16 rapidActivityLaunch. */
 let androidPushPromptedThisProcess = false;
@@ -120,6 +131,15 @@ function isPaymentSuccess(remoteMessage: RemoteMessage) {
     title === 'payment successful' ||
     type.toLowerCase() === 'payment' ||
     type.toLowerCase() === 'payment_success'
+  );
+}
+
+function isCallCancelled(remoteMessage: RemoteMessage) {
+  const data = remoteMessage.data || {};
+  const type = dataString(data, 'notification_type') || dataString(data, 'type');
+  return (
+    type.toLowerCase() === 'call_cancelled' ||
+    type.toLowerCase() === 'call_cancel'
   );
 }
 
@@ -571,12 +591,13 @@ export async function syncFcmTokenWithBackend(): Promise<void> {
       scheduleFcmSyncRetry();
       return;
     }
-    if (lastSyncedFcmToken === fcmToken) {
+    if (lastSyncedFcmToken === fcmToken && lastSyncedVoipToken === (getVoipPushToken() || null)) {
       return;
     }
-    const payload = await buildFcmDevicePayload(fcmToken);
+    const payload = await buildFcmDevicePayload(fcmToken, getVoipPushToken());
     await registerFcmDevice(payload);
     lastSyncedFcmToken = fcmToken;
+    lastSyncedVoipToken = payload.voip_token || null;
     if (__DEV__) {
       console.log('[FCM] device registered with backend', payload.device_id);
     }
@@ -594,9 +615,10 @@ async function refreshFcmTokenWithBackend(fcmToken: string): Promise<void> {
     return;
   }
   try {
-    const payload = await buildFcmDevicePayload(fcmToken);
+    const payload = await buildFcmDevicePayload(fcmToken, getVoipPushToken());
     await refreshFcmDevice(payload);
     lastSyncedFcmToken = fcmToken;
+    lastSyncedVoipToken = payload.voip_token || null;
     if (__DEV__) {
       console.log('[FCM] device refreshed with backend', payload.device_id);
     }
@@ -614,6 +636,7 @@ export async function unregisterFcmDeviceFromBackend(
   try {
     await removeFcmDevice(undefined, authTokenOverride);
     lastSyncedFcmToken = null;
+    lastSyncedVoipToken = null;
     if (__DEV__) {
       console.log('[FCM] device removed from backend');
     }
@@ -624,6 +647,11 @@ export async function unregisterFcmDeviceFromBackend(
 
 export async function handleBackgroundFcmMessage(remoteMessage: RemoteMessage) {
   logFcmNotification('background handler', remoteMessage);
+  const data = (remoteMessage.data || {}) as Record<string, unknown>;
+  if (isIncomingCall(remoteMessage) || isCallCancelled(remoteMessage)) {
+    await displayNativeIncomingCall(data);
+    return;
+  }
   // If FCM already includes a notification payload, the OS shows it when
   // backgrounded/killed. Still display via Notifee for data-only messages.
   const hasNotificationPayload = Boolean(
@@ -641,6 +669,9 @@ export function registerNotifeeBackgroundHandler() {
 
   backgroundHandlerRegistered = true;
   notifee.onBackgroundEvent(async ({type, detail}) => {
+    if (await handleCallNotifeeEvent(type, detail)) {
+      return;
+    }
     if (type === EventType.PRESS && detail.notification) {
       console.log('[FCM] Notifee background press', detail.notification.data);
       const remoteMessage = {
@@ -656,6 +687,94 @@ export function registerNotifeeBackgroundHandler() {
   });
 }
 
+/**
+ * Answer/Decline on the Android full-screen call notification. Returns true when
+ * the event belonged to a call so the generic routing is skipped.
+ */
+async function handleCallNotifeeEvent(
+  type: EventType,
+  detail: {
+    notification?: {data?: Record<string, unknown> | null};
+    pressAction?: {id?: string} | null;
+  },
+): Promise<boolean> {
+  const data = (detail.notification?.data || {}) as Record<string, unknown>;
+  const notificationType = String(
+    data.notification_type || data.type || '',
+  ).toLowerCase();
+  if (notificationType !== 'incoming_call') {
+    return false;
+  }
+
+  const uuid = String(data.uuid || data.call_id || '');
+  const actionId = detail.pressAction?.id;
+
+  if (type === EventType.ACTION_PRESS && actionId === CALL_ACTION_DECLINE) {
+    console.log('[IncomingCall] declined from notification', uuid);
+    await declineNativeCall(uuid, data);
+    return true;
+  }
+
+  if (
+    type === EventType.PRESS ||
+    (type === EventType.ACTION_PRESS && actionId === CALL_ACTION_ANSWER)
+  ) {
+    console.log('[IncomingCall] answered from notification', uuid);
+    await answerNativeCall(uuid, data);
+    return true;
+  }
+
+  if (type === EventType.DISMISSED) {
+    await declineNativeCall(uuid, data);
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Android only: the full-screen intent launches the activity with no press
+ * event. If a call notification is still ringing at startup, show the in-app
+ * accept/decline screen so the user can act on it.
+ */
+async function resumeRingingCallOnLaunch(): Promise<void> {
+  if (Platform.OS !== 'android') {
+    return;
+  }
+  try {
+    const displayed = await notifee.getDisplayedNotifications();
+    const ringing = displayed.find(item => {
+      const data = (item.notification?.data || {}) as Record<string, unknown>;
+      return (
+        String(data.notification_type || data.type || '').toLowerCase() ===
+        'incoming_call'
+      );
+    });
+    if (!ringing) {
+      return;
+    }
+    const data = (ringing.notification?.data || {}) as Record<string, unknown>;
+    console.log('[IncomingCall] resuming ringing call on launch', data.uuid);
+    const callType =
+      dataString(data, 'call_type').toLowerCase() === 'audio'
+        ? 'audio'
+        : 'video';
+    navigateWhenReady('AcknowledgeCall', {
+      chat_id: dataString(data, 'chat_id'),
+      role: '0',
+      name: dataString(data, 'name'),
+      image: dataString(data, 'avatar'),
+      callType,
+      call_type: callType,
+      callId: dataString(data, 'call_id') || dataString(data, 'uuid'),
+      callerId: dataString(data, 'caller_id'),
+      isVideo: callType === 'video',
+    });
+  } catch (error) {
+    console.warn('[IncomingCall] resume on launch failed', error);
+  }
+}
+
 export function registerPushNotificationHandlers() {
   if (handlersRegistered) {
     return () => {};
@@ -664,11 +783,17 @@ export function registerPushNotificationHandlers() {
 
   const unsubscribeOnMessage = messaging().onMessage(async remoteMessage => {
     logFcmNotification('foreground', remoteMessage);
+    if (isIncomingCall(remoteMessage) || isCallCancelled(remoteMessage)) {
+      displayNativeIncomingCall(
+        (remoteMessage.data || {}) as Record<string, unknown>,
+      );
+      return;
+    }
     await displayFcmWithNotifee(remoteMessage);
     eventEmitter.emit(EVENT_TYPES.FCM_FOREGROUND_RECEIVED, remoteMessage);
     refreshNotificationBadgeFromApi().catch(() => {});
-    // Foreground: show banner only; don't auto-navigate except payment/call
-    if (isPaymentSuccess(remoteMessage) || isIncomingCall(remoteMessage)) {
+    // Foreground: show banner only; don't auto-navigate except payment
+    if (isPaymentSuccess(remoteMessage)) {
       routeNotification(remoteMessage, false);
     }
   });
@@ -682,20 +807,21 @@ export function registerPushNotificationHandlers() {
 
   const unsubscribeNotifeeForeground = notifee.onForegroundEvent(
     ({type, detail}) => {
-      if (type !== EventType.PRESS || !detail.notification) {
-        return;
-      }
-
-      const remoteMessage = {
-        data: detail.notification.data,
-        notification: {
-          title: detail.notification.title,
-          body: detail.notification.body,
-        },
-        messageId: detail.notification.id,
-      } as RemoteMessage;
-      logFcmNotification('Notifee foreground tap', remoteMessage);
-      routeNotification(remoteMessage, true);
+      void handleCallNotifeeEvent(type, detail).then(handled => {
+        if (handled || type !== EventType.PRESS || !detail.notification) {
+          return;
+        }
+        const pressed = {
+          data: detail.notification.data,
+          notification: {
+            title: detail.notification.title,
+            body: detail.notification.body,
+          },
+          messageId: detail.notification.id,
+        } as RemoteMessage;
+        logFcmNotification('Notifee foreground tap', pressed);
+        routeNotification(pressed, true);
+      });
     },
   );
 
@@ -720,6 +846,27 @@ export function registerPushNotificationHandlers() {
           return;
         }
 
+        const data = (initialNotification.notification.data || {}) as Record<
+          string,
+          unknown
+        >;
+        const isCall =
+          String(data.notification_type || data.type || '').toLowerCase() ===
+          'incoming_call';
+
+        // Cold start from the Android full-screen intent or its Answer action.
+        if (isCall) {
+          const uuid = String(data.uuid || data.call_id || '');
+          if (initialNotification.pressAction?.id === CALL_ACTION_DECLINE) {
+            declineNativeCall(uuid, data).catch(() => {});
+          } else {
+            answerNativeCall(uuid, data).catch(err =>
+              console.warn('[IncomingCall] cold-start answer failed', err),
+            );
+          }
+          return;
+        }
+
         const remoteMessage = {
           data: initialNotification.notification.data,
           notification: {
@@ -735,6 +882,10 @@ export function registerPushNotificationHandlers() {
         console.warn('[FCM] Notifee initial notification failed:', error);
       });
   }
+
+  // The full-screen intent opens the app without emitting a press event, so a
+  // still-ringing notification is the only signal that a call is waiting.
+  resumeRingingCallOnLaunch();
 
   const unsubscribeTokenRefresh = messaging().onTokenRefresh(token => {
     if (__DEV__) {

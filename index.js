@@ -38,18 +38,23 @@ messaging().setBackgroundMessageHandler(async remoteMessage => {
       handleBackgroundFcmMessage,
       registerNotifeeBackgroundHandler,
     } = require('./src/services/pushNotificationService');
+    const {setupNativeCallKeep} = require('./src/services/nativeCallKeepService');
     registerNotifeeBackgroundHandler();
+    // Must settle before the call UI is presented, or the push is dropped.
+    await setupNativeCallKeep().catch(() => {});
     await handleBackgroundFcmMessage(remoteMessage);
   } catch (e) {
     console.warn('[FCM] Notifee background display failed:', e?.message ?? e);
   }
 });
 
-try {
-  const {
-    registerNotifeeBackgroundHandler,
-  } = require('./src/services/pushNotificationService');
-  registerNotifeeBackgroundHandler();
+  try {
+    const {
+      registerNotifeeBackgroundHandler,
+    } = require('./src/services/pushNotificationService');
+    const {setupNativeCallKeep} = require('./src/services/nativeCallKeepService');
+    registerNotifeeBackgroundHandler();
+    setupNativeCallKeep().catch(() => {});
 } catch (e) {
   console.warn('[FCM] Notifee background handler init failed:', e?.message ?? e);
 }

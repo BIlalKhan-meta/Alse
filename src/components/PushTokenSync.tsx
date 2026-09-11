@@ -4,6 +4,10 @@ import {useSelector} from 'react-redux';
 import {syncFcmTokenWithBackend} from '../services/pushNotificationService';
 import {refreshNotificationBadgeFromApi} from '../utils/notificationBadge';
 import axiosInstance from '../api';
+import {
+  onVoipToken,
+  setupNativeCallKeep,
+} from '../services/nativeCallKeepService';
 
 /**
  * Registers FCM device with backend whenever the user is authenticated
@@ -21,6 +25,12 @@ const PushTokenSync: React.FC = () => {
       axiosInstance.post('/presence/heartbeat').catch(() => {});
     };
 
+    setupNativeCallKeep().catch(err =>
+      console.warn('[CallKeep] setup failed', err),
+    );
+    onVoipToken(() => {
+      syncFcmTokenWithBackend().catch(() => {});
+    });
     syncFcmTokenWithBackend().catch(() => {});
     refreshNotificationBadgeFromApi().catch(() => {});
     syncPresence();

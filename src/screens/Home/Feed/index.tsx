@@ -3,6 +3,7 @@ import {
   View,
   TouchableOpacity,
   Animated,
+  Image,
   Modal,
   ActivityIndicator,
   Text,
@@ -144,93 +145,6 @@ const Home: React.FC = () => {
 
   const [isFabOpen, setIsFabOpen] = useState(false);
   const animation = useRef(new Animated.Value(0)).current;
-  /** 0 = expanded composer, 1 = minimized while scrolling the feed */
-  const composerCollapse = useRef(new Animated.Value(0)).current;
-  const lastScrollY = useRef(0);
-  const collapseTargetRef = useRef(false);
-
-  const composerAnim = useMemo(
-    () => ({
-      containerPaddingTop: composerCollapse.interpolate({
-        inputRange: [0, 1],
-        outputRange: [15, 8],
-      }),
-      containerPaddingBottom: composerCollapse.interpolate({
-        inputRange: [0, 1],
-        outputRange: [vh * 1.5, 8],
-      }),
-      topMarginBottom: composerCollapse.interpolate({
-        inputRange: [0, 1],
-        outputRange: [15, 0],
-      }),
-      avatarSize: composerCollapse.interpolate({
-        inputRange: [0, 1],
-        outputRange: [40, 32],
-      }),
-      avatarRadius: composerCollapse.interpolate({
-        inputRange: [0, 1],
-        outputRange: [20, 16],
-      }),
-      inputPaddingVertical: composerCollapse.interpolate({
-        inputRange: [0, 1],
-        outputRange: [10, 6],
-      }),
-      actionsMaxHeight: composerCollapse.interpolate({
-        inputRange: [0, 1],
-        outputRange: [48, 0],
-      }),
-      actionsOpacity: composerCollapse.interpolate({
-        inputRange: [0, 0.4, 1],
-        outputRange: [1, 0, 0],
-      }),
-      actionsPaddingTop: composerCollapse.interpolate({
-        inputRange: [0, 1],
-        outputRange: [8, 0],
-      }),
-    }),
-    [composerCollapse],
-  );
-
-  const setComposerCollapsed = useCallback(
-    (collapsed: boolean) => {
-      if (collapseTargetRef.current === collapsed) {
-        return;
-      }
-      collapseTargetRef.current = collapsed;
-      Animated.timing(composerCollapse, {
-        toValue: collapsed ? 1 : 0,
-        duration: 220,
-        useNativeDriver: false,
-      }).start();
-    },
-    [composerCollapse],
-  );
-
-  const onFeedScroll = useCallback(
-    (event: {nativeEvent: {contentOffset: {y: number}}}) => {
-      const y = event.nativeEvent.contentOffset.y;
-      const dy = y - lastScrollY.current;
-      lastScrollY.current = y;
-
-      // Always expand near the top of the feed.
-      if (y <= 24) {
-        setComposerCollapsed(false);
-        return;
-      }
-
-      // Ignore tiny jitter so Android/iOS don't flicker.
-      if (Math.abs(dy) < 3) {
-        return;
-      }
-
-      if (dy > 0 && y > 48) {
-        setComposerCollapsed(true);
-      } else if (dy < 0) {
-        setComposerCollapsed(false);
-      }
-    },
-    [setComposerCollapsed],
-  );
 
   const [mediaModalVisible, setMediaModalVisible] = useState<{
     visible: boolean;
@@ -712,83 +626,66 @@ const Home: React.FC = () => {
   };
 
   const renderCreatePostSection = () => (
-    <Animated.View
-      style={[
-        styles.whatsOnYourMindContainer,
-        {
-          paddingTop: composerAnim.containerPaddingTop,
-          paddingBottom: composerAnim.containerPaddingBottom,
-        },
-      ]}
-      collapsable={false}>
-      <Animated.View
-        style={[
-          styles.whatsOnYourMindTop,
-          {marginBottom: composerAnim.topMarginBottom},
-        ]}>
-        <Animated.Image
-          source={
-            user?.avatar
-              ? {uri: getAbsoluteAvatarUrl(user?.avatar)}
-              : images.profile
-          }
-          style={[
-            styles.profilePic,
-            {
-              width: composerAnim.avatarSize,
-              height: composerAnim.avatarSize,
-              borderRadius: composerAnim.avatarRadius,
-            },
-          ]}
-        />
-        <TouchableOpacity
-          testID="feed-create-post"
-          style={styles.whatsOnYourMindInput}
-          onPress={() => navigation.navigate('CreatePost')}
-          activeOpacity={0.7}>
-          <Animated.View
-            style={{paddingVertical: composerAnim.inputPaddingVertical}}>
-            <InterRegular style={styles.whatsOnYourMindText}>
-              What's on your mind?
+    <View style={styles.composerCard} collapsable={false}>
+      <View style={styles.whatsOnYourMindContainer}>
+        <View style={styles.whatsOnYourMindTop}>
+          <Image
+            source={
+              user?.avatar
+                ? {uri: getAbsoluteAvatarUrl(user?.avatar)}
+                : images.profile
+            }
+            style={styles.profilePic}
+          />
+          <TouchableOpacity
+            testID="feed-create-post"
+            style={styles.whatsOnYourMindInput}
+            onPress={() => navigation.navigate('CreatePost')}
+            activeOpacity={0.7}>
+            <View style={styles.whatsOnYourMindInputInner}>
+              <InterRegular style={styles.whatsOnYourMindText}>
+                What's on your mind?
+              </InterRegular>
+            </View>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.whatsOnYourMindBottom}>
+          <TouchableOpacity
+            style={styles.whatsOnYourMindButton}
+            onPress={() => navigation.navigate('CreatePost')}>
+            <Video color="#FF3B30" size={20} />
+            <InterRegular style={styles.whatsOnYourMindButtonText}>
+              Video
             </InterRegular>
-          </Animated.View>
-        </TouchableOpacity>
-      </Animated.View>
-      <Animated.View
-        style={[
-          styles.whatsOnYourMindBottom,
-          {
-            maxHeight: composerAnim.actionsMaxHeight,
-            opacity: composerAnim.actionsOpacity,
-            paddingTop: composerAnim.actionsPaddingTop,
-          },
-        ]}>
-        <TouchableOpacity
-          style={styles.whatsOnYourMindButton}
-          onPress={() => navigation.navigate('CreatePost')}>
-          <Video color="#FF3B30" size={20} />
-          <InterRegular style={styles.whatsOnYourMindButtonText}>
-            Video
-          </InterRegular>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.whatsOnYourMindButton}
-          onPress={() => navigation.navigate('CreatePost')}>
-          <ImageIcon color="#4CD964" size={20} />
-          <InterRegular style={styles.whatsOnYourMindButtonText}>
-            Photo
-          </InterRegular>
-        </TouchableOpacity>
-      </Animated.View>
-    </Animated.View>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.whatsOnYourMindButton}
+            onPress={() => navigation.navigate('CreatePost')}>
+            <ImageIcon color="#4CD964" size={20} />
+            <InterRegular style={styles.whatsOnYourMindButtonText}>
+              Photo
+            </InterRegular>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
   );
 
-  const renderFeedTopSection = () => (
-    <View style={styles.feedTopSection} collapsable={false}>
+  /** Stories, composer and filters live inside the list so they scroll away. */
+  const renderFeedScrollHeader = () => (
+    <View style={styles.feedScrollHeader}>
+      <View style={styles.storiesWrap} pointerEvents="box-none">
+        <ErrorBoundary fallbackTitle="Stories unavailable">
+          <Stories ref={storiesRef} />
+        </ErrorBoundary>
+      </View>
       {renderCreatePostSection()}
-      <FeedFilterTabs
-        activeFilter={activeFilter}
-        onFilterChange={handleFilterChange} />
+      <View style={styles.filterTabsCard} collapsable={false}>
+        <FeedFilterTabs
+          activeFilter={activeFilter}
+          onFilterChange={handleFilterChange}
+        />
+      </View>
     </View>
   );
 
@@ -899,50 +796,39 @@ const Home: React.FC = () => {
         </View>
       </Modal>
       <View style={styles.contentContainer}>
-        <View style={styles.storiesWrap} pointerEvents="box-none">
-          <ErrorBoundary fallbackTitle="Stories unavailable">
-            <Stories ref={storiesRef} />
-          </ErrorBoundary>
-        </View>
-
-        {renderFeedTopSection()}
-
         <View style={styles.feedContainer}>
-          {initialLoading && posts.length === 0 ? (
-            <View style={styles.feedList}>{renderSkeletonLoaders()}</View>
-          ) : (
-            <View style={styles.feedList}>
-              <FlashList
-                ref={flatListRef}
-                viewabilityConfigCallbackPairs={viewabilityConfigCallbackPairs}
-                data={filteredPosts}
-                keyboardShouldPersistTaps="handled"
-                onScroll={onFeedScroll}
-                scrollEventThrottle={16}
-                refreshControl={
-                  <RefreshControl
-                    refreshing={refreshing}
-                    onRefresh={handleRefresh}
-                    colors={[colors.themeColor]}
-                    tintColor={colors.themeColor}
-                  />
-                }
-                renderItem={renderPost}
-                contentContainerStyle={styles.feedListContent}
-                keyExtractor={item =>
-                  String(item?.id ?? item?.advertisement_id)
-                }
-                showsVerticalScrollIndicator={false}
-                ListEmptyComponent={renderEmpty}
-                ListFooterComponent={renderFooter}
-                onEndReached={loadMorePosts}
-                onEndReachedThreshold={0.5}
-                estimatedItemSize={480}
-                drawDistance={vh * 120}
-                removeClippedSubviews={true}
-              />
-            </View>
-          )}
+          <View style={styles.feedList}>
+            <FlashList
+              ref={flatListRef}
+              viewabilityConfigCallbackPairs={viewabilityConfigCallbackPairs}
+              data={filteredPosts}
+              keyboardShouldPersistTaps="handled"
+              refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={handleRefresh}
+                  colors={[colors.themeColor]}
+                  tintColor={colors.themeColor}
+                />
+              }
+              renderItem={renderPost}
+              // These must be elements, not functions: a new function identity
+              // each render remounts the header and refetches stories.
+              ListHeaderComponent={renderFeedScrollHeader()}
+              contentContainerStyle={styles.feedListContent}
+              keyExtractor={item => String(item?.id ?? item?.advertisement_id)}
+              showsVerticalScrollIndicator={false}
+              ListEmptyComponent={
+                initialLoading ? renderSkeletonLoaders() : renderEmpty()
+              }
+              ListFooterComponent={renderFooter()}
+              onEndReached={loadMorePosts}
+              onEndReachedThreshold={0.5}
+              estimatedItemSize={480}
+              drawDistance={vh * 120}
+              removeClippedSubviews={true}
+            />
+          </View>
 
           {/* FAB Container */}
           <View style={styles.fabMenuContainer}>

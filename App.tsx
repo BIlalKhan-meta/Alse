@@ -20,6 +20,7 @@ import {
   requestPushPermissionAndToken,
 } from './src/services/pushNotificationService';
 import IncomingCallHandler from './src/components/IncomingCallHandler';
+import {setupNativeCallKeep} from './src/services/nativeCallKeepService';
 import MainNavigation from './src/navigation';
 import PushTokenSync from './src/components/PushTokenSync';
 import DeepLinkHandler from './src/components/DeepLinkHandler';
@@ -98,6 +99,9 @@ function App(): React.JSX.Element {
     }
     requestPushPermissionAndToken().catch(error => {
       console.warn('[FCM] push setup failed:', error);
+    });
+    setupNativeCallKeep().catch(error => {
+      console.warn('[CallKeep] setup failed:', error);
     });
     const cleanupPushHandlers = registerPushNotificationHandlers();
 

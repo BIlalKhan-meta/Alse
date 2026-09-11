@@ -5,6 +5,9 @@
 #import <React/RCTBundleURLProvider.h>
 #import <React/RCTRootView.h>
 #import <React/RCTLinkingManager.h>
+#import <PushKit/PushKit.h>
+#import "RNCallKeep.h"
+#import "RNVoipPushNotificationManager.h"
 
 // Use the standard umbrella import for 0.79+
 #import <React_RCTAppDelegate/RCTAppDelegate.h>

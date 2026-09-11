@@ -189,9 +189,19 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
 
   // The sheet lives in a Modal, whose window does not always resize for the
   // keyboard, so KeyboardAvoidingView cannot lift the composer. Shrink and
-  // offset the sheet manually, and skip it when the window did resize.
+  // offset the sheet manually, and skip it when the window did resize on its
+  // own. The tallest height seen is the no-keyboard baseline to compare against.
+  const baseRootHeightRef = useRef(0);
+  if (rootHeight > baseRootHeightRef.current) {
+    baseRootHeightRef.current = rootHeight;
+  }
+  useEffect(() => {
+    baseRootHeightRef.current = 0;
+  }, [windowHeight]);
+
   const modalWindowResized =
-    rootHeight > 0 && windowHeight - rootHeight > keyboardHeight / 2;
+    rootHeight > 0 &&
+    baseRootHeightRef.current - rootHeight > keyboardHeight / 2;
   const keyboardOffset =
     keyboardHeight > 0 && !modalWindowResized ? keyboardHeight : 0;
   const sheetMaxHeight = Math.max(
