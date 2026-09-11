@@ -1,23 +1,22 @@
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
   ActivityIndicator,
   StatusBar,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
-import AgoraUIKit, {
-  ChannelProfileType,
-  ClientRoleType,
-  Layout,
-} from 'agora-rn-uikit';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
 import {
-  AGORA_APP_ID,
-  AGORA_TEMP_TOKEN,
-  AGORA_TOKEN_CHANNEL,
-} from '../../config/agora';
+  Mic,
+  MicOff,
+  PhoneOff,
+  SwitchCamera,
+  Video as VideoIcon,
+  VideoOff,
+} from 'lucide-react-native';
 import {selectUserProfile} from '../../store/slices/authSlice';
 import chatSocket from '../../services/chatSocket';
 import {connectSocket} from '../../utils/socket';
@@ -26,19 +25,18 @@ import ringbackService from '../../services/ringbackService';
 import type {AgoraCallRouteParams} from '../../types/agoraCall';
 import {GetCallRtcToken} from '../../api/liveStream';
 import {ensureCameraPermission} from '../../utils/helpers';
+import useAgoraCallSession from '../../hooks/useAgoraCallSession';
+import AgoraVideoView from '../../components/AgoraVideoView';
 
 const VideoCall = () => {
   const route = useRoute();
   const navigation = useNavigation();
   const user = useSelector(selectUserProfile);
-  const params = (route.params || {}) as AgoraCallRouteParams;
+  const params = (route.params || {}) as AgoraCallRouteParams & {
+    name?: string;
+  };
 
-  const {
-    chatId,
-    callId,
-    otherUserId,
-    isReceiver = false,
-  } = params;
+  const {chatId, callId, otherUserId, isReceiver = false} = params;
 
   const currentUserId = user?.id != null ? String(user.id) : '';
   const fallbackUid =
@@ -46,35 +44,122 @@ const VideoCall = () => {
 
   const [hasPermission, setHasPermission] = useState(false);
   const [callActive, setCallActive] = useState(true);
-  const [rtcToken, setRtcToken] = useState<string | undefined>(
-    AGORA_TEMP_TOKEN || undefined,
-  );
+  const [rtcToken, setRtcToken] = useState<string | null>(null);
   const [rtcUid, setRtcUid] = useState<number>(fallbackUid);
-  const [tokenReady, setTokenReady] = useState(Boolean(AGORA_TEMP_TOKEN));
+  const [tokenReady, setTokenReady] = useState(false);
   const [tokenError, setTokenError] = useState<string | null>(null);
-  const [isConnecting, setIsConnecting] = useState(!isReceiver);
-  const [remoteUserJoined, setRemoteUserJoined] = useState(false);
 
-  const remoteUserJoinedRef = useRef(false);
-  const channelJoinedRef = useRef(false);
   const hasRemoteEverJoinedThisCallRef = useRef(false);
   const rtmInvitationAcceptedRef = useRef(false);
   const noAnswerTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const navigationRef = useRef(navigation);
   navigationRef.current = navigation;
 
+  const channelName = chatId ? `chat_${chatId}` : null;
+
   const [callAccepted, setCallAccepted] = useState(
     () => !isReceiver && agoraRtmCallService.isLocalInvitationAccepted(),
   );
+
+  const handleEndCall = useCallback(async () => {
+    setCallActive(false);
+    const unansweredCancel =
+      !isReceiver &&
+      !hasRemoteEverJoinedThisCallRef.current &&
+      !rtmInvitationAcceptedRef.current;
+
+    if (unansweredCancel) {
+      agoraRtmCallService.cancelLocalInvitation().catch(() => {});
+    }
+    connectSocket();
+    if (chatId && chatSocket.isSocketConnected()) {
+      const payload = {
+        chat_id: chatId,
+        callId: callId || `ended_${Date.now()}`,
+        userId: currentUserId,
+        callType: 'video' as const,
+      };
+      if (unansweredCancel) {
+        chatSocket.sendCallCancelToChat(payload);
+      }
+      chatSocket.sendCallEndedToChat(payload);
+      if (otherUserId) {
+        chatSocket.sendCallEnded({
+          callId: payload.callId,
+          userId: currentUserId,
+          otherUserId: String(otherUserId),
+        });
+      }
+    }
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    }
+  }, [navigation, callId, otherUserId, currentUserId, chatId, isReceiver]);
+
+  const fetchRtcToken = useCallback(async (): Promise<string | null> => {
+    if (!chatId) {
+      return null;
+    }
+    const res: any = await GetCallRtcToken(`chat_${chatId}`);
+    const data = res?.data?.data ?? res?.data ?? {};
+    const token =
+      data?.agora_token ||
+      data?.token ||
+      data?.rtcToken ||
+      (typeof data === 'string' ? data : null);
+    return typeof token === 'string' && token.length > 0 ? token : null;
+  }, [chatId]);
+
+  const onRemoteJoined = useCallback(() => {
+    hasRemoteEverJoinedThisCallRef.current = true;
+    rtmInvitationAcceptedRef.current = true;
+    setCallAccepted(true);
+    if (noAnswerTimeoutRef.current) {
+      clearTimeout(noAnswerTimeoutRef.current);
+      noAnswerTimeoutRef.current = null;
+    }
+  }, []);
+
+  const onRemoteLeft = useCallback(() => {
+    if (hasRemoteEverJoinedThisCallRef.current) {
+      setCallActive(false);
+      if (navigationRef.current?.canGoBack()) {
+        navigationRef.current.goBack();
+      }
+    }
+  }, []);
+
+  const session = useAgoraCallSession({
+    channel: channelName,
+    token: rtcToken,
+    uid: rtcUid,
+    isVideo: true,
+    enabled: hasPermission && tokenReady && callActive,
+    onRemoteJoined,
+    onRemoteLeft,
+    fetchToken: fetchRtcToken,
+  });
+
+  const {
+    joined,
+    primaryRemoteUid,
+    remoteVideoOff,
+    micMuted,
+    cameraOff,
+    error: sessionError,
+    toggleMic,
+    toggleCamera,
+    switchCamera,
+    onLocalViewLayout,
+  } = session;
+
+  const remoteUserJoined = primaryRemoteUid !== null;
 
   useEffect(() => {
     if (isReceiver) {
       return;
     }
-    if (
-      agoraRtmCallService.isLocalInvitationAccepted() &&
-      !callAccepted
-    ) {
+    if (agoraRtmCallService.isLocalInvitationAccepted() && !callAccepted) {
       rtmInvitationAcceptedRef.current = true;
       setCallAccepted(true);
     }
@@ -136,7 +221,6 @@ const VideoCall = () => {
     noAnswerTimeoutRef.current = setTimeout(() => {
       noAnswerTimeoutRef.current = null;
       if (
-        remoteUserJoinedRef.current ||
         hasRemoteEverJoinedThisCallRef.current ||
         rtmInvitationAcceptedRef.current ||
         agoraRtmCallService.isLocalInvitationAccepted()
@@ -184,20 +268,8 @@ const VideoCall = () => {
   ]);
 
   useEffect(() => {
-    if (remoteUserJoined) {
-      remoteUserJoinedRef.current = true;
-      hasRemoteEverJoinedThisCallRef.current = true;
-    }
-  }, [remoteUserJoined]);
-
-  const channelName = AGORA_TEMP_TOKEN
-    ? AGORA_TOKEN_CHANNEL
-    : `chat_${chatId}`;
-
-  useEffect(() => {
     let cancelled = false;
-    if (AGORA_TEMP_TOKEN || !chatId) {
-      setTokenReady(Boolean(AGORA_TEMP_TOKEN) || !chatId);
+    if (!chatId) {
       return;
     }
     setTokenReady(false);
@@ -212,9 +284,7 @@ const VideoCall = () => {
           (typeof data === 'string' ? data : null);
         const uidRaw = data?.uid;
         const uid =
-          typeof uidRaw === 'number'
-            ? uidRaw
-            : Number(uidRaw) || fallbackUid;
+          typeof uidRaw === 'number' ? uidRaw : Number(uidRaw) || fallbackUid;
         if (cancelled) {
           return;
         }
@@ -239,27 +309,6 @@ const VideoCall = () => {
     };
   }, [chatId, fallbackUid]);
 
-  const connectionData = useMemo(
-    () => ({
-      appId: AGORA_APP_ID,
-      channel: channelName,
-      rtcToken: rtcToken,
-      rtcUid: rtcUid > 0 ? rtcUid : undefined,
-    }),
-    [channelName, rtcToken, rtcUid],
-  );
-
-  const settings = useMemo(
-    () => ({
-      layout: Layout.Pin,
-      mode: ChannelProfileType.ChannelProfileCommunication,
-      role: ClientRoleType.ClientRoleBroadcaster,
-      activeSpeaker: true,
-      disableRtm: true,
-    }),
-    [],
-  );
-
   useEffect(() => {
     const requestPermissions = async () => {
       try {
@@ -272,41 +321,6 @@ const VideoCall = () => {
     };
     requestPermissions();
   }, []);
-
-  const handleEndCall = useCallback(async () => {
-    setCallActive(false);
-    const unansweredCancel =
-      !isReceiver &&
-      !hasRemoteEverJoinedThisCallRef.current &&
-      !rtmInvitationAcceptedRef.current;
-
-    if (unansweredCancel) {
-      agoraRtmCallService.cancelLocalInvitation().catch(() => {});
-    }
-    connectSocket();
-    if (chatId && chatSocket.isSocketConnected()) {
-      const payload = {
-        chat_id: chatId,
-        callId: callId || `ended_${Date.now()}`,
-        userId: currentUserId,
-        callType: 'video' as const,
-      };
-      if (unansweredCancel) {
-        chatSocket.sendCallCancelToChat(payload);
-      }
-      chatSocket.sendCallEndedToChat(payload);
-      if (otherUserId) {
-        chatSocket.sendCallEnded({
-          callId: payload.callId,
-          userId: currentUserId,
-          otherUserId: String(otherUserId),
-        });
-      }
-    }
-    if (navigation.canGoBack()) {
-      navigation.goBack();
-    }
-  }, [navigation, callId, otherUserId, currentUserId, chatId, isReceiver]);
 
   useEffect(() => {
     if (!chatId || !callActive) {
@@ -372,57 +386,28 @@ const VideoCall = () => {
       return;
     }
     connectSocket();
-    const cleanupFn = chatSocket.onMessageReceived(String(chatId), (data: any) => {
-      try {
-        const messageText = data?.message || data?.text || '';
-        const parsed = JSON.parse(messageText);
-        if (parsed?.type === 'call_declined') {
-          const declinedBy = parsed?.declinedBy || '';
-          if (declinedBy && String(declinedBy) !== String(currentUserId)) {
-            setCallActive(false);
-            if (navigationRef.current?.canGoBack()) {
-              navigationRef.current.goBack();
+    const cleanupFn = chatSocket.onMessageReceived(
+      String(chatId),
+      (data: any) => {
+        try {
+          const messageText = data?.message || data?.text || '';
+          const parsed = JSON.parse(messageText);
+          if (parsed?.type === 'call_declined') {
+            const declinedBy = parsed?.declinedBy || '';
+            if (declinedBy && String(declinedBy) !== String(currentUserId)) {
+              setCallActive(false);
+              if (navigationRef.current?.canGoBack()) {
+                navigationRef.current.goBack();
+              }
             }
           }
+        } catch {
+          /* ignore */
         }
-      } catch {
-        /* ignore */
-      }
-    });
+      },
+    );
     return () => cleanupFn?.();
   }, [chatId, callActive, isReceiver, currentUserId]);
-
-  const rtcCallbacks = useMemo(
-    () => ({
-      EndCall: handleEndCall,
-      JoinChannelSuccess: () => {
-        channelJoinedRef.current = true;
-        setTimeout(() => setIsConnecting(false), 0);
-      },
-      UserJoined: () => {
-        remoteUserJoinedRef.current = true;
-        hasRemoteEverJoinedThisCallRef.current = true;
-        rtmInvitationAcceptedRef.current = true;
-        if (noAnswerTimeoutRef.current) {
-          clearTimeout(noAnswerTimeoutRef.current);
-          noAnswerTimeoutRef.current = null;
-        }
-        setRemoteUserJoined(true);
-        setIsConnecting(false);
-      },
-      UserOffline: () => {
-        remoteUserJoinedRef.current = false;
-        setRemoteUserJoined(false);
-        if (hasRemoteEverJoinedThisCallRef.current) {
-          setCallActive(false);
-          if (navigationRef.current?.canGoBack()) {
-            navigationRef.current.goBack();
-          }
-        }
-      },
-    }),
-    [handleEndCall],
-  );
 
   if (!chatId) {
     if (navigation.canGoBack()) {
@@ -446,11 +431,19 @@ const VideoCall = () => {
     return null;
   }
 
-  if (tokenError) {
+  const blockingError = tokenError || sessionError;
+  if (blockingError) {
     return (
       <View style={styles.container}>
         <StatusBar barStyle="light-content" backgroundColor="#000" />
-        <Text style={styles.permissionText}>{tokenError}</Text>
+        <View style={styles.errorWrap}>
+          <Text style={styles.permissionText}>{blockingError}</Text>
+          <TouchableOpacity
+            style={[styles.ctrlBtn, styles.endBtn]}
+            onPress={handleEndCall}>
+            <PhoneOff size={26} color="#fff" />
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
@@ -468,51 +461,133 @@ const VideoCall = () => {
   }
 
   const peerLabel = String(params.userName || params.name || 'User');
+  const waitingForAnswer = !isReceiver && !callAccepted && !remoteUserJoined;
+  const showBlockingOverlay = !joined;
 
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#000" />
-      <View style={styles.agoraWrap}>
-        <AgoraUIKit
-          connectionData={connectionData}
-          settings={settings}
-          rtcCallbacks={rtcCallbacks}
+
+      {/* Remote (full screen). Mounted as soon as the peer is in the channel. */}
+      {primaryRemoteUid !== null && !remoteVideoOff ? (
+        <AgoraVideoView
+          key={`remote_${primaryRemoteUid}`}
+          uid={primaryRemoteUid}
+          style={styles.remoteVideo}
         />
-      </View>
-      {(isConnecting || !remoteUserJoined) && !isReceiver ? (
-        <View style={styles.connectingOverlay} pointerEvents="box-none">
-          <Text style={styles.callingTitle}>Calling</Text>
-          <Text style={styles.callingName}>{peerLabel}</Text>
-          <ActivityIndicator
-            size="large"
-            color="#fff"
-            style={styles.callingSpinner}
-          />
-          <Text style={styles.connectingText}>
-            Waiting for {peerLabel} to answer…
-          </Text>
+      ) : (
+        <View style={[styles.remoteVideo, styles.remotePlaceholder]}>
+          {primaryRemoteUid !== null ? (
+            <>
+              <VideoOff size={44} color="rgba(255,255,255,0.5)" />
+              <Text style={styles.placeholderText}>
+                {peerLabel} turned off their camera
+              </Text>
+            </>
+          ) : null}
         </View>
-      ) : null}
-      {isConnecting && isReceiver ? (
-        <View style={styles.connectingOverlay}>
+      )}
+
+      {/* Local preview stays mounted for the whole call: onLayout must fire
+          before startPreview (the camera HAL needs an attached native view on
+          MediaTek/TECNO), and unmounting it on a camera toggle would tear down
+          Agora's canvas. Camera-off just covers it. */}
+      <View style={styles.localWrap} pointerEvents="none">
+        <AgoraVideoView
+          uid={0}
+          style={styles.localVideo}
+          mirror
+          overlay
+          onLayout={onLocalViewLayout}
+        />
+        {cameraOff ? (
+          <View style={[StyleSheet.absoluteFillObject, styles.localOff]}>
+            <VideoOff size={20} color="rgba(255,255,255,0.6)" />
+          </View>
+        ) : null}
+      </View>
+
+      {showBlockingOverlay ? (
+        <View style={styles.connectingOverlay} pointerEvents="box-none">
           <ActivityIndicator size="large" color="#fff" />
           <Text style={styles.connectingText}>Connecting...</Text>
         </View>
       ) : null}
+
+      {waitingForAnswer && joined ? (
+        <View style={styles.callingBanner} pointerEvents="box-none">
+          <Text style={styles.callingBannerText}>Calling {peerLabel}</Text>
+          <ActivityIndicator size="small" color="#fff" />
+        </View>
+      ) : null}
+
+      <View style={styles.controls}>
+        <TouchableOpacity
+          style={[styles.ctrlBtn, micMuted && styles.ctrlBtnActive]}
+          onPress={toggleMic}>
+          {micMuted ? (
+            <MicOff size={24} color="#fff" />
+          ) : (
+            <Mic size={24} color="#fff" />
+          )}
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.ctrlBtn, cameraOff && styles.ctrlBtnActive]}
+          onPress={toggleCamera}>
+          {cameraOff ? (
+            <VideoOff size={24} color="#fff" />
+          ) : (
+            <VideoIcon size={24} color="#fff" />
+          )}
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.ctrlBtn} onPress={switchCamera}>
+          <SwitchCamera size={24} color="#fff" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.ctrlBtn, styles.endBtn]}
+          onPress={handleEndCall}>
+          <PhoneOff size={24} color="#fff" />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {flex: 1, backgroundColor: '#000'},
-  agoraWrap: {flex: 1, backgroundColor: '#000'},
+  remoteVideo: {...StyleSheet.absoluteFillObject, backgroundColor: '#000'},
+  remotePlaceholder: {justifyContent: 'center', alignItems: 'center'},
+  placeholderText: {
+    color: 'rgba(255,255,255,0.7)',
+    marginTop: 12,
+    fontSize: 15,
+    textAlign: 'center',
+    paddingHorizontal: 32,
+  },
+  localWrap: {
+    position: 'absolute',
+    top: 56,
+    right: 16,
+    width: 110,
+    height: 160,
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: '#111',
+    zIndex: 5,
+  },
+  localVideo: {width: '100%', height: '100%'},
+  localOff: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#111',
+  },
   permissionText: {
-    flex: 1,
     color: '#fff',
     textAlign: 'center',
     padding: 16,
     fontSize: 16,
   },
+  errorWrap: {flex: 1, justifyContent: 'center', alignItems: 'center'},
   connectingOverlay: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
@@ -521,25 +596,53 @@ const styles = StyleSheet.create({
     zIndex: 10,
     paddingHorizontal: 24,
   },
-  callingTitle: {
-    color: 'rgba(255,255,255,0.75)',
-    fontSize: 16,
-    marginBottom: 8,
+  callingBanner: {
+    position: 'absolute',
+    top: 56,
+    left: 16,
+    right: 142,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    zIndex: 10,
   },
-  callingName: {
+  callingBannerText: {
     color: '#fff',
-    fontSize: 28,
-    fontWeight: '700',
-    marginBottom: 24,
-    textAlign: 'center',
+    fontSize: 16,
+    fontWeight: '600',
+    marginRight: 8,
   },
-  callingSpinner: {marginBottom: 16},
   connectingText: {
     color: '#fff',
     marginTop: 8,
     fontSize: 16,
     textAlign: 'center',
   },
+  controls: {
+    position: 'absolute',
+    bottom: 40,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 20,
+  },
+  ctrlBtn: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    marginHorizontal: 10,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  ctrlBtnActive: {backgroundColor: 'rgba(255,255,255,0.4)'},
+  endBtn: {backgroundColor: '#e5342b'},
 });
 
 export default VideoCall;

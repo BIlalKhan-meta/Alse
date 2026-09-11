@@ -1,11 +1,4 @@
-import React, {
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -16,23 +9,9 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {
-  ChannelProfileType,
-  ClientRoleType,
-  Layout,
-} from 'agora-rn-uikit';
-import {PropsProvider} from 'agora-rn-uikit/src/Contexts/PropsContext';
-import RtcConfigure from 'agora-rn-uikit/src/RtcConfigure';
-import {MaxUidConsumer} from 'agora-rn-uikit/src/Contexts/MaxUidContext';
-import EndCall from 'agora-rn-uikit/src/Controls/Local/EndCall';
-import RtcContext from 'agora-rn-uikit/src/Contexts/RtcContext';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
-import {
-  AGORA_APP_ID,
-  AGORA_TEMP_TOKEN,
-  AGORA_TOKEN_CHANNEL,
-} from '../../config/agora';
+import {Mic, MicOff, PhoneOff, Volume2, VolumeX} from 'lucide-react-native';
 import {selectUserProfile} from '../../store/slices/authSlice';
 import chatSocket from '../../services/chatSocket';
 import {connectSocket} from '../../utils/socket';
@@ -41,97 +20,7 @@ import ringbackService from '../../services/ringbackService';
 import type {AgoraCallRouteParams} from '../../types/agoraCall';
 import {GetCallRtcToken} from '../../api/liveStream';
 import {ensureCameraPermission} from '../../utils/helpers';
-
-const VideoDisabler: React.FC<{children: React.ReactNode}> = ({children}) => {
-  const rtcContext = useContext(RtcContext);
-  const hasDisabledRef = useRef(false);
-
-  useEffect(() => {
-    const disableVideo = async () => {
-      if (rtcContext?.RtcEngine && !hasDisabledRef.current) {
-        try {
-          await rtcContext.RtcEngine.enableLocalVideo(false);
-          rtcContext.RtcEngine.muteLocalVideoStream(true);
-          hasDisabledRef.current = true;
-          return true;
-        } catch {
-          return false;
-        }
-      }
-      return false;
-    };
-    disableVideo().then(ok => {
-      if (!ok) {
-        const t = setTimeout(() => disableVideo(), 100);
-        const iv = setInterval(() => {
-          disableVideo().then(success => {
-            if (success) {
-              clearInterval(iv);
-            }
-          });
-        }, 200);
-        return () => {
-          clearTimeout(t);
-          clearInterval(iv);
-        };
-      }
-    });
-  }, [rtcContext?.RtcEngine]);
-
-  return <>{children}</>;
-};
-
-const RemoteUserDetector: React.FC<{
-  onRemoteUserJoined: () => void;
-  onRemoteUserLeft: () => void;
-}> = ({onRemoteUserJoined, onRemoteUserLeft}) => {
-  const hasNotifiedJoinRef = useRef(false);
-  return (
-    <MaxUidConsumer>
-      {maxUsers => {
-        const remoteUsers = maxUsers.filter(u => u.uid !== 'local');
-        const hasRemote = remoteUsers.length > 0;
-        if (hasRemote && !hasNotifiedJoinRef.current) {
-          hasNotifiedJoinRef.current = true;
-          setTimeout(() => onRemoteUserJoined(), 0);
-        }
-        if (!hasRemote && hasNotifiedJoinRef.current) {
-          hasNotifiedJoinRef.current = false;
-          setTimeout(() => onRemoteUserLeft(), 0);
-        }
-        return null;
-      }}
-    </MaxUidConsumer>
-  );
-};
-
-const AudioMuteButton: React.FC = () => {
-  const rtcContext = useContext(RtcContext);
-  const [isMuted, setIsMuted] = useState(false);
-  const toggleMute = useCallback(async () => {
-    if (!rtcContext?.RtcEngine) {
-      return;
-    }
-    try {
-      const next = !isMuted;
-      await rtcContext.RtcEngine.muteLocalAudioStream(next);
-      setIsMuted(next);
-    } catch (e) {
-      console.warn(e);
-    }
-  }, [rtcContext?.RtcEngine, isMuted]);
-
-  return (
-    <View style={localStyles.controlBtnWrap}>
-      <TouchableOpacity
-        style={[localStyles.controlBtn, isMuted && localStyles.controlBtnMuted]}
-        onPress={toggleMute}>
-        <Text style={localStyles.controlBtnText}>{isMuted ? '🔇' : '🎤'}</Text>
-      </TouchableOpacity>
-      <Text style={localStyles.controlLbl}>{isMuted ? 'Unmute' : 'Mute'}</Text>
-    </View>
-  );
-};
+import useAgoraCallSession from '../../hooks/useAgoraCallSession';
 
 const AudioCall = () => {
   const route = useRoute();
@@ -159,35 +48,119 @@ const AudioCall = () => {
 
   const [hasPermission, setHasPermission] = useState(false);
   const [callActive, setCallActive] = useState(true);
-  const [rtcToken, setRtcToken] = useState<string | undefined>(
-    AGORA_TEMP_TOKEN || undefined,
-  );
+  const [rtcToken, setRtcToken] = useState<string | null>(null);
   const [rtcUid, setRtcUid] = useState<number>(fallbackUid);
-  const [tokenReady, setTokenReady] = useState(Boolean(AGORA_TEMP_TOKEN));
+  const [tokenReady, setTokenReady] = useState(false);
   const [tokenError, setTokenError] = useState<string | null>(null);
-  const [isConnecting, setIsConnecting] = useState(!isReceiver);
-  const [remoteUserJoined, setRemoteUserJoined] = useState(false);
 
-  const remoteUserJoinedRef = useRef(false);
-  const channelJoinedRef = useRef(false);
   const hasRemoteEverJoinedThisCallRef = useRef(false);
   const rtmInvitationAcceptedRef = useRef(false);
   const noAnswerTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const navigationRef = useRef(navigation);
   navigationRef.current = navigation;
 
+  const channelName = chatId ? `chat_${chatId}` : null;
+
   const [callAccepted, setCallAccepted] = useState(
     () => !isReceiver && agoraRtmCallService.isLocalInvitationAccepted(),
   );
+
+  const handleEndCall = useCallback(() => {
+    setCallActive(false);
+    const unansweredCancel =
+      !isReceiver &&
+      !hasRemoteEverJoinedThisCallRef.current &&
+      !rtmInvitationAcceptedRef.current;
+
+    if (unansweredCancel) {
+      agoraRtmCallService.cancelLocalInvitation().catch(() => {});
+    }
+    connectSocket();
+    if (chatId && chatSocket.isSocketConnected()) {
+      const payload = {
+        chat_id: chatId,
+        callId: callId || `ended_${Date.now()}`,
+        userId: currentUserId,
+        callType: 'audio' as const,
+      };
+      if (unansweredCancel) {
+        chatSocket.sendCallCancelToChat(payload);
+      }
+      chatSocket.sendCallEndedToChat(payload);
+      if (otherUserId) {
+        chatSocket.sendCallEnded({
+          callId: payload.callId,
+          userId: currentUserId,
+          otherUserId: String(otherUserId),
+        });
+      }
+    }
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    }
+  }, [navigation, callId, otherUserId, currentUserId, chatId, isReceiver]);
+
+  const fetchRtcToken = useCallback(async (): Promise<string | null> => {
+    if (!chatId) {
+      return null;
+    }
+    const res: any = await GetCallRtcToken(`chat_${chatId}`);
+    const data = res?.data?.data ?? res?.data ?? {};
+    const token =
+      data?.agora_token ||
+      data?.token ||
+      data?.rtcToken ||
+      (typeof data === 'string' ? data : null);
+    return typeof token === 'string' && token.length > 0 ? token : null;
+  }, [chatId]);
+
+  const onRemoteJoined = useCallback(() => {
+    hasRemoteEverJoinedThisCallRef.current = true;
+    rtmInvitationAcceptedRef.current = true;
+    setCallAccepted(true);
+    if (noAnswerTimeoutRef.current) {
+      clearTimeout(noAnswerTimeoutRef.current);
+      noAnswerTimeoutRef.current = null;
+    }
+  }, []);
+
+  const onRemoteLeft = useCallback(() => {
+    if (hasRemoteEverJoinedThisCallRef.current) {
+      setCallActive(false);
+      if (navigationRef.current?.canGoBack()) {
+        navigationRef.current.goBack();
+      }
+    }
+  }, []);
+
+  const session = useAgoraCallSession({
+    channel: channelName,
+    token: rtcToken,
+    uid: rtcUid,
+    isVideo: false,
+    enabled: hasPermission && tokenReady && callActive,
+    onRemoteJoined,
+    onRemoteLeft,
+    fetchToken: fetchRtcToken,
+  });
+
+  const {
+    joined,
+    primaryRemoteUid,
+    micMuted,
+    speakerOn,
+    error: sessionError,
+    toggleMic,
+    toggleSpeaker,
+  } = session;
+
+  const remoteUserJoined = primaryRemoteUid !== null;
 
   useEffect(() => {
     if (isReceiver) {
       return;
     }
-    if (
-      agoraRtmCallService.isLocalInvitationAccepted() &&
-      !callAccepted
-    ) {
+    if (agoraRtmCallService.isLocalInvitationAccepted() && !callAccepted) {
       rtmInvitationAcceptedRef.current = true;
       setCallAccepted(true);
     }
@@ -249,7 +222,6 @@ const AudioCall = () => {
     noAnswerTimeoutRef.current = setTimeout(() => {
       noAnswerTimeoutRef.current = null;
       if (
-        remoteUserJoinedRef.current ||
         hasRemoteEverJoinedThisCallRef.current ||
         rtmInvitationAcceptedRef.current ||
         agoraRtmCallService.isLocalInvitationAccepted()
@@ -296,35 +268,9 @@ const AudioCall = () => {
     navigation,
   ]);
 
-  const handleRemoteUserDetected = useCallback(() => {
-    remoteUserJoinedRef.current = true;
-    hasRemoteEverJoinedThisCallRef.current = true;
-    rtmInvitationAcceptedRef.current = true;
-    setCallAccepted(true);
-    setRemoteUserJoined(true);
-    setIsConnecting(false);
-    if (noAnswerTimeoutRef.current) {
-      clearTimeout(noAnswerTimeoutRef.current);
-      noAnswerTimeoutRef.current = null;
-    }
-  }, []);
-
-  const handleRemoteUserLeft = useCallback(() => {
-    setRemoteUserJoined(false);
-    if (hasRemoteEverJoinedThisCallRef.current) {
-      setCallActive(false);
-      if (navigation.canGoBack()) {
-        navigation.goBack();
-      }
-    }
-  }, [navigation]);
-
-  const channelName = chatId ? `chat_${chatId}` : AGORA_TOKEN_CHANNEL;
-
   useEffect(() => {
     let cancelled = false;
-    if (AGORA_TEMP_TOKEN || !chatId) {
-      setTokenReady(Boolean(AGORA_TEMP_TOKEN) || !chatId);
+    if (!chatId) {
       return;
     }
     setTokenReady(false);
@@ -339,9 +285,7 @@ const AudioCall = () => {
           (typeof data === 'string' ? data : null);
         const uidRaw = data?.uid;
         const uid =
-          typeof uidRaw === 'number'
-            ? uidRaw
-            : Number(uidRaw) || fallbackUid;
+          typeof uidRaw === 'number' ? uidRaw : Number(uidRaw) || fallbackUid;
         if (cancelled) {
           return;
         }
@@ -366,21 +310,6 @@ const AudioCall = () => {
     };
   }, [chatId, fallbackUid]);
 
-  const rtcProps = useMemo(
-    () => ({
-      appId: AGORA_APP_ID,
-      channel: channelName,
-      token: AGORA_TEMP_TOKEN || rtcToken,
-      uid: rtcUid > 0 ? rtcUid : undefined,
-      layout: Layout.Pin,
-      mode: ChannelProfileType.ChannelProfileCommunication,
-      role: ClientRoleType.ClientRoleBroadcaster,
-      activeSpeaker: true,
-      disableRtm: true,
-    }),
-    [channelName, rtcToken, rtcUid],
-  );
-
   useEffect(() => {
     const req = async () => {
       try {
@@ -394,67 +323,6 @@ const AudioCall = () => {
     };
     req();
   }, []);
-
-  const handleEndCall = useCallback(() => {
-    setCallActive(false);
-    const unansweredCancel =
-      !isReceiver &&
-      !hasRemoteEverJoinedThisCallRef.current &&
-      !rtmInvitationAcceptedRef.current;
-
-    if (unansweredCancel) {
-      agoraRtmCallService.cancelLocalInvitation().catch(() => {});
-    }
-    connectSocket();
-    if (chatId && chatSocket.isSocketConnected()) {
-      const payload = {
-        chat_id: chatId,
-        callId: callId || `ended_${Date.now()}`,
-        userId: currentUserId,
-        callType: 'audio' as const,
-      };
-      if (unansweredCancel) {
-        chatSocket.sendCallCancelToChat(payload);
-      }
-      chatSocket.sendCallEndedToChat(payload);
-      if (otherUserId) {
-        chatSocket.sendCallEnded({
-          callId: payload.callId,
-          userId: currentUserId,
-          otherUserId: String(otherUserId),
-        });
-      }
-    }
-    if (navigation.canGoBack()) {
-      navigation.goBack();
-    }
-  }, [navigation, callId, otherUserId, currentUserId, chatId, isReceiver]);
-
-  const callbacks = useMemo(
-    () => ({
-      EndCall: handleEndCall,
-      JoinChannelSuccess: () => {
-        channelJoinedRef.current = true;
-        setTimeout(() => setIsConnecting(false), 0);
-      },
-      RemoteUserJoined: handleRemoteUserDetected,
-      UserOffline: () => {
-        setRemoteUserJoined(false);
-        if (hasRemoteEverJoinedThisCallRef.current) {
-          setCallActive(false);
-          if (navigation.canGoBack()) {
-            navigation.goBack();
-          }
-        }
-      },
-    }),
-    [handleEndCall, handleRemoteUserDetected, navigation],
-  );
-
-  const agoraProps = useMemo(
-    () => ({rtcProps, callbacks}),
-    [rtcProps, callbacks],
-  );
 
   useEffect(() => {
     if (!chatId || !callActive) {
@@ -519,23 +387,26 @@ const AudioCall = () => {
       return;
     }
     connectSocket();
-    const cleanupFn = chatSocket.onMessageReceived(String(chatId), (data: any) => {
-      try {
-        const messageText = data?.message || data?.text || '';
-        const parsed = JSON.parse(messageText);
-        if (parsed?.type === 'call_declined') {
-          const declinedBy = parsed?.declinedBy || '';
-          if (declinedBy && String(declinedBy) !== String(currentUserId)) {
-            setCallActive(false);
-            if (navigationRef.current?.canGoBack()) {
-              navigationRef.current.goBack();
+    const cleanupFn = chatSocket.onMessageReceived(
+      String(chatId),
+      (data: any) => {
+        try {
+          const messageText = data?.message || data?.text || '';
+          const parsed = JSON.parse(messageText);
+          if (parsed?.type === 'call_declined') {
+            const declinedBy = parsed?.declinedBy || '';
+            if (declinedBy && String(declinedBy) !== String(currentUserId)) {
+              setCallActive(false);
+              if (navigationRef.current?.canGoBack()) {
+                navigationRef.current.goBack();
+              }
             }
           }
+        } catch {
+          /* ignore */
         }
-      } catch {
-        /* ignore */
-      }
-    });
+      },
+    );
     return () => cleanupFn?.();
   }, [chatId, callActive, isReceiver, currentUserId]);
 
@@ -561,16 +432,24 @@ const AudioCall = () => {
     return null;
   }
 
-  if (tokenError) {
+  const blockingError = tokenError || sessionError;
+  if (blockingError) {
     return (
       <SafeAreaView style={styles.container}>
         <StatusBar barStyle="light-content" backgroundColor="#000" />
-        <Text style={styles.permissionText}>{tokenError}</Text>
+        <View style={styles.errorWrap}>
+          <Text style={styles.permissionText}>{blockingError}</Text>
+          <TouchableOpacity
+            style={[styles.ctrlBtn, styles.endBtn]}
+            onPress={handleEndCall}>
+            <PhoneOff size={26} color="#fff" />
+          </TouchableOpacity>
+        </View>
       </SafeAreaView>
     );
   }
 
-  if (!tokenReady || !(AGORA_TEMP_TOKEN || rtcToken)) {
+  if (!tokenReady || !rtcToken) {
     return (
       <SafeAreaView style={styles.container}>
         <StatusBar barStyle="light-content" backgroundColor="#000" />
@@ -585,63 +464,71 @@ const AudioCall = () => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#000" />
-      {isConnecting ? (
-        <View style={styles.connectingOverlay}>
-          <ActivityIndicator size="large" color="#fff" />
-          <Text style={styles.connectingText}>Connecting...</Text>
+      <View style={styles.content}>
+        <View style={styles.avatarBlock}>
+          {image ? (
+            <Image source={{uri: image}} style={styles.avatar} />
+          ) : (
+            <View style={[styles.avatar, styles.avatarPh]}>
+              <Text style={styles.avatarTxt}>
+                {displayName ? displayName.charAt(0).toUpperCase() : '?'}
+              </Text>
+            </View>
+          )}
+          <Text style={styles.nameTxt}>{displayName}</Text>
+          <Text style={styles.statusTxt}>
+            {!joined
+              ? 'Connecting...'
+              : remoteUserJoined
+                ? 'Voice call'
+                : isReceiver
+                  ? 'Voice call'
+                  : 'Calling...'}
+          </Text>
         </View>
-      ) : null}
-      <PropsProvider value={agoraProps}>
-        <RtcConfigure>
-          <RemoteUserDetector
-            onRemoteUserJoined={handleRemoteUserDetected}
-            onRemoteUserLeft={handleRemoteUserLeft}
-          />
-          <VideoDisabler>
-            <View style={styles.content}>
-              <View style={styles.avatarBlock}>
-                {image ? (
-                  <Image source={{uri: image}} style={styles.avatar} />
-                ) : (
-                  <View style={[styles.avatar, styles.avatarPh]}>
-                    <Text style={styles.avatarTxt}>
-                      {displayName ? displayName.charAt(0).toUpperCase() : '?'}
-                    </Text>
-                  </View>
-                )}
-                <Text style={styles.nameTxt}>{displayName}</Text>
-                <Text style={styles.statusTxt}>
-                  {isConnecting ? 'Connecting...' : 'Voice call'}
-                </Text>
-              </View>
-              <MaxUidConsumer>
-                {maxUsers => {
-                  const rem = maxUsers.filter(u => u.uid !== 'local');
-                  if (rem.length > 0) {
-                    return (
-                      <Text style={styles.partTxt}>
-                        {rem.length} on call
-                      </Text>
-                    );
-                  }
-                  return null;
-                }}
-              </MaxUidConsumer>
-            </View>
-            <View style={styles.controls}>
-              <AudioMuteButton />
-              <EndCall />
-            </View>
-          </VideoDisabler>
-        </RtcConfigure>
-      </PropsProvider>
+      </View>
+      <View style={styles.controls}>
+        <View style={styles.ctrlWrap}>
+          <TouchableOpacity
+            style={[styles.ctrlBtn, micMuted && styles.ctrlBtnActive]}
+            onPress={toggleMic}>
+            {micMuted ? (
+              <MicOff size={24} color="#fff" />
+            ) : (
+              <Mic size={24} color="#fff" />
+            )}
+          </TouchableOpacity>
+          <Text style={styles.ctrlLbl}>{micMuted ? 'Unmute' : 'Mute'}</Text>
+        </View>
+        <View style={styles.ctrlWrap}>
+          <TouchableOpacity
+            style={[styles.ctrlBtn, speakerOn && styles.ctrlBtnActive]}
+            onPress={toggleSpeaker}>
+            {speakerOn ? (
+              <Volume2 size={24} color="#fff" />
+            ) : (
+              <VolumeX size={24} color="#fff" />
+            )}
+          </TouchableOpacity>
+          <Text style={styles.ctrlLbl}>Speaker</Text>
+        </View>
+        <View style={styles.ctrlWrap}>
+          <TouchableOpacity
+            style={[styles.ctrlBtn, styles.endBtn]}
+            onPress={handleEndCall}>
+            <PhoneOff size={24} color="#fff" />
+          </TouchableOpacity>
+          <Text style={styles.ctrlLbl}>End</Text>
+        </View>
+      </View>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {flex: 1, backgroundColor: '#000'},
-  permissionText: {flex: 1, color: '#fff', textAlign: 'center', padding: 16},
+  permissionText: {color: '#fff', textAlign: 'center', padding: 16},
+  errorWrap: {flex: 1, justifyContent: 'center', alignItems: 'center'},
   connectingOverlay: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
@@ -666,28 +553,24 @@ const styles = StyleSheet.create({
   avatarTxt: {fontSize: 48, color: '#fff', fontWeight: '700'},
   nameTxt: {fontSize: 24, color: '#fff', fontWeight: '700', marginBottom: 8},
   statusTxt: {fontSize: 16, color: '#aaa'},
-  partTxt: {color: '#888', marginTop: 12},
   controls: {
     flexDirection: 'row',
     justifyContent: 'space-evenly',
     paddingBottom: 32,
     paddingHorizontal: 20,
   },
-});
-
-const localStyles = StyleSheet.create({
-  controlBtnWrap: {alignItems: 'center'},
-  controlBtn: {
+  ctrlWrap: {alignItems: 'center'},
+  ctrlBtn: {
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#333',
+    backgroundColor: 'rgba(255,255,255,0.18)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  controlBtnMuted: {backgroundColor: '#622'},
-  controlBtnText: {fontSize: 22},
-  controlLbl: {color: '#fff', marginTop: 6, fontSize: 12},
+  ctrlBtnActive: {backgroundColor: 'rgba(255,255,255,0.4)'},
+  ctrlLbl: {color: '#fff', marginTop: 6, fontSize: 12},
+  endBtn: {backgroundColor: '#e5342b'},
 });
 
 export default AudioCall;

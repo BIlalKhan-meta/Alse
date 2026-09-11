@@ -68,16 +68,24 @@ import CampaignStats from '../../screens/CampaignStats';
 import AuctionDetail from '../../screens/AuctionDetail';
 import CreateReel from '../../screens/CreateReel';
 
-/** Load AgoraUIKit only when a 1:1 call starts — importing it at app boot
- *  constructs NativeEventEmitter and can occupy the RTC singleton so
- *  livestream joinChannel returns -17. */
+/** Load the call screens only when a 1:1 call starts — pulling in
+ *  react-native-agora at app boot constructs NativeEventEmitter and can occupy
+ *  the RTC singleton so livestream joinChannel returns -17. */
+let videoCallScreen: React.ComponentType<any> | null = null;
 function VideoCallScreen(props: object) {
-  const Screen = require('../../screens/VideoCall').default;
+  if (!videoCallScreen) {
+    videoCallScreen = require('../../screens/VideoCall').default;
+  }
+  const Screen = videoCallScreen!;
   return <Screen {...props} />;
 }
 
+let audioCallScreen: React.ComponentType<any> | null = null;
 function AudioCallScreen(props: object) {
-  const Screen = require('../../screens/AudioCall').default;
+  if (!audioCallScreen) {
+    audioCallScreen = require('../../screens/AudioCall').default;
+  }
+  const Screen = audioCallScreen!;
   return <Screen {...props} />;
 }
 
