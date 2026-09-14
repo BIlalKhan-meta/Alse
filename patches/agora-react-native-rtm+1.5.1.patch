@@ -1,3 +1,16 @@
+diff --git a/node_modules/agora-react-native-rtm/android/build.gradle b/node_modules/agora-react-native-rtm/android/build.gradle
+index 6fde237..ae4e044 100644
+--- a/node_modules/agora-react-native-rtm/android/build.gradle
++++ b/node_modules/agora-react-native-rtm/android/build.gradle
+@@ -127,7 +127,7 @@ dependencies {
+     //noinspection GradleDynamicVersion
+   implementation "com.facebook.react:react-native:+"
+ // From node_modules
+-  api 'io.agora.rtm:rtm-sdk:1.5.3'
++  api 'io.agora.rtm:rtm-special-sdk:1.5.3.216'
+ }
+ 
+ if (isNewArchitectureEnabled()) {
 diff --git a/node_modules/agora-react-native-rtm/android/src/main/java/io/agora/agora_rtm/AgoraRTMModule.java b/node_modules/agora-react-native-rtm/android/src/main/java/io/agora/agora_rtm/AgoraRTMModule.java
 index 52ca3b0..3c7a37e 100644
 --- a/node_modules/agora-react-native-rtm/android/src/main/java/io/agora/agora_rtm/AgoraRTMModule.java
