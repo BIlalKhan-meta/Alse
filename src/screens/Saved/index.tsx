@@ -299,6 +299,7 @@ const Saved: React.FC = () => {
           likes={item?.total_likes}
           comments={item?.total_comments}
           share={item?.share}
+          views={item?.total_views}
           account={item?.privacy}
           sharePost={sharePost}
           onCommnetPress={() => handleCommentPress(item?.id)}

@@ -137,6 +137,11 @@ const endpoints = {
     addStories: '/stories',
     analytics: (storyId: string | number) => `/stories/${storyId}/analytics`,
   },
+  views: {
+    record: '/views',
+    viewers: (type: string, id: string | number) =>
+      `/views/${type}/${id}/viewers`,
+  },
   liveStream: {
     getLiveStreams: '/live-stream',
     createLiveStreams: '/live-stream/start',

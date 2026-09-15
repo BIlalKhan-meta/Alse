@@ -509,6 +509,16 @@ const Stories = forwardRef<StoriesRef>((_, ref) => {
         renderFooter: isCurrentUserStory
           ? () => (
               <SafeAreaView style={styles.footerContainer}>
+                {/* Only the author sees who reached their story. */}
+                <View style={styles.storyViewsBadge}>
+                  <Image
+                    source={images.EyeIcon}
+                    style={styles.storyViewsIcon}
+                  />
+                  <Text style={styles.storyViewsText}>
+                    {story.views_count ?? 0}
+                  </Text>
+                </View>
                 <TouchableOpacity
                   onPress={() => deleteStory(story.id)}
                   style={styles.deleteButton}
@@ -888,7 +898,8 @@ const styles = StyleSheet.create({
   },
   footerContainer: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     width: '100%',
     paddingVertical: 16,
     paddingHorizontal: 16,
@@ -897,6 +908,26 @@ const styles = StyleSheet.create({
     bottom: 20,
     left: 0,
     right: 0,
+  },
+  storyViewsBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+  },
+  storyViewsIcon: {
+    width: 18,
+    height: 18,
+    resizeMode: 'contain',
+    tintColor: '#fff',
+  },
+  storyViewsText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '600',
   },
   deleteButton: {
     backgroundColor: 'rgba(255, 0, 0, 0.8)',

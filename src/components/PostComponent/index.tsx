@@ -11,6 +11,7 @@ import {
   Play,
   Pencil,
   Trash2,
+  Eye,
 } from 'lucide-react-native';
 import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
@@ -171,6 +172,8 @@ interface PostProps {
   likes: number;
   comments: number;
   share: number;
+  /** Unique viewers. Only surfaced for video posts. */
+  views?: number;
   account: string;
   onCommnetPress: () => void;
   onSavePress?: () => void;
@@ -212,6 +215,7 @@ const PostComponent: React.FC<PostProps> = ({
   likes,
   comments,
   share,
+  views,
   account,
   onCommnetPress,
   onSavePress,
@@ -267,6 +271,12 @@ const PostComponent: React.FC<PostProps> = ({
 
   const isVideoMedia = (type: string) =>
     String(type ?? '').toLowerCase() === 'video';
+
+  // A view count only means something for video, so text and photo posts leave
+  // it out rather than showing a number nobody can act on.
+  const hasVideoMedia = resolvedMediaList.some(media =>
+    isVideoMedia(media.type),
+  );
 
   useEffect(() => {
     setActiveMediaIndex(0);
@@ -651,6 +661,17 @@ const PostComponent: React.FC<PostProps> = ({
                 
                 <CornerUpRight color="#65676B" size={16} style={styles.countIconMargin} />
                 <Text style={styles.countText}>{share}</Text>
+
+                {hasVideoMedia ? (
+                  <>
+                    <Eye
+                      color="#65676B"
+                      size={16}
+                      style={styles.countIconMargin}
+                    />
+                    <Text style={styles.countText}>{views ?? 0}</Text>
+                  </>
+                ) : null}
               </View>
               <TouchableOpacity onPress={onSavePress}>
                 <Bookmark

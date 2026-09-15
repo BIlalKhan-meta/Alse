@@ -66,6 +66,7 @@ import {
 } from '../../../utils/feedFilters';
 import AdFeedCard from '../../../components/AdFeedCard';
 import {recordImpression} from '../../../api/advertising';
+import {recordMediaView} from '../../../api/views';
 import {usePostComments} from '../../../hooks/usePostComments';
 
 const Home: React.FC = () => {
@@ -96,6 +97,7 @@ const Home: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState<FeedFilterTab>('all');
   const [hiddenAdIds, setHiddenAdIds] = useState<Set<number>>(new Set());
   const impressedAdIds = useRef<Set<number>>(new Set());
+  const viewedPostIds = useRef<Set<number>>(new Set());
 
   const {
     commentsVisible,
@@ -460,6 +462,21 @@ const Home: React.FC = () => {
             impressedAdIds.current.delete(adId);
           });
         }
+
+        // The viewability config already requires 60% visible for 250ms, which
+        // is what makes this a view rather than a scroll-past.
+        const postId = Number(feedItem?.id);
+        if (!isAd && postId && !viewedPostIds.current.has(postId)) {
+          const hasVideo = getNewsfeedMediaList(feedItem?.media).some(
+            media => String(media?.type ?? '').toLowerCase() === 'video',
+          );
+          if (hasVideo) {
+            viewedPostIds.current.add(postId);
+            recordMediaView('post', postId).catch(() => {
+              viewedPostIds.current.delete(postId);
+            });
+          }
+        }
       });
 
       if (visibleItems.length === 0) {
@@ -588,6 +605,7 @@ const Home: React.FC = () => {
         likes={item?.likes?.length}
         comments={item?.total_comments}
         share={item?.share}
+        views={item?.total_views}
         account={item?.privacy}
         sharePost={sharePost}
         onCommnetPress={() => handleCommentPress(item?.id)}

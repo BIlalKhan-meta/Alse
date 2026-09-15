@@ -623,7 +623,7 @@ const ProfileScreen: React.FC = ({navigation}) => {
 
   return (
     <View style={styles.container}>
-      <GlobalHeader icon={true} />
+      <GlobalHeader icon={true} showBack />
       {data?.is_private && !data?.is_following ? (
         <Card style={{height: vh * 55}}>
           <ProfileCard

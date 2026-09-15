@@ -15,6 +15,7 @@ import CommentsModal from '../../components/CommentsModal';
 import LikesModal from '../../components/LikesModal';
 import MediaModal from '../../components/MediaModal';
 import {createPost, getPost, postLike} from '../../api/home';
+import {recordMediaView} from '../../api/views';
 import {removeSavedItem, saveItem} from '../../api/menu';
 import {usePostComments} from '../../hooks/usePostComments';
 import {
@@ -93,6 +94,29 @@ const PostDetail: React.FC = () => {
   );
   const primaryMedia = mediaList[0];
   const {caption, sharedFromName} = parseSharedFrom(post?.description ?? '');
+
+  // Opening a video post is a view. The server ignores repeats and the
+  // author's own visits.
+  useEffect(() => {
+    const id = Number(post?.id);
+    const hasVideo = mediaList.some(
+      item => String(item?.type ?? '').toLowerCase() === 'video',
+    );
+    if (!id || !hasVideo) {
+      return;
+    }
+    recordMediaView('post', id)
+      .then(response => {
+        const count = Number(response?.data?.data?.views_count);
+        if (!Number.isFinite(count)) {
+          return;
+        }
+        setPost((current: any) =>
+          current ? {...current, total_views: count} : current,
+        );
+      })
+      .catch(() => {});
+  }, [mediaList, post?.id]);
 
   const handleLike = async () => {
     if (!post?.id) {
@@ -212,6 +236,7 @@ const PostDetail: React.FC = () => {
             likes={Number(post.total_likes ?? post.likes?.length ?? 0)}
             comments={Number(post.total_comments ?? 0)}
             share={Number(post.share ?? 0)}
+            views={Number(post.total_views ?? 0)}
             account={post.privacy ?? ''}
             onCommnetPress={() => openComments(post.id)}
             onLikesModal={() => setLikesVisible(true)}

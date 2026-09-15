@@ -26,6 +26,7 @@ import {BASE_URL} from '../../utils/baseurl';
 import ShareModal from '../../components/ShareModal';
 import CommentsModal from '../../components/CommentsModal';
 import {createMessage, getVideoById} from '../../api/home';
+import {recordMediaView} from '../../api/views';
 import {saveItem, removeSavedItem} from '../../api/menu';
 import {
   serializePostShare,
@@ -58,6 +59,7 @@ interface VideoItem {
   isSaved?: boolean;
   likes: number;
   comments: number;
+  views: number;
   privacy?: string;
 }
 
@@ -80,6 +82,7 @@ function transformApiVideo(video: any): VideoItem {
     isSaved: video.is_saved ?? false,
     likes: video.likes ?? 0,
     comments: video.comments_count ?? video.comments ?? 0,
+    views: video.views_count ?? video.views ?? 0,
     user: video.user || {
       id: video.user_id,
       name: video.user_name || `User ${video.user_id}`,
@@ -224,6 +227,15 @@ const VideosReelOverlay: React.FC<{
             tintColor="#fff"
           />
         </TouchableOpacity>
+
+        <View style={styles.sideButton}>
+          <Image
+            source={images.EyeIcon}
+            style={styles.sideViewsIcon}
+            tintColor="#fff"
+          />
+          <Text style={styles.sideCount}>{item.views || 0}</Text>
+        </View>
       </View>
 
       {item.content ? (
@@ -345,6 +357,7 @@ const VideosTab = () => {
   const pagerScrollStateRef = useRef<'idle' | 'dragging' | 'settling'>('idle');
   const reelsRef = useRef<VideoItem[]>([]);
   reelsRef.current = reels;
+  const viewedReelIds = useRef<Set<number>>(new Set());
 
   /** Avoid UIPageViewController crash when setPage runs mid-gesture/unmount (ALSE-J). */
   const safeSetPage = useCallback((page: number) => {
@@ -511,6 +524,40 @@ const VideosTab = () => {
       setLoadingMore(false);
     }
   };
+
+  // Count a view once a reel has actually been watched for a moment, so paging
+  // straight through the feed does not register on every reel it passes.
+  useEffect(() => {
+    if (!isFocused) {
+      return;
+    }
+
+    const reelId = Number(reelsRef.current[activeIndex]?.id);
+    if (!reelId || viewedReelIds.current.has(reelId)) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      viewedReelIds.current.add(reelId);
+      recordMediaView('video', reelId)
+        .then(response => {
+          const count = Number(response?.data?.data?.views_count);
+          if (!Number.isFinite(count)) {
+            return;
+          }
+          setReels(prev =>
+            prev.map(reel =>
+              reel.id === reelId ? {...reel, views: count} : reel,
+            ),
+          );
+        })
+        .catch(() => {
+          viewedReelIds.current.delete(reelId);
+        });
+    }, 1500);
+
+    return () => clearTimeout(timer);
+  }, [activeIndex, isFocused, reels.length]);
 
   const handleLoadMore = useCallback(() => {
     if (hasMore && !loading && !loadingMore) {
@@ -892,6 +939,11 @@ const styles = StyleSheet.create({
   sideIcon: {
     width: 29,
     height: 28,
+  },
+  sideViewsIcon: {
+    width: 26,
+    height: 26,
+    resizeMode: 'contain',
   },
   sideCount: {
     color: '#fff',

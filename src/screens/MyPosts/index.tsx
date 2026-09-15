@@ -270,6 +270,7 @@ const MyPosts: React.FC = () => {
         likes={item?.total_likes}
         comments={item?.total_comments}
         share={item.share}
+        views={item?.total_views}
         account={item.privacy}
         // onCommnetPress={() => setCommentsVisible(true)}
         onCommnetPress={() => handleCommentPress(item?.id)}
