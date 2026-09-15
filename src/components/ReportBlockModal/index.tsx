@@ -1,10 +1,11 @@
-import React from 'react';
+import React, {ReactNode} from 'react';
 import {View, TouchableOpacity, Text, StyleProp, ViewStyle} from 'react-native';
 import styles from './styles';
 
 interface Option {
   text: string;
   onPress: () => void;
+  icon?: ReactNode;
 }
 
 interface ReportBlockModalProps {
@@ -32,7 +33,8 @@ const ReportBlockModal: React.FC<ReportBlockModalProps> = ({
               key={index}
               style={styles.modalOption}
               onPress={option.onPress}>
-              <Text style={{color: '#65676B', fontSize: 14}}>{option.text}</Text>
+              {option.icon}
+              <Text style={styles.optionText}>{option.text}</Text>
             </TouchableOpacity>
           ))}
         </View>

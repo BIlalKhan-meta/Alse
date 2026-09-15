@@ -129,6 +129,34 @@ function resolveChatAttachmentUrls(item: any): {
   return {imageUrl, videoUrl};
 }
 
+function firstNonEmptyName(...values: unknown[]): string | undefined {
+  for (const value of values) {
+    if (typeof value === 'string' && value.trim()) {
+      return value.trim();
+    }
+  }
+  return undefined;
+}
+
+function resolveChatSenderName(...sources: any[]): string {
+  for (const source of sources) {
+    if (!source || typeof source !== 'object') {
+      continue;
+    }
+    const name = firstNonEmptyName(
+      source.name,
+      source.full_name,
+      source.username,
+      source.user_name,
+      source.sender_name,
+    );
+    if (name) {
+      return name;
+    }
+  }
+  return 'Member';
+}
+
 function generateAgoraCallId(): string {
   return generateCallUuid();
 }
@@ -154,6 +182,19 @@ const ChatOngoing: React.FC<Props> = props => {
   const [messages, setMessages] = useState<IMessage[]>([]);
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const user = useSelector(selectUserProfile);
+  const currentUserName =
+    firstNonEmptyName(user?.full_name, user?.name, user?.username) || 'You';
+  const isGroupChat = useMemo(() => {
+    if (props?.route?.params?.isGroup) {
+      return true;
+    }
+    const uniqueSenders = new Set(
+      messages
+        .map(message => String(message?.user?._id ?? ''))
+        .filter(Boolean),
+    );
+    return uniqueSenders.size > 2;
+  }, [messages, props?.route?.params?.isGroup]);
   const [phoneModalVisible, setPhoneModalVisible] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isCalling, setIsCalling] = useState(false);
@@ -430,6 +471,7 @@ const ChatOngoing: React.FC<Props> = props => {
         created_at: Date.now(),
         user: {
           _id: user.id,
+          name: currentUserName,
           avatar: user?.avatar,
         },
       });
@@ -648,6 +690,7 @@ const ChatOngoing: React.FC<Props> = props => {
         createdAt: new Date(res?.created_at || Date.now()),
         user: {
           _id: res?.user?._id,
+          name: resolveChatSenderName(res?.user, res),
           avatar: res?.user?.avatar,
         },
       };
@@ -712,6 +755,7 @@ const ChatOngoing: React.FC<Props> = props => {
               createdAt: new Date(item?.created_at || Date.now()),
               user: {
                 _id: item?.user_id,
+                name: resolveChatSenderName(item, item?.user),
                 avatar:
                   getAbsoluteAvatarUrl(
                     item?.user_image || item?.avatar || item?.sender_image,
@@ -799,6 +843,7 @@ const ChatOngoing: React.FC<Props> = props => {
           created_at: Date.now(),
           user: {
             _id: user.id,
+            name: currentUserName,
             avatar: user?.avatar ? user.avatar : images.profile,
           },
           ...(saved?.id != null ? {id: saved.id} : {}),
@@ -832,7 +877,7 @@ const ChatOngoing: React.FC<Props> = props => {
         setIsSendingMessage(false);
       }
     },
-    [props?.route?.params?.id, user?.id, user?.avatar, getData],
+    [props?.route?.params?.id, user?.id, user?.avatar, currentUserName, getData],
   );
 
   useLayoutEffect(() => {
@@ -872,6 +917,7 @@ const ChatOngoing: React.FC<Props> = props => {
       createdAt: new Date(),
       user: {
         _id: user.id,
+        name: currentUserName,
         avatar: user?.avatar || user?.image || images.profile,
       },
     };
@@ -901,6 +947,7 @@ const ChatOngoing: React.FC<Props> = props => {
         created_at: Date.now(),
         user: {
           _id: user.id,
+          name: currentUserName,
           avatar: user?.avatar || user?.image || images.profile,
         },
       });
@@ -926,6 +973,7 @@ const ChatOngoing: React.FC<Props> = props => {
       createdAt: new Date(),
       user: {
         _id: user.id,
+        name: currentUserName,
         avatar: user?.avatar || user?.image || images.profile,
       },
     };
@@ -955,6 +1003,7 @@ const ChatOngoing: React.FC<Props> = props => {
         created_at: Date.now(),
         user: {
           _id: user.id,
+          name: currentUserName,
           avatar: user?.avatar || user?.image || images.profile,
         },
       });
@@ -1091,8 +1140,10 @@ const ChatOngoing: React.FC<Props> = props => {
           onSend={onSend}
           user={{
             _id: user?.id,
+            name: currentUserName,
             avatar: user?.avatar || user?.image || images.profile,
           }}
+          renderUsernameOnMessage={isGroupChat}
           renderMessageText={renderMessageText as any}
           renderMessageImage={renderMessageImageFullscreen as any}
           renderMessageVideo={renderMessageVideoFullscreen as any}

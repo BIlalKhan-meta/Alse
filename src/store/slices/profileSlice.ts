@@ -195,6 +195,11 @@ const profileSlice = createSlice({
       state.loading = false;
       state.error = null;
     },
+    /** Drops a deleted post from the grid without waiting for a refetch. */
+    removePostFromProfile: (state, action: PayloadAction<number | string>) => {
+      const gridId = `post-${action.payload}`;
+      state.posts = state.posts.filter(post => post.id !== gridId);
+    },
   },
   extraReducers: builder => {
     builder
@@ -204,10 +209,10 @@ const profileSlice = createSlice({
       })
       .addCase(fetchUserPosts.fulfilled, (state, action) => {
         state.loading = false;
-        // Keep previously seeded profile posts if the posts endpoint returned nothing
-        if (action.payload?.length) {
-          state.posts = action.payload;
-        }
+        // Always take the server list. The thunk only fulfils when at least one
+        // request succeeded, so an empty array means the user really has no
+        // posts left — keeping the seeded list here resurrected deleted posts.
+        state.posts = action.payload ?? [];
       })
       .addCase(fetchUserPosts.rejected, (state, action) => {
         state.loading = false;
@@ -216,7 +221,12 @@ const profileSlice = createSlice({
   },
 });
 
-export const {clearPosts, clearError, setPostsFromProfile} = profileSlice.actions;
+export const {
+  clearPosts,
+  clearError,
+  setPostsFromProfile,
+  removePostFromProfile,
+} = profileSlice.actions;
 export const selectUserPosts = (state: any) => state.profile.posts;
 export const selectPostsLoading = (state: any) => state.profile.loading;
 export const selectPostsError = (state: any) => state.profile.error;

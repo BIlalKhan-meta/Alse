@@ -38,11 +38,11 @@ export const createPostWithMediaKeys = (payload: {
   description: string;
   privacy: string | number;
   media_keys?: MediaKeyPayload[];
-}) => {
+}, signal?: AbortSignal) => {
   return axiosInstance.post(endpoints.home.createPost, {
     description: payload.description,
     content: payload.description,
     privacy: payload.privacy,
     media_keys: payload.media_keys ?? [],
-  });
+  }, {signal});
 };

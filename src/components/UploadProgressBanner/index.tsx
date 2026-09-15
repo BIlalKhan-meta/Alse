@@ -1,7 +1,8 @@
 import React, {useEffect, useState} from 'react';
-import {StyleSheet, Text, View} from 'react-native';
+import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import eventEmitter, {EVENT_TYPES} from '../../utils/EventEmitter';
 import {colors} from '../../utils/theme';
+import {cancelPostUpload} from '../../services/postUploadQueue';
 
 const UploadProgressBanner: React.FC = () => {
   const [message, setMessage] = useState('');
@@ -23,11 +24,18 @@ const UploadProgressBanner: React.FC = () => {
   }
 
   return (
-    <View style={styles.banner} pointerEvents="none">
-      <Text style={styles.text}>
-        {message}
-        {typeof percent === 'number' ? ` · ${percent}%` : ''}
-      </Text>
+    <View style={styles.banner}>
+      <Text style={styles.text} numberOfLines={1}>
+          {message}
+          {typeof percent === 'number' ? ` · ${percent}%` : ''}
+        </Text>
+      <TouchableOpacity
+        style={styles.cancelButton}
+        onPress={cancelPostUpload}
+        accessibilityRole="button"
+        accessibilityLabel="Cancel post upload">
+        <Text style={styles.cancelText}>Cancel</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -43,11 +51,25 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingVertical: 10,
     paddingHorizontal: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
   text: {
+    flex: 1,
     color: '#fff',
     fontWeight: '600',
-    textAlign: 'center',
+  },
+  cancelButton: {
+    minHeight: 34,
+    justifyContent: 'center',
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+  },
+  cancelText: {
+    color: '#fff',
+    fontWeight: '700',
   },
 });
 

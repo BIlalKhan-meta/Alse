@@ -1,6 +1,6 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
-import {Image, TouchableOpacity, View} from 'react-native';
+import {Image, Text, TouchableOpacity, View} from 'react-native';
 import {
   Bubble,
   MessageText,
@@ -121,10 +121,33 @@ export function createRenderMessageVideo(
 /** Default renderer without fullscreen action. */
 export const renderMessageVideo = createRenderMessageVideo(() => {});
 
-export const renderBubble: React.FC<BubbleProps> = props => (
-  <Bubble
-    {...props}
-    wrapperStyle={{
+export const renderBubble: React.FC<BubbleProps> = props => {
+  const isOwn =
+    props.user?._id != null &&
+    String(props.currentMessage?.user?._id) === String(props.user._id);
+  const senderName = props.currentMessage?.user?.name;
+  const showSenderName =
+    Boolean(props.renderUsernameOnMessage) && !isOwn && Boolean(senderName);
+
+  return (
+    <View>
+      {showSenderName ? (
+        <Text
+          style={{
+            color: '#0A7A7A',
+            fontSize: 12,
+            fontWeight: '600',
+            marginLeft: 12,
+            marginBottom: 2,
+          }}
+          numberOfLines={1}>
+          {senderName}
+        </Text>
+      ) : null}
+      <Bubble
+        {...props}
+        renderUsernameOnMessage={false}
+        wrapperStyle={{
       left: {
         backgroundColor: '#E8F5E8',
         marginVertical: vh * 0.5,
@@ -163,8 +186,10 @@ export const renderBubble: React.FC<BubbleProps> = props => (
     tickStyle={{
       color: 'rgba(255,255,255,0.8)',
     }}
-  />
-);
+      />
+    </View>
+  );
+};
 
 export const renderSystemMessage: React.FC<SystemMessageProps> = props => (
   <SystemMessage

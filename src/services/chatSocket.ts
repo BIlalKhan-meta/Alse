@@ -332,7 +332,7 @@ class ChatSocket {
     message_type?: string;
     created_at?: number;
     id?: string | number;
-    user?: {_id: string | number; avatar?: string};
+    user?: {_id: string | number; name?: string; avatar?: string};
   }) {
     if (!this.socket || !(this.isConnected || this.socket.connected)) {
       console.error('[Socket] ❌ Cannot emitAlseChatMessage: not connected');

@@ -74,11 +74,12 @@ export const getVideoCommentLikes = (videoId: number, commentId: number) => {
   return axiosInstance.get(`/video/${videoId}/comment/${commentId}/likes`);
 };
 
-export const createPost = (formData: FormData) => {
+export const createPost = (formData: FormData, signal?: AbortSignal) => {
   return uploadWithFetch(
     endpoints.home.createPost,
     formData,
     CREATE_POST_UPLOAD_TIMEOUT_MS,
+    signal,
   );
 };
 
@@ -241,10 +242,15 @@ async function uploadWithFetch(
   path: string,
   body: FormData,
   timeoutMs: number = UPLOAD_TIMEOUT_MS,
+  externalSignal?: AbortSignal,
 ): Promise<{data: any}> {
   const token = store.getState().auth.token;
   const url = `${BASE_URL.replace(/\/$/, '')}${path}`;
   const controller = new AbortController();
+  const abortFromExternalSignal = () => controller.abort();
+  externalSignal?.addEventListener('abort', abortFromExternalSignal, {
+    once: true,
+  });
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   const headers: Record<string, string> = {
@@ -285,6 +291,8 @@ async function uploadWithFetch(
       throw err;
     }
     throw e;
+  } finally {
+    externalSignal?.removeEventListener('abort', abortFromExternalSignal);
   }
 }
 

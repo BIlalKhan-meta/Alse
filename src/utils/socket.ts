@@ -72,7 +72,7 @@ export const emitMessage = (payload: {
   message_type?: 'text' | 'image' | 'video' | 'call';
   created_at?: number;
   id?: string | number;
-  user?: {_id: string | number; avatar?: string};
+  user?: {_id: string | number; name?: string; avatar?: string};
 }) => {
   const auth = ensureAuthConnect();
   if (!auth) {

@@ -555,11 +555,13 @@ const Home: React.FC = () => {
     const postDescriptionRaw = item?.description ?? item?.content ?? '';
     const {caption, sharedFromName} = parseSharedFrom(postDescriptionRaw);
     const feedLabel = resolveFeedLabel(item);
+    const isOwnPost =
+      user?.id != null && String(item?.user_id) === String(user.id);
 
     return (
       <PostComponent
         feedLabel={feedLabel}
-        showMenuButton={false}
+        showMenuButton={isOwnPost}
         isFocused={isFocused}
         id={item?.user_id}
         mediaId={item?.id}
@@ -598,6 +600,7 @@ const Home: React.FC = () => {
         modalVisible={activePostId === item?.id}
         onCardPress={() => setActivePostId(null)}
         handleBlockPress={() => {
+          setActivePostId(null);
           setDeleteVisible({visibility: true, id: item?.id});
         }}
         handleReportPost={() => {

@@ -40,6 +40,7 @@ async function putWithProgress(
   fileUri: string,
   headers: Record<string, string>,
   onProgress?: UploadProgressCallback,
+  signal?: AbortSignal,
 ): Promise<void> {
   const normalizedUri = fileUri.startsWith('file://')
     ? fileUri
@@ -48,7 +49,14 @@ async function putWithProgress(
       : fileUri;
 
   await new Promise<void>((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(new DOMException('Upload cancelled', 'AbortError'));
+      return;
+    }
+
     const xhr = new XMLHttpRequest();
+    const abortUpload = () => xhr.abort();
+    signal?.addEventListener('abort', abortUpload, {once: true});
     xhr.open('PUT', uploadUrl);
     Object.entries(headers || {}).forEach(([key, value]) => {
       if (value) {
@@ -63,6 +71,7 @@ async function putWithProgress(
       onProgress(Math.min(99, Math.round((event.loaded / event.total) * 100)));
     };
     xhr.onload = () => {
+      signal?.removeEventListener('abort', abortUpload);
       if (xhr.status >= 200 && xhr.status < 300) {
         onProgress?.(100);
         resolve();
@@ -70,8 +79,18 @@ async function putWithProgress(
       }
       reject(new Error(`Upload failed with status ${xhr.status}`));
     };
-    xhr.onerror = () => reject(new Error('Network request failed'));
-    xhr.ontimeout = () => reject(new Error('Upload timed out'));
+    xhr.onerror = () => {
+      signal?.removeEventListener('abort', abortUpload);
+      reject(new Error('Network request failed'));
+    };
+    xhr.ontimeout = () => {
+      signal?.removeEventListener('abort', abortUpload);
+      reject(new Error('Upload timed out'));
+    };
+    xhr.onabort = () => {
+      signal?.removeEventListener('abort', abortUpload);
+      reject(new DOMException('Upload cancelled', 'AbortError'));
+    };
     xhr.send({
       uri: normalizedUri,
       type: headers['Content-Type'] || 'application/octet-stream',
@@ -86,23 +105,33 @@ async function putWithRetry(
   headers: Record<string, string>,
   onProgress?: UploadProgressCallback,
   maxAttempts: number = 3,
+  signal?: AbortSignal,
 ): Promise<void> {
   let lastError: unknown;
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    if (signal?.aborted) {
+      throw new DOMException('Upload cancelled', 'AbortError');
+    }
     try {
       if (attempt === 1) {
         try {
           const {backgroundPutFile} = require('./backgroundUpload');
-          await backgroundPutFile(uploadUrl, fileUri, headers);
+          await backgroundPutFile(uploadUrl, fileUri, headers, signal);
           onProgress?.(100);
           return;
         } catch (bgError) {
+          if (signal?.aborted || (bgError as Error)?.name === 'AbortError') {
+            throw bgError;
+          }
           console.warn('[upload] background upload fallback to XHR', bgError);
         }
       }
-      await putWithProgress(uploadUrl, fileUri, headers, onProgress);
+      await putWithProgress(uploadUrl, fileUri, headers, onProgress, signal);
       return;
     } catch (error) {
+      if (signal?.aborted || (error as Error)?.name === 'AbortError') {
+        throw error;
+      }
       lastError = error;
       if (attempt < maxAttempts) {
         await sleep(1000 * attempt);
@@ -159,6 +188,7 @@ export async function uploadMediaDirect(
   options?: {
     folder?: 'posts' | 'stories' | 'videos';
     onProgress?: UploadProgressCallback;
+    signal?: AbortSignal;
   },
 ): Promise<MediaKeyPayload & {localThumbnail?: string | null}> {
   let uri = await ensureFileUriReadable(media.uri);
@@ -193,6 +223,8 @@ export async function uploadMediaDirect(
     uri,
     upload.headers || {'Content-Type': contentType},
     options?.onProgress,
+    3,
+    options?.signal,
   );
 
   return {
@@ -213,16 +245,21 @@ export async function uploadMediaListDirect(
   options?: {
     folder?: 'posts' | 'stories' | 'videos';
     onProgress?: UploadProgressCallback;
+    signal?: AbortSignal;
   },
 ): Promise<MediaKeyPayload[]> {
   const results: MediaKeyPayload[] = [];
   const total = mediaList.length || 1;
 
   for (let i = 0; i < mediaList.length; i++) {
+    if (options?.signal?.aborted) {
+      throw new DOMException('Upload cancelled', 'AbortError');
+    }
     const base = Math.round((i / total) * 100);
     const span = Math.round(100 / total);
     const uploaded = await uploadMediaDirect(mediaList[i], {
       folder: options?.folder,
+      signal: options?.signal,
       onProgress: percent => {
         options?.onProgress?.(
           Math.min(99, base + Math.round((percent / 100) * span)),

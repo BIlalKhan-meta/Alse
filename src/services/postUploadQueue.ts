@@ -2,8 +2,7 @@ import eventEmitter, {EVENT_TYPES} from '../utils/EventEmitter';
 import {createPostWithMediaKeys} from '../api/mediaUpload';
 import {uploadMediaListDirect} from '../utils/directMediaUpload';
 import {buildPostVideoFile, Toast} from '../utils/helpers';
-import store from '../store';
-import {postCreate} from '../store/slices/homeSlice';
+import {createPost} from '../api/home';
 import {deletePostDraftById} from '../utils/postDrafts';
 import {
   composePhotoMusicSlideshow,
@@ -25,6 +24,13 @@ export type QueuedPostUpload = {
 };
 
 let inFlight = false;
+let activeController: AbortController | null = null;
+
+function throwIfCancelled(signal: AbortSignal) {
+  if (signal.aborted) {
+    throw new DOMException('Upload cancelled', 'AbortError');
+  }
+}
 
 function emitProgress(message: string, percent?: number) {
   eventEmitter.emit(EVENT_TYPES.UPLOAD_PROGRESS, {message, percent});
@@ -36,6 +42,9 @@ export async function enqueuePostUpload(payload: QueuedPostUpload) {
     return;
   }
   inFlight = true;
+  const controller = new AbortController();
+  activeController = controller;
+  const {signal} = controller;
   emitProgress('Uploading…', 0);
 
   try {
@@ -60,6 +69,7 @@ export async function enqueuePostUpload(payload: QueuedPostUpload) {
           kind: 'video',
         },
       ];
+      throwIfCancelled(signal);
     }
 
     let mediaKeys: Array<{key: string; type: 'image' | 'video'; filename?: string}> =
@@ -69,8 +79,10 @@ export async function enqueuePostUpload(payload: QueuedPostUpload) {
         mediaKeys = await uploadMediaListDirect(mediaToUpload, {
           folder: 'posts',
           onProgress: percent => emitProgress(`Uploading ${percent}%`, percent),
+          signal,
         });
       } catch (directErr) {
+        throwIfCancelled(signal);
         console.warn('[postUploadQueue] direct upload failed', directErr);
         const body = new FormData();
         body.append('content', payload.description);
@@ -93,8 +105,9 @@ export async function enqueuePostUpload(payload: QueuedPostUpload) {
             } as any);
           }
         }
+        throwIfCancelled(signal);
         emitProgress('Creating post…', 95);
-        await store.dispatch(postCreate(body)).unwrap();
+        await createPost(body, signal);
         if (payload.userId && payload.draftId) {
           await deletePostDraftById(payload.userId, payload.draftId);
         }
@@ -105,12 +118,13 @@ export async function enqueuePostUpload(payload: QueuedPostUpload) {
       }
     }
 
+    throwIfCancelled(signal);
     emitProgress('Creating post…', 98);
     await createPostWithMediaKeys({
       description: payload.description,
       privacy: payload.privacy,
       media_keys: mediaKeys,
-    });
+    }, signal);
     if (payload.userId && payload.draftId) {
       await deletePostDraftById(payload.userId, payload.draftId);
     }
@@ -118,6 +132,14 @@ export async function enqueuePostUpload(payload: QueuedPostUpload) {
     Toast.success('Posted Successfully');
     eventEmitter.emit(EVENT_TYPES.UPLOAD_COMPLETE, {ok: true});
   } catch (err: any) {
+    if (signal.aborted || err?.name === 'AbortError') {
+      Toast.success('Post upload cancelled');
+      eventEmitter.emit(EVENT_TYPES.UPLOAD_COMPLETE, {
+        ok: false,
+        cancelled: true,
+      });
+      return;
+    }
     const message =
       err?.message === MUSIC_TOO_MANY_IMAGES_FOR_CLIP
         ? 'Too many images for music clip'
@@ -126,6 +148,18 @@ export async function enqueuePostUpload(payload: QueuedPostUpload) {
     eventEmitter.emit(EVENT_TYPES.UPLOAD_COMPLETE, {ok: false, message});
   } finally {
     inFlight = false;
+    if (activeController === controller) {
+      activeController = null;
+    }
     setTimeout(() => emitProgress('', undefined), 1200);
   }
+}
+
+export function cancelPostUpload(): boolean {
+  if (!inFlight || !activeController) {
+    return false;
+  }
+  activeController.abort();
+  emitProgress('', undefined);
+  return true;
 }

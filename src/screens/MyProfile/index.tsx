@@ -16,7 +16,7 @@ import {BlurView} from '@react-native-community/blur';
 import Clipboard from '@react-native-clipboard/clipboard';
 import {useIsFocused, useNavigation} from '@react-navigation/native';
 import {useSelector} from 'react-redux';
-import {Play} from 'lucide-react-native';
+import {MoreVertical, Play, Trash2} from 'lucide-react-native';
 import {images} from '../../utils/images';
 import {
   selectUserProfile,
@@ -30,6 +30,7 @@ import {
 } from '../../store/slices/settingsSlice';
 import {
   fetchUserPosts,
+  removePostFromProfile,
   selectUserPosts,
   selectPostsLoading,
   setPostsFromProfile,
@@ -42,7 +43,8 @@ import {shareProfile} from '../../api/profile';
 import Toast from 'react-native-toast-message';
 import MediaModal from '../../components/MediaModal';
 import {timeFormat} from '../../utils';
-import {resolvePlayableMediaUrl} from '../../utils/helpers';
+import {getMessage, resolvePlayableMediaUrl} from '../../utils/helpers';
+import {deletePost} from '../../api/home';
 
 import styles from './styles';
 import {colors} from '../../utils/theme';
@@ -61,11 +63,21 @@ interface PostItem {
 
 const STILL_IMAGE_EXT = /\.(jpe?g|png|gif|webp|heic|heif)(\?|$)/i;
 
+/**
+ * profileSlice prefixes grid ids: `post-12` for posts, `reel-12` for reels.
+ * Only posts can be deleted, so reels resolve to null and get no menu.
+ */
+const getDeletablePostId = (gridId: string): number | null => {
+  const match = /^post-(\d+)$/.exec(gridId);
+  return match ? Number(match[1]) : null;
+};
+
 /** Grid cell — Image only (no Video) so Android surfaces don't bleed between cells. */
 const ProfilePostThumb: React.FC<{
   item: PostItem;
   onPress: (item: PostItem) => void;
-}> = ({item, onPress}) => {
+  onMenuPress?: (item: PostItem) => void;
+}> = ({item, onPress, onMenuPress}) => {
   const [failed, setFailed] = useState(false);
   const thumbUri = item.uri;
   const stillThumb =
@@ -101,6 +113,17 @@ const ProfilePostThumb: React.FC<{
         accessibilityRole="button"
         accessibilityLabel={item.isVideo ? 'Play video' : 'View photo'}
       />
+      {/* Rendered after the fill Pressable so it stays tappable. */}
+      {onMenuPress ? (
+        <TouchableOpacity
+          style={postMenuStyles.thumbMenuButton}
+          onPress={() => onMenuPress(item)}
+          hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
+          accessibilityRole="button"
+          accessibilityLabel="Post options">
+          <MoreVertical color="#fff" size={18} />
+        </TouchableOpacity>
+      ) : null}
     </View>
   );
 };
@@ -126,6 +149,10 @@ const MyProfile: React.FC = () => {
   const [shareLoading, setShareLoading] = useState(false);
   const [shareSuccessModal, setShareSuccessModal] = useState(false);
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
+  const [postMenuId, setPostMenuId] = useState<number | null>(null);
+  const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
+  const [isDeletingPost, setIsDeletingPost] = useState(false);
+  const [deleteSuccessModal, setDeleteSuccessModal] = useState(false);
   const [mediaModal, setMediaModal] = useState<{
     visible: boolean;
     mediaUrl: string;
@@ -199,6 +226,42 @@ const MyProfile: React.FC = () => {
     },
     [currentProfile.fullName],
   );
+
+  const openPostMenu = useCallback((item: PostItem) => {
+    const postId = getDeletablePostId(item.id);
+    if (postId == null) {
+      return;
+    }
+    setPostMenuId(postId);
+  }, []);
+
+  const confirmDeletePost = useCallback(async () => {
+    if (deleteTargetId == null) {
+      return;
+    }
+    setIsDeletingPost(true);
+    try {
+      await deletePost(deleteTargetId);
+      // Drop it locally first, then resync. `auth.user` is persisted and still
+      // carries the old embedded posts, which otherwise seed it back.
+      dispatch(removePostFromProfile(deleteTargetId));
+      setDeleteTargetId(null);
+      setDeleteSuccessModal(true);
+      await dispatch(GetUserProfile());
+      if (user?.id) {
+        await dispatch(fetchUserPosts(user.id.toString()));
+      }
+    } catch (error: any) {
+      setDeleteTargetId(null);
+      Toast.show({
+        type: 'error',
+        text1: t('profileScr.posts'),
+        text2: getMessage(error?.message ?? error),
+      });
+    } finally {
+      setIsDeletingPost(false);
+    }
+  }, [deleteTargetId, dispatch, t, user?.id]);
 
   // Reset avatar error when avatar changes
   useEffect(() => {
@@ -299,10 +362,11 @@ const MyProfile: React.FC = () => {
   const handleFocusRefetch = useCallback(async () => {
     if (user?.id && posts.length === 0 && !postsLoading && initialLoad) {
       try {
+        // Seeds the grid only while the server list is in flight; the persisted
+        // auth user can still hold posts that have since been deleted, so the
+        // refetch below always runs and has the final say.
         seedPostsFromProfilePayload(user);
-        if (!(user.posts?.length > 0)) {
-          await dispatch(fetchUserPosts(user.id.toString()));
-        }
+        await dispatch(fetchUserPosts(user.id.toString()));
       } catch (error) {
         console.error('Error fetching posts on focus:', error);
       }
@@ -511,6 +575,11 @@ const MyProfile: React.FC = () => {
                   key={item.id}
                   item={item}
                   onPress={openPostMedia}
+                  onMenuPress={
+                    getDeletablePostId(item.id) != null
+                      ? openPostMenu
+                      : undefined
+                  }
                 />
               ))}
             </View>
@@ -562,6 +631,54 @@ const MyProfile: React.FC = () => {
         SecondaryText2="No"
       />
 
+      <Modal
+        visible={postMenuId != null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setPostMenuId(null)}>
+        <Pressable
+          style={postMenuStyles.backdrop}
+          onPress={() => setPostMenuId(null)}>
+          <Pressable style={postMenuStyles.sheet}>
+            <TouchableOpacity
+              style={postMenuStyles.sheetRow}
+              onPress={() => {
+                setDeleteTargetId(postMenuId);
+                setPostMenuId(null);
+              }}>
+              <Trash2 color="#D14343" size={18} />
+              <Text style={postMenuStyles.deleteText}>Delete</Text>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      <GeneralModal
+        visible={deleteTargetId != null}
+        closeModal={() => setDeleteTargetId(null)}
+        icon={images.qmark}
+        title="Delete Post"
+        message="Are you sure you want to delete this Post?"
+        SecondaryText1="Yes"
+        SecondaryText2="No"
+        onPress={confirmDeletePost}
+        loading={isDeletingPost}
+        buttonText={''}
+        secondaryBtn={true}
+        primaryBtn={false}
+      />
+
+      <GeneralModal
+        visible={deleteSuccessModal}
+        closeModal={() => setDeleteSuccessModal(false)}
+        icon={images.checkedIcon}
+        title="Delete Post"
+        message="Post has been deleted successfully."
+        buttonText={t('ok')}
+        onPress={() => setDeleteSuccessModal(false)}
+        primaryBtn={true}
+      />
+
       <MediaModal
         visible={mediaModal.visible}
         onClose={() =>
@@ -579,6 +696,45 @@ const MyProfile: React.FC = () => {
     </View>
   );
 };
+
+const postMenuStyles = StyleSheet.create({
+  thumbMenuButton: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    zIndex: 3,
+  },
+  backdrop: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.35)',
+  },
+  sheet: {
+    backgroundColor: colors.white,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    paddingVertical: vh * 1.5,
+    paddingBottom: vh * 4,
+  },
+  sheetRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    minHeight: 48,
+    paddingHorizontal: vw * 6,
+  },
+  deleteText: {
+    color: '#D14343',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+});
 
 const shareModalStyles = StyleSheet.create({
   blur: {

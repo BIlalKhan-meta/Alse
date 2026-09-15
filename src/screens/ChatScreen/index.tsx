@@ -39,6 +39,7 @@ interface ChatItem {
   last_message?: {
     message: string;
     created_at: string;
+    user_name?: string;
   };
 }
 
@@ -143,6 +144,17 @@ const ChatScreen: React.FC = () => {
       }
     }
 
+    const lastPreview =
+      getPostSharePreviewText(item.last_message?.message) ||
+      getProductSharePreviewText(item.last_message?.message) ||
+      item.last_message?.message ||
+      'No messages yet';
+    const lastSender = item.last_message?.user_name?.trim();
+    const lastMessageText =
+      isGroup && lastSender && item.last_message?.message
+        ? `${lastSender}: ${lastPreview}`
+        : lastPreview;
+
     return (
       <TouchableOpacity
         style={styles.chatCard}
@@ -175,10 +187,7 @@ const ChatScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
         <Text style={styles.lastMessage} numberOfLines={3}>
-          {getPostSharePreviewText(item.last_message?.message) ||
-            getProductSharePreviewText(item.last_message?.message) ||
-            item.last_message?.message ||
-            'No messages yet'}
+          {lastMessageText}
         </Text>
 
         {/* Inline Menu */}

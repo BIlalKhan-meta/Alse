@@ -9,6 +9,8 @@ import {
   Volume2,
   VolumeX,
   Play,
+  Pencil,
+  Trash2,
 } from 'lucide-react-native';
 import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
@@ -319,8 +321,16 @@ const PostComponent: React.FC<PostProps> = ({
 
   const options = myAccount
     ? [
-        {text: 'Edit', onPress: () => handleReportPress()},
-        {text: 'Remove', onPress: () => handleBlockPress()},
+        {
+          text: 'Edit',
+          icon: <Pencil color="#65676B" size={17} />,
+          onPress: () => handleReportPress(),
+        },
+        {
+          text: 'Delete',
+          icon: <Trash2 color="#D14343" size={17} />,
+          onPress: () => handleBlockPress(),
+        },
       ]
     : [
         {text: 'Report', onPress: () => handleReportPost()},
