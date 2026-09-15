@@ -88,6 +88,10 @@ APP_BASE_NAME=${0##*/}
 # APP_HOME=$( cd "${APP_HOME:-./}" > /dev/null && pwd -P ) || exit
 APP_HOME=$( cd -P "${APP_HOME:-./}" > /dev/null && printf '%s\n' "$PWD" ) || exit
 
+# Cap CMake/ninja parallelism. Default (= CPU count) often SIGKILLs clang++ on
+# 16GB Macs during RelWithDebInfo (Gradle then shows "subcommand failed" with
+# no compiler diagnostics). Override with CMAKE_BUILD_PARALLEL_LEVEL=N if needed.
+export CMAKE_BUILD_PARALLEL_LEVEL="${CMAKE_BUILD_PARALLEL_LEVEL:-2}"
 
 # Use the maximum available, or set MAX_FD != -1 to use that value.
 MAX_FD=maximum

@@ -29,6 +29,46 @@ buildscript {
 
 apply plugin: "com.facebook.react.rootproject"
 
+// Cap CMake/ninja compile parallelism. AGP invokes ninja directly (not
+// cmake --build), so CMAKE_BUILD_PARALLEL_LEVEL is ignored. Without this,
+// ninja uses all CPU cores and clang++ often gets SIGKILL'd on 16GB Macs —
+// Gradle then reports "subcommand failed" with no compiler diagnostics.
+def limitCmakeParallelism = { project ->
+    def androidExt = project.extensions.findByName("android")
+    if (androidExt == null) return
+    try {
+        def cmake = androidExt.defaultConfig.externalNativeBuild.cmake
+        def args = [
+            "-DCMAKE_JOB_POOL_COMPILE=compile",
+            "-DCMAKE_JOB_POOL_LINK=link",
+            "-DCMAKE_JOB_POOLS=compile=2;link=1",
+        ]
+        args.each { arg ->
+            if (!cmake.arguments.get().contains(arg)) {
+                cmake.arguments.add(arg)
+            }
+        }
+    } catch (Throwable ignored) {
+        // Module has no externalNativeBuild/cmake — skip.
+    }
+}
+
+def whenAndroidReady = { subproject, action ->
+    def run = {
+        if (subproject.state.executed) {
+            action(subproject)
+        } else {
+            subproject.afterEvaluate { action(subproject) }
+        }
+    }
+    subproject.pluginManager.withPlugin("com.android.library", run)
+    subproject.pluginManager.withPlugin("com.android.application", run)
+}
+
+subprojects { subproject ->
+    whenAndroidReady(subproject, limitCmakeParallelism)
+}
+
 // Disable AGP lintVital tasks — they OOM Metaspace on large RN deps (e.g. react-native-video).
 gradle.projectsEvaluated {
     rootProject.subprojects.each { subproject ->
