@@ -733,9 +733,10 @@ async function handleCallNotifeeEvent(
 }
 
 /**
- * Android only: the full-screen intent launches the activity with no press
- * event. If a call notification is still ringing at startup, show the in-app
- * accept/decline screen so the user can act on it.
+ * Android only: the app can reach startup while a call notification is still
+ * ringing without any press event reaching us (cold start, launcher tap, or a
+ * notification tap the handler missed). Show the in-app accept/decline screen
+ * so the user can still act on it.
  */
 async function resumeRingingCallOnLaunch(): Promise<void> {
   if (Platform.OS !== 'android') {

@@ -2,10 +2,15 @@
  * Android incoming-call UI for background/killed state.
  *
  * Android 10+ forbids starting an activity from the background, so a killed app
- * cannot simply open itself when a call push arrives. The allowed mechanism is a
- * high-importance notification carrying a full-screen intent: the system shows
- * it over the lock screen, and falls back to a heads-up banner with
- * Answer/Decline actions when the device is unlocked.
+ * cannot simply open itself when a call push arrives. It rings through a
+ * high-importance CALL-category notification: a heads-up banner when unlocked
+ * and a lock-screen notification when locked, both carrying Answer/Decline.
+ *
+ * A full-screen intent would take over the whole screen, but Play restricts
+ * USE_FULL_SCREEN_INTENT to apps whose core purpose is calling or alarms, so the
+ * permission is not declared and must not be reintroduced here. Android 14+ also
+ * stopped auto-granting it to apps like this one, so it had already degraded to
+ * this same banner on modern devices.
  *
  * CallKeep's ConnectionService is deliberately not used here — it requires the
  * user to enable a phone account in system settings first, and silently shows
@@ -22,7 +27,6 @@ export const CALL_CHANNEL_ID = 'incoming_calls_v2';
 export const CALL_NOTIFICATION_ID_PREFIX = 'call_';
 export const CALL_ACTION_ANSWER = 'call_answer';
 export const CALL_ACTION_DECLINE = 'call_decline';
-export const CALL_ACTION_FULLSCREEN = 'call_fullscreen';
 
 /** Matches the caller-side no-answer timeout in VideoCall/AudioCall. */
 const RING_TIMEOUT_MS = 35000;
@@ -103,11 +107,9 @@ export async function showAndroidIncomingCall(
       onlyAlertOnce: false,
       loopSound: true,
       timeoutAfter: RING_TIMEOUT_MS,
-      // Shows over the lock screen; degrades to a heads-up banner when unlocked.
-      fullScreenAction: {
-        id: CALL_ACTION_FULLSCREEN,
-        launchActivity: 'default',
-      },
+      // Wakes the display so a locked phone shows the ringing notification
+      // instead of staying dark. This is what a full-screen intent used to do.
+      lightUpScreen: true,
       pressAction: {
         id: CALL_ACTION_ANSWER,
         launchActivity: 'default',
