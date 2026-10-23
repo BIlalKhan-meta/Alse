@@ -38,6 +38,7 @@ export async function backgroundPutFile(
   filePath: string,
   headers: Record<string, string>,
   signal?: AbortSignal,
+  onProgress?: (percent: number) => void,
 ): Promise<void> {
   ensureAndroidUploadChannel();
   const path = filePath.replace('file://', '');
@@ -49,6 +50,7 @@ export async function backgroundPutFile(
 
     let uploadId: string | undefined;
     let settled = false;
+    let lastPercent = -1;
     const listeners: Array<{remove?: () => void} | void> = [];
 
     const cleanup = () => {
@@ -103,6 +105,20 @@ export async function backgroundPutFile(
           return;
         }
         listeners.push(
+          Upload.addListener('progress', startedUploadId, (data: any) => {
+            const raw = Number(data?.progress);
+            if (!Number.isFinite(raw)) {
+              return;
+            }
+            const percent = Math.max(0, Math.min(99, Math.round(raw)));
+            if (percent <= lastPercent) {
+              return;
+            }
+            lastPercent = percent;
+            onProgress?.(percent);
+          }),
+        );
+        listeners.push(
           Upload.addListener('error', startedUploadId, (data: any) => {
             settle(() =>
               reject(new Error(data?.error || 'Background upload failed')),
@@ -120,6 +136,7 @@ export async function backgroundPutFile(
           Upload.addListener('completed', startedUploadId, (data: any) => {
             settle(() => {
               if (data?.responseCode >= 200 && data?.responseCode < 300) {
+                onProgress?.(100);
                 resolve();
                 return;
               }

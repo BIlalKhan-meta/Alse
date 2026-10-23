@@ -246,11 +246,6 @@ const Stories = forwardRef<StoriesRef>((_, ref) => {
   const uploadFile = async (file: any, attempt = 1) => {
     setIsUploading(true);
     setUploadProgress(0);
-    Toast.show({
-      type: 'info',
-      text1: t('toast.uploadingStory'),
-      text2: t('loadingText'),
-    });
 
     const formData = new FormData();
     formData.append('file', file);
@@ -260,7 +255,15 @@ const Stories = forwardRef<StoriesRef>((_, ref) => {
       if (!token) {
         throw new Error('Not authenticated');
       }
-      await AddStory(formData, setUploadProgress);
+      await AddStory(formData, progress => {
+        setUploadProgress(Math.max(0, Math.min(100, Math.round(progress))));
+      });
+
+      setUploadProgress(100);
+      // Let the progress UI settle at 100% before showing the success toast.
+      await new Promise(r => setTimeout(r, 400));
+      setIsUploading(false);
+      setUploadProgress(0);
 
       Toast.show({
         type: 'success',
@@ -270,6 +273,9 @@ const Stories = forwardRef<StoriesRef>((_, ref) => {
       await getStories(false);
     } catch (err: any) {
       console.error('Upload error:', err);
+      setIsUploading(false);
+      setUploadProgress(0);
+
       const isNetworkError =
         err?.code === 'ECONNABORTED' ||
         err?.message === 'Network request timeout' ||
@@ -289,9 +295,6 @@ const Stories = forwardRef<StoriesRef>((_, ref) => {
         type: 'error',
         text1: message,
       });
-    } finally {
-      setIsUploading(false);
-      setUploadProgress(0);
     }
   };
 

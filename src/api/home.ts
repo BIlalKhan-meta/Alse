@@ -284,9 +284,12 @@ async function uploadWithFetch(
       err.code = 'ECONNABORTED';
       throw err;
     }
-    if (e?.message === 'Network request failed') {
+    if (
+      e?.message === 'Network request failed' ||
+      e?.message === 'Network Error'
+    ) {
       const err: any = new Error(
-        'Upload failed. The video file may be missing or too large to send.',
+        'Upload failed due to a network issue. Please check your connection and try again.',
       );
       throw err;
     }

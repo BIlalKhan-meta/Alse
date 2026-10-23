@@ -8,6 +8,8 @@ import {
   ActivityIndicator,
   Text,
   RefreshControl,
+  Platform,
+  InteractionManager,
 } from 'react-native';
 import {FlashList} from '@shopify/flash-list';
 import {images} from '../../../utils/images';
@@ -98,6 +100,27 @@ const Home: React.FC = () => {
   const [hiddenAdIds, setHiddenAdIds] = useState<Set<number>>(new Set());
   const impressedAdIds = useRef<Set<number>>(new Set());
   const viewedPostIds = useRef<Set<number>>(new Set());
+  const refreshingRef = useRef(false);
+  const refreshSafetyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+
+  const clearRefreshing = useCallback(() => {
+    if (refreshSafetyTimerRef.current) {
+      clearTimeout(refreshSafetyTimerRef.current);
+      refreshSafetyTimerRef.current = null;
+    }
+    refreshingRef.current = false;
+    // iOS + FlashList: clearing refreshing in the same frame as content
+    // updates often leaves the native spinner stuck. Defer one tick.
+    if (Platform.OS === 'ios') {
+      InteractionManager.runAfterInteractions(() => {
+        setTimeout(() => setRefreshing(false), 50);
+      });
+    } else {
+      setRefreshing(false);
+    }
+  }, []);
 
   const {
     commentsVisible,
@@ -178,7 +201,12 @@ const Home: React.FC = () => {
 
   // Fetch all home data: feed, profile, countries, user/shops, stories, live-streams
   const fetchAllData = useCallback(
-    async (showInitialLoading = false, filter: FeedFilterTab = activeFilter) => {
+    async (
+      showInitialLoading = false,
+      filter: FeedFilterTab = activeFilter,
+      options?: {blockOnSecondary?: boolean},
+    ) => {
+      const blockOnSecondary = options?.blockOnSecondary !== false;
       try {
         if (showInitialLoading) {
           setInitialLoading(true);
@@ -191,22 +219,35 @@ const Home: React.FC = () => {
             ...(apiFilter ? {filter: apiFilter} : {}),
           }),
         );
-        await dispatch(GetUserProfile());
-        await getCountriesList().then(res => {
-          if (res?.data) {
-            dispatch(getCountries(res?.data?.data));
+
+        const secondary = async () => {
+          try {
+            await dispatch(GetUserProfile());
+            await getCountriesList().then(res => {
+              if (res?.data) {
+                dispatch(getCountries(res?.data?.data));
+              }
+            });
+            await checkIsSeller();
+          } catch (secondaryError) {
+            console.log('Error fetching secondary home data:', secondaryError);
           }
-        });
-        await checkIsSeller();
-        void storiesRef.current?.refresh();
+          void storiesRef.current?.refresh();
+        };
+
+        if (blockOnSecondary) {
+          await secondary();
+        } else {
+          void secondary();
+        }
       } catch (error) {
         console.log('Error fetching data:', error);
       } finally {
         setInitialLoading(false);
-        setRefreshing(false);
+        clearRefreshing();
       }
     },
-    [dispatch, activeFilter],
+    [dispatch, activeFilter, clearRefreshing],
   );
 
   const filteredPosts = useMemo(() => {
@@ -270,9 +311,27 @@ const Home: React.FC = () => {
   }, []);
 
   const handleRefresh = useCallback(async () => {
+    if (refreshingRef.current) {
+      return;
+    }
+    refreshingRef.current = true;
     setRefreshing(true);
-    await fetchAllData(false);
-  }, [fetchAllData]);
+    // Safety: never leave the iOS spinner up forever if a request hangs.
+    refreshSafetyTimerRef.current = setTimeout(() => {
+      clearRefreshing();
+    }, 15000);
+    // Don't block the pull-to-refresh spinner on profile/countries/seller —
+    // those can hang and leave the iOS loader stuck.
+    await fetchAllData(false, activeFilter, {blockOnSecondary: false});
+  }, [fetchAllData, activeFilter, clearRefreshing]);
+
+  useEffect(() => {
+    return () => {
+      if (refreshSafetyTimerRef.current) {
+        clearTimeout(refreshSafetyTimerRef.current);
+      }
+    };
+  }, []);
 
   const loadMorePosts = useCallback(() => {
     if (!loadingMore && hasMore) {
@@ -847,7 +906,9 @@ const Home: React.FC = () => {
               onEndReachedThreshold={0.5}
               estimatedItemSize={480}
               drawDistance={vh * 120}
-              removeClippedSubviews={true}
+              // removeClippedSubviews on iOS + RefreshControl often leaves the
+              // native pull-to-refresh spinner stuck after data updates.
+              removeClippedSubviews={Platform.OS === 'android'}
             />
           </View>
 

@@ -43,9 +43,20 @@ async function uploadWithFetch(
   } catch (e: any) {
     clearTimeout(timeoutId);
     if (e.name === 'AbortError') {
-      const err: any = new Error('Network request timeout');
+      const err: any = new Error(
+        'Upload timed out. Try a shorter video or a better connection.',
+      );
       err.code = 'ECONNABORTED';
       throw err;
+    }
+    const message = String(e?.message || '').toLowerCase();
+    if (
+      message.includes('network request failed') ||
+      message.includes('network error')
+    ) {
+      throw new Error(
+        'Upload failed due to a network issue. Please check your connection and try again.',
+      );
     }
     throw e;
   }

@@ -197,7 +197,22 @@ const CreateReel: React.FC = () => {
       formData.append('privacy', privacy);
       formData.append('video_file', videoFile as any);
 
-      const res = await createVideo(formData);
+      let res: any;
+      try {
+        res = await createVideo(formData);
+      } catch (firstErr: any) {
+        const firstMessage = String(firstErr?.message || '').toLowerCase();
+        const isTransientNetwork =
+          firstMessage.includes('network request failed') ||
+          firstMessage.includes('network error') ||
+          firstMessage.includes('network issue');
+        if (!isTransientNetwork) {
+          throw firstErr;
+        }
+        // One automatic retry for flaky mobile connections on large video uploads.
+        await new Promise(r => setTimeout(r, 1000));
+        res = await createVideo(formData);
+      }
       console.log('=-=-=>>>', JSON.stringify(res));
       Toast.success('Video uploaded successfully');
       navigation.goBack();

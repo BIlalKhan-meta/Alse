@@ -202,7 +202,6 @@ const CreatePost: React.FC = () => {
     const draftId = activeDraftId;
     const userId = user?.id;
 
-    Toast.success(t('uploadStarted', {defaultValue: 'Upload started'}));
     navigation.goBack();
 
     void enqueuePostUpload({

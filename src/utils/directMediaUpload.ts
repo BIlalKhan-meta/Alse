@@ -39,6 +39,135 @@ function contentTypeFor(
   return 'image/jpeg';
 }
 
+function toFilePath(fileUri: string): string {
+  if (!fileUri) {
+    return fileUri;
+  }
+  if (fileUri.startsWith('file://')) {
+    return fileUri.replace(/^file:\/\//, '');
+  }
+  return fileUri;
+}
+
+function toFileUri(fileUri: string): string {
+  if (!fileUri) {
+    return fileUri;
+  }
+  if (fileUri.startsWith('file://') || fileUri.startsWith('content://')) {
+    return fileUri;
+  }
+  if (fileUri.startsWith('/')) {
+    return `file://${fileUri}`;
+  }
+  return fileUri;
+}
+
+function isAbortError(error: unknown): boolean {
+  return (
+    (error as Error)?.name === 'AbortError' ||
+    (error as DOMException)?.name === 'AbortError'
+  );
+}
+
+function isTransientNetworkError(error: unknown): boolean {
+  const message = String((error as Error)?.message || '').toLowerCase();
+  return (
+    message.includes('network request failed') ||
+    message.includes('network error') ||
+    message.includes('failed to connect') ||
+    message.includes('timed out') ||
+    message.includes('timeout') ||
+    message.includes('connection') ||
+    message.includes('socket')
+  );
+}
+
+export function toFriendlyUploadError(error: unknown): Error {
+  if (isAbortError(error)) {
+    return error as Error;
+  }
+  const original = String((error as Error)?.message || '');
+  if (isTransientNetworkError(error)) {
+    return new Error(
+      'Upload failed due to a network issue. Please check your connection and try again.',
+    );
+  }
+  if (!original) {
+    return new Error('Upload failed. Please try again.');
+  }
+  return error instanceof Error ? error : new Error(original);
+}
+
+async function assertReadableFile(fileUri: string): Promise<string> {
+  const path = toFilePath(fileUri);
+  const exists = await RNFS.exists(path);
+  if (!exists) {
+    throw new Error('Media file not found on device. Please reselect and try again.');
+  }
+  const stat = await RNFS.stat(path).catch(() => null);
+  if (!stat?.size || Number(stat.size) <= 0) {
+    throw new Error('Media file is empty or unreadable. Please reselect and try again.');
+  }
+  return path;
+}
+
+async function putWithBlobUtil(
+  uploadUrl: string,
+  fileUri: string,
+  headers: Record<string, string>,
+  onProgress?: UploadProgressCallback,
+  signal?: AbortSignal,
+): Promise<void> {
+  const ReactNativeBlobUtil = require('react-native-blob-util').default;
+  const path = await assertReadableFile(fileUri);
+
+  if (signal?.aborted) {
+    throw new DOMException('Upload cancelled', 'AbortError');
+  }
+
+  const task = ReactNativeBlobUtil.config({
+    timeout: 5 * 60 * 1000,
+    fileCache: false,
+  }).fetch('PUT', uploadUrl, headers || {}, ReactNativeBlobUtil.wrap(path));
+
+  const abortUpload = () => {
+    try {
+      task.cancel?.();
+    } catch (_) {}
+  };
+  signal?.addEventListener('abort', abortUpload, {once: true});
+
+  try {
+    if (typeof task.uploadProgress === 'function') {
+      task.uploadProgress({interval: 300}, (written: number, total: number) => {
+        if (!onProgress || !total || total <= 0) {
+          return;
+        }
+        onProgress(Math.min(99, Math.round((written / total) * 100)));
+      });
+    }
+
+    const response = await task;
+    if (signal?.aborted) {
+      throw new DOMException('Upload cancelled', 'AbortError');
+    }
+
+    const status = Number(response?.info?.()?.status ?? response?.respInfo?.status ?? 0);
+    if (status >= 200 && status < 300) {
+      onProgress?.(100);
+      return;
+    }
+    throw new Error(`Upload failed with status ${status || 'unknown'}`);
+  } catch (error) {
+    if (signal?.aborted || isAbortError(error)) {
+      throw new DOMException('Upload cancelled', 'AbortError');
+    }
+    throw error;
+  } finally {
+    signal?.removeEventListener('abort', abortUpload);
+  }
+}
+
 async function putWithProgress(
   uploadUrl: string,
   fileUri: string,
@@ -46,11 +175,8 @@ async function putWithProgress(
   onProgress?: UploadProgressCallback,
   signal?: AbortSignal,
 ): Promise<void> {
-  const normalizedUri = fileUri.startsWith('file://')
-    ? fileUri
-    : fileUri.startsWith('/')
-      ? `file://${fileUri}`
-      : fileUri;
+  const normalizedUri = toFileUri(fileUri);
+  await assertReadableFile(normalizedUri);
 
   await new Promise<void>((resolve, reject) => {
     if (signal?.aborted) {
@@ -112,28 +238,52 @@ async function putWithRetry(
   signal?: AbortSignal,
 ): Promise<void> {
   let lastError: unknown;
+  const path = await assertReadableFile(fileUri);
+
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     if (signal?.aborted) {
       throw new DOMException('Upload cancelled', 'AbortError');
     }
+
+    // Prefer blob-util for large video PUTs — XHR {uri} often throws
+    // "Network request failed" on Android for bigger files.
     try {
-      if (attempt === 1) {
-        try {
-          const {backgroundPutFile} = require('./backgroundUpload');
-          await backgroundPutFile(uploadUrl, fileUri, headers, signal);
-          onProgress?.(100);
-          return;
-        } catch (bgError) {
-          if (signal?.aborted || (bgError as Error)?.name === 'AbortError') {
-            throw bgError;
-          }
-          console.warn('[upload] background upload fallback to XHR', bgError);
-        }
+      await putWithBlobUtil(uploadUrl, path, headers, onProgress, signal);
+      return;
+    } catch (blobError) {
+      if (signal?.aborted || isAbortError(blobError)) {
+        throw blobError;
       }
-      await putWithProgress(uploadUrl, fileUri, headers, onProgress, signal);
+      lastError = blobError;
+      console.warn('[upload] blob-util PUT failed, trying fallbacks', blobError);
+    }
+
+    if (attempt === 1) {
+      try {
+        const {backgroundPutFile} = require('./backgroundUpload');
+        await backgroundPutFile(
+          uploadUrl,
+          path,
+          headers,
+          signal,
+          onProgress,
+        );
+        onProgress?.(100);
+        return;
+      } catch (bgError) {
+        if (signal?.aborted || isAbortError(bgError)) {
+          throw bgError;
+        }
+        lastError = bgError;
+        console.warn('[upload] background upload fallback to XHR', bgError);
+      }
+    }
+
+    try {
+      await putWithProgress(uploadUrl, path, headers, onProgress, signal);
       return;
     } catch (error) {
-      if (signal?.aborted || (error as Error)?.name === 'AbortError') {
+      if (signal?.aborted || isAbortError(error)) {
         throw error;
       }
       lastError = error;
@@ -142,7 +292,8 @@ async function putWithRetry(
       }
     }
   }
-  throw lastError;
+
+  throw toFriendlyUploadError(lastError);
 }
 
 export async function compressVideoIfNeeded(uri: string): Promise<string> {
@@ -154,15 +305,16 @@ export async function compressVideoIfNeeded(uri: string): Promise<string> {
       maxSize: Platform.OS === 'android' ? 960 : 1280,
       bitrate: Platform.OS === 'android' ? 1_500_000 : 2_500_000,
     });
-    return compressed || uri;
+    const nextUri = compressed || uri;
+    return toFileUri(nextUri);
   } catch (error) {
     console.warn('[upload] video compress skipped', error);
-    return uri;
+    return toFileUri(uri);
   }
 }
 
 async function assertVideoUnderSizeLimit(uri: string): Promise<void> {
-  const path = uri.replace(/^file:\/\//, '');
+  const path = toFilePath(uri);
   const stat = await RNFS.stat(path).catch(() => null);
   if (stat?.size && Number(stat.size) > MAX_VIDEO_UPLOAD_BYTES) {
     throw new Error(
@@ -196,7 +348,7 @@ export async function ensureFileUriReadable(
     await RNFS.copyFile(uri, dest);
     return `file://${dest}`;
   }
-  return uri;
+  return toFileUri(uri);
 }
 
 export async function uploadMediaDirect(
@@ -220,6 +372,7 @@ export async function uploadMediaDirect(
     uri = await compressVideoIfNeeded(uri);
     await assertVideoUnderSizeLimit(uri);
   }
+  await assertReadableFile(uri);
 
   const localThumbnail = await generateLocalUploadThumbnail(uri, media.kind);
   const extension = extensionFromUri(
@@ -228,36 +381,71 @@ export async function uploadMediaDirect(
   );
   const contentType = contentTypeFor(media.kind, extension, media.type);
 
-  const presignRes = await requestMediaPresign({
-    content_type: contentType,
-    extension,
-    folder: options?.folder ?? 'posts',
-    filename_prefix: media.kind === 'video' ? 'PostVid' : 'PostImg',
-    count: 1,
-  });
+  let lastError: unknown;
+  const maxPresignAttempts = media.kind === 'video' ? 2 : 1;
 
-  const upload: any =
-    presignRes?.data?.data?.uploads?.[0] ??
-    presignRes?.data?.uploads?.[0];
-  if (!upload?.upload_url || !upload?.key) {
-    throw new Error('Failed to get upload URL');
+  for (let attempt = 1; attempt <= maxPresignAttempts; attempt++) {
+    if (options?.signal?.aborted) {
+      throw new DOMException('Upload cancelled', 'AbortError');
+    }
+
+    try {
+      const presignRes = await requestMediaPresign({
+        content_type: contentType,
+        extension,
+        folder: options?.folder ?? 'posts',
+        filename_prefix: media.kind === 'video' ? 'PostVid' : 'PostImg',
+        count: 1,
+      });
+
+      const upload: any =
+        presignRes?.data?.data?.uploads?.[0] ??
+        presignRes?.data?.uploads?.[0];
+      if (!upload?.upload_url || !upload?.key) {
+        throw new Error('Failed to get upload URL');
+      }
+
+      // Only send headers the server signed — avoid spoiling S3 signature.
+      const signedHeaders: Record<string, string> = {
+        ...(upload.headers || {}),
+      };
+      if (!signedHeaders['Content-Type'] && !signedHeaders['content-type']) {
+        signedHeaders['Content-Type'] = contentType;
+      }
+
+      await putWithRetry(
+        upload.upload_url,
+        uri,
+        signedHeaders,
+        options?.onProgress,
+        media.kind === 'video' ? 3 : 2,
+        options?.signal,
+      );
+
+      return {
+        key: upload.key,
+        type: media.kind,
+        filename: upload.filename || `${upload.key.split('/').pop()}`,
+        localThumbnail,
+      };
+    } catch (error) {
+      if (options?.signal?.aborted || isAbortError(error)) {
+        throw error;
+      }
+      lastError = error;
+      if (attempt < maxPresignAttempts && isTransientNetworkError(error)) {
+        console.warn(
+          `[upload] transient failure, refreshing presign (attempt ${attempt})`,
+          error,
+        );
+        await sleep(1200 * attempt);
+        continue;
+      }
+      throw toFriendlyUploadError(error);
+    }
   }
 
-  await putWithRetry(
-    upload.upload_url,
-    uri,
-    upload.headers || {'Content-Type': contentType},
-    options?.onProgress,
-    3,
-    options?.signal,
-  );
-
-  return {
-    key: upload.key,
-    type: media.kind,
-    filename: upload.filename || `${upload.key.split('/').pop()}`,
-    localThumbnail,
-  };
+  throw toFriendlyUploadError(lastError);
 }
 
 export async function uploadMediaListDirect(
