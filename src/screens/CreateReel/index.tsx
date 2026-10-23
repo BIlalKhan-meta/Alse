@@ -27,9 +27,10 @@ import {images} from '../../utils/images';
 import moment from 'moment';
 import {createVideo, getVideoCategories} from '../../api/reels';
 import RNFS from 'react-native-fs';
-import {compressVideoIfNeeded} from '../../utils/directMediaUpload';
-
-const MAX_VIDEO_UPLOAD_BYTES = 100 * 1024 * 1024; // 100MB (matches backend)
+import {
+  compressVideoIfNeeded,
+  MAX_VIDEO_UPLOAD_BYTES,
+} from '../../utils/directMediaUpload';
 
 const PRIVACY_OPTIONS = [
   {label: 'Public', value: 'public'},

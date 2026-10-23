@@ -12,7 +12,6 @@ import {
 } from 'react-native';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import Video from 'react-native-video';
 import {useSelector} from 'react-redux';
 import useImagePicker, {
   isVideoAsset,
@@ -452,15 +451,16 @@ const CreatePost: React.FC = () => {
                 <TouchableOpacity
                   activeOpacity={0.9}
                   onPress={() => handleEditMedia(0)}
-                  style={styles.mediaPressable}>
-                  <Video
-                    source={{uri: selectedMediaList[0].uri}}
-                    style={styles.mainMediaImage}
-                    resizeMode="cover"
-                    repeat
-                    muted
-                    pointerEvents="none"
-                  />
+                  style={styles.mediaPressable}
+                  accessibilityLabel="Edit video">
+                  {/*
+                    Do NOT mount react-native-video here. Autoplay previews OOM
+                    on low-heap Android (ALSE-20: VideoEventEmitter + 128MB limit).
+                  */}
+                  <View style={[styles.mainMediaImage, styles.videoPoster]}>
+                    <VideoIcon color="#fff" size={36} />
+                    <Text style={styles.videoPosterLabel}>Video</Text>
+                  </View>
                 </TouchableOpacity>
               ) : (
                 <TouchableOpacity
@@ -492,14 +492,9 @@ const CreatePost: React.FC = () => {
                       onPress={() => handleEditMedia(index + 1)}
                       style={styles.mediaPressable}>
                       {media.kind === 'video' ? (
-                        <Video
-                          source={{uri: media.uri}}
-                          style={styles.thumbnailImage}
-                          resizeMode="cover"
-                          repeat
-                          muted
-                          pointerEvents="none"
-                        />
+                        <View style={[styles.thumbnailImage, styles.videoPoster]}>
+                          <VideoIcon color="#fff" size={20} />
+                        </View>
                       ) : (
                         <Image
                           source={{uri: media.uri}}

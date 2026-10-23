@@ -7,7 +7,9 @@ import {showEditor} from 'react-native-video-trim';
 import type {RefObject} from 'react';
 import type {View} from 'react-native';
 import {CropAspect} from '../types/mediaEditor';
-import {normalizeFormDataUri} from './helpers';
+import {normalizeFormDataUri, prepareVideoUriForUpload} from './helpers';
+
+const VIDEO_TRIM_TIMEOUT_MS = 5 * 60 * 1000;
 
 export type ImageDimensions = {width: number; height: number};
 
@@ -329,15 +331,30 @@ export async function openVideoEditorForPost(
     };
   }
 
+  let editorUri = sourceUri;
+  try {
+    // content:// / ph:// must be real files before native FFmpeg trim.
+    editorUri = await prepareVideoUriForUpload(sourceUri);
+  } catch (error: any) {
+    return {
+      success: false,
+      error: error?.message ?? 'Could not prepare video for editing',
+    };
+  }
+
   return new Promise(resolve => {
     const emitter = new NativeEventEmitter(VideoTrimModule);
     let settled = false;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
     const finish = (result: VideoEditorPostResult) => {
       if (settled) {
         return;
       }
       settled = true;
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
       subscription.remove();
       resolve(result);
     };
@@ -363,8 +380,15 @@ export async function openVideoEditorForPost(
       }
     });
 
+    timeoutId = setTimeout(() => {
+      finish({
+        success: false,
+        error: 'Video editor timed out. Please try a shorter clip.',
+      });
+    }, VIDEO_TRIM_TIMEOUT_MS);
+
     try {
-      showEditor(sourceUri, {
+      showEditor(editorUri, {
         headerText: 'Edit Video',
         trimmerColor: '#20B2AA',
         theme: 'light',

@@ -1,8 +1,12 @@
 import {Platform} from 'react-native';
 import RNFS from 'react-native-fs';
 import {requestMediaPresign, MediaKeyPayload} from '../api/mediaUpload';
+import {prepareVideoUriForUpload} from './helpers';
 
 export type UploadProgressCallback = (percent: number) => void;
+
+/** Matches CreateReel / backend practical limit — oversized files OOM low-heap Android. */
+export const MAX_VIDEO_UPLOAD_BYTES = 100 * 1024 * 1024;
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -144,15 +148,26 @@ async function putWithRetry(
 export async function compressVideoIfNeeded(uri: string): Promise<string> {
   try {
     const {Video} = require('react-native-compressor');
+    // Conservative settings for low-heap Android (128MB devices OOM during encode).
     const compressed = await Video.compress(uri, {
       compressionMethod: 'auto',
-      maxSize: 1280,
-      bitrate: 2_500_000,
+      maxSize: Platform.OS === 'android' ? 960 : 1280,
+      bitrate: Platform.OS === 'android' ? 1_500_000 : 2_500_000,
     });
     return compressed || uri;
   } catch (error) {
     console.warn('[upload] video compress skipped', error);
     return uri;
+  }
+}
+
+async function assertVideoUnderSizeLimit(uri: string): Promise<void> {
+  const path = uri.replace(/^file:\/\//, '');
+  const stat = await RNFS.stat(path).catch(() => null);
+  if (stat?.size && Number(stat.size) > MAX_VIDEO_UPLOAD_BYTES) {
+    throw new Error(
+      'Video must be smaller than 100 MB. Please trim or compress it before uploading.',
+    );
   }
 }
 
@@ -166,12 +181,18 @@ export async function generateLocalUploadThumbnail(
   return null;
 }
 
-export async function ensureFileUriReadable(uri: string): Promise<string> {
+export async function ensureFileUriReadable(
+  uri: string,
+  kind: 'image' | 'video' = 'image',
+): Promise<string> {
   if (!uri) {
     return uri;
   }
+  if (kind === 'video') {
+    return prepareVideoUriForUpload(uri);
+  }
   if (uri.startsWith('content://') || uri.startsWith('ph://')) {
-    const dest = `${RNFS.CachesDirectoryPath}/upload_${Date.now()}.bin`;
+    const dest = `${RNFS.CachesDirectoryPath}/upload_${Date.now()}.jpg`;
     await RNFS.copyFile(uri, dest);
     return `file://${dest}`;
   }
@@ -191,9 +212,13 @@ export async function uploadMediaDirect(
     signal?: AbortSignal;
   },
 ): Promise<MediaKeyPayload & {localThumbnail?: string | null}> {
-  let uri = await ensureFileUriReadable(media.uri);
+  let uri = await ensureFileUriReadable(media.uri, media.kind);
   if (media.kind === 'video') {
+    if (options?.signal?.aborted) {
+      throw new DOMException('Upload cancelled', 'AbortError');
+    }
     uri = await compressVideoIfNeeded(uri);
+    await assertVideoUnderSizeLimit(uri);
   }
 
   const localThumbnail = await generateLocalUploadThumbnail(uri, media.kind);

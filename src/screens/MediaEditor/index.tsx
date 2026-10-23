@@ -4,6 +4,7 @@ import {
   ActivityIndicator,
   Image,
   LayoutChangeEvent,
+  Platform,
   Text,
   TouchableOpacity,
   View,
@@ -63,8 +64,11 @@ const MediaEditor: React.FC = () => {
   const [cardHeight, setCardHeight] = useState(400);
   const [activeTool, setActiveTool] = useState<EditorTool>('none');
   const [textOverlay, setTextOverlay] = useState<TextOverlayState | null>(null);
-  const [videoPaused, setVideoPaused] = useState(false);
+  // Default paused on Android — autoplay + ExoPlayer events OOM low-heap devices (ALSE-20).
+  const [videoPaused, setVideoPaused] = useState(Platform.OS === 'android');
   const [isExporting, setIsExporting] = useState(false);
+  /** Unmount Video while opening the native trimmer so decoders release memory. */
+  const [hideVideoPreview, setHideVideoPreview] = useState(false);
   const [isCropping, setIsCropping] = useState(false);
   const [captureOverlay, setCaptureOverlay] = useState(false);
   const [canUndo, setCanUndo] = useState(false);
@@ -292,8 +296,13 @@ const MediaEditor: React.FC = () => {
     try {
       if (currentItem.kind === 'video') {
         setIsExporting(true);
+        setVideoPaused(true);
+        setHideVideoPreview(true);
+        // Let the player tear down before FFmpeg/trim UI allocates memory.
+        await new Promise<void>(resolve => setTimeout(resolve, 80));
         const result = await openVideoEditorForPost(workingUri || currentItem.uri);
         if (!result.success || !result.exportedUri) {
+          setHideVideoPreview(false);
           if (result.error && result.error !== 'User cancelled') {
             Toast.error(result.error ?? t('videoEditorFailed'));
           }
@@ -342,6 +351,7 @@ const MediaEditor: React.FC = () => {
         sourceUri,
       });
     } catch (error: any) {
+      setHideVideoPreview(false);
       Toast.error(error?.message ?? t('imageEditorFailed'));
     } finally {
       setCaptureOverlay(false);
@@ -353,16 +363,37 @@ const MediaEditor: React.FC = () => {
     if (currentItem.kind === 'video') {
       return (
         <>
-          <Video
-            source={{uri: workingUri || currentItem.uri}}
-            style={styles.mediaFill}
-            resizeMode="cover"
-            repeat
-            paused={videoPaused}
-          />
+          {hideVideoPreview || isExporting ? (
+            <View style={[styles.mediaFill, {backgroundColor: '#111'}]} />
+          ) : (
+            <Video
+              source={{uri: workingUri || currentItem.uri}}
+              style={styles.mediaFill}
+              resizeMode="cover"
+              repeat
+              muted
+              paused={videoPaused}
+              playInBackground={false}
+              playWhenInactive={false}
+              disableFocus={Platform.OS === 'android'}
+              useTextureView={Platform.OS === 'android'}
+              maxBitRate={1_200_000}
+              bufferConfig={{
+                minBufferMs: 1000,
+                maxBufferMs: 4000,
+                bufferForPlaybackMs: 500,
+                bufferForPlaybackAfterRebufferMs: 1000,
+              }}
+              onError={err => {
+                console.warn('[MediaEditor] video preview error:', err?.error ?? err);
+                setVideoPaused(true);
+              }}
+            />
+          )}
           <TouchableOpacity
             style={styles.videoControls}
-            onPress={() => setVideoPaused(prev => !prev)}>
+            onPress={() => setVideoPaused(prev => !prev)}
+            disabled={hideVideoPreview || isExporting}>
             <Text style={styles.videoControlText}>
               {videoPaused ? t('play') : t('pause')}
             </Text>

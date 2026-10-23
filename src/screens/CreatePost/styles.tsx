@@ -136,6 +136,17 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  videoPoster: {
+    backgroundColor: '#111',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  videoPosterLabel: {
+    marginTop: 8,
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '600',
+  },
   mediaPressable: {
     width: '100%',
     height: '100%',
