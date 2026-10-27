@@ -7,8 +7,8 @@
   },
   "scripts": {
     "postinstall": "patch-package",
-    "android": "react-native run-android",
-    "android:device": "react-native run-android --device $(adb devices | grep -w device | head -1 | awk '{print $1}')",
+    "android": "adb reverse tcp:8081 tcp:8081 || true; react-native run-android --active-arch-only",
+    "android:device": "adb reverse tcp:8081 tcp:8081 || true; react-native run-android --active-arch-only --device $(adb devices | grep -w device | head -1 | awk '{print $1}')",
     "ios": "react-native run-ios",
     "ios:archive": "cd ios && xcodebuild -workspace Alenga.xcworkspace -scheme Alenga -configuration Release -destination 'generic/platform=iOS' archive -archivePath build/Alenga.xcarchive",
     "ios:upload": "bash scripts/upload-ios-archive.sh",

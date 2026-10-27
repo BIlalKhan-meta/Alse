@@ -1,6 +1,6 @@
 import {useFocusEffect, useNavigation, useRoute} from '@react-navigation/native';
 import {ChevronLeft, Camera, Video as VideoIcon, Music, Check, X} from 'lucide-react-native';
-import React, {useEffect, useLayoutEffect, useState} from 'react';
+import React, {useEffect, useLayoutEffect, useRef, useState} from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -23,7 +23,12 @@ import {SelectedMusic} from '../../types/backgroundMusic';
 import {EditedMedia} from '../../types/mediaEditor';
 import {selectUserProfile} from '../../store/slices/authSlice';
 import {formatMusicLabel} from '../../utils/backgroundMusic';
-import {Toast, getAbsoluteAvatarUrl, getMessage} from '../../utils/helpers';
+import {
+  Toast,
+  getAbsoluteAvatarUrl,
+  getMessage,
+  prepareVideoUriForUpload,
+} from '../../utils/helpers';
 import {
   draftMediaToPickedMedia,
   loadPostDraft,
@@ -68,6 +73,31 @@ const CreatePost: React.FC = () => {
   const {startImageEditFlow, startVideoEditFlow, startReEditFlow} =
     useMediaEditorFlow('create');
   const remainingMediaSlots = MAX_MEDIA - selectedMediaList.length;
+  const preparedVideoUrisRef = useRef<Record<string, string>>({});
+  const preparingVideoRef = useRef<Record<string, boolean>>({});
+
+  useEffect(() => {
+    const videos = selectedMediaList.filter(
+      media => media?.kind === 'video' && media.uri,
+    );
+    for (const media of videos) {
+      const key = media.uri;
+      if (preparedVideoUrisRef.current[key] || preparingVideoRef.current[key]) {
+        continue;
+      }
+      preparingVideoRef.current[key] = true;
+      void prepareVideoUriForUpload(key)
+        .then(prepared => {
+          preparedVideoUrisRef.current[key] = prepared;
+        })
+        .catch(error => {
+          console.warn('[CreatePost] video prepare skipped', error);
+        })
+        .finally(() => {
+          preparingVideoRef.current[key] = false;
+        });
+    }
+  }, [selectedMediaList]);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -196,22 +226,33 @@ const CreatePost: React.FC = () => {
       privacyValue = '0';
     }
 
-    const mediaSnapshot = selectedMediaList.filter(media => media?.uri);
+    const mediaSnapshot = selectedMediaList
+      .filter(media => media?.uri)
+      .map(media => {
+        if (media.kind !== 'video') {
+          return media;
+        }
+        const prepared = preparedVideoUrisRef.current[media.uri];
+        return prepared
+          ? {...media, uploadUri: prepared}
+          : media;
+      });
     const musicSnapshot = selectedMusic;
     const text = description.trim();
     const draftId = activeDraftId;
     const userId = user?.id;
 
-    navigation.goBack();
-
-    void enqueuePostUpload({
+    const uploadPayload = {
       description: text,
       privacy: privacyValue,
       mediaList: mediaSnapshot,
       music: musicSnapshot,
       draftId,
       userId,
-    });
+    };
+
+    navigation.goBack();
+    void enqueuePostUpload(uploadPayload);
   };
 
   const hasDraftContent =

@@ -18,6 +18,7 @@ export type QueuedPostUpload = {
   privacy: string;
   mediaList: Array<{
     uri: string;
+    uploadUri?: string;
     kind: 'image' | 'video';
     name?: string;
     type?: string;
@@ -32,6 +33,26 @@ let activeController: AbortController | null = null;
 let lastEmittedPercent = -1;
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+const CREATE_POST_TIMEOUT_MS = 90_000;
+
+function mergeAbortSignals(
+  parent: AbortSignal,
+  timeoutMs: number,
+): {signal: AbortSignal; dispose: () => void} {
+  const timeoutController = new AbortController();
+  const timer = setTimeout(() => timeoutController.abort(), timeoutMs);
+  const onParentAbort = () => timeoutController.abort();
+  parent.addEventListener('abort', onParentAbort, {once: true});
+
+  return {
+    signal: timeoutController.signal,
+    dispose: () => {
+      clearTimeout(timer);
+      parent.removeEventListener('abort', onParentAbort);
+    },
+  };
+}
 
 function throwIfCancelled(signal: AbortSignal) {
   if (signal.aborted) {
@@ -68,7 +89,11 @@ function emitProgress(message: string, percent?: number) {
     if (nextPercent < lastEmittedPercent && nextPercent !== 0) {
       nextPercent = lastEmittedPercent;
     }
-    if (nextPercent === lastEmittedPercent && message.startsWith('Uploading')) {
+    if (
+      nextPercent === lastEmittedPercent &&
+      message.startsWith('Uploading') &&
+      lastEmittedPercent < 99
+    ) {
       return;
     }
     lastEmittedPercent = nextPercent;
@@ -104,7 +129,8 @@ export async function enqueuePostUpload(payload: QueuedPostUpload) {
   activeController = controller;
   const {signal} = controller;
   lastEmittedPercent = -1;
-  emitProgress('Uploading…', 0);
+  const hasVideo = payload.mediaList.some(m => m?.kind === 'video');
+  emitProgress(hasVideo ? 'Preparing video…' : 'Uploading…', hasVideo ? 8 : 0);
 
   try {
     let mediaToUpload = payload.mediaList.filter(m => m?.uri);
@@ -138,6 +164,7 @@ export async function enqueuePostUpload(payload: QueuedPostUpload) {
         mediaKeys = await uploadMediaListDirect(mediaToUpload, {
           folder: 'posts',
           onProgress: percent => emitProgress('Uploading…', percent),
+          onStatus: (message, percent) => emitProgress(message, percent),
           signal,
         });
       } catch (directErr) {
@@ -148,7 +175,9 @@ export async function enqueuePostUpload(payload: QueuedPostUpload) {
         const directMessage = String((directErr as Error)?.message || '');
         if (
           directMessage &&
-          !/network request failed|network error/i.test(directMessage)
+          !/network request failed|network error|status 5\d\d|http 5\d\d/i.test(
+            directMessage,
+          )
         ) {
           throw toFriendlyUploadError(directErr);
         }
@@ -202,12 +231,26 @@ export async function enqueuePostUpload(payload: QueuedPostUpload) {
     }
 
     throwIfCancelled(signal);
-    emitProgress('Creating post…', 98);
-    const createResponse = await createPostWithMediaKeys({
-      description: payload.description,
-      privacy: payload.privacy,
-      media_keys: mediaKeys,
-    }, signal);
+    emitProgress('Creating post…', 100);
+    const createTimeout = mergeAbortSignals(signal, CREATE_POST_TIMEOUT_MS);
+    let createResponse: any;
+    try {
+      createResponse = await createPostWithMediaKeys(
+        {
+          description: payload.description,
+          privacy: payload.privacy,
+          media_keys: mediaKeys,
+        },
+        createTimeout.signal,
+      );
+    } catch (createErr) {
+      if (createTimeout.signal.aborted && !signal.aborted) {
+        throw new Error('Creating post timed out. Please try again.');
+      }
+      throw createErr;
+    } finally {
+      createTimeout.dispose();
+    }
     if (payload.userId && payload.draftId) {
       await deletePostDraftById(payload.userId, payload.draftId);
     }

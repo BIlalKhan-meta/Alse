@@ -570,6 +570,34 @@ function isStillImageUrl(url?: string | null): boolean {
   return IMAGE_EXT.test(url.split('?')[0] || '');
 }
 
+/** Stream URL for inline feed playback — never use image variant paths for video. */
+export function getVideoPlaybackUrl(media?: {
+  path?: string;
+  full_path?: string;
+}): string {
+  if (!media) {
+    return '';
+  }
+  return changeUrlForData(media.path || media.full_path || '');
+}
+
+/** Still-image poster for a video post, when the API provides one. */
+export function getVideoPosterUrl(media?: {
+  thumbnail_path?: string;
+  medium_path?: string;
+}): string | undefined {
+  if (!media) {
+    return undefined;
+  }
+  const candidates = [media.thumbnail_path, media.medium_path];
+  for (const candidate of candidates) {
+    if (isStillImageUrl(candidate)) {
+      return changeUrlForData(candidate!);
+    }
+  }
+  return undefined;
+}
+
 /**
  * Thumbnail for profile grids: prefer a still Post_* image.
  * For video-only posts, prefer a real image thumbnail when present; otherwise

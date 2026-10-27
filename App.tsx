@@ -130,6 +130,8 @@ function App(): React.JSX.Element {
           </NavigationContainer>
           {__DEV__ && <NetworkLoggerFAB />}
           <Toast />
+          {/* Must stay under Provider — useDispatch crashes with store=null (ALSE-24). */}
+          <UploadProgressBanner />
           </AppQueryProvider>
         </LanguageProvider>
       </PersistGate>
@@ -141,7 +143,6 @@ function App(): React.JSX.Element {
       <SafeAreaProvider>
         <ErrorBoundary>
           {appContent}
-          <UploadProgressBanner />
         </ErrorBoundary>
       </SafeAreaProvider>
     </GestureHandlerRootView>

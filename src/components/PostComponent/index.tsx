@@ -52,6 +52,8 @@ import {
   createVideoFile,
   getAbsoluteAvatarUrl,
   getMessage,
+  getVideoPlaybackUrl,
+  getVideoPosterUrl,
   parseSharedFrom,
   Toast,
 } from '../../utils/helpers';
@@ -410,6 +412,8 @@ const PostComponent: React.FC<PostProps> = ({
     // Android TextureView/ExoPlayer crashes when recycled list cells tear down.
     const shouldMountVideo =
       isVideo && isFocused === true && isActiveSlide && !videoError;
+    const videoPlaybackUri = isVideo ? getVideoPlaybackUrl(item) : '';
+    const videoPosterUri = isVideo ? getVideoPosterUrl(item) : undefined;
 
     return (
       <View style={[styles.mediaSlide, {width: mediaSlideWidth}]}>
@@ -417,12 +421,15 @@ const PostComponent: React.FC<PostProps> = ({
           <View style={styles.videoInlineWrap} collapsable={false}>
             {/* Poster under player / for inactive slides */}
             <View style={styles.videoPoster} pointerEvents="none">
-              <CustomImage
-                media={item}
-                variant="medium"
-                style={styles.postImage}
-                resizeMode="cover"
-              />
+              {videoPosterUri ? (
+                <CustomImage
+                  source={{uri: videoPosterUri}}
+                  style={styles.postImage}
+                  resizeMode="cover"
+                />
+              ) : (
+                <View style={styles.videoPosterFallback} />
+              )}
               {!shouldMountVideo ? (
                 <View style={styles.playAffordance} pointerEvents="none">
                   <Play color="#fff" size={28} fill="#fff" />
@@ -437,17 +444,17 @@ const PostComponent: React.FC<PostProps> = ({
                   </View>
                 ) : null}
                 <Video
-                  key={`${String(item.id ?? mediaId ?? id ?? '')}-${changeUrlForData(item.path)}`}
+                  key={`${String(item.id ?? mediaId ?? id ?? '')}-${videoPlaybackUri}`}
                   onReadyForDisplay={() => {
                     if (mountedRef.current) {
                       setVideoLoad(false);
                     }
                   }}
                   source={{
-                    uri: changeUrlForData(
-                      item.medium_path || item.path || item.full_path || '',
-                    ),
+                    uri: videoPlaybackUri,
                   }}
+                  poster={videoPosterUri}
+                  posterResizeMode="cover"
                   style={[
                     styles.postVideo,
                     {
@@ -468,12 +475,13 @@ const PostComponent: React.FC<PostProps> = ({
                   disableFocus={Platform.OS === 'android'}
                   useTextureView={Platform.OS === 'android'}
                   bufferConfig={{
-                    minBufferMs: 2000,
-                    maxBufferMs: 10000,
-                    bufferForPlaybackMs: 1000,
-                    bufferForPlaybackAfterRebufferMs: 2000,
+                    minBufferMs: 1500,
+                    maxBufferMs: 8000,
+                    bufferForPlaybackMs: 350,
+                    bufferForPlaybackAfterRebufferMs: 750,
                   }}
-                  maxBitRate={2_500_000}
+                  maxBitRate={2_000_000}
+                  preferredForwardBufferDuration={4}
                   onBuffer={res => {
                     if (mountedRef.current) {
                       setVideoLoad(Boolean(res?.isBuffering));
@@ -1087,6 +1095,10 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     backgroundColor: '#E4E6EB',
     zIndex: 1,
+  },
+  videoPosterFallback: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#1C1C1E',
   },
   playAffordance: {
     ...StyleSheet.absoluteFillObject,
