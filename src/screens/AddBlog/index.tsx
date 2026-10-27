@@ -208,7 +208,13 @@ const AddBlog = () => {
             onPress: () =>
               captureImage(title == t('blogs.addVideos') ? 'video' : 'photo'),
           },
-          {text: 'Open Gallery', onPress: chooseImageFromLibrary},
+          {
+            text: 'Open Gallery',
+            onPress: () =>
+              chooseImageFromLibrary(
+                title == t('blogs.addVideos') ? 'video' : 'photo',
+              ),
+          },
         ]}
       />
       <Formik

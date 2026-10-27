@@ -9,6 +9,30 @@ import App from './App';
 import {name as appName} from './app.json';
 import {SENTRY_DSN} from './src/config/sentry';
 
+const isNoisyNetworkError = (event, hint) => {
+  const values = event?.exception?.values || [];
+  const messages = [
+    ...values.map(v => `${v?.type || ''} ${v?.value || ''}`),
+    event?.message || '',
+    hint?.originalException?.message || '',
+    String(hint?.originalException || ''),
+  ]
+    .join(' ')
+    .toLowerCase();
+
+  return (
+    messages.includes('socketexception') ||
+    messages.includes('software caused connection abort') ||
+    messages.includes('the request timed out') ||
+    messages.includes('network request failed') ||
+    messages.includes('network error') ||
+    messages.includes('failed to connect') ||
+    messages.includes('econnreset') ||
+    messages.includes('econnaborted') ||
+    messages.includes('etimedout')
+  );
+};
+
 Sentry.init({
   dsn: SENTRY_DSN || undefined,
   enabled: Boolean(SENTRY_DSN),
@@ -18,9 +42,17 @@ Sentry.init({
   enableNative: true,
   enableNativeCrashHandling: true,
   attachScreenshot: true,
-  // Default ~2s flags keyboard/system stalls as hangs (ALSE-M). Keep real hangs.
-  appHangTimeoutInterval: 4,
+  // Default ~2s flags keyboard/system stalls as hangs (ALSE-M / ALSE-3).
+  // 5s keeps real freezes while reducing false positives around keyboard/bridge.
+  appHangTimeoutInterval: 5,
   environment: __DEV__ ? 'development' : 'production',
+  beforeSend(event, hint) {
+    // ALSE-1A / ALSE-P: transient network failures — don't flood the issue stream.
+    if (isNoisyNetworkError(event, hint)) {
+      return null;
+    }
+    return event;
+  },
 });
 
 // Must run at app entry (not inside React). Otherwise background/quit FCM never reaches JS.
@@ -37,11 +69,31 @@ messaging().setBackgroundMessageHandler(async remoteMessage => {
     const {
       handleBackgroundFcmMessage,
       registerNotifeeBackgroundHandler,
+      isIncomingCallPush,
     } = require('./src/services/pushNotificationService');
-    const {setupNativeCallKeep} = require('./src/services/nativeCallKeepService');
     registerNotifeeBackgroundHandler();
-    // Must settle before the call UI is presented, or the push is dropped.
-    await setupNativeCallKeep().catch(() => {});
+    // Only load CallKeep native libs for actual call pushes. Loading them for
+    // every "X is live" / like push on the main thread caused Background ANRs
+    // (ALSE-21 / ALSE-1Z / ALSE-23) while the activity was stopped.
+    const data = remoteMessage?.data || {};
+    const title = String(
+      remoteMessage?.notification?.title ?? data.title ?? '',
+    ).toLowerCase();
+    const type = String(
+      data.notification_type ?? data.type ?? '',
+    ).toLowerCase();
+    const looksLikeCall =
+      (typeof isIncomingCallPush === 'function' &&
+        isIncomingCallPush(remoteMessage)) ||
+      type === 'incoming_call' ||
+      type === 'call_cancelled' ||
+      type === 'call_cancel' ||
+      title.includes('incoming call') ||
+      title.includes('calling');
+    if (looksLikeCall) {
+      const {setupNativeCallKeep} = require('./src/services/nativeCallKeepService');
+      await setupNativeCallKeep().catch(() => {});
+    }
     await handleBackgroundFcmMessage(remoteMessage);
   } catch (e) {
     console.warn('[FCM] Notifee background display failed:', e?.message ?? e);

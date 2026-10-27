@@ -11,6 +11,7 @@ import {
   Platform,
   InteractionManager,
 } from 'react-native';
+import {useAppIsActive} from '../../../hooks/useAppIsActive';
 import {FlashList} from '@shopify/flash-list';
 import {images} from '../../../utils/images';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
@@ -170,6 +171,15 @@ const Home: React.FC = () => {
 
   const [isFabOpen, setIsFabOpen] = useState(false);
   const animation = useRef(new Animated.Value(0)).current;
+  const fabAnimRef = useRef<Animated.CompositeAnimation | null>(null);
+  const appIsActive = useAppIsActive();
+
+  useEffect(() => {
+    return () => {
+      fabAnimRef.current?.stop();
+      animation.stopAnimation();
+    };
+  }, [animation]);
 
   const [mediaModalVisible, setMediaModalVisible] = useState<{
     visible: boolean;
@@ -189,13 +199,13 @@ const Home: React.FC = () => {
 
   const toggleFab = () => {
     const toValue = isFabOpen ? 0 : 1;
-
-    Animated.spring(animation, {
+    fabAnimRef.current?.stop();
+    fabAnimRef.current = Animated.spring(animation, {
       toValue,
       friction: 5,
       useNativeDriver: true,
-    }).start();
-
+    });
+    fabAnimRef.current.start();
     setIsFabOpen(!isFabOpen);
   };
 
@@ -624,6 +634,7 @@ const Home: React.FC = () => {
 
     const isFocused =
       isScreenFocused &&
+      appIsActive &&
       !mediaModalVisible.visible &&
       focusedIndex === index;
     const mediaList = getNewsfeedMediaList(item?.media);

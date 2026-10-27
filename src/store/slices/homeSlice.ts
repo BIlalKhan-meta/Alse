@@ -271,20 +271,22 @@ const homeSlice = createSlice({
         item => item?.id == action?.payload?.postid,
       );
       if (index != -1) {
+        // Immer draft — mutate in place. Avoid JSON deep-clone (main-thread stall / App Hang).
         state.posts[index].is_liked = !state.posts[index].is_liked;
-        const postFound = state.posts[index];
-
-        const clone = JSON.parse(JSON.stringify(postFound?.likes));
-        const find = clone.findIndex(
-          val => val?.user?.id == action?.payload?.tempData?.user?.id,
-        );
-        console.log('findfindfindfind ====findfindfind>', find);
-        if (find > -1) {
-          clone.splice(find, 1);
-        } else {
-          clone.push(action?.payload?.tempData);
+        const likes = state.posts[index].likes;
+        if (!Array.isArray(likes)) {
+          state.posts[index].likes = action?.payload?.tempData
+            ? [action.payload.tempData]
+            : [];
+          return;
         }
-        state.posts[index].likes = clone;
+        const userId = action?.payload?.tempData?.user?.id;
+        const find = likes.findIndex((val: any) => val?.user?.id == userId);
+        if (find > -1) {
+          likes.splice(find, 1);
+        } else if (action?.payload?.tempData) {
+          likes.push(action.payload.tempData);
+        }
       }
     },
     updatePost: (state, action) => {
@@ -303,6 +305,16 @@ const homeSlice = createSlice({
       if (index! - 1) {
         state.posts[index].is_saved = !state.posts[index].is_saved;
       }
+    },
+    prependPost: (state, action) => {
+      const post = action.payload;
+      if (!post || post.id == null) {
+        return;
+      }
+      const withoutDuplicate = state.posts.filter(
+        (item: any) => item?.id !== post.id,
+      );
+      state.posts = [post, ...withoutDuplicate] as typeof state.posts;
     },
   },
   extraReducers: builder => {
@@ -350,6 +362,7 @@ const homeSlice = createSlice({
   },
 });
 
-export const {updateLike, postSave, updatePost} = homeSlice.actions;
+export const {updateLike, postSave, updatePost, prependPost} =
+  homeSlice.actions;
 
 export default homeSlice.reducer;

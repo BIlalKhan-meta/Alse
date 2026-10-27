@@ -23,6 +23,7 @@ import {
 } from 'lucide-react-native';
 import {useTranslation} from 'react-i18next';
 import GlobalHeader from '../../components/GlobalHeader';
+import {toSafeImageUri} from '../../utils/helpers';
 
 interface RouteParams {
   auctionId: number;
@@ -218,9 +219,8 @@ const AuctionDetail: React.FC = () => {
   
   // Get the first available image or use placeholder
   const imageUri =
-    auction.product_images && auction.product_images.length > 0
-      ? auction.product_images[0]
-      : 'https://via.placeholder.com/300x200?text=No+Image';
+    toSafeImageUri(auction.product_images?.[0]) ||
+    'https://via.placeholder.com/300x200?text=No+Image';
 
   // Use latest bid amount or starting price for display
   const displayPrice = latestBidAmount || auction.starting_price;

@@ -29,6 +29,7 @@ import {useTranslation} from 'react-i18next';
 import GlobalHeader from '../../components/GlobalHeader';
 import {useAppDispatch} from '../../hooks/storeHooks';
 import {logout, LogoutUser} from '../../store/slices/authSlice';
+import {toSafeImageUri} from '../../utils/helpers';
 
 // Using Auction interface from auction.ts
 
@@ -231,9 +232,8 @@ const AuctionBidding: React.FC = () => {
     
     // Get the first available image or use placeholder
     const imageUri =
-      item.product_images && item.product_images.length > 0
-        ? item.product_images[0]
-        : 'https://via.placeholder.com/300x200?text=No+Image';
+      toSafeImageUri(item.product_images?.[0]) ||
+      'https://via.placeholder.com/300x200?text=No+Image';
 
     // Use starting price as current price if no current price is available
     const currentPrice = item.current_price || parseFloat(item.starting_price);

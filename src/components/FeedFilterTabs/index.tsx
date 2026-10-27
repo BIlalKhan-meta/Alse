@@ -1,9 +1,5 @@
 import React from 'react';
-import {Text, View} from 'react-native';
-import {
-  ScrollView,
-  TouchableOpacity,
-} from 'react-native-gesture-handler';
+import {ScrollView, Text, TouchableOpacity, View} from 'react-native';
 import {useTranslation} from 'react-i18next';
 import {FEED_FILTER_TABS, FeedFilterTab} from '../../utils/feedFilters';
 import styles from './styles';
@@ -20,7 +16,9 @@ const FeedFilterTabs: React.FC<FeedFilterTabsProps> = ({
   const {t} = useTranslation();
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} collapsable={false}>
+      {/* RN ScrollView (not RNGH) + single content child avoids ALSE-1D
+          HorizontalScrollView multi-child crash during screen transitions. */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -28,23 +26,25 @@ const FeedFilterTabs: React.FC<FeedFilterTabsProps> = ({
         nestedScrollEnabled
         directionalLockEnabled
         contentContainerStyle={styles.scrollContent}>
-        {FEED_FILTER_TABS.map(filter => {
-          const isActive = activeFilter === filter;
-          return (
-            <TouchableOpacity
-              key={filter}
-              testID={`feed-filter-${filter}`}
-              accessibilityRole="button"
-              accessibilityState={{selected: isActive}}
-              activeOpacity={0.7}
-              onPress={() => onFilterChange(filter)}
-              style={[styles.tab, isActive && styles.tabActive]}>
-              <Text style={[styles.tabText, isActive && styles.tabTextActive]}>
-                {t(`feed.filters.${filter}`)}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
+        <View style={{flexDirection: 'row', alignItems: 'center'}}>
+          {FEED_FILTER_TABS.map(filter => {
+            const isActive = activeFilter === filter;
+            return (
+              <TouchableOpacity
+                key={filter}
+                testID={`feed-filter-${filter}`}
+                accessibilityRole="button"
+                accessibilityState={{selected: isActive}}
+                activeOpacity={0.7}
+                onPress={() => onFilterChange(filter)}
+                style={[styles.tab, isActive && styles.tabActive]}>
+                <Text style={[styles.tabText, isActive && styles.tabTextActive]}>
+                  {t(`feed.filters.${filter}`)}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
       </ScrollView>
     </View>
   );

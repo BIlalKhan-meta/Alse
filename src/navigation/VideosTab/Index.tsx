@@ -8,6 +8,7 @@ import {
   Image,
   TouchableOpacity,
   Pressable,
+  InteractionManager,
 } from 'react-native';
 import PagerView from 'react-native-pager-view';
 import Video from 'react-native-video';
@@ -35,6 +36,7 @@ import {getAbsoluteAvatarUrl, getMessage, Toast} from '../../utils/helpers';
 import {emitMessage} from '../../utils/socket';
 import {useTranslation} from 'react-i18next';
 import {usePostComments} from '../../hooks/usePostComments';
+import {useAppIsActive} from '../../hooks/useAppIsActive';
 
 type OverlayCtx = {
   _id: string | number;
@@ -350,6 +352,8 @@ const VideosTab = () => {
   const [activeIndex, setActiveIndex] = useState(0);
   const {t} = useTranslation();
   const isFocused = useIsFocused();
+  const appIsActive = useAppIsActive();
+  const tabActive = isFocused && appIsActive;
   const route = useRoute<any>();
   const navigation = useNavigation<any>();
   const pagerRef = useRef<PagerView>(null);
@@ -359,21 +363,32 @@ const VideosTab = () => {
   reelsRef.current = reels;
   const viewedReelIds = useRef<Set<number>>(new Set());
 
+  const isFocusedRef = useRef(tabActive);
+  isFocusedRef.current = tabActive;
+
   /** Avoid UIPageViewController crash when setPage runs mid-gesture/unmount (ALSE-J). */
   const safeSetPage = useCallback((page: number) => {
-    requestAnimationFrame(() => {
-      if (pagerScrollStateRef.current !== 'idle') {
-        return;
-      }
-      try {
-        if (typeof pagerRef.current?.setPageWithoutAnimation === 'function') {
-          pagerRef.current.setPageWithoutAnimation(page);
-        } else {
-          pagerRef.current?.setPage(page);
+    InteractionManager.runAfterInteractions(() => {
+      requestAnimationFrame(() => {
+        if (!isFocusedRef.current) {
+          return;
         }
-      } catch (err) {
-        console.warn('[VideosTab] setPage failed', err);
-      }
+        if (pagerScrollStateRef.current !== 'idle') {
+          return;
+        }
+        if (!pagerRef.current) {
+          return;
+        }
+        try {
+          if (typeof pagerRef.current.setPageWithoutAnimation === 'function') {
+            pagerRef.current.setPageWithoutAnimation(page);
+          } else {
+            pagerRef.current.setPage?.(page);
+          }
+        } catch (err) {
+          console.warn('[VideosTab] setPage failed', err);
+        }
+      });
     });
   }, []);
   const [shareVideoId, setShareVideoId] = useState<number | null>(null);
@@ -765,8 +780,10 @@ const VideosTab = () => {
               item={item}
               uri={processVideoUrl(item.video)}
               isActive={index === activeIndex}
-              shouldMountPlayer={Math.abs(index - activeIndex) <= 1}
-              tabFocused={isFocused}
+              shouldMountPlayer={
+                tabActive && Math.abs(index - activeIndex) <= 1
+              }
+              tabFocused={tabActive}
               index={index}
               videoHeaders={videoHeaders}
               onLike={handleLike}

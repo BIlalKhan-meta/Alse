@@ -7,6 +7,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
+import {useAppIsActive} from '../../hooks/useAppIsActive';
 import {
   ActivityIndicator,
   Alert,
@@ -177,6 +178,7 @@ interface Props {
 const ChatOngoing: React.FC<Props> = props => {
   const navigation = useNavigation();
   const isFocused = useIsFocused();
+  const appIsActive = useAppIsActive();
   const insets = useSafeAreaInsets();
 
   const [messages, setMessages] = useState<IMessage[]>([]);
@@ -1225,7 +1227,9 @@ const ChatOngoing: React.FC<Props> = props => {
               style={styles.fullscreenVideo}
               controls
               resizeMode="contain"
-              paused={false}
+              paused={!appIsActive}
+              playInBackground={false}
+              playWhenInactive={false}
               ignoreSilentSwitch="ignore"
             />
           ) : null}

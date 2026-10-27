@@ -16,11 +16,20 @@ const useImagePicker = () => {
     quality: 1,
   };
 
+  const normalizeMediaType = (mediaType: unknown): 'photo' | 'video' | 'mixed' => {
+    if (mediaType === 'photo' || mediaType === 'video' || mediaType === 'mixed') {
+      return mediaType;
+    }
+    // Press events / other objects must never reach native (ALSE-1J).
+    return 'photo';
+  };
+
   // Function to handle image selection from gallery
   const chooseImageFromLibrary = (mediaType = 'photo', showPreview = false) => {
+    const safeType = normalizeMediaType(mediaType);
     let options: any = {
       ...globalOptions,
-      mediaType: mediaType, // 'photo' or 'video' or 'mixed'
+      mediaType: safeType, // 'photo' or 'video' or 'mixed'
     };
 
     launchImageLibrary(options, response => {
@@ -46,9 +55,10 @@ const useImagePicker = () => {
     mediaType = 'photo',
     showPreview = false,
   ) => {
+    const safeType = normalizeMediaType(mediaType);
     let options: any = {
       ...globalOptions,
-      mediaType: mediaType,
+      mediaType: safeType,
     };
 
     try {
@@ -84,10 +94,11 @@ const useImagePicker = () => {
 
   // Function to capture image using the camera
   const captureImage = (mediaType = 'photo', showPreview = false) => {
+    const safeType = normalizeMediaType(mediaType);
     const isVideoOrMixed =
-      mediaType === 'video' || mediaType === 'mixed';
+      safeType === 'video' || safeType === 'mixed';
     let options: any = {
-      mediaType: mediaType, // 'photo' or 'video' or 'mixed'
+      mediaType: safeType, // 'photo' or 'video' or 'mixed'
       maxWidth: 2048,
       maxHeight: 2048,
       quality: 0.92,

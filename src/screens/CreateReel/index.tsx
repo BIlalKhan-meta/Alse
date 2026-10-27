@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   FlatList,
   Image,
+  Platform,
   ScrollView,
   Text,
   TextInput,
@@ -128,11 +129,19 @@ const CreateReel: React.FC = () => {
             if (!uri) {
               return null;
             }
+            const playableDuration = Number(
+              (edge?.node as any)?.image?.playableDuration ??
+                (edge?.node as any)?.playableDuration ??
+                0,
+            );
             return {
               id: `${edge.node.timestamp || index}_${index}`,
               uri,
               thumbnail: uri,
               filename: edge.node.image.filename || 'video.mp4',
+              duration: Number.isFinite(playableDuration)
+                ? playableDuration
+                : 0,
             };
           })
           .filter(Boolean) as any[],
@@ -241,15 +250,6 @@ const CreateReel: React.FC = () => {
     }
   };
 
-  const [durations, setDurations] = useState<any>({});
-
-  const handleLoad = (id: any, data: any) => {
-    setDurations((prev: any) => ({
-      ...prev,
-      [id]: data.duration, // duration in seconds
-    }));
-  };
-
   const formatDuration = (seconds: any) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
@@ -257,8 +257,7 @@ const CreateReel: React.FC = () => {
   };
 
   const renderVideoItem = ({item}: {item: any}) => {
-    const id = item.id;
-    const duration = durations[id] || 0;
+    const duration = Number(item?.duration) || 0;
     if (!item?.uri) {
       return null;
     }
@@ -267,17 +266,23 @@ const CreateReel: React.FC = () => {
       <TouchableOpacity
         style={styles.videoContainer}
         onPress={() => setSelectedVideo(item)}>
-        <Video
-          source={{uri: item.uri}}
-          style={styles.videoThumbnail}
-          paused={true}
-          resizeMode="cover"
-          onLoad={data => handleLoad(id, data)}
-          onError={() => {}}
-        />
-        <View style={styles.durationBadge}>
-          <Text style={styles.durationText}>{formatDuration(duration)}</Text>
+        {/* No ExoPlayer in the grid — N paused Videos still OOM low-heap Android (ALSE-1Y). */}
+        <View
+          style={[
+            styles.videoThumbnail,
+            {
+              backgroundColor: '#1a1a1a',
+              alignItems: 'center',
+              justifyContent: 'center',
+            },
+          ]}>
+          <VideoIcon size={28} color="#999" />
         </View>
+        {duration > 0 ? (
+          <View style={styles.durationBadge}>
+            <Text style={styles.durationText}>{formatDuration(duration)}</Text>
+          </View>
+        ) : null}
         {selectedVideo?.id === item.id && (
           <View style={styles.selectedOverlay}>
             <View style={styles.checkmark} />
@@ -298,9 +303,13 @@ const CreateReel: React.FC = () => {
                 source={{uri: selectedVideo.uri}}
                 style={styles.mainVideo}
                 resizeMode="contain"
-                paused={false}
-                repeat
+                paused
                 muted
+                playInBackground={false}
+                playWhenInactive={false}
+                disableFocus={Platform.OS === 'android'}
+                useTextureView={Platform.OS === 'android'}
+                onError={() => {}}
               />
               <TouchableOpacity
                 style={imageStyles.default.removeImageButton}
@@ -448,9 +457,13 @@ const CreateReel: React.FC = () => {
                 source={{uri: selectedVideo.uri}}
                 style={styles.previewVideo}
                 resizeMode="cover"
-                paused={false}
-                repeat
+                paused
                 muted
+                playInBackground={false}
+                playWhenInactive={false}
+                disableFocus={Platform.OS === 'android'}
+                useTextureView={Platform.OS === 'android'}
+                onError={() => {}}
               />
             </View>
           </View>

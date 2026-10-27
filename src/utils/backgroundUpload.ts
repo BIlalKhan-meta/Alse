@@ -40,6 +40,10 @@ export async function backgroundPutFile(
   signal?: AbortSignal,
   onProgress?: (percent: number) => void,
 ): Promise<void> {
+  // Android 13+: uploadservice GlobalRequestObserver → SecurityException (ALSE-X).
+  if (Platform.OS === 'android') {
+    throw new Error('Background upload disabled on Android (ALSE-X)');
+  }
   ensureAndroidUploadChannel();
   const path = filePath.replace('file://', '');
   await new Promise<void>((resolve, reject) => {

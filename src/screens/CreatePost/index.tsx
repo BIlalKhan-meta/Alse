@@ -23,7 +23,7 @@ import {SelectedMusic} from '../../types/backgroundMusic';
 import {EditedMedia} from '../../types/mediaEditor';
 import {selectUserProfile} from '../../store/slices/authSlice';
 import {formatMusicLabel} from '../../utils/backgroundMusic';
-import {Toast, getAbsoluteAvatarUrl} from '../../utils/helpers';
+import {Toast, getAbsoluteAvatarUrl, getMessage} from '../../utils/helpers';
 import {
   draftMediaToPickedMedia,
   loadPostDraft,

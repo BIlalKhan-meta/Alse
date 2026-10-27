@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -137,6 +137,7 @@ const Marketplace: React.FC = () => {
   // FAB state
   const [isFabOpen, setIsFabOpen] = useState(false);
   const [fabAnimation] = useState(new Animated.Value(0));
+  const fabAnimRef = useRef<Animated.CompositeAnimation | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [categories, setCategories] = useState<any[]>([]);
@@ -360,22 +361,31 @@ const Marketplace: React.FC = () => {
     selectedCategoryId,
   ]);
 
-  // FAB animation functions
-  const toggleFab = () => {
-    const toValue = isFabOpen ? 0 : 1;
-    Animated.spring(fabAnimation, {
+  useEffect(() => {
+    return () => {
+      fabAnimRef.current?.stop();
+      fabAnimation.stopAnimation();
+    };
+  }, [fabAnimation]);
+
+  const runFabSpring = (toValue: number) => {
+    fabAnimRef.current?.stop();
+    fabAnimRef.current = Animated.spring(fabAnimation, {
       toValue,
       useNativeDriver: true,
-    }).start();
+    });
+    fabAnimRef.current.start();
+  };
+
+  // FAB animation functions
+  const toggleFab = () => {
+    runFabSpring(isFabOpen ? 0 : 1);
     setIsFabOpen(!isFabOpen);
   };
 
   const handleTrackOrder = () => {
     setIsFabOpen(false);
-    Animated.spring(fabAnimation, {
-      toValue: 0,
-      useNativeDriver: true,
-    }).start();
+    runFabSpring(0);
 
     // Navigate to tracking screen with orders data
     navigation.navigate('OrderTracking', {orders});
@@ -383,10 +393,7 @@ const Marketplace: React.FC = () => {
 
   const handleBecomeRider = () => {
     setIsFabOpen(false);
-    Animated.spring(fabAnimation, {
-      toValue: 0,
-      useNativeDriver: true,
-    }).start();
+    runFabSpring(0);
 
     // Navigate to become rider screen
     navigation.navigate('BecomeRider');
@@ -394,10 +401,7 @@ const Marketplace: React.FC = () => {
 
   const handleFinancials = () => {
     setIsFabOpen(false);
-    Animated.spring(fabAnimation, {
-      toValue: 0,
-      useNativeDriver: true,
-    }).start();
+    runFabSpring(0);
 
     // Navigate to financials screen
     navigation.navigate('Financials');
@@ -405,10 +409,7 @@ const Marketplace: React.FC = () => {
 
   const handleBecomeSeller = async () => {
     setIsFabOpen(false);
-    Animated.spring(fabAnimation, {
-      toValue: 0,
-      useNativeDriver: true,
-    }).start();
+    runFabSpring(0);
 
     try {
       setSellerCheckLoading(true);

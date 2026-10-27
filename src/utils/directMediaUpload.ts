@@ -258,7 +258,10 @@ async function putWithRetry(
       console.warn('[upload] blob-util PUT failed, trying fallbacks', blobError);
     }
 
-    if (attempt === 1) {
+    // Skip react-native-background-upload on Android: its uploadservice
+    // GlobalRequestObserver registers a BroadcastReceiver without
+    // RECEIVER_NOT_EXPORTED and crashes API 33+ (ALSE-X SecurityException).
+    if (attempt === 1 && Platform.OS !== 'android') {
       try {
         const {backgroundPutFile} = require('./backgroundUpload');
         await backgroundPutFile(
@@ -298,12 +301,28 @@ async function putWithRetry(
 
 export async function compressVideoIfNeeded(uri: string): Promise<string> {
   try {
+    // Skip compress on very low-heap Android — LocationExtractor/encode OOM
+    // at 128MB growth limit (ALSE-22). Upload original instead.
+    if (Platform.OS === 'android') {
+      try {
+        const DeviceInfo = require('react-native-device-info');
+        const totalMem = await DeviceInfo.getTotalMemory?.();
+        if (typeof totalMem === 'number' && totalMem > 0 && totalMem < 2.5e9) {
+          console.warn('[upload] skip compress on low-RAM device');
+          return toFileUri(uri);
+        }
+      } catch {
+        // device-info optional
+      }
+    }
+
     const {Video} = require('react-native-compressor');
     // Conservative settings for low-heap Android (128MB devices OOM during encode).
     const compressed = await Video.compress(uri, {
-      compressionMethod: 'auto',
-      maxSize: Platform.OS === 'android' ? 960 : 1280,
-      bitrate: Platform.OS === 'android' ? 1_500_000 : 2_500_000,
+      compressionMethod: 'manual',
+      maxSize: Platform.OS === 'android' ? 720 : 1280,
+      bitrate: Platform.OS === 'android' ? 1_000_000 : 2_500_000,
+      minimumFileSizeForCompress: 8,
     });
     const nextUri = compressed || uri;
     return toFileUri(nextUri);

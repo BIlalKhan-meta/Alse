@@ -64,8 +64,10 @@ const MediaEditor: React.FC = () => {
   const [cardHeight, setCardHeight] = useState(400);
   const [activeTool, setActiveTool] = useState<EditorTool>('none');
   const [textOverlay, setTextOverlay] = useState<TextOverlayState | null>(null);
-  // Default paused on Android — autoplay + ExoPlayer events OOM low-heap devices (ALSE-20).
-  const [videoPaused, setVideoPaused] = useState(Platform.OS === 'android');
+  // Default paused — autoplay + ExoPlayer events OOM low-heap devices (ALSE-20).
+  const [videoPaused, setVideoPaused] = useState(true);
+  /** Android: keep Video unmounted until the user taps Play (ALSE-20 VideoEventEmitter OOM). */
+  const [androidVideoMounted, setAndroidVideoMounted] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   /** Unmount Video while opening the native trimmer so decoders release memory. */
   const [hideVideoPreview, setHideVideoPreview] = useState(false);
@@ -298,8 +300,13 @@ const MediaEditor: React.FC = () => {
         setIsExporting(true);
         setVideoPaused(true);
         setHideVideoPreview(true);
-        // Let the player tear down before FFmpeg/trim UI allocates memory.
-        await new Promise<void>(resolve => setTimeout(resolve, 80));
+        setAndroidVideoMounted(false);
+        // Let the player fully tear down before FFmpeg/trim allocates memory
+        // (ALSE-1E SIGABRT on Done when ExoPlayer + native editor overlap).
+        await new Promise<void>(resolve => setTimeout(resolve, 250));
+        await new Promise<void>(resolve =>
+          requestAnimationFrame(() => resolve()),
+        );
         const result = await openVideoEditorForPost(workingUri || currentItem.uri);
         if (!result.success || !result.exportedUri) {
           setHideVideoPreview(false);
@@ -361,11 +368,13 @@ const MediaEditor: React.FC = () => {
 
   const renderMedia = () => {
     if (currentItem.kind === 'video') {
+      const shouldMountVideo =
+        !hideVideoPreview &&
+        !isExporting &&
+        (Platform.OS !== 'android' || androidVideoMounted);
       return (
         <>
-          {hideVideoPreview || isExporting ? (
-            <View style={[styles.mediaFill, {backgroundColor: '#111'}]} />
-          ) : (
+          {shouldMountVideo ? (
             <Video
               source={{uri: workingUri || currentItem.uri}}
               style={styles.mediaFill}
@@ -377,25 +386,37 @@ const MediaEditor: React.FC = () => {
               playWhenInactive={false}
               disableFocus={Platform.OS === 'android'}
               useTextureView={Platform.OS === 'android'}
-              maxBitRate={1_200_000}
+              maxBitRate={800_000}
               bufferConfig={{
                 minBufferMs: 1000,
-                maxBufferMs: 4000,
+                maxBufferMs: 2500,
                 bufferForPlaybackMs: 500,
                 bufferForPlaybackAfterRebufferMs: 1000,
               }}
               onError={err => {
                 console.warn('[MediaEditor] video preview error:', err?.error ?? err);
                 setVideoPaused(true);
+                if (Platform.OS === 'android') {
+                  setAndroidVideoMounted(false);
+                }
               }}
             />
+          ) : (
+            <View style={[styles.mediaFill, {backgroundColor: '#111'}]} />
           )}
           <TouchableOpacity
             style={styles.videoControls}
-            onPress={() => setVideoPaused(prev => !prev)}
+            onPress={() => {
+              if (Platform.OS === 'android' && !androidVideoMounted) {
+                setAndroidVideoMounted(true);
+                setVideoPaused(false);
+                return;
+              }
+              setVideoPaused(prev => !prev);
+            }}
             disabled={hideVideoPreview || isExporting}>
             <Text style={styles.videoControlText}>
-              {videoPaused ? t('play') : t('pause')}
+              {videoPaused || !shouldMountVideo ? t('play') : t('pause')}
             </Text>
           </TouchableOpacity>
         </>

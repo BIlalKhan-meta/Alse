@@ -83,16 +83,36 @@ const runAfterAlertDismiss = (action: () => void) => {
   });
 };
 
+const VALID_LIBRARY_MEDIA_TYPES: LibraryMediaType[] = [
+  'photo',
+  'video',
+  'mixed',
+];
+
+const normalizeLibraryMediaType = (
+  mediaType: unknown,
+  fallback: LibraryMediaType = 'photo',
+): LibraryMediaType => {
+  if (
+    typeof mediaType === 'string' &&
+    VALID_LIBRARY_MEDIA_TYPES.includes(mediaType as LibraryMediaType)
+  ) {
+    return mediaType as LibraryMediaType;
+  }
+  return fallback;
+};
+
 const libraryOptionsFor = (
   mediaType: LibraryMediaType,
   selectionLimit: number = 1,
 ): ImageLibraryOptions => {
+  const safeType = normalizeLibraryMediaType(mediaType);
   const base: ImageLibraryOptions = {
-    mediaType,
+    mediaType: safeType,
     quality: 1,
     selectionLimit,
   };
-  if (mediaType === 'photo') {
+  if (safeType === 'photo') {
     base.maxWidth = 2048;
     base.maxHeight = 2048;
   }
@@ -165,7 +185,12 @@ const useImagePicker = () => {
     mediaType: LibraryMediaType = 'photo',
     selectionLimit: number = 1,
   ) => {
-    const options = libraryOptionsFor(mediaType, selectionLimit);
+    const safeType = normalizeLibraryMediaType(mediaType);
+    const limit =
+      typeof selectionLimit === 'number' && selectionLimit > 0
+        ? selectionLimit
+        : 1;
+    const options = libraryOptionsFor(safeType, limit);
 
     launchImageLibrary(options, response => {
       if (response.didCancel || response.errorCode) {
@@ -178,19 +203,20 @@ const useImagePicker = () => {
       }
 
       const assets = response.assets;
-      if (selectionLimit > 1) {
+      if (limit > 1) {
         setImagesData(assets);
         setImageData(null);
         setImage(null);
         return;
       }
 
-      assignSingleAsset(assets[0], mediaType);
+      assignSingleAsset(assets[0], safeType);
     });
   };
 
   const captureImage = async (mediaType: LibraryMediaType = 'photo') => {
-    const forVideo = mediaType === 'video';
+    const safeType = normalizeLibraryMediaType(mediaType);
+    const forVideo = safeType === 'video';
     const granted = await ensureCameraPermission({forVideo});
     if (!granted) {
       Toast.error(
@@ -201,7 +227,7 @@ const useImagePicker = () => {
       return;
     }
 
-    const options = cameraOptionsFor(mediaType);
+    const options = cameraOptionsFor(safeType);
 
     launchCamera(options, response => {
       if (response.didCancel || response.errorCode) {
@@ -213,7 +239,7 @@ const useImagePicker = () => {
         return;
       }
 
-      assignSingleAsset(response.assets[0], mediaType);
+      assignSingleAsset(response.assets[0], safeType);
     });
   };
 

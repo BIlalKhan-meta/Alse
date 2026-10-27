@@ -209,7 +209,13 @@ const EditBlog = () => {
             onPress: () =>
               captureImage(title == 'Update Video' ? 'video' : 'photo'),
           },
-          {text: 'Open Gallery', onPress: chooseImageFromLibrary},
+          {
+            text: 'Open Gallery',
+            onPress: () =>
+              chooseImageFromLibrary(
+                title == 'Update Video' ? 'video' : 'photo',
+              ),
+          },
         ]}
       />
       <Formik

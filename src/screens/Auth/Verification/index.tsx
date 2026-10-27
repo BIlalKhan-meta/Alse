@@ -19,6 +19,7 @@ import {useAppDispatch} from '../../../hooks/storeHooks';
 
 import {forgotPassword, verifyOtp} from '../../../api/auth';
 import Toast from 'react-native-toast-message';
+import {getMessage, Toast as AppToast} from '../../../utils/helpers';
 
 const Verification: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -89,7 +90,7 @@ const Verification: React.FC = () => {
       })
       .catch(err => {
         setSubmitted(false);
-        Toast.error(getMessage(err?.message));
+        AppToast.error(getMessage(err?.message ?? err));
       });
   };
   return (

@@ -183,7 +183,10 @@ const MyProfileUpdate: React.FC = () => {
                     text: 'Open Camera',
                     onPress: () => captureImage(),
                   },
-                  {text: 'Open Gallery', onPress: chooseImageFromLibrary},
+                  {
+                    text: 'Open Gallery',
+                    onPress: () => chooseImageFromLibrary('photo'),
+                  },
                 ]}
               />
               <View style={styles.container}>

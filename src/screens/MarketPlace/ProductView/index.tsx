@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import {useIsFocused, useRoute, useNavigation} from '@react-navigation/native';
+import {useAppIsActive} from '../../../hooks/useAppIsActive';
 import {useSelector} from 'react-redux';
 import {
   ChevronLeft,
@@ -94,6 +95,7 @@ const ProductView: React.FC = () => {
   const productId = (route?.params as any)?.productId;
   const user = useSelector(selectUserProfile);
   const isFocused = useIsFocused();
+  const appIsActive = useAppIsActive();
 
   const [productDetails, setProductDetails] = useState<Record<string, any> | null>(
     null,
@@ -549,8 +551,10 @@ const ProductView: React.FC = () => {
                 style={styles.productImage}
                 resizeMode="cover"
                 controls
-                paused={false}
+                paused={!isFocused || !appIsActive}
                 repeat
+                playInBackground={false}
+                playWhenInactive={false}
               />
             ) : (
               <Image

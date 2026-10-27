@@ -1,8 +1,10 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {useDispatch} from 'react-redux';
 import eventEmitter, {EVENT_TYPES} from '../../utils/EventEmitter';
 import {colors} from '../../utils/theme';
 import {cancelPostUpload} from '../../services/postUploadQueue';
+import {prependPost} from '../../store/slices/homeSlice';
 
 const clampPercent = (value?: number): number | undefined => {
   if (typeof value !== 'number' || Number.isNaN(value)) {
@@ -12,6 +14,7 @@ const clampPercent = (value?: number): number | undefined => {
 };
 
 const UploadProgressBanner: React.FC = () => {
+  const dispatch = useDispatch();
   const [message, setMessage] = useState('');
   const [percent, setPercent] = useState<number | undefined>();
   const lastPercentRef = useRef(0);
@@ -37,11 +40,28 @@ const UploadProgressBanner: React.FC = () => {
       lastPercentRef.current = stablePercent;
       setPercent(stablePercent);
     };
+
+    const onComplete = (payload?: {
+      ok?: boolean;
+      post?: any;
+      cancelled?: boolean;
+      message?: string;
+    }) => {
+      setMessage('');
+      setPercent(undefined);
+      lastPercentRef.current = 0;
+      if (payload?.ok && payload?.post) {
+        dispatch(prependPost(payload.post));
+      }
+    };
+
     eventEmitter.on(EVENT_TYPES.UPLOAD_PROGRESS, onProgress);
+    eventEmitter.on(EVENT_TYPES.UPLOAD_COMPLETE, onComplete);
     return () => {
       eventEmitter.off(EVENT_TYPES.UPLOAD_PROGRESS, onProgress);
+      eventEmitter.off(EVENT_TYPES.UPLOAD_COMPLETE, onComplete);
     };
-  }, []);
+  }, [dispatch]);
 
   if (!message) {
     return null;

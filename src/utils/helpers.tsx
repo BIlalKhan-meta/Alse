@@ -359,6 +359,39 @@ export const getDateSection = date => {
   }
 };
 
+/**
+ * Coerce API image fields into a string URI for <Image source={{uri}}>.
+ * Auction/product payloads sometimes send ids/objects (ALSE-18).
+ */
+export const toSafeImageUri = (
+  value: unknown,
+  fallback?: string,
+): string | undefined => {
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (trimmed) {
+      return changeUrlForData(trimmed);
+    }
+  }
+  if (value && typeof value === 'object') {
+    const record = value as Record<string, unknown>;
+    const nested =
+      record.url ??
+      record.uri ??
+      record.path ??
+      record.image ??
+      record.file ??
+      record.original_url;
+    if (typeof nested === 'string' && nested.trim()) {
+      return changeUrlForData(nested.trim());
+    }
+  }
+  if (typeof fallback === 'string' && fallback.trim()) {
+    return fallback;
+  }
+  return undefined;
+};
+
 export const changeUrlForData = (url: string) =>
   (url || '')?.replaceAll(
     'https://elombelo-bucket.s3.us-west-1.amazonaws.com',

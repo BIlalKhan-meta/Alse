@@ -1,7 +1,45 @@
 import React, {useEffect, useRef} from 'react';
-import {View, Animated, Easing} from 'react-native';
+import {View, Animated, Easing, StyleProp, ViewStyle} from 'react-native';
 import {vw, vh} from '../../constant';
 import styles from './styles';
+
+type SkeletonItemProps = {
+  width: number | string;
+  height: number | string;
+  borderRadius?: number;
+  style?: StyleProp<ViewStyle>;
+  translateX: Animated.AnimatedInterpolation<string | number>;
+};
+
+/** Hoisted so Animated.View children are not remounted every parent render (ALSE-19). */
+const SkeletonItem = ({
+  width,
+  height,
+  borderRadius = 4,
+  style = {},
+  translateX,
+}: SkeletonItemProps) => (
+  <View
+    style={[
+      {
+        width,
+        height,
+        backgroundColor: '#E1E9EE',
+        borderRadius,
+        overflow: 'hidden',
+      } as ViewStyle,
+      style,
+    ]}>
+    <Animated.View
+      style={{
+        width: '100%',
+        height: '100%',
+        backgroundColor: 'rgba(255,255,255,0.5)',
+        transform: [{translateX}],
+      }}
+    />
+  </View>
+);
 
 const PostSkeleton = () => {
   const shimmerAnimatedValue = useRef(new Animated.Value(0)).current;
@@ -17,7 +55,10 @@ const PostSkeleton = () => {
     );
     shimmerAnimation.start();
 
-    return () => shimmerAnimation.stop();
+    return () => {
+      shimmerAnimation.stop();
+      shimmerAnimatedValue.stopAnimation();
+    };
   }, [shimmerAnimatedValue]);
 
   const translateX = shimmerAnimatedValue.interpolate({
@@ -25,40 +66,27 @@ const PostSkeleton = () => {
     outputRange: [-vw * 100, vw * 100],
   });
 
-  const SkeletonItem = ({width, height, borderRadius = 4, style = {}}) => (
-    <View
-      style={[
-        {
-          width,
-          height,
-          backgroundColor: '#E1E9EE',
-          borderRadius,
-          overflow: 'hidden',
-        },
-        style,
-      ]}>
-      <Animated.View
-        style={{
-          width: '100%',
-          height: '100%',
-          backgroundColor: 'rgba(255,255,255,0.5)',
-          transform: [{translateX}],
-        }}
-      />
-    </View>
-  );
-
   return (
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <SkeletonItem width={40} height={40} borderRadius={20} />
+        <SkeletonItem
+          width={40}
+          height={40}
+          borderRadius={20}
+          translateX={translateX}
+        />
         <View style={styles.headerText}>
-          <SkeletonItem width={120} height={14} />
-          <SkeletonItem width={80} height={12} style={{marginTop: 4}} />
+          <SkeletonItem width={120} height={14} translateX={translateX} />
+          <SkeletonItem
+            width={80}
+            height={12}
+            style={{marginTop: 4}}
+            translateX={translateX}
+          />
         </View>
         <View style={{marginLeft: 'auto'}}>
-          <SkeletonItem width={20} height={20} />
+          <SkeletonItem width={20} height={20} translateX={translateX} />
         </View>
       </View>
 
@@ -69,6 +97,7 @@ const PostSkeleton = () => {
           height={250}
           borderRadius={8}
           style={{marginTop: vh * 1, position: 'relative'}}
+          translateX={translateX}
         />
         <View style={styles.engagementBar}>
           <SkeletonItem
@@ -76,26 +105,39 @@ const PostSkeleton = () => {
             height={30}
             borderRadius={15}
             style={{backgroundColor: '#d2d5d6'}}
+            translateX={translateX}
           />
           <SkeletonItem
             width={30}
             height={30}
             borderRadius={15}
-            style={{backgroundColor: '#d2d5d6'}}
+            style={{backgroundColor: '#d2d5d6', marginTop: vh * 1}}
+            translateX={translateX}
           />
           <SkeletonItem
             width={30}
             height={30}
             borderRadius={15}
-            style={{backgroundColor: '#d2d5d6'}}
+            style={{backgroundColor: '#d2d5d6', marginTop: vh * 1}}
+            translateX={translateX}
           />
         </View>
       </View>
       {/* Post Text */}
       <View style={styles.postText}>
-        <SkeletonItem width="100%" height={12} />
-        <SkeletonItem width="80%" height={12} style={{marginTop: 4}} />
-        <SkeletonItem width="60%" height={12} style={{marginTop: 4}} />
+        <SkeletonItem width="100%" height={12} translateX={translateX} />
+        <SkeletonItem
+          width="80%"
+          height={12}
+          style={{marginTop: 4}}
+          translateX={translateX}
+        />
+        <SkeletonItem
+          width="60%"
+          height={12}
+          style={{marginTop: 4}}
+          translateX={translateX}
+        />
       </View>
     </View>
   );

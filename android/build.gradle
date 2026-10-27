@@ -22,7 +22,7 @@ buildscript {
     dependencies {
         classpath("com.android.tools.build:gradle")
         classpath("com.facebook.react:react-native-gradle-plugin")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.0")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
         classpath('com.google.gms:google-services:4.4.2')
     }
 }
@@ -31,8 +31,8 @@ apply plugin: "com.facebook.react.rootproject"
 
 // Cap CMake/ninja compile parallelism. AGP invokes ninja directly (not
 // cmake --build), so CMAKE_BUILD_PARALLEL_LEVEL is ignored. Without this,
-// ninja uses all CPU cores and clang++ often gets SIGKILL'd on 16GB Macs —
-// Gradle then reports "subcommand failed" with no compiler diagnostics.
+// ninja uses all CPU cores and clang++ often gets SIGKILL/SIGSEGV on 16GB
+// Intel Macs — Gradle then reports "subcommand failed" with no diagnostics.
 def limitCmakeParallelism = { project ->
     def androidExt = project.extensions.findByName("android")
     if (androidExt == null) return
@@ -41,7 +41,7 @@ def limitCmakeParallelism = { project ->
         def args = [
             "-DCMAKE_JOB_POOL_COMPILE=compile",
             "-DCMAKE_JOB_POOL_LINK=link",
-            "-DCMAKE_JOB_POOLS=compile=2;link=1",
+            "-DCMAKE_JOB_POOLS=compile=1;link=1",
         ]
         args.each { arg ->
             if (!cmake.arguments.get().contains(arg)) {

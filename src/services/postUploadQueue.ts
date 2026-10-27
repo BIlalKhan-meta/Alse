@@ -39,6 +39,15 @@ function throwIfCancelled(signal: AbortSignal) {
   }
 }
 
+/** Extract created post from createPost / createPostWithMediaKeys response. */
+function extractCreatedPost(response: any): any | null {
+  const post = response?.data?.data;
+  if (post && typeof post === 'object' && post.id != null) {
+    return post;
+  }
+  return null;
+}
+
 function emitProgress(message: string, percent?: number) {
   if (!message) {
     lastEmittedPercent = -1;
@@ -171,8 +180,9 @@ export async function enqueuePostUpload(payload: QueuedPostUpload) {
         }
         throwIfCancelled(signal);
         emitProgress('Creating post…', 95);
+        let createResponse: any;
         try {
-          await createPost(body, signal);
+          createResponse = await createPost(body, signal);
         } catch (fallbackErr) {
           throw toFriendlyUploadError(fallbackErr);
         }
@@ -183,14 +193,17 @@ export async function enqueuePostUpload(payload: QueuedPostUpload) {
           () => Toast.success('Posted Successfully'),
           100,
         );
-        eventEmitter.emit(EVENT_TYPES.UPLOAD_COMPLETE, {ok: true});
+        eventEmitter.emit(EVENT_TYPES.UPLOAD_COMPLETE, {
+          ok: true,
+          post: extractCreatedPost(createResponse),
+        });
         return;
       }
     }
 
     throwIfCancelled(signal);
     emitProgress('Creating post…', 98);
-    await createPostWithMediaKeys({
+    const createResponse = await createPostWithMediaKeys({
       description: payload.description,
       privacy: payload.privacy,
       media_keys: mediaKeys,
@@ -199,7 +212,10 @@ export async function enqueuePostUpload(payload: QueuedPostUpload) {
       await deletePostDraftById(payload.userId, payload.draftId);
     }
     await finishWithToast(() => Toast.success('Posted Successfully'), 100);
-    eventEmitter.emit(EVENT_TYPES.UPLOAD_COMPLETE, {ok: true});
+    eventEmitter.emit(EVENT_TYPES.UPLOAD_COMPLETE, {
+      ok: true,
+      post: extractCreatedPost(createResponse),
+    });
   } catch (err: any) {
     if (signal.aborted || err?.name === 'AbortError') {
       await finishWithToast(() => Toast.success('Post upload cancelled'));

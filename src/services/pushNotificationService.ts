@@ -154,6 +154,13 @@ function isIncomingCall(remoteMessage: RemoteMessage) {
   );
 }
 
+/** Exported for background entry (index.js) so CallKeep only loads for calls. */
+export function isIncomingCallPush(remoteMessage: RemoteMessage) {
+  return (
+    isIncomingCall(remoteMessage) || isCallCancelled(remoteMessage)
+  );
+}
+
 async function handlePaymentNotification(remoteMessage: RemoteMessage) {
   try {
     await InAppBrowser.isAvailable();

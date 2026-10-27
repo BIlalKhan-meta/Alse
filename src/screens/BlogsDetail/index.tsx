@@ -15,6 +15,7 @@ import {
   useRoute,
 } from '@react-navigation/native';
 import {useEffect, useLayoutEffect, useState} from 'react';
+import {useAppIsActive} from '../../hooks/useAppIsActive';
 import {colors} from '../../utils/theme';
 import Card from '../../components/Card';
 import {images} from '../../utils/images';
@@ -52,6 +53,7 @@ const ViewBlog: React.FC = () => {
   const {id, title, type} = route?.params;
   const user = useSelector(selectUserProfile);
   const isFocused = useIsFocused();
+  const appIsActive = useAppIsActive();
 
   const fetchData = async () => {
     setLoading(true);
@@ -191,9 +193,11 @@ const ViewBlog: React.FC = () => {
               }}
               style={styles.media}
               controls={true}
-              paused={false}
+              paused={!isFocused || !appIsActive}
               repeat={true}
               resizeMode="cover"
+              playInBackground={false}
+              playWhenInactive={false}
             />
           ) : (
             <Image

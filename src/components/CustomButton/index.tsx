@@ -30,7 +30,10 @@ const CustomButton: React.FC<ButtonProps> = props => {
       <TouchableOpacity
         testID={props.testID}
         disabled={props.disable || props?.loading}
-        onPress={props?.onPress}
+        // Don't forward the press event — callers often pass hooks like
+        // chooseImageFromLibrary, which treat the first arg as mediaType
+        // (ALSE-1J / ALSE-1K: mediaType cast from ReadableNativeMap).
+        onPress={() => props?.onPress?.()}
         style={[styles.button, props.style]}>
         {props?.loading ? (
           <ActivityIndicator size={'large'} color={colors.white} />

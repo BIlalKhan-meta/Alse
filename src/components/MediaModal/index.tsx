@@ -16,6 +16,7 @@ import {X} from 'lucide-react-native';
 import InterRegular from '../Text/InterRegular';
 import {vh, vw} from '../../constant';
 import {changeUrlForData, resolvePlayableMediaUrl} from '../../utils/helpers';
+import {useAppIsActive} from '../../hooks/useAppIsActive';
 
 interface MediaModalProps {
   visible: boolean;
@@ -44,6 +45,8 @@ const MediaModal: React.FC<MediaModalProps> = ({
   const [error, setError] = useState(false);
   const [retryKey, setRetryKey] = useState(0);
   const [fullImageReady, setFullImageReady] = useState(false);
+  const appIsActive = useAppIsActive();
+  const videoPaused = !visible || !appIsActive;
 
   const resolvedUrl = useMemo(() => {
     if (!mediaUrl) {
@@ -145,7 +148,7 @@ const MediaModal: React.FC<MediaModalProps> = ({
                   resizeMode="contain"
                   controls
                   repeat={false}
-                  paused={false}
+                  paused={videoPaused}
                   playInBackground={false}
                   playWhenInactive={false}
                   disableFocus={Platform.OS === 'android'}

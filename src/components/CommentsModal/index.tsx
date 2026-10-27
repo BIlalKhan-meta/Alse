@@ -76,6 +76,7 @@ import {
 } from '../../utils/commentTree';
 import {Gesture, GestureDetector} from 'react-native-gesture-handler';
 import Animated, {
+  cancelAnimation,
   runOnJS,
   useAnimatedStyle,
   useSharedValue,
@@ -214,8 +215,16 @@ const CommentsModal: React.FC<CommentsModalProps> = props => {
       isClosingRef.current = false;
       sheetTranslateY.value = vh * 85;
       sheetTranslateY.value = withSpring(0, {damping: 22, stiffness: 220});
+      return;
     }
+    cancelAnimation(sheetTranslateY);
   }, [visible, sheetTranslateY]);
+
+  useEffect(() => {
+    return () => {
+      cancelAnimation(sheetTranslateY);
+    };
+  }, [sheetTranslateY]);
 
   const dismissSheet = useCallback(() => {
     if (isClosingRef.current) {

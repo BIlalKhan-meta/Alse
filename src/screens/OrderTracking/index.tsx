@@ -467,33 +467,35 @@ const OrderTracking: React.FC = () => {
               </Text>
             </View>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {orders.map(order => (
-                <TouchableOpacity
-                  key={order.order_id}
-                  style={[
-                    styles.orderOption,
-                    selectedOrder?.order_id === order.order_id &&
-                      styles.selectedOrderOption,
-                  ]}
-                  onPress={() => setSelectedOrder(order)}>
-                  <Text
+              <View style={{flexDirection: 'row'}}>
+                {orders.map(order => (
+                  <TouchableOpacity
+                    key={order.order_id}
                     style={[
-                      styles.orderOptionText,
+                      styles.orderOption,
                       selectedOrder?.order_id === order.order_id &&
-                        styles.selectedOrderOptionText,
-                    ]}>
-                    {order.product?.title || 'Product Name'}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.orderOptionStatus,
-                      selectedOrder?.order_id === order.order_id &&
-                        styles.selectedOrderOptionStatus,
-                    ]}>
-                    {order.status}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+                        styles.selectedOrderOption,
+                    ]}
+                    onPress={() => setSelectedOrder(order)}>
+                    <Text
+                      style={[
+                        styles.orderOptionText,
+                        selectedOrder?.order_id === order.order_id &&
+                          styles.selectedOrderOptionText,
+                      ]}>
+                      {order.product?.title || 'Product Name'}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.orderOptionStatus,
+                        selectedOrder?.order_id === order.order_id &&
+                          styles.selectedOrderOptionStatus,
+                      ]}>
+                      {order.status}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
             </ScrollView>
 
             {/* Load More Button */}
