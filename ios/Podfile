@@ -179,9 +179,24 @@ target 'Alenga' do
     ]
     # ReactCodegen compiles generated ObjC++ (e.g. rnasyncstorage-generated.mm) with a UIKit prefix header.
     # UIKit/UIStackView.h on iOS 18.5+ SDK needs FLT_MAX/FLT_MIN without pulling float.h into every pod.
-    flt_minmax_targets = ['ReactCodegen']
+    flt_minmax_targets = ['ReactCodegen', 'React-RCTFabric']
+    # Xcode 17+/26 can SIGSEGV compiling large Fabric ObjC++ units at -Os/-O3 during Archive.
+    fabric_clang_workaround_targets = [
+      'React-RCTFabric',
+      'React-Fabric',
+      'React-FabricImage',
+      'React-FabricComponents',
+    ]
     installer.pods_project.targets.each do |target|
       target.build_configurations.each do |config|
+        if fabric_clang_workaround_targets.include?(target.name)
+          config.build_settings['COMPILER_INDEX_STORE_ENABLE'] = 'NO'
+          config.build_settings['CLANG_ENABLE_MODULE_DEBUGGING'] = 'NO'
+          if config.name == 'Release'
+            config.build_settings['GCC_OPTIMIZATION_LEVEL'] = '1'
+          end
+        end
+
         if flt_minmax_targets.include?(target.name)
           defs = config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] || '$(inherited)'
           defs = [defs] if defs.is_a?(String)
@@ -315,6 +330,21 @@ target 'Alenga' do
           "#ifdef __OBJC__\n#include \"../../../Alenga/FLTMinMax.h\"\n#import <UIKit/UIKit.h>"
         )
         File.write(react_codegen_pch, pch)
+      end
+    end
+
+    react_rctfabric_pch = File.join(
+      installer.sandbox.root,
+      'Target Support Files/React-RCTFabric/React-RCTFabric-prefix.pch',
+    )
+    if File.exist?(react_rctfabric_pch)
+      pch = File.read(react_rctfabric_pch)
+      unless pch.include?('FLTMinMax')
+        pch = pch.sub(
+          "#ifdef __OBJC__\n#import <UIKit/UIKit.h>",
+          "#ifdef __OBJC__\n#include \"../../../Alenga/FLTMinMax.h\"\n#import <UIKit/UIKit.h>"
+        )
+        File.write(react_rctfabric_pch, pch)
       end
     end
 
