@@ -3944,7 +3944,7 @@ PODS:
 DEPENDENCIES:
   - agora-react-native-rtm (from `../node_modules/agora-react-native-rtm`)
   - boost (from `../node_modules/react-native/third-party-podspecs/boost.podspec`)
-  - BoringSSL-GRPC (from `/Users/macbook/projects/Alse/ios/vendor/boringssl-grpc`)
+  - BoringSSL-GRPC (from `/Users/rehan/workspace/Alse/ios/vendor/boringssl-grpc`)
   - BVLinearGradient (from `../node_modules/react-native-linear-gradient`)
   - DoubleConversion (from `../node_modules/react-native/third-party-podspecs/DoubleConversion.podspec`)
   - fast_float (from `../node_modules/react-native/third-party-podspecs/fast_float.podspec`)
@@ -4122,7 +4122,7 @@ EXTERNAL SOURCES:
   boost:
     :podspec: "../node_modules/react-native/third-party-podspecs/boost.podspec"
   BoringSSL-GRPC:
-    :git: "/Users/macbook/projects/Alse/ios/vendor/boringssl-grpc"
+    :git: "/Users/rehan/workspace/Alse/ios/vendor/boringssl-grpc"
   BVLinearGradient:
     :path: "../node_modules/react-native-linear-gradient"
   DoubleConversion:
@@ -4385,8 +4385,8 @@ EXTERNAL SOURCES:
 
 CHECKOUT OPTIONS:
   BoringSSL-GRPC:
-    :commit: 45a564cf1cfa5325c84be871e054578e98d35d4e
-    :git: "/Users/macbook/projects/Alse/ios/vendor/boringssl-grpc"
+    :commit: cb94416dbaac083818bc6e23b35aa7602941de65
+    :git: "/Users/rehan/workspace/Alse/ios/vendor/boringssl-grpc"
 
 SPEC CHECKSUMS:
   abseil: d121da9ef7e2ff4cab7666e76c5a3e0915ae08c3

@@ -112,6 +112,23 @@ target 'Alenga' do
       named_targets.include?(target.name) || target.name.include?('Nitro')
     end
 
+    # fmt 11.0.2 enables consteval for Apple clang >= 14, but Xcode 26 / Apple
+    # clang 21 rejects FMT_STRING usages in format-inl.h. Disable consteval for
+    # all Apple clang (same approach as fmt upstream / RN macos workaround).
+    # Compiler -D flags do not work: base.h unconditionally redefines the macro.
+    fmt_base = File.join(installer.sandbox.root, 'fmt/include/fmt/base.h')
+    if File.exist?(fmt_base)
+      fmt_content = File.read(fmt_base)
+      fmt_patched = fmt_content.gsub(
+        '#elif defined(__apple_build_version__) && __apple_build_version__ < 14000029L',
+        '#elif defined(__apple_build_version__)'
+      )
+      if fmt_patched != fmt_content
+        File.chmod(0644, fmt_base)
+        File.write(fmt_base, fmt_patched)
+      end
+    end
+
     # RCT-Folly never generates folly-config.h under use_frameworks. Nitro public
     # headers import <jsi/jsi.h>, the jsi umbrella pulls Folly, and the Folly
     # module then fails without this file.
