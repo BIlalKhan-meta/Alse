@@ -2856,6 +2856,30 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
+  - react-native-contacts (8.0.10):
+    - DoubleConversion
+    - glog
+    - hermes-engine
+    - RCT-Folly (= 2024.11.18.00)
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-hermes
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - Yoga
   - react-native-date-picker (5.0.12):
     - React-Core
   - react-native-document-picker (12.0.1):
@@ -3993,6 +4017,7 @@ DEPENDENCIES:
   - "react-native-blur (from `../node_modules/@react-native-community/blur`)"
   - "react-native-cameraroll (from `../node_modules/@react-native-camera-roll/camera-roll`)"
   - react-native-compressor (from `../node_modules/react-native-compressor`)
+  - react-native-contacts (from `../node_modules/react-native-contacts`)
   - react-native-date-picker (from `../node_modules/react-native-date-picker`)
   - "react-native-document-picker (from `../node_modules/@react-native-documents/picker`)"
   - react-native-encrypted-storage (from `../node_modules/react-native-encrypted-storage`)
@@ -4216,6 +4241,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@react-native-camera-roll/camera-roll"
   react-native-compressor:
     :path: "../node_modules/react-native-compressor"
+  react-native-contacts:
+    :path: "../node_modules/react-native-contacts"
   react-native-date-picker:
     :path: "../node_modules/react-native-date-picker"
   react-native-document-picker:
@@ -4470,6 +4497,7 @@ SPEC CHECKSUMS:
   react-native-blur: 0cbcfd9966016730dd711dcb740e99cd86f7f5cb
   react-native-cameraroll: 97677c22721914919629d45ebaea8d8977852579
   react-native-compressor: 19ed2252c9f06152a4f8d25d60f0db5bf8b641e1
+  react-native-contacts: 1d3a24cb4fcfe60e8ec0d12ad0bf43993c038085
   react-native-date-picker: 2eb0ed05ab9dcb4f337deda77deaa779807c4c61
   react-native-document-picker: 1eabad03eb6dbae4a40dd69c5a9544d6c20cac2b
   react-native-encrypted-storage: 569d114e329b1c2c2d9f8c84bcdbe4478dda2258
@@ -4541,7 +4569,7 @@ SPEC CHECKSUMS:
   RNInAppBrowser: 904d24dc75e8e6c6c98a3160329192608946f9df
   RNLocalize: 5b24342fb7288242c2215756412d8dcb8dadf31e
   RNNotifee: 5e3b271e8ea7456a36eec994085543c9adca9168
-  RNPermissions: 294541611e08d4b14fa3c01592403c83a3b6bca2
+  RNPermissions: bbb8ed420a77eb6f54c1e6e7139e52b118216fc5
   RNReanimated: 8de62bc2d96b9ba9ebde80bb9179889aba05ae3c
   RNScreens: 199aa0f639b5d6e8f3e0306476d576464848b7a2
   RNSentry: 96eac86d0dfd84388c5247a47c4493d692037f1f
@@ -4558,6 +4586,6 @@ SPEC CHECKSUMS:
   VisionCamera: 7187b3dac1ff3071234ead959ce311875748e14f
   Yoga: b37eeaa6148984cac70ecaf8022bb209e03296cb
 
-PODFILE CHECKSUM: 65a53a64d9647561a73cfcd8b16e04b8a88518e8
+PODFILE CHECKSUM: 91649c708b56732d45033ccfd90ddd6f2f1d9b9b
 
 COCOAPODS: 1.16.2

@@ -55,6 +55,21 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     paddingHorizontal: 10,
   },
+  dobInput: {
+    backgroundColor: '#0C959B1A',
+    height: vh * 6,
+    width: vw * 85,
+    borderColor: '#0C959B',
+    borderWidth: 1,
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    justifyContent: 'center',
+  },
+  dobContainer: {
+    marginTop: vh * 3,
+    width: '100%',
+    alignItems: 'center',
+  },
   subHeading : {
     color: '#61677D',
     fontSize: fontSizes.f11,

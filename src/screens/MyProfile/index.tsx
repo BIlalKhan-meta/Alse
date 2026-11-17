@@ -194,10 +194,7 @@ const MyProfile: React.FC = () => {
 
       pronouns: profileData?.pronouns || user?.pronouns || '',
 
-      bio:
-        profileData?.description ||
-        user?.bio ||
-        '✨ Add a short bio to tell people about yourself! 🌟: \n 🌍 Traveler \n 🎨 Artist \n 💻 Developer',
+      bio: (profileData?.description || user?.bio || '').trim(),
 
       avatar: profileData?.avatar || user?.avatar,
     };
@@ -205,6 +202,7 @@ const MyProfile: React.FC = () => {
 
   // Get current profile info
   const currentProfile = getProfileInfo();
+  const hasBio = Boolean(currentProfile.bio);
 
   const openPostMedia = useCallback(
     (item: PostItem) => {
@@ -492,6 +490,15 @@ const MyProfile: React.FC = () => {
             <View style={styles.profileInfo}>
               <Text style={styles.userName}>{currentProfile.fullName}</Text>
               <Text style={styles.userHandle}>@{currentProfile.username}</Text>
+              <Text style={styles.privacyStatus}>
+                {user?.profile_visibility_customized
+                  ? user?.is_private
+                    ? t('profileScr.privacyPrivate')
+                    : t('profileScr.privacyPublic')
+                  : user?.is_private
+                    ? t('profileScr.privacyPrivateDefault')
+                    : t('profileScr.privacyPublicDefault')}
+              </Text>
               {currentProfile.pronouns ? (
                 <Text style={styles.pronouns}>{currentProfile.pronouns}</Text>
               ) : null}
@@ -512,7 +519,10 @@ const MyProfile: React.FC = () => {
           </View>
 
           <View style={styles.bioSection}>
-            <Text style={styles.bioText}>{currentProfile.bio}</Text>
+            <Text
+              style={[styles.bioText, !hasBio && styles.bioPlaceholder]}>
+              {hasBio ? currentProfile.bio : t('profileScr.addBio')}
+            </Text>
           </View>
         </View>
 

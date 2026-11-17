@@ -41,11 +41,12 @@ const styles = StyleSheet.create({
     height: 36,
     borderRadius: 18,
     backgroundColor: colors.white,
-    borderWidth: 1,
-    borderColor: '#E4E6EB',
     alignItems: 'center',
     justifyContent: 'center',
+    marginLeft: Math.round(vw * 1),
     marginRight: Math.round(vw * 2.1),
+    // Keep vertically centered with the native-stack title (no marginTop).
+    alignSelf: 'center',
   },
   iconContainer: {
     height: vw * 10,

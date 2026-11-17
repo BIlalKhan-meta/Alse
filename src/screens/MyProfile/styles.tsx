@@ -51,6 +51,9 @@ const styles = StyleSheet.create({
     color: '#333',
     lineHeight: 20,
   },
+  bioPlaceholder: {
+    color: '#999',
+  },
   userName: {
     fontSize: 20,
     fontWeight: 'bold',
@@ -60,6 +63,12 @@ const styles = StyleSheet.create({
   userHandle: {
     fontSize: 14,
     color: '#666',
+    marginBottom: 2,
+  },
+
+  privacyStatus: {
+    fontSize: 12,
+    color: '#888',
     marginBottom: 2,
   },
 

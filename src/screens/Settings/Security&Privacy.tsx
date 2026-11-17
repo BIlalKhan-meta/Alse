@@ -29,6 +29,18 @@ const SecurityPrivacy = ({navigation}: any) => {
 
         {/* Settings Container */}
         <View style={styles.settingsContainer}>
+          {/* Profile Visibility / Social Activity */}
+          <TouchableOpacity
+            style={styles.navigationItem}
+            onPress={() => navigation.navigate('SocialActivity')}>
+            <InterLightAverage style={styles.navigationItemText}>
+              Profile visibility
+            </InterLightAverage>
+            <View style={styles.navigationArrow}>
+              <ChevronRight size={20} color={colors.lightGrey} />
+            </View>
+          </TouchableOpacity>
+
           {/* Change Password */}
           <TouchableOpacity
             style={styles.navigationItem}

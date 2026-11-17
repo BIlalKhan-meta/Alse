@@ -84,6 +84,17 @@ export default {
   error: 'Error',
   followed: 'Followed',
   unfollowed: 'Unfollowed',
+  follow: 'Follow',
+  unfollow: 'Unfollow',
+  requested: 'Requested',
+  seeAll: 'See all',
+  pymk: {
+    title: 'People you may know',
+    suggestedForYou: 'Suggested for you',
+    fromContacts: 'From your contacts',
+    sameLocation: 'Same location',
+    nearYou: 'Near you',
+  },
   galleryUpload: 'Upload from gallery',
   chooseImageSource: 'Choose camera or gallery',
   camera: 'camera',
@@ -283,6 +294,7 @@ export default {
     createAccount: 'Create Account',
     alreadyHaveAccount: 'Do you have an account?',
     signIn: 'Sign in',
+    dob: 'Date of birth',
   },
 
   searchScr: {
@@ -312,6 +324,11 @@ export default {
     linkCopied: 'Profile link copied to clipboard. You can share it with anyone.',
     getShareLink: 'Getting share link...',
     loading: 'Loading posts...',
+    privacyPublicDefault: 'Your profile is public by default',
+    privacyPrivateDefault: 'Your profile is private by default',
+    privacyPublic: 'Your profile is public',
+    privacyPrivate: 'Your profile is private',
+    addBio: 'Please add a bio from settings',
   },
 
   notifications: {

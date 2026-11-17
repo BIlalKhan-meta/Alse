@@ -638,6 +638,7 @@ const ProfileScreen: React.FC = ({navigation}) => {
             isFollowing={data?.is_following}
             isRequested={data?.is_follow_requested}
             is_private={data?.is_private}
+            canMessage={data?.can_message}
             id={data?.id}
             username={data?.username || ''}
             location={data?.location_name || data?.location || ''}
@@ -673,6 +674,7 @@ const ProfileScreen: React.FC = ({navigation}) => {
               isFollowing={data?.is_following}
               isRequested={data?.is_follow_requested}
               is_private={data?.is_private}
+              canMessage={data?.can_message}
               id={data?.id}
               username={data?.username || ''}
               location={data?.location_name || data?.location || ''}

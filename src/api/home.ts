@@ -131,6 +131,55 @@ export const getAllUsers = (page: number, text: string) => {
   );
 };
 
+export type SuggestedUser = {
+  id: number;
+  username?: string;
+  full_name?: string;
+  avatar?: string | null;
+  is_private?: boolean | number;
+  location_name?: string | null;
+  is_following?: boolean;
+  is_follow_requested?: boolean;
+  suggestion_reason?: string;
+};
+
+export type PeopleYouMayKnowMatchPayload = {
+  emails?: string[];
+  phones?: string[];
+  latitude?: number;
+  longitude?: number;
+  location_name?: string;
+};
+
+const extractSuggestedUsers = (res: any): SuggestedUser[] => {
+  const body = res?.data?.data ?? res?.data ?? [];
+  if (Array.isArray(body)) {
+    return body;
+  }
+  if (Array.isArray(body?.data)) {
+    return body.data;
+  }
+  return [];
+};
+
+export const getPeopleYouMayKnow = (perPage = 15) => {
+  return axiosInstance
+    .get(endpoints.home.peopleYouMayKnow, {params: {per_page: perPage}})
+    .then(extractSuggestedUsers);
+};
+
+export const matchPeopleYouMayKnow = (payload: PeopleYouMayKnowMatchPayload) => {
+  return axiosInstance
+    .post(endpoints.home.peopleYouMayKnowMatch, {
+      emails: payload.emails ?? [],
+      phones: payload.phones ?? [],
+      latitude: payload.latitude,
+      longitude: payload.longitude,
+      location_name: payload.location_name,
+    })
+    .then(extractSuggestedUsers);
+};
+
 export const getRequestFollow = () => {
   return axiosInstance.get(endpoints.home.followRequest);
 };

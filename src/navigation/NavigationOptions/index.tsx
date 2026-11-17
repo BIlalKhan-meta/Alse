@@ -59,6 +59,8 @@ const titles: {[key: string]: string} = {
   AboutUs: 'About Us',
   PrivacyPolicy: 'Privacy Policy',
   TermsConditions: 'Terms & Conditions',
+  SocialActivity: 'Social Activity',
+  SecurityPrivacy: 'Security & Privacy',
   RequestScreen: 'Followers',
   Saved: 'Saved Posts',
   SavedReels: 'Reels & Videos',
@@ -103,6 +105,8 @@ const backButtonRoutes: {[key: string]: boolean} = {
   AboutUs: true,
   TermsConditions: true,
   PrivacyPolicy: true,
+  SocialActivity: true,
+  SecurityPrivacy: true,
   MyOrders: true,
   Notifications: true,
   Settings: true,
@@ -249,7 +253,8 @@ const getHeaderLeft: React.FC<NavigationOptionsProps> = props => {
       props?.route?.name === 'ProductView' ||
       props?.route?.name === 'SubscriptionPlan' ||
       props?.route?.name === 'RequestScreen' ||
-      props?.route?.name === 'SavedReels'
+      props?.route?.name === 'SavedReels' ||
+      props?.route?.name === 'SearchUsers'
     ) {
       return (
         <TouchableOpacity

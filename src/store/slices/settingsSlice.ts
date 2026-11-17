@@ -18,6 +18,7 @@ interface SecuritySettings {
   story_visibility: 'everyone' | 'followers' | 'private';
   story_replies: 'everyone' | 'followers' | 'off';
   profile_visibility: 'public' | 'private';
+  profile_visibility_customized?: boolean;
   auto_filter_offensive: boolean;
   message_requests: 'everyone' | 'followers' | 'off';
 }

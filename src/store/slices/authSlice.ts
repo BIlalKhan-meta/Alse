@@ -164,6 +164,11 @@ const authSlice = createSlice({
       state.token = action.payload?.access_token;
       state.user = action.payload?.user;
     },
+    patchUser: (state, action) => {
+      if (state.user && action.payload) {
+        state.user = {...state.user, ...action.payload};
+      }
+    },
   },
   extraReducers: builder => {
     builder
@@ -193,5 +198,5 @@ const authSlice = createSlice({
 });
 export const selectBearerToken = state => state.auth.token;
 export const selectUserProfile = state => state.auth.user;
-export const {logout, setUser} = authSlice.actions;
+export const {logout, setUser, patchUser} = authSlice.actions;
 export default authSlice.reducer;

@@ -94,11 +94,16 @@ const styles = StyleSheet.create({
     marginRight: vw * 2,
     height: vh * 5,
     backgroundColor: colors.themeColor,
+    flex: 1,
+  },
+  followButtonFull: {
+    marginRight: 0,
   },
   messageButton: {
     height: vh * 5,
     backgroundColor: colors.midGray,
     borderWidth: 0,
+    flex: 1,
   },
   menuButton: {
     position: 'absolute',

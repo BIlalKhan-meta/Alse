@@ -63,6 +63,8 @@
 	</dict>
 	<key>NSCameraUsageDescription</key>
 	<string>${PRODUCT_NAME} needs access to your photo library to show your profile picture, upload images for posts, and manage product photos. Granting permission will help us improve your experience</string>
+	<key>NSContactsUsageDescription</key>
+	<string>${PRODUCT_NAME} uses your contacts to help you find people you know who are already on ALSE. Contact details are matched privately and are not stored.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>${PRODUCT_NAME} uses the local network for voice and video calls.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>

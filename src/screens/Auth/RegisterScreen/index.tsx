@@ -1,9 +1,11 @@
 import React, {useState} from 'react';
 import {View, Text, TouchableOpacity, Image, SafeAreaView} from 'react-native';
 import * as yup from 'yup';
+import dayjs from 'dayjs';
 import styles from './styles';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import RegularTextInput from '../../../components/TextInput/RegularTextInput';
+import DatePickerInput from '../../../components/TextInput/DatePickerTextInput2';
 import {Formik} from 'formik';
 import {colors} from '../../../utils/theme';
 import CustomButton from '../../../components/CustomButton';
@@ -21,6 +23,7 @@ interface FormValues {
   name: string;
   identifier: string;
   password: string;
+  dob: Date | null;
   agree: boolean;
 }
 
@@ -37,6 +40,7 @@ const SignupScreen: React.FC = () => {
     name: '',
     identifier: '',
     password: '',
+    dob: null,
     agree: false,
   });
 
@@ -48,6 +52,11 @@ const SignupScreen: React.FC = () => {
       .min(6, 'Password must be at least 6 characters')
       .required('Password is required'),
     name: yup.string().required('Name is required'),
+    dob: yup
+      .date()
+      .nullable()
+      .required('Date of birth is required')
+      .max(new Date(), 'Date of birth must be in the past'),
     agree: yup
       .boolean()
       .oneOf(
@@ -64,12 +73,15 @@ const SignupScreen: React.FC = () => {
 
       setSubmitted(true);
 
-      const apiData = {
-        full_name: values.name,
-        identifier: values.identifier,
-        password: values.password,
-        agree: values.agree,
-      };
+      if (!values.dob) {
+        Toast.show({
+          type: 'error',
+          text1: 'Date of birth',
+          text2: 'Please select your date of birth',
+        });
+        setSubmitted(false);
+        return;
+      }
 
       if (!values.agree) {
         Toast.show({
@@ -99,7 +111,14 @@ const SignupScreen: React.FC = () => {
         return;
       }
 
-      const res = await signup(apiData);
+      const formData = new FormData();
+      formData.append('full_name', values.name);
+      formData.append('identifier', values.identifier);
+      formData.append('password', values.password);
+      formData.append('dob', dayjs(values.dob).format('YYYY-MM-DD'));
+      formData.append('agree', String(values.agree));
+
+      const res = await signup(formData);
 
       if (res?.data?.status) {
         Toast.show({
@@ -324,6 +343,22 @@ const SignupScreen: React.FC = () => {
                     setSecurePassword(!securePassword)
                   }
                   style={styles.input}
+                />
+
+                <DatePickerInput
+                  placeholder={t('signUp.dob', {
+                    defaultValue: 'Date of birth',
+                  })}
+                  initialDate={values.dob}
+                  onDateChange={(date: Date) => setFieldValue('dob', date)}
+                  error={
+                    submitted || values.dob
+                      ? (errors.dob as string)
+                      : undefined
+                  }
+                  style={styles.dobInput}
+                  containerStyle={styles.dobContainer}
+                  maxDate
                 />
 
                 <View style={styles.checkboxcontainer}>

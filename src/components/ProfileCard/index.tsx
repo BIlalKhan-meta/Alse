@@ -19,11 +19,13 @@ import CustomImage from '../CustomeImage';
 interface ProfileCardProps {
   name: string;
   description: string;
-  stats: string;
+  stats?: string;
   avatar: string;
   isFollowing: boolean;
   is_private: boolean;
   isRequested: boolean;
+  /** When omitted, falls back to public=allowed / private=followers-only. */
+  canMessage?: boolean | null;
   onPress: () => void;
   id: number;
   username?: string;
@@ -46,6 +48,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
   isFollowing,
   isRequested,
   is_private,
+  canMessage,
   id,
   username = '@alsedaise',
   location = 'Jersey, NY',
@@ -66,63 +69,73 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
   const [follow, setFollow] = useState(
     isFollowing ? 'following' : isRequested ? 'requested' : 'notFollowing',
   );
+  // Public: DM without follow. Private: only after accepted follow.
+  const resolveCanMessage = () => {
+    if (canMessage != null) {
+      return Boolean(canMessage);
+    }
+    if (is_private) {
+      return Boolean(isFollowing);
+    }
+    return true;
+  };
+
+  const [allowMessage, setAllowMessage] = useState(resolveCanMessage);
 
   const {t} = useTranslation();
+
+  useEffect(() => {
+    setFollow(
+      isFollowing ? 'following' : isRequested ? 'requested' : 'notFollowing',
+    );
+    setAllowMessage(
+      canMessage != null
+        ? Boolean(canMessage)
+        : is_private
+          ? Boolean(isFollowing)
+          : true,
+    );
+  }, [isFollowing, isRequested, canMessage, is_private]);
 
   const handleFollow = () => {
     setFollowLoader(true);
 
     if (follow === 'notFollowing') {
-      if (!is_private) {
-        // Request follow for private profile
-        userFollow(id)
-          .then(res => {
-            if (res?.data) {
-              console.log('REQUESTINGGGGGGGGGGGGGGGGGGGGGGGG================');
-              setFollow('requested');
-              Toast.show({
-                type: 'success',
-                text1: t('toast.followRequestSent'),
-                text2: res?.data?.message,
-              });
-            }
-          })
-          .catch(err => {
+      userFollow(id)
+        .then(res => {
+          if (!res?.data) {
+            return;
+          }
+          if (is_private) {
+            // Private: follow request until owner accepts
+            setFollow('requested');
             Toast.show({
-              type: 'error',
-              text1: t('error'),
-              text2: t('toast.followReqFailed'),
+              type: 'success',
+              text1: t('toast.followRequestSent'),
+              text2: res?.data?.message,
             });
-            console.log('Error sending follow request:', err);
-          })
-          .finally(() => {
-            setFollowLoader(false);
-          });
-      } else {
-        // Follow public profile directly
-        userFollow(id)
-          .then(res => {
-            if (res?.data) {
-              console.log('FOLLOWINGGGGGGGGGGGGGGGGGG=================');
-              setFollow('following');
-              Toast.show({
-                type: 'success',
-                text1: t('followed'),
-                text2: res?.data?.message,
-              });
-            }
-          })
-          .catch(err => {
+          } else {
+            // Public: follow immediately
+            setFollow('following');
+            setAllowMessage(true);
             Toast.show({
-              type: 'error',
-              text1: t('error'),
-              text2: t('toast.followReqFailed'),
+              type: 'success',
+              text1: t('followed'),
+              text2: res?.data?.message,
             });
-          })
-          .finally(() => {
-            setFollowLoader(false);
+          }
+        })
+        .catch(err => {
+          Toast.show({
+            type: 'error',
+            text1: t('error'),
+            text2: t('toast.followReqFailed'),
           });
-      }
+          console.log('Error following user:', err);
+        })
+        .finally(() => {
+          setFollowLoader(false);
+        });
     } else if (follow === 'following' || follow === 'requested') {
       // Unfollow or cancel follow request
       userUnFollow(id)
@@ -130,6 +143,8 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
           if (res?.data) {
             console.log();
             setFollow('notFollowing');
+            // Public accounts remain messageable after unfollow.
+            setAllowMessage(canMessage != null ? Boolean(canMessage) : !is_private);
             Toast.show({
               type: 'success',
               text1: t('unfollowed'),
@@ -152,14 +167,19 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
   };
 
   const handleMessage = () => {
+    if (!allowMessage) {
+      Toast.show({
+        type: 'error',
+        text1: 'Unable to message',
+        text2: is_private
+          ? 'Follow this private account to send a message'
+          : 'This user is not accepting messages',
+      });
+      return;
+    }
+
     setMessageLoader(true);
-    const data = {
-      user_id: id,
-    };
-    const form = new FormData();
-    form.append('user_id', data?.user_id);
-    console.log('formformformformform ====>', form);
-    createChat(data)
+    createChat({user_id: id})
       .then(res => {
         setMessageLoader(false);
 
@@ -169,12 +189,21 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
           name: name,
           phoneNumber: phoneNumber,
           user: {id, avatar},
+          isMutualFollow: Boolean(res?.data?.data?.is_mutual_follow),
         });
-        // console.log('Respose from Create Chat', res?.data?.data);
       })
       .catch(err => {
         setMessageLoader(false);
-
+        const msg =
+          err?.response?.data?.message ||
+          (is_private
+            ? 'Follow this private account to send a message'
+            : 'This user is not accepting messages');
+        Toast.show({
+          type: 'error',
+          text1: 'Unable to message',
+          text2: String(msg),
+        });
         console.log('Error from Create Chat -----', err);
       });
   };
@@ -308,11 +337,15 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
         </TouchableOpacity>
       </View>
 
-      {/* Buttons */}
+      {/* Buttons — Message when API allows (public: anyone; private: followers) */}
       {user?.id !== id && (
         <View style={styles.buttonContainer}>
           <CustomButton
-            style={styles.followButton}
+            style={
+              !allowMessage
+                ? {...styles.followButton, ...styles.followButtonFull}
+                : styles.followButton
+            }
             onPress={handleFollow}
             loading={followLoader}>
             {follow === 'following'
@@ -321,13 +354,15 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
               ? 'Requested'
               : 'Follow'}
           </CustomButton>
-          <CustomButton
-            style={styles.messageButton}
-            txtstyle={{color: 'black'}}
-            onPress={handleMessage}
-            loading={messageLoader}>
-            {'Message'}
-          </CustomButton>
+          {allowMessage ? (
+            <CustomButton
+              style={styles.messageButton}
+              txtstyle={{color: 'black'}}
+              onPress={handleMessage}
+              loading={messageLoader}>
+              {'Message'}
+            </CustomButton>
+          ) : null}
         </View>
       )}
 

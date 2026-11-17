@@ -11,7 +11,7 @@ import {
   SafeAreaView,
 } from 'react-native';
 import {useSelector} from 'react-redux';
-import {PencilLine, Shield} from 'lucide-react-native';
+import {PencilLine, Shield, Users} from 'lucide-react-native';
 import InterLight from '../../components/Text/InterLight';
 import InterBoldLabel from '../../components/Text/InterBoldLabel';
 import InterRegular from '../../components/Text/InterRegular';
@@ -554,6 +554,13 @@ const Settings = ({navigation}: any) => {
               label="Security Settings"
               onPress={() => navigation.navigate('SecurityPrivacy')}
               icon={<Shield size={22} color={colors.themeColor} />}
+            />
+
+            <MenuIconRow
+              testID="settings-social-activity"
+              label="Social Activity"
+              onPress={() => navigation.navigate('SocialActivity')}
+              icon={<Users size={22} color={colors.themeColor} />}
             />
 
             <MenuIconRow

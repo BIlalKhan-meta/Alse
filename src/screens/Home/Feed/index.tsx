@@ -71,6 +71,11 @@ import AdFeedCard from '../../../components/AdFeedCard';
 import {recordImpression} from '../../../api/advertising';
 import {recordMediaView} from '../../../api/views';
 import {usePostComments} from '../../../hooks/usePostComments';
+import PeopleYouMayKnow from '../../../components/PeopleYouMayKnow';
+import {
+  fetchPeopleYouMayKnowSuggestions,
+} from '../../../services/peopleYouMayKnowService';
+import {SuggestedUser} from '../../../api/home';
 
 const Home: React.FC = () => {
   const flatListRef = useRef<FlashList<any>>(null);
@@ -97,6 +102,8 @@ const Home: React.FC = () => {
 
   const [refreshing, setRefreshing] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [pymkUsers, setPymkUsers] = useState<SuggestedUser[]>([]);
+  const [pymkLoading, setPymkLoading] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FeedFilterTab>('all');
   const [hiddenAdIds, setHiddenAdIds] = useState<Set<number>>(new Set());
   const impressedAdIds = useRef<Set<number>>(new Set());
@@ -209,6 +216,18 @@ const Home: React.FC = () => {
     setIsFabOpen(!isFabOpen);
   };
 
+  const loadPeopleYouMayKnow = useCallback(async () => {
+    setPymkLoading(true);
+    try {
+      const users = await fetchPeopleYouMayKnowSuggestions();
+      setPymkUsers(Array.isArray(users) ? users.slice(0, 15) : []);
+    } catch (error) {
+      console.warn('[PYMK] home fetch failed:', error);
+    } finally {
+      setPymkLoading(false);
+    }
+  }, []);
+
   // Fetch all home data: feed, profile, countries, user/shops, stories, live-streams
   const fetchAllData = useCallback(
     async (
@@ -239,6 +258,7 @@ const Home: React.FC = () => {
               }
             });
             await checkIsSeller();
+            void loadPeopleYouMayKnow();
           } catch (secondaryError) {
             console.log('Error fetching secondary home data:', secondaryError);
           }
@@ -257,7 +277,7 @@ const Home: React.FC = () => {
         clearRefreshing();
       }
     },
-    [dispatch, activeFilter, clearRefreshing],
+    [dispatch, activeFilter, clearRefreshing, loadPeopleYouMayKnow],
   );
 
   const filteredPosts = useMemo(() => {
@@ -777,6 +797,14 @@ const Home: React.FC = () => {
           onFilterChange={handleFilterChange}
         />
       </View>
+      <PeopleYouMayKnow
+        users={pymkUsers}
+        loading={pymkLoading}
+        layout="horizontal"
+        showSeeAll
+        onUsersChange={setPymkUsers}
+        onSeeAll={() => navigation.navigate('SearchUsers')}
+      />
     </View>
   );
 

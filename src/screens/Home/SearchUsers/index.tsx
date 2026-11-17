@@ -4,11 +4,18 @@ import Card from '../../../components/Card';
 import {useIsFocused} from '@react-navigation/native';
 import styles from './styles';
 import SearchComponent from '../../../components/SearchComponent';
-import {getAllUsers, userFollow, userUnFollow} from '../../../api/home';
+import {
+  getAllUsers,
+  SuggestedUser,
+  userFollow,
+  userUnFollow,
+} from '../../../api/home';
 import {FollowingCard} from '../../../components/FollowingCard';
 import HorizontalSeparator from '../../../components/HorizontalSeparator';
 import {EmptyComponent} from '../../../components/EmptyComponent';
 import {colors} from '../../../utils/theme';
+import PeopleYouMayKnow from '../../../components/PeopleYouMayKnow';
+import {fetchPeopleYouMayKnowSuggestions} from '../../../services/peopleYouMayKnowService';
 
 const DEBOUNCE_MS = 350;
 
@@ -31,8 +38,11 @@ const SearchUsers: React.FC = () => {
   const [debouncedText, setDebouncedText] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [lastPage, setLastPage] = useState(1);
+  const [pymkUsers, setPymkUsers] = useState<SuggestedUser[]>([]);
+  const [pymkLoading, setPymkLoading] = useState(false);
   const requestIdRef = useRef(0);
   const loadingRef = useRef(false);
+  const showPymk = debouncedText.length === 0;
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -74,12 +84,27 @@ const SearchUsers: React.FC = () => {
     }
   }, []);
 
+  const loadPymk = useCallback(async () => {
+    setPymkLoading(true);
+    try {
+      const suggestions = await fetchPeopleYouMayKnowSuggestions();
+      setPymkUsers(Array.isArray(suggestions) ? suggestions : []);
+    } catch (error) {
+      console.warn('[PYMK] search fetch failed:', error);
+    } finally {
+      setPymkLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (!isFocused) {
       return;
     }
     void fetchData(1, debouncedText, false);
-  }, [isFocused, debouncedText, fetchData]);
+    if (debouncedText.length === 0) {
+      void loadPymk();
+    }
+  }, [isFocused, debouncedText, fetchData, loadPymk]);
 
   const onLoadMore = async () => {
     if (!loading && currentPage < lastPage) {
@@ -150,13 +175,29 @@ const SearchUsers: React.FC = () => {
           renderItem={renderUserItem}
           onEndReached={onLoadMore}
           onEndReachedThreshold={0.5}
+          ListHeaderComponent={
+            showPymk ? (
+              <PeopleYouMayKnow
+                users={pymkUsers}
+                loading={pymkLoading}
+                layout="vertical"
+                onUsersChange={setPymkUsers}
+              />
+            ) : null
+          }
           ListFooterComponent={() =>
             loading ? (
               <ActivityIndicator size="large" color={colors.themeColor} />
             ) : null
           }
           ListEmptyComponent={
-            !loading && users.length === 0 ? (
+            !loading && users.length === 0 && !showPymk ? (
+              <EmptyComponent text="No Users Found" />
+            ) : !loading &&
+              users.length === 0 &&
+              showPymk &&
+              !pymkLoading &&
+              pymkUsers.length === 0 ? (
               <EmptyComponent text="No Users Found" />
             ) : null
           }

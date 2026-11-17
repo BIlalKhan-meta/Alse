@@ -1,36 +1,47 @@
-import React, {useState} from 'react';
-import {View, TouchableOpacity, StyleSheet} from 'react-native';
-import DatePicker from 'react-native-date-picker';
-import InterLight from '../../Text/InterLight';
+import React, {useEffect, useState} from 'react';
+import {
+  View,
+  TouchableOpacity,
+  StyleSheet,
+  StyleProp,
+  ViewStyle,
+  Text,
+} from 'react-native';
 import DateTimePicker from 'react-native-modal-datetime-picker';
 import {dateHelper} from '../../../utils';
 import InterRegularSmallest from '../../Text/InterRegularSmallest';
 import {colors} from '../../../utils/theme';
-import {vh, vw} from '../../../constant';
+import {fontSizes, vh, vw} from '../../../constant';
 
 interface DatePickerInputProps {
-  label: string;
+  label?: string;
   initialDate: Date | null | string;
   placeholder: string;
   error?: string;
   onDateChange: (date: Date) => void;
-  style: object;
+  style?: StyleProp<ViewStyle>;
+  containerStyle?: StyleProp<ViewStyle>;
   maxDate?: boolean;
 }
 
 const DatePickerInput: React.FC<DatePickerInputProps> = ({
-  label,
   initialDate,
   placeholder,
   onDateChange,
   style,
+  containerStyle,
   error,
   maxDate,
 }) => {
   const [openDate, setOpenDate] = useState<boolean>(false);
+  const hasValue = Boolean(initialDate);
   const [formattedDate, setFormattedDate] = useState<string>(
-    initialDate ? dateHelper(initialDate) : placeholder,
+    initialDate ? dateHelper(initialDate) : '',
   );
+
+  useEffect(() => {
+    setFormattedDate(initialDate ? dateHelper(initialDate) : '');
+  }, [initialDate]);
 
   const formatDate = (date: Date) => {
     const day = String(date.getDate()).padStart(2, '0');
@@ -40,31 +51,33 @@ const DatePickerInput: React.FC<DatePickerInputProps> = ({
   };
 
   return (
-    <>
-      <TouchableOpacity onPress={() => setOpenDate(true)}>
+    <View style={[styles.container, containerStyle]}>
+      <TouchableOpacity
+        onPress={() => setOpenDate(true)}
+        activeOpacity={0.8}
+        accessibilityRole="button"
+        accessibilityLabel={placeholder}>
         <View style={[styles.textinputbox, style]}>
-          <InterLight>{formattedDate}</InterLight>
+          <Text
+            style={[
+              styles.valueText,
+              !hasValue && !formattedDate && styles.placeholderText,
+            ]}
+            numberOfLines={1}>
+            {formattedDate || placeholder}
+          </Text>
         </View>
       </TouchableOpacity>
-      {/* <DatePicker
-        modal
-        mode="date"
-        open={openDate}
-        date={initialDate ? initialDate : new Date()}
-        onConfirm={date => {
-          setOpenDate(false);
-          setFormattedDate(formatDate(date));
-          onDateChange(date);
-        }}
-        onCancel={() => {
-          setOpenDate(false);
-        }}
-      /> */}
       <DateTimePicker
         mode="date"
-        // open={openDate}
         isVisible={openDate}
-        date={initialDate ? initialDate : new Date()}
+        date={
+          initialDate
+            ? initialDate instanceof Date
+              ? initialDate
+              : new Date(initialDate)
+            : new Date(2000, 0, 1)
+        }
         onConfirm={date => {
           setOpenDate(false);
           setFormattedDate(formatDate(date));
@@ -76,20 +89,34 @@ const DatePickerInput: React.FC<DatePickerInputProps> = ({
         {...(maxDate ? {maximumDate: new Date()} : {})}
       />
 
-      {error && (
-        <InterRegularSmallest style={styles.error}>
-          {error}
-        </InterRegularSmallest>
-      )}
-    </>
+      {error ? (
+        <InterRegularSmallest style={styles.error}>{error}</InterRegularSmallest>
+      ) : null}
+    </View>
   );
 };
 
 export default DatePickerInput;
 
 const styles = StyleSheet.create({
+  container: {
+    marginTop: vh * 3,
+    width: '100%',
+    alignItems: 'center',
+  },
   textinputbox: {
-    // Add your styles here
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  valueText: {
+    color: colors.black,
+    fontSize: fontSizes.f11,
+    fontWeight: '300',
+    includeFontPadding: false,
+    textAlignVertical: 'center',
+  },
+  placeholderText: {
+    color: colors.darkGray,
   },
   error: {
     color: colors.redText,
@@ -97,8 +124,5 @@ const styles = StyleSheet.create({
     width: '100%',
     marginLeft: vw * 2,
     alignSelf: 'flex-start',
-  },
-  calendericon: {
-    // Add your styles here
   },
 });

@@ -42,6 +42,7 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useSelector} from 'react-redux';
 import {
   createMessage,
+  fetchProfileById,
   getChat,
   getPost,
   uploadImages,
@@ -201,6 +202,9 @@ const ChatOngoing: React.FC<Props> = props => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isCalling, setIsCalling] = useState(false);
   const [isVideoCalling, setIsVideoCalling] = useState(false);
+  const [isMutualFollow, setIsMutualFollow] = useState(
+    Boolean(props?.route?.params?.isMutualFollow),
+  );
   const [optionVisibal, setOptionVisible] = useState(false);
   const [fullscreenImageUri, setFullscreenImageUri] = useState<string | null>(
     null,
@@ -366,8 +370,7 @@ const ChatOngoing: React.FC<Props> = props => {
     return true; // iOS doesn't need this permission
   };
 
-  // Make video call
-  const makeVideoCall = async (callType: 'video' | 'audio' = 'video') => {
+  const resolveReceiverId = useCallback(() => {
     const currentUserId = user?.id != null ? String(user.id) : null;
     const explicitCandidates = [
       props?.route?.params?.receiverId,
@@ -393,13 +396,41 @@ const ChatOngoing: React.FC<Props> = props => {
       id => !currentUserId || id !== currentUserId,
     );
 
-    const routeId =
-      props?.route?.params?.id != null ? String(props.route.params.id) : null;
-    const routeIdAsReceiver =
-      routeId && (!currentUserId || routeId !== currentUserId) ? routeId : null;
+    return nonSelfExplicit ?? nonSelfFromMessages ?? null;
+  }, [messages, props?.route?.params, user?.id]);
 
-    const receiverId =
-      nonSelfExplicit ?? nonSelfFromMessages ?? routeIdAsReceiver ?? null;
+  useEffect(() => {
+    if (isGroupChat) {
+      setIsMutualFollow(true);
+      return;
+    }
+    const peerId = resolveReceiverId();
+    if (!peerId) {
+      return;
+    }
+    let cancelled = false;
+    fetchProfileById(Number(peerId))
+      .then(res => {
+        if (cancelled) {
+          return;
+        }
+        const profile = res?.data?.data;
+        setIsMutualFollow(Boolean(profile?.is_mutual_follow));
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setIsMutualFollow(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isFocused, isGroupChat, resolveReceiverId]);
+
+  // Make video call
+  const makeVideoCall = async (callType: 'video' | 'audio' = 'video') => {
+    const currentUserId = user?.id != null ? String(user.id) : null;
+    const receiverId = resolveReceiverId();
 
     if (!receiverId) {
       Alert.alert(
@@ -409,11 +440,18 @@ const ChatOngoing: React.FC<Props> = props => {
       return;
     }
 
+    if (!isGroupChat && !isMutualFollow) {
+      Alert.alert(
+        'Call unavailable',
+        'Calls are only available when you both follow each other.',
+      );
+      return;
+    }
+
     console.log('[ChatOngoing] Calling receiver:', receiverId, {
       currentUserId,
       routeChatId: props?.route?.params?.id,
-      explicitCandidates,
-      messageUserCandidates,
+      isMutualFollow,
     });
 
     try {
@@ -478,19 +516,30 @@ const ChatOngoing: React.FC<Props> = props => {
         },
       });
 
-      inviteCall({
-        chat_id: chatId,
-        call_id: callId,
-        call_type: callType === 'video' ? 'video' : 'audio',
-      })
-        .then(() => console.log('[ChatOngoing] call invite push sent', callId))
-        .catch(err =>
-          console.warn(
-            '[ChatOngoing] call invite push failed',
-            err?.response?.status,
-            err?.response?.data ?? err?.message,
-          ),
-        );
+      try {
+        await inviteCall({
+          chat_id: chatId,
+          call_id: callId,
+          call_type: callType === 'video' ? 'video' : 'audio',
+        });
+        console.log('[ChatOngoing] call invite push sent', callId);
+      } catch (err: any) {
+        const status = err?.response?.status;
+        const msg =
+          err?.response?.data?.message ||
+          err?.message ||
+          'Unable to start call';
+        console.warn('[ChatOngoing] call invite push failed', status, msg);
+        if (status === 403) {
+          Alert.alert(
+            'Call unavailable',
+            'Calls are only available when you both follow each other.',
+          );
+          return;
+        }
+        Alert.alert('Call Failed', String(msg));
+        return;
+      }
 
       const fd = {
         chat_id: chatId,
@@ -531,6 +580,13 @@ const ChatOngoing: React.FC<Props> = props => {
 
   // Show call options
   const showCallOptions = () => {
+    if (!isGroupChat && !isMutualFollow) {
+      Alert.alert(
+        'Call unavailable',
+        'Calls are only available when you both follow each other.',
+      );
+      return;
+    }
     Alert.alert('Call Options', 'Choose how you want to call', [
       {
         text: 'Video Call',
@@ -1068,39 +1124,43 @@ const ChatOngoing: React.FC<Props> = props => {
             onPress={showCallOptions}
             style={[
               styles.iconContainer,
-              (isCalling || isVideoCalling) && (styles as any).disabledButton,
+              (isCalling ||
+                isVideoCalling ||
+                (!isGroupChat && !isMutualFollow)) &&
+                (styles as any).disabledButton,
             ]}
-            disabled={isCalling || isVideoCalling}>
+            disabled={
+              isCalling || isVideoCalling || (!isGroupChat && !isMutualFollow)
+            }>
             <Phone
               size={20}
-              color={isCalling || isVideoCalling ? '#4CAF50' : '#666'}
+              color={
+                isCalling || isVideoCalling
+                  ? '#4CAF50'
+                  : !isGroupChat && !isMutualFollow
+                    ? '#BBB'
+                    : '#666'
+              }
               strokeWidth={2}
             />
           </TouchableOpacity>
-          {/* Test button for direct calling */}
-          {/* <TouchableOpacity
-            onPress={() => {
-              console.log('🧪 Test call button pressed');
-              attemptCall('+1234567890');
-            }}
-            style={[
-              styles.iconContainer,
-              {backgroundColor: '#FF9800', marginLeft: 8},
-            ]}>
-            <Text style={{color: 'white', fontSize: 12, fontWeight: 'bold'}}>
-              TEST
-            </Text>
-          </TouchableOpacity> */}
           <TouchableOpacity
             style={[
               styles.iconContainer,
-              isVideoCalling && (styles as any).disabledButton,
+              (isVideoCalling || (!isGroupChat && !isMutualFollow)) &&
+                (styles as any).disabledButton,
             ]}
             onPress={() => makeVideoCall('video')}
-            disabled={isVideoCalling}>
+            disabled={isVideoCalling || (!isGroupChat && !isMutualFollow)}>
             <VideoIcon
               size={20}
-              color={isVideoCalling ? '#4CAF50' : '#666'}
+              color={
+                isVideoCalling
+                  ? '#4CAF50'
+                  : !isGroupChat && !isMutualFollow
+                    ? '#BBB'
+                    : '#666'
+              }
               strokeWidth={2}
             />
           </TouchableOpacity>

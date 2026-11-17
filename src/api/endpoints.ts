@@ -41,6 +41,8 @@ const endpoints = {
     notificationOpen: '/notifications',
     notificationClick: '/notifications',
     allUsers: '/search-users',
+    peopleYouMayKnow: '/people-you-may-know',
+    peopleYouMayKnowMatch: '/people-you-may-know/match',
     videos: 'videos',
   },
   media: {

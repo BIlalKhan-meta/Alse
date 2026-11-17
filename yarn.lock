@@ -6930,6 +6930,11 @@ js-md5@^0.8.3:
   resolved "https://registry.npmjs.org/js-md5/-/js-md5-0.8.3.tgz"
   integrity sha512-qR0HB5uP6wCuRMrWPTrkMaev7MJZwJuuw4fnwAzRgP4J4/F8RwtodOKpGp4XpqsLBFzzgqIO42efFAyz2Et6KQ==
 
+js-sha256@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/js-sha256/-/js-sha256-1.0.0.tgz#24cdfe8c9184426d814da8e16ba0c769dc425416"
+  integrity sha512-Bqxf6ENUzYIMzuELCmRNrJOVbjKH1oMgbfYJBKVr/W1Xf9fazpahqCbb24v1pR7XV1isuqhM+w9KWpK7zCyUQw==
+
 "js-tokens@^3.0.0 || ^4.0.0", js-tokens@^4.0.0:
   version "4.0.0"
   resolved "https://registry.npmjs.org/js-tokens/-/js-tokens-4.0.0.tgz"
@@ -8392,6 +8397,11 @@ react-native-compressor@1.19.4:
   version "1.19.4"
   resolved "https://registry.yarnpkg.com/react-native-compressor/-/react-native-compressor-1.19.4.tgz#828e5e9057e225f5a3ba1324d15ac280b4fca2d0"
   integrity sha512-xRFgCHtGLxwHpf2WyyVqPWuYQvawrhBNPVf59GT6kpzRtA4IYSk87Q6wHq8boEqrlX/e8ENOvAxxEaY+823aAA==
+
+react-native-contacts@^8.0.10:
+  version "8.0.10"
+  resolved "https://registry.yarnpkg.com/react-native-contacts/-/react-native-contacts-8.0.10.tgz#427ac7638db134e221cfe6af0ec6537f53016d07"
+  integrity sha512-9iBRf/YLYSXQxfbPvz43DwXMv0OcHeit37W/313adYJIWz/W8SypqqxmAg9B/Lg1hzD+KYEn+UpljZnwgp78OQ==
 
 react-native-country-picker-modal@^2.0.0:
   version "2.0.0"

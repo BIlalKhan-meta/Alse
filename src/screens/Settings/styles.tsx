@@ -288,21 +288,35 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: 16,
+    paddingLeft: 4,
+    paddingRight: 16,
     backgroundColor: colors.white,
+    overflow: 'visible',
   },
 
   switchContainer: {
-    width: 50,
-    height: 30,
+    width: 58,
+    height: 36,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'visible',
+    marginLeft: 12,
+    flexShrink: 0,
   },
 
   settingsItemLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
+    flexShrink: 1,
+    minWidth: 0,
     gap: 12,
+    paddingRight: 8,
+  },
+
+  socialActivityContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 24,
   },
 
   settingsIcon: {
@@ -316,12 +330,15 @@ const styles = StyleSheet.create({
 
   settingsTextContainer: {
     flex: 1,
+    flexShrink: 1,
+    minWidth: 0,
   },
 
   settingsItemText: {
     fontSize: 16,
     color: colors.black,
     fontWeight: '600',
+    flexShrink: 1,
   },
 
   settingsItemSubtitle: {
@@ -552,12 +569,17 @@ const styles = StyleSheet.create({
   selectWrapper: {
     backgroundColor: '#F9FAFB',
     borderRadius: 8,
-    height: 36,
-    minWidth: width * 0.35,
+    minHeight: 36,
+    minWidth: width * 0.28,
+    maxWidth: width * 0.42,
+    paddingHorizontal: 12,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 6,
     borderWidth: 1,
     borderColor: '#E5E7EB',
+    flexShrink: 0,
   },
 
   picker: {

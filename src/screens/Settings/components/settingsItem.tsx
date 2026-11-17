@@ -1,18 +1,16 @@
-import {Picker} from '@react-native-picker/picker';
 import {ChevronDown, ChevronRight} from 'lucide-react-native';
-import React, {useState} from 'react';
+import React, {useMemo, useState} from 'react';
 import {
   View,
   Switch,
   TouchableOpacity,
-  Platform,
   ActivityIndicator,
 } from 'react-native';
 import InterLight from '../../../components/Text/InterLight';
-import InterRegular from '../../../components/Text/InterRegular';
 import {colors} from '../../../utils/theme';
 import styles from '../styles';
 import InterBold from '../../../components/Text/InterBold';
+import FilterSelectModal from '../../../components/FilterSelectModal';
 
 interface SettingsItemProps {
   title: string;
@@ -41,33 +39,36 @@ const SettingsItem = ({
   showChevron = false,
   loading = false,
 }: SettingsItemProps) => {
-  // For navigation items, wrap the entire content in TouchableOpacity
+  const [selectOpen, setSelectOpen] = useState(false);
+
+  const selectedLabel = useMemo(() => {
+    const match = options.find(opt => opt.value === value);
+    return match?.label ?? String(value ?? '');
+  }, [options, value]);
+
   if (type === 'navigation' || showChevron) {
     return (
-      <>
-        <TouchableOpacity style={styles.settingsItem} onPress={onPress}>
-          <View style={styles.settingsItemLeft}>
-            {IconComponent && (
-              <View style={styles.settingsIcon}>
-                <IconComponent size={20} color={colors.lightGrey} />
-              </View>
-            )}
-            <View style={styles.settingsTextContainer}>
-              <InterBold style={styles.settingsItemText}>{title}</InterBold>
-              {subtitle && (
-                <InterLight style={styles.settingsItemSubtitle}>
-                  {subtitle}
-                </InterLight>
-              )}
+      <TouchableOpacity style={styles.settingsItem} onPress={onPress}>
+        <View style={styles.settingsItemLeft}>
+          {IconComponent && (
+            <View style={styles.settingsIcon}>
+              <IconComponent size={20} color={colors.lightGrey} />
             </View>
+          )}
+          <View style={styles.settingsTextContainer}>
+            <InterBold style={styles.settingsItemText}>{title}</InterBold>
+            {subtitle && (
+              <InterLight style={styles.settingsItemSubtitle}>
+                {subtitle}
+              </InterLight>
+            )}
           </View>
-          <ChevronRight size={20} color={colors.lightGrey} />
-        </TouchableOpacity>
-      </>
+        </View>
+        <ChevronRight size={20} color={colors.lightGrey} />
+      </TouchableOpacity>
     );
   }
 
-  // For other types (switch, select), use the original structure
   return (
     <>
       <View style={styles.settingsItem}>
@@ -93,10 +94,10 @@ const SettingsItem = ({
               <ActivityIndicator size="small" color={colors.themeColor} />
             ) : (
               <Switch
-                value={value}
+                value={Boolean(value)}
                 onValueChange={onToggle}
                 trackColor={{false: '#E5E7EB', true: colors.themeColor}}
-                thumbColor={value ? '#ffffff' : '#ffffff'}
+                thumbColor="#ffffff"
                 ios_backgroundColor="#E5E7EB"
               />
             )}
@@ -104,30 +105,36 @@ const SettingsItem = ({
         )}
 
         {type === 'select' && (
-          <View style={styles.selectWrapper}>
+          <TouchableOpacity
+            style={styles.selectWrapper}
+            activeOpacity={0.7}
+            disabled={loading}
+            onPress={() => setSelectOpen(true)}
+            hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
             {loading ? (
               <ActivityIndicator size="small" color={colors.themeColor} />
             ) : (
-              <Picker
-                selectedValue={value}
-                onValueChange={onValueChange}
-                mode="dropdown"
-                style={styles.picker}
-                itemStyle={styles.pickerItem}
-                dropdownIconColor={colors.lightGrey}
-                enabled={!loading}>
-                {options.map(opt => (
-                  <Picker.Item
-                    key={opt.value}
-                    label={opt.label}
-                    value={opt.value}
-                  />
-                ))}
-              </Picker>
+              <>
+                <InterBold style={styles.selectButtonText}>
+                  {selectedLabel}
+                </InterBold>
+                <ChevronDown size={16} color={colors.lightGrey} />
+              </>
             )}
-          </View>
+          </TouchableOpacity>
         )}
       </View>
+
+      {type === 'select' ? (
+        <FilterSelectModal
+          visible={selectOpen}
+          onClose={() => setSelectOpen(false)}
+          title={title}
+          items={options}
+          selectedValue={String(value ?? '')}
+          onSelect={next => onValueChange?.(next)}
+        />
+      ) : null}
     </>
   );
 };

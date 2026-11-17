@@ -1,11 +1,13 @@
 import React, {useState, useEffect} from 'react';
-import {View, ScrollView, Alert} from 'react-native';
+import {View, ScrollView, TouchableOpacity, Image, SafeAreaView} from 'react-native';
 import styles from './styles';
 import {useSelector, useDispatch} from 'react-redux';
-import {selectUserProfile} from '../../store/slices/authSlice';
+import {useNavigation} from '@react-navigation/native';
+import {patchUser} from '../../store/slices/authSlice';
 import {useAppTranslation} from '../../i18n/hooks/useAppTranslation';
-import GlobalHeader from '../../components/GlobalHeader';
 import SettingsItem from './components/settingsItem';
+import InterBoldLabel from '../../components/Text/InterBoldLabel';
+import {images} from '../../utils/images';
 import {
   savePrivacySettings,
   updateSecurity,
@@ -14,6 +16,7 @@ import Toast from 'react-native-toast-message';
 
 const SocialActivity = () => {
   const dispatch = useDispatch();
+  const navigation = useNavigation<any>();
   const {t} = useAppTranslation();
 
   // Get settings from Redux store with proper typing
@@ -48,7 +51,7 @@ const SocialActivity = () => {
 
   const profileVisibilityOptions = [
     {label: 'Public', value: 'public'},
-    {label: 'Buyers Only', value: 'buyers_only'}, // Updated to match your interface
+    {label: 'Private', value: 'private'},
   ];
 
   const postVisibilityOptions = [
@@ -57,10 +60,16 @@ const SocialActivity = () => {
     {label: 'Private', value: 'private'},
   ];
 
+  const storyVisibilityOptions = [
+    {label: 'Everyone', value: 'everyone'},
+    {label: 'Followers', value: 'followers'},
+    {label: 'Nobody', value: 'none'},
+  ];
+
   const commentOptions = [
     {label: t('everyone'), value: 'everyone'},
     {label: t('followers'), value: 'followers'},
-    {label: t('private'), value: 'private'}, // Updated to match your interface
+    {label: 'Nobody', value: 'none'},
   ];
 
   const storyReplyOptions = [
@@ -72,7 +81,7 @@ const SocialActivity = () => {
   const msgRequestOptions = [
     {label: t('everyone'), value: 'everyone'},
     {label: t('followers'), value: 'followers'},
-    {label: t('off'), value: 'off'}, // Updated to match your interface
+    {label: t('off'), value: 'off'},
   ];
 
   // Handle settings update
@@ -86,22 +95,30 @@ const SocialActivity = () => {
       setLocalSettings(updatedSettings);
       dispatch(updateSecurity({[key]: value}));
 
-      // Create JSON data
-      const jsonData = {
-        post_visibility: updatedSettings.post_visibility,
-        allow_tags: updatedSettings.allow_tags,
-        comment_permissions: updatedSettings.comment_permissions,
-        auto_filter_offensive: updatedSettings.auto_filter_offensive,
-        story_visibility: updatedSettings.story_visibility,
-        story_replies: updatedSettings.story_replies,
-        profile_visibility: updatedSettings.profile_visibility,
-        message_requests: updatedSettings.message_requests,
-      };
+      // Only send the changed field (+ keep related privacy fields consistent).
+      const jsonData = {[key]: value};
 
       console.log('Sending data to PUT endpoint:', jsonData);
 
       // Dispatch without ID parameter
       const result = await dispatch(savePrivacySettings(jsonData)).unwrap();
+
+      if (result && typeof result === 'object') {
+        setLocalSettings(prev => ({
+          ...prev,
+          ...result,
+        }));
+        dispatch(updateSecurity(result));
+      }
+
+      if (key === 'profile_visibility') {
+        dispatch(
+          patchUser({
+            is_private: value === 'private' ? 1 : 0,
+            profile_visibility_customized: true,
+          }),
+        );
+      }
 
       console.log('Settings updated successfully:', result);
     } catch (error) {
@@ -131,13 +148,23 @@ const SocialActivity = () => {
   };
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <GlobalHeader icon={true} />
+    <SafeAreaView style={styles.container}>
+      <View style={styles.menuHeader}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+          hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+          <Image source={images.backicon} style={styles.backIcon} />
+        </TouchableOpacity>
+        <InterBoldLabel style={styles.menuTitle}>
+          {t('settings.socialActivity') || 'Social Activity'}
+        </InterBoldLabel>
       </View>
 
-      <ScrollView style={{marginHorizontal: 16}}>
+      <ScrollView
+        style={styles.scrollContainer}
+        contentContainerStyle={styles.socialActivityContent}
+        showsVerticalScrollIndicator={false}>
         <SettingsItem
           title={'Profile Visibility'}
           type="select"
@@ -190,7 +217,7 @@ const SocialActivity = () => {
           title={'Story Visibility'}
           type="select"
           value={localSettings.story_visibility}
-          options={postVisibilityOptions} // Reusing same options since they match
+          options={storyVisibilityOptions}
           onValueChange={value => handleSelectChange('story_visibility', value)}
         />
 
@@ -202,9 +229,13 @@ const SocialActivity = () => {
           onValueChange={value => handleSelectChange('story_replies', value)}
         />
 
-        <SettingsItem title={'Blocked users'} type="navigation" />
+        <SettingsItem
+          title={'Blocked users'}
+          type="navigation"
+          onPress={() => navigation.navigate('BlockedUsers')}
+        />
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 

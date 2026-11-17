@@ -20,6 +20,8 @@ interface ButtonProps {
   onPress: () => void;
   children: React.ReactNode;
   loading?: boolean;
+  /** Defaults to large; use small for compact buttons (e.g. Follow chips). */
+  loaderSize?: 'small' | 'large';
   disable?: boolean;
   testID?: string;
 }
@@ -36,7 +38,10 @@ const CustomButton: React.FC<ButtonProps> = props => {
         onPress={() => props?.onPress?.()}
         style={[styles.button, props.style]}>
         {props?.loading ? (
-          <ActivityIndicator size={'large'} color={colors.white} />
+          <ActivityIndicator
+            size={props.loaderSize ?? 'large'}
+            color={colors.white}
+          />
         ) : (
           <Text style={[styles.text, props.txtstyle]}>{props.children}</Text>
         )}
