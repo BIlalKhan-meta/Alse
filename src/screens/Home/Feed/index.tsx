@@ -77,6 +77,24 @@ import {
 } from '../../../services/peopleYouMayKnowService';
 import {SuggestedUser} from '../../../api/home';
 
+/** Insert a People You May Know row after every N feed posts. */
+const PYMK_EVERY_N_POSTS = 8;
+
+type FeedPostRow = {
+  rowType: 'post';
+  id: string;
+  post: Record<string, unknown>;
+  postIndex: number;
+};
+
+type FeedPymkRow = {
+  rowType: 'pymk';
+  id: string;
+  slot: number;
+};
+
+type FeedRow = FeedPostRow | FeedPymkRow;
+
 const Home: React.FC = () => {
   const flatListRef = useRef<FlashList<any>>(null);
   const storiesRef = useRef<StoriesRef>(null);
@@ -300,24 +318,60 @@ const Home: React.FC = () => {
     });
   }, [posts, activeFilter, hiddenAdIds]);
 
+  const feedItems = useMemo(() => {
+    const rows: FeedRow[] = [];
+    let postsSincePymk = 0;
+    let pymkSlot = 0;
+    const canShowPymk = pymkLoading || pymkUsers.length > 0;
+
+    filteredPosts.forEach((post, index) => {
+      rows.push({
+        rowType: 'post',
+        id: String(post?.id ?? post?.advertisement_id ?? `post-${index}`),
+        post,
+        postIndex: index,
+      });
+      postsSincePymk += 1;
+
+      if (canShowPymk && postsSincePymk >= PYMK_EVERY_N_POSTS) {
+        rows.push({
+          rowType: 'pymk',
+          id: `pymk-${pymkSlot}`,
+          slot: pymkSlot,
+        });
+        pymkSlot += 1;
+        postsSincePymk = 0;
+      }
+    });
+
+    return rows;
+  }, [filteredPosts, pymkLoading, pymkUsers.length]);
+
   // Prefetch next focused post's primary medium image (cheap ahead-of-time)
   useEffect(() => {
     if (focusedIndex == null || focusedIndex < 0) {
       return;
     }
-    const next = filteredPosts[focusedIndex + 1];
-    if (!next) {
+    let nextPost: Record<string, unknown> | null = null;
+    for (let i = focusedIndex + 1; i < feedItems.length; i += 1) {
+      const row = feedItems[i];
+      if (row?.rowType === 'post') {
+        nextPost = row.post;
+        break;
+      }
+    }
+    if (!nextPost) {
       return;
     }
     const isAd =
-      next?.feed_item_type === 'advertisement' ||
-      next?.type === 'advertisement' ||
-      next?.is_ad === true;
+      nextPost?.feed_item_type === 'advertisement' ||
+      nextPost?.type === 'advertisement' ||
+      nextPost?.is_ad === true;
     if (isAd) {
       return;
     }
     const mediaList = getNewsfeedMediaList(
-      (next?.media as Parameters<typeof getNewsfeedMediaList>[0]) ?? null,
+      (nextPost?.media as Parameters<typeof getNewsfeedMediaList>[0]) ?? null,
     );
     const primary = mediaList[0];
     if (!primary) {
@@ -332,7 +386,7 @@ const Home: React.FC = () => {
     if (mediumUri) {
       preloadRemoteImages([mediumUri]);
     }
-  }, [focusedIndex, filteredPosts]);
+  }, [focusedIndex, feedItems]);
 
   const handleFilterChange = useCallback((filter: FeedFilterTab) => {
     setActiveFilter(filter);
@@ -539,7 +593,16 @@ const Home: React.FC = () => {
       );
 
       visibleItems.forEach(entry => {
-        const feedItem = entry.item;
+        const row = entry.item;
+        const feedItem =
+          row?.rowType === 'post'
+            ? row.post
+            : row?.rowType === 'pymk'
+              ? null
+              : row;
+        if (!feedItem) {
+          return;
+        }
         const isAd =
           feedItem?.feed_item_type === 'advertisement' ||
           feedItem?.type === 'advertisement' ||
@@ -577,7 +640,12 @@ const Home: React.FC = () => {
         (a, b) => (a.index ?? 0) - (b.index ?? 0),
       );
       const primaryItem = sorted[Math.floor(sorted.length / 2)];
-      setFocusedIndex(primaryItem.index ?? null);
+      if (primaryItem?.item?.rowType === 'post') {
+        setFocusedIndex(primaryItem.index ?? null);
+        return;
+      }
+      const nearestPost = sorted.find(entry => entry.item?.rowType === 'post');
+      setFocusedIndex(nearestPost?.index ?? null);
     },
   ).current;
 
@@ -637,16 +705,58 @@ const Home: React.FC = () => {
     });
   }, []);
 
-  const renderPost = ({item, index}: any) => {
+  const handlePymkUsersChange = useCallback((nextSlice: SuggestedUser[]) => {
+    setPymkUsers(prev => {
+      const byId = new Map(nextSlice.map(user => [Number(user.id), user]));
+      return prev.map(user => byId.get(Number(user.id)) ?? user);
+    });
+  }, []);
+
+  const renderPymkRow = useCallback(
+    (slot: number) => {
+      if (!pymkLoading && pymkUsers.length === 0) {
+        return null;
+      }
+      // Rotate which suggestions appear so repeated carousels feel less identical.
+      const start =
+        pymkUsers.length > 0 ? (slot * 4) % pymkUsers.length : 0;
+      const rotated =
+        pymkUsers.length > 0
+          ? [
+              ...pymkUsers.slice(start),
+              ...pymkUsers.slice(0, start),
+            ].slice(0, Math.min(8, pymkUsers.length))
+          : pymkUsers;
+
+      return (
+        <PeopleYouMayKnow
+          users={rotated}
+          loading={pymkLoading && rotated.length === 0}
+          layout="horizontal"
+          showSeeAll
+          onUsersChange={handlePymkUsersChange}
+          onSeeAll={() => navigation.navigate('SearchUsers')}
+        />
+      );
+    },
+    [handlePymkUsersChange, navigation, pymkLoading, pymkUsers],
+  );
+
+  const renderPost = ({item, index}: {item: FeedRow; index: number}) => {
+    if (item.rowType === 'pymk') {
+      return renderPymkRow(item.slot);
+    }
+
+    const post = item.post;
     const isAd =
-      item?.feed_item_type === 'advertisement' ||
-      item?.type === 'advertisement' ||
-      item?.is_ad === true;
+      post?.feed_item_type === 'advertisement' ||
+      post?.type === 'advertisement' ||
+      post?.is_ad === true;
 
     if (isAd) {
       return (
         <AdFeedCard
-          item={item}
+          item={post}
           onRemoved={handleAdRemoved}
         />
       );
@@ -657,25 +767,27 @@ const Home: React.FC = () => {
       appIsActive &&
       !mediaModalVisible.visible &&
       focusedIndex === index;
-    const mediaList = getNewsfeedMediaList(item?.media);
+    const mediaList = getNewsfeedMediaList(post?.media as any);
     const primaryMedia = mediaList[0];
-    const postDescriptionRaw = item?.description ?? item?.content ?? '';
-    const {caption, sharedFromName} = parseSharedFrom(postDescriptionRaw);
-    const feedLabel = resolveFeedLabel(item);
+    const postDescriptionRaw = post?.description ?? post?.content ?? '';
+    const {caption, sharedFromName} = parseSharedFrom(
+      String(postDescriptionRaw),
+    );
+    const feedLabel = resolveFeedLabel(post);
     const isOwnPost =
-      user?.id != null && String(item?.user_id) === String(user.id);
+      user?.id != null && String(post?.user_id) === String(user.id);
 
     return (
       <PostComponent
         feedLabel={feedLabel}
         showMenuButton={isOwnPost}
         isFocused={isFocused}
-        id={item?.user_id}
-        mediaId={item?.id}
-        avatar={item?.avatar}
-        name={item?.fullname}
-        country={item?.country ? item?.country : ''}
-        time={timeFormat(item?.date, true)}
+        id={post?.user_id as any}
+        mediaId={post?.id as any}
+        avatar={post?.avatar as any}
+        name={post?.fullname as any}
+        country={post?.country ? String(post.country) : ''}
+        time={timeFormat(post?.date as any, true)}
         postText={caption}
         sharedFromName={sharedFromName}
         mediaList={mediaList.map(media => ({
@@ -692,41 +804,49 @@ const Home: React.FC = () => {
             ? 'video'
             : 'image'
         }
-        likes={item?.likes?.length}
-        comments={item?.total_comments}
-        share={item?.share}
-        views={item?.total_views}
-        account={item?.privacy}
+        likes={(post?.likes as any[])?.length}
+        comments={post?.total_comments as any}
+        share={post?.share as any}
+        views={post?.total_views as any}
+        account={post?.privacy as any}
         sharePost={sharePost}
-        onCommnetPress={() => handleCommentPress(item?.id)}
+        onCommnetPress={() => handleCommentPress(post?.id as any)}
         onLikesModal={() =>
-          setLikesVisible({visiblity: true, likes: item?.likes, id: item?.id})
+          setLikesVisible({
+            visiblity: true,
+            likes: (post?.likes as any[]) || [],
+            id: Number(post?.id),
+          })
         }
-        onLikePress={() => handleLikePress(item?.id)}
-        onSavePress={() => handleSave(item?.id, item?.is_saved)}
-        onDotPress={() => handleDotPress(item?.id)}
-        modalVisible={activePostId === item?.id}
+        onLikePress={() => handleLikePress(post?.id as any)}
+        onSavePress={() =>
+          handleSave(post?.id as any, post?.is_saved as any)
+        }
+        onDotPress={() => handleDotPress(post?.id as any)}
+        modalVisible={activePostId === post?.id}
         onCardPress={() => setActivePostId(null)}
         handleBlockPress={() => {
           setActivePostId(null);
-          setDeleteVisible({visibility: true, id: item?.id});
+          setDeleteVisible({visibility: true, id: post?.id as any});
         }}
         handleReportPost={() => {
-          setReportVisible({visibility: true, id: item?.id});
+          setReportVisible({visibility: true, id: post?.id as any});
           handleDotPress(null);
         }}
         handleReportPress={() => {
           setActivePostId(null);
-          const {caption} = parseSharedFrom(postDescriptionRaw);
+          const {caption: editCaption} = parseSharedFrom(
+            String(postDescriptionRaw),
+          );
           navigation.navigate('CreatePostEdit', {
             title: 'Edit Post',
-            data: {...item, description: caption},
+            data: {...post, description: editCaption},
           });
         }}
-        isLiked={item?.is_liked}
-        isSaved={item?.is_saved}
+        isLiked={post?.is_liked as any}
+        isSaved={post?.is_saved as any}
         onMediaPress={(media, mediaIndex) => {
-          handleMediaPress(item, mediaIndex);
+          handleMediaPress(post, mediaIndex);
           handleDotPress(null);
         }}
         isPaused={!isFocused}
@@ -802,7 +922,7 @@ const Home: React.FC = () => {
         loading={pymkLoading}
         layout="horizontal"
         showSeeAll
-        onUsersChange={setPymkUsers}
+        onUsersChange={handlePymkUsersChange}
         onSeeAll={() => navigation.navigate('SearchUsers')}
       />
     </View>
@@ -920,7 +1040,7 @@ const Home: React.FC = () => {
             <FlashList
               ref={flatListRef}
               viewabilityConfigCallbackPairs={viewabilityConfigCallbackPairs}
-              data={filteredPosts}
+              data={feedItems}
               keyboardShouldPersistTaps="handled"
               refreshControl={
                 <RefreshControl
@@ -931,11 +1051,12 @@ const Home: React.FC = () => {
                 />
               }
               renderItem={renderPost}
+              getItemType={item => item.rowType}
               // These must be elements, not functions: a new function identity
               // each render remounts the header and refetches stories.
               ListHeaderComponent={renderFeedScrollHeader()}
               contentContainerStyle={styles.feedListContent}
-              keyExtractor={item => String(item?.id ?? item?.advertisement_id)}
+              keyExtractor={item => item.id}
               showsVerticalScrollIndicator={false}
               ListEmptyComponent={
                 initialLoading ? renderSkeletonLoaders() : renderEmpty()
