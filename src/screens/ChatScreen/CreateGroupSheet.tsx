@@ -11,13 +11,54 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {getAllUsers} from '../../api/home';
-import {createGroup} from '../../api/home';
+import {
+  createGroup,
+  getFollowersList,
+  getFollowingList,
+} from '../../api/home';
 import CustomeImage from '../../components/CustomeImage';
 import {vh, vw} from '../../constant';
 import {changeUrlForData} from '../../utils/helpers';
 import {colors} from '../../utils/theme';
 import Toast from 'react-native-toast-message';
+
+function extractListRows(res: any): any[] {
+  return res?.data?.data?.data || res?.data?.data || [];
+}
+
+/** Users you follow who also follow you back. */
+function buildMutualFollowUsers(
+  followingRows: any[],
+  followerRows: any[],
+): any[] {
+  const followerIds = new Set(
+    followerRows
+      .map((row: any) => Number(row?.user_id))
+      .filter((id: number) => Number.isFinite(id) && id > 0),
+  );
+
+  const seen = new Set<number>();
+  const mutuals: any[] = [];
+  for (const row of followingRows) {
+    const id = Number(row?.following_id);
+    if (!Number.isFinite(id) || id <= 0 || seen.has(id)) {
+      continue;
+    }
+    if (!followerIds.has(id)) {
+      continue;
+    }
+    seen.add(id);
+    mutuals.push({
+      id,
+      name: row?.name,
+      full_name: row?.name,
+      username: row?.username,
+      avatar: row?.avatar,
+      is_mutual_follow: true,
+    });
+  }
+  return mutuals;
+}
 
 interface Props {
   visible: boolean;
@@ -61,14 +102,18 @@ const CreateGroupSheet: React.FC<Props> = ({
   useEffect(() => {
     if (visible) {
       setLoading(true);
-      getAllUsers(1, '')
-        .then(res => {
-          if (res?.data && res?.data?.data?.data) {
-            setUsers(res?.data?.data?.data || []);
-          }
+      Promise.all([getFollowingList(), getFollowersList()])
+        .then(([followingRes, followersRes]) => {
+          setUsers(
+            buildMutualFollowUsers(
+              extractListRows(followingRes),
+              extractListRows(followersRes),
+            ),
+          );
         })
         .catch(Err => {
-          console.log('Error fetching users:', Err);
+          console.log('Error fetching mutual followers:', Err);
+          setUsers([]);
         })
         .finally(() => setLoading(false));
     }
@@ -153,6 +198,9 @@ const CreateGroupSheet: React.FC<Props> = ({
       <View style={styles.overlay}>
         <View style={styles.content}>
           <Text style={styles.title}>Create Group</Text>
+          <Text style={styles.subtitle}>
+            Only people you mutually follow can be added
+          </Text>
 
           <TextInput
             style={styles.groupNameInput}
@@ -164,7 +212,7 @@ const CreateGroupSheet: React.FC<Props> = ({
 
           <TextInput
             style={styles.searchInput}
-            placeholder="Search user..."
+            placeholder="Search mutual followers..."
             placeholderTextColor="#999"
             value={search}
             onChangeText={setSearch}
@@ -203,7 +251,11 @@ const CreateGroupSheet: React.FC<Props> = ({
               )}
               ListEmptyComponent={
                 !loading ? (
-                  <Text style={styles.emptyText}>No users found</Text>
+                  <Text style={styles.emptyText}>
+                    {search.trim()
+                      ? 'No mutual followers match your search'
+                      : 'No mutual followers yet'}
+                  </Text>
                 ) : null
               }
             />
@@ -252,8 +304,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 12,
+    marginBottom: 4,
     color: 'black',
+  },
+  subtitle: {
+    fontSize: 13,
+    color: '#666',
+    marginBottom: 12,
   },
   groupNameInput: {
     borderWidth: 1,

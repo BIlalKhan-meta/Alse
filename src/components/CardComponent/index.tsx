@@ -14,7 +14,7 @@ import {colors} from '../../utils/theme';
 import Card from '../Card';
 import RegularTextInput from '../TextInput/RegularTextInput';
 import DropDownPicker from 'react-native-dropdown-picker';
-import {vh, vw} from '../../constant';
+import {POST_DESCRIPTION_MAX_LENGTH, vh, vw} from '../../constant';
 import {useSelector} from 'react-redux';
 import {selectUserProfile} from '../../store/slices/authSlice';
 import {useTranslation} from 'react-i18next';
@@ -90,15 +90,21 @@ const CardComponent: React.FC<CardComponentProps> = ({
           style={styles.avatar}
         />
 
-        <TextInput
-          // onPress={() => onTextInput()}
-          style={styles.input}
-          placeholder={`${t('createPost')}?`}
-          placeholderTextColor={colors.inputText}
-          onChangeText={handleOnChangeText}
-          multiline
-          value={value}
-        />
+        <View style={styles.inputColumn}>
+          <TextInput
+            // onPress={() => onTextInput()}
+            style={styles.input}
+            placeholder={`${t('createPost')}?`}
+            placeholderTextColor={colors.inputText}
+            onChangeText={handleOnChangeText}
+            multiline
+            maxLength={POST_DESCRIPTION_MAX_LENGTH}
+            value={value}
+          />
+          <Text style={styles.charCount}>
+            {(value || '').length}/{POST_DESCRIPTION_MAX_LENGTH}
+          </Text>
+        </View>
       </View>
       {ListOptions && privacy && setPrivacy && (
         <View style={{marginVertical: vh * 5, zIndex: 10, marginTop: -4}}>
@@ -250,12 +256,21 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     marginRight: 10,
   },
-  input: {
+  inputColumn: {
     flex: 1,
+  },
+  input: {
     backgroundColor: colors.inputcolor,
     color: colors.inputText,
     padding: 10,
     borderRadius: 10,
+  },
+  charCount: {
+    marginTop: 4,
+    fontSize: 12,
+    color: colors.inputText,
+    textAlign: 'right',
+    opacity: 0.7,
   },
   uploadOptions: {
     flexDirection: 'row',

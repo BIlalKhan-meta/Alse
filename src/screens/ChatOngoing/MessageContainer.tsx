@@ -22,6 +22,7 @@ import {
   parseProductShareMessage,
 } from '../../utils/productSharePayload';
 import {parsePostShareMessage} from '../../utils/postSharePayload';
+import {parsePrivateReplyMessage} from '../../utils/privateReplyPayload';
 import ChatProductCard from './ChatProductCard';
 import ChatPostCard from './ChatPostCard';
 
@@ -121,76 +122,6 @@ export function createRenderMessageVideo(
 /** Default renderer without fullscreen action. */
 export const renderMessageVideo = createRenderMessageVideo(() => {});
 
-export const renderBubble: React.FC<BubbleProps> = props => {
-  const isOwn =
-    props.user?._id != null &&
-    String(props.currentMessage?.user?._id) === String(props.user._id);
-  const senderName = props.currentMessage?.user?.name;
-  const showSenderName =
-    Boolean(props.renderUsernameOnMessage) && !isOwn && Boolean(senderName);
-
-  return (
-    <View>
-      {showSenderName ? (
-        <Text
-          style={{
-            color: '#0A7A7A',
-            fontSize: 12,
-            fontWeight: '600',
-            marginLeft: 12,
-            marginBottom: 2,
-          }}
-          numberOfLines={1}>
-          {senderName}
-        </Text>
-      ) : null}
-      <Bubble
-        {...props}
-        renderUsernameOnMessage={false}
-        wrapperStyle={{
-      left: {
-        backgroundColor: '#E8F5E8',
-        marginVertical: vh * 0.5,
-        marginHorizontal: 4,
-        borderRadius: 18,
-        paddingHorizontal: 4,
-      },
-      right: {
-        backgroundColor: '#00BCD4',
-        marginVertical: vh * 0.5,
-        marginHorizontal: 4,
-        borderRadius: 18,
-        paddingHorizontal: 4,
-      },
-    }}
-    textStyle={{
-      left: {
-        color: colors.black,
-        fontSize: 14,
-      },
-      right: {
-        color: colors.white,
-        fontSize: 14,
-      },
-    }}
-    timeTextStyle={{
-      left: {
-        color: colors.gray,
-        fontSize: 11,
-      },
-      right: {
-        color: 'rgba(255,255,255,0.8)',
-        fontSize: 11,
-      },
-    }}
-    tickStyle={{
-      color: 'rgba(255,255,255,0.8)',
-    }}
-      />
-    </View>
-  );
-};
-
 export const renderSystemMessage: React.FC<SystemMessageProps> = props => (
   <SystemMessage
     {...props}
@@ -258,58 +189,227 @@ export function createRenderCustomView(
   return ChatMessageCustomView;
 }
 
-export const renderMessageText: React.FC<MessageTextProps> = props => {
-  const rawText = props.currentMessage?.text;
-  if (parseProductShareMessage(rawText) || parsePostShareMessage(rawText)) {
-    return null;
-  }
-
-  return (
-    <MessageText
-      {...props}
-      currentMessage={
-        props.currentMessage
-          ? {
-              ...props.currentMessage,
-              text: getProductShareDisplayText(
-                getCallMessageDisplayText(rawText),
-              ),
-            }
-          : props.currentMessage
-      }
-      containerStyle={{
-        left: {
-          backgroundColor: 'transparent',
-        },
-        right: {
-          backgroundColor: 'transparent',
-        },
-      }}
-      textStyle={{
-        left: {
-          color: colors.black,
-          fontSize: 14,
-          lineHeight: 20,
-        },
-        right: {
-          color: colors.white,
-          fontSize: 14,
-          lineHeight: 20,
-        },
-      }}
-      linkStyle={{
-        left: {
-          color: '#00BCD4',
-          textDecorationLine: 'underline',
-        },
-        right: {
-          color: colors.white,
-          textDecorationLine: 'underline',
-        },
-      }}
-    />
-  );
+export type PrivateReplyQuotePressPayload = {
+  quote_message_id?: string | number;
+  group_chat_id?: string | number;
+  group_name?: string;
 };
+
+export function createRenderMessageText(): React.FC<MessageTextProps> {
+  const ChatMessageText: React.FC<MessageTextProps> = props => {
+    const rawText = props.currentMessage?.text;
+    if (parseProductShareMessage(rawText) || parsePostShareMessage(rawText)) {
+      return null;
+    }
+
+    const privateReply = parsePrivateReplyMessage(rawText);
+    if (privateReply) {
+      const isOwn =
+        props.user?._id != null &&
+        String(props.currentMessage?.user?._id) === String(props.user._id);
+
+      return (
+        <View style={{paddingHorizontal: 8, paddingVertical: 4, maxWidth: 260}}>
+          <View
+            style={{
+              borderLeftWidth: 3,
+              borderLeftColor: isOwn ? 'rgba(255,255,255,0.85)' : '#0A7A7A',
+              backgroundColor: isOwn
+                ? 'rgba(255,255,255,0.2)'
+                : 'rgba(0,0,0,0.06)',
+              borderRadius: 6,
+              paddingHorizontal: 8,
+              paddingVertical: 6,
+              marginBottom: 6,
+            }}>
+            <Text
+              style={{
+                color: isOwn ? colors.white : '#0A7A7A',
+                fontSize: 12,
+                fontWeight: '700',
+                marginBottom: 2,
+              }}
+              numberOfLines={1}>
+              {privateReply.quote_author}
+            </Text>
+            <Text
+              style={{
+                color: isOwn ? 'rgba(255,255,255,0.9)' : colors.gray,
+                fontSize: 12,
+                lineHeight: 16,
+              }}
+              numberOfLines={3}>
+              {privateReply.quote_text || 'Message'}
+            </Text>
+          </View>
+          {privateReply.body ? (
+            <Text
+              style={{
+                color: isOwn ? colors.white : colors.black,
+                fontSize: 14,
+                lineHeight: 20,
+              }}>
+              {privateReply.body}
+            </Text>
+          ) : null}
+        </View>
+      );
+    }
+
+    return (
+      <MessageText
+        {...props}
+        currentMessage={
+          props.currentMessage
+            ? {
+                ...props.currentMessage,
+                text: getProductShareDisplayText(
+                  getCallMessageDisplayText(rawText),
+                ),
+              }
+            : props.currentMessage
+        }
+        containerStyle={{
+          left: {
+            backgroundColor: 'transparent',
+          },
+          right: {
+            backgroundColor: 'transparent',
+          },
+        }}
+        textStyle={{
+          left: {
+            color: colors.black,
+            fontSize: 14,
+            lineHeight: 20,
+          },
+          right: {
+            color: colors.white,
+            fontSize: 14,
+            lineHeight: 20,
+          },
+        }}
+        linkStyle={{
+          left: {
+            color: '#00BCD4',
+            textDecorationLine: 'underline',
+          },
+          right: {
+            color: colors.white,
+            textDecorationLine: 'underline',
+          },
+        }}
+      />
+    );
+  };
+  ChatMessageText.displayName = 'ChatMessageText';
+  return ChatMessageText;
+}
+
+export const renderMessageText = createRenderMessageText();
+
+export function createRenderBubble(
+  highlightedMessageId?: string | number | null,
+  onPrivateReplyQuotePress?: (
+    payload: PrivateReplyQuotePressPayload,
+  ) => void,
+): React.FC<BubbleProps> {
+  const ChatBubble: React.FC<BubbleProps> = props => {
+    const isOwn =
+      props.user?._id != null &&
+      String(props.currentMessage?.user?._id) === String(props.user._id);
+    const senderName = props.currentMessage?.user?.name;
+    const showSenderName =
+      Boolean(props.renderUsernameOnMessage) && !isOwn && Boolean(senderName);
+    const isHighlighted =
+      highlightedMessageId != null &&
+      String(props.currentMessage?._id) === String(highlightedMessageId);
+    const privateReply = parsePrivateReplyMessage(
+      props.currentMessage?.text,
+    );
+
+    return (
+      <View>
+        {showSenderName ? (
+          <Text
+            style={{
+              color: '#0A7A7A',
+              fontSize: 12,
+              fontWeight: '600',
+              marginLeft: 12,
+              marginBottom: 2,
+            }}
+            numberOfLines={1}>
+            {senderName}
+          </Text>
+        ) : null}
+        <Bubble
+          {...props}
+          renderUsernameOnMessage={false}
+          // GiftedChat wraps the bubble in TouchableWithoutFeedback, so nested
+          // Touchables never fire — handle quote jump on the bubble press.
+          onPress={
+            privateReply
+              ? () =>
+                  onPrivateReplyQuotePress?.({
+                    quote_message_id: privateReply.quote_message_id,
+                    group_chat_id: privateReply.group_chat_id,
+                    group_name: privateReply.group_name,
+                  })
+              : props.onPress
+          }
+          wrapperStyle={{
+            left: {
+              backgroundColor: isHighlighted ? '#C8E6C9' : '#E8F5E8',
+              marginVertical: vh * 0.5,
+              marginHorizontal: 4,
+              borderRadius: 18,
+              paddingHorizontal: 4,
+              borderWidth: isHighlighted ? 2 : 0,
+              borderColor: isHighlighted ? '#FFC107' : 'transparent',
+            },
+            right: {
+              backgroundColor: isHighlighted ? '#26C6DA' : '#00BCD4',
+              marginVertical: vh * 0.5,
+              marginHorizontal: 4,
+              borderRadius: 18,
+              paddingHorizontal: 4,
+              borderWidth: isHighlighted ? 2 : 0,
+              borderColor: isHighlighted ? '#FFC107' : 'transparent',
+            },
+          }}
+          textStyle={{
+            left: {
+              color: colors.black,
+              fontSize: 14,
+            },
+            right: {
+              color: colors.white,
+              fontSize: 14,
+            },
+          }}
+          timeTextStyle={{
+            left: {
+              color: colors.gray,
+              fontSize: 11,
+            },
+            right: {
+              color: 'rgba(255,255,255,0.8)',
+              fontSize: 11,
+            },
+          }}
+          tickStyle={{
+            color: 'rgba(255,255,255,0.8)',
+          }}
+        />
+      </View>
+    );
+  };
+  ChatBubble.displayName = 'ChatBubble';
+  return ChatBubble;
+}
+
+export const renderBubble = createRenderBubble();
 
 // Uncomment and type this if needed
 // export const renderCustomView: React.FC<{ user: { name: string } }> = ({ user }) => (

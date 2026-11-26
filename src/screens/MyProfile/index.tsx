@@ -59,6 +59,7 @@ interface PostItem {
   isVideo?: boolean;
   userName?: string;
   date?: string;
+  description?: string;
 }
 
 const STILL_IMAGE_EXT = /\.(jpe?g|png|gif|webp|heic|heif)(\?|$)/i;
@@ -159,12 +160,14 @@ const MyProfile: React.FC = () => {
     mediaType: 'image' | 'video';
     userName: string;
     postTime: string;
+    description?: string;
   }>({
     visible: false,
     mediaUrl: '',
     mediaType: 'image',
     userName: '',
     postTime: '',
+    description: '',
   });
 
   // Initialize profile data when user is available
@@ -220,6 +223,7 @@ const MyProfile: React.FC = () => {
           : 'image',
         userName: item.userName || currentProfile.fullName || '',
         postTime: item.date ? timeFormat(item.date, true) : '',
+        description: String(item.description || item.title || '').trim(),
       });
     },
     [currentProfile.fullName],
@@ -696,12 +700,14 @@ const MyProfile: React.FC = () => {
             ...prev,
             visible: false,
             mediaUrl: '',
+            description: '',
           }))
         }
         mediaUrl={mediaModal.mediaUrl}
         mediaType={mediaModal.mediaType}
         userName={mediaModal.userName}
         postTime={mediaModal.postTime}
+        description={mediaModal.description}
       />
     </View>
   );

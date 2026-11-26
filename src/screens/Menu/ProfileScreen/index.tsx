@@ -29,7 +29,13 @@ import {
 } from '../../../store/slices/homeSlice';
 import {useAppDispatch} from '../../../hooks/storeHooks';
 import Loader from '../../../components/Loader';
-import {getMessage, Toast, getProfileGridMedia, resolvePlayableMediaUrl} from '../../../utils/helpers';
+import {
+  getMessage,
+  Toast,
+  getProfileGridMedia,
+  resolvePlayableMediaUrl,
+  parseSharedFrom,
+} from '../../../utils/helpers';
 import {capitalize, timeFormat} from '../../../utils';
 import {createPost, fetchProfileById, reportPost} from '../../../api/home';
 import {getUserPosts, getUserVideos} from '../../../api/profile';
@@ -145,12 +151,14 @@ const ProfileScreen: React.FC = ({navigation}) => {
     mediaType: 'image' | 'video';
     userName: string;
     postTime: string;
+    description?: string;
   }>({
     visible: false,
     mediaUrl: '',
     mediaType: 'image',
     userName: '',
     postTime: '',
+    description: '',
   });
 
   const handleDotPress = (postId: number) => {
@@ -578,6 +586,9 @@ const ProfileScreen: React.FC = ({navigation}) => {
         `${capitalize(data?.first_name)} ${capitalize(data?.last_name)}`.trim() ||
         '',
       postTime: item.date ? timeFormat(item.date, true) : '',
+      description: parseSharedFrom(
+        item?.description ?? item?.content ?? '',
+      ).caption.trim(),
     });
   };
   const onViewableItemsChanged = ({viewableItems}) => {
@@ -867,12 +878,14 @@ const ProfileScreen: React.FC = ({navigation}) => {
             ...prev,
             visible: false,
             mediaUrl: '',
+            description: '',
           }))
         }
         mediaUrl={mediaModal.mediaUrl}
         mediaType={mediaModal.mediaType}
         userName={mediaModal.userName}
         postTime={mediaModal.postTime}
+        description={mediaModal.description}
       />
     </View>
   );

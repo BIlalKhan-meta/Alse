@@ -29,11 +29,11 @@ import {GiftedChat, IMessage, InputToolbar} from 'react-native-gifted-chat';
 import {images} from '../../utils/images';
 import {colors} from '../../utils/theme';
 import {
+  createRenderBubble,
   createRenderCustomView,
   createRenderMessageImage,
+  createRenderMessageText,
   createRenderMessageVideo,
-  renderBubble,
-  renderMessageText,
 } from './MessageContainer';
 import styles from './styles';
 
@@ -41,6 +41,7 @@ import {Phone, Video as VideoIcon, X} from 'lucide-react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useSelector} from 'react-redux';
 import {
+  createChat,
   createMessage,
   fetchProfileById,
   getChat,
@@ -80,6 +81,14 @@ import {
   normalizeChatMessageText,
   shouldOmitCallDeclineFromChat,
 } from '../../utils/callPayload';
+import {
+  PrivateReplyQuote,
+  getPrivateReplyDisplayText,
+  parsePrivateReplyMessage,
+  serializePrivateReply,
+} from '../../utils/privateReplyPayload';
+import {getPostSharePreviewText} from '../../utils/postSharePayload';
+import {getProductSharePreviewText} from '../../utils/productSharePayload';
 
 /**
  * get-chat (and socket) use `medias: string[]` + `message_type`; legacy fields used `image` / `video`.
@@ -172,6 +181,11 @@ interface Props {
       name?: string;
       user?: any;
       phoneNumber?: string;
+      isGroup?: boolean;
+      isMutualFollow?: boolean;
+      privateReplyQuote?: PrivateReplyQuote;
+      /** Scroll to / highlight this message after load (group jump-back). */
+      focusMessageId?: string | number;
     };
   };
 }
@@ -215,9 +229,27 @@ const ChatOngoing: React.FC<Props> = props => {
   const [isOpeningSharedPost, setIsOpeningSharedPost] = useState(false);
   const [isMediaUploading, setIsMediaUploading] = useState(false);
   const [mediaUploadLabel, setMediaUploadLabel] = useState('Sending media...');
+  const [privateReplyQuote, setPrivateReplyQuote] =
+    useState<PrivateReplyQuote | null>(
+      props?.route?.params?.privateReplyQuote ?? null,
+    );
+  const [longPressMessage, setLongPressMessage] = useState<IMessage | null>(
+    null,
+  );
+  const [isOpeningPrivateReply, setIsOpeningPrivateReply] = useState(false);
+  const [highlightedMessageId, setHighlightedMessageId] = useState<
+    string | number | null
+  >(null);
   /** Optimistic message ids not yet confirmed by the API — survive the 3s poll. */
   const pendingOptimisticIds = useRef<Set<string>>(new Set());
   const isSendingRef = useRef(false);
+  const messageContainerRef = useRef<any>(null);
+  const pendingFocusMessageId = useRef<string | number | null>(
+    props?.route?.params?.focusMessageId ?? null,
+  );
+  const highlightClearTimer = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
 
   const renderMessageImageFullscreen = useMemo(
     () => createRenderMessageImage(uri => setFullscreenImageUri(uri)),
@@ -305,6 +337,68 @@ const ChatOngoing: React.FC<Props> = props => {
   const renderProductCustomView = useMemo(
     () => createRenderCustomView(navigation, openSharedPost),
     [navigation, openSharedPost],
+  );
+
+  const handlePrivateReplyQuotePress = useCallback(
+    (payload: {
+      quote_message_id?: string | number;
+      group_chat_id?: string | number;
+      group_name?: string;
+    }) => {
+      if (payload.group_chat_id == null || payload.quote_message_id == null) {
+        Toast.error(
+          'This reply has no group link. Reply privately again from the group.',
+        );
+        return;
+      }
+
+      // Already in that group — just focus the message.
+      if (
+        String(props?.route?.params?.id) === String(payload.group_chat_id)
+      ) {
+        pendingFocusMessageId.current = payload.quote_message_id;
+        setHighlightedMessageId(payload.quote_message_id);
+        const index = messages.findIndex(
+          m => String(m._id) === String(payload.quote_message_id),
+        );
+        if (index >= 0) {
+          try {
+            messageContainerRef.current?.scrollToIndex?.({
+              index,
+              animated: true,
+              viewPosition: 0.4,
+            });
+          } catch {
+            /* ignore */
+          }
+        } else {
+          Toast.error('Original message not found in this chat');
+        }
+        return;
+      }
+
+      const openChat =
+        typeof (navigation as any).push === 'function'
+          ? (navigation as any).push
+          : (navigation as any).navigate;
+      openChat('ChatOngoing', {
+        id: payload.group_chat_id,
+        name: payload.group_name || 'Group',
+        receiverId: null,
+        user: {id: null, avatar: undefined},
+        isGroup: true,
+        focusMessageId: payload.quote_message_id,
+      });
+    },
+    [messages, navigation, props?.route?.params?.id],
+  );
+
+  const renderMessageText = useMemo(() => createRenderMessageText(), []);
+
+  const renderBubble = useMemo(
+    () =>
+      createRenderBubble(highlightedMessageId, handlePrivateReplyQuotePress),
+    [highlightedMessageId, handlePrivateReplyQuotePress],
   );
 
   const toggleOption = () => setOptionVisible(!optionVisibal);
@@ -870,6 +964,188 @@ const ChatOngoing: React.FC<Props> = props => {
     return cleanup;
   }, [props?.route?.params?.id, appendIncomingMessage]);
 
+  const handleLongPressMessage = useCallback(
+    (_context: any, message: IMessage | undefined) => {
+      if (!message || !isGroupChat || !user?.id) {
+        return;
+      }
+      if (String(message.user?._id) === String(user.id)) {
+        return;
+      }
+      setLongPressMessage(message);
+    },
+    [isGroupChat, user?.id],
+  );
+
+  const handleReplyPrivately = useCallback(async () => {
+    const target = longPressMessage;
+    setLongPressMessage(null);
+    if (!target?.user?._id) {
+      return;
+    }
+
+    const senderId = target.user._id;
+    const rawQuote = String(target.text || '');
+    const quoteText =
+      (parsePrivateReplyMessage(rawQuote)
+        ? getPrivateReplyDisplayText(rawQuote)
+        : null) ||
+      getPostSharePreviewText(rawQuote) ||
+      getProductSharePreviewText(rawQuote) ||
+      normalizeChatMessageText(rawQuote) ||
+      (target.image ? 'Photo' : '') ||
+      (target.video ? 'Video' : '') ||
+      'Message';
+    const quote: PrivateReplyQuote = {
+      quote_text: String(quoteText).trim() || 'Message',
+      quote_author: resolveChatSenderName(target.user),
+      quote_message_id: target._id,
+      group_chat_id: props?.route?.params?.id,
+      group_name: props?.route?.params?.name,
+    };
+
+    setIsOpeningPrivateReply(true);
+    try {
+      const res: any = await createChat({user_id: senderId});
+      const chat = res?.data?.data;
+      if (!chat?.id) {
+        Toast.error('Unable to open private chat');
+        return;
+      }
+
+      // Guard: never treat a group thread as the private DM destination.
+      const chatType = String(chat?.type || '').toLowerCase();
+      const isReturnedGroup =
+        chatType === 'group' ||
+        chat?.group === true ||
+        chat?.is_group === true ||
+        String(chat.id) === String(props?.route?.params?.id);
+      if (isReturnedGroup) {
+        Toast.error('Unable to open private chat');
+        return;
+      }
+
+      // Always push a new screen so we leave the group thread.
+      if (typeof (navigation as any).push === 'function') {
+        (navigation as any).push('ChatOngoing', {
+          id: chat.id,
+          receiverId: senderId,
+          name: chat.name || target.user?.name,
+          phoneNumber: chat.phoneNumber,
+          user: {
+            id: senderId,
+            avatar: chat.image || target.user?.avatar,
+          },
+          isGroup: false,
+          isMutualFollow: Boolean(chat.is_mutual_follow),
+          privateReplyQuote: quote,
+        });
+      } else {
+        (navigation as any).navigate('ChatOngoing', {
+          id: chat.id,
+          receiverId: senderId,
+          name: chat.name || target.user?.name,
+          phoneNumber: chat.phoneNumber,
+          user: {
+            id: senderId,
+            avatar: chat.image || target.user?.avatar,
+          },
+          isGroup: false,
+          isMutualFollow: Boolean(chat.is_mutual_follow),
+          privateReplyQuote: quote,
+        });
+      }
+    } catch (err: any) {
+      Toast.error(getMessage(err) || 'Unable to open private chat');
+    } finally {
+      setIsOpeningPrivateReply(false);
+    }
+  }, [
+    longPressMessage,
+    navigation,
+    props?.route?.params?.id,
+    props?.route?.params?.name,
+  ]);
+
+  useEffect(() => {
+    // Never attach a private-reply quote while still sitting in a group chat.
+    if (isGroupChat) {
+      setPrivateReplyQuote(null);
+      return;
+    }
+    const quote = props?.route?.params?.privateReplyQuote;
+    if (quote) {
+      setPrivateReplyQuote(quote);
+    }
+  }, [
+    isGroupChat,
+    props?.route?.params?.id,
+    props?.route?.params?.privateReplyQuote,
+  ]);
+
+  useEffect(() => {
+    pendingFocusMessageId.current =
+      props?.route?.params?.focusMessageId ?? null;
+  }, [props?.route?.params?.id, props?.route?.params?.focusMessageId]);
+
+  // After messages load, scroll to / highlight the focused group message.
+  useEffect(() => {
+    const focusId = pendingFocusMessageId.current;
+    const chatId = props?.route?.params?.id;
+    if (focusId == null || messages.length === 0 || !chatId) {
+      return;
+    }
+
+    // Ignore stale list still showing the previous chat.
+    const sampleChatId = (messages.find(m => (m as any)?.chat_id != null) as any)
+      ?.chat_id;
+    if (
+      sampleChatId != null &&
+      String(sampleChatId) !== String(chatId)
+    ) {
+      return;
+    }
+
+    const index = messages.findIndex(m => String(m._id) === String(focusId));
+    if (index < 0) {
+      pendingFocusMessageId.current = null;
+      Toast.error('Original message not found in this chat');
+      return;
+    }
+
+    pendingFocusMessageId.current = null;
+    setHighlightedMessageId(focusId);
+
+    const timer = setTimeout(() => {
+      try {
+        messageContainerRef.current?.scrollToIndex?.({
+          index,
+          animated: true,
+          viewPosition: 0.4,
+        });
+      } catch {
+        /* list may not be ready; highlight still shows */
+      }
+    }, 350);
+
+    if (highlightClearTimer.current) {
+      clearTimeout(highlightClearTimer.current);
+    }
+    highlightClearTimer.current = setTimeout(() => {
+      setHighlightedMessageId(null);
+    }, 2500);
+
+    return () => clearTimeout(timer);
+  }, [messages, props?.route?.params?.id]);
+
+  useEffect(() => {
+    return () => {
+      if (highlightClearTimer.current) {
+        clearTimeout(highlightClearTimer.current);
+      }
+    };
+  }, []);
+
   const onSend = useCallback(
     async (newMessages: IMessage[] = []) => {
       const message = newMessages?.[0];
@@ -878,11 +1154,34 @@ const ChatOngoing: React.FC<Props> = props => {
         return;
       }
 
+      const outgoingText = privateReplyQuote
+        ? serializePrivateReply({
+            v: 1,
+            type: 'private_reply',
+            quote_text: privateReplyQuote.quote_text,
+            quote_author: privateReplyQuote.quote_author,
+            quote_message_id: privateReplyQuote.quote_message_id,
+            group_chat_id: privateReplyQuote.group_chat_id,
+            group_name: privateReplyQuote.group_name,
+            body: message.text,
+          })
+        : message.text;
+
+      const optimisticMessages = [
+        {
+          ...message,
+          text: outgoingText,
+        },
+      ];
+
       const tempId = message._id;
       pendingOptimisticIds.current.add(String(tempId));
       setMessages(previousMessages =>
-        GiftedChat.append(previousMessages, newMessages),
+        GiftedChat.append(previousMessages, optimisticMessages),
       );
+      if (privateReplyQuote) {
+        setPrivateReplyQuote(null);
+      }
 
       isSendingRef.current = true;
       setIsSendingMessage(true);
@@ -891,13 +1190,13 @@ const ChatOngoing: React.FC<Props> = props => {
       try {
         const res: any = await createMessage({
           chat_id: chatId,
-          message: message.text,
+          message: outgoingText,
         });
         const saved = res?.data?.data;
 
         emitMessage({
           chat_id: chatId,
-          message: message.text,
+          message: outgoingText,
           created_at: Date.now(),
           user: {
             _id: user.id,
@@ -915,6 +1214,7 @@ const ChatOngoing: React.FC<Props> = props => {
                 ? {
                     ...m,
                     _id: saved.id,
+                    text: outgoingText,
                     createdAt: new Date(saved.created_at || Date.now()),
                   }
                 : m,
@@ -935,7 +1235,14 @@ const ChatOngoing: React.FC<Props> = props => {
         setIsSendingMessage(false);
       }
     },
-    [props?.route?.params?.id, user?.id, user?.avatar, currentUserName, getData],
+    [
+      props?.route?.params?.id,
+      user?.id,
+      user?.avatar,
+      currentUserName,
+      getData,
+      privateReplyQuote,
+    ],
   );
 
   useLayoutEffect(() => {
@@ -1200,6 +1507,8 @@ const ChatOngoing: React.FC<Props> = props => {
         <GiftedChat
           messages={messages}
           onSend={onSend}
+          onLongPress={handleLongPressMessage}
+          messageContainerRef={messageContainerRef}
           user={{
             _id: user?.id,
             name: currentUserName,
@@ -1212,39 +1521,92 @@ const ChatOngoing: React.FC<Props> = props => {
           renderCustomView={renderProductCustomView as any}
           messagesContainerStyle={styles.messagesContainer}
           renderBubble={renderBubble as any}
-          renderInputToolbar={props => (
-            <View style={styles.inputContainer}>
-              <View style={styles.inputBox}>
-                <TouchableOpacity
-                  style={styles.attachButton}
-                  onPress={toggleOption}>
-                  <Image source={images.upload} style={styles.attachIcon} />
-                </TouchableOpacity>
-                <InputToolbar
-                  {...props}
-                  containerStyle={styles.inputToolbarStyle}
-                  primaryStyle={styles.primaryStyle}
-                  renderComposer={renderComposer as any}
-                  renderSend={toolbarProps => (
-                    <SendWithLoader
-                      {...(toolbarProps as any)}
-                      isSending={isSendingMessage}
-                    />
-                  )}
-                />
-                {/* <TouchableOpacity style={styles.micButton}>
-                  <Image source={images.recordingIcon} style={styles.micIcon} />
-                </TouchableOpacity> */}
+          renderInputToolbar={toolbarProps => (
+            <View>
+              {privateReplyQuote ? (
+                <View style={styles.quoteBanner}>
+                  <View style={styles.quoteBannerBar} />
+                  <View style={styles.quoteBannerBody}>
+                    <Text style={styles.quoteBannerAuthor} numberOfLines={1}>
+                      {privateReplyQuote.quote_author}
+                    </Text>
+                    <Text style={styles.quoteBannerText} numberOfLines={2}>
+                      {privateReplyQuote.quote_text}
+                    </Text>
+                  </View>
+                  <TouchableOpacity
+                    style={styles.quoteBannerDismiss}
+                    onPress={() => setPrivateReplyQuote(null)}
+                    accessibilityRole="button"
+                    accessibilityLabel="Dismiss private reply quote">
+                    <X size={18} color={colors.gray} />
+                  </TouchableOpacity>
+                </View>
+              ) : null}
+              <View style={styles.inputContainer}>
+                <View style={styles.inputBox}>
+                  <TouchableOpacity
+                    style={styles.attachButton}
+                    onPress={toggleOption}>
+                    <Image source={images.upload} style={styles.attachIcon} />
+                  </TouchableOpacity>
+                  <InputToolbar
+                    {...toolbarProps}
+                    containerStyle={styles.inputToolbarStyle}
+                    primaryStyle={styles.primaryStyle}
+                    renderComposer={renderComposer as any}
+                    renderSend={sendProps => (
+                      <SendWithLoader
+                        {...(sendProps as any)}
+                        isSending={isSendingMessage}
+                      />
+                    )}
+                  />
+                </View>
               </View>
             </View>
           )}
-          minInputToolbarHeight={60}
+          minInputToolbarHeight={privateReplyQuote ? 100 : 60}
           maxInputLength={1000}
-          keyboardShouldPersistTaps="never"
+          keyboardShouldPersistTaps="handled"
           loadEarlier={false}
           inverted={true}
+          listViewProps={{
+            onScrollToIndexFailed: (info: {
+              index: number;
+              averageItemLength: number;
+            }) => {
+              messageContainerRef.current?.scrollToOffset?.({
+                offset: Math.max(0, info.averageItemLength * info.index),
+                animated: true,
+              });
+            },
+          } as any}
         />
       </View>
+
+      <Modal
+        visible={Boolean(longPressMessage)}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setLongPressMessage(null)}>
+        <Pressable
+          style={styles.privateReplyMenuOverlay}
+          onPress={() => setLongPressMessage(null)}>
+          <Pressable style={styles.privateReplyMenuCard}>
+            <TouchableOpacity
+              style={styles.privateReplyMenuItem}
+              onPress={handleReplyPrivately}
+              disabled={isOpeningPrivateReply}>
+              <Text style={styles.privateReplyMenuItemText}>
+                {isOpeningPrivateReply
+                  ? 'Opening…'
+                  : 'Reply privately'}
+              </Text>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      </Modal>
 
       <Modal
         visible={isMediaUploading}

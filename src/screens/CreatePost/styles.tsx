@@ -120,6 +120,12 @@ const styles = StyleSheet.create({
     padding: 0,
     margin: 0,
   },
+  charCount: {
+    marginTop: 6,
+    fontSize: 12,
+    color: '#999',
+    textAlign: 'right',
+  },
 
   multiMediaContainer: {
     marginTop: 15,

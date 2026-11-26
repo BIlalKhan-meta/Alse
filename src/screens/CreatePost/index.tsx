@@ -39,6 +39,7 @@ import {colors} from '../../utils/theme';
 import {images} from '../../utils/images';
 import styles from './styles';
 import {useTranslation} from 'react-i18next';
+import {POST_DESCRIPTION_MAX_LENGTH} from '../../constant';
 
 type SelectedMedia = PickedMedia;
 
@@ -459,9 +460,13 @@ const CreatePost: React.FC = () => {
                 placeholder="What's on your mind?"
                 placeholderTextColor="#999"
                 multiline
+                maxLength={POST_DESCRIPTION_MAX_LENGTH}
                 value={description}
                 onChangeText={setDescription}
               />
+              <Text style={styles.charCount}>
+                {description.length}/{POST_DESCRIPTION_MAX_LENGTH}
+              </Text>
             </View>
             {selectedMusic ? (
               <View style={styles.musicRow}>

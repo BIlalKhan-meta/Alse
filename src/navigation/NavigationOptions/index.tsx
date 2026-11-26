@@ -1,6 +1,6 @@
 import React, {useCallback, useEffect, useState} from 'react';
 import {Image, Text, TouchableOpacity, View} from 'react-native';
-import {ChevronLeft} from 'lucide-react-native';
+import {ChevronLeft, Search} from 'lucide-react-native';
 import {useFocusEffect} from '@react-navigation/native';
 import styles from './styles';
 import {images} from '../../utils/images';
@@ -197,23 +197,31 @@ const HomeHeaderRight = ({navigation}: {navigation: any}) => {
 
   const badgeLabel = unreadCount > 99 ? '99+' : String(unreadCount);
 
+  const headerIconCircle = {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#E4E6EB',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+  } as const;
+
   return (
     <View style={styles.notificationandshopcontainer}>
       <TouchableOpacity
         style={[styles.iconContainer, {marginRight: 4}]}
+        onPress={() => navigation.navigate('Search')}
+        accessibilityRole="button"
+        accessibilityLabel="Search"
+        testID="header-search">
+        <View style={[styles.notificationcontainer, headerIconCircle]}>
+          <Search color="#0C959B" size={20} />
+        </View>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.iconContainer, {marginRight: 4}]}
         onPress={() => navigation.navigate('Notifications')}>
-        <View
-          style={[
-            styles.notificationcontainer,
-            {
-              backgroundColor: '#fff',
-              borderWidth: 1,
-              borderColor: '#E4E6EB',
-              width: 40,
-              height: 40,
-              borderRadius: 20,
-            },
-          ]}>
+        <View style={[styles.notificationcontainer, headerIconCircle]}>
           <Image
             source={images.bellIcon}
             style={[

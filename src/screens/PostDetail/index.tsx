@@ -46,7 +46,8 @@ const PostDetail: React.FC = () => {
     mediaUrl: string;
     previewUrl?: string;
     mediaType: 'image' | 'video';
-  }>({visible: false, mediaUrl: '', mediaType: 'image'});
+    description?: string;
+  }>({visible: false, mediaUrl: '', mediaType: 'image', description: ''});
 
   const {
     commentsVisible,
@@ -177,6 +178,7 @@ const PostDetail: React.FC = () => {
       mediaUrl,
       previewUrl: item?.thumbnail_path || item?.medium_path,
       mediaType,
+      description: parseSharedFrom(post?.description ?? '').caption.trim(),
     });
   };
 
@@ -296,6 +298,10 @@ const PostDetail: React.FC = () => {
         mediaType={media.mediaType}
         userName={post?.fullname || post?.name || ''}
         postTime={post?.date ? timeFormat(post.date, true) : ''}
+        description={
+          media.description ||
+          parseSharedFrom(post?.description ?? '').caption.trim()
+        }
       />
     </SafeAreaView>
   );

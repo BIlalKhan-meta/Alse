@@ -8,6 +8,9 @@ export const vh: number = screenHeight / 100;
 export const DEVICE_WIDTH: number = screenWidth;
 export const DEVICE_HEIGHT: number = screenHeight;
 
+/** Max characters for newsfeed post captions (create / edit). */
+export const POST_DESCRIPTION_MAX_LENGTH = 1200;
+
 interface FontSizes {
   [key: string]: number;
 }

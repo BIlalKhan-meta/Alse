@@ -10,6 +10,7 @@ import MediaEditor from '../../screens/MediaEditor';
 import MusicPicker from '../../screens/MusicPicker';
 import RequestScreen from '../../screens/RequestScreen';
 import Notifications from '../../screens/Home/Notifications';
+import SearchTab from '../SearchTab';
 import ContactUs from '../../screens/ContactUs';
 import AboutUs from '../../screens/AboutUs';
 import ChatOngoing from '../../screens/ChatOngoing';
@@ -111,6 +112,11 @@ const AppNavigation = () => {
           name="RequestScreen"
           component={RequestScreen}
           options={NavigationOptions}
+        />
+        <Stack.Screen
+          name="Search"
+          component={SearchTab}
+          options={{headerShown: false}}
         />
         <Stack.Screen
           name="Notifications"

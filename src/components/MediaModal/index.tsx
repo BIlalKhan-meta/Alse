@@ -9,6 +9,8 @@ import {
   ActivityIndicator,
   Text,
   Platform,
+  ScrollView,
+  Pressable,
 } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import Video from 'react-native-video';
@@ -17,6 +19,7 @@ import InterRegular from '../Text/InterRegular';
 import {vh, vw} from '../../constant';
 import {changeUrlForData, resolvePlayableMediaUrl} from '../../utils/helpers';
 import {useAppIsActive} from '../../hooks/useAppIsActive';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 interface MediaModalProps {
   visible: boolean;
@@ -25,12 +28,15 @@ interface MediaModalProps {
   mediaType: 'image' | 'video';
   userName?: string;
   postTime?: string;
+  /** Post caption shown over media (Facebook-style truncate + more). */
+  description?: string;
   /** Smaller URL shown immediately while full media loads */
   previewUrl?: string;
 }
 
-const {width: screenWidth} = Dimensions.get('window');
+const {width: screenWidth, height: screenHeight} = Dimensions.get('window');
 const VIDEO_EXT = /\.(mp4|mov|webm|mkv|m4v|3gp)(\?|$)/i;
+const CAPTION_COLLAPSED_LINES = 3;
 
 const MediaModal: React.FC<MediaModalProps> = ({
   visible,
@@ -39,14 +45,20 @@ const MediaModal: React.FC<MediaModalProps> = ({
   mediaType,
   userName,
   postTime,
+  description,
   previewUrl,
 }) => {
+  const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [retryKey, setRetryKey] = useState(0);
   const [fullImageReady, setFullImageReady] = useState(false);
+  const [captionExpanded, setCaptionExpanded] = useState(false);
+  const [captionTruncated, setCaptionTruncated] = useState(false);
   const appIsActive = useAppIsActive();
   const videoPaused = !visible || !appIsActive;
+
+  const caption = String(description || '').trim();
 
   const resolvedUrl = useMemo(() => {
     if (!mediaUrl) {
@@ -70,8 +82,10 @@ const MediaModal: React.FC<MediaModalProps> = ({
       setLoading(true);
       setError(false);
       setFullImageReady(false);
+      setCaptionExpanded(false);
+      setCaptionTruncated(false);
     }
-  }, [visible, mediaUrl, mediaType, previewUrl, retryKey]);
+  }, [visible, mediaUrl, mediaType, previewUrl, retryKey, description]);
 
   const showPreview =
     Boolean(resolvedPreview) &&
@@ -89,7 +103,7 @@ const MediaModal: React.FC<MediaModalProps> = ({
       hardwareAccelerated>
       <StatusBar backgroundColor="#000" barStyle="light-content" />
       <View style={styles.container}>
-        <View style={styles.header}>
+        <View style={[styles.header, {paddingTop: Math.max(insets.top, vh * 4)}]}>
           <View style={styles.headerInfo}>
             {userName ? (
               <InterRegular style={styles.userName}>{userName}</InterRegular>
@@ -216,6 +230,71 @@ const MediaModal: React.FC<MediaModalProps> = ({
               />
             </View>
           )}
+
+          {caption ? (
+            <View
+              style={[
+                styles.captionDock,
+                {paddingBottom: Math.max(insets.bottom, 12)},
+              ]}
+              pointerEvents="box-none">
+              <TouchableOpacity
+                activeOpacity={0.9}
+                onPress={() => {
+                  if (captionTruncated) {
+                    setCaptionExpanded(true);
+                  }
+                }}
+                style={styles.captionCollapsed}
+                accessibilityRole="button"
+                accessibilityLabel="Expand description">
+                <Text
+                  style={styles.captionText}
+                  numberOfLines={CAPTION_COLLAPSED_LINES}
+                  onTextLayout={e => {
+                    const lines = e.nativeEvent.lines?.length ?? 0;
+                    setCaptionTruncated(lines >= CAPTION_COLLAPSED_LINES);
+                  }}>
+                  {caption}
+                </Text>
+                {captionTruncated ? (
+                  <Text style={styles.moreText}>more</Text>
+                ) : null}
+              </TouchableOpacity>
+            </View>
+          ) : null}
+
+          {caption && captionExpanded ? (
+            <View style={styles.captionOverlayRoot} pointerEvents="box-none">
+              <Pressable
+                style={styles.captionOverlayScrim}
+                onPress={() => setCaptionExpanded(false)}
+              />
+              <View
+                style={[
+                  styles.captionOverlayCard,
+                  {
+                    maxHeight: screenHeight * 0.55,
+                    paddingBottom: Math.max(insets.bottom, 12),
+                  },
+                ]}>
+                <View style={styles.captionOverlayHeader}>
+                  <Text style={styles.captionOverlayTitle}>Description</Text>
+                  <TouchableOpacity
+                    onPress={() => setCaptionExpanded(false)}
+                    hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
+                    <Text style={styles.seeLessText}>See less</Text>
+                  </TouchableOpacity>
+                </View>
+                <ScrollView
+                  style={styles.captionScroll}
+                  showsVerticalScrollIndicator
+                  bounces>
+                  <Text style={styles.captionTextExpanded}>{caption}</Text>
+                </ScrollView>
+              </View>
+            </View>
+          ) : null}
         </View>
       </View>
     </Modal>
@@ -232,8 +311,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: vw * 4,
-    paddingVertical: vh * 2,
-    paddingTop: Platform.OS === 'ios' ? vh * 6 : vh * 4,
+    paddingVertical: vh * 1.5,
     zIndex: 20,
   },
   headerInfo: {
@@ -308,6 +386,72 @@ const styles = StyleSheet.create({
   retryText: {
     color: '#000',
     fontWeight: '600',
+  },
+  captionDock: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 30,
+  },
+  captionCollapsed: {
+    paddingHorizontal: vw * 4,
+    paddingTop: 10,
+    paddingBottom: 8,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+  },
+  captionText: {
+    color: '#fff',
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  moreText: {
+    color: 'rgba(255,255,255,0.75)',
+    fontSize: 14,
+    fontWeight: '700',
+    marginTop: 2,
+  },
+  captionOverlayRoot: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 40,
+    justifyContent: 'flex-end',
+  },
+  captionOverlayScrim: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+  },
+  captionOverlayCard: {
+    backgroundColor: 'rgba(20,20,20,0.96)',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    paddingHorizontal: vw * 4,
+    paddingTop: 14,
+    zIndex: 41,
+  },
+  captionOverlayHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  captionOverlayTitle: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  seeLessText: {
+    color: '#9EDCE0',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  captionScroll: {
+    flexGrow: 0,
+  },
+  captionTextExpanded: {
+    color: '#fff',
+    fontSize: 15,
+    lineHeight: 22,
+    paddingBottom: 16,
   },
 });
 

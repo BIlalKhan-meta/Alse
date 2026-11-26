@@ -128,7 +128,7 @@ function App(): React.JSX.Element {
             <MainNavigation />
             <IncomingCallHandler />
           </NavigationContainer>
-          {__DEV__ && <NetworkLoggerFAB />}
+          {/* {__DEV__ && <NetworkLoggerFAB />} */}
           <Toast />
           {/* Must stay under Provider — useDispatch crashes with store=null (ALSE-24). */}
           <UploadProgressBanner />

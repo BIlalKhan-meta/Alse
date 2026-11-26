@@ -392,6 +392,66 @@ const styles = StyleSheet.create({
     color: colors.gray,
     fontWeight: '500',
   },
+  privateReplyMenuOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  privateReplyMenuCard: {
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    minWidth: vw * 55,
+    paddingVertical: vh * 0.5,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  privateReplyMenuItem: {
+    paddingVertical: vh * 1.6,
+    paddingHorizontal: vw * 6,
+  },
+  privateReplyMenuItemText: {
+    fontSize: fontSizes.medium,
+    color: colors.black,
+    fontWeight: '500',
+  },
+  quoteBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#EEF9F9',
+    borderTopWidth: 1,
+    borderTopColor: '#E5E5E5',
+    paddingHorizontal: vw * 4,
+    paddingVertical: vh * 1,
+  },
+  quoteBannerBar: {
+    width: 3,
+    alignSelf: 'stretch',
+    backgroundColor: '#0A7A7A',
+    borderRadius: 2,
+    marginRight: vw * 3,
+  },
+  quoteBannerBody: {
+    flex: 1,
+  },
+  quoteBannerAuthor: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#0A7A7A',
+    marginBottom: 2,
+  },
+  quoteBannerText: {
+    fontSize: 12,
+    color: colors.gray,
+    lineHeight: 16,
+  },
+  quoteBannerDismiss: {
+    padding: 8,
+    marginLeft: vw * 2,
+  },
 });
 
 export default styles;

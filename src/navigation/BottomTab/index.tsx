@@ -1,23 +1,19 @@
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import {Search, User} from 'lucide-react-native';
+import {MessageCircle, User} from 'lucide-react-native';
 import React from 'react';
 import {Image, View} from 'react-native';
-import LiveStreamScreen from '../../screens/Livestream/GoLive';
+import ChatScreen from '../../screens/ChatScreen';
 import MyProfile from '../../screens/MyProfile';
 import {images} from '../../utils/images';
 import {colors} from '../../utils/theme';
 import HomeNavigation from '../HomeNavigation';
 import MarketPlaceNavigation from '../MarketPlaceNavigator';
 import NavigationOptions from '../NavigationOptions';
-import SearchTab from '../SearchTab';
 import VideosTab from '../VideosTab/Index';
 import styles from './styles';
 
 const TabNavigation = () => {
   const Tab = createBottomTabNavigator();
-
-  // const user = useSelector(selectUserProfile);
-  // console.log('user', user);
 
   return (
     <Tab.Navigator
@@ -59,26 +55,6 @@ const TabNavigation = () => {
       />
 
       <Tab.Screen
-        name="Search"
-        component={SearchTab}
-        options={{
-          tabBarLabel: 'Search',
-          tabBarTestID: 'tab-search',
-          // Keep tab bar mounted on Android. Hiding it while adjustResize runs
-          // makes the search field/keyboard bounce in a loop.
-          tabBarHideOnKeyboard: false,
-          tabBarVisibilityAnimationConfig: {
-            show: {animation: 'timing', config: {duration: 0}},
-            hide: {animation: 'timing', config: {duration: 0}},
-          },
-          tabBarIcon: ({color}) => (
-            <View style={styles.tabButton}>
-              <Search color={color} size={22} />
-            </View>
-          ),
-        }}
-      />
-      <Tab.Screen
         name="MarketPlaceNavigation"
         component={MarketPlaceNavigation}
         options={{
@@ -95,23 +71,6 @@ const TabNavigation = () => {
           ...NavigationOptions,
         }}
       />
-      <Tab.Screen
-        name="LiveStreamScreen"
-        component={LiveStreamScreen}
-        initialParams={{isHost: true, channel: ''}}
-        options={{
-          tabBarLabel: 'Go Live',
-          tabBarIcon: ({color}) => (
-            <View style={styles.tabButton}>
-              <Image
-                source={images.liveStream}
-                style={[styles.icon, {tintColor: color}]}
-              />
-            </View>
-          ),
-          ...NavigationOptions,
-        }}
-      />
 
       <Tab.Screen
         name="Videos"
@@ -119,7 +78,8 @@ const TabNavigation = () => {
         options={{
           unmountOnBlur: true,
           headerShown: false,
-          tabBarLabel: 'Videos',
+          tabBarLabel: 'Reels',
+          tabBarTestID: 'tab-reels',
           tabBarIcon: ({color}) => (
             <View style={styles.tabButton}>
               <Image
@@ -130,6 +90,22 @@ const TabNavigation = () => {
           ),
         }}
       />
+
+      <Tab.Screen
+        name="Chat"
+        component={ChatScreen}
+        options={{
+          tabBarLabel: 'Chat',
+          tabBarTestID: 'tab-chat',
+          tabBarIcon: ({color}) => (
+            <View style={styles.tabButton}>
+              <MessageCircle color={color} size={22} />
+            </View>
+          ),
+          ...NavigationOptions,
+        }}
+      />
+
       <Tab.Screen
         name="MyProfile"
         component={MyProfile}

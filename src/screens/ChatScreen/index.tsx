@@ -26,6 +26,10 @@ import SelectUserModal from './SelectUserModal';
 import CreateGroupSheet from './CreateGroupSheet';
 import {getProductSharePreviewText} from '../../utils/productSharePayload';
 import {getPostSharePreviewText} from '../../utils/postSharePayload';
+import {
+  getPrivateReplyDisplayText,
+  parsePrivateReplyMessage,
+} from '../../utils/privateReplyPayload';
 import {colors} from '../../utils/theme';
 interface ChatItem {
   id: number;
@@ -145,6 +149,9 @@ const ChatScreen: React.FC = () => {
     }
 
     const lastPreview =
+      (parsePrivateReplyMessage(item.last_message?.message)
+        ? getPrivateReplyDisplayText(item.last_message?.message)
+        : null) ||
       getPostSharePreviewText(item.last_message?.message) ||
       getProductSharePreviewText(item.last_message?.message) ||
       item.last_message?.message ||

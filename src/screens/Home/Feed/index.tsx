@@ -212,6 +212,7 @@ const Home: React.FC = () => {
     mediaType: 'image' | 'video';
     userName: string;
     postTime: string;
+    description?: string;
     previewUrl?: string;
   }>({
     visible: false,
@@ -219,6 +220,7 @@ const Home: React.FC = () => {
     mediaType: 'image',
     userName: '',
     postTime: '',
+    description: '',
     previewUrl: '',
   });
 
@@ -694,6 +696,9 @@ const Home: React.FC = () => {
       mediaType,
       userName: item.fullname || '',
       postTime: timeFormat(item.date, true),
+      description: parseSharedFrom(
+        item?.description ?? item?.content ?? '',
+      ).caption.trim(),
     });
   };
 
@@ -1236,6 +1241,7 @@ const Home: React.FC = () => {
                 mediaType: 'image',
                 userName: '',
                 postTime: '',
+                description: '',
                 previewUrl: '',
               })
             }
@@ -1244,6 +1250,7 @@ const Home: React.FC = () => {
             mediaType={mediaModalVisible.mediaType}
             userName={mediaModalVisible.userName}
             postTime={mediaModalVisible.postTime}
+            description={mediaModalVisible.description}
           />
 
           <FeedWellnessModal
